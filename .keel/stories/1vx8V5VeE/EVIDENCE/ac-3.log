@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-02T11:37:44.176854994-08:00
+mode: manual
+---
+main.rs now exposes infrastructure as the single infra root and dependent modules compile via crate::infrastructure::* paths.

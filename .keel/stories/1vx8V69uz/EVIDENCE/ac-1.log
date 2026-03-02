@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-02T11:27:52.962452780-08:00
+mode: manual
+---
+Moved model, policy, state_machine, and transitions into src/domain and rewired module declarations.

@@ -1,0 +1,5 @@
+id: 1vugz2UvY
+git_sha: 1f0ba4fcb83430f03bae08c9279977dbf0c2e9da
+evidence:
+  EVIDENCE/llm-judge-executor-can-package-a-story-s-diff-and-acs-for-an-llm-judge-and-capture-the-signed-transcript.txt: 5a915ef47b96a83e766be0c436149a5c11aff482e527f9939557808821d8d764
+  EVIDENCE/record-cli.gif: 382156394a3e6422d39911720624d544427ac6a109145b76ae851c380fa6e7a4

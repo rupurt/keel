@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-02T11:14:45.929416406-08:00
+mode: manual
+---
+Legacy top-level CLI roots were moved to src/cli and removed from main module declarations.

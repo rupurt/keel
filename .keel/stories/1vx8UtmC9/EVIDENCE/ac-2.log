@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-02T12:03:11.163705073-08:00
+mode: manual
+---
+Root production modules were removed from src root and relocated into cli, domain, infrastructure, and read_model namespaces.

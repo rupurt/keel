@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-02-24T21:42:44.110557700-08:00
+mode: manual
+---
+Verified that src/traceability.rs derives story dependency graphs from SRS requirement order.

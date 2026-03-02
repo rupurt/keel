@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-02T11:27:52.995874782-08:00
+mode: manual
+---
+Application and CLI continue to depend on crate::domain::* without introducing cyclic import failures.

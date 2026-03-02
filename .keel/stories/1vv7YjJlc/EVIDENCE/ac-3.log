@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-02-24T21:37:48.121302093-08:00
+mode: manual
+---
+Verified that format_enforcement_error is used for reporting errors in story submit/accept.

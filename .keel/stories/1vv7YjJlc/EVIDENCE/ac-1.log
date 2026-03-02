@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-02-24T21:37:47.936563626-08:00
+mode: manual
+---
+Verified that src/commands/story/submit.rs uses enforce_transition.

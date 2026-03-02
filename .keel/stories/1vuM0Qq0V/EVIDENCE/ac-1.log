@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-02-23T15:45:42.206203478-08:00
+mode: manual
+---
+Verified: State machine transitions now use the unified Problem type

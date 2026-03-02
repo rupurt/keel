@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-02T07:27:44.077981510-08:00
+mode: manual
+---
+Added architecture contract tests that assert forbidden dependency edges across main adapters, next algorithm, diagnostic adapters, and read_model boundaries; validated with just quality + just test.

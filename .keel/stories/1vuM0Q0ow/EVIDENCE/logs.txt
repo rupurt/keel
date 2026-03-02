@@ -1,0 +1,1 @@
+Doctor refactored to use centralized checks

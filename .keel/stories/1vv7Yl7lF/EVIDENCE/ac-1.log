@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-02-24T21:39:33.328776851-08:00
+mode: manual
+---
+Implemented synthesis_voyage_knowledge in src/generate/knowledge_synthesis.rs.

@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-02-24T21:42:44.204733264-08:00
+mode: manual
+---
+Verified that the modeler correctly identifies dependency chains within voyage scopes.

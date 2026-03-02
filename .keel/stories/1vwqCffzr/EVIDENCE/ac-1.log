@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-02T10:19:21.471367014-08:00
+mode: manual
+---
+Added dedicated command regression suite covering next/flow block thresholds and lifecycle transition parity. Verified via command_regression_tests and full just test pass.

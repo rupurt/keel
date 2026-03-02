@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-01T20:31:15.533421627-08:00
+mode: manual
+---
+Implemented domain event model and process manager orchestration for story/voyage/epic progression, added process-manager tests, and validated with just quality + just test.

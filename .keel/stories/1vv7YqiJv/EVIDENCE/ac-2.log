@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-02-24T21:46:35.665879946-08:00
+mode: manual
+---
+Updated tests to use strict datetime format and verified that date-only formats are rejected.

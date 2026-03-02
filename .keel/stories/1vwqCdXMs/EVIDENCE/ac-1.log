@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-01T15:53:17.323263430-08:00
+mode: manual
+---
+Bounded context ownership map added in ARCHITECTURE.md with explicit governance, work-management, research, verification, read-model, and interface ownership, seams, and forbidden coupling rules.

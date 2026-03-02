@@ -1,0 +1,1 @@
+Story submit uses unified check logic

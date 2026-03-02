@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-02T10:04:15.608992778-08:00
+mode: manual
+---
+Implemented infrastructure::fs_adapters::FilesystemAdapter with repository/document port implementations and parity tests for load/list/persist/read/write behavior against current markdown board storage model.

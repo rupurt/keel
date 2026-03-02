@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-02T09:45:45.745593808-08:00
+mode: manual
+---
+Added read_model::queue_policy shared facade and rewired next, flow bottleneck, and flow state-machine consumers to use shared queue classification APIs, enforced by architecture_contract_tests::queue_policy_consumers_use_shared_read_model_api.

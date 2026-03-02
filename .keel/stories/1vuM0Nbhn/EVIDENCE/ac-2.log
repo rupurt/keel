@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-02-23T15:45:41.931532636-08:00
+mode: manual
+---
+Verified: GateSeverity enum removed and unified into Severity

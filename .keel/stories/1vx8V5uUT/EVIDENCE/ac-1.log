@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-02T11:14:45.909657988-08:00
+mode: manual
+---
+Main dispatch now routes through cli::commands and CLI modules are under src/cli/**.

@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-02T11:14:45.948455179-08:00
+mode: manual
+---
+main.rs declares mod cli and handlers call cli::commands::* without behavior regression.

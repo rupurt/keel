@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-02-24T21:41:54.594925479-08:00
+mode: manual
+---
+Updated format_proposed_adrs to list specific blocked stories and their blocking ADRs.

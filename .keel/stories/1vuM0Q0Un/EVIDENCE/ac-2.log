@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-02-23T15:45:42.115498902-08:00
+mode: manual
+---
+Verified: Voyage validation logic moved to src/validation/structural.rs

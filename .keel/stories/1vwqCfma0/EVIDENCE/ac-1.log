@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-02T10:33:51.970750138-08:00
+mode: manual
+---
+Removed duplicate capacity projection and rendering logic from diagnostics interface by delegating to flow::capacity, which reuses canonical read-model DTOs. Added architecture contract coverage for delegation.

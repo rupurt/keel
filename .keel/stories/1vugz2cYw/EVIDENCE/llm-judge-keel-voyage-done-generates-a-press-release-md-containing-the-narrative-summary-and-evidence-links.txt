@@ -1,0 +1,326 @@
+LLM Judge Transcript
+Story: 1vugz2cYw
+Criterion: `keel voyage done` generates a `PRESS_RELEASE.md` containing the narrative summary and evidence links
+
+Diff:
+.keel/stories/1vugz2cYw/README.md --- 1/2 --- Text
+ 2 id: 1vugz2cYw                                      2 id: 1vugz2cYw
+ 3 title: Automate Narrative PR Release Generation    3 title: Automate Narrative PR Release Generation
+ 4 type: feat                                         4 type: feat
+ 5 status: backlog                                    5 status: in-progress
+ 6 created_at: 2026-02-23T17:13:04                    6 created_at: 2026-02-23T17:13:04
+ 7 updated_at: 2026-02-23T19:50:00                    7 updated_at: 2026-02-24T10:37:36
+ 8 scope: 1vugyr0OR/1vugyujor                         8 scope: 1vugyr0OR/1vugyujor
+ 9 index: 3                                           9 index: 3
+10 ---                                               10 ---
+
+.keel/stories/1vugz2cYw/README.md --- 2/2 --- Text
+13                                                   13 
+14 ## Summary                                        14 ## Summary
+15                                                   15 
+16 When a block of work (Voyage) is completed, Keel  16 When a block of work (Voyage) is completed, Keel 
+.. should generate a high-fidelity Pull Request desc .. should generate a high-fidelity Pull Request desc
+.. ription. This PR should tell the story of the fea .. ription. This PR should tell the story of the fea
+.. ture by stitching together story summaries, `REFL .. ture by stitching together story summaries, `REFL
+.. ECT.md` insights, and embedding the `vhs` recordi .. ECT.md` insights, and embedding the `vhs` recordi
+.. ngs/LLM transcripts as proof.                     .. ngs/LLM transcripts as proof. The result should b
+..                                                   .. e stored in `PRESS_RELEASE.md` within the voyage 
+..                                                   .. directory.
+17                                                   17 
+18 ## Acceptance Criteria                            18 ## Acceptance Criteria
+19                                                   19 
+20 - [ ] [SRS-03/AC-01] `keel voyage done` generates 20 - [x] [SRS-03/AC-01] `keel voyage done` generates
+..  a `PR_RELEASE.md` containing the narrative summa ..  a `PRESS_RELEASE.md` containing the narrative su
+.. ry and evidence links <!-- verify: llm-judge, SRS .. mmary and evidence links <!-- verify: llm-judge, 
+.. -03:start:end -->                                 .. SRS-03:start:end -->
+
+src/commands/voyage/done.rs --- 1/4 --- Rust
+  1   1 //! Done voyage command
+  2   2 
+  .   3 use std::fmt::Write;
+  3   4 use std::fs;
+  4   . 
+  5   5 use std::path::Path;
+
+src/commands/voyage/done.rs --- 2/4 --- Rust
+ 78  78     fs::write(&voyage.path, updated_content)
+ 79  79         .with_context(|| format!("Failed to write voyage: {}", voyage.path.display()))?;
+ ..  80 
+ ..  81     // Generate PRESS_RELEASE.md
+ ..  82     if let Err(e) = generate_press_release(board_dir, &board, voyage) {
+ ..  83         eprintln!("Warning: Failed to generate PRESS_RELEASE.md: {}", e);
+ ..  84     }
+ 80  85 
+ 81  86     println!("Completed voyage: {}", voyage.id());
+ 82  87 
+
+src/commands/voyage/done.rs --- 3/4 --- Rust
+116 121     Ok(true)
+117 122 }
+... 123 
+... 124 /// Generate a high-fidelity PRESS_RELEASE.md for the voyage
+... 125 fn generate_press_release(
+... 126     _board_dir: &Path,
+... 127     board: &crate::model::Board,
+... 128     voyage: &crate::model::Voyage,
+... 129 ) -> Result<()> {
+... 130     let mut output = String::new();
+... 131     writeln!(output, "# PRESS RELEASE: {}", voyage.title()).unwrap();
+... 132     writeln!(output).unwrap();
+... 133     writeln!(output, "## Overview").unwrap();
+... 134     if let Some(goal) = voyage.frontmatter.goal.as_ref() {
+... 135         writeln!(output, "> {}", goal).unwrap();
+... 136     }
+... 137     writeln!(output).unwrap();
+... 138 
+... 139     let stories = board.stories_for_voyage(voyage);
+... 140 
+... 141     // 1. Executive Summary (Synthesized from stories)
+... 142     writeln!(output, "## Narrative Summary").unwrap();
+... 143     for story in &stories {
+... 144         let content = fs::read_to_string(&story.path)?;
+... 145         if let Some(summary) = extract_story_summary(&content) {
+... 146             writeln!(output, "### {}", story.title()).unwrap();
+... 147             writeln!(output, "{}", summary).unwrap();
+... 148             writeln!(output).unwrap();
+... 149         }
+... 150     }
+... 151 
+... 152     // 2. Insights & Lessons (From REFLECT.md)
+... 153     writeln!(output, "## Key Insights").unwrap();
+... 154     for story in &stories {
+... 155         let story_dir = story.path.parent().unwrap();
+... 156         let reflect_path = story_dir.join("REFLECT.md");
+... 157         if reflect_path.exists() {
+... 158             let reflect_content = fs::read_to_string(reflect_path)?;
+... 159             writeln!(output, "### Insights from {}", story.title()).unwrap();
+... 160             writeln!(output, "{}", reflect_content.trim()).unwrap();
+... 161             writeln!(output).unwrap();
+... 162         }
+... 163     }
+... 164 
+... 165     // 3. Evidence & Proof (vhs recordings, LLM transcripts)
+... 166     writeln!(output, "## Verification Proof").unwrap();
+... 167     for story in &stories {
+... 168         let story_dir = story.path.parent().unwrap();
+... 169         let evidence_dir = story_dir.join("EVIDENCE");
+... 170         if evidence_dir.exists() {
+... 171             let entries = fs::read_dir(evidence_dir)?;
+... 172             let mut story_evidence = Vec::new();
+... 173             for entry in entries.flatten() {
+... 174                 let path = entry.path();
+... 175                 if path.is_file() {
+... 176                     let filename = path.file_name().unwrap().to_string_lossy().to_string();
+... 177                     story_evidence.push(filename);
+... 178                 }
+... 179             }
+... 180 
+... 181             if !story_evidence.is_empty() {
+... 182                 writeln!(output, "### Proof for {}", story.title()).unwrap();
+... 183                 for filename in story_evidence {
+... 184                     let rel_path =
+... 185                         format!("../../../../stories/{}/EVIDENCE/{}", story.id(), filename);
+... 186                     if filename.ends_with(".gif") {
+... 187                         writeln!(output, "![{}]({})", filename, rel_path).unwrap();
+... 188                     } else {
+... 189                         writeln!(output, "- [{}]({})", filename, rel_path).unwrap();
+... 190                     }
+... 191                 }
+... 192                 writeln!(output).unwrap();
+... 193             }
+... 194         }
+... 195     }
+... 196 
+... 197     let release_path = voyage.path.parent().unwrap().join("PRESS_RELEASE.md");
+... 198     fs::write(release_path, output)?;
+... 199 
+... 200     Ok(())
+... 201 }
+... 202 
+... 203 /// Extract summary section from story README
+... 204 fn extract_story_summary(content: &str) -> Option<String> {
+... 205     let mut in_summary = false;
+... 206     let mut summary = String::new();
+... 207 
+... 208     for line in content.lines() {
+... 209         if line.starts_with("# Summary") || line.starts_with("## Summary") {
+... 210             in_summary = true;
+... 211             continue;
+... 212         }
+... 213         if in_summary {
+... 214             if line.starts_with('#') {
+... 215                 break;
+... 216             }
+... 217             summary.push_str(line);
+... 218             summary.push('\n');
+... 219         }
+... 220     }
+... 221 
+... 222     let trimmed = summary.trim();
+... 223     if trimmed.is_empty() {
+... 224         None
+... 225     } else {
+... 226         Some(trimmed.to_string())
+... 227     }
+... 228 }
+118 229 
+119 230 /// If epic is strategic but should be tactical, update it.
+120 231 fn auto_tactical_epic_if_needed(board_dir: &Path, epic_id: &str) -> Result<()> {
+
+src/commands/voyage/done.rs --- 4/4 --- Rust
+337 448         assert!(content.contains("status: tactical"));
+338 449     }
+... 450 
+... 451     #[test]
+... 452     fn done_voyage_generates_press_release() {
+... 453         let temp = TestBoardBuilder::new()
+... 454             .epic(TestEpic::new("release-epic"))
+... 455             .voyage(TestVoyage::new("01-release", "release-epic").status("in-progress"))
+... 456             .story(
+... 457                 TestStory::new("S1")
+... 458                     .title("Story 1")
+... 459                     .scope("release-epic/01-release")
+... 460                     .stage(crate::model::Stage::Done)
+... 461                     .body("## Summary\nThis is story 1 summary.\n"),
+... 462             )
+... 463             .build();
+... 464 
+... 465         // Add reflection manually
+... 466         let reflect_path = temp.path().join("stories/S1/REFLECT.md");
+... 467         fs::write(reflect_path, "### L001: Insight 1").unwrap();
+... 468 
+... 469         // Add evidence manually
+... 470         let evidence_dir = temp.path().join("stories/S1/EVIDENCE");
+... 471         fs::create_dir_all(&evidence_dir).unwrap();
+... 472         fs::write(evidence_dir.join("proof.txt"), "proof content").unwrap();
+... 473 
+... 474         run_with_dir(temp.path(), "01-release", None, None, None).unwrap();
+... 475 
+... 476         let release_path = temp
+... 477             .path()
+... 478             .join("epics/release-epic/voyages/01-release/PRESS_RELEASE.md");
+... 479         assert!(release_path.exists());
+... 480 
+... 481         let release_content = fs::read_to_string(release_path).unwrap();
+... 482         assert!(release_content.contains("# PRESS RELEASE: 01-release Voyage"));
+... 483         assert!(release_content.contains("## Narrative Summary"));
+... 484         assert!(release_content.contains("### Story 1"));
+... 485         assert!(release_content.contains("This is story 1 summary."));
+... 486         assert!(release_content.contains("## Key Insights"));
+... 487         assert!(release_content.contains("### L001: Insight 1"));
+... 488         assert!(release_content.contains("## Verification Proof"));
+... 489         assert!(release_content.contains("proof.txt"));
+... 490     }
+339 491 }
+
+src/drift_tests.rs --- Rust
+325 325         VoyageFrontmatter {
+326 326             id: "t".to_string(),
+327 327             title: "t".to_string(),
+... 328             goal: None,
+328 329             status: Status::Planned,
+329 330             epic: Some("e".to_string()),
+330 331             index: None,
+
+src/flow/next_up.rs --- 1/2 --- Rust
+421 421             frontmatter: VoyageFrontmatter {
+422 422                 id: id.to_string(),
+423 423                 title: title.to_string(),
+... 424                 goal: None,
+424 425                 status,
+425 426                 epic: None,
+426 427                 index: None,
+
+src/flow/next_up.rs --- 2/2 --- Rust
+771 772             frontmatter: VoyageFrontmatter {
+772 773                 id: id.to_string(),
+773 774                 title: title.to_string(),
+... 775                 goal: None,
+774 776                 status,
+775 777                 epic: Some(epic.to_string()),
+776 778                 index: None,
+
+src/invariants.rs --- Rust
+238 238             frontmatter: VoyageFrontmatter {
+239 239                 id: id.to_string(),
+240 240                 title: format!("Voyage {}", id),
+... 241                 goal: None,
+241 242                 status,
+242 243                 epic: Some("test-epic".to_string()),
+243 244                 index: None,
+
+src/model/board.rs --- Rust
+215 215             frontmatter: VoyageFrontmatter {
+216 216                 id: id.to_string(),
+217 217                 title: format!("Voyage {}", id),
+... 218                 goal: None,
+218 219                 status: Status::Planned,
+219 220                 epic: Some(epic_id.to_string()),
+220 221                 index: None,
+
+src/model/voyage.rs --- 1/4 --- Rust
+ 35  35 pub struct VoyageFrontmatter {
+ 36  36     pub id: String,
+ 37  37     pub title: String,
+ ..  38     #[serde(default)]
+ ..  39     pub goal: Option<String>,
+ 38  40     #[serde(default)]
+ 39  41     pub status: Status,
+ 40  42     #[serde(default)]
+
+src/model/voyage.rs --- 2/4 --- Rust
+125     #[test]                                      127     #[test]
+126     fn voyage_frontmatter_deserializes() {       128     fn voyage_frontmatter_deserializes() {
+127         let yaml = r#"                           129         let yaml = r#"
+128 id: 01-core-infrastructure                       130 id: 01-core-infrastructure
+129 title: Core Infrastructure                       131 title: Core Infrastructure
+130 status: in-progress                              132 goal: Build the core
+131 epic: board-cli                                  133 status: in-progress
+...                                                  134 epic: board-cli
+132 "#;                                              135 "#;
+133         let fm: VoyageFrontmatter = serde_yaml:: 136         let fm: VoyageFrontmatter = serde_yaml::
+... from_str(yaml).unwrap();                         ... from_str(yaml).unwrap();
+134                                                  137 
+135         assert_eq!(fm.id, "01-core-infrastructur 138         assert_eq!(fm.id, "01-core-infrastructur
+... e");                                             ... e");
+136         assert_eq!(fm.title, "Core Infrastructur 139         assert_eq!(fm.title, "Core Infrastructur
+... e");                                             ... e");
+...                                                  140         assert_eq!(fm.goal, Some("Build the core
+...                                                  ... ".to_string()));
+137         assert_eq!(fm.status, Status::InProgress 141         assert_eq!(fm.status, Status::InProgress
+... );                                               ... );
+138         assert_eq!(fm.epic, Some("board-cli".to_ 142         assert_eq!(fm.epic, Some("board-cli".to_
+... string()));                                      ... string()));
+139     }                                            143     }
+
+src/model/voyage.rs --- 3/4 --- Rust
+158 162             frontmatter: VoyageFrontmatter {
+159 163                 id: "01-core".to_string(),
+160 164                 title: "Core".to_string(),
+... 165                 goal: None,
+161 166                 status: Status::Planned,
+162 167                 epic: None,
+163 168                 index: None,
+
+src/model/voyage.rs --- 4/4 --- Rust
+178 183             frontmatter: VoyageFrontmatter {
+179 184                 id: "01-core-infrastructure".to_string(),
+180 185                 title: "Core Infrastructure".to_string(),
+... 186                 goal: None,
+181 187                 status: Status::Planned,
+182 188                 epic: None,
+183 189                 index: None,
+
+src/test_helpers.rs --- Rust
+822 822             frontmatter: crate::model::VoyageFrontmatter {
+823 823                 id: self.id.clone(),
+824 824                 title: self.title,
+... 825                 goal: None,
+825 826                 status: self.status,
+826 827                 epic: Some(self.epic_id.clone()),
+827 828                 index: None,
+
+
+
+Result: PASS
+Signature: <KEEL-JUDGE-SIG>

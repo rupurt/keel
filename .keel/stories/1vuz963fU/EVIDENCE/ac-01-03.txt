@@ -1,0 +1,11 @@
+Verification evidence for story 1vuz963fU:
+- Added shared queue policy module: src/policy/queue.rs
+- Refactored threshold call sites: src/next/algorithm.rs, src/flow/bottleneck.rs, src/state_machine/flow.rs
+- Added/updated tests for policy defaults and queue classification boundaries
+- Validation run:
+  - cargo test policy::queue
+  - cargo test next::algorithm
+  - cargo test flow::bottleneck
+  - cargo test state_machine::flow
+  - just quality
+  - just test

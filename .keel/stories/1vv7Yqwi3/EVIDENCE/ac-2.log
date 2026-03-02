@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-02-24T21:45:03.371300444-08:00
+mode: manual
+---
+Updated story doctor checks to report errors for legacy frontmatter instead of offering fixes.

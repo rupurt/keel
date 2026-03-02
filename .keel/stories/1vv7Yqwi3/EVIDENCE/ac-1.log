@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-02-24T21:45:03.274920144-08:00
+mode: manual
+---
+Deleted legacy migration functions from src/commands/diagnostics/doctor/fixes.rs.

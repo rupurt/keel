@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-01T17:10:52.088985197-08:00
+mode: manual
+---
+Added layer dependency matrix in ARCHITECTURE.md with explicit allowed and forbidden dependencies for domain, application, infrastructure, read-model, and interface layers, including a matrix view.

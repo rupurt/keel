@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-02-24T21:41:54.688862520-08:00
+mode: manual
+---
+Verified that agents can now see which ADRs are blocking their work in the next decision output.

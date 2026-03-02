@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-02T12:03:11.147063311-08:00
+mode: manual
+---
+Architecture contracts enforce normalized roots and forbid legacy declarations and paths in module declarations and source tree checks.

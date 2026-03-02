@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-02-24T21:46:35.571272950-08:00
+mode: manual
+---
+Removed deserialize_flexible_datetime and updated all models to use deserialize_strict_datetime.

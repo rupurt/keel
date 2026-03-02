@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-01T16:26:05.530400548-08:00
+mode: manual
+---
+Story lifecycle commands now delegate to application service entrypoints in src/application/story_lifecycle.rs via thin adapters in src/commands/story/{start,submit,accept,reject,ice,thaw}.rs.

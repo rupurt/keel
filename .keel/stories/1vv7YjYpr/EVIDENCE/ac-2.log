@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-02-24T21:37:18.588376625-08:00
+mode: manual
+---
+Verified that format_enforcement_error is used for reporting errors in story start.

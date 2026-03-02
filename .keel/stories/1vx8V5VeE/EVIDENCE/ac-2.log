@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-02T11:37:44.157179362-08:00
+mode: manual
+---
+Removed legacy top-level module declarations for relocated infrastructure services from main.rs.

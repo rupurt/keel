@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-02-24T21:38:07.187304926-08:00
+mode: manual
+---
+Verified that src/commands/voyage/start.rs uses enforce_transition.

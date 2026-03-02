@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-02T11:37:44.193210341-08:00
+mode: manual
+---
+Regression suite remained green after infrastructure relocation: just test (911/911 passed).

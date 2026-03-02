@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-02-24T21:47:50.366171473-08:00
+mode: manual
+---
+Purged unused compatibility fields and Fix variants from model and validation modules.

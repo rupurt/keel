@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-02T11:27:52.979030319-08:00
+mode: manual
+---
+Removed legacy top-level domain roots from main.rs and import graph (no active src/model, src/policy, src/state_machine, src/transitions modules).
