@@ -9,6 +9,7 @@ scope: 1vwq96cpt/1vwq9rycE
 index: 1
 submitted_at: 2026-03-01T19:23:23
 completed_at: 2026-03-01T00:00:00
+started_at: 2026-03-01T17:25:42
 ---
 
 # Build Canonical Flow Status Projection

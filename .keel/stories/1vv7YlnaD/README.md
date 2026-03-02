@@ -9,6 +9,7 @@ scope: 1vv7YWzw2/1vv7Yags9
 index: 3
 submitted_at: 2026-02-24T21:40:37
 completed_at: 2026-02-24T21:40:38
+started_at: 2026-02-24T21:38:09
 ---
 
 # Define Schema for Observational Knowledge Artifacts

@@ -6,8 +6,8 @@ status: done
 epic: 1vv7YWzw2
 created_at: 2026-02-24T21:35:32
 updated_at: 2026-02-24T21:39:09
-started: 2026-02-24
 completed_at: 2026-02-24T21:40:38
+started_at: 2026-02-24T21:37:42
 ---
 
 # Observational Knowledge Synthesis

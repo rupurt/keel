@@ -221,6 +221,7 @@ mod tests {
                 index: None,
                 created_at: None,
                 updated_at: None,
+                started_at: None,
                 completed_at: None,
             },
             path: PathBuf::from(format!("{}/README.md", id)),

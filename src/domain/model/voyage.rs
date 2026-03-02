@@ -27,6 +27,9 @@ pub struct VoyageFrontmatter {
     /// Last update datetime
     #[serde(default, deserialize_with = "deserialize_strict_datetime")]
     pub updated_at: Option<NaiveDateTime>,
+    /// First start datetime
+    #[serde(default, deserialize_with = "deserialize_strict_datetime")]
+    pub started_at: Option<NaiveDateTime>,
     /// Completion datetime
     #[serde(default, deserialize_with = "deserialize_strict_datetime")]
     pub completed_at: Option<NaiveDateTime>,
@@ -130,6 +133,7 @@ title: Generate Command
         // Default status is now Draft (voyage being planned)
         assert_eq!(fm.status, VoyageState::Draft);
         assert!(fm.epic.is_none());
+        assert!(fm.started_at.is_none());
         assert!(fm.completed_at.is_none());
     }
 
@@ -145,6 +149,7 @@ title: Generate Command
                 index: None,
                 created_at: None,
                 updated_at: None,
+                started_at: None,
                 completed_at: None,
             },
             path: PathBuf::from("test"),
@@ -166,6 +171,7 @@ title: Generate Command
                 index: None,
                 created_at: None,
                 updated_at: None,
+                started_at: None,
                 completed_at: None,
             },
             path: PathBuf::from("test"),

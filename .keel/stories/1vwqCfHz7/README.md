@@ -9,6 +9,7 @@ scope: 1vwq96cpt/1vwq9rycE
 index: 2
 submitted_at: 2026-03-02T08:14:31
 completed_at: 2026-03-02T08:50:30
+started_at: 2026-03-01T23:51:16
 ---
 
 # Build Canonical Capacity Projection

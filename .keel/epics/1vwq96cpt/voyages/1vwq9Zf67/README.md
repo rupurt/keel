@@ -6,8 +6,8 @@ status: done
 epic: 1vwq96cpt
 created_at: 2026-03-01T15:24:49
 updated_at: 2026-03-01T15:30:29
-started: 2026-03-01
 completed_at: 2026-03-02T09:47:14
+started_at: 2026-03-01T15:57:19
 ---
 
 # Introduce Application Services And Process Managers

@@ -64,6 +64,7 @@ mod tests {
 
         assert!(content.contains("status: in-progress"));
         assert!(content.contains("updated_at:"));
+        assert!(content.contains("started_at:"));
     }
 
     #[test]
@@ -101,6 +102,32 @@ mod tests {
         assert!(content.contains("## Rejections"));
         assert!(content.contains("Missing tests coverage"));
         assert!(content.contains("status: in-progress"));
+    }
+
+    #[test]
+    fn restart_preserves_existing_started_at() {
+        let temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("RESTART1")
+                    .title("Restarted Story")
+                    .stage(StoryState::Rejected),
+            )
+            .build();
+
+        let story_path = temp.path().join("stories/RESTART1/README.md");
+        let original = fs::read_to_string(&story_path).unwrap();
+        let with_started = original.replace(
+            "status: rejected\n",
+            "status: rejected\nstarted_at: 2026-03-01T10:00:00\n",
+        );
+        fs::write(&story_path, with_started).unwrap();
+
+        run(temp.path(), "RESTART1", None).unwrap();
+
+        let updated = fs::read_to_string(&story_path).unwrap();
+        assert!(updated.contains("status: in-progress"));
+        assert_eq!(updated.matches("started_at:").count(), 1);
+        assert!(updated.contains("started_at: 2026-03-01T10:00:00"));
     }
 
     #[test]
@@ -171,6 +198,7 @@ mod tests {
         let content = fs::read_to_string(&story_path).unwrap();
         assert!(content.contains("status: in-progress"));
         assert!(content.contains("updated_at:"));
+        assert!(content.contains("started_at:"));
     }
 
     #[test]

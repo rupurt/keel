@@ -203,6 +203,7 @@ mod tests {
                 milestone: None,
                 created_at: None,
                 updated_at: None,
+                started_at: None,
                 completed_at: Some(completed_at.and_hms_opt(12, 0, 0).unwrap()),
                 submitted_at: None,
                 index: None,

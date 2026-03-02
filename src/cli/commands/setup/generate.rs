@@ -10,6 +10,7 @@ use crate::infrastructure::loader::load_board;
 
 /// Run the generate command
 pub fn run(board_dir: &Path) -> Result<()> {
+    let backfill_stats = crate::application::started_at_backfill::backfill(board_dir)?;
     let board = load_board(board_dir)?;
 
     // 1. Generate board-level README.md
@@ -34,6 +35,12 @@ pub fn run(board_dir: &Path) -> Result<()> {
         }
     }
 
+    if backfill_stats.stories_updated > 0 || backfill_stats.voyages_updated > 0 {
+        println!(
+            "Backfilled started_at timestamps (stories: {}, voyages: {})",
+            backfill_stats.stories_updated, backfill_stats.voyages_updated
+        );
+    }
     println!("Board updated");
 
     Ok(())

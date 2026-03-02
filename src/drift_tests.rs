@@ -310,6 +310,7 @@ mod template_struct_fields {
             milestone: Some("m".to_string()),
             created_at: Some(dt),
             updated_at: Some(dt),
+            started_at: Some(dt),
             completed_at: Some(dt),
             submitted_at: Some(dt),
             index: Some(1),
@@ -332,6 +333,7 @@ mod template_struct_fields {
             index: None,
             created_at: Some(dt),
             updated_at: Some(dt),
+            started_at: Some(dt),
             completed_at: Some(dt),
         }
     }

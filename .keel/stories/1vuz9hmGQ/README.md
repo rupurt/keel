@@ -9,6 +9,7 @@ scope: 1vuz8K4NM/1vuz8jNo3
 index: 2
 submitted_at: 2026-02-24T15:44:00
 completed_at: 2026-02-24T15:44:14
+started_at: 2026-02-24T14:10:38
 ---
 
 # Remove Legacy State and Status Deserializers

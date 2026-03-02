@@ -31,8 +31,6 @@ pub struct TimestampUpdates {
     pub submitted_at: bool,
     /// Update the completed_at field to current datetime
     pub completed_at: bool,
-    /// Update the started field to today (used by voyages)
-    pub started: bool,
 }
 
 impl TimestampUpdates {
@@ -42,7 +40,6 @@ impl TimestampUpdates {
             updated_at: true,
             submitted_at: false,
             completed_at: false,
-            started: false,
         }
     }
 
@@ -52,7 +49,6 @@ impl TimestampUpdates {
             updated_at: true,
             submitted_at: true,
             completed_at: false,
-            started: false,
         }
     }
 
@@ -62,17 +58,6 @@ impl TimestampUpdates {
             updated_at: true,
             submitted_at: false,
             completed_at: true,
-            started: false,
-        }
-    }
-
-    /// Create a new TimestampUpdates with started set (for voyage start)
-    pub const fn with_started() -> Self {
-        Self {
-            updated_at: false,
-            submitted_at: false,
-            completed_at: false,
-            started: true,
         }
     }
 
@@ -82,7 +67,6 @@ impl TimestampUpdates {
             updated_at: false,
             submitted_at: false,
             completed_at: true,
-            started: false,
         }
     }
 }

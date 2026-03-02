@@ -9,6 +9,7 @@ scope: 1vv7YWzw2/1vv7YYY0y
 index: 1
 submitted_at: 2026-02-24T21:37:35
 completed_at: 2026-02-24T21:37:37
+started_at: 2026-02-24T21:36:38
 ---
 
 # Refactor Story Start Command to Use Unified Enforcer

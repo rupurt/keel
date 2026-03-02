@@ -9,6 +9,7 @@ scope: 1vwq96cpt/1vwq9Zf67
 index: 4
 submitted_at: 2026-03-02T09:33:26
 completed_at: 2026-03-02T09:47:14
+started_at: 2026-03-02T00:30:43
 ---
 
 # Rewire Command Handlers To Use Cases

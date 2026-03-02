@@ -9,6 +9,7 @@ scope: 1vuz8K4NM/1vuz8jNo3
 index: 5
 submitted_at: 2026-02-24T00:00:00
 completed_at: 2026-02-24T00:00:00
+started_at: 2026-02-24T06:18:39
 ---
 
 # Purge Legacy Terminology from CLI and Documentation

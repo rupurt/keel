@@ -70,11 +70,13 @@ impl VoyageEpicLifecycleService {
         let content = fs::read_to_string(&voyage.path)
             .with_context(|| format!("Failed to read voyage: {}", voyage.path.display()))?;
 
-        let updated_content = update_frontmatter(
-            &content,
-            VoyageState::InProgress,
-            &TimestampUpdates::with_started(),
-        )?;
+        let mut mutations = vec![Mutation::set("status", VoyageState::InProgress.to_string())];
+        if voyage.frontmatter.started_at.is_none() {
+            let now = Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
+            mutations.push(Mutation::set("started_at", now));
+        }
+
+        let updated_content = apply(&content, &mutations);
 
         fs::write(&voyage.path, updated_content)
             .with_context(|| format!("Failed to write voyage: {}", voyage.path.display()))?;

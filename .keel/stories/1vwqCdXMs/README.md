@@ -9,6 +9,7 @@ scope: 1vwq96cpt/1vwq9Pj97
 index: 1
 submitted_at: 2026-03-01T15:56:49
 completed_at: 2026-03-01T16:29:25
+started_at: 2026-03-01T15:42:24
 ---
 
 # Map Bounded Context Ownership

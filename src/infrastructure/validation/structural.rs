@@ -40,8 +40,15 @@ pub fn check_date_consistency(path: &Path, check_id: CheckId) -> Vec<Problem> {
             let key_str = key.as_str().unwrap_or_default();
 
             // 1. Check for fields that SHOULD end in _at but don't
-            let suspected_date_fields =
-                ["date", "created", "completed", "updated", "laid", "decided"];
+            let suspected_date_fields = [
+                "date",
+                "created",
+                "completed",
+                "updated",
+                "started",
+                "laid",
+                "decided",
+            ];
             if suspected_date_fields.contains(&key_str) {
                 let severity = if check_id == CheckId::AdrDateConsistency {
                     Severity::Error

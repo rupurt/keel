@@ -9,6 +9,7 @@ scope: 1vv7YWzw2/1vv7YeGDR
 index: 2
 submitted_at: 2026-02-24T21:46:57
 completed_at: 2026-02-24T21:46:57
+started_at: 2026-02-24T21:41:19
 ---
 
 # Enforce Strict Datetime Parsing in All Frontmatter

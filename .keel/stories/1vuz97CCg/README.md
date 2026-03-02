@@ -9,6 +9,7 @@ scope: 1vuz8K4NM/1vuz8VYmc
 index: 5
 submitted_at: 2026-02-24T14:46:59
 completed_at: 2026-02-24T14:48:19
+started_at: 2026-02-24T13:41:50
 ---
 
 # Update Architecture and Command Docs for Queue Policy

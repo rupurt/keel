@@ -9,6 +9,7 @@ scope: 1vwq96cpt/1vwq9Zf67
 index: 3
 submitted_at: 2026-03-01T20:32:11
 completed_at: 2026-03-02T08:16:58
+started_at: 2026-03-01T18:00:05
 ---
 
 # Introduce Domain Events And Process Managers

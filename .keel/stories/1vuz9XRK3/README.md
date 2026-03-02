@@ -9,6 +9,7 @@ scope: 1vuz8K4NM/1vuz8dYT5
 index: 5
 submitted_at: 2026-02-24T19:07:55
 completed_at: 2026-02-24T19:10:37
+started_at: 2026-02-24T15:52:31
 ---
 
 # Add Regression Tests for Gate Runtime and Reporting Modes

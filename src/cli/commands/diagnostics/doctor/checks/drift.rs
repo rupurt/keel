@@ -45,10 +45,10 @@ pub const VOYAGE_FIELDS: &[&str] = &[
     "status",
     "epic",
     "created_at",
+    "started_at",
     "updated_at",
     "completed_at",
     // Date fields managed by update_frontmatter
-    "started",
     "completed",
     // Legacy/backwards-compat
     "created",

@@ -9,6 +9,7 @@ scope: 1vugyr0OR/1vugyuhks
 index: 1
 submitted_at: 2026-02-24T00:00:00
 completed_at: 2026-02-24T00:00:00
+started_at: 2026-02-23T20:36:32
 ---
 
 # Add Editor Integration for Manual Proofs

@@ -9,6 +9,7 @@ scope: 1vuLyP3zx/1vuM0BauX
 index: 1
 submitted_at: 2026-02-22T00:00:00
 completed_at: 2026-02-22T00:00:00
+started_at: 2026-02-22T09:24:31
 ---
 
 # Merge GateProblem and Problem Types

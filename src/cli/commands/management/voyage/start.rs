@@ -58,7 +58,7 @@ mod tests {
         .unwrap();
 
         assert!(content.contains("status: in-progress"));
-        assert!(content.contains("started:"));
+        assert!(content.contains("started_at:"));
     }
 
     #[test]

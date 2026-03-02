@@ -9,6 +9,7 @@ scope: 1vuz8K4NM/1vuz8jNo3
 index: 1
 submitted_at: 2026-02-24T15:26:41
 completed_at: 2026-02-24T15:27:53
+started_at: 2026-02-24T14:01:59
 ---
 
 # Implement Hard Migration Command for Canonical Schema

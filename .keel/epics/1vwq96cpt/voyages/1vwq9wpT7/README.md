@@ -6,8 +6,8 @@ status: done
 epic: 1vwq96cpt
 created_at: 2026-03-01T15:25:12
 updated_at: 2026-03-01T15:30:29
-started: 2026-03-01
 completed_at: 2026-03-02T10:48:06
+started_at: 2026-03-01T16:59:58
 ---
 
 # Migrate CLI Interfaces And Verification Coverage

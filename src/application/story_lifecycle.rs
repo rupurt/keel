@@ -8,6 +8,7 @@ use std::io::Write;
 use std::path::Path;
 
 use anyhow::{Context, Result, anyhow};
+use chrono::Local;
 use owo_colors::OwoColorize;
 
 use crate::application::domain_events::DomainEvent;
@@ -18,6 +19,7 @@ use crate::domain::state_machine::{
     enforce_transition, format_enforcement_error,
 };
 use crate::domain::transitions::{execute, transitions};
+use crate::infrastructure::frontmatter_mutation::{Mutation, apply};
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::verification;
 
@@ -73,7 +75,11 @@ impl StoryLifecycleService {
             },
         )?;
 
-        execute(board_dir, story.id(), &transitions::START)?;
+        let result = execute(board_dir, story.id(), &transitions::START)?;
+        if story.frontmatter.started_at.is_none() {
+            let now = Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
+            set_started_at(&result.story.path, &now)?;
+        }
 
         if was_rejected {
             println!("Restarted rejected story: {}", story.id());
@@ -319,6 +325,17 @@ impl StoryLifecycleService {
 
         Ok(())
     }
+}
+
+fn set_started_at(path: &Path, datetime: &str) -> Result<()> {
+    let content = fs::read_to_string(path)
+        .with_context(|| format!("Failed to read story: {}", path.display()))?;
+    let updated = apply(&content, &[Mutation::set("started_at", datetime)]);
+    if updated != content {
+        fs::write(path, updated)
+            .with_context(|| format!("Failed to write story: {}", path.display()))?;
+    }
+    Ok(())
 }
 
 pub(crate) fn is_relevant_knowledge(

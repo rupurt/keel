@@ -9,6 +9,7 @@ scope: 1vuz8K4NM/1vuz8dYT5
 index: 3
 submitted_at: 2026-02-24T17:25:16
 completed_at: 2026-02-24T17:25:16
+started_at: 2026-02-24T15:01:11
 ---
 
 # Route Doctor Checks Through Gate Evaluators

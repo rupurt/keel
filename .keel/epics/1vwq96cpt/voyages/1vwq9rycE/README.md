@@ -6,8 +6,8 @@ status: done
 epic: 1vwq96cpt
 created_at: 2026-03-01T15:25:07
 updated_at: 2026-03-01T15:30:29
-started: 2026-03-01
 completed_at: 2026-03-02T10:37:53
+started_at: 2026-03-01T17:25:42
 ---
 
 # Consolidate Read Models And Queue Policies

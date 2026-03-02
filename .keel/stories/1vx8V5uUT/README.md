@@ -9,6 +9,7 @@ scope: 1vwq96cpt/1vx8TLqpp
 index: 2
 submitted_at: 2026-03-02T11:19:10
 completed_at: 2026-03-02T11:21:14
+started_at: 2026-03-02T11:09:42
 ---
 
 # Relocate Cli Command Surface Into Src Cli

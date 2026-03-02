@@ -13,10 +13,9 @@ use super::TimestampUpdates;
 /// across transition and voyage commands. It handles:
 ///
 /// - Updating the `status` field to the new value
-/// - Updating `updated_at` to today (if configured)
+/// - Updating `updated_at` to current datetime (if configured)
 /// - Updating `submitted_at` to current datetime (if configured)
 /// - Updating `completed_at` to current datetime (if configured)
-/// - Updating `started` to today (if configured, for voyages)
 /// - Inserting missing timestamp fields before closing `---`
 ///
 /// The status parameter accepts any type implementing Display,
@@ -28,7 +27,6 @@ pub fn update_frontmatter(
 ) -> Result<String> {
     let now_dt = Local::now();
     let now = now_dt.format("%Y-%m-%dT%H:%M:%S").to_string();
-    let today = now_dt.format("%Y-%m-%d").to_string();
 
     let mut result = String::new();
     let mut in_frontmatter = false;
@@ -38,7 +36,6 @@ pub fn update_frontmatter(
     let mut updated_updated_at = false;
     let mut updated_submitted_at = false;
     let mut updated_completed_at = false;
-    let mut updated_started = false;
 
     for line in content.lines() {
         if line == "---" {
@@ -55,9 +52,6 @@ pub fn update_frontmatter(
                 }
                 if timestamps.completed_at && !updated_completed_at {
                     result.push_str(&format!("completed_at: {}\n", now));
-                }
-                if timestamps.started && !updated_started {
-                    result.push_str(&format!("started: {}\n", today));
                 }
             }
         }
@@ -80,10 +74,6 @@ pub fn update_frontmatter(
                 // Update completed_at (datetime format)
                 result.push_str(&format!("completed_at: {}\n", now));
                 updated_completed_at = true;
-            } else if line.starts_with("started:") && timestamps.started {
-                // Update started (date-only, for voyages)
-                result.push_str(&format!("started: {}\n", today));
-                updated_started = true;
             } else {
                 result.push_str(line);
                 result.push('\n');
@@ -146,6 +136,7 @@ Body content
             update_frontmatter(sample_frontmatter(), StoryState::InProgress, &timestamps).unwrap();
 
         assert!(result.contains("updated_at: "));
+        assert!(!result.contains("started_at: "));
     }
 
     #[test]

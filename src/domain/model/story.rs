@@ -26,6 +26,9 @@ pub struct StoryFrontmatter {
     /// Last update datetime
     #[serde(default, deserialize_with = "deserialize_strict_datetime")]
     pub updated_at: Option<NaiveDateTime>,
+    /// First start datetime
+    #[serde(default, deserialize_with = "deserialize_strict_datetime")]
+    pub started_at: Option<NaiveDateTime>,
     /// Completion datetime
     #[serde(default, deserialize_with = "deserialize_strict_datetime")]
     pub completed_at: Option<NaiveDateTime>,
@@ -162,6 +165,7 @@ status: backlog
 scope: board-cli/01-core-infrastructure
 created_at: 2025-01-23T10:00:00
 updated_at: 2025-01-23T10:00:00
+started_at: 2025-01-23T12:00:00
 "#
     }
 
@@ -203,6 +207,7 @@ type: feat
 status: done
 created_at: 2026-01-01T09:00:00
 updated_at: 2026-01-15T14:30:00
+started_at: 2026-01-10T08:00:00
 submitted_at: 2026-01-20T16:45:00
 completed_at: 2026-01-29T11:00:00
 "#;
@@ -215,6 +220,10 @@ completed_at: 2026-01-29T11:00:00
         assert_eq!(
             fm.updated_at,
             NaiveDateTime::parse_from_str("2026-01-15T14:30:00", "%Y-%m-%dT%H:%M:%S").ok()
+        );
+        assert_eq!(
+            fm.started_at,
+            NaiveDateTime::parse_from_str("2026-01-10T08:00:00", "%Y-%m-%dT%H:%M:%S").ok()
         );
         assert_eq!(
             fm.submitted_at,

@@ -9,6 +9,7 @@ scope: 1vwq96cpt/1vwq9wpT7
 index: 4
 submitted_at: 2026-03-02T10:42:29
 completed_at: 2026-03-02T10:48:06
+started_at: 2026-03-02T01:05:15
 ---
 
 # Publish Migration Completion Checklist

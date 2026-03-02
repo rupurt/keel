@@ -9,6 +9,7 @@ scope: 1vuz8K4NM/1vuz8dYT5
 index: 6
 submitted_at: 2026-02-24T00:00:00
 completed_at: 2026-02-24T00:00:00
+started_at: 2026-02-24T06:28:24
 ---
 
 # Gate Voyage Report Artifacts to Done State
