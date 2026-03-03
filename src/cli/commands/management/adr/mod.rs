@@ -12,6 +12,12 @@ pub enum AdrAction {
     New {
         /// ADR title
         title: String,
+        /// Primary bounded context this ADR applies to
+        #[arg(long)]
+        context: Option<String>,
+        /// Additional scopes this ADR applies to (repeatable)
+        #[arg(long = "applies-to", action = clap::ArgAction::Append, value_name = "SCOPE")]
+        applies_to: Vec<String>,
     },
     /// List all ADRs
     List {
@@ -64,7 +70,11 @@ use crate::infrastructure::utils::slugify;
 /// Run an ADR action through the ADR interface adapter.
 pub fn run(action: AdrAction) -> Result<()> {
     match action {
-        AdrAction::New { title } => run_new(&title),
+        AdrAction::New {
+            title,
+            context,
+            applies_to,
+        } => run_new(&title, context.as_deref(), &applies_to),
         AdrAction::List { status } => run_list(status.as_deref()),
         AdrAction::Show { id } => run_show(&id),
         AdrAction::Accept { id } => run_accept(&id),
@@ -86,7 +96,43 @@ fn next_adr_index(board: &Board) -> u32 {
 }
 
 /// Create a new ADR
-pub fn run_new(title: &str) -> Result<()> {
+pub fn run_new(title: &str, context: Option<&str>, applies_to: &[String]) -> Result<()> {
+    let board_dir = find_board_dir()?;
+    new_adr(&board_dir, title, context, applies_to)
+}
+
+fn yaml_quote(input: &str) -> String {
+    format!("\"{}\"", input.replace('\\', "\\\\").replace('"', "\\\""))
+}
+
+fn format_context_value(context: Option<&str>) -> String {
+    match context.map(str::trim).filter(|value| !value.is_empty()) {
+        Some(value) => yaml_quote(value),
+        None => "null".to_string(),
+    }
+}
+
+fn format_applies_to_value(applies_to: &[String]) -> String {
+    let values: Vec<String> = applies_to
+        .iter()
+        .map(|value| value.trim())
+        .filter(|value| !value.is_empty())
+        .map(yaml_quote)
+        .collect();
+
+    if values.is_empty() {
+        "[]".to_string()
+    } else {
+        format!("[{}]", values.join(", "))
+    }
+}
+
+fn new_adr(
+    board_dir: &std::path::Path,
+    title: &str,
+    context: Option<&str>,
+    applies_to: &[String],
+) -> Result<()> {
     // Enforce Title Case
     if !crate::infrastructure::utils::is_title_case(title) {
         return Err(anyhow!(
@@ -95,14 +141,15 @@ pub fn run_new(title: &str) -> Result<()> {
         ));
     }
 
-    let board_dir = find_board_dir()?;
-    let board = load_board(&board_dir)?;
+    let board = load_board(board_dir)?;
 
     // Generate random ID and calculate index
     let id = crate::infrastructure::story_id::generate_story_id();
     let index = next_adr_index(&board);
     let slug = slugify(title);
     let date = Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
+    let context_value = format_context_value(context);
+    let applies_to_value = format_applies_to_value(applies_to);
 
     // Build filename
     let filename = format!("{}-{}.md", id, slug);
@@ -123,6 +170,8 @@ pub fn run_new(title: &str) -> Result<()> {
             ("title", &title_string),
             ("decided_at", &date),
             ("index", &index_string),
+            ("context", &context_value),
+            ("applies_to", &applies_to_value),
         ],
     );
 
@@ -460,5 +509,46 @@ decided_at: 2026-01-15T00:00:00
 
         let next_idx = next_adr_index(&board);
         assert_eq!(next_idx, 1);
+    }
+
+    #[test]
+    fn new_adr_persists_context_and_applies_to_in_frontmatter() {
+        let temp = TempDir::new().unwrap();
+        let board_dir = create_test_board(&temp);
+
+        new_adr(
+            &board_dir,
+            "Scoped Decision",
+            Some("work-management"),
+            &["queue-policy".to_string(), "story-lifecycle".to_string()],
+        )
+        .unwrap();
+
+        let adrs_dir = board_dir.join("adrs");
+        let adr_path = fs::read_dir(&adrs_dir)
+            .unwrap()
+            .map(|entry| entry.unwrap().path())
+            .find(|path| {
+                fs::read_to_string(path)
+                    .unwrap()
+                    .contains("title: Scoped Decision")
+            })
+            .expect("New ADR file should exist");
+
+        let content = fs::read_to_string(&adr_path).unwrap();
+        assert!(content.contains("context: \"work-management\""));
+        assert!(content.contains("applies-to: [\"queue-policy\", \"story-lifecycle\"]"));
+
+        let board = load_board(&board_dir).unwrap();
+        let adr = board
+            .adrs
+            .values()
+            .find(|adr| adr.frontmatter.title == "Scoped Decision")
+            .expect("ADR should be loaded");
+        assert_eq!(adr.frontmatter.context.as_deref(), Some("work-management"));
+        assert_eq!(
+            adr.frontmatter.applies_to,
+            vec!["queue-policy".to_string(), "story-lifecycle".to_string()]
+        );
     }
 }

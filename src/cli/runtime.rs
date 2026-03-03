@@ -280,6 +280,11 @@ fn handle_adr_command(matches: &ArgMatches) -> Result<()> {
     let action = match command {
         ("new", m) => super::commands::management::adr::AdrAction::New {
             title: m.get_one::<String>("title").expect("required").clone(),
+            context: m.get_one::<String>("context").cloned(),
+            applies_to: m
+                .get_many::<String>("applies-to")
+                .map(|values| values.cloned().collect())
+                .unwrap_or_default(),
         },
         ("list", m) => super::commands::management::adr::AdrAction::List {
             status: m.get_one::<String>("status").cloned(),

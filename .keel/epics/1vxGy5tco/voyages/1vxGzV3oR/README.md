@@ -25,12 +25,12 @@ started_at: 2026-03-02T21:31:55
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 2/4 stories complete
+**Progress:** 3/4 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Canonicalize Template Tokens To Schema Names](../../../../stories/1vxH83JcY/README.md) | refactor | done |
 | [Align CLI Contracts For Creation Commands](../../../../stories/1vxH83MOO/README.md) | feat | done |
 | [Codify Token Bucket Contract Tests](../../../../stories/1vxH84K5a/README.md) | chore | backlog |
-| [Extend Adr Creation Inputs For Context Ownership](../../../../stories/1vxH84Xh8/README.md) | feat | backlog |
+| [Extend Adr Creation Inputs For Context Ownership](../../../../stories/1vxH84Xh8/README.md) | feat | done |
 <!-- END GENERATED -->

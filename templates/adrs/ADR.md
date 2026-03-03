@@ -3,8 +3,8 @@ id: {{id}}
 index: {{index}}
 title: {{title}}
 status: proposed
-context: null
-applies-to: []
+context: {{context}}
+applies-to: {{applies_to}}
 supersedes: []
 superseded-by: null
 decided_at: {{decided_at}}

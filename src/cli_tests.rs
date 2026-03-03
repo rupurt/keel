@@ -635,6 +635,63 @@ fn cli_parses_epic_list_with_filter() {
 }
 
 #[test]
+fn cli_parses_adr_new_with_context_and_applies_to() {
+    let cli = Cli::try_parse_from([
+        "board",
+        "adr",
+        "new",
+        "Store Events",
+        "--context",
+        "work-management",
+        "--applies-to",
+        "queue-policy",
+        "--applies-to",
+        "story-lifecycle",
+    ])
+    .unwrap();
+
+    if let Commands::Management(ManagementCommands::Adr {
+        action:
+            AdrAction::New {
+                title,
+                context,
+                applies_to,
+            },
+    }) = cli.command
+    {
+        assert_eq!(title, "Store Events");
+        assert_eq!(context, Some("work-management".to_string()));
+        assert_eq!(
+            applies_to,
+            vec!["queue-policy".to_string(), "story-lifecycle".to_string()]
+        );
+    } else {
+        panic!("Expected ADR New command");
+    }
+}
+
+#[test]
+fn cli_parses_adr_new_without_optional_flags() {
+    let cli = Cli::try_parse_from(["board", "adr", "new", "Store Events"]).unwrap();
+
+    if let Commands::Management(ManagementCommands::Adr {
+        action:
+            AdrAction::New {
+                title,
+                context,
+                applies_to,
+            },
+    }) = cli.command
+    {
+        assert_eq!(title, "Store Events");
+        assert!(context.is_none());
+        assert!(applies_to.is_empty());
+    } else {
+        panic!("Expected ADR New command");
+    }
+}
+
+#[test]
 fn cli_parses_voyage_new() {
     let cli = Cli::try_parse_from([
         "board",

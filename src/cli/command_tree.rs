@@ -260,9 +260,24 @@ pub fn build_cli() -> Command {
             Command::new("adr")
                 .about("ADR commands (architecture decisions)")
                 .hide(true)
-                .subcommand(Command::new("new").about("Create a new ADR").arg(
-                    Arg::new("title").required(true).value_name("TITLE"),
-                ))
+                .subcommand(
+                    Command::new("new")
+                        .about("Create a new ADR")
+                        .arg(Arg::new("title").required(true).value_name("TITLE"))
+                        .arg(
+                            Arg::new("context")
+                                .long("context")
+                                .value_name("CONTEXT")
+                                .help("Primary bounded context this ADR applies to"),
+                        )
+                        .arg(
+                            Arg::new("applies-to")
+                                .long("applies-to")
+                                .value_name("SCOPE")
+                                .help("Additional scopes this ADR applies to (repeatable)")
+                                .action(ArgAction::Append),
+                        ),
+                )
                 .subcommand(
                     Command::new("list")
                         .about("List all ADRs")
