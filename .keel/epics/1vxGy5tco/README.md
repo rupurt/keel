@@ -19,9 +19,9 @@ created_at: 2026-03-02T20:02:45
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/2 voyages complete, 0/8 stories done
+**Progress:** 0/2 voyages complete, 2/8 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Template And CLI Contract Canonicalization](voyages/1vxGzV3oR/) | in-progress | 0/4 |
-| [Doctor And Transition Hard Enforcement](voyages/1vxGzVpw5/) | in-progress | 0/4 |
+| [Template And CLI Contract Canonicalization](voyages/1vxGzV3oR/) | in-progress | 1/4 |
+| [Doctor And Transition Hard Enforcement](voyages/1vxGzVpw5/) | in-progress | 1/4 |
 <!-- END GENERATED -->

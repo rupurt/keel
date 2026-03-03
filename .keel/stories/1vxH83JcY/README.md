@@ -2,13 +2,14 @@
 id: 1vxH83JcY
 title: Canonicalize Template Tokens To Schema Names
 type: refactor
-status: needs-human-verification
+status: done
 created_at: 2026-03-02T20:13:03
-updated_at: 2026-03-02T21:42:18
+updated_at: 2026-03-02T21:55:02
 scope: 1vxGy5tco/1vxGzV3oR
 index: 1
 started_at: 2026-03-02T21:31:56
 submitted_at: 2026-03-02T21:42:18
+completed_at: 2026-03-02T21:55:02
 ---
 
 # Canonicalize Template Tokens To Schema Names

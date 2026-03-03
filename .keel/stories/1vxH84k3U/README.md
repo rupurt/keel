@@ -2,13 +2,14 @@
 id: 1vxH84k3U
 title: Escalate Unresolved Scaffold Checks To Doctor Errors
 type: feat
-status: needs-human-verification
+status: done
 created_at: 2026-03-02T20:13:04
-updated_at: 2026-03-02T21:50:30
+updated_at: 2026-03-02T21:55:09
 scope: 1vxGy5tco/1vxGzVpw5
 index: 1
 started_at: 2026-03-02T21:46:34
 submitted_at: 2026-03-02T21:50:30
+completed_at: 2026-03-02T21:55:09
 ---
 
 # Escalate Unresolved Scaffold Checks To Doctor Errors

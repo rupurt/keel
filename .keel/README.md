@@ -15,8 +15,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Canonicalize Template Tokens To Schema Names](stories/1vxH83JcY/README.md) | refactor | [Template Contract Hard Cutover](epics/1vxGy5tco/) / [Template And CLI Contract Canonicalization](epics/1vxGy5tco/voyages/1vxGzV3oR/) |
-| [Escalate Unresolved Scaffold Checks To Doctor Errors](stories/1vxH84k3U/README.md) | feat | [Template Contract Hard Cutover](epics/1vxGy5tco/) / [Doctor And Transition Hard Enforcement](epics/1vxGy5tco/voyages/1vxGzVpw5/) |
 
 ## In Progress
 
