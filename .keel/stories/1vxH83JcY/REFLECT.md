@@ -19,4 +19,4 @@
 ## Observations
 
 - Updating template files alone is insufficient; callsite replacement maps and embedded-template tests must move in lockstep.
-- A direct regression test on legacy placeholder strings (`{{date}}`, `{{datetime}}`) provided a clear hard-cutover guardrail.
+- A direct regression test on legacy placeholder strings (`date`, `datetime`) provided a clear hard-cutover guardrail.

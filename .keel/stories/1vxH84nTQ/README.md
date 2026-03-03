@@ -2,13 +2,14 @@
 id: 1vxH84nTQ
 title: Enforce Terminal Story Coherency In Doctor
 type: feat
-status: needs-human-verification
+status: done
 created_at: 2026-03-02T20:13:04
-updated_at: 2026-03-03T09:13:53
+updated_at: 2026-03-03T09:34:26
 scope: 1vxGy5tco/1vxGzVpw5
 index: 2
 started_at: 2026-03-03T08:14:15
 submitted_at: 2026-03-03T09:13:53
+completed_at: 2026-03-03T09:34:26
 ---
 
 # Enforce Terminal Story Coherency In Doctor

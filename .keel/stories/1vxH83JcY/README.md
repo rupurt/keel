@@ -20,6 +20,6 @@ Replace non-canonical template token names with canonical schema/frontmatter-mir
 
 ## Acceptance Criteria
 
-- [x] [SRS-01/AC-01] Replace legacy token names (for example `{{date}}`, `{{datetime}}`) in active planning templates with canonical schema-mirrored tokens. <!-- verify: manual, SRS-01:start, proof: ac-1.log-->
+- [x] [SRS-01/AC-01] Replace legacy token names (for example `date`, `datetime`) in active planning templates with canonical schema-mirrored tokens. <!-- verify: manual, SRS-01:start, proof: ac-1.log-->
 - [x] [SRS-01/AC-02] Update rendering callsites in creation paths so all canonical tokens are populated correctly without fallback alias handling. <!-- verify: manual, SRS-01:continues, proof: ac-2.log-->
 - [x] [SRS-01/AC-03] Add regression tests asserting deprecated token aliases are absent from embedded templates. <!-- verify: manual, SRS-01:end, proof: ac-3.log-->

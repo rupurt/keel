@@ -2,13 +2,14 @@
 id: 1vxH83MOO
 title: Align CLI Contracts For Creation Commands
 type: feat
-status: needs-human-verification
+status: done
 created_at: 2026-03-02T20:13:03
-updated_at: 2026-03-03T08:10:40
+updated_at: 2026-03-03T09:34:25
 scope: 1vxGy5tco/1vxGzV3oR
 index: 2
 started_at: 2026-03-02T21:56:52
 submitted_at: 2026-03-03T08:10:40
+completed_at: 2026-03-03T09:34:25
 ---
 
 # Align CLI Contracts For Creation Commands

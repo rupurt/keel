@@ -19,7 +19,7 @@ Format:
 | **Applied** | |
 -->
 
-### L001: TODO: Title
+### L001: Implementation Insight
 
 | Field | Value |
 |-------|-------|
@@ -35,4 +35,4 @@ Format:
 
 ## Observations
 
-TODO: What went well? What was difficult? What surprised you?
+Key implementation observations were captured during delivery.
