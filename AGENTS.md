@@ -24,8 +24,9 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
 ## Planning Workflow (Architect)
 
 1. **Identify Gaps**: Use `just keel flow` or `just keel status` to find Epics needing tactical decomposition.
-2. **Scaffold Voyage**: Create a new tactical unit:
-   - `just keel voyage new "<Title>" --epic <epic-id> --goal "<The specific outcome>"`
+2. **Scaffold Planning Unit**:
+   - For new strategic work, create an Epic: `just keel epic new "<Title>" --goal "<Outcome>"`
+   - For tactical decomposition, create a Voyage: `just keel voyage new "<Title>" --epic <epic-id> --goal "<The specific outcome>"`
 3. **Define Requirements (SRS)**: Fill out the `SRS.md` in the new voyage bundle. Ensure requirements are atomic, uniquely identified (e.g., `SRS-01`), and written so they can map directly to story acceptance criteria and verification evidence.
 4. **Detail Design (SDD)**: Fill out the `SDD.md` describing the architectural approach and component changes, with enough specificity that implementers can produce objective proofs.
 5. **Decompose Stories**: Break the design into implementable units:
@@ -36,7 +37,14 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
    - Every acceptance criterion has a clear verification approach (automated test, CLI proof, or documented manual evidence).
    - CLI options and authored entity content are explicit enough for downstream automation and transitions.
 7. **Loop Back Upstream if Needed**: If decomposition or verification design exposes ambiguity, update SRS/SDD first, then re-check story acceptance criteria.
-8. **Seal Planning**: Promote the voyage from `draft` to `planned` with `just keel voyage plan <id>`. This validates requirement coverage and thaws stories into the agent backlog.
+8. **Generate Planning Summary Report In Chat (Required)**: For every newly planned Epic or Voyage, publish a terse, actionable planning summary directly in the chat/harness response (do not create a dedicated summary file).
+   - Include:
+     - Objective and scope boundaries
+     - Requirement-to-story coverage status
+     - Verification strategy summary (how requirements will be proven)
+     - Key risks/assumptions
+     - Canonical next step command
+9. **Seal Planning**: Promote the voyage from `draft` to `planned` with `just keel voyage plan <id>`. This validates requirement coverage and thaws stories into the agent backlog.
 
 ## Research Workflow (Explorer)
 
