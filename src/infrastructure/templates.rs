@@ -56,6 +56,49 @@ pub mod adr {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::BTreeSet;
+
+    const CLI_OWNED_TOKENS: &[&str] = &["applies_to", "context", "epic", "goal", "title", "type"];
+    const SYSTEM_OWNED_TOKENS: &[&str] = &[
+        "created_at",
+        "decided_at",
+        "id",
+        "index",
+        "status",
+        "updated_at",
+    ];
+    const GENERATED_TOKENS: &[&str] = &[
+        "done_count",
+        "epic_id",
+        "matrix",
+        "narrative",
+        "total_count",
+    ];
+
+    fn extract_tokens(template: &str) -> BTreeSet<String> {
+        let mut tokens = BTreeSet::new();
+        let mut cursor = template;
+
+        while let Some(start) = cursor.find("{{") {
+            let after_start = &cursor[start + 2..];
+            let Some(end) = after_start.find("}}") else {
+                break;
+            };
+
+            let token = &after_start[..end];
+            if !token.trim().is_empty() {
+                tokens.insert(token.to_string());
+            }
+
+            cursor = &after_start[end + 2..];
+        }
+
+        tokens
+    }
+
+    fn token_set(items: &[&str]) -> BTreeSet<String> {
+        items.iter().map(|token| (*token).to_string()).collect()
+    }
 
     #[test]
     fn epic_readme_contains_placeholders() {
@@ -381,5 +424,77 @@ mod tests {
         assert!(bearing::ASSESSMENT.contains("| Confidence |"));
         assert!(bearing::ASSESSMENT.contains("| Effort |"));
         assert!(bearing::ASSESSMENT.contains("| Risk |"));
+    }
+
+    #[test]
+    fn template_tokens_match_known_bucket_inventory() {
+        let known_tokens: BTreeSet<String> = CLI_OWNED_TOKENS
+            .iter()
+            .chain(SYSTEM_OWNED_TOKENS)
+            .chain(GENERATED_TOKENS)
+            .map(|token| (*token).to_string())
+            .collect();
+
+        let templates = [
+            ("epic README", epic::README),
+            ("epic PRD", epic::PRD),
+            ("epic PRESS_RELEASE", epic::PRESS_RELEASE),
+            ("voyage README", voyage::README),
+            ("voyage SRS", voyage::SRS),
+            ("voyage SDD", voyage::SDD),
+            ("voyage REPORT", voyage::REPORT),
+            ("voyage COMPLIANCE", voyage::COMPLIANCE),
+            ("story README", story::STORY),
+            ("story REFLECT", story::REFLECT),
+            ("bearing README", bearing::README),
+            ("bearing BRIEF", bearing::BRIEF),
+            ("bearing SURVEY", bearing::SURVEY),
+            ("bearing ASSESSMENT", bearing::ASSESSMENT),
+            ("adr", adr::ADR),
+        ];
+
+        for (label, template) in templates {
+            let tokens = extract_tokens(template);
+            let unknown: Vec<String> = tokens.difference(&known_tokens).cloned().collect();
+            assert!(
+                unknown.is_empty(),
+                "{label} has unknown template tokens: {:?}; allowed buckets are CLI={:?}, SYSTEM={:?}, GENERATED={:?}",
+                unknown,
+                CLI_OWNED_TOKENS,
+                SYSTEM_OWNED_TOKENS,
+                GENERATED_TOKENS
+            );
+        }
+    }
+
+    #[test]
+    fn planning_templates_reject_generated_bucket_tokens() {
+        let generated_tokens = token_set(GENERATED_TOKENS);
+        let planning_templates = [
+            ("epic README", epic::README),
+            ("epic PRD", epic::PRD),
+            ("epic PRESS_RELEASE", epic::PRESS_RELEASE),
+            ("voyage README", voyage::README),
+            ("voyage SRS", voyage::SRS),
+            ("voyage SDD", voyage::SDD),
+            ("story README", story::STORY),
+            ("story REFLECT", story::REFLECT),
+            ("bearing README", bearing::README),
+            ("bearing BRIEF", bearing::BRIEF),
+            ("bearing SURVEY", bearing::SURVEY),
+            ("bearing ASSESSMENT", bearing::ASSESSMENT),
+            ("adr", adr::ADR),
+        ];
+
+        for (label, template) in planning_templates {
+            let tokens = extract_tokens(template);
+            let out_of_bucket: Vec<String> =
+                tokens.intersection(&generated_tokens).cloned().collect();
+            assert!(
+                out_of_bucket.is_empty(),
+                "{label} uses generated-bucket tokens {:?}; planning templates may only use CLI-owned or system-owned tokens",
+                out_of_bucket
+            );
+        }
     }
 }

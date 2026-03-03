@@ -586,6 +586,202 @@ mod template_generator {
 }
 
 // ============================================================
+// Story 1vxH84K5a: Token bucket contract drift checks
+// ============================================================
+
+mod token_bucket_contract {
+    use std::collections::BTreeSet;
+
+    const CLI_OWNED_TOKENS: &[&str] = &["applies_to", "context", "epic", "goal", "title", "type"];
+    const SYSTEM_OWNED_TOKENS: &[&str] = &[
+        "created_at",
+        "decided_at",
+        "id",
+        "index",
+        "status",
+        "updated_at",
+    ];
+    const GENERATED_TOKENS: &[&str] = &[
+        "done_count",
+        "epic_id",
+        "matrix",
+        "narrative",
+        "total_count",
+    ];
+
+    fn extract_tokens(template: &str) -> BTreeSet<String> {
+        let mut tokens = BTreeSet::new();
+        let mut cursor = template;
+
+        while let Some(start) = cursor.find("{{") {
+            let after_start = &cursor[start + 2..];
+            let Some(end) = after_start.find("}}") else {
+                break;
+            };
+
+            let token = &after_start[..end];
+            if !token.trim().is_empty() {
+                tokens.insert(token.to_string());
+            }
+
+            cursor = &after_start[end + 2..];
+        }
+
+        tokens
+    }
+
+    fn token_set(tokens: &[&str]) -> BTreeSet<String> {
+        tokens.iter().map(|token| (*token).to_string()).collect()
+    }
+
+    fn arg_ids_for_new_subcommand(root: &str) -> BTreeSet<String> {
+        let mut cli = crate::build_cli();
+        let root_cmd = cli
+            .find_subcommand_mut(root)
+            .unwrap_or_else(|| panic!("missing root subcommand: {root}"));
+        let new_cmd = root_cmd
+            .find_subcommand_mut("new")
+            .unwrap_or_else(|| panic!("missing `new` subcommand for: {root}"));
+
+        new_cmd
+            .get_arguments()
+            .map(|arg| arg.get_id().as_str().to_string())
+            .filter(|id| id != "help")
+            .collect()
+    }
+
+    #[test]
+    fn planning_template_tokens_stay_within_cli_or_system_buckets() {
+        let known_tokens: BTreeSet<String> = CLI_OWNED_TOKENS
+            .iter()
+            .chain(SYSTEM_OWNED_TOKENS)
+            .map(|token| (*token).to_string())
+            .collect();
+        let generated_tokens = token_set(GENERATED_TOKENS);
+
+        let templates = [
+            (
+                "epic README",
+                crate::infrastructure::templates::epic::README,
+            ),
+            ("epic PRD", crate::infrastructure::templates::epic::PRD),
+            (
+                "epic PRESS_RELEASE",
+                crate::infrastructure::templates::epic::PRESS_RELEASE,
+            ),
+            (
+                "voyage README",
+                crate::infrastructure::templates::voyage::README,
+            ),
+            ("voyage SRS", crate::infrastructure::templates::voyage::SRS),
+            ("voyage SDD", crate::infrastructure::templates::voyage::SDD),
+            (
+                "story README",
+                crate::infrastructure::templates::story::STORY,
+            ),
+            (
+                "story REFLECT",
+                crate::infrastructure::templates::story::REFLECT,
+            ),
+            (
+                "bearing README",
+                crate::infrastructure::templates::bearing::README,
+            ),
+            (
+                "bearing BRIEF",
+                crate::infrastructure::templates::bearing::BRIEF,
+            ),
+            (
+                "bearing SURVEY",
+                crate::infrastructure::templates::bearing::SURVEY,
+            ),
+            (
+                "bearing ASSESSMENT",
+                crate::infrastructure::templates::bearing::ASSESSMENT,
+            ),
+            ("adr", crate::infrastructure::templates::adr::ADR),
+        ];
+
+        for (label, template) in templates {
+            let tokens = extract_tokens(template);
+
+            let unknown: Vec<String> = tokens.difference(&known_tokens).cloned().collect();
+            assert!(
+                unknown.is_empty(),
+                "{label} contains unknown tokens: {:?}; allowed planning buckets are CLI={:?}, SYSTEM={:?}",
+                unknown,
+                CLI_OWNED_TOKENS,
+                SYSTEM_OWNED_TOKENS
+            );
+
+            let out_of_bucket: Vec<String> =
+                tokens.intersection(&generated_tokens).cloned().collect();
+            assert!(
+                out_of_bucket.is_empty(),
+                "{label} contains generated-bucket tokens {:?}; generated tokens are only allowed in report templates",
+                out_of_bucket
+            );
+        }
+    }
+
+    #[test]
+    fn creation_command_new_surfaces_match_cli_owned_token_contract() {
+        let expected_epic: BTreeSet<String> =
+            ["name", "goal"].into_iter().map(String::from).collect();
+        let expected_voyage: BTreeSet<String> = ["name", "epic", "goal"]
+            .into_iter()
+            .map(String::from)
+            .collect();
+        let expected_story: BTreeSet<String> =
+            ["title", "type"].into_iter().map(String::from).collect();
+        let expected_bearing: BTreeSet<String> = ["name"].into_iter().map(String::from).collect();
+        let expected_adr: BTreeSet<String> = ["title", "context", "applies-to"]
+            .into_iter()
+            .map(String::from)
+            .collect();
+
+        assert_eq!(arg_ids_for_new_subcommand("epic"), expected_epic);
+        assert_eq!(arg_ids_for_new_subcommand("voyage"), expected_voyage);
+        assert_eq!(arg_ids_for_new_subcommand("story"), expected_story);
+        assert_eq!(arg_ids_for_new_subcommand("bearing"), expected_bearing);
+        assert_eq!(arg_ids_for_new_subcommand("adr"), expected_adr);
+    }
+
+    #[test]
+    fn generated_marker_contract_remains_literal() {
+        let marker_templates = [
+            (
+                "epic README",
+                crate::infrastructure::templates::epic::README,
+                ["<!-- BEGIN GENERATED -->", "<!-- END GENERATED -->"],
+            ),
+            (
+                "voyage README",
+                crate::infrastructure::templates::voyage::README,
+                ["<!-- BEGIN GENERATED -->", "<!-- END GENERATED -->"],
+            ),
+            (
+                "voyage SRS",
+                crate::infrastructure::templates::voyage::SRS,
+                [
+                    "<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->",
+                    "<!-- END FUNCTIONAL_REQUIREMENTS -->",
+                ],
+            ),
+        ];
+
+        for (label, template, markers) in marker_templates {
+            for marker in markers {
+                assert!(
+                    template.contains(marker),
+                    "{label} is missing required generated marker: {marker}"
+                );
+            }
+        }
+    }
+}
+
+// ============================================================
 // Story 1vuz97CCg: Queue policy documentation drift checks
 // ============================================================
 
