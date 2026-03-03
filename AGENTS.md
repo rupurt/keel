@@ -55,6 +55,16 @@ Apply these checks to **every change** before finalizing work:
    - `test:` (adding/updating tests)
    - `chore:` (build/tooling)
 
+## Compatibility Policy (Hard Cutover)
+
+At this stage of development, this repository uses a **hard cutover** policy by default.
+
+1. **No Backward Compatibility by Default**: Do not add compatibility aliases, dual-write logic, soft-deprecated schema fields, or fallback parsing for legacy formats unless a story explicitly requires it.
+2. **Replace, Don’t Bridge**: When introducing a new canonical token, field, command behavior, or document contract, remove the old path in the same change slice.
+3. **Fail Fast in Validation**: `keel doctor` and transition gates should treat legacy or unfilled scaffold patterns as hard failures when they violate the new contract.
+4. **Single Canonical Path**: Keep one source of truth for rendering, parsing, and validation; avoid parallel implementations meant only to preserve old behavior.
+5. **Migration Is Explicit Work**: If existing board artifacts need updates, handle that in a dedicated migration pass/story instead of embedding runtime compatibility logic.
+
 ## Foundational Documents
 
 These define constraints and workflow:
