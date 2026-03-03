@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-02T21:40:55.047951121-08:00
+mode: manual
+---
+Updated creation render callsites to populate canonical token names without date/datetime alias usage.

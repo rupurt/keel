@@ -2,7 +2,7 @@
 id: {{id}}
 title: {{title}}
 status: {{status}}
-created_at: {{date}}
+created_at: {{created_at}}
 ---
 
 # {{title}}

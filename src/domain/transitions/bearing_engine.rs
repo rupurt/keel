@@ -107,7 +107,10 @@ fn execute_side_effect(
                 &[
                     ("id", bearing.id()),
                     ("title", &bearing.frontmatter.title),
-                    ("date", &Local::now().format("%Y-%m-%d").to_string()),
+                    (
+                        "created_at",
+                        &Local::now().format("%Y-%m-%dT%H:%M:%S").to_string(),
+                    ),
                 ],
             );
 

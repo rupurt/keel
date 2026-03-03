@@ -64,7 +64,7 @@ fn new_voyage(board_dir: &Path, name: &str, epic_id: &str, goal: Option<&str>) -
         &[
             ("id", &voyage_id),
             ("title", name),
-            ("date", &now),
+            ("created_at", &now),
             ("epic", epic_id),
             ("goal", goal_text),
         ],

@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-02T21:40:53.764057182-08:00
+mode: manual
+---
+Added regression coverage to fail if active planning templates reintroduce legacy date/datetime tokens.

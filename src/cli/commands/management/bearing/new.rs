@@ -28,7 +28,7 @@ fn new_bearing(board_dir: &Path, name: &str) -> Result<()> {
     }
 
     let board = load_board(board_dir)?;
-    let today = Local::now().format("%Y-%m-%d").to_string();
+    let now = Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
 
     // Generate random bearing ID
     let bearing_id = generate_story_id();
@@ -71,7 +71,7 @@ fn new_bearing(board_dir: &Path, name: &str) -> Result<()> {
         &[
             ("id", &bearing_id),
             ("title", name),
-            ("date", &today),
+            ("created_at", &now),
             ("status", "exploring"),
         ],
     );
@@ -89,10 +89,7 @@ fn new_bearing(board_dir: &Path, name: &str) -> Result<()> {
         .with_context(|| format!("Failed to write bearing README: {}", readme_path.display()))?;
 
     // Render BRIEF.md template
-    let brief_content = template_rendering::render(
-        templates::bearing::BRIEF,
-        &[("id", &bearing_id), ("title", name), ("date", &today)],
-    );
+    let brief_content = template_rendering::render(templates::bearing::BRIEF, &[("title", name)]);
 
     // Strip frontmatter if the template still includes it (templates usually have it)
     // For now, I will just write it as is, but if BRIEF.md template is updated, this is clean.

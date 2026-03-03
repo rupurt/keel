@@ -258,11 +258,13 @@ pub fn calculate_next(
     let mut suggestions = Vec::new();
     if agent_mode {
         if agent_backlog_blocked_by_dependencies {
-            suggestions
-                .push("All workable backlog stories are blocked by implementation dependencies."
-                    .to_string());
-            suggestions
-                .push("Run `keel next --agent --parallel` to inspect sequential chains.".to_string());
+            suggestions.push(
+                "All workable backlog stories are blocked by implementation dependencies."
+                    .to_string(),
+            );
+            suggestions.push(
+                "Run `keel next --agent --parallel` to inspect sequential chains.".to_string(),
+            );
         }
         if queue_policy_snapshot.verification.has_items() {
             suggestions.push("Waiting for human acceptance of completed work".to_string());
@@ -556,14 +558,18 @@ mod tests {
         let next = calculate_next(&board, temp.path(), true, None).unwrap();
         match next {
             NextDecision::Empty(empty) => {
-                assert!(empty
-                    .suggestions
-                    .iter()
-                    .any(|s| s.contains("blocked by implementation dependencies")));
-                assert!(!empty
-                    .suggestions
-                    .iter()
-                    .any(|s| s.contains("Board is empty")));
+                assert!(
+                    empty
+                        .suggestions
+                        .iter()
+                        .any(|s| s.contains("blocked by implementation dependencies"))
+                );
+                assert!(
+                    !empty
+                        .suggestions
+                        .iter()
+                        .any(|s| s.contains("Board is empty"))
+                );
             }
             _ => panic!("Expected Empty decision with dependency-blocked suggestions"),
         }

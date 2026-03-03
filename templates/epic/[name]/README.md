@@ -1,7 +1,7 @@
 ---
 id: {{id}}
 title: {{title}}
-created_at: {{date}}
+created_at: {{created_at}}
 ---
 
 # {{title}}

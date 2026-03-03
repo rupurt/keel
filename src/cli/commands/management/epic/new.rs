@@ -63,7 +63,7 @@ fn new_epic(
         &[
             ("id", &epic_id),
             ("title", name),
-            ("date", &now),
+            ("created_at", &now),
             ("goal", goal_text),
         ],
     );

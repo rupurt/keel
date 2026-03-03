@@ -193,7 +193,8 @@ fn new_story(
             ("id", &story_id),
             ("title", title),
             ("type", story_type),
-            ("datetime", &now),
+            ("created_at", &now),
+            ("updated_at", &now),
         ],
     );
 
@@ -263,9 +264,12 @@ mod tests {
 
     #[test]
     fn render_template_replaces_placeholders() {
-        let template = "Hello {{name}}, today is {{date}}";
-        let result = template_rendering::render(template, &[("name", "World"), ("date", "Monday")]);
-        assert_eq!(result, "Hello World, today is Monday");
+        let template = "Story {{title}} created at {{created_at}}";
+        let result = template_rendering::render(
+            template,
+            &[("title", "World"), ("created_at", "2026-03-02T00:00:00")],
+        );
+        assert_eq!(result, "Story World created at 2026-03-02T00:00:00");
     }
 
     #[test]

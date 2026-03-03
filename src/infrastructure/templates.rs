@@ -61,7 +61,7 @@ mod tests {
     fn epic_readme_contains_placeholders() {
         assert!(epic::README.contains("{{id}}"));
         assert!(epic::README.contains("{{title}}"));
-        assert!(epic::README.contains("{{date}}"));
+        assert!(epic::README.contains("{{created_at}}"));
     }
 
     #[test]
@@ -189,7 +189,7 @@ mod tests {
     fn voyage_readme_contains_placeholders() {
         assert!(voyage::README.contains("{{id}}"));
         assert!(voyage::README.contains("{{title}}"));
-        assert!(voyage::README.contains("{{date}}"));
+        assert!(voyage::README.contains("{{created_at}}"));
     }
 
     #[test]
@@ -292,7 +292,8 @@ mod tests {
         assert!(story::STORY.contains("{{id}}"));
         assert!(story::STORY.contains("{{title}}"));
         assert!(story::STORY.contains("{{type}}"));
-        assert!(story::STORY.contains("{{datetime}}"));
+        assert!(story::STORY.contains("{{created_at}}"));
+        assert!(story::STORY.contains("{{updated_at}}"));
     }
 
     #[test]
@@ -320,7 +321,29 @@ mod tests {
     fn bearing_readme_contains_placeholders() {
         assert!(bearing::README.contains("{{id}}"));
         assert!(bearing::README.contains("{{title}}"));
-        assert!(bearing::README.contains("{{date}}"));
+        assert!(bearing::README.contains("{{created_at}}"));
+    }
+
+    #[test]
+    fn planning_templates_do_not_use_legacy_date_tokens() {
+        let planning_templates = [
+            epic::README,
+            voyage::README,
+            story::STORY,
+            bearing::README,
+            adr::ADR,
+        ];
+
+        for template in planning_templates {
+            assert!(
+                !template.contains("{{date}}"),
+                "planning template must not use legacy {{date}} token"
+            );
+            assert!(
+                !template.contains("{{datetime}}"),
+                "planning template must not use legacy {{datetime}} token"
+            );
+        }
     }
 
     #[test]

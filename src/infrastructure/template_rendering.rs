@@ -17,8 +17,11 @@ mod tests {
 
     #[test]
     fn render_replaces_placeholders() {
-        let template = "Hello {{name}}, today is {{date}}";
-        let result = render(template, &[("name", "World"), ("date", "Monday")]);
-        assert_eq!(result, "Hello World, today is Monday");
+        let template = "Hello {{name}}, created at {{created_at}}";
+        let result = render(
+            template,
+            &[("name", "World"), ("created_at", "2026-03-02T00:00:00")],
+        );
+        assert_eq!(result, "Hello World, created at 2026-03-02T00:00:00");
     }
 }

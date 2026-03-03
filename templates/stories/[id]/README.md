@@ -3,8 +3,8 @@ id: {{id}}
 title: {{title}}
 type: {{type}}
 status: backlog
-created_at: {{datetime}}
-updated_at: {{datetime}}
+created_at: {{created_at}}
+updated_at: {{updated_at}}
 ---
 
 # {{title}}

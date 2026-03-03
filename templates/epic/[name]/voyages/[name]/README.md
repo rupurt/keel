@@ -3,7 +3,7 @@ id: {{id}}
 title: {{title}}
 status: draft
 epic: {{epic}}
-created_at: {{date}}
+created_at: {{created_at}}
 ---
 
 # {{title}}

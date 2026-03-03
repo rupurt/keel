@@ -419,7 +419,7 @@ pub fn run_lay(pattern: &str) -> Result<()> {
     fs::create_dir_all(&epic_dir)
         .with_context(|| format!("Failed to create epic directory: {}", epic_dir.display()))?;
 
-    let today = Local::now().format("%Y-%m-%d").to_string();
+    let now = Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
 
     // Create README.md with bearing reference
     let readme_content = template_rendering::render(
@@ -427,7 +427,7 @@ pub fn run_lay(pattern: &str) -> Result<()> {
         &[
             ("id", epic_id),
             ("title", &bearing.frontmatter.title),
-            ("date", &today),
+            ("created_at", &now),
         ],
     );
     // Insert bearing reference after status line
