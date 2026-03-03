@@ -292,8 +292,8 @@ mod template_struct_fields {
     use chrono::NaiveDate;
 
     use crate::domain::model::{
-        AdrFrontmatter, AdrStatus, EpicFrontmatter, EpicState, StoryFrontmatter, StoryState,
-        StoryType, VoyageFrontmatter, VoyageState,
+        AdrFrontmatter, AdrStatus, EpicFrontmatter, StoryFrontmatter, StoryState, StoryType,
+        VoyageFrontmatter, VoyageState,
     };
 
     fn populated_story() -> StoryFrontmatter {
@@ -346,12 +346,10 @@ mod template_struct_fields {
         EpicFrontmatter {
             id: "t".to_string(),
             title: "t".to_string(),
-            status: EpicState::Strategic,
             description: Some("d".to_string()),
             bearing: None,
             index: None,
             created_at: Some(dt),
-            completed_at: Some(dt),
         }
     }
 
@@ -465,7 +463,7 @@ mod template_generator {
 
         fs::write(
             root.join("epics/test-epic/README.md"),
-            "---\nid: test-epic\ntitle: Test Epic\nstatus: tactical\n---\n\n# Test Epic\n\n> Goal\n\n## Voyages\n\n<!-- BEGIN GENERATED -->\n<!-- END GENERATED -->\n",
+            "---\nid: test-epic\ntitle: Test Epic\n---\n\n# Test Epic\n\n> Goal\n\n## Voyages\n\n<!-- BEGIN GENERATED -->\n<!-- END GENERATED -->\n",
         ).unwrap();
 
         fs::write(

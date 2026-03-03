@@ -35,8 +35,8 @@ pub fn styled_stage(stage: &StoryState) -> String {
 /// Color an epic stage label
 pub fn styled_epic_stage(stage: &EpicState) -> String {
     match stage {
-        EpicState::Strategic => format!("{}", stage.dimmed()),
-        EpicState::Tactical => format!("{}", stage.yellow()),
+        EpicState::Draft => format!("{}", stage.dimmed()),
+        EpicState::Active => format!("{}", stage.yellow()),
         EpicState::Done => format!("{}", stage.green()),
     }
 }

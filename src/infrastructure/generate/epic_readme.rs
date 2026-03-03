@@ -113,7 +113,6 @@ mod tests {
             r#"---
 id: test-epic
 title: Test Epic
-status: tactical
 ---
 "#,
         )

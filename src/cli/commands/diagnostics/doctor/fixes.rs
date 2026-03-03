@@ -66,10 +66,6 @@ fn apply_fix(fix: &Fix) -> Result<()> {
                 path.display()
             );
         }
-        Fix::UpdateEpicStatus { path, new_status } => {
-            update_frontmatter_field(path, "status", new_status)?;
-            println!("  FIX: Updated epic status in {}", path.display());
-        }
         _ => {
             // Other fixes can be implemented as needed
         }

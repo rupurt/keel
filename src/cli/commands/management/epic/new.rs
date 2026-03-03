@@ -79,7 +79,7 @@ fn new_epic(
     if let Some(desc) = description {
         content = crate::cli::commands::management::story::new::insert_frontmatter_field(
             &content,
-            "status: strategic",
+            &format!("title: {}", name),
             &format!("description: {}", desc),
         );
     }
@@ -155,7 +155,7 @@ mod tests {
 
         let readme = fs::read_to_string(epic_dir.join("README.md")).unwrap();
         assert!(readme.contains("title: My New Epic"));
-        assert!(readme.contains("status: strategic"));
+        assert!(!readme.contains("\nstatus:"));
         assert!(readme.contains("description: A description"));
         assert!(readme.contains("> A goal"));
         assert!(readme.contains("index: 1")); // First epic

@@ -124,7 +124,7 @@ impl EpicVoyageViolation {
                 epic_id,
                 incomplete_count,
             } => format!(
-                "epic is 'done' but has {} incomplete voyages (run `epic reopen {}`)",
+                "epic is 'done' but has {} incomplete voyages ({})",
                 incomplete_count, epic_id
             ),
             Self::AllVoyagesDoneButEpicNotDone {
@@ -184,13 +184,13 @@ pub fn validate_epic_voyage_coherence(
 
     // 1. Determine implicit state
     let implicit_state = if voyage_states.is_empty() {
-        EpicState::Strategic
+        EpicState::Draft
     } else if voyage_states.iter().all(|v| *v == VoyageState::Done) {
         EpicState::Done
     } else if voyage_states.iter().any(|v| *v != VoyageState::Draft) {
-        EpicState::Tactical
+        EpicState::Active
     } else {
-        EpicState::Strategic
+        EpicState::Draft
     };
 
     // 2. Check for terminal coherence (Done epics)
@@ -219,7 +219,7 @@ pub fn validate_epic_voyage_coherence(
         return violations;
     }
 
-    // 4. Check for "Strategic" vs "Tactical" drift
+    // 4. Check for "Draft" vs "Active" drift
     if epic_state != implicit_state {
         violations.push(EpicVoyageViolation::EpicStatusDrift {
             epic_id: epic_id.to_string(),
@@ -475,8 +475,8 @@ mod tests {
     // ============ Epic-Voyage Coherence Tests ============
 
     #[test]
-    fn empty_voyages_ok_for_strategic_epic() {
-        let violations = validate_epic_voyage_coherence("e1", EpicState::Strategic, &[]);
+    fn empty_voyages_ok_for_draft_epic() {
+        let violations = validate_epic_voyage_coherence("e1", EpicState::Draft, &[]);
         assert!(violations.is_empty());
     }
 
@@ -504,9 +504,9 @@ mod tests {
     }
 
     #[test]
-    fn strategic_epic_with_all_done_voyages_warns() {
+    fn draft_epic_with_all_done_voyages_warns() {
         let voyages = vec![VoyageState::Done, VoyageState::Done];
-        let violations = validate_epic_voyage_coherence("e1", EpicState::Strategic, &voyages);
+        let violations = validate_epic_voyage_coherence("e1", EpicState::Draft, &voyages);
 
         assert_eq!(violations.len(), 1);
         match &violations[0] {
@@ -516,16 +516,16 @@ mod tests {
                 ..
             } => {
                 assert_eq!(*voyage_count, 2);
-                assert_eq!(*epic_state, EpicState::Strategic);
+                assert_eq!(*epic_state, EpicState::Draft);
             }
             _ => panic!("Wrong violation type"),
         }
     }
 
     #[test]
-    fn strategic_epic_with_active_voyage_warns_drift() {
+    fn draft_epic_with_active_voyage_warns_drift() {
         let voyages = vec![VoyageState::InProgress, VoyageState::Draft];
-        let violations = validate_epic_voyage_coherence("e1", EpicState::Strategic, &voyages);
+        let violations = validate_epic_voyage_coherence("e1", EpicState::Draft, &voyages);
 
         assert_eq!(violations.len(), 1);
         match &violations[0] {
@@ -534,24 +534,24 @@ mod tests {
                 implicit_status,
                 ..
             } => {
-                assert_eq!(*current_status, EpicState::Strategic);
-                assert_eq!(*implicit_status, EpicState::Tactical);
+                assert_eq!(*current_status, EpicState::Draft);
+                assert_eq!(*implicit_status, EpicState::Active);
             }
             _ => panic!("Wrong violation type"),
         }
     }
 
     #[test]
-    fn tactical_epic_with_active_voyage_ok() {
+    fn active_epic_with_active_voyage_ok() {
         let voyages = vec![VoyageState::InProgress, VoyageState::Draft];
-        let violations = validate_epic_voyage_coherence("e1", EpicState::Tactical, &voyages);
+        let violations = validate_epic_voyage_coherence("e1", EpicState::Active, &voyages);
         assert!(violations.is_empty());
     }
 
     #[test]
-    fn tactical_epic_with_planned_voyage_ok() {
+    fn active_epic_with_planned_voyage_ok() {
         let voyages = vec![VoyageState::Planned, VoyageState::Draft];
-        let violations = validate_epic_voyage_coherence("e1", EpicState::Tactical, &voyages);
+        let violations = validate_epic_voyage_coherence("e1", EpicState::Active, &voyages);
         assert!(violations.is_empty());
     }
 
@@ -560,7 +560,7 @@ mod tests {
         let violation = EpicVoyageViolation::AllVoyagesDoneButEpicNotDone {
             epic_id: "e1".to_string(),
             voyage_count: 2,
-            epic_state: EpicState::Strategic,
+            epic_state: EpicState::Draft,
         };
 
         let fix = violation.suggested_fix();
@@ -576,15 +576,15 @@ mod tests {
     fn drift_violation_suggests_update_status() {
         let violation = EpicVoyageViolation::EpicStatusDrift {
             epic_id: "e1".to_string(),
-            current_status: EpicState::Strategic,
-            implicit_status: EpicState::Tactical,
+            current_status: EpicState::Draft,
+            implicit_status: EpicState::Active,
         };
 
         let fix = violation.suggested_fix();
         assert!(matches!(
             fix,
             Some(SuggestedFix::UpdateEpicStatus {
-                new_status: EpicState::Tactical
+                new_status: EpicState::Active
             })
         ));
     }
@@ -610,7 +610,7 @@ mod tests {
             EpicVoyageViolation::AllVoyagesDoneButEpicNotDone {
                 epic_id: "test-epic".to_string(),
                 voyage_count: 2,
-                epic_state: EpicState::Strategic,
+                epic_state: EpicState::Draft,
             },
         ];
 

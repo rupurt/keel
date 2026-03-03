@@ -234,14 +234,13 @@ mod tests {
             frontmatter: EpicFrontmatter {
                 id: id.to_string(),
                 title: format!("Epic {}", id),
-                status: EpicState::Strategic,
                 description: None,
                 bearing: None,
                 index: None,
                 created_at: None,
-                completed_at: None,
             },
             path: PathBuf::from(format!("{}/README.md", id)),
+            status: EpicState::Draft,
         }
     }
 

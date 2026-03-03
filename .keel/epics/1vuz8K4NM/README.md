@@ -2,9 +2,7 @@
 id: 1vuz8K4NM
 index: 3
 title: Flow Coherence Refactor
-status: done
 created_at: 2026-02-24T12:35:00
-completed_at: 2026-02-24T19:33:54
 ---
 
 # Flow Coherence Refactor

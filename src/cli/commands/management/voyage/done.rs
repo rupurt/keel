@@ -146,23 +146,26 @@ END FUNCTIONAL_REQUIREMENTS
     #[test]
     fn done_voyage_auto_completes_epic_when_all_voyages_done() {
         let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("test-epic").status("strategic"))
+            .epic(TestEpic::new("test-epic"))
             .voyage(TestVoyage::new("01-done", "test-epic").status("done"))
             .voyage(TestVoyage::new("02-in-progress", "test-epic").status("in-progress"))
             .build();
 
         run_with_dir(temp.path(), "02-in-progress", None, None, None).unwrap();
 
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let epic = board.require_epic("test-epic").unwrap();
+        assert_eq!(epic.status(), crate::domain::model::EpicState::Done);
+
         let content = fs::read_to_string(temp.path().join("epics/test-epic/README.md")).unwrap();
-        assert!(content.contains("status: done"));
-        assert!(content.contains("completed_at:"));
-        assert!(!content.contains("\ncompleted:"));
+        assert!(!content.contains("\nstatus:"));
+        assert!(!content.contains("\ncompleted_at:"));
     }
 
     #[test]
     fn done_voyage_keeps_epic_active_if_voyages_incomplete() {
         let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("test-epic").status("strategic"))
+            .epic(TestEpic::new("test-epic"))
             .voyage(TestVoyage::new("01-done", "test-epic").status("done"))
             .voyage(TestVoyage::new("02-in-progress", "test-epic").status("in-progress"))
             .voyage(TestVoyage::new("03-in-progress", "test-epic").status("in-progress"))
@@ -170,9 +173,9 @@ END FUNCTIONAL_REQUIREMENTS
 
         run_with_dir(temp.path(), "02-in-progress", None, None, None).unwrap();
 
-        let content = fs::read_to_string(temp.path().join("epics/test-epic/README.md")).unwrap();
-        // It will be tactical because it has other incomplete voyages
-        assert!(content.contains("status: tactical"));
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let epic = board.require_epic("test-epic").unwrap();
+        assert_eq!(epic.status(), crate::domain::model::EpicState::Active);
     }
 
     #[test]

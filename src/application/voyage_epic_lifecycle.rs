@@ -10,12 +10,10 @@ use std::path::Path;
 use anyhow::{Context, Result, anyhow, bail};
 use chrono::Local;
 
-use crate::application::domain_events::DomainEvent;
-use crate::application::process_manager::DomainProcessManager;
-use crate::domain::model::{EpicState, VoyageState};
+use crate::domain::model::VoyageState;
 use crate::domain::state_machine::{
-    EnforcementPolicy, TransitionEntity, TransitionIntent, VoyageTransition, classify_findings,
-    enforce_transition, format_enforcement_error, format_transition_error,
+    EnforcementPolicy, TransitionEntity, TransitionIntent, VoyageTransition, enforce_transition,
+    format_enforcement_error,
 };
 use crate::domain::transitions::{TimestampUpdates, update_frontmatter};
 use crate::infrastructure::frontmatter_mutation::{Mutation, apply};
@@ -162,134 +160,8 @@ impl VoyageEpicLifecycleService {
 
         println!("Completed voyage: {}", voyage.id());
 
-        DomainProcessManager::default().handle(
-            board_dir,
-            DomainEvent::VoyageCompleted {
-                voyage_id: voyage.id().to_string(),
-                epic_id: voyage.epic_id.clone(),
-            },
-        )?;
-
         Ok(())
     }
-
-    /// Keep epic status synchronized after a voyage reaches done.
-    pub(crate) fn sync_epic_after_voyage_completion(board_dir: &Path, epic_id: &str) -> Result<()> {
-        auto_tactical_epic_if_needed(board_dir, epic_id)?;
-        let completed_epic = auto_complete_epic_if_needed(board_dir, epic_id)
-            .context("Failed to sync epic status after completing voyage")?;
-
-        // complete_epic() regenerates the board when it runs.
-        if !completed_epic {
-            crate::cli::commands::generate::run(board_dir)?;
-        }
-
-        Ok(())
-    }
-
-    /// Complete an epic (strategic/tactical -> done).
-    pub fn complete_epic(board_dir: &Path, id: &str) -> Result<()> {
-        let board = load_board(board_dir)?;
-        let epic = board.require_epic(id)?;
-
-        if epic.status() == EpicState::Done {
-            return Err(anyhow!("Epic {} is already done", epic.id()));
-        }
-
-        let gate_problems = crate::domain::state_machine::evaluate_epic_done(&board, epic);
-        let blocking = classify_findings(EnforcementPolicy::STRICT, &gate_problems);
-        if !blocking.is_empty() {
-            return Err(anyhow!(format_transition_error(
-                &format!("epic {}", epic.id()),
-                "complete",
-                &blocking
-            )));
-        }
-
-        let content = fs::read_to_string(&epic.path)
-            .with_context(|| format!("Failed to read epic: {}", epic.path.display()))?;
-        let updated_content = update_epic_done_frontmatter(&content)?;
-
-        fs::write(&epic.path, updated_content)
-            .with_context(|| format!("Failed to write epic: {}", epic.path.display()))?;
-
-        println!("Completed epic: {}", epic.id());
-
-        crate::cli::commands::generate::run(board_dir)?;
-
-        Ok(())
-    }
-
-    /// Reopen an epic (done -> strategic).
-    pub fn reopen_epic(board_dir: &Path, id: &str) -> Result<()> {
-        let board = load_board(board_dir)?;
-        let epic = board.require_epic(id)?;
-
-        if epic.status() != EpicState::Done {
-            return Err(anyhow!(
-                "Epic {} is not done (status: {})",
-                epic.id(),
-                epic.status()
-            ));
-        }
-
-        let content = fs::read_to_string(&epic.path)
-            .with_context(|| format!("Failed to read epic: {}", epic.path.display()))?;
-        let updated_content = update_epic_reopen_frontmatter(&content)?;
-
-        fs::write(&epic.path, updated_content)
-            .with_context(|| format!("Failed to write epic: {}", epic.path.display()))?;
-
-        println!("Reopened epic: {}", epic.id());
-
-        crate::cli::commands::generate::run(board_dir)?;
-
-        Ok(())
-    }
-}
-
-/// If all voyages in the epic are done, auto-complete the epic.
-fn auto_complete_epic_if_needed(board_dir: &Path, epic_id: &str) -> Result<bool> {
-    let board = load_board(board_dir)?;
-    let epic = board.require_epic(epic_id)?;
-
-    if epic.status() == EpicState::Done {
-        return Ok(false);
-    }
-
-    let voyages = board.voyages_for_epic(epic);
-    if voyages.is_empty() {
-        return Ok(false);
-    }
-
-    let all_done = voyages.iter().all(|v| v.status() == VoyageState::Done);
-    if !all_done {
-        return Ok(false);
-    }
-
-    VoyageEpicLifecycleService::complete_epic(board_dir, epic_id)?;
-    Ok(true)
-}
-
-/// If epic is strategic but should be tactical, update it.
-fn auto_tactical_epic_if_needed(board_dir: &Path, epic_id: &str) -> Result<()> {
-    let board = load_board(board_dir)?;
-    let epic = board.require_epic(epic_id)?;
-
-    if epic.status() != EpicState::Strategic {
-        return Ok(());
-    }
-
-    let voyages = board.voyages_for_epic(epic);
-    let has_tactical_voyage = voyages.iter().any(|v| v.status() != VoyageState::Draft);
-
-    if has_tactical_voyage {
-        let content = fs::read_to_string(&epic.path)?;
-        let updated = apply(&content, &[Mutation::set("status", "tactical")]);
-        fs::write(&epic.path, updated)?;
-    }
-
-    Ok(())
 }
 
 /// Generate a high-fidelity PRESS_RELEASE.md for the voyage.
@@ -431,30 +303,6 @@ fn add_retrospective(
     }
 
     result
-}
-
-/// Update epic frontmatter status to done.
-fn update_epic_done_frontmatter(content: &str) -> Result<String> {
-    let now = Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
-    Ok(apply(
-        content,
-        &[
-            Mutation::set("status", "done"),
-            Mutation::set("completed_at", now),
-        ],
-    ))
-}
-
-/// Update epic frontmatter status to strategic and remove completed timestamp.
-fn update_epic_reopen_frontmatter(content: &str) -> Result<String> {
-    Ok(apply(
-        content,
-        &[
-            Mutation::set("status", "strategic"),
-            Mutation::remove("completed_at"),
-            Mutation::remove("completed"),
-        ],
-    ))
 }
 
 #[cfg(test)]

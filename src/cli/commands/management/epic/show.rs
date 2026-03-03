@@ -62,7 +62,7 @@ mod tests {
     #[test]
     fn test_show_epic() {
         let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("epic1").status("tactical"))
+            .epic(TestEpic::new("epic1"))
             .voyage(TestVoyage::new("v1", "epic1").status("planned"))
             .build();
 

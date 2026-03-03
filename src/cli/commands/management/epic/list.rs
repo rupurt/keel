@@ -41,25 +41,33 @@ fn list_epics<'a>(board: &'a Board, status: Option<&str>) -> Vec<&'a Epic> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic};
+    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestVoyage};
 
     #[test]
     fn test_list_epics_filtering() {
         let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("active-epic").status("tactical"))
-            .epic(TestEpic::new("planned-epic").status("strategic"))
+            .epic(TestEpic::new("active-epic"))
+            .epic(TestEpic::new("draft-epic"))
+            .epic(TestEpic::new("done-epic"))
+            .voyage(TestVoyage::new("a1", "active-epic").status("in-progress"))
+            .voyage(TestVoyage::new("d1", "draft-epic").status("draft"))
+            .voyage(TestVoyage::new("x1", "done-epic").status("done"))
             .build();
         let board = load_board(temp.path()).unwrap();
 
         let all = list_epics(&board, None);
-        assert_eq!(all.len(), 2);
+        assert_eq!(all.len(), 3);
 
-        let active = list_epics(&board, Some("tactical"));
+        let active = list_epics(&board, Some("active"));
         assert_eq!(active.len(), 1);
         assert_eq!(active[0].id(), "active-epic");
 
-        let planned = list_epics(&board, Some("strategic"));
-        assert_eq!(planned.len(), 1);
-        assert_eq!(planned[0].id(), "planned-epic");
+        let draft = list_epics(&board, Some("draft"));
+        assert_eq!(draft.len(), 1);
+        assert_eq!(draft[0].id(), "draft-epic");
+
+        let done = list_epics(&board, Some("done"));
+        assert_eq!(done.len(), 1);
+        assert_eq!(done[0].id(), "done-epic");
     }
 }

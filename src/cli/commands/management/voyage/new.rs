@@ -6,28 +6,20 @@ use std::path::Path;
 use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 
-use crate::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
-use crate::domain::model::EpicState;
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::story_id::generate_story_id;
 use crate::infrastructure::template_rendering;
 use crate::infrastructure::templates;
 
 /// Create a new voyage
-pub fn run(name: &str, epic_id: &str, reopen: bool, goal: Option<&str>) -> Result<()> {
+pub fn run(name: &str, epic_id: &str, goal: Option<&str>) -> Result<()> {
     let board_dir = crate::infrastructure::config::find_board_dir()?;
-    new_voyage(&board_dir, name, epic_id, reopen, goal)?;
+    new_voyage(&board_dir, name, epic_id, goal)?;
     Ok(())
 }
 
 /// Create a new voyage
-fn new_voyage(
-    board_dir: &Path,
-    name: &str,
-    epic_id: &str,
-    reopen: bool,
-    goal: Option<&str>,
-) -> Result<String> {
+fn new_voyage(board_dir: &Path, name: &str, epic_id: &str, goal: Option<&str>) -> Result<String> {
     let board = load_board(board_dir)?;
     let now = Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
     let goal_text =
@@ -42,20 +34,7 @@ fn new_voyage(
     }
 
     // Verify epic exists
-    let epic = board.require_epic(epic_id)?;
-
-    // Check if epic is done
-    if epic.status() == EpicState::Done {
-        if reopen {
-            // Reopen the epic first
-            VoyageEpicLifecycleService::reopen_epic(board_dir, epic_id)?;
-        } else {
-            return Err(anyhow!(
-                "Epic '{}' is done. Use --reopen to add voyage and reopen epic.",
-                epic_id
-            ));
-        }
-    }
+    board.require_epic(epic_id)?;
 
     // Find next voyage number for this epic
     let next_num = find_next_voyage_num(&board, epic_id);
@@ -177,8 +156,7 @@ mod tests {
             .build();
         let board_dir = temp.path();
 
-        let voyage_id =
-            new_voyage(board_dir, "Voyage 1", "test-epic", false, Some("My goal")).unwrap();
+        let voyage_id = new_voyage(board_dir, "Voyage 1", "test-epic", Some("My goal")).unwrap();
 
         let voyage_dir = board_dir.join("epics/test-epic/voyages").join(&voyage_id);
         assert!(voyage_dir.is_dir());

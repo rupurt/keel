@@ -2,10 +2,8 @@
 id: 1vuLyP3zx
 index: 1
 title: Validation Unification
-status: done
 description: Unify validation logic across doctor, gating, and command runtime to ensure a DRY and coherent system.
 created_at: 2026-02-22T00:00:00
-completed_at: 2026-02-22T00:00:00
 ---
 
 # Validation Unification

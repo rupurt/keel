@@ -13,13 +13,11 @@ use crate::infrastructure::loader::load_board;
 enum ProcessAction {
     StartVoyage { voyage_id: String },
     CompleteVoyage { voyage_id: String },
-    SyncEpicAfterVoyageCompletion { epic_id: String },
 }
 
 pub trait ProcessActionExecutor {
     fn start_voyage(&self, board_dir: &Path, voyage_id: &str) -> Result<()>;
     fn complete_voyage(&self, board_dir: &Path, voyage_id: &str) -> Result<()>;
-    fn sync_epic_after_voyage_completion(&self, board_dir: &Path, epic_id: &str) -> Result<()>;
 }
 
 pub struct LiveProcessActionExecutor;
@@ -31,10 +29,6 @@ impl ProcessActionExecutor for LiveProcessActionExecutor {
 
     fn complete_voyage(&self, board_dir: &Path, voyage_id: &str) -> Result<()> {
         VoyageEpicLifecycleService::complete_voyage(board_dir, voyage_id, None, None, None)
-    }
-
-    fn sync_epic_after_voyage_completion(&self, board_dir: &Path, epic_id: &str) -> Result<()> {
-        VoyageEpicLifecycleService::sync_epic_after_voyage_completion(board_dir, epic_id)
     }
 }
 
@@ -81,14 +75,6 @@ impl<E: ProcessActionExecutor> DomainProcessManager<E> {
                 );
                 self.executor.complete_voyage(board_dir, &voyage_id)
             }
-            ProcessAction::SyncEpicAfterVoyageCompletion { epic_id } => {
-                println!(
-                    "[process-manager] Syncing epic {} after voyage completion.",
-                    epic_id
-                );
-                self.executor
-                    .sync_epic_after_voyage_completion(board_dir, &epic_id)
-            }
         }
     }
 
@@ -100,11 +86,7 @@ impl<E: ProcessActionExecutor> DomainProcessManager<E> {
             DomainEvent::StoryAccepted {
                 scope: Some(scope), ..
             } => plan_story_accepted_actions(board, scope),
-            DomainEvent::VoyageCompleted { epic_id, .. } => {
-                vec![ProcessAction::SyncEpicAfterVoyageCompletion {
-                    epic_id: epic_id.clone(),
-                }]
-            }
+            DomainEvent::VoyageCompleted { .. } => Vec::new(),
             DomainEvent::StoryStarted { scope: None, .. }
             | DomainEvent::StoryAccepted { scope: None, .. } => Vec::new(),
         }
@@ -201,15 +183,6 @@ mod tests {
                 .push(format!("complete:{voyage_id}"));
             Ok(())
         }
-
-        fn sync_epic_after_voyage_completion(
-            &self,
-            _board_dir: &Path,
-            epic_id: &str,
-        ) -> Result<()> {
-            self.calls.lock().unwrap().push(format!("sync:{epic_id}"));
-            Ok(())
-        }
     }
 
     #[test]
@@ -304,7 +277,7 @@ mod tests {
     }
 
     #[test]
-    fn voyage_completed_event_syncs_epic() {
+    fn voyage_completed_event_noops() {
         let temp = TestBoardBuilder::new().epic(TestEpic::new("e1")).build();
 
         let calls = Arc::new(Mutex::new(Vec::new()));
@@ -323,6 +296,6 @@ mod tests {
             .unwrap();
 
         let calls = calls.lock().unwrap();
-        assert_eq!(calls.as_slice(), ["sync:e1"]);
+        assert!(calls.is_empty());
     }
 }

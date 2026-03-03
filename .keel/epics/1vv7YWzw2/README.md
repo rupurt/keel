@@ -2,9 +2,7 @@
 id: 1vv7YWzw2
 index: 4
 title: System Coherence and Intelligent Flow
-status: done
 created_at: 2026-02-24T21:35:28
-completed_at: 2026-02-24T21:48:03
 ---
 
 # System Coherence and Intelligent Flow

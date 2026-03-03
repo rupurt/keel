@@ -155,4 +155,3 @@ Use CLI commands only; do not move `.keel` files manually.
 | Ice | `just keel story ice <id>` |
 | Thaw | `just keel story thaw <id>` |
 | Voyage done | `just keel voyage done <id>` |
-| Epic done | `just keel epic done <id>` |

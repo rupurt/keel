@@ -58,7 +58,7 @@ mod tests {
     #[test]
     fn status_counts_stories_by_frontmatter_status() {
         let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("test-epic").status("tactical"))
+            .epic(TestEpic::new("test-epic"))
             .voyage(TestVoyage::new("01-first", "test-epic").status("in-progress"))
             .story(
                 TestStory::new("FEAT0001")

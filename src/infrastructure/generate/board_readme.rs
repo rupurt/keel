@@ -396,7 +396,7 @@ mod tests {
     #[test]
     fn generate_board_readme_includes_epics() {
         let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("test-epic").status("tactical"))
+            .epic(TestEpic::new("test-epic"))
             .voyage(TestVoyage::new("01-first", "test-epic").status("in-progress"))
             .build();
         let board = load_board(temp.path()).unwrap();
@@ -464,7 +464,7 @@ mod tests {
     #[test]
     fn generate_board_readme_includes_bearings() {
         let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("done-epic").status("done"))
+            .epic(TestEpic::new("done-epic"))
             .adr(crate::test_helpers::TestAdr::new("ADR-0001").status("proposed")) // minimal valid board
             .build();
 

@@ -19,9 +19,6 @@ pub enum VoyageAction {
         /// Associated epic
         #[arg(long, short)]
         epic: String,
-        /// Reopen the epic if it's marked done
-        #[arg(long)]
-        reopen: bool,
         /// Goal/value proposition for the voyage
         #[arg(long, short, required = true)]
         goal: Option<String>,
@@ -78,12 +75,7 @@ pub enum VoyageAction {
 /// Run a voyage action through the voyage interface adapter.
 pub fn run(action: VoyageAction) -> Result<()> {
     match action {
-        VoyageAction::New {
-            name,
-            epic,
-            reopen,
-            goal,
-        } => new::run(&name, &epic, reopen, goal.as_deref()),
+        VoyageAction::New { name, epic, goal } => new::run(&name, &epic, goal.as_deref()),
         VoyageAction::Start {
             id,
             force,

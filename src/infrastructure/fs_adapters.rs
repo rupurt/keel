@@ -210,7 +210,7 @@ mod tests {
     #[test]
     fn filesystem_adapter_matches_loader_for_repository_reads() {
         let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("repo-epic").status("tactical"))
+            .epic(TestEpic::new("repo-epic"))
             .voyage(
                 TestVoyage::new("01-repo", "repo-epic")
                     .status("in-progress")

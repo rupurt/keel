@@ -324,8 +324,6 @@ fn lifecycle_commands_delegate_to_application_services() {
     for path in [
         "src/cli/commands/management/voyage/start.rs",
         "src/cli/commands/management/voyage/done.rs",
-        "src/cli/commands/management/epic/done.rs",
-        "src/cli/commands/management/epic/reopen.rs",
     ] {
         let content = read_source(path);
         assert!(

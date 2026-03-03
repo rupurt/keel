@@ -1,9 +1,7 @@
 //! Epic command implementations
 
-pub mod done;
 pub mod list;
 pub mod new;
-pub mod reopen;
 pub mod show;
 
 use anyhow::Result;
@@ -22,16 +20,6 @@ pub enum EpicAction {
         #[arg(long, short, required = true)]
         goal: Option<String>,
     },
-    /// Complete an epic
-    Done {
-        /// Epic ID (supports fuzzy matching)
-        id: String,
-    },
-    /// Reopen a completed epic
-    Reopen {
-        /// Epic ID (supports fuzzy matching)
-        id: String,
-    },
     /// Show epic details
     Show {
         /// Epic ID (supports fuzzy matching)
@@ -40,7 +28,7 @@ pub enum EpicAction {
     /// List epics
     List {
         /// Filter by status
-        #[arg(long, short, value_parser = ["strategic", "tactical", "done"])]
+        #[arg(long, short, value_parser = ["draft", "active", "done"])]
         status: Option<String>,
     },
 }
@@ -53,8 +41,6 @@ pub fn run(action: EpicAction) -> Result<()> {
             description,
             goal,
         } => new::run(&name, description.as_deref(), goal.as_deref()),
-        EpicAction::Done { id } => done::run(&id),
-        EpicAction::Reopen { id } => reopen::run(&id),
         EpicAction::Show { id } => show::run(&id),
         EpicAction::List { status } => list::run(status.as_deref()),
     }

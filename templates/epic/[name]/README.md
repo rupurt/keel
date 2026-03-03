@@ -1,7 +1,6 @@
 ---
 id: {{id}}
 title: {{title}}
-status: strategic
 created_at: {{date}}
 ---
 

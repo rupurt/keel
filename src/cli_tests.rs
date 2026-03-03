@@ -235,14 +235,11 @@ fn cli_parses_voyage_new_requires_epic() {
     ])
     .unwrap();
     if let Commands::Management(ManagementCommands::Voyage {
-        action: VoyageAction::New {
-            name, epic, reopen, ..
-        },
+        action: VoyageAction::New { name, epic, .. },
     }) = cli.command
     {
         assert_eq!(name, "fast-search");
         assert_eq!(epic, "performance");
-        assert!(!reopen);
     } else {
         panic!("Expected Voyage New command");
     }
@@ -567,19 +564,6 @@ fn cli_parses_epic_new_requires_goal() {
 }
 
 #[test]
-fn cli_parses_epic_done() {
-    let cli = Cli::try_parse_from(["board", "epic", "done", "board-cli"]).unwrap();
-    if let Commands::Management(ManagementCommands::Epic {
-        action: EpicAction::Done { id },
-    }) = cli.command
-    {
-        assert_eq!(id, "board-cli");
-    } else {
-        panic!("Expected Epic Done command");
-    }
-}
-
-#[test]
 fn cli_parses_epic_show() {
     let cli = Cli::try_parse_from(["board", "epic", "show", "board-cli"]).unwrap();
     if let Commands::Management(ManagementCommands::Epic {
@@ -607,12 +591,12 @@ fn cli_parses_epic_list() {
 
 #[test]
 fn cli_parses_epic_list_with_filter() {
-    let cli = Cli::try_parse_from(["board", "epic", "list", "--status", "tactical"]).unwrap();
+    let cli = Cli::try_parse_from(["board", "epic", "list", "--status", "active"]).unwrap();
     if let Commands::Management(ManagementCommands::Epic {
         action: EpicAction::List { status },
     }) = cli.command
     {
-        assert_eq!(status, Some("tactical".to_string()));
+        assert_eq!(status, Some("active".to_string()));
     } else {
         panic!("Expected Epic List command");
     }
@@ -632,14 +616,11 @@ fn cli_parses_voyage_new() {
     ])
     .unwrap();
     if let Commands::Management(ManagementCommands::Voyage {
-        action: VoyageAction::New {
-            name, epic, reopen, ..
-        },
+        action: VoyageAction::New { name, epic, .. },
     }) = cli.command
     {
         assert_eq!(name, "command-restructure");
         assert_eq!(epic, "board-cli");
-        assert!(!reopen);
     } else {
         panic!("Expected Voyage New command");
     }
@@ -810,7 +791,7 @@ fn cli_rejects_legacy_story_stage_filter() {
 #[test]
 fn cli_rejects_legacy_epic_status_filter() {
     let result =
-        crate::build_cli().try_get_matches_from(["keel", "epic", "list", "--status", "active"]);
+        crate::build_cli().try_get_matches_from(["keel", "epic", "list", "--status", "strategic"]);
     assert!(result.is_err());
 }
 

@@ -37,7 +37,6 @@ pub struct TestStory {
 pub struct TestEpic {
     pub id: String,
     pub title: String,
-    pub status: String,
     pub index: Option<u32>,
 }
 
@@ -162,7 +161,6 @@ impl Default for TestEpic {
         Self {
             id: "test-epic".to_string(),
             title: "Test Epic".to_string(),
-            status: "strategic".to_string(),
             index: None,
         }
     }
@@ -185,11 +183,6 @@ impl TestEpic {
     #[allow(dead_code)] // Test helper for future use
     pub fn title(mut self, title: &str) -> Self {
         self.title = title.to_string();
-        self
-    }
-
-    pub fn status(mut self, status: &str) -> Self {
-        self.status = status.to_string();
         self
     }
 }
@@ -433,8 +426,8 @@ impl TestBoardBuilder {
             fs::write(
                         epic_dir.join("README.md"),
                         format!(
-                            "---\nid: {}\ntitle: {}\nstatus: {}\n{}---\n\n# {}\n\n## Voyages\n\n<!-- BEGIN GENERATED -->\n<!-- END GENERATED -->\n",
-                            epic.id, epic.title, epic.status, index_line, epic.title
+                            "---\nid: {}\ntitle: {}\n{}---\n\n# {}\n\n## Voyages\n\n<!-- BEGIN GENERATED -->\n<!-- END GENERATED -->\n",
+                            epic.id, epic.title, index_line, epic.title
                         ),
                     )
                     .unwrap();
@@ -905,7 +898,7 @@ mod tests {
 
         assert!(temp.path().join("stories/TEST001/README.md").exists());
         let content = fs::read_to_string(temp.path().join("epics/test-epic/README.md")).unwrap();
-        assert!(content.contains("status: strategic"));
+        assert!(!content.contains("\nstatus:"));
     }
 
     #[test]

@@ -183,7 +183,7 @@ mod tests {
         fs::write(
             epic_dir.join("README.md"),
             format!(
-                "---\nid: {epic}\ntitle: Epic {epic}\nstatus: tactical\ncreated_at: 2026-03-01T00:00:00\n---\n\n# Epic\n"
+                "---\nid: {epic}\ntitle: Epic {epic}\ncreated_at: 2026-03-01T00:00:00\n---\n\n# Epic\n"
             ),
         )
         .unwrap();

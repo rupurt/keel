@@ -3,52 +3,30 @@
 use std::path::{Path, PathBuf};
 
 use chrono::NaiveDateTime;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 
-use super::{Entity, FuzzyMatch, deserialize_strict_datetime};
+use super::{Entity, FuzzyMatch, VoyageState, deserialize_strict_datetime};
 
-/// Strategic states for an epic
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Default)]
+/// Derived states for an epic.
+///
+/// Epic status is computed from voyage states (never persisted in epic frontmatter):
+/// - `Draft`: no voyages, or all voyages are draft
+/// - `Done`: at least one voyage exists and all voyages are done
+/// - `Active`: any mixed/non-draft in-flight state
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[serde(rename_all = "kebab-case")]
 pub enum EpicState {
-    /// High-level goal defined, but no tactical execution yet (all voyages in draft)
     #[default]
-    Strategic,
-    /// Tactical execution has begun (at least one voyage is planned or in-progress)
-    Tactical,
-    /// Strategic goal met (all voyages done and success criteria verified)
+    Draft,
+    Active,
     Done,
-}
-
-impl<'de> Deserialize<'de> for EpicState {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        match s.as_str() {
-            "strategic" => Ok(EpicState::Strategic),
-            "tactical" => Ok(EpicState::Tactical),
-            "done" => Ok(EpicState::Done),
-            "planned" | "draft" => Err(serde::de::Error::custom(format!(
-                "legacy epic status `{s}` is no longer supported; use `strategic`"
-            ))),
-            "in-progress" | "active" => Err(serde::de::Error::custom(format!(
-                "legacy epic status `{s}` is no longer supported; use `tactical`"
-            ))),
-            _ => Err(serde::de::Error::unknown_variant(
-                &s,
-                &["strategic", "tactical", "done"],
-            )),
-        }
-    }
 }
 
 impl std::fmt::Display for EpicState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Strategic => write!(f, "strategic"),
-            Self::Tactical => write!(f, "tactical"),
+            Self::Draft => write!(f, "draft"),
+            Self::Active => write!(f, "active"),
             Self::Done => write!(f, "done"),
         }
     }
@@ -61,8 +39,6 @@ pub struct EpicFrontmatter {
     pub id: String,
     pub title: String,
     #[serde(default)]
-    pub status: EpicState,
-    #[serde(default)]
     pub description: Option<String>,
     /// Source bearing ID when this epic is laid from a bearing
     #[serde(default)]
@@ -73,9 +49,6 @@ pub struct EpicFrontmatter {
     /// Creation datetime
     #[serde(default, deserialize_with = "deserialize_strict_datetime")]
     pub created_at: Option<NaiveDateTime>,
-    /// Completion datetime
-    #[serde(default, deserialize_with = "deserialize_strict_datetime")]
-    pub completed_at: Option<NaiveDateTime>,
 }
 
 /// An epic with its frontmatter and file location
@@ -85,6 +58,8 @@ pub struct Epic {
     pub frontmatter: EpicFrontmatter,
     /// Path to the epic README.md
     pub path: PathBuf,
+    /// Derived status from voyages
+    pub status: EpicState,
 }
 
 impl Epic {
@@ -99,9 +74,25 @@ impl Epic {
         &self.frontmatter.title
     }
 
-    /// Get the epic status
+    /// Get the epic status (derived from voyages)
     pub fn status(&self) -> EpicState {
-        self.frontmatter.status
+        self.status
+    }
+
+    /// Update derived status.
+    pub(crate) fn set_status(&mut self, status: EpicState) {
+        self.status = status;
+    }
+
+    /// Derive epic status from voyage states.
+    pub fn derive_status(voyage_states: &[VoyageState]) -> EpicState {
+        if voyage_states.is_empty() || voyage_states.iter().all(|s| *s == VoyageState::Draft) {
+            EpicState::Draft
+        } else if voyage_states.iter().all(|s| *s == VoyageState::Done) {
+            EpicState::Done
+        } else {
+            EpicState::Active
+        }
     }
 
     /// Get the index number (for ordering within the board)
@@ -146,27 +137,12 @@ mod tests {
         let yaml = r#"
 id: board-cli
 title: Board CLI
-status: strategic
 "#;
         let fm: EpicFrontmatter = serde_yaml::from_str(yaml).unwrap();
 
         assert_eq!(fm.id, "board-cli");
         assert_eq!(fm.title, "Board CLI");
-        assert_eq!(fm.status, EpicState::Strategic);
         assert!(fm.bearing.is_none());
-    }
-
-    #[test]
-    fn epic_frontmatter_handles_defaults() {
-        let yaml = r#"
-id: web-ui
-title: Web UI
-"#;
-        let fm: EpicFrontmatter = serde_yaml::from_str(yaml).unwrap();
-
-        // Default is Strategic
-        assert_eq!(fm.status, EpicState::Strategic);
-        assert!(fm.completed_at.is_none());
     }
 
     #[test]
@@ -174,7 +150,6 @@ title: Web UI
         let yaml = r#"
 id: board-cli
 title: Board CLI
-status: strategic
 bearing: BRG-01
 "#;
         let fm: EpicFrontmatter = serde_yaml::from_str(yaml).unwrap();
@@ -182,38 +157,25 @@ bearing: BRG-01
     }
 
     #[test]
-    fn epic_frontmatter_rejects_legacy_completed_field() {
+    fn epic_frontmatter_rejects_status_field() {
         let yaml = r#"
 id: test
 title: Test
-status: done
-completed: 2026-01-01
+status: active
 "#;
         let err = serde_yaml::from_str::<EpicFrontmatter>(yaml).unwrap_err();
-        let message = err.to_string();
-        assert!(message.contains("completed"));
+        assert!(err.to_string().contains("status"));
     }
 
     #[test]
-    fn epic_frontmatter_rejects_legacy_names_with_replacements() {
-        for (legacy, replacement) in [
-            ("planned", "strategic"),
-            ("draft", "strategic"),
-            ("in-progress", "tactical"),
-            ("active", "tactical"),
-        ] {
-            let yaml = format!("id: test\ntitle: test\nstatus: {legacy}\n");
-            let err = serde_yaml::from_str::<EpicFrontmatter>(&yaml).unwrap_err();
-            let message = err.to_string();
-            assert!(
-                message.contains(legacy),
-                "missing legacy token in: {message}"
-            );
-            assert!(
-                message.contains(replacement),
-                "missing canonical replacement in: {message}"
-            );
-        }
+    fn epic_frontmatter_rejects_completed_at_field() {
+        let yaml = r#"
+id: test
+title: Test
+completed_at: 2026-01-01T00:00:00
+"#;
+        let err = serde_yaml::from_str::<EpicFrontmatter>(yaml).unwrap_err();
+        assert!(err.to_string().contains("completed_at"));
     }
 
     #[test]
@@ -222,20 +184,40 @@ completed: 2026-01-01
             frontmatter: EpicFrontmatter {
                 id: "board-cli".to_string(),
                 title: "Board CLI".to_string(),
-                status: EpicState::Strategic,
                 description: None,
                 bearing: None,
                 index: None,
                 created_at: None,
-                completed_at: None,
             },
             path: PathBuf::from("test"),
+            status: EpicState::Draft,
         };
 
         assert!(epic.matches("board-cli"));
         assert!(epic.matches("board"));
         assert!(epic.matches("CLI"));
         assert!(!epic.matches("web"));
+    }
+
+    #[test]
+    fn derive_status_matches_voyage_states() {
+        assert_eq!(Epic::derive_status(&[]), EpicState::Draft);
+        assert_eq!(
+            Epic::derive_status(&[VoyageState::Draft, VoyageState::Draft]),
+            EpicState::Draft
+        );
+        assert_eq!(
+            Epic::derive_status(&[VoyageState::Done, VoyageState::Done]),
+            EpicState::Done
+        );
+        assert_eq!(
+            Epic::derive_status(&[VoyageState::InProgress]),
+            EpicState::Active
+        );
+        assert_eq!(
+            Epic::derive_status(&[VoyageState::Draft, VoyageState::Done]),
+            EpicState::Active
+        );
     }
 
     #[test]

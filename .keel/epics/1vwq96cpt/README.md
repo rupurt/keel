@@ -2,9 +2,7 @@
 id: 1vwq96cpt
 index: 5
 title: Domain Driven Design Restructure
-status: done
 created_at: 2026-03-01T15:24:20
-completed_at: 2026-03-02T12:04:04
 ---
 
 # Domain Driven Design Restructure

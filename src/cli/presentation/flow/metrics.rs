@@ -85,7 +85,7 @@ pub fn calculate_metrics(board: &Board) -> FlowMetrics {
     metrics.planning.epics_needing_voyages = board
         .epics
         .values()
-        .filter(|e| e.status() == EpicState::Tactical)
+        .filter(|e| e.status() == EpicState::Draft)
         .filter(|e| board.voyages_for_epic(e).is_empty())
         .count();
 
@@ -199,7 +199,7 @@ mod tests {
     #[test]
     fn calculate_counts_epics_needing_voyages() {
         let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("e1").status("tactical")) // Active but no voyages
+            .epic(TestEpic::new("e1")) // Draft epic with no voyages
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
         let m = calculate_metrics(&board);

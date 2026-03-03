@@ -80,7 +80,7 @@ mod tests {
     #[test]
     fn generate_creates_board_readme() {
         let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("test-epic").status("tactical"))
+            .epic(TestEpic::new("test-epic"))
             .voyage(TestVoyage::new("01-first", "test-epic").status("in-progress"))
             .story(
                 TestStory::new("FEAT0001")
@@ -100,7 +100,7 @@ mod tests {
     #[test]
     fn generate_updates_epic_readme() {
         let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("test-epic").status("tactical"))
+            .epic(TestEpic::new("test-epic"))
             .voyage(TestVoyage::new("01-first", "test-epic").status("in-progress"))
             .build();
 

@@ -114,12 +114,6 @@ fn handle_epic_command(matches: &ArgMatches) -> Result<()> {
             description: m.get_one::<String>("description").cloned(),
             goal: m.get_one::<String>("goal").cloned(),
         },
-        ("done", m) => super::commands::management::epic::EpicAction::Done {
-            id: m.get_one::<String>("id").expect("required").clone(),
-        },
-        ("reopen", m) => super::commands::management::epic::EpicAction::Reopen {
-            id: m.get_one::<String>("id").expect("required").clone(),
-        },
         ("show", m) => super::commands::management::epic::EpicAction::Show {
             id: m.get_one::<String>("id").expect("required").clone(),
         },
@@ -140,7 +134,6 @@ fn handle_voyage_command(matches: &ArgMatches) -> Result<()> {
         ("new", m) => super::commands::management::voyage::VoyageAction::New {
             name: m.get_one::<String>("name").expect("required").clone(),
             epic: m.get_one::<String>("epic").expect("required").clone(),
-            reopen: *m.get_one::<bool>("reopen").unwrap_or(&false),
             goal: m.get_one::<String>("goal").cloned(),
         },
         ("start", m) => super::commands::management::voyage::VoyageAction::Start {

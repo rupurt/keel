@@ -57,12 +57,14 @@ pub const VOYAGE_FIELDS: &[&str] = &[
 pub const EPIC_FIELDS: &[&str] = &[
     "id",
     "title",
+    // Kept here to avoid duplicate unknown-field warnings; parser/structural
+    // checks enforce that epic status is no longer allowed.
     "status",
     "description",
     "created_at",
-    "completed_at",
     // Link to bearing that originated this epic
     "bearing",
+    "index",
     // Legacy/backwards-compat
     "created",
 ];
@@ -415,7 +417,6 @@ mod tests {
             r#"---
 id: test-epic
 title: Test Epic
-status: done
 completed: 2026-01-01T00:00:00
 ---
 
@@ -439,7 +440,7 @@ completed: 2026-01-01T00:00:00
     }
 
     #[test]
-    fn epic_frontmatter_accepts_completed_at_field() {
+    fn epic_frontmatter_flags_completed_at_field_as_unknown() {
         let temp = TempDir::new().unwrap();
         let epic_dir = temp.path().join("epics").join("test-epic");
         fs::create_dir_all(&epic_dir).unwrap();
@@ -449,7 +450,6 @@ completed: 2026-01-01T00:00:00
             r#"---
 id: test-epic
 title: Test Epic
-status: done
 completed_at: 2026-01-01T00:00:00
 ---
 
@@ -461,10 +461,10 @@ completed_at: 2026-01-01T00:00:00
         let (problems, files_checked) = check_frontmatter_field_drift(temp.path()).unwrap();
         assert_eq!(files_checked, 1);
         assert!(
-            !problems.iter().any(|p| p
+            problems.iter().any(|p| p
                 .message
                 .contains("unknown frontmatter field: 'completed_at'")),
-            "completed_at should be accepted, got: {:?}",
+            "expected unknown-field warning for completed_at field, got: {:?}",
             problems
                 .iter()
                 .map(|p| p.message.clone())

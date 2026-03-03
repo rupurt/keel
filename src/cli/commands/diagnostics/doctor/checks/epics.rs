@@ -3,10 +3,7 @@ use std::path::Path;
 use anyhow::Result;
 
 use super::super::types::*;
-use crate::domain::model::{Board, EpicState, VoyageState};
-use crate::domain::state_machine::invariants::{
-    EpicVoyageViolation, validate_epic_voyage_coherence,
-};
+use crate::domain::model::{Board, EpicState};
 use crate::infrastructure::validation::structural;
 
 /// Scan epic files for structural problems
@@ -28,52 +25,6 @@ pub fn check_epic_readme_structure(path: &Path) -> Vec<Problem> {
 /// Check epic PRD.md structure for section markers and content
 pub fn check_epic_prd_structure(path: &Path) -> Vec<Problem> {
     structural::check_epic_prd_structure(path)
-}
-
-/// Check epic status consistency
-/// - Done epics shouldn't have incomplete voyages
-/// - Non-done epics with all voyages done should be marked done
-pub fn check_epic_status_consistency(board: &Board) -> Vec<Problem> {
-    let mut problems = Vec::new();
-
-    for epic in board.epics.values() {
-        let voyages = board.voyages_for_epic(epic);
-
-        let epic_state = epic.status();
-        let voyage_states: Vec<VoyageState> = voyages.iter().map(|v| v.status()).collect();
-
-        let violations = validate_epic_voyage_coherence(epic.id(), epic_state, &voyage_states);
-
-        for violation in violations {
-            let fix = match &violation {
-                crate::domain::state_machine::invariants::EpicVoyageViolation::AllVoyagesDoneButEpicNotDone { .. } => {
-                    Some(Fix::UpdateEpicStatus {
-                        path: epic.path.clone(),
-                        new_status: EpicState::Done.to_string(),
-                    })
-                }
-                crate::domain::state_machine::invariants::EpicVoyageViolation::EpicStatusDrift {
-                    implicit_status, ..
-                } => Some(Fix::UpdateEpicStatus {
-                    path: epic.path.clone(),
-                    new_status: implicit_status.to_string(),
-                }),
-                _ => None,
-            };
-
-            problems.push(Problem {
-                severity: Severity::Warning,
-                path: epic.path.clone(),
-                message: violation.message(),
-                fix,
-                scope: None,
-                category: None,
-                check_id: CheckId::Unknown,
-            });
-        }
-    }
-
-    problems
 }
 
 /// Check epic title case

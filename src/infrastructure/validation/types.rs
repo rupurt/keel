@@ -117,10 +117,6 @@ pub enum Fix {
         path: PathBuf,
         new_status: String,
     },
-    UpdateEpicStatus {
-        path: PathBuf,
-        new_status: String,
-    },
     #[allow(dead_code)]
     StartVoyage {
         path: PathBuf,

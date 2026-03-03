@@ -2,9 +2,7 @@
 id: 1vugyr0OR
 index: 2
 title: Institutional Memory & Verification
-status: done
 created_at: 2026-02-23T00:00:00
-completed_at: 2026-02-24T00:00:00
 ---
 
 # Institutional Memory & Verification

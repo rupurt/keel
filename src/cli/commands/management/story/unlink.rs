@@ -71,7 +71,7 @@ mod tests {
     #[test]
     fn unlink_removes_scope() {
         let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("test-epic").status("tactical"))
+            .epic(TestEpic::new("test-epic"))
             .voyage(TestVoyage::new("01-first", "test-epic").status("planned"))
             .story(
                 TestStory::new("FEAT0001")

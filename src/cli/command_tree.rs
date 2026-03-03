@@ -355,12 +355,6 @@ pub fn build_cli() -> Command {
                                 .required(true),
                         ),
                 )
-                .subcommand(Command::new("done").about("Complete an epic").arg(Arg::new("id").required(true)))
-                .subcommand(
-                    Command::new("reopen")
-                        .about("Reopen a completed epic")
-                        .arg(Arg::new("id").required(true)),
-                )
                 .subcommand(
                     Command::new("show")
                         .about("Show epic details")
@@ -373,8 +367,8 @@ pub fn build_cli() -> Command {
                             Arg::new("status")
                                 .long("status")
                                 .short('s')
-                                .help("Filter by canonical epic state")
-                                .value_parser(["strategic", "tactical", "done"])
+                                .help("Filter by derived epic state")
+                                .value_parser(["draft", "active", "done"])
                                 .value_name("STATUS"),
                         ),
                 )
@@ -389,7 +383,6 @@ pub fn build_cli() -> Command {
                         .about("Create a new voyage")
                         .arg(Arg::new("name").required(true).value_name("NAME"))
                         .arg(Arg::new("epic").long("epic").required(true).value_name("EPIC"))
-                        .arg(Arg::new("reopen").long("reopen").action(ArgAction::SetTrue))
                         .arg(Arg::new("goal").long("goal").short('g').value_name("GOAL")),
                 )
                 .subcommand(

@@ -58,7 +58,8 @@ pub fn load_entities<T: FromPath>(paths: &[PathBuf]) -> HashMap<String, T> {
 pub fn load_board(board_dir: &Path) -> Result<Board> {
     let stories = load_stories(board_dir)?;
     let voyages = load_voyages(board_dir)?;
-    let epics = load_epics(board_dir)?;
+    let mut epics = load_epics(board_dir)?;
+    derive_epic_statuses(&mut epics, &voyages);
     let bearings = load_bearings(board_dir)?;
     let adrs = load_adrs(board_dir)?;
 
@@ -216,6 +217,7 @@ impl FromPath for Epic {
         Ok(Epic {
             frontmatter,
             path: path.to_path_buf(),
+            status: crate::domain::model::EpicState::Draft,
         })
     }
     fn entity_id(&self) -> &str {
@@ -223,6 +225,17 @@ impl FromPath for Epic {
     }
     fn entity_name() -> &'static str {
         "epic"
+    }
+}
+
+fn derive_epic_statuses(epics: &mut HashMap<String, Epic>, voyages: &HashMap<String, Voyage>) {
+    for epic in epics.values_mut() {
+        let voyage_states: Vec<_> = voyages
+            .values()
+            .filter(|voyage| voyage.epic_id == epic.id())
+            .map(|voyage| voyage.status())
+            .collect();
+        epic.set_status(crate::domain::model::Epic::derive_status(&voyage_states));
     }
 }
 
@@ -355,7 +368,6 @@ Body content
             r#"---
 id: test-epic
 title: Test Epic
-status: tactical
 ---
 Epic description
 "#,
@@ -466,7 +478,7 @@ Voyage description
         fs::create_dir_all(root.join("epics/test-epic/voyages/02-full-name")).unwrap();
         fs::write(
             root.join("epics/test-epic/README.md"),
-            "---\nid: test-epic\ntitle: Test Epic\nstatus: tactical\n---\n",
+            "---\nid: test-epic\ntitle: Test Epic\n---\n",
         )
         .unwrap();
         fs::write(
@@ -564,7 +576,6 @@ Body content
             r#"---
 id: test-epic
 title: Test Epic
-status: planned
 ---
 Epic description
 "#,
