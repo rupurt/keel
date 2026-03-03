@@ -34,7 +34,7 @@ pub fn classify_queue_pressure(verify_count: usize, ready_count: usize) -> Queue
 
 /// Build queue-policy snapshot from canonical flow metrics.
 pub fn project(metrics: &FlowMetrics) -> QueuePolicySnapshot {
-    let ready_count = metrics.execution.backlog_count + metrics.execution.in_progress_count;
+    let ready_count = metrics.execution.backlog_ready_count + metrics.execution.in_progress_count;
     let queue_pressure = classify_queue_pressure(metrics.verification.count, ready_count);
 
     QueuePolicySnapshot {
@@ -85,6 +85,8 @@ mod tests {
         let metrics = FlowMetrics {
             execution: ExecutionMetrics {
                 backlog_count: 2,
+                backlog_ready_count: 2,
+                backlog_blocked_count: 0,
                 in_progress_count: 1,
                 ..ExecutionMetrics::default()
             },

@@ -1,6 +1,7 @@
 //! Canonical flow metrics projection shared by diagnostics and queue policy.
 
 use crate::domain::model::{Board, EpicState, StoryState, VoyageState};
+use crate::read_model::traceability::derive_implementation_dependencies;
 
 /// High-level summary of board-wide flow state.
 #[derive(Debug, Default)]
@@ -16,6 +17,8 @@ pub struct FlowMetrics {
 #[derive(Debug, Default)]
 pub struct ExecutionMetrics {
     pub backlog_count: usize,
+    pub backlog_ready_count: usize,
+    pub backlog_blocked_count: usize,
     pub in_progress_count: usize,
     pub active_voyages_count: usize,
 }
@@ -53,13 +56,32 @@ pub struct GovernanceMetrics {
 /// Calculate board-wide flow metrics.
 pub fn calculate_metrics(board: &Board) -> FlowMetrics {
     let mut metrics = FlowMetrics::default();
+    let deps = derive_implementation_dependencies(board);
 
     // 1. Execution
-    metrics.execution.backlog_count = board
+    let backlog_stories: Vec<_> = board
         .stories
         .values()
         .filter(|s| s.stage == StoryState::Backlog)
-        .count();
+        .collect();
+    metrics.execution.backlog_count = backlog_stories.len();
+
+    for story in &backlog_stories {
+        let dep_ids = deps.get(story.id()).map_or(&[][..], Vec::as_slice);
+        let is_blocked = dep_ids.iter().any(|dep_id| {
+            board
+                .stories
+                .get(dep_id)
+                .is_some_and(|dep_story| dep_story.stage != StoryState::Done)
+        });
+
+        if is_blocked {
+            metrics.execution.backlog_blocked_count += 1;
+        } else {
+            metrics.execution.backlog_ready_count += 1;
+        }
+    }
+
     metrics.execution.in_progress_count = board
         .stories
         .values()
@@ -167,7 +189,42 @@ mod tests {
 
         assert_eq!(m.execution.in_progress_count, 1);
         assert_eq!(m.execution.backlog_count, 1);
+        assert_eq!(m.execution.backlog_ready_count, 1);
+        assert_eq!(m.execution.backlog_blocked_count, 0);
         assert_eq!(m.done_count, 1);
+    }
+
+    #[test]
+    fn calculate_splits_backlog_ready_and_blocked_by_dependencies() {
+        let srs = "# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | first req | test |\n| SRS-02 | second req | test |\nEND FUNCTIONAL_REQUIREMENTS";
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("keel"))
+            .voyage(TestVoyage::new("01-flow", "keel").srs_content(srs))
+            .story(
+                TestStory::new("S1")
+                    .scope("keel/01-flow")
+                    .stage(StoryState::InProgress)
+                    .body("- [ ] [SRS-01/AC-01] First requirement"),
+            )
+            .story(
+                TestStory::new("S2")
+                    .scope("keel/01-flow")
+                    .stage(StoryState::Backlog)
+                    .body("- [ ] [SRS-02/AC-01] Depends on S1"),
+            )
+            .story(
+                TestStory::new("S3")
+                    .scope("keel/01-flow")
+                    .stage(StoryState::Backlog)
+                    .body("- [ ] [SRS-01/AC-02] Parallel with S1"),
+            )
+            .build();
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let m = calculate_metrics(&board);
+
+        assert_eq!(m.execution.backlog_count, 2);
+        assert_eq!(m.execution.backlog_ready_count, 1);
+        assert_eq!(m.execution.backlog_blocked_count, 1);
     }
 
     #[test]

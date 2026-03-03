@@ -401,6 +401,7 @@ pub fn analyze_two_actor_health(metrics: &FlowMetrics) -> TwoActorHealth {
     let action_summary = summarize_action(
         queue_policy_snapshot.verification,
         queue_policy_snapshot.agent.is_starved(),
+        metrics.execution.backlog_blocked_count,
     );
 
     TwoActorHealth {
@@ -410,7 +411,11 @@ pub fn analyze_two_actor_health(metrics: &FlowMetrics) -> TwoActorHealth {
     }
 }
 
-fn summarize_action(verification_queue: VerificationQueueCategory, agent_starved: bool) -> String {
+fn summarize_action(
+    verification_queue: VerificationQueueCategory,
+    agent_starved: bool,
+    blocked_backlog_count: usize,
+) -> String {
     match verification_queue {
         VerificationQueueCategory::FlowBlocked => {
             "Verification queue is blocked; review and accept completed stories".to_string()
@@ -419,6 +424,10 @@ fn summarize_action(verification_queue: VerificationQueueCategory, agent_starved
             "Human queue is blocked; review and accept completed stories".to_string()
         }
         VerificationQueueCategory::Attention => "Stories await human acceptance".to_string(),
+        VerificationQueueCategory::Empty if agent_starved && blocked_backlog_count > 0 => {
+            "Agent queue is blocked by implementation dependencies; unblock prerequisite stories"
+                .to_string()
+        }
         VerificationQueueCategory::Empty if agent_starved => {
             "Start a voyage to unblock agent".to_string()
         }
@@ -491,19 +500,34 @@ fn build_human_queue(metrics: &FlowMetrics) -> ActorQueue {
 }
 
 fn build_agent_queue(metrics: &FlowMetrics) -> ActorQueue {
-    let ready_count = metrics.execution.backlog_count + metrics.execution.in_progress_count;
+    let ready_count = metrics.execution.backlog_ready_count;
+    let in_flight_count = metrics.execution.in_progress_count;
+    let blocked_count = metrics.execution.backlog_blocked_count;
+    let actionable_count = ready_count + in_flight_count;
     let queue_pressure =
-        queue_policy::classify_queue_pressure(metrics.verification.count, ready_count);
+        queue_policy::classify_queue_pressure(metrics.verification.count, actionable_count);
     let is_starved = queue_pressure.agent.is_starved();
 
-    // Agent queue shows ready items with secondary shading for WIP
-    // Primary (█) = backlog, Secondary (▒) = in-progress
-    let items = vec![QueueItem {
-        label: "ready".to_string(),
-        count: ready_count,
-        age_days: None,
-        secondary_count: Some(metrics.execution.in_progress_count),
-    }];
+    let items = vec![
+        QueueItem {
+            label: "ready".to_string(),
+            count: ready_count,
+            age_days: None,
+            secondary_count: Some(0),
+        },
+        QueueItem {
+            label: "in-flight".to_string(),
+            count: in_flight_count,
+            age_days: None,
+            secondary_count: Some(in_flight_count),
+        },
+        QueueItem {
+            label: "blocked".to_string(),
+            count: blocked_count,
+            age_days: None,
+            secondary_count: Some(0),
+        },
+    ];
 
     let starvation_message = if is_starved {
         Some("Start a voyage to unblock.".to_string())
@@ -549,6 +573,8 @@ mod tests {
             },
             execution: ExecutionMetrics {
                 backlog_count: 5,
+                backlog_ready_count: 5,
+                backlog_blocked_count: 0,
                 in_progress_count: 2,
                 active_voyages_count: 1,
             },
@@ -609,6 +635,8 @@ mod tests {
         // Clear verification, pile up execution
         metrics.verification.count = 0;
         metrics.execution.backlog_count = 50;
+        metrics.execution.backlog_ready_count = 50;
+        metrics.execution.backlog_blocked_count = 0;
         metrics.execution.in_progress_count = 10;
         let constraint = identify_constraint(&metrics, &throughput);
         assert_eq!(constraint, PipelineStage::Execution);
@@ -653,6 +681,8 @@ mod tests {
     fn identify_starvation_risk_execution_low() {
         let mut metrics = make_metrics();
         metrics.execution.backlog_count = 1;
+        metrics.execution.backlog_ready_count = 1;
+        metrics.execution.backlog_blocked_count = 0;
         metrics.execution.in_progress_count = 0;
 
         let throughput = make_throughput();
@@ -670,6 +700,8 @@ mod tests {
         metrics.research.assessing_count = 2;
         metrics.planning.planned_count = 10;
         metrics.execution.backlog_count = 10;
+        metrics.execution.backlog_ready_count = 10;
+        metrics.execution.backlog_blocked_count = 0;
         metrics.execution.in_progress_count = 3;
 
         let throughput = make_throughput();
@@ -779,21 +811,46 @@ mod tests {
     }
 
     #[test]
-    fn two_actor_agent_queue_contains_ready_items() {
+    fn two_actor_agent_queue_splits_ready_in_flight_and_blocked_items() {
         let metrics = make_metrics();
         let health = analyze_two_actor_health(&metrics);
 
         let ready_item = health.agent_queue.items.iter().find(|i| i.label == "ready");
         assert!(ready_item.is_some());
+        assert_eq!(
+            ready_item.unwrap().count,
+            metrics.execution.backlog_ready_count
+        );
 
-        let expected = metrics.execution.backlog_count + metrics.execution.in_progress_count;
-        assert_eq!(ready_item.unwrap().count, expected);
+        let in_flight_item = health
+            .agent_queue
+            .items
+            .iter()
+            .find(|i| i.label == "in-flight");
+        assert!(in_flight_item.is_some());
+        assert_eq!(
+            in_flight_item.unwrap().count,
+            metrics.execution.in_progress_count
+        );
+
+        let blocked_item = health
+            .agent_queue
+            .items
+            .iter()
+            .find(|i| i.label == "blocked");
+        assert!(blocked_item.is_some());
+        assert_eq!(
+            blocked_item.unwrap().count,
+            metrics.execution.backlog_blocked_count
+        );
     }
 
     #[test]
     fn two_actor_agent_starved_when_no_work() {
         let mut metrics = make_metrics();
         metrics.execution.backlog_count = 0;
+        metrics.execution.backlog_ready_count = 0;
+        metrics.execution.backlog_blocked_count = 0;
         metrics.execution.in_progress_count = 0;
         metrics.verification.count = 0;
 
@@ -807,6 +864,8 @@ mod tests {
     fn two_actor_agent_not_starved_with_backlog() {
         let mut metrics = make_metrics();
         metrics.execution.backlog_count = 5;
+        metrics.execution.backlog_ready_count = 5;
+        metrics.execution.backlog_blocked_count = 0;
         metrics.execution.in_progress_count = 0;
 
         let health = analyze_two_actor_health(&metrics);
@@ -819,6 +878,8 @@ mod tests {
     fn two_actor_agent_not_starved_with_wip() {
         let mut metrics = make_metrics();
         metrics.execution.backlog_count = 0;
+        metrics.execution.backlog_ready_count = 0;
+        metrics.execution.backlog_blocked_count = 0;
         metrics.execution.in_progress_count = 2;
 
         let health = analyze_two_actor_health(&metrics);
@@ -830,6 +891,8 @@ mod tests {
     fn two_actor_action_summary_suggests_unblock_when_starved() {
         let mut metrics = make_metrics();
         metrics.execution.backlog_count = 0;
+        metrics.execution.backlog_ready_count = 0;
+        metrics.execution.backlog_blocked_count = 0;
         metrics.execution.in_progress_count = 0;
         metrics.verification.count = 0;
 
@@ -842,6 +905,8 @@ mod tests {
     fn two_actor_action_summary_suggests_accept_when_verify_attention() {
         let mut metrics = make_metrics();
         metrics.execution.backlog_count = 3;
+        metrics.execution.backlog_ready_count = 3;
+        metrics.execution.backlog_blocked_count = 0;
         metrics.execution.in_progress_count = 1;
         metrics.verification.count = HUMAN_NEXT_VERIFY_BLOCK_THRESHOLD - 1;
 
@@ -854,6 +919,8 @@ mod tests {
     fn two_actor_action_summary_marks_blocked_at_human_threshold() {
         let mut metrics = make_metrics();
         metrics.execution.backlog_count = 3;
+        metrics.execution.backlog_ready_count = 3;
+        metrics.execution.backlog_blocked_count = 0;
         metrics.execution.in_progress_count = 1;
         metrics.verification.count = HUMAN_NEXT_VERIFY_BLOCK_THRESHOLD;
 
@@ -868,6 +935,8 @@ mod tests {
     fn two_actor_action_summary_suggests_accept_when_verify_flow_blocked() {
         let mut metrics = make_metrics();
         metrics.execution.backlog_count = 3;
+        metrics.execution.backlog_ready_count = 3;
+        metrics.execution.backlog_blocked_count = 0;
         metrics.execution.in_progress_count = 1;
         metrics.verification.count = FLOW_VERIFY_BLOCK_THRESHOLD + 1;
 

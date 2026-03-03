@@ -275,6 +275,8 @@ mod tests {
         FlowMetrics {
             execution: ExecutionMetrics {
                 backlog_count: 5,
+                backlog_ready_count: 5,
+                backlog_blocked_count: 0,
                 in_progress_count: 2,
                 active_voyages_count: 2,
             },
