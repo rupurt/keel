@@ -12,22 +12,19 @@ use crate::infrastructure::template_rendering;
 use crate::infrastructure::templates;
 
 /// Create a new epic
-pub fn run(name: &str, description: Option<&str>, goal: Option<&str>) -> Result<()> {
+pub fn run(name: &str, goal: &str) -> Result<()> {
     let board_dir = crate::infrastructure::config::find_board_dir()?;
-    new_epic(&board_dir, name, description, goal)
+    new_epic(&board_dir, name, goal)
 }
 
 /// Create a new epic
-fn new_epic(
-    board_dir: &Path,
-    name: &str,
-    description: Option<&str>,
-    goal: Option<&str>,
-) -> Result<()> {
+fn new_epic(board_dir: &Path, name: &str, goal: &str) -> Result<()> {
     let board = load_board(board_dir)?;
     let now = Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
-    let goal_text =
-        goal.ok_or_else(|| anyhow!("goal is required (use --goal when creating epic)"))?;
+    let goal_text = goal.trim();
+    if goal_text.is_empty() {
+        return Err(anyhow!("goal is required (use --goal when creating epic)"));
+    }
 
     // Enforce Title Case
     if !crate::infrastructure::utils::is_title_case(name) {
@@ -75,15 +72,6 @@ fn new_epic(
         &format!("index: {}", next_index),
     );
 
-    // Insert description if provided
-    if let Some(desc) = description {
-        content = crate::cli::commands::management::story::new::insert_frontmatter_field(
-            &content,
-            &format!("title: {}", name),
-            &format!("description: {}", desc),
-        );
-    }
-
     // Write README
     let readme_path = epic_dir.join("README.md");
     fs::write(&readme_path, content)
@@ -129,13 +117,7 @@ mod tests {
         let temp = TestBoardBuilder::new().build();
         let board_dir = temp.path();
 
-        new_epic(
-            board_dir,
-            "My New Epic",
-            Some("A description"),
-            Some("A goal"),
-        )
-        .unwrap();
+        new_epic(board_dir, "My New Epic", "A goal").unwrap();
 
         // Find the epic directory (it's random now)
         let epics_dir = board_dir.join("epics");
@@ -156,7 +138,6 @@ mod tests {
         let readme = fs::read_to_string(epic_dir.join("README.md")).unwrap();
         assert!(readme.contains("title: My New Epic"));
         assert!(!readme.contains("\nstatus:"));
-        assert!(readme.contains("description: A description"));
         assert!(readme.contains("> A goal"));
         assert!(readme.contains("index: 1")); // First epic
         let created_at_re = Regex::new(r"created_at: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}").unwrap();
@@ -208,8 +189,8 @@ mod tests {
         let board_dir = temp.path();
 
         // Names can now collide because IDs are random
-        new_epic(board_dir, "Duplicate", None, Some("goal")).unwrap();
-        let res = new_epic(board_dir, "Duplicate", None, Some("goal"));
+        new_epic(board_dir, "Duplicate", "goal").unwrap();
+        let res = new_epic(board_dir, "Duplicate", "goal");
 
         assert!(res.is_ok());
     }

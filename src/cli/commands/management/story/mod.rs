@@ -15,7 +15,7 @@ pub mod submit;
 pub mod thaw;
 pub mod unlink;
 
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 use clap::Subcommand;
 
 use crate::infrastructure::config::find_board_dir;
@@ -29,15 +29,6 @@ pub enum StoryAction {
         /// Story type
         #[arg(long, short = 't', default_value = "feat")]
         r#type: String,
-        /// Associated epic(s)
-        #[arg(long, short)]
-        epic: Option<String>,
-        /// Associated voyage (requires --epic)
-        #[arg(long, short, requires = "epic")]
-        voyage: Option<String>,
-        /// Scope alias for `epic` or `epic/voyage`
-        #[arg(long, conflicts_with_all = ["epic", "voyage"])]
-        scope: Option<String>,
     },
     /// Move story to in-progress
     Start {
@@ -152,17 +143,7 @@ pub enum StoryAction {
 /// Run a story action through the story interface adapter.
 pub fn run(action: StoryAction) -> Result<()> {
     match action {
-        StoryAction::New {
-            title,
-            r#type,
-            epic,
-            voyage,
-            scope,
-        } => {
-            let (epic, voyage) =
-                parse_story_scope(scope.as_deref(), epic.as_deref(), voyage.as_deref())?;
-            new::run(&title, &r#type, epic.as_deref(), voyage.as_deref())
-        }
+        StoryAction::New { title, r#type } => new::run(&title, &r#type, None, None),
         StoryAction::Start { id, expect_version } => {
             start::run(&find_board_dir()?, &id, expect_version)
         }
@@ -190,31 +171,5 @@ pub fn run(action: StoryAction) -> Result<()> {
             judge,
             files,
         } => record::run(&find_board_dir()?, id, ac, cmd, msg, judge, files),
-    }
-}
-
-fn parse_story_scope(
-    scope: Option<&str>,
-    epic: Option<&str>,
-    voyage: Option<&str>,
-) -> Result<(Option<String>, Option<String>)> {
-    match (scope, epic, voyage) {
-        (Some(scope), None, None) => {
-            let scope_parts: Vec<&str> = scope.split('/').collect();
-            match scope_parts.as_slice() {
-                [epic] if !epic.is_empty() => Ok((Some(epic.to_string()), None)),
-                [epic, voyage] if !epic.is_empty() && !voyage.is_empty() => {
-                    Ok((Some(epic.to_string()), Some(voyage.to_string())))
-                }
-                _ => Err(anyhow!(
-                    "--scope must be `epic` or `epic/voyage`, got `{}`",
-                    scope
-                )),
-            }
-        }
-        (None, epic, voyage) => Ok((epic.map(|s| s.to_string()), voyage.map(|s| s.to_string()))),
-        (Some(_), Some(_), _) | (Some(_), _, Some(_)) => Err(anyhow!(
-            "--scope cannot be combined with --epic or --voyage"
-        )),
     }
 }

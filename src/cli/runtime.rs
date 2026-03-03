@@ -115,8 +115,7 @@ fn handle_epic_command(matches: &ArgMatches) -> Result<()> {
     let action = match command {
         ("new", m) => super::commands::management::epic::EpicAction::New {
             name: m.get_one::<String>("name").expect("required").clone(),
-            description: m.get_one::<String>("description").cloned(),
-            goal: m.get_one::<String>("goal").cloned(),
+            goal: m.get_one::<String>("goal").expect("required").clone(),
         },
         ("show", m) => super::commands::management::epic::EpicAction::Show {
             id: m.get_one::<String>("id").expect("required").clone(),
@@ -138,7 +137,7 @@ fn handle_voyage_command(matches: &ArgMatches) -> Result<()> {
         ("new", m) => super::commands::management::voyage::VoyageAction::New {
             name: m.get_one::<String>("name").expect("required").clone(),
             epic: m.get_one::<String>("epic").expect("required").clone(),
-            goal: m.get_one::<String>("goal").cloned(),
+            goal: m.get_one::<String>("goal").expect("required").clone(),
         },
         ("start", m) => super::commands::management::voyage::VoyageAction::Start {
             id: m.get_one::<String>("id").expect("required").clone(),
@@ -179,9 +178,6 @@ fn handle_story_command(matches: &ArgMatches) -> Result<()> {
                 .get_one::<String>("type")
                 .expect("defaulted in clap")
                 .clone(),
-            epic: m.get_one::<String>("epic").cloned(),
-            voyage: m.get_one::<String>("voyage").cloned(),
-            scope: m.get_one::<String>("scope").cloned(),
         },
         ("start", m) => super::commands::management::story::StoryAction::Start {
             id: m.get_one::<String>("id").expect("required").clone(),

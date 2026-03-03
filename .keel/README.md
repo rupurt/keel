@@ -15,6 +15,7 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
+| [Align CLI Contracts For Creation Commands](stories/1vxH83MOO/README.md) | feat | [Template Contract Hard Cutover](epics/1vxGy5tco/) / [Template And CLI Contract Canonicalization](epics/1vxGy5tco/voyages/1vxGzV3oR/) |
 
 ## In Progress
 
@@ -25,7 +26,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Align CLI Contracts For Creation Commands](stories/1vxH83MOO/README.md) | feat | [Template Contract Hard Cutover](epics/1vxGy5tco/) / [Template And CLI Contract Canonicalization](epics/1vxGy5tco/voyages/1vxGzV3oR/) |
 | [Enforce Terminal Story Coherency In Doctor](stories/1vxH84nTQ/README.md) | feat | [Template Contract Hard Cutover](epics/1vxGy5tco/) / [Doctor And Transition Hard Enforcement](epics/1vxGy5tco/voyages/1vxGzVpw5/) |
 | [Gate Story Submit And Accept On Coherent Artifacts](stories/1vxH84M8t/README.md) | feat | [Template Contract Hard Cutover](epics/1vxGy5tco/) / [Doctor And Transition Hard Enforcement](epics/1vxGy5tco/voyages/1vxGzVpw5/) |
 | [Extend Adr Creation Inputs For Context Ownership](stories/1vxH84Xh8/README.md) | feat | [Template Contract Hard Cutover](epics/1vxGy5tco/) / [Template And CLI Contract Canonicalization](epics/1vxGy5tco/voyages/1vxGzV3oR/) |

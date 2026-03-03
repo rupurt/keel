@@ -30,7 +30,7 @@ started_at: 2026-03-02T21:31:55
 | Title | Type | Status |
 |-------|------|--------|
 | [Canonicalize Template Tokens To Schema Names](../../../../stories/1vxH83JcY/README.md) | refactor | done |
-| [Align CLI Contracts For Creation Commands](../../../../stories/1vxH83MOO/README.md) | feat | backlog |
+| [Align CLI Contracts For Creation Commands](../../../../stories/1vxH83MOO/README.md) | feat | needs-human-verification |
 | [Codify Token Bucket Contract Tests](../../../../stories/1vxH84K5a/README.md) | chore | backlog |
 | [Extend Adr Creation Inputs For Context Ownership](../../../../stories/1vxH84Xh8/README.md) | feat | backlog |
 <!-- END GENERATED -->

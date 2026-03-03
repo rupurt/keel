@@ -396,113 +396,56 @@ fn cli_parses_story_list_with_filters() {
 
 #[test]
 fn cli_parses_story_new() {
-    let cli = Cli::try_parse_from([
-        "board",
-        "story",
-        "new",
-        "Add login",
-        "--type",
-        "feat",
-        "--epic",
-        "web-ui",
-    ])
-    .unwrap();
+    let cli =
+        Cli::try_parse_from(["board", "story", "new", "Add login", "--type", "feat"]).unwrap();
     if let Commands::Management(ManagementCommands::Story {
-        action:
-            StoryAction::New {
-                title,
-                r#type,
-                epic,
-                voyage,
-                scope,
-            },
+        action: StoryAction::New { title, r#type },
     }) = cli.command
     {
         assert_eq!(title, "Add login");
         assert_eq!(r#type, "feat");
-        assert_eq!(epic, Some("web-ui".to_string()));
-        assert!(voyage.is_none());
-        assert!(scope.is_none());
     } else {
         panic!("Expected Story New command");
     }
 }
 
 #[test]
-fn cli_parses_story_new_with_scope() {
-    let cli = Cli::try_parse_from([
-        "board",
+fn cli_rejects_story_new_scope_flag() {
+    let result = crate::build_cli().try_get_matches_from([
+        "keel",
         "story",
         "new",
         "Add login",
         "--scope",
         "web-ui/01-auth",
-    ])
-    .unwrap();
-    if let Commands::Management(ManagementCommands::Story {
-        action:
-            StoryAction::New {
-                title,
-                r#type,
-                epic,
-                voyage,
-                scope,
-            },
-    }) = cli.command
-    {
-        assert_eq!(title, "Add login");
-        assert_eq!(r#type, "feat");
-        assert_eq!(scope, Some("web-ui/01-auth".to_string()));
-        assert!(epic.is_none());
-        assert!(voyage.is_none());
-    } else {
-        panic!("Expected Story New command");
-    }
+    ]);
+    assert!(result.is_err(), "Expected parse error for removed --scope");
 }
 
 #[test]
-fn cli_story_new_voyage_requires_epic() {
-    // --voyage without --epic should fail
-    let result = Cli::try_parse_from([
+fn cli_rejects_story_new_epic_flag() {
+    let result = crate::build_cli().try_get_matches_from([
+        "keel",
+        "story",
+        "new",
+        "Test Story",
+        "--epic",
         "board",
+    ]);
+    assert!(result.is_err(), "Expected parse error for removed --epic");
+}
+
+#[test]
+fn cli_rejects_story_new_voyage_flag() {
+    let result = crate::build_cli().try_get_matches_from([
+        "keel",
         "story",
         "new",
         "Test Story",
         "--voyage",
         "09-acceptance-workflow",
     ]);
-    assert!(result.is_err(), "voyage without epic should fail");
-
-    // --voyage with --epic should succeed
-    let cli = Cli::try_parse_from([
-        "board",
-        "story",
-        "new",
-        "Test Story",
-        "--voyage",
-        "09-acceptance-workflow",
-        "--epic",
-        "board",
-    ])
-    .unwrap();
-    if let Commands::Management(ManagementCommands::Story {
-        action:
-            StoryAction::New {
-                title,
-                epic,
-                voyage,
-                scope,
-                ..
-            },
-    }) = cli.command
-    {
-        assert_eq!(title, "Test Story");
-        assert_eq!(epic, Some("board".to_string()));
-        assert_eq!(voyage, Some("09-acceptance-workflow".to_string()));
-        assert!(scope.is_none());
-    } else {
-        panic!("Expected Story New command");
-    }
+    assert!(result.is_err(), "Expected parse error for removed --voyage");
 }
 
 #[test]
@@ -540,24 +483,16 @@ fn cli_parses_epic_new() {
         "epic",
         "new",
         "auth-system",
-        "--description",
-        "Authentication epic",
         "--goal",
         "Improve login and session handling",
     ])
     .unwrap();
     if let Commands::Management(ManagementCommands::Epic {
-        action:
-            EpicAction::New {
-                name,
-                description,
-                goal,
-            },
+        action: EpicAction::New { name, goal },
     }) = cli.command
     {
         assert_eq!(name, "auth-system");
-        assert_eq!(description, Some("Authentication epic".to_string()));
-        assert_eq!(goal, Some("Improve login and session handling".to_string()));
+        assert_eq!(goal, "Improve login and session handling");
     } else {
         panic!("Expected Epic New command");
     }
@@ -565,18 +500,99 @@ fn cli_parses_epic_new() {
 
 #[test]
 fn cli_parses_epic_new_requires_goal() {
-    let result = Cli::try_parse_from([
-        "board",
+    let result = Cli::try_parse_from(["board", "epic", "new", "auth-system"]);
+    assert!(
+        result.is_err(),
+        "Expected parse error when --goal is missing"
+    );
+}
+
+#[test]
+fn cli_rejects_epic_new_description_flag() {
+    let result = crate::build_cli().try_get_matches_from([
+        "keel",
         "epic",
         "new",
         "auth-system",
+        "--goal",
+        "Improve login and session handling",
         "--description",
         "Authentication epic",
     ]);
     assert!(
         result.is_err(),
-        "Expected parse error when --goal is missing"
+        "Expected parse error for removed --description"
     );
+}
+
+#[test]
+fn cli_creation_commands_reject_system_owned_flags() {
+    let cases = vec![
+        (
+            vec![
+                "keel",
+                "epic",
+                "new",
+                "Auth System",
+                "--goal",
+                "Improve login",
+                "--id",
+                "E-001",
+            ],
+            "epic new",
+        ),
+        (
+            vec![
+                "keel",
+                "voyage",
+                "new",
+                "Command Restructure",
+                "--epic",
+                "board",
+                "--goal",
+                "Improve decomposition",
+                "--status",
+                "draft",
+            ],
+            "voyage new",
+        ),
+        (
+            vec![
+                "keel",
+                "story",
+                "new",
+                "Add Login",
+                "--type",
+                "feat",
+                "--created-at",
+                "2026-01-01T00:00:00",
+            ],
+            "story new",
+        ),
+        (
+            vec!["keel", "bearing", "new", "Discovery Spike", "--index", "1"],
+            "bearing new",
+        ),
+        (
+            vec![
+                "keel",
+                "adr",
+                "new",
+                "Store Events",
+                "--updated-at",
+                "2026-01-01T00:00:00",
+            ],
+            "adr new",
+        ),
+    ];
+
+    for (args, command_name) in cases {
+        let result = crate::build_cli().try_get_matches_from(args);
+        assert!(
+            result.is_err(),
+            "Expected parse error when system-owned field flag is used in {command_name}"
+        );
+    }
 }
 
 #[test]

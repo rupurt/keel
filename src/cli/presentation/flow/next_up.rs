@@ -233,7 +233,10 @@ fn build_human_next_up(board: &Board) -> Vec<NextUpItem> {
             id: epic.id().to_string(),
             title: epic.title().to_string(),
             category: "decompose".to_string(),
-            command: Some(format!("keel voyage new \"<name>\" --epic {}", epic.id())),
+            command: Some(format!(
+                "keel voyage new \"<name>\" --epic {} --goal \"<goal>\"",
+                epic.id()
+            )),
         });
     } else {
         // Fall back to draft voyages needing stories, preferring active epics

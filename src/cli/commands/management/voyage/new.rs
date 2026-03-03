@@ -12,18 +12,22 @@ use crate::infrastructure::template_rendering;
 use crate::infrastructure::templates;
 
 /// Create a new voyage
-pub fn run(name: &str, epic_id: &str, goal: Option<&str>) -> Result<()> {
+pub fn run(name: &str, epic_id: &str, goal: &str) -> Result<()> {
     let board_dir = crate::infrastructure::config::find_board_dir()?;
     new_voyage(&board_dir, name, epic_id, goal)?;
     Ok(())
 }
 
 /// Create a new voyage
-fn new_voyage(board_dir: &Path, name: &str, epic_id: &str, goal: Option<&str>) -> Result<String> {
+fn new_voyage(board_dir: &Path, name: &str, epic_id: &str, goal: &str) -> Result<String> {
     let board = load_board(board_dir)?;
     let now = Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
-    let goal_text =
-        goal.ok_or_else(|| anyhow!("goal is required (use --goal when creating voyage)"))?;
+    let goal_text = goal.trim();
+    if goal_text.is_empty() {
+        return Err(anyhow!(
+            "goal is required (use --goal when creating voyage)"
+        ));
+    }
 
     // Enforce Title Case
     if !crate::infrastructure::utils::is_title_case(name) {
@@ -117,10 +121,7 @@ fn new_voyage(board_dir: &Path, name: &str, epic_id: &str, goal: Option<&str>) -
         "    2. Fill epics/{}/voyages/{}/SDD.md with design",
         epic_id, voyage_id
     );
-    println!(
-        "    3. Decompose into stories: keel story new --epic {} --voyage {}",
-        epic_id, voyage_id
-    );
+    println!("    3. Decompose into stories: keel story new \"<Title>\" --type feat");
     println!();
     println!("  Epic PRD: epics/{}/PRD.md", epic_id);
 
@@ -156,7 +157,7 @@ mod tests {
             .build();
         let board_dir = temp.path();
 
-        let voyage_id = new_voyage(board_dir, "Voyage 1", "test-epic", Some("My goal")).unwrap();
+        let voyage_id = new_voyage(board_dir, "Voyage 1", "test-epic", "My goal").unwrap();
 
         let voyage_dir = board_dir.join("epics/test-epic/voyages").join(&voyage_id);
         assert!(voyage_dir.is_dir());

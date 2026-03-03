@@ -354,12 +354,6 @@ pub fn build_cli() -> Command {
                         .about("Create a new epic")
                         .arg(Arg::new("name").required(true).value_name("NAME"))
                         .arg(
-                            Arg::new("description")
-                                .long("description")
-                                .short('d')
-                                .value_name("DESCRIPTION"),
-                        )
-                        .arg(
                             Arg::new("goal")
                                 .long("goal")
                                 .short('g')
@@ -395,7 +389,13 @@ pub fn build_cli() -> Command {
                         .about("Create a new voyage")
                         .arg(Arg::new("name").required(true).value_name("NAME"))
                         .arg(Arg::new("epic").long("epic").required(true).value_name("EPIC"))
-                        .arg(Arg::new("goal").long("goal").short('g').value_name("GOAL")),
+                        .arg(
+                            Arg::new("goal")
+                                .long("goal")
+                                .short('g')
+                                .value_name("GOAL")
+                                .required(true),
+                        ),
                 )
                 .subcommand(
                     Command::new("start")
@@ -455,10 +455,7 @@ pub fn build_cli() -> Command {
                                 .short('t')
                                 .value_name("TYPE")
                                 .default_value("feat"),
-                        )
-                        .arg(Arg::new("scope").long("scope").value_name("SCOPE"))
-                        .arg(Arg::new("epic").long("epic").value_name("EPIC"))
-                        .arg(Arg::new("voyage").long("voyage").value_name("VOYAGE")),
+                        ),
                 )
                 .subcommand(
                     Command::new("start")
