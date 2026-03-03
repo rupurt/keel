@@ -470,6 +470,7 @@ pub fn print_gap_summary(report: &DoctorReport) {
 mod tests {
     use super::*;
     use crate::domain::model::StoryState;
+    use crate::infrastructure::validation::{CheckId, Severity};
     use crate::test_helpers::{TestBoardBuilder, TestStory};
     use std::fs;
     use tempfile::TempDir;
@@ -570,17 +571,29 @@ mod tests {
             .build();
 
         let report = validate(temp.path()).unwrap();
-        let has_terminal_scaffold_problem = report.story_checks.iter().any(|check| {
-            check.name == "Terminal artifact coherence"
-                && check.problems.iter().any(|problem| {
-                    problem.check_id
-                        == crate::infrastructure::validation::CheckId::StoryTerminalScaffold
-                })
-        });
+        let terminal_scaffold_problems: Vec<_> = report
+            .story_checks
+            .iter()
+            .filter(|check| check.name == "Terminal artifact coherence")
+            .flat_map(|check| check.problems.iter())
+            .filter(|problem| problem.check_id == CheckId::StoryTerminalScaffold)
+            .collect();
 
         assert!(
-            has_terminal_scaffold_problem,
+            !terminal_scaffold_problems.is_empty(),
             "expected terminal artifact coherence check to flag unresolved scaffold text"
+        );
+        assert!(
+            terminal_scaffold_problems
+                .iter()
+                .all(|problem| problem.severity == Severity::Error),
+            "terminal scaffold violations must be hard errors"
+        );
+        assert!(
+            terminal_scaffold_problems.iter().any(|problem| problem
+                .message
+                .contains("README has unresolved scaffold/default text")),
+            "expected README scaffold violation message"
         );
     }
 }

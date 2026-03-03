@@ -820,6 +820,15 @@ mod tests {
             .any(|problem| problem.message.contains(needle))
     }
 
+    fn story_terminal_scaffold_problem<'a>(
+        problems: &'a [Problem],
+        needle: &str,
+    ) -> Option<&'a Problem> {
+        problems.iter().find(|problem| {
+            problem.check_id == CheckId::StoryTerminalScaffold && problem.message.contains(needle)
+        })
+    }
+
     #[test]
     fn evaluate_voyage_transition_plan_skips_legality_checks() {
         let temp = TestBoardBuilder::new()
@@ -1040,10 +1049,20 @@ mod tests {
         let story = board.require_story("S-SUBMIT-README").unwrap();
 
         let problems = evaluate_story_transition(&board, story, StoryTransition::Submit, true);
-        assert!(has_message(
+        let problem = story_terminal_scaffold_problem(
             &problems,
-            "README has unresolved scaffold/default text"
-        ));
+            "README has unresolved scaffold/default text",
+        )
+        .expect("expected README scaffold violation");
+        assert_eq!(problem.severity, Severity::Error);
+        assert_eq!(problem.check_id, CheckId::StoryTerminalScaffold);
+        assert!(
+            problems
+                .iter()
+                .filter(|candidate| candidate.check_id == CheckId::StoryTerminalScaffold)
+                .all(|candidate| candidate.severity == Severity::Error),
+            "terminal scaffold gate must never downgrade to warnings"
+        );
     }
 
     #[test]
@@ -1062,10 +1081,20 @@ mod tests {
         let story = board.require_story("S-SUBMIT-REFLECT").unwrap();
 
         let problems = evaluate_story_transition(&board, story, StoryTransition::Submit, true);
-        assert!(has_message(
+        let problem = story_terminal_scaffold_problem(
             &problems,
-            "REFLECT has unresolved scaffold/default text"
-        ));
+            "REFLECT has unresolved scaffold/default text",
+        )
+        .expect("expected REFLECT scaffold violation");
+        assert_eq!(problem.severity, Severity::Error);
+        assert_eq!(problem.check_id, CheckId::StoryTerminalScaffold);
+        assert!(
+            problems
+                .iter()
+                .filter(|candidate| candidate.check_id == CheckId::StoryTerminalScaffold)
+                .all(|candidate| candidate.severity == Severity::Error),
+            "terminal scaffold gate must never downgrade to warnings"
+        );
     }
 
     #[test]
@@ -1128,10 +1157,20 @@ mod tests {
         let story = board.require_story("S-ACCEPT-REFLECT").unwrap();
 
         let problems = evaluate_story_transition(&board, story, StoryTransition::Accept, false);
-        assert!(has_message(
+        let problem = story_terminal_scaffold_problem(
             &problems,
-            "REFLECT has unresolved scaffold/default text"
-        ));
+            "REFLECT has unresolved scaffold/default text",
+        )
+        .expect("expected REFLECT scaffold violation");
+        assert_eq!(problem.severity, Severity::Error);
+        assert_eq!(problem.check_id, CheckId::StoryTerminalScaffold);
+        assert!(
+            problems
+                .iter()
+                .filter(|candidate| candidate.check_id == CheckId::StoryTerminalScaffold)
+                .all(|candidate| candidate.severity == Severity::Error),
+            "terminal scaffold gate must never downgrade to warnings"
+        );
     }
 
     #[test]

@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-03T11:45:30.089567516-08:00
+mode: manual
+---
+Legacy message-only scaffold assertions were replaced with hard-failure checks that enforce error severity for StoryTerminalScaffold issues.,

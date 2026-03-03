@@ -15,6 +15,7 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
+| [Add Hard Cutover Regression Coverage](stories/1vxH84jzB/README.md) | chore | [Template Contract Hard Cutover](epics/1vxGy5tco/) / [Doctor And Transition Hard Enforcement](epics/1vxGy5tco/voyages/1vxGzVpw5/) |
 
 ## In Progress
 
@@ -25,7 +26,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Add Hard Cutover Regression Coverage](stories/1vxH84jzB/README.md) | chore | [Template Contract Hard Cutover](epics/1vxGy5tco/) / [Doctor And Transition Hard Enforcement](epics/1vxGy5tco/voyages/1vxGzVpw5/) |
 
 <details>
 <summary><h2>Icebox</h2></summary>
