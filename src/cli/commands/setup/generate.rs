@@ -35,6 +35,10 @@ pub fn run(board_dir: &Path) -> Result<()> {
         }
     }
 
+    // 4. Regenerate persistent weekly throughput history for diagnostics graphs.
+    let history = crate::read_model::throughput_history::project_default(&board);
+    crate::infrastructure::throughput_history_store::save_if_changed(board_dir, &history)?;
+
     if backfill_stats.stories_updated > 0 || backfill_stats.voyages_updated > 0 {
         println!(
             "Backfilled started_at timestamps (stories: {}, voyages: {})",
@@ -95,6 +99,15 @@ mod tests {
         let readme = fs::read_to_string(temp.path().join("README.md")).unwrap();
         assert!(readme.contains("# Planning Board"));
         assert!(readme.contains("FEAT0001"));
+    }
+
+    #[test]
+    fn generate_writes_flow_history_snapshot() {
+        let temp = TestBoardBuilder::new().build();
+        run(temp.path()).unwrap();
+
+        let history = fs::read_to_string(temp.path().join("flow_history.json")).unwrap();
+        assert!(history.contains("\"schema_version\": 1"));
     }
 
     #[test]

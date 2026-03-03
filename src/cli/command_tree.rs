@@ -26,6 +26,7 @@ Diagnostics
   doctor      Validate board health and optionally fix issues
   status      Show board status summary
   flow        Show two-actor flow dashboard (human queue vs agent queue)
+  throughput  Show weekly throughput and timing sparklines
   capacity    Show per-epic capacity breakdown with parallel potential
   gaps        Show gap classification summary (runs doctor, shows only gap counts)
 "#;
@@ -72,6 +73,17 @@ pub fn build_cli() -> Command {
         .subcommand(
             Command::new("flow")
                 .about("Show two-actor flow dashboard (human queue vs agent queue)")
+                .hide(true)
+                .arg(
+                    Arg::new("no_color")
+                        .long("no-color")
+                        .help("Disable color output (also respects NO_COLOR env var)")
+                        .action(ArgAction::SetTrue),
+                ),
+        )
+        .subcommand(
+            Command::new("throughput")
+                .about("Show weekly throughput and timing sparklines")
                 .hide(true)
                 .arg(
                     Arg::new("no_color")

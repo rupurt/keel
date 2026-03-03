@@ -5,7 +5,7 @@ use std::collections::{HashMap, HashSet};
 use std::fmt::Write;
 
 pub use super::capacity::EpicCapacityReport;
-use super::theme::Theme;
+use crate::cli::presentation::theme::Theme;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DepStatus {

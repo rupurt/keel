@@ -41,6 +41,10 @@ pub fn run() -> Result<()> {
             let no_color = *m.get_one::<bool>("no_color").unwrap_or(&false);
             super::commands::diagnostics::flow::run(&resolve_board_dir()?, no_color)
         }
+        Some(("throughput", m)) => {
+            let no_color = *m.get_one::<bool>("no_color").unwrap_or(&false);
+            super::commands::diagnostics::throughput::run(&resolve_board_dir()?, no_color)
+        }
         Some(("next", m)) => {
             let agent = *m.get_one::<bool>("agent").unwrap_or(&false);
             let json = *m.get_one::<bool>("json").unwrap_or(&false);

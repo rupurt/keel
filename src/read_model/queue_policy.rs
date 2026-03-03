@@ -3,10 +3,10 @@
 //! This facade provides one API for queue classification so `next`, flow
 //! bottleneck analysis, and flow state decisions consume identical policy data.
 
-use crate::cli::presentation::flow::metrics::FlowMetrics;
 pub use crate::domain::policy::queue::{
     AgentQueueCategory, DraftVoyageQueueCategory, VerificationQueueCategory,
 };
+use crate::read_model::flow_metrics::FlowMetrics;
 
 /// Canonical queue-policy snapshot derived from flow metrics.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -59,11 +59,11 @@ pub fn classify_draft_voyage(story_count: usize) -> DraftVoyageQueueCategory {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cli::presentation::flow::metrics::{
-        ExecutionMetrics, FlowMetrics, PlanningMetrics, ResearchMetrics, VerificationMetrics,
-    };
     use crate::domain::policy::queue::{
         FLOW_VERIFY_BLOCK_THRESHOLD, HUMAN_NEXT_VERIFY_BLOCK_THRESHOLD,
+    };
+    use crate::read_model::flow_metrics::{
+        ExecutionMetrics, FlowMetrics, PlanningMetrics, ResearchMetrics, VerificationMetrics,
     };
 
     #[test]

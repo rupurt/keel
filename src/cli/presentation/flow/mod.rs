@@ -9,11 +9,13 @@ pub mod capacity;
 pub mod display;
 pub mod format;
 pub mod layout;
-pub mod metrics;
 pub mod next_up;
-pub mod theme;
 pub mod throughput;
 
+pub use crate::read_model::flow_metrics::{
+    ExecutionMetrics, FlowMetrics, GovernanceMetrics, PlanningMetrics, ResearchMetrics,
+    VerificationMetrics, calculate_metrics,
+};
 pub use bottleneck::{
     ActorQueue, BottleneckAnalysis, BottleneckConstraint, PipelineStage, TwoActorHealth,
     analyze_health, analyze_two_actor_health,
@@ -25,15 +27,12 @@ pub use format::{
     render_epic_capacities,
 };
 pub use layout::LayoutConfig;
-pub use metrics::{
-    ExecutionMetrics, FlowMetrics, GovernanceMetrics, PlanningMetrics, ResearchMetrics,
-    VerificationMetrics, calculate_metrics,
-};
 pub use next_up::{NextUpItem, NextUpSection, calculate_next_up};
-pub use theme::Theme;
 pub use throughput::calculate_throughput;
 
 /// Calculate board-wide flow state summary.
-pub fn calculate_flow_state(board: &crate::domain::model::Board) -> metrics::FlowMetrics {
-    metrics::calculate_metrics(board)
+pub fn calculate_flow_state(
+    board: &crate::domain::model::Board,
+) -> crate::read_model::flow_metrics::FlowMetrics {
+    crate::read_model::flow_metrics::calculate_metrics(board)
 }

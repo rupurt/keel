@@ -20,7 +20,7 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
 
     let epic = board.require_epic(id)?;
 
-    let width = crate::cli::presentation::flow::display::get_terminal_width();
+    let width = crate::cli::presentation::terminal::get_terminal_width();
     println!("{}", style::heavy_rule(width, None));
     println!(
         "{}",

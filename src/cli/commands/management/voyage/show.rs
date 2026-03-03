@@ -15,7 +15,7 @@ pub fn run(id: &str) -> Result<()> {
 
     let voyage = board.require_voyage(id)?;
 
-    let width = crate::cli::presentation::flow::display::get_terminal_width();
+    let width = crate::cli::presentation::terminal::get_terminal_width();
 
     // Header
     println!("{}", style::heavy_rule(width, None));

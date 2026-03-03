@@ -135,7 +135,7 @@ pub fn progress_bar(
     checked: usize,
     total: usize,
     width: usize,
-    theme: Option<&crate::cli::presentation::flow::theme::Theme>,
+    theme: Option<&crate::cli::presentation::theme::Theme>,
 ) -> String {
     if total == 0 {
         return String::new();
@@ -177,7 +177,7 @@ pub fn capacity_progress_bar(
     in_flight: usize,
     total: usize,
     width: usize,
-    theme: Option<&crate::cli::presentation::flow::theme::Theme>,
+    theme: Option<&crate::cli::presentation::theme::Theme>,
 ) -> String {
     if total == 0 {
         let empty = "░".repeat(width);
@@ -328,7 +328,7 @@ pub fn styled_scope(scope: Option<&str>) -> String {
 }
 
 /// Dim horizontal rule
-pub fn rule(width: usize, theme: Option<&crate::cli::presentation::flow::theme::Theme>) -> String {
+pub fn rule(width: usize, theme: Option<&crate::cli::presentation::theme::Theme>) -> String {
     let s = "─".repeat(width);
     if let Some(t) = theme {
         format!("{}{}{}", t.muted, s, t.reset)
@@ -338,10 +338,7 @@ pub fn rule(width: usize, theme: Option<&crate::cli::presentation::flow::theme::
 }
 
 /// Bold horizontal rule
-pub fn heavy_rule(
-    width: usize,
-    theme: Option<&crate::cli::presentation::flow::theme::Theme>,
-) -> String {
+pub fn heavy_rule(width: usize, theme: Option<&crate::cli::presentation::theme::Theme>) -> String {
     let s = "═".repeat(width);
     if let Some(t) = theme {
         format!("{}{}{}", t.muted, s, t.reset)

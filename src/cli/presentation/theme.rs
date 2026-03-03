@@ -1,8 +1,6 @@
-//! Theme configuration for flow display
-//!
-//! Centralizes ANSI color codes and supports --no-color flag and NO_COLOR env var.
+//! Shared ANSI theme configuration for CLI presentation rendering.
 
-/// Color theme for flow display
+/// Color theme used by terminal presentation renderers.
 #[derive(Debug, Clone)]
 pub struct Theme {
     /// Color for human actor (cyan)
@@ -20,16 +18,16 @@ pub struct Theme {
 }
 
 impl Theme {
-    /// Check if colors are enabled based on --no-color flag and NO_COLOR env var
+    /// Check if colors are enabled based on --no-color flag and NO_COLOR env var.
     pub fn should_use_color(no_color_flag: bool) -> bool {
         if no_color_flag {
             return false;
         }
-        // Per no-color.org: NO_COLOR env var presence (any value) disables color
+        // Per no-color.org: NO_COLOR env var presence (any value) disables color.
         std::env::var("NO_COLOR").is_err()
     }
 
-    /// Get the appropriate theme based on color settings
+    /// Get the appropriate theme based on color settings.
     pub fn for_color_mode(use_color: bool) -> Self {
         if use_color {
             Self::default()
@@ -53,7 +51,7 @@ impl Default for Theme {
 }
 
 impl Theme {
-    /// Theme with no colors (empty strings)
+    /// Theme with no colors (empty strings).
     pub fn no_color() -> Self {
         Self {
             human: "",

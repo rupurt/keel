@@ -8,18 +8,11 @@ use super::box_component::BoxComponent;
 use super::format::{
     QueueItemDisplay, classify_stories, render_dependency_chains, render_epic_capacities,
 };
-use super::metrics::FlowMetrics;
-use super::theme::Theme;
 use crate::cli::presentation::flow::layout::LayoutConfig;
+use crate::cli::presentation::theme::Theme;
 use crate::cli::style;
 use crate::domain::model::Board;
-
-/// Get the current terminal width, falling back to a default.
-pub fn get_terminal_width() -> usize {
-    terminal_size::terminal_size()
-        .map(|(w, _)| w.0 as usize)
-        .unwrap_or(100)
-}
+use crate::read_model::flow_metrics::FlowMetrics;
 
 /// Render an annotated pipeline flow diagram.
 pub fn render_annotated_flow(
@@ -274,7 +267,7 @@ fn render_stacked_queue_boxes(health: &TwoActorHealth, width: usize, theme: &The
 mod tests {
     use super::*;
     use crate::cli::presentation::flow::bottleneck::TwoActorHealth;
-    use crate::cli::presentation::flow::metrics::{
+    use crate::read_model::flow_metrics::{
         ExecutionMetrics, GovernanceMetrics, PlanningMetrics, ResearchMetrics, VerificationMetrics,
     };
 

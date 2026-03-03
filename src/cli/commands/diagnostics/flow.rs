@@ -2,7 +2,8 @@
 
 use anyhow::Result;
 
-use crate::cli::presentation::flow::display::{get_terminal_width, render_annotated_flow};
+use crate::cli::presentation::flow::display::render_annotated_flow;
+use crate::cli::presentation::terminal::get_terminal_width;
 use crate::infrastructure::loader::load_board;
 use crate::read_model::flow_status;
 

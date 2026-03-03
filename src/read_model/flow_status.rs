@@ -3,8 +3,8 @@
 //! This read model centralizes board operational metrics so `flow`, `status`,
 //! and `next` consume one deterministic projection source.
 
-use crate::cli::presentation::flow::metrics::{FlowMetrics, calculate_metrics};
 use crate::domain::model::Board;
+use crate::read_model::flow_metrics::{FlowMetrics, calculate_metrics};
 
 /// Combined operational projection for flow and status consumers.
 #[derive(Debug)]

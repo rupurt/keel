@@ -47,6 +47,12 @@ enum DiagnosticsCommands {
         #[arg(long)]
         no_color: bool,
     },
+    /// Show weekly throughput and timing sparklines
+    Throughput {
+        /// Disable color output (also respects NO_COLOR env var)
+        #[arg(long)]
+        no_color: bool,
+    },
     /// Surface the single most important thing to work on
     Next {
         /// Filter by role taxonomy (e.g., "engineer/software:infrastructure")
@@ -214,6 +220,16 @@ fn cli_parses_flow_command() {
         cli.command,
         Commands::Diagnostics(DiagnosticsCommands::Flow { .. })
     ));
+}
+
+#[test]
+fn cli_parses_throughput_command() {
+    let cli = Cli::try_parse_from(["board", "throughput", "--no-color"]).unwrap();
+    if let Commands::Diagnostics(DiagnosticsCommands::Throughput { no_color }) = cli.command {
+        assert!(no_color);
+    } else {
+        panic!("Expected Throughput command");
+    }
 }
 
 #[test]

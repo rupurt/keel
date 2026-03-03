@@ -16,7 +16,7 @@ pub fn run(board_dir: &Path, id: &str) -> Result<()> {
         .find(|k| k.id == id)
         .ok_or_else(|| anyhow!("Knowledge unit not found: {}", id))?;
 
-    let width = crate::cli::presentation::flow::display::get_terminal_width();
+    let width = crate::cli::presentation::terminal::get_terminal_width();
     println!("{}", style::heavy_rule(width, None));
     println!("{}", style::header(&k.id, &k.title, style::styled_story_id));
     println!("{}", style::heavy_rule(width, None));

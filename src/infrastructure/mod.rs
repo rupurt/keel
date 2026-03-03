@@ -10,6 +10,7 @@ pub mod scoring;
 pub mod story_id;
 pub mod template_rendering;
 pub mod templates;
+pub mod throughput_history_store;
 pub mod utils;
 pub mod validation;
 pub mod verification;

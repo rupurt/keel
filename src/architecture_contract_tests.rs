@@ -198,7 +198,7 @@ fn next_algorithm_avoids_interface_or_transition_edges() {
         &[
             "crate::cli::commands::",
             "crate::domain::transitions::",
-            "crate::cli::presentation::flow::metrics::calculate_metrics",
+            "crate::read_model::flow_metrics::calculate_metrics",
         ],
     );
 }
@@ -218,11 +218,19 @@ fn flow_and_status_adapters_use_canonical_projection_service() {
     );
     assert!(
         !flow.contains("flow::metrics::calculate_metrics"),
-        "flow adapter should not use local flow metrics directly"
+        "flow adapter should not use legacy flow metrics path directly"
     );
     assert!(
         !status.contains("flow::metrics::calculate_metrics"),
-        "status adapter should not use local flow metrics directly"
+        "status adapter should not use legacy flow metrics path directly"
+    );
+    assert!(
+        !flow.contains("read_model::flow_metrics::calculate_metrics"),
+        "flow adapter should use canonical projection service instead of direct flow metrics"
+    );
+    assert!(
+        !status.contains("read_model::flow_metrics::calculate_metrics"),
+        "status adapter should use canonical projection service instead of direct flow metrics"
     );
 }
 
@@ -241,6 +249,28 @@ fn capacity_diagnostics_adapter_delegates_to_shared_capacity_interface() {
     assert!(
         !capacity.contains("load_board"),
         "capacity diagnostics adapter should not duplicate board loading logic"
+    );
+}
+
+#[test]
+fn throughput_diagnostics_adapter_uses_throughput_projection_and_store() {
+    let throughput = read_production_source("src/cli/commands/diagnostics/throughput.rs");
+
+    assert!(
+        throughput.contains("read_model::throughput_history::project_default"),
+        "throughput diagnostics adapter should consume throughput projection via read model"
+    );
+    assert!(
+        throughput.contains("infrastructure::throughput_history_store::save_if_changed"),
+        "throughput diagnostics adapter should persist through the infrastructure store adapter"
+    );
+    assert!(
+        !throughput.contains("flow::metrics::calculate_metrics"),
+        "throughput diagnostics adapter should not depend on legacy flow metrics path"
+    );
+    assert!(
+        !throughput.contains("read_model::flow_metrics::calculate_metrics"),
+        "throughput diagnostics adapter should not bypass throughput projection with direct flow metrics"
     );
 }
 
@@ -350,7 +380,11 @@ fn read_model_projection_layer_avoids_command_and_transition_edges() {
         let content = fs::read_to_string(&path).expect("read_model source should be readable");
         let violations = forbidden_patterns(
             &content,
-            &["crate::cli::commands::", "crate::domain::transitions::"],
+            &[
+                "crate::cli::commands::",
+                "crate::cli::presentation::",
+                "crate::domain::transitions::",
+            ],
         );
         assert!(
             violations.is_empty(),

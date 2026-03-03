@@ -1,8 +1,8 @@
-//! Shared flow metrics calculation
+//! Canonical flow metrics projection shared by diagnostics and queue policy.
 
 use crate::domain::model::{Board, EpicState, StoryState, VoyageState};
 
-/// High-level summary of board-wide flow state
+/// High-level summary of board-wide flow state.
 #[derive(Debug, Default)]
 pub struct FlowMetrics {
     pub execution: ExecutionMetrics,
@@ -50,7 +50,7 @@ pub struct GovernanceMetrics {
     pub accepted_count: usize,
 }
 
-/// Calculate board-wide flow metrics
+/// Calculate board-wide flow metrics.
 pub fn calculate_metrics(board: &Board) -> FlowMetrics {
     let mut metrics = FlowMetrics::default();
 
