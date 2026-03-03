@@ -2,11 +2,12 @@
 id: 1vxGzV3oR
 index: 1
 title: Template And CLI Contract Canonicalization
-status: in-progress
+status: done
 epic: 1vxGy5tco
 created_at: 2026-03-02T20:04:13
 updated_at: 2026-03-02T21:05:48
 started_at: 2026-03-02T21:31:55
+completed_at: 2026-03-03T15:53:40
 ---
 
 # Template And CLI Contract Canonicalization
