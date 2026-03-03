@@ -18,6 +18,14 @@ static SCOPE_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?m)^scope:\s*(
 
 use super::model::{Knowledge, KnowledgeSourceType};
 
+/// Validation issue found in a knowledge block.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct KnowledgeValidationIssue {
+    pub id: String,
+    pub title: String,
+    pub reason: String,
+}
+
 /// Parse a knowledge table from markdown content.
 ///
 /// Knowledge tables have this format:
@@ -38,7 +46,7 @@ fn parse_knowledge_table(
     id: &str,
     title: &str,
     header_end: usize,
-) -> Option<Knowledge> {
+) -> Result<Knowledge, String> {
     let remaining = &content[header_end..];
 
     // Extract table rows (lines with pipes)
@@ -58,15 +66,39 @@ fn parse_knowledge_table(
         }
 
         if let Some(caps) = field_re.captures(line) {
-            let field_name = caps.get(1)?.as_str().to_lowercase().replace(' ', "");
-            let value = caps.get(2)?.as_str().trim().to_string();
+            let Some(field_match) = caps.get(1) else {
+                continue;
+            };
+            let Some(value_match) = caps.get(2) else {
+                continue;
+            };
+            let field_name = field_match.as_str().to_lowercase().replace(' ', "");
+            let value = value_match.as_str().trim().to_string();
             fields.insert(field_name, value);
         }
     }
 
-    // Require at least an insight field
-    if !fields.contains_key("insight") {
-        return None;
+    let mut missing = Vec::new();
+
+    if title.trim().is_empty() || is_placeholder_title(title) {
+        missing.push("title");
+    }
+
+    let insight = fields.get("insight").cloned().unwrap_or_default();
+    if insight.trim().is_empty() {
+        missing.push("insight");
+    }
+
+    let suggested_action = fields.get("suggestedaction").cloned().unwrap_or_default();
+    if suggested_action.trim().is_empty() {
+        missing.push("suggested action");
+    }
+
+    if !missing.is_empty() {
+        return Err(format!(
+            "missing or default required fields: {}",
+            missing.join(", ")
+        ));
     }
 
     let observed_at = fields.get("observedat").and_then(|s| {
@@ -85,7 +117,7 @@ fn parse_knowledge_table(
         .and_then(|s| s.parse::<f64>().ok())
         .unwrap_or(0.8);
 
-    Some(Knowledge {
+    Ok(Knowledge {
         id: id.to_string(),
         source: std::path::PathBuf::new(),       // Set by caller
         source_type: KnowledgeSourceType::Story, // Set by caller
@@ -96,8 +128,8 @@ fn parse_knowledge_table(
             .cloned()
             .unwrap_or_else(|| "unknown".to_string()),
         context: fields.get("context").cloned().unwrap_or_default(),
-        insight: fields.get("insight").cloned().unwrap_or_default(),
-        suggested_action: fields.get("suggestedaction").cloned().unwrap_or_default(),
+        insight,
+        suggested_action,
         applies_to: fields.get("appliesto").cloned().unwrap_or_default(),
         applied: fields.get("applied").cloned().unwrap_or_default(),
         observed_at,
@@ -106,22 +138,43 @@ fn parse_knowledge_table(
     })
 }
 
+fn strip_html_comments(content: &str) -> String {
+    let mut stripped = content.to_string();
+    while let Some(start) = stripped.find("<!--") {
+        if let Some(end) = stripped[start..].find("-->") {
+            stripped.replace_range(start..start + end + 3, "");
+        } else {
+            break;
+        }
+    }
+    stripped
+}
+
+fn is_placeholder_title(title: &str) -> bool {
+    let normalized = title.trim().to_lowercase();
+    matches!(
+        normalized.as_str(),
+        "title" | "todo: title" | "todo:title" | "implementation insight"
+    )
+}
+
 /// Parse all knowledge from a markdown content section.
-fn parse_knowledge_from_content(
+pub fn parse_knowledge_from_content(
     content: &str,
     source: &Path,
     source_type: KnowledgeSourceType,
 ) -> Vec<Knowledge> {
     let mut knowledge_list = Vec::new();
+    let sanitized = strip_html_comments(content);
 
     let header_re = &*KNOWLEDGE_HEADER_RE;
 
-    for caps in header_re.captures_iter(content) {
+    for caps in header_re.captures_iter(&sanitized) {
         let id = caps.get(1).map(|m| m.as_str()).unwrap_or("");
         let title = caps.get(2).map(|m| m.as_str().trim()).unwrap_or("");
         let header_end = caps.get(0).map(|m| m.end()).unwrap_or(0);
 
-        if let Some(mut knowledge) = parse_knowledge_table(content, id, title, header_end) {
+        if let Ok(mut knowledge) = parse_knowledge_table(&sanitized, id, title, header_end) {
             knowledge.source = source.to_path_buf();
             knowledge.source_type = source_type;
             knowledge_list.push(knowledge);
@@ -129,6 +182,34 @@ fn parse_knowledge_from_content(
     }
 
     knowledge_list
+}
+
+/// Validate all knowledge blocks in content and return quality issues.
+///
+/// Rules:
+/// - Title must be non-empty and not a scaffold/default label.
+/// - Insight must be non-empty.
+/// - Suggested Action must be non-empty.
+pub fn validate_knowledge_content(content: &str) -> Vec<KnowledgeValidationIssue> {
+    let mut issues = Vec::new();
+    let sanitized = strip_html_comments(content);
+    let header_re = &*KNOWLEDGE_HEADER_RE;
+
+    for caps in header_re.captures_iter(&sanitized) {
+        let id = caps.get(1).map(|m| m.as_str()).unwrap_or("").to_string();
+        let title = caps
+            .get(2)
+            .map(|m| m.as_str().trim())
+            .unwrap_or("")
+            .to_string();
+        let header_end = caps.get(0).map(|m| m.end()).unwrap_or(0);
+
+        if let Err(reason) = parse_knowledge_table(&sanitized, &id, &title, header_end) {
+            issues.push(KnowledgeValidationIssue { id, title, reason });
+        }
+    }
+
+    issues
 }
 
 /// Extract a section from markdown content.
@@ -406,6 +487,7 @@ mod tests {
 |-------|-------|
 | **Category** | code |
 | **Insight** | First insight |
+| **Suggested Action** | Apply first action |
 
 ### L002: Second Knowledge
 
@@ -413,6 +495,7 @@ mod tests {
 |-------|-------|
 | **Category** | process |
 | **Insight** | Second insight |
+| **Suggested Action** | Apply second action |
 "#;
 
         let knowledge_list = parse_knowledge_from_content(
@@ -435,6 +518,7 @@ mod tests {
 |-------|-------|
 | **Category** | architecture |
 | **Insight** | Voyage insight |
+| **Suggested Action** | Apply voyage action |
 "#;
 
         let knowledge_list = parse_knowledge_from_content(
@@ -491,6 +575,7 @@ status: done
 |-------|-------|
 | **Category** | testing |
 | **Insight** | This is a test insight |
+| **Suggested Action** | Add this assertion pattern |
 "#;
 
         fs::write(bundle_dir.join("README.md"), readme_content).unwrap();
@@ -524,6 +609,7 @@ status: done
 |-------|-------|
 | **Category** | architecture |
 | **Insight** | A synthesized insight |
+| **Suggested Action** | Keep the synthesis contract stable |
 "#;
 
         fs::write(
@@ -678,5 +764,53 @@ status: done
 "#;
 
         assert!(extract_scope_from_frontmatter(content).is_none());
+    }
+
+    #[test]
+    fn parse_knowledge_ignores_commented_examples() {
+        let content = r#"
+## Knowledge
+
+<!--
+### L001: Title
+| Field | Value |
+|-------|-------|
+| **Insight** | Example insight |
+| **Suggested Action** | Example action |
+-->
+
+### L002: Real Insight
+| Field | Value |
+|-------|-------|
+| **Insight** | Real insight |
+| **Suggested Action** | Real action |
+"#;
+
+        let knowledge_list = parse_knowledge_from_content(
+            content,
+            Path::new("/test.md"),
+            KnowledgeSourceType::Story,
+        );
+
+        assert_eq!(knowledge_list.len(), 1);
+        assert_eq!(knowledge_list[0].id, "L002");
+    }
+
+    #[test]
+    fn validate_knowledge_reports_missing_required_fields() {
+        let content = r#"
+### L001: Implementation Insight
+| Field | Value |
+|-------|-------|
+| **Insight** | |
+| **Suggested Action** | |
+"#;
+
+        let issues = validate_knowledge_content(content);
+        assert_eq!(issues.len(), 1);
+        assert_eq!(issues[0].id, "L001");
+        assert!(issues[0].reason.contains("title"));
+        assert!(issues[0].reason.contains("insight"));
+        assert!(issues[0].reason.contains("suggested action"));
     }
 }

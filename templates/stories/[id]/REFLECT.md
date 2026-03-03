@@ -3,7 +3,8 @@
 ## Knowledge
 
 <!--
-Institutional memory is mandatory. Capture what you learned during implementation.
+Capture only novel/actionable knowledge that is likely useful in future work.
+If there is no reusable insight for this story, leave the Knowledge section empty.
 Format:
 ### L001: Title
 | Field | Value |
@@ -18,20 +19,6 @@ Format:
 | **Confidence** | 0.0-1.0 (insight quality) |
 | **Applied** | |
 -->
-
-### L001: TODO: Title
-
-| Field | Value |
-|-------|-------|
-| **Category** | |
-| **Context** | |
-| **Insight** | |
-| **Suggested Action** | |
-| **Applies To** | |
-| **Observed At** | |
-| **Score** | |
-| **Confidence** | |
-| **Applied** | |
 
 ## Observations
 

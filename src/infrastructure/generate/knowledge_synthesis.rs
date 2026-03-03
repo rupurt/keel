@@ -26,6 +26,14 @@ pub fn synthesize_voyage_knowledge(board: &Board, voyage: &Voyage) -> Result<()>
         if reflect_path.exists() {
             let content = fs::read_to_string(&reflect_path)
                 .with_context(|| format!("Failed to read reflection for story {}", story.id()))?;
+            let insights = crate::read_model::knowledge::scanner::parse_knowledge_from_content(
+                &content,
+                &reflect_path,
+                crate::read_model::knowledge::KnowledgeSourceType::Story,
+            );
+            if insights.is_empty() {
+                continue;
+            }
 
             synthesis.push_str(&format!(
                 "## Story: {} ({})
@@ -34,7 +42,20 @@ pub fn synthesize_voyage_knowledge(board: &Board, voyage: &Voyage) -> Result<()>
                 story.title(),
                 story.id()
             ));
-            synthesis.push_str(&content);
+            for insight in insights {
+                synthesis.push_str(&format!("### {}: {}\n\n", insight.id, insight.title));
+                synthesis.push_str("| Field | Value |\n");
+                synthesis.push_str("|-------|-------|\n");
+                synthesis.push_str(&format!("| **Category** | {} |\n", insight.category));
+                synthesis.push_str(&format!("| **Context** | {} |\n", insight.context));
+                synthesis.push_str(&format!("| **Insight** | {} |\n", insight.insight));
+                synthesis.push_str(&format!(
+                    "| **Suggested Action** | {} |\n",
+                    insight.suggested_action
+                ));
+                synthesis.push_str(&format!("| **Applies To** | {} |\n", insight.applies_to));
+                synthesis.push_str(&format!("| **Applied** | {} |\n\n", insight.applied));
+            }
             synthesis.push_str(
                 "
 

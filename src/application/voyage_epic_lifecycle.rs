@@ -198,9 +198,16 @@ fn generate_press_release(
         let reflect_path = story_dir.join("REFLECT.md");
         if reflect_path.exists() {
             let reflect_content = fs::read_to_string(reflect_path)?;
-            writeln!(output, "### Insights from {}", story.title()).unwrap();
-            writeln!(output, "{}", reflect_content.trim()).unwrap();
-            writeln!(output).unwrap();
+            let insights = crate::read_model::knowledge::scanner::parse_knowledge_from_content(
+                &reflect_content,
+                &story_dir.join("REFLECT.md"),
+                crate::read_model::knowledge::KnowledgeSourceType::Story,
+            );
+            if !insights.is_empty() {
+                writeln!(output, "### Insights from {}", story.title()).unwrap();
+                render_story_insights(&mut output, &insights);
+                writeln!(output).unwrap();
+            }
         }
     }
 
@@ -266,6 +273,18 @@ fn extract_story_summary(content: &str) -> Option<String> {
         None
     } else {
         Some(trimmed.to_string())
+    }
+}
+
+fn render_story_insights(
+    output: &mut String,
+    insights: &[crate::read_model::knowledge::Knowledge],
+) {
+    for insight in insights {
+        writeln!(output, "- **{}: {}**", insight.id, insight.title).unwrap();
+        writeln!(output, "  - Insight: {}", insight.insight).unwrap();
+        writeln!(output, "  - Suggested Action: {}", insight.suggested_action).unwrap();
+        writeln!(output).unwrap();
     }
 }
 

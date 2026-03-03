@@ -184,17 +184,6 @@ fn evaluate_story_submit(_board: &Board, story: &Story) -> Vec<Problem> {
             Problem::error(story.path.clone(), "REFLECT.md missing in bundle")
                 .with_check_id(CheckId::Unknown),
         );
-    } else if let Ok(reflect_content) = fs::read_to_string(&reflect_path)
-        && !reflect_content.contains("### L")
-        && !reflect_content.contains("### ML")
-    {
-        problems.push(
-            Problem::error(
-                reflect_path,
-                "No knowledge units found in REFLECT.md (Institutional memory is mandatory)",
-            )
-            .with_check_id(CheckId::Unknown),
-        );
     }
 
     // 2. Check for SRS refs
@@ -306,14 +295,6 @@ fn evaluate_story_accept(
             Problem::error(story.path.clone(), "REFLECT.md missing in bundle")
                 .with_check_id(CheckId::Unknown),
         );
-    } else if let Ok(content) = fs::read_to_string(&reflect_path)
-        && !content.contains("### L")
-        && !content.contains("### ML")
-    {
-        problems.push(
-            Problem::error(reflect_path, "No knowledge units found in REFLECT.md")
-                .with_check_id(CheckId::Unknown),
-        );
     }
 
     // 2. Ensure EVIDENCE/ directory exists
@@ -356,23 +337,40 @@ fn check_story_bundle_coherence(story: &Story, bundle_dir: &std::path::Path) -> 
     let reflect_path = bundle_dir.join("REFLECT.md");
     if reflect_path.exists()
         && let Ok(content) = fs::read_to_string(&reflect_path)
-        && let Some(pattern) =
+    {
+        if let Some(pattern) =
             crate::infrastructure::validation::structural::first_unfilled_placeholder_pattern(
                 &content,
             )
-    {
-        problems.push(Problem {
-            severity: Severity::Error,
-            path: reflect_path,
-            scope: story.scope().map(String::from),
-            message: format!(
-                "REFLECT has unresolved scaffold/default text (pattern: {})",
-                pattern
-            ),
-            fix: None,
-            category: None,
-            check_id: CheckId::StoryTerminalScaffold,
-        });
+        {
+            problems.push(Problem {
+                severity: Severity::Error,
+                path: reflect_path.clone(),
+                scope: story.scope().map(String::from),
+                message: format!(
+                    "REFLECT has unresolved scaffold/default text (pattern: {})",
+                    pattern
+                ),
+                fix: None,
+                category: None,
+                check_id: CheckId::StoryTerminalScaffold,
+            });
+        }
+
+        for issue in crate::read_model::knowledge::scanner::validate_knowledge_content(&content) {
+            problems.push(Problem {
+                severity: Severity::Error,
+                path: reflect_path.clone(),
+                scope: story.scope().map(String::from),
+                message: format!(
+                    "REFLECT has invalid knowledge unit {}: {}",
+                    issue.id, issue.reason
+                ),
+                fix: None,
+                category: None,
+                check_id: CheckId::StoryTerminalScaffold,
+            });
+        }
     }
 
     problems
@@ -1098,6 +1096,55 @@ mod tests {
     }
 
     #[test]
+    fn evaluate_story_submit_blocks_invalid_knowledge_entry() {
+        let temp = TestBoardBuilder::new()
+            .story(TestStory::new("S-SUBMIT-KNOWLEDGE").title("Story 1").body(
+                "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] implemented <!-- verify: cargo test, SRS-01:start:end -->",
+            ))
+            .build();
+        fs::write(
+            temp.path().join("stories/S-SUBMIT-KNOWLEDGE/REFLECT.md"),
+            "# Reflection\n\n## Knowledge\n\n### L001: Implementation Insight\n\n| Field | Value |\n|-------|-------|\n| **Insight** | |\n| **Suggested Action** | |\n",
+        )
+        .unwrap();
+        let board = load_board(temp.path()).unwrap();
+        let story = board.require_story("S-SUBMIT-KNOWLEDGE").unwrap();
+
+        let problems = evaluate_story_transition(&board, story, StoryTransition::Submit, true);
+        assert!(
+            has_message(&problems, "REFLECT has invalid knowledge unit"),
+            "invalid knowledge entries should be hard-blocked on submit"
+        );
+    }
+
+    #[test]
+    fn evaluate_story_submit_allows_reflect_without_knowledge_entries() {
+        let temp = TestBoardBuilder::new()
+            .story(TestStory::new("S-SUBMIT-OPTIONAL-KNOWLEDGE").title("Story 1").body(
+                "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] implemented <!-- verify: cargo test, SRS-01:start:end -->",
+            ))
+            .build();
+        fs::write(
+            temp.path()
+                .join("stories/S-SUBMIT-OPTIONAL-KNOWLEDGE/REFLECT.md"),
+            "# Reflection\n\n## Knowledge\n\n## Observations\n\nNo novel reusable insight in this slice.\n",
+        )
+        .unwrap();
+        let board = load_board(temp.path()).unwrap();
+        let story = board.require_story("S-SUBMIT-OPTIONAL-KNOWLEDGE").unwrap();
+
+        let problems = evaluate_story_transition(&board, story, StoryTransition::Submit, true);
+        assert!(
+            !has_message(&problems, "No knowledge units found"),
+            "knowledge capture should be optional when no reusable insights are present"
+        );
+        assert!(
+            !has_message(&problems, "REFLECT has invalid knowledge unit"),
+            "empty knowledge section should not be treated as invalid"
+        );
+    }
+
+    #[test]
     fn evaluate_story_accept_requires_human_override_for_manual_checks() {
         let temp = TestBoardBuilder::new()
             .story(
@@ -1170,6 +1217,63 @@ mod tests {
                 .filter(|candidate| candidate.check_id == CheckId::StoryTerminalScaffold)
                 .all(|candidate| candidate.severity == Severity::Error),
             "terminal scaffold gate must never downgrade to warnings"
+        );
+    }
+
+    #[test]
+    fn evaluate_story_accept_blocks_invalid_knowledge_entry() {
+        let temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("S-ACCEPT-KNOWLEDGE")
+                    .stage(StoryState::NeedsHumanVerification)
+                    .body(
+                        "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Done <!-- verify: cargo test, SRS-01:start:end -->",
+                    ),
+            )
+            .build();
+        fs::write(
+            temp.path().join("stories/S-ACCEPT-KNOWLEDGE/REFLECT.md"),
+            "# Reflection\n\n## Knowledge\n\n### L001: Title\n\n| Field | Value |\n|-------|-------|\n| **Insight** | Placeholder insight |\n| **Suggested Action** | |\n",
+        )
+        .unwrap();
+        let board = load_board(temp.path()).unwrap();
+        let story = board.require_story("S-ACCEPT-KNOWLEDGE").unwrap();
+
+        let problems = evaluate_story_transition(&board, story, StoryTransition::Accept, false);
+        assert!(
+            has_message(&problems, "REFLECT has invalid knowledge unit"),
+            "invalid knowledge entries should be hard-blocked on accept"
+        );
+    }
+
+    #[test]
+    fn evaluate_story_accept_allows_reflect_without_knowledge_entries() {
+        let temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("S-ACCEPT-OPTIONAL-KNOWLEDGE")
+                    .stage(StoryState::NeedsHumanVerification)
+                    .body(
+                        "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Done <!-- verify: cargo test, SRS-01:start:end -->",
+                    ),
+            )
+            .build();
+        fs::write(
+            temp.path()
+                .join("stories/S-ACCEPT-OPTIONAL-KNOWLEDGE/REFLECT.md"),
+            "# Reflection\n\n## Knowledge\n\n## Observations\n\nNo reusable insight captured.\n",
+        )
+        .unwrap();
+        let board = load_board(temp.path()).unwrap();
+        let story = board.require_story("S-ACCEPT-OPTIONAL-KNOWLEDGE").unwrap();
+
+        let problems = evaluate_story_transition(&board, story, StoryTransition::Accept, false);
+        assert!(
+            !has_message(&problems, "No knowledge units found"),
+            "knowledge capture should be optional at accept time"
+        );
+        assert!(
+            !has_message(&problems, "REFLECT has invalid knowledge unit"),
+            "empty knowledge section should be allowed"
         );
     }
 

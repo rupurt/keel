@@ -1,1 +1,1 @@
-### L001: Automated narrative synthesis reduces human reporting overhead
+### Note 001: Automated narrative synthesis reduces human reporting overhead

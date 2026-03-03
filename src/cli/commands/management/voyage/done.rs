@@ -194,7 +194,11 @@ END FUNCTIONAL_REQUIREMENTS
 
         // Add reflection manually
         let reflect_path = temp.path().join("stories/S1/REFLECT.md");
-        fs::write(reflect_path, "### L001: Insight 1").unwrap();
+        fs::write(
+            reflect_path,
+            "## Knowledge\n\n### L001: Insight 1\n\n| Field | Value |\n|-------|-------|\n| **Insight** | Keep story summary and evidence synchronized |\n| **Suggested Action** | Require synchronized updates in done flow |\n",
+        )
+        .unwrap();
 
         // Add evidence manually
         let evidence_dir = temp.path().join("stories/S1/EVIDENCE");
@@ -214,7 +218,8 @@ END FUNCTIONAL_REQUIREMENTS
         assert!(release_content.contains("### Story 1"));
         assert!(release_content.contains("This is story 1 summary."));
         assert!(release_content.contains("## Key Insights"));
-        assert!(release_content.contains("### L001: Insight 1"));
+        assert!(release_content.contains("L001: Insight 1"));
+        assert!(release_content.contains("Suggested Action"));
         assert!(release_content.contains("## Verification Proof"));
         assert!(release_content.contains("proof.txt"));
 

@@ -56,11 +56,18 @@ pub fn generate_voyage_report(board: &Board, voyage: &Voyage) -> String {
         let story_dir = story.path.parent().unwrap();
         let reflect_path = story_dir.join("REFLECT.md");
         if reflect_path.exists()
-            && let Ok(reflect_content) = fs::read_to_string(reflect_path)
+            && let Ok(reflect_content) = fs::read_to_string(&reflect_path)
         {
-            writeln!(narrative).unwrap();
-            writeln!(narrative, "#### Implementation Insights").unwrap();
-            writeln!(narrative, "{}", reflect_content.trim()).unwrap();
+            let insights = crate::read_model::knowledge::scanner::parse_knowledge_from_content(
+                &reflect_content,
+                &reflect_path,
+                crate::read_model::knowledge::KnowledgeSourceType::Story,
+            );
+            if !insights.is_empty() {
+                writeln!(narrative).unwrap();
+                writeln!(narrative, "#### Implementation Insights").unwrap();
+                render_knowledge_entries(&mut narrative, &insights);
+            }
         }
 
         // Include Evidence links
@@ -129,5 +136,23 @@ fn extract_summary(content: &str) -> Option<String> {
         None
     } else {
         Some(trimmed.to_string())
+    }
+}
+
+fn render_knowledge_entries(
+    output: &mut String,
+    entries: &[crate::read_model::knowledge::Knowledge],
+) {
+    for entry in entries {
+        writeln!(output, "- **{}: {}**", entry.id, entry.title).unwrap();
+        writeln!(output, "  - Insight: {}", entry.insight).unwrap();
+        writeln!(output, "  - Suggested Action: {}", entry.suggested_action).unwrap();
+        if !entry.applies_to.trim().is_empty() {
+            writeln!(output, "  - Applies To: {}", entry.applies_to).unwrap();
+        }
+        if !entry.category.trim().is_empty() && entry.category != "unknown" {
+            writeln!(output, "  - Category: {}", entry.category).unwrap();
+        }
+        writeln!(output).unwrap();
     }
 }

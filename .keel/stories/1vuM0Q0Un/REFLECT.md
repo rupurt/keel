@@ -1,1 +1,1 @@
-### L001: Centralized structural validation logic
+### Note 001: Centralized structural validation logic

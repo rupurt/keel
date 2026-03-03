@@ -87,7 +87,7 @@ fn regression_story_lifecycle_command_chain_reaches_done() {
     fs::create_dir_all(&evidence_dir).unwrap();
     fs::write(
         temp.path().join("stories/REGCHAIN1/REFLECT.md"),
-        "### L001: Insight",
+        "# Reflection\n\n## Knowledge\n\n## Observations\n\nNo reusable insight captured.\n",
     )
     .unwrap();
 

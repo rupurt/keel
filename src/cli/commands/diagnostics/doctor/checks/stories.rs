@@ -957,23 +957,39 @@ pub fn check_terminal_story_coherence(board: &Board) -> Vec<Problem> {
         let reflect_path = story.path.parent().unwrap().join("REFLECT.md");
         if reflect_path.exists()
             && let Ok(content) = fs::read_to_string(&reflect_path)
-            && let Some(pattern) = structural::first_unfilled_placeholder_pattern(&content)
         {
-            problems.push(
-                Problem::error(
-                    reflect_path.clone(),
-                    format!(
-                        "REFLECT has unresolved scaffold/default text (pattern: {})",
-                        pattern
-                    ),
-                )
-                .with_check_id(CheckId::StoryTerminalScaffold)
-                .with_scope(scope.clone())
-                .with_fix(Fix::ClearPlaceholder {
-                    path: reflect_path,
-                    pattern,
-                }),
-            );
+            if let Some(pattern) = structural::first_unfilled_placeholder_pattern(&content) {
+                problems.push(
+                    Problem::error(
+                        reflect_path.clone(),
+                        format!(
+                            "REFLECT has unresolved scaffold/default text (pattern: {})",
+                            pattern
+                        ),
+                    )
+                    .with_check_id(CheckId::StoryTerminalScaffold)
+                    .with_scope(scope.clone())
+                    .with_fix(Fix::ClearPlaceholder {
+                        path: reflect_path.clone(),
+                        pattern,
+                    }),
+                );
+            }
+
+            for issue in crate::read_model::knowledge::scanner::validate_knowledge_content(&content)
+            {
+                problems.push(
+                    Problem::error(
+                        reflect_path.clone(),
+                        format!(
+                            "REFLECT has invalid knowledge unit {}: {}",
+                            issue.id, issue.reason
+                        ),
+                    )
+                    .with_check_id(CheckId::StoryTerminalScaffold)
+                    .with_scope(scope.clone()),
+                );
+            }
         }
     }
 
@@ -1199,6 +1215,62 @@ mod tests {
             problems[0]
                 .message
                 .contains("REFLECT has unresolved scaffold/default text")
+        );
+    }
+
+    #[test]
+    fn terminal_coherence_fails_invalid_knowledge_entries_in_reflect() {
+        let temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("S1")
+                    .stage(StoryState::Done)
+                    .body("## Summary\n\nImplemented.\n\n## Acceptance Criteria\n\n- [x] [SRS-03/AC-01] done <!-- verify: manual, SRS-03:start:end -->"),
+            )
+            .build();
+
+        let reflect_path = temp.path().join("stories").join("S1").join("REFLECT.md");
+        fs::write(
+            &reflect_path,
+            "# Reflection - Test\n\n## Knowledge\n\n### L001: Implementation Insight\n\n| Field | Value |\n|-------|-------|\n| **Insight** | |\n| **Suggested Action** | |\n",
+        )
+        .unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_terminal_story_coherence(&board);
+
+        assert!(
+            problems
+                .iter()
+                .any(|p| p.message.contains("invalid knowledge unit")),
+            "expected invalid knowledge unit error for placeholder/empty knowledge block"
+        );
+    }
+
+    #[test]
+    fn terminal_coherence_allows_reflect_without_knowledge_entries() {
+        let temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("S1")
+                    .stage(StoryState::Done)
+                    .body("## Summary\n\nImplemented.\n\n## Acceptance Criteria\n\n- [x] [SRS-03/AC-01] done <!-- verify: manual, SRS-03:start:end -->"),
+            )
+            .build();
+
+        let reflect_path = temp.path().join("stories").join("S1").join("REFLECT.md");
+        fs::write(
+            &reflect_path,
+            "# Reflection - Test\n\n## Knowledge\n\n## Observations\n\nNo reusable insight captured.",
+        )
+        .unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_terminal_story_coherence(&board);
+
+        assert!(
+            problems
+                .iter()
+                .all(|p| !p.message.contains("invalid knowledge unit")),
+            "empty knowledge sections should be allowed"
         );
     }
 

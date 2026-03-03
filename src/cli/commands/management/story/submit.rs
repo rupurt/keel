@@ -20,6 +20,9 @@ mod tests {
     use regex::Regex;
     use std::fs;
 
+    const REFLECT_NO_KNOWLEDGE: &str =
+        "# Reflection\n\n## Knowledge\n\n## Observations\n\nNo reusable insight captured.\n";
+
     #[test]
     fn submit_moves_story_to_ready_for_acceptance() {
         let temp = TestBoardBuilder::new()
@@ -35,7 +38,7 @@ mod tests {
         fs::create_dir_all(temp.path().join("stories/ACTIVE1/EVIDENCE")).unwrap();
         fs::write(
             temp.path().join("stories/ACTIVE1/REFLECT.md"),
-            "### L001: Insight",
+            REFLECT_NO_KNOWLEDGE,
         )
         .unwrap();
 
@@ -62,7 +65,7 @@ mod tests {
         fs::create_dir_all(temp.path().join("stories/SUBMIT1/EVIDENCE")).unwrap();
         fs::write(
             temp.path().join("stories/SUBMIT1/REFLECT.md"),
-            "### L001: Insight",
+            REFLECT_NO_KNOWLEDGE,
         )
         .unwrap();
 
@@ -104,7 +107,7 @@ mod tests {
         fs::create_dir_all(temp.path().join("stories/1vkqtsCCC/EVIDENCE")).unwrap();
         fs::write(
             temp.path().join("stories/1vkqtsCCC/REFLECT.md"),
-            "### L001: Insight",
+            REFLECT_NO_KNOWLEDGE,
         )
         .unwrap();
 
@@ -132,7 +135,7 @@ mod tests {
         fs::create_dir_all(temp.path().join("stories/1vkqtsDDD/EVIDENCE")).unwrap();
         fs::write(
             temp.path().join("stories/1vkqtsDDD/REFLECT.md"),
-            "### L001: Insight",
+            REFLECT_NO_KNOWLEDGE,
         )
         .unwrap();
 
@@ -154,7 +157,7 @@ mod tests {
         fs::create_dir_all(temp.path().join("stories/1vkqtsEEE/EVIDENCE")).unwrap();
         fs::write(
             temp.path().join("stories/1vkqtsEEE/REFLECT.md"),
-            "### L001: Insight",
+            REFLECT_NO_KNOWLEDGE,
         )
         .unwrap();
 
@@ -181,7 +184,7 @@ mod tests {
         fs::create_dir_all(temp.path().join("stories/FLATACT/EVIDENCE")).unwrap();
         fs::write(
             temp.path().join("stories/FLATACT/REFLECT.md"),
-            "### L001: Insight",
+            REFLECT_NO_KNOWLEDGE,
         )
         .unwrap();
 
@@ -211,7 +214,7 @@ mod tests {
         fs::create_dir_all(temp.path().join("stories/1vkqtsVV1/EVIDENCE")).unwrap();
         fs::write(
             temp.path().join("stories/1vkqtsVV1/REFLECT.md"),
-            "### L001: Insight",
+            REFLECT_NO_KNOWLEDGE,
         )
         .unwrap();
 
@@ -235,7 +238,7 @@ mod tests {
         fs::create_dir_all(temp.path().join("stories/1vkqtsVV2/EVIDENCE")).unwrap();
         fs::write(
             temp.path().join("stories/1vkqtsVV2/REFLECT.md"),
-            "### L001: Insight",
+            REFLECT_NO_KNOWLEDGE,
         )
         .unwrap();
 

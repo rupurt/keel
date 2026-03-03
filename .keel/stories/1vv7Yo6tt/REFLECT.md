@@ -5,7 +5,7 @@
 <!--
 Institutional memory is mandatory. Capture what you learned during implementation.
 Format:
-### L001: Title
+### Note 001: Title
 | Field | Value |
 |-------|-------|
 | **Category** | code/testing/process/architecture |
@@ -19,7 +19,7 @@ Format:
 | **Applied** | |
 -->
 
-### L001: Implementation Insight
+### Note 001: Implementation Insight
 
 | Field | Value |
 |-------|-------|

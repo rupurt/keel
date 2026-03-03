@@ -1,1 +1,1 @@
-### L001: Centralized submit logic in gating.rs
+### Note 001: Centralized submit logic in gating.rs
