@@ -264,6 +264,8 @@ fn evaluate_story_submit(_board: &Board, story: &Story) -> Vec<Problem> {
         });
     }
 
+    problems.extend(check_story_bundle_coherence(story, bundle_dir));
+
     problems
 }
 
@@ -321,6 +323,56 @@ fn evaluate_story_accept(
             Problem::error(story.path.clone(), "EVIDENCE directory missing in bundle")
                 .with_check_id(CheckId::Unknown),
         );
+    }
+
+    problems.extend(check_story_bundle_coherence(story, bundle_dir));
+
+    problems
+}
+
+fn check_story_bundle_coherence(story: &Story, bundle_dir: &std::path::Path) -> Vec<Problem> {
+    let mut problems = Vec::new();
+
+    if let Ok(content) = fs::read_to_string(&story.path)
+        && let Some(pattern) =
+            crate::infrastructure::validation::structural::first_unfilled_placeholder_pattern(
+                &content,
+            )
+    {
+        problems.push(Problem {
+            severity: Severity::Error,
+            path: story.path.clone(),
+            scope: story.scope().map(String::from),
+            message: format!(
+                "README has unresolved scaffold/default text (pattern: {})",
+                pattern
+            ),
+            fix: None,
+            category: None,
+            check_id: CheckId::StoryTerminalScaffold,
+        });
+    }
+
+    let reflect_path = bundle_dir.join("REFLECT.md");
+    if reflect_path.exists()
+        && let Ok(content) = fs::read_to_string(&reflect_path)
+        && let Some(pattern) =
+            crate::infrastructure::validation::structural::first_unfilled_placeholder_pattern(
+                &content,
+            )
+    {
+        problems.push(Problem {
+            severity: Severity::Error,
+            path: reflect_path,
+            scope: story.scope().map(String::from),
+            message: format!(
+                "REFLECT has unresolved scaffold/default text (pattern: {})",
+                pattern
+            ),
+            fix: None,
+            category: None,
+            check_id: CheckId::StoryTerminalScaffold,
+        });
     }
 
     problems
@@ -759,6 +811,7 @@ mod tests {
     use crate::domain::model::StoryState;
     use crate::infrastructure::loader::load_board;
     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use std::fs;
     use std::path::PathBuf;
 
     fn has_message(problems: &[Problem], needle: &str) -> bool {
@@ -977,6 +1030,45 @@ mod tests {
     }
 
     #[test]
+    fn evaluate_story_submit_blocks_unresolved_readme_scaffold() {
+        let temp = TestBoardBuilder::new()
+            .story(TestStory::new("S-SUBMIT-README").title("Story 1").body(
+                "TODO: finish this\n\n## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] implemented <!-- verify: cargo test, SRS-01:start:end -->",
+            ))
+            .build();
+        let board = load_board(temp.path()).unwrap();
+        let story = board.require_story("S-SUBMIT-README").unwrap();
+
+        let problems = evaluate_story_transition(&board, story, StoryTransition::Submit, true);
+        assert!(has_message(
+            &problems,
+            "README has unresolved scaffold/default text"
+        ));
+    }
+
+    #[test]
+    fn evaluate_story_submit_blocks_unresolved_reflect_scaffold() {
+        let temp = TestBoardBuilder::new()
+            .story(TestStory::new("S-SUBMIT-REFLECT").title("Story 1").body(
+                "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] implemented <!-- verify: cargo test, SRS-01:start:end -->",
+            ))
+            .build();
+        fs::write(
+            temp.path().join("stories/S-SUBMIT-REFLECT/REFLECT.md"),
+            "# Reflection\n\n### L-01: Keep reflection\n\nTODO: replace this",
+        )
+        .unwrap();
+        let board = load_board(temp.path()).unwrap();
+        let story = board.require_story("S-SUBMIT-REFLECT").unwrap();
+
+        let problems = evaluate_story_transition(&board, story, StoryTransition::Submit, true);
+        assert!(has_message(
+            &problems,
+            "REFLECT has unresolved scaffold/default text"
+        ));
+    }
+
+    #[test]
     fn evaluate_story_accept_requires_human_override_for_manual_checks() {
         let temp = TestBoardBuilder::new()
             .story(
@@ -1013,6 +1105,58 @@ mod tests {
         assert!(
             !has_message(&problems, "manual acceptance criteria"),
             "manual requirement should be bypassed when human override is set"
+        );
+    }
+
+    #[test]
+    fn evaluate_story_accept_blocks_unresolved_reflect_scaffold() {
+        let temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("S-ACCEPT-REFLECT")
+                    .stage(StoryState::NeedsHumanVerification)
+                    .body(
+                        "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Done <!-- verify: cargo test, SRS-01:start:end -->",
+                    ),
+            )
+            .build();
+        fs::write(
+            temp.path().join("stories/S-ACCEPT-REFLECT/REFLECT.md"),
+            "# Reflection\n\n### L-01: Captured\n\nTODO: pending cleanup",
+        )
+        .unwrap();
+        let board = load_board(temp.path()).unwrap();
+        let story = board.require_story("S-ACCEPT-REFLECT").unwrap();
+
+        let problems = evaluate_story_transition(&board, story, StoryTransition::Accept, false);
+        assert!(has_message(
+            &problems,
+            "REFLECT has unresolved scaffold/default text"
+        ));
+    }
+
+    #[test]
+    fn evaluate_story_accept_ignores_generated_manifest_for_scaffold_gate() {
+        let temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("S-ACCEPT-MANIFEST")
+                    .stage(StoryState::NeedsHumanVerification)
+                    .body(
+                        "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Done <!-- verify: cargo test, SRS-01:start:end -->",
+                    ),
+            )
+            .build();
+        fs::write(
+            temp.path().join("stories/S-ACCEPT-MANIFEST/manifest.yaml"),
+            "artifact: TODO: generated report content",
+        )
+        .unwrap();
+        let board = load_board(temp.path()).unwrap();
+        let story = board.require_story("S-ACCEPT-MANIFEST").unwrap();
+
+        let problems = evaluate_story_transition(&board, story, StoryTransition::Accept, false);
+        assert!(
+            !has_message(&problems, "unresolved scaffold/default text"),
+            "only README and REFLECT should be checked for unresolved scaffold markers"
         );
     }
 

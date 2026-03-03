@@ -25,11 +25,11 @@ started_at: 2026-03-02T21:46:34
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 2/4 stories complete
+**Progress:** 3/4 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Gate Story Submit And Accept On Coherent Artifacts](../../../../stories/1vxH84M8t/README.md) | feat | backlog |
+| [Gate Story Submit And Accept On Coherent Artifacts](../../../../stories/1vxH84M8t/README.md) | feat | done |
 | [Add Hard Cutover Regression Coverage](../../../../stories/1vxH84jzB/README.md) | chore | backlog |
 | [Escalate Unresolved Scaffold Checks To Doctor Errors](../../../../stories/1vxH84k3U/README.md) | feat | done |
 | [Enforce Terminal Story Coherency In Doctor](../../../../stories/1vxH84nTQ/README.md) | feat | done |

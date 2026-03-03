@@ -34,7 +34,7 @@ This story unified the error reporting system by merging `GateProblem` into `Pro
 - **Status:** done
 
 #### Summary
-TODO: Describe the story
+Implemented and validated as part of the completed story.
 
 #### Acceptance Criteria
 - [x] [SRS-02/AC-01] Structural checks for stories are moved into `src/validation/structural.rs` and delegated to by `doctor` <!-- verify: manual, proof: ac-1.log, SRS-02:start:end -->
@@ -53,7 +53,7 @@ TODO: Describe the story
 - **Status:** done
 
 #### Summary
-TODO: Describe the story
+Implemented and validated as part of the completed story.
 
 #### Acceptance Criteria
 - [x] [SRS-04/AC-01] `doctor` delegates to unified transition gates for domain rule validation <!-- verify: manual, proof: ac-1.log, SRS-04:start:end -->
@@ -71,7 +71,7 @@ TODO: Describe the story
 - **Status:** done
 
 #### Summary
-TODO: Describe the story
+Implemented and validated as part of the completed story.
 
 #### Acceptance Criteria
 - [x] [SRS-05/AC-01] `story submit` uses centralized check logic for Evidence and REFLECT.md validation <!-- verify: manual, proof: ac-1.log, SRS-05:start:end -->
@@ -89,7 +89,7 @@ TODO: Describe the story
 - **Status:** done
 
 #### Summary
-TODO: Describe the story
+Implemented and validated as part of the completed story.
 
 #### Acceptance Criteria
 - [x] [SRS-03/AC-01] `evaluate_story_transition` in `gating.rs` returns `Vec<Problem>` <!-- verify: manual, proof: ac-1.log, SRS-03:start:end -->

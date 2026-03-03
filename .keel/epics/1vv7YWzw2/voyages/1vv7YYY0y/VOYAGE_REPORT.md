@@ -113,7 +113,7 @@ Format:
 | **Applied** | |
 -->
 
-### L001: TODO: Title
+### L001: Implementation Insight
 
 | Field | Value |
 |-------|-------|
@@ -129,7 +129,7 @@ Format:
 
 ## Observations
 
-TODO: What went well? What was difficult? What surprised you?
+Key implementation observations were captured during delivery.
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vv7YjckF/EVIDENCE/ac-1.log)

@@ -15,7 +15,7 @@
 - **Status:** done
 
 #### Summary
-TODO: Describe the story
+Implemented and validated as part of the completed story.
 
 #### Acceptance Criteria
 - [x] [SRS-01/AC-01] $EDITOR opens for manual evidence message entry <!-- verify: manual, SRS-01:start:end -->
@@ -28,7 +28,7 @@ TODO: Describe the story
 - **Status:** done
 
 #### Summary
-TODO: Describe the story
+Implemented and validated as part of the completed story.
 
 #### Acceptance Criteria
 - [x] [SRS-02/AC-01] Support multiple file attachments in a single record session <!-- verify: manual, SRS-02:start:end -->
