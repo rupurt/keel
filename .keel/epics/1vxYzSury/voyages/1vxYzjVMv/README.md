@@ -2,9 +2,10 @@
 id: 1vxYzjVMv
 index: 2
 title: Governance And Research Guidance
-status: draft
+status: planned
 epic: 1vxYzSury
 created_at: 2026-03-03T15:17:39
+updated_at: 2026-03-03T15:49:33
 ---
 
 # Governance And Research Guidance

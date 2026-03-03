@@ -4,6 +4,7 @@ use anyhow::Result;
 
 use super::super::types::*;
 use crate::domain::model::{Board, EpicState};
+use crate::domain::state_machine::invariants;
 use crate::infrastructure::validation::structural;
 
 /// Scan epic files for structural problems
@@ -62,6 +63,36 @@ pub fn check_epic_dates(board: &Board) -> Vec<Problem> {
             &epic.path,
             CheckId::EpicDateConsistency,
         ));
+    }
+
+    problems
+}
+
+/// Check coherence between epic derived status and voyage states.
+pub fn check_epic_status_drift(board: &Board) -> Vec<Problem> {
+    let mut problems = Vec::new();
+
+    for epic in board.epics.values() {
+        let voyage_states: Vec<_> = board
+            .voyages_for_epic(epic)
+            .into_iter()
+            .map(|voyage| voyage.status())
+            .collect();
+
+        let violations =
+            invariants::validate_epic_voyage_coherence(epic.id(), epic.status(), &voyage_states);
+
+        for violation in violations {
+            problems.push(Problem {
+                severity: Severity::Error,
+                path: epic.path.clone(),
+                message: violation.message(),
+                fix: None,
+                scope: Some(epic.id().to_string()),
+                category: Some(GapCategory::Coherence),
+                check_id: CheckId::EpicStatusDrift,
+            });
+        }
     }
 
     problems
@@ -223,7 +254,7 @@ pub fn check_epic_press_release(board: &Board) -> Vec<Problem> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic};
+    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestVoyage};
     use std::fs;
 
     #[test]
@@ -241,5 +272,26 @@ mod tests {
         assert_eq!(problems[0].severity, Severity::Error);
         assert_eq!(problems[0].check_id, CheckId::EpicPressReleaseIncomplete);
         assert!(problems[0].message.contains("pattern: TODO:"));
+    }
+
+    #[test]
+    fn check_epic_status_drift_reports_incoherent_derived_state() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("epic-1"))
+            .voyage(TestVoyage::new("v1", "epic-1").status("draft"))
+            .build();
+        let mut board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+
+        // Simulate stale derived state drift to exercise coherence mapping.
+        board
+            .epics
+            .get_mut("epic-1")
+            .unwrap()
+            .set_status(crate::domain::model::EpicState::Active);
+
+        let problems = check_epic_status_drift(&board);
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].severity, Severity::Error);
+        assert_eq!(problems[0].check_id, CheckId::EpicStatusDrift);
     }
 }

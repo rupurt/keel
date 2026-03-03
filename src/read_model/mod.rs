@@ -2,6 +2,7 @@
 
 pub mod capacity;
 pub mod evidence;
+pub mod execution_queue;
 pub mod flow_metrics;
 pub mod flow_status;
 pub mod knowledge;

@@ -278,6 +278,15 @@ pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
         duration: Duration::from_millis(0),
     });
 
+    let epic_drift_problems = checks::epics::check_epic_status_drift(&board);
+    epic_checks.push(CheckResult {
+        name: "Epic status drift",
+        evaluations: board.epics.len(),
+        passed: epic_drift_problems.is_empty(),
+        problems: epic_drift_problems,
+        duration: Duration::from_millis(0),
+    });
+
     let epic_done_problems = checks::epics::check_epic_done_gates(&board);
     epic_checks.push(CheckResult {
         name: "Epic completion gates",

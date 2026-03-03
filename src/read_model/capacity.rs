@@ -6,6 +6,7 @@
 use std::collections::HashMap;
 
 use crate::domain::model::{Board, StoryState};
+use crate::read_model::execution_queue::{BacklogQueueState, classify_backlog_story};
 use crate::read_model::traceability::derive_implementation_dependencies;
 
 /// Summary of execution capacity per epic.
@@ -75,22 +76,10 @@ pub fn project(board: &Board) -> SystemCapacity {
         match story.stage {
             StoryState::Done => report.capacity.done += 1,
             StoryState::InProgress => report.capacity.in_flight += 1,
-            StoryState::Backlog => {
-                let dep_ids = deps.get(story.id()).cloned().unwrap_or_default();
-                let is_blocked = dep_ids.iter().any(|dep_id: &String| {
-                    if let Some(dep_story) = board.stories.get(dep_id) {
-                        dep_story.stage != StoryState::Done
-                    } else {
-                        false
-                    }
-                });
-
-                if is_blocked {
-                    report.capacity.blocked += 1;
-                } else {
-                    report.capacity.ready += 1;
-                }
-            }
+            StoryState::Backlog => match classify_backlog_story(board, story, &deps) {
+                BacklogQueueState::Ready => report.capacity.ready += 1,
+                BacklogQueueState::Blocked => report.capacity.blocked += 1,
+            },
             StoryState::Icebox | StoryState::Rejected => report.capacity.inactive += 1,
             _ => {}
         }
@@ -188,5 +177,31 @@ mod tests {
 
         assert_eq!(keel_cap.capacity.blocked, 0);
         assert_eq!(keel_cap.capacity.ready, 1);
+    }
+
+    #[test]
+    fn draft_voyage_backlog_story_is_blocked_capacity() {
+        let srs = "# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req1 | test |\nEND FUNCTIONAL_REQUIREMENTS";
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("keel"))
+            .voyage(
+                TestVoyage::new("01-test", "keel")
+                    .status("draft")
+                    .srs_content(srs),
+            )
+            .story(
+                TestStory::new("S1")
+                    .scope("keel/01-test")
+                    .stage(StoryState::Backlog)
+                    .body("- [ ] [SRS-01/AC-01] req1"),
+            )
+            .build();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let cap = project(&board);
+        let keel_cap = cap.epics.iter().find(|e| e.id == "keel").unwrap();
+
+        assert_eq!(keel_cap.capacity.blocked, 1);
+        assert_eq!(keel_cap.capacity.ready, 0);
     }
 }

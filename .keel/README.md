@@ -58,15 +58,15 @@
 | [Template And CLI Contract Canonicalization](epics/1vxGy5tco/voyages/1vxGzV3oR/) | in-progress |
 | [Doctor And Transition Hard Enforcement](epics/1vxGy5tco/voyages/1vxGzVpw5/) | done |
 
-### [Deterministic Command Guidance](epics/1vxYzSury/) (draft) - 5 voyages, 0 done
+### [Deterministic Command Guidance](epics/1vxYzSury/) (active) - 5 voyages, 0 done
 
 | Voyage | Status |
 |--------|--------|
-| [Output Contract And Shared Renderer](epics/1vxYzSury/voyages/1vxYzh8ep/) | draft |
-| [Governance And Research Guidance](epics/1vxYzSury/voyages/1vxYzjVMv/) | draft |
-| [Story And Voyage Lifecycle Guidance](epics/1vxYzSury/voyages/1vxYzjiwH/) | draft |
-| [Decision And Verification Guidance Parity](epics/1vxYzSury/voyages/1vxYzrwma/) | draft |
-| [Command Classification Drift Guards](epics/1vxYzSury/voyages/1vxYzsAxT/) | draft |
+| [Output Contract And Shared Renderer](epics/1vxYzSury/voyages/1vxYzh8ep/) | planned |
+| [Governance And Research Guidance](epics/1vxYzSury/voyages/1vxYzjVMv/) | planned |
+| [Story And Voyage Lifecycle Guidance](epics/1vxYzSury/voyages/1vxYzjiwH/) | planned |
+| [Decision And Verification Guidance Parity](epics/1vxYzSury/voyages/1vxYzrwma/) | planned |
+| [Command Classification Drift Guards](epics/1vxYzSury/voyages/1vxYzsAxT/) | planned |
 
 <details>
 <summary><h2>Done</h2></summary>

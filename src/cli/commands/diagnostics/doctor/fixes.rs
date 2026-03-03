@@ -56,6 +56,14 @@ fn apply_fix(fix: &Fix) -> Result<()> {
             update_frontmatter_field(path, "id", new_id)?;
             println!("  FIX: Updated id in {}", path.display());
         }
+        Fix::UpdateVoyageStatus { path, new_status } => {
+            update_frontmatter_field(path, "status", new_status)?;
+            println!(
+                "  FIX: Updated voyage status to '{}' in {}",
+                new_status,
+                path.display()
+            );
+        }
         Fix::ClearPlaceholder { path, pattern } => {
             let content = fs::read_to_string(path)?;
             let new_content = content.replace(pattern, "");
@@ -145,5 +153,30 @@ impl TestIndex {
 
     pub fn find_match(&self, _criterion: &str) -> Option<String> {
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn apply_fix_updates_voyage_status() {
+        let temp = tempfile::tempdir().unwrap();
+        let readme = temp.path().join("README.md");
+        fs::write(
+            &readme,
+            "---\nid: v1\ntitle: Voyage\nstatus: in-progress\n---\n\n# Voyage\n",
+        )
+        .unwrap();
+
+        apply_fix(&Fix::UpdateVoyageStatus {
+            path: readme.clone(),
+            new_status: "done".to_string(),
+        })
+        .unwrap();
+
+        let content = fs::read_to_string(&readme).unwrap();
+        assert!(content.contains("status: done"));
     }
 }

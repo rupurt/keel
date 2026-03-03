@@ -2,9 +2,10 @@
 id: 1vxYzjiwH
 index: 3
 title: Story And Voyage Lifecycle Guidance
-status: draft
+status: planned
 epic: 1vxYzSury
 created_at: 2026-03-03T15:17:39
+updated_at: 2026-03-03T15:49:33
 ---
 
 # Story And Voyage Lifecycle Guidance

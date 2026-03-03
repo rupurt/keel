@@ -194,6 +194,8 @@ pub enum CheckId {
     StoryTerminalScaffold,
     StoryMissingManifest,
     StoryManifestTampered,
+    VoyageStatusDrift,
+    EpicStatusDrift,
     EpicMissingReadme,
     EpicMissingPrd,
     EpicMissingPressRelease,

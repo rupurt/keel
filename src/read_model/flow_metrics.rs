@@ -1,7 +1,7 @@
 //! Canonical flow metrics projection shared by diagnostics and queue policy.
 
 use crate::domain::model::{Board, EpicState, StoryState, VoyageState};
-use crate::read_model::traceability::derive_implementation_dependencies;
+use crate::read_model::execution_queue;
 
 /// High-level summary of board-wide flow state.
 #[derive(Debug, Default)]
@@ -56,7 +56,6 @@ pub struct GovernanceMetrics {
 /// Calculate board-wide flow metrics.
 pub fn calculate_metrics(board: &Board) -> FlowMetrics {
     let mut metrics = FlowMetrics::default();
-    let deps = derive_implementation_dependencies(board);
 
     // 1. Execution
     let backlog_stories: Vec<_> = board
@@ -65,22 +64,9 @@ pub fn calculate_metrics(board: &Board) -> FlowMetrics {
         .filter(|s| s.stage == StoryState::Backlog)
         .collect();
     metrics.execution.backlog_count = backlog_stories.len();
-
-    for story in &backlog_stories {
-        let dep_ids = deps.get(story.id()).map_or(&[][..], Vec::as_slice);
-        let is_blocked = dep_ids.iter().any(|dep_id| {
-            board
-                .stories
-                .get(dep_id)
-                .is_some_and(|dep_story| dep_story.stage != StoryState::Done)
-        });
-
-        if is_blocked {
-            metrics.execution.backlog_blocked_count += 1;
-        } else {
-            metrics.execution.backlog_ready_count += 1;
-        }
-    }
+    let (ready, blocked) = execution_queue::backlog_queue_counts(board);
+    metrics.execution.backlog_ready_count = ready;
+    metrics.execution.backlog_blocked_count = blocked;
 
     metrics.execution.in_progress_count = board
         .stories
@@ -224,6 +210,31 @@ mod tests {
 
         assert_eq!(m.execution.backlog_count, 2);
         assert_eq!(m.execution.backlog_ready_count, 1);
+        assert_eq!(m.execution.backlog_blocked_count, 1);
+    }
+
+    #[test]
+    fn calculate_treats_backlog_in_draft_voyage_as_blocked() {
+        let srs = "# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req1 | test |\nEND FUNCTIONAL_REQUIREMENTS";
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("keel"))
+            .voyage(
+                TestVoyage::new("01-test", "keel")
+                    .status("draft")
+                    .srs_content(srs),
+            )
+            .story(
+                TestStory::new("S1")
+                    .scope("keel/01-test")
+                    .stage(StoryState::Backlog)
+                    .body("- [ ] [SRS-01/AC-01] req1"),
+            )
+            .build();
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let m = calculate_metrics(&board);
+
+        assert_eq!(m.execution.backlog_count, 1);
+        assert_eq!(m.execution.backlog_ready_count, 0);
         assert_eq!(m.execution.backlog_blocked_count, 1);
     }
 
