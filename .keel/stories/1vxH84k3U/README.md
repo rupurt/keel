@@ -19,4 +19,4 @@ Promote unresolved scaffold/default text findings from warning-level to error-le
 
 - [ ] [SRS-01/AC-01] Doctor emits errors (not warnings) for unresolved scaffold/default patterns in covered planning/coherency docs.
 - [ ] [SRS-01/AC-02] Doctor error output includes artifact path and offending pattern for remediation.
-- [ ] [SRS-05/AC-01] Generated report artifacts remain excluded from this enforcement scope.
+- [ ] [SRS-01/AC-03] Enforcement remains hard-cutover and does not downgrade unresolved scaffold/default findings to warnings.

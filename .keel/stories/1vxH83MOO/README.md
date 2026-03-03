@@ -19,4 +19,4 @@ Align creation command interfaces with ownership policy so only user-owned input
 
 - [ ] [SRS-02/AC-01] Verify `epic new`, `voyage new`, `story new`, `bearing new`, and `adr new` expose only approved user-owned creation inputs.
 - [ ] [SRS-02/AC-02] Confirm no creation command introduces CLI flags for system-owned fields (`id`, `index`, `status`, `*_at`).
-- [ ] [SRS-04/AC-01] Make `voyage new --goal` required at CLI parse time and keep runtime validation behavior coherent.
+- [ ] [SRS-02/AC-03] Make `voyage new --goal` required at CLI parse time and keep runtime validation behavior coherent.

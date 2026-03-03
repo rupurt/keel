@@ -19,4 +19,4 @@ Enforce submit/accept lifecycle gating so unresolved scaffold/default story and 
 
 - [ ] [SRS-04/AC-01] Story submit is blocked when story README or REFLECT contains unresolved scaffold/default patterns.
 - [ ] [SRS-04/AC-02] Story accept is blocked on the same coherency violations.
-- [ ] [SRS-04/AC-03] Gate failure output is actionable and identifies failing artifacts/patterns.
+- [ ] [SRS-05/AC-01] Generated report artifacts remain excluded from unresolved-scaffold enforcement scope.
