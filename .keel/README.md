@@ -16,6 +16,7 @@
 | Story | Type | Scope |
 |-------|------|-------|
 | [Canonicalize Template Tokens To Schema Names](stories/1vxH83JcY/README.md) | refactor | [Template Contract Hard Cutover](epics/1vxGy5tco/) / [Template And CLI Contract Canonicalization](epics/1vxGy5tco/voyages/1vxGzV3oR/) |
+| [Escalate Unresolved Scaffold Checks To Doctor Errors](stories/1vxH84k3U/README.md) | feat | [Template Contract Hard Cutover](epics/1vxGy5tco/) / [Doctor And Transition Hard Enforcement](epics/1vxGy5tco/voyages/1vxGzVpw5/) |
 
 ## In Progress
 
@@ -26,7 +27,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Escalate Unresolved Scaffold Checks To Doctor Errors](stories/1vxH84k3U/README.md) | feat | [Template Contract Hard Cutover](epics/1vxGy5tco/) / [Doctor And Transition Hard Enforcement](epics/1vxGy5tco/voyages/1vxGzVpw5/) |
 | [Align CLI Contracts For Creation Commands](stories/1vxH83MOO/README.md) | feat | [Template Contract Hard Cutover](epics/1vxGy5tco/) / [Template And CLI Contract Canonicalization](epics/1vxGy5tco/voyages/1vxGzV3oR/) |
 | [Enforce Terminal Story Coherency In Doctor](stories/1vxH84nTQ/README.md) | feat | [Template Contract Hard Cutover](epics/1vxGy5tco/) / [Doctor And Transition Hard Enforcement](epics/1vxGy5tco/voyages/1vxGzVpw5/) |
 | [Gate Story Submit And Accept On Coherent Artifacts](stories/1vxH84M8t/README.md) | feat | [Template Contract Hard Cutover](epics/1vxGy5tco/) / [Doctor And Transition Hard Enforcement](epics/1vxGy5tco/voyages/1vxGzVpw5/) |
@@ -49,7 +49,7 @@
 | Voyage | Status |
 |--------|--------|
 | [Template And CLI Contract Canonicalization](epics/1vxGy5tco/voyages/1vxGzV3oR/) | in-progress |
-| [Doctor And Transition Hard Enforcement](epics/1vxGy5tco/voyages/1vxGzVpw5/) | planned |
+| [Doctor And Transition Hard Enforcement](epics/1vxGy5tco/voyages/1vxGzVpw5/) | in-progress |
 
 <details>
 <summary><h2>Done</h2></summary>

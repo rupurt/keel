@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-02T21:49:41.936258871-08:00
+mode: manual
+---
+Doctor messages now include offending unresolved pattern text (for example pattern: TODO:) alongside artifact paths.

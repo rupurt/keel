@@ -202,14 +202,44 @@ pub fn check_epic_press_release(board: &Board) -> Vec<Problem> {
             Err(_) => continue,
         };
 
-        if content.contains("TODO:") || content.contains("{{") {
+        if let Some(pattern) = structural::first_unfilled_placeholder_pattern(&content) {
             problems.push(
-                Problem::warning(pr_path, "PRESS_RELEASE.md has unfilled placeholders")
-                    .with_check_id(CheckId::EpicPressReleaseIncomplete)
-                    .with_scope(epic.id()),
+                Problem::error(
+                    pr_path,
+                    format!(
+                        "PRESS_RELEASE.md has unresolved scaffold/default text (pattern: {})",
+                        pattern
+                    ),
+                )
+                .with_check_id(CheckId::EpicPressReleaseIncomplete)
+                .with_scope(epic.id()),
             );
         }
     }
 
     problems
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_helpers::{TestBoardBuilder, TestEpic};
+    use std::fs;
+
+    #[test]
+    fn check_epic_press_release_reports_unresolved_scaffold_as_error() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("epic-1"))
+            .build();
+        let pr_path = temp.path().join("epics/epic-1/PRESS_RELEASE.md");
+        fs::write(&pr_path, "# PRESS RELEASE\n\nTODO: finalize release copy").unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_epic_press_release(&board);
+
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].severity, Severity::Error);
+        assert_eq!(problems[0].check_id, CheckId::EpicPressReleaseIncomplete);
+        assert!(problems[0].message.contains("pattern: TODO:"));
+    }
 }

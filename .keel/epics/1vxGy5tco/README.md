@@ -23,5 +23,5 @@ created_at: 2026-03-02T20:02:45
 | Voyage | Status | Stories |
 |--------|--------|---------|
 | [Template And CLI Contract Canonicalization](voyages/1vxGzV3oR/) | in-progress | 0/4 |
-| [Doctor And Transition Hard Enforcement](voyages/1vxGzVpw5/) | planned | 0/4 |
+| [Doctor And Transition Hard Enforcement](voyages/1vxGzVpw5/) | in-progress | 0/4 |
 <!-- END GENERATED -->

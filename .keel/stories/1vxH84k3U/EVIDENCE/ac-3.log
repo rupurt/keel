@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-02T21:49:41.289373406-08:00
+mode: manual
+---
+Added regression tests enforcing hard-cutover behavior so unresolved scaffold/default checks are not downgraded back to warnings.

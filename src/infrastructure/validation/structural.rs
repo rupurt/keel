@@ -3,12 +3,16 @@
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::LazyLock;
 
 use anyhow::Result;
 
 use crate::domain::model::{EpicFrontmatter, StoryFrontmatter};
 use crate::infrastructure::parser::parse_frontmatter;
 use crate::infrastructure::validation::types::{CheckId, Fix, Problem, Severity};
+
+static TEMPLATE_TOKEN_RE: LazyLock<regex::Regex> =
+    LazyLock::new(|| regex::Regex::new(r"\{\{([^}]+)\}\}").unwrap());
 
 /// Check for date field naming and type consistency.
 ///
@@ -167,6 +171,10 @@ pub fn scan_story_files(board_dir: &Path) -> Result<(Vec<Problem>, usize)> {
 /// Check if a string contains unfilled placeholders (TODO: or unreplaced {{tokens}}).
 /// Ignores markers inside HTML comments.
 pub fn is_placeholder_unfilled(content: &str) -> bool {
+    first_unfilled_placeholder_pattern(content).is_some()
+}
+
+fn strip_html_comments(content: &str) -> String {
     let mut search_text = content.to_string();
     while let Some(start) = search_text.find("<!--") {
         if let Some(end) = search_text[start..].find("-->") {
@@ -176,15 +184,24 @@ pub fn is_placeholder_unfilled(content: &str) -> bool {
         }
     }
 
-    // 1. Check for literal TODO:
+    search_text
+}
+
+/// Return the first unresolved scaffold/default marker outside comments.
+///
+/// Markers are either:
+/// - literal `TODO:`
+/// - unresolved `{{token}}` placeholders
+pub fn first_unfilled_placeholder_pattern(content: &str) -> Option<String> {
+    let search_text = strip_html_comments(content);
+
     if search_text.contains("TODO:") {
-        return true;
+        return Some("TODO:".to_string());
     }
 
-    // 2. Check for unreplaced template tokens {{placeholder}}
-    // Use a regex to find {{...}} that weren't substituted
-    let token_re = regex::Regex::new(r"\{\{([^}]+)\}\}").unwrap();
-    token_re.is_match(&search_text)
+    TEMPLATE_TOKEN_RE
+        .find(&search_text)
+        .map(|marker| marker.as_str().to_string())
 }
 
 /// Extract story ID from file by parsing frontmatter.
@@ -534,27 +551,30 @@ pub fn check_epic_readme_structure(path: &Path) -> Vec<Problem> {
 
     if content.contains("> TODO: Value proposition") {
         problems.push(
-            Problem::warning(path.to_path_buf(), "goal is unfilled")
-                .with_check_id(CheckId::Unknown)
-                .with_fix(Fix::ClearPlaceholder {
-                    path: path.to_path_buf(),
-                    pattern: "> TODO: Value proposition".to_string(),
-                }),
+            Problem::error(
+                path.to_path_buf(),
+                "goal is unfilled (pattern: > TODO: Value proposition)",
+            )
+            .with_check_id(CheckId::Unknown)
+            .with_fix(Fix::ClearPlaceholder {
+                path: path.to_path_buf(),
+                pattern: "> TODO: Value proposition".to_string(),
+            }),
         );
-    } else if is_placeholder_unfilled(&content) {
-        let token_re = regex::Regex::new(r"\{\{([^}]+)\}\}").unwrap();
-        let pattern = token_re
-            .find(&content)
-            .map(|m| m.as_str().to_string())
-            .unwrap_or_else(|| "TODO:".to_string());
-
+    } else if let Some(pattern) = first_unfilled_placeholder_pattern(&content) {
         problems.push(
-            Problem::warning(path.to_path_buf(), "contains unfilled TODO placeholder")
-                .with_check_id(CheckId::Unknown)
-                .with_fix(Fix::ClearPlaceholder {
-                    path: path.to_path_buf(),
-                    pattern,
-                }),
+            Problem::error(
+                path.to_path_buf(),
+                format!(
+                    "contains unresolved scaffold/default text (pattern: {})",
+                    pattern
+                ),
+            )
+            .with_check_id(CheckId::Unknown)
+            .with_fix(Fix::ClearPlaceholder {
+                path: path.to_path_buf(),
+                pattern,
+            }),
         );
     }
 
@@ -569,17 +589,14 @@ pub fn check_voyage_readme_structure(path: &Path) -> Vec<Problem> {
         Err(_) => return problems,
     };
 
-    if is_placeholder_unfilled(&content) {
-        let token_re = regex::Regex::new(r"\{\{([^}]+)\}\}").unwrap();
-        let pattern = token_re
-            .find(&content)
-            .map(|m| m.as_str().to_string())
-            .unwrap_or_else(|| "TODO:".to_string());
-
+    if let Some(pattern) = first_unfilled_placeholder_pattern(&content) {
         problems.push(
-            Problem::warning(
+            Problem::error(
                 path.to_path_buf(),
-                "README contains unfilled TODO placeholder",
+                format!(
+                    "README contains unresolved scaffold/default text (pattern: {})",
+                    pattern
+                ),
             )
             .with_check_id(CheckId::VoyagesReadmeStructure)
             .with_fix(Fix::ClearPlaceholder {
@@ -622,20 +639,20 @@ pub fn check_voyage_srs_structure(path: &Path) -> Vec<Problem> {
         Err(_) => return problems,
     };
 
-    if is_placeholder_unfilled(&content) {
-        let token_re = regex::Regex::new(r"\{\{([^}]+)\}\}").unwrap();
-        let pattern = token_re
-            .find(&content)
-            .map(|m| m.as_str().to_string())
-            .unwrap_or_else(|| "TODO:".to_string());
-
+    if let Some(pattern) = first_unfilled_placeholder_pattern(&content) {
         problems.push(
-            Problem::warning(path.to_path_buf(), "SRS contains unfilled TODO placeholder")
-                .with_check_id(CheckId::VoyagesSrsExists)
-                .with_fix(Fix::ClearPlaceholder {
-                    path: path.to_path_buf(),
-                    pattern,
-                }),
+            Problem::error(
+                path.to_path_buf(),
+                format!(
+                    "SRS contains unresolved scaffold/default text (pattern: {})",
+                    pattern
+                ),
+            )
+            .with_check_id(CheckId::VoyagesSrsExists)
+            .with_fix(Fix::ClearPlaceholder {
+                path: path.to_path_buf(),
+                pattern,
+            }),
         );
     }
 
@@ -665,20 +682,20 @@ pub fn check_voyage_sdd_structure(path: &Path) -> Vec<Problem> {
         Err(_) => return problems,
     };
 
-    if is_placeholder_unfilled(&content) {
-        let token_re = regex::Regex::new(r"\{\{([^}]+)\}\}").unwrap();
-        let pattern = token_re
-            .find(&content)
-            .map(|m| m.as_str().to_string())
-            .unwrap_or_else(|| "TODO:".to_string());
-
+    if let Some(pattern) = first_unfilled_placeholder_pattern(&content) {
         problems.push(
-            Problem::warning(path.to_path_buf(), "SDD contains unfilled TODO placeholder")
-                .with_check_id(CheckId::VoyagesSddExists)
-                .with_fix(Fix::ClearPlaceholder {
-                    path: path.to_path_buf(),
-                    pattern,
-                }),
+            Problem::error(
+                path.to_path_buf(),
+                format!(
+                    "SDD contains unresolved scaffold/default text (pattern: {})",
+                    pattern
+                ),
+            )
+            .with_check_id(CheckId::VoyagesSddExists)
+            .with_fix(Fix::ClearPlaceholder {
+                path: path.to_path_buf(),
+                pattern,
+            }),
         );
     }
 
@@ -694,20 +711,20 @@ pub fn check_epic_prd_structure(path: &Path) -> Vec<Problem> {
         Err(_) => return problems,
     };
 
-    if is_placeholder_unfilled(&content) {
-        let token_re = regex::Regex::new(r"\{\{([^}]+)\}\}").unwrap();
-        let pattern = token_re
-            .find(&content)
-            .map(|m| m.as_str().to_string())
-            .unwrap_or_else(|| "TODO:".to_string());
-
+    if let Some(pattern) = first_unfilled_placeholder_pattern(&content) {
         problems.push(
-            Problem::warning(path.to_path_buf(), "PRD contains unfilled TODO placeholder")
-                .with_check_id(CheckId::Unknown)
-                .with_fix(Fix::ClearPlaceholder {
-                    path: path.to_path_buf(),
-                    pattern,
-                }),
+            Problem::error(
+                path.to_path_buf(),
+                format!(
+                    "PRD contains unresolved scaffold/default text (pattern: {})",
+                    pattern
+                ),
+            )
+            .with_check_id(CheckId::Unknown)
+            .with_fix(Fix::ClearPlaceholder {
+                path: path.to_path_buf(),
+                pattern,
+            }),
         );
     }
 
@@ -802,6 +819,18 @@ mod tests {
     }
 
     #[test]
+    fn test_first_unfilled_placeholder_pattern_prefers_todo_and_ignores_comments() {
+        assert_eq!(
+            first_unfilled_placeholder_pattern("<!-- TODO: ignored --> {{token}}"),
+            Some("{{token}}".to_string())
+        );
+        assert_eq!(
+            first_unfilled_placeholder_pattern("Real TODO: remains"),
+            Some("TODO:".to_string())
+        );
+    }
+
+    #[test]
     fn test_scan_story_files_empty() {
         let temp = TempDir::new().unwrap();
         let (problems, count) = scan_story_files(temp.path()).unwrap();
@@ -841,10 +870,11 @@ mod tests {
 
         let problems = check_voyage_readme_structure(&path);
         assert!(!problems.is_empty());
+        assert!(problems.iter().any(|p| p.severity == Severity::Error));
         assert!(
             problems
                 .iter()
-                .any(|p| p.message.contains("TODO placeholder"))
+                .any(|p| p.message.contains("pattern: TODO:"))
         );
     }
 
@@ -879,5 +909,67 @@ mod tests {
 
         let problems = check_epic_prd_structure(&path);
         assert!(problems.iter().any(|p| p.message.contains("missing")));
+    }
+
+    #[test]
+    fn test_unresolved_scaffold_patterns_are_errors_in_srs_sdd_prd() {
+        let temp = TempDir::new().unwrap();
+
+        let srs_path = temp.path().join("SRS.md");
+        fs::write(
+            &srs_path,
+            r#"# SRS
+TODO: define requirement details
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+<!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+        let srs_problems = check_voyage_srs_structure(&srs_path);
+        assert!(srs_problems.iter().any(|p| p.severity == Severity::Error));
+        assert!(
+            srs_problems
+                .iter()
+                .any(|p| p.message.contains("pattern: TODO:"))
+        );
+
+        let sdd_path = temp.path().join("SDD.md");
+        fs::write(&sdd_path, "# SDD\n\nTODO: fill architecture decisions").unwrap();
+        let sdd_problems = check_voyage_sdd_structure(&sdd_path);
+        assert!(sdd_problems.iter().any(|p| p.severity == Severity::Error));
+        assert!(
+            sdd_problems
+                .iter()
+                .any(|p| p.message.contains("pattern: TODO:"))
+        );
+
+        let prd_path = temp.path().join("PRD.md");
+        fs::write(
+            &prd_path,
+            r#"# PRD
+TODO: fill product requirements
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| FR-01 | requirement | must |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+| NFR-01 | requirement | should |
+<!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+<!-- BEGIN SUCCESS_CRITERIA -->
+- [ ] complete
+<!-- END SUCCESS_CRITERIA -->
+"#,
+        )
+        .unwrap();
+        let prd_problems = check_epic_prd_structure(&prd_path);
+        assert!(prd_problems.iter().any(|p| p.severity == Severity::Error));
+        assert!(
+            prd_problems
+                .iter()
+                .any(|p| p.message.contains("pattern: TODO:"))
+        );
     }
 }

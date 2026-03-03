@@ -2,10 +2,11 @@
 id: 1vxGzVpw5
 index: 2
 title: Doctor And Transition Hard Enforcement
-status: planned
+status: in-progress
 epic: 1vxGy5tco
 created_at: 2026-03-02T20:04:13
 updated_at: 2026-03-02T21:05:48
+started_at: 2026-03-02T21:46:34
 ---
 
 # Doctor And Transition Hard Enforcement
@@ -30,6 +31,6 @@ updated_at: 2026-03-02T21:05:48
 |-------|------|--------|
 | [Gate Story Submit And Accept On Coherent Artifacts](../../../../stories/1vxH84M8t/README.md) | feat | backlog |
 | [Add Hard Cutover Regression Coverage](../../../../stories/1vxH84jzB/README.md) | chore | backlog |
-| [Escalate Unresolved Scaffold Checks To Doctor Errors](../../../../stories/1vxH84k3U/README.md) | feat | backlog |
+| [Escalate Unresolved Scaffold Checks To Doctor Errors](../../../../stories/1vxH84k3U/README.md) | feat | needs-human-verification |
 | [Enforce Terminal Story Coherency In Doctor](../../../../stories/1vxH84nTQ/README.md) | feat | backlog |
 <!-- END GENERATED -->
