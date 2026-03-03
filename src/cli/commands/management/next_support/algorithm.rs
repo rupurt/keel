@@ -75,6 +75,8 @@ pub fn calculate_next(
     agent_mode: bool,
     actor_role: Option<&crate::domain::model::taxonomy::RoleTaxonomy>,
 ) -> Result<NextDecision> {
+    let mut agent_backlog_blocked_by_dependencies = false;
+
     let projection = crate::read_model::flow_status::project(board);
     let metrics = &projection.flow;
     let queue_policy_snapshot = queue_policy::project(metrics);
@@ -207,13 +209,23 @@ pub fn calculate_next(
 
         // 6b. Select from backlog
         let deps = crate::read_model::traceability::derive_implementation_dependencies(board);
-        let mut candidates: Vec<_> = board
+        let workable_backlog: Vec<_> = board
             .stories
             .values()
             .filter(|s| s.stage == StoryState::Backlog)
             .filter(|s| {
                 crate::domain::state_machine::invariants::story_workable(s, board, board_dir)
             })
+            .filter(|s| {
+                actor_role
+                    .map(|role| crate::domain::model::taxonomy::actor_matches_story(role, s))
+                    .unwrap_or(true)
+            })
+            .collect();
+
+        let mut candidates: Vec<_> = workable_backlog
+            .iter()
+            .copied()
             .filter(|s| {
                 // Unblocked if no dependencies OR all dependencies are Done
                 deps.get(s.id()).is_none_or(|dep_ids| {
@@ -226,11 +238,6 @@ pub fn calculate_next(
                     })
                 })
             })
-            .filter(|s| {
-                actor_role
-                    .map(|role| crate::domain::model::taxonomy::actor_matches_story(role, s))
-                    .unwrap_or(true)
-            })
             .collect();
 
         candidates.sort_by(|a, b| compare_work_item_ids(a.id(), b.id()));
@@ -242,10 +249,21 @@ pub fn calculate_next(
                 warning: None,
             }));
         }
+
+        if !workable_backlog.is_empty() {
+            agent_backlog_blocked_by_dependencies = true;
+        }
     }
 
     let mut suggestions = Vec::new();
     if agent_mode {
+        if agent_backlog_blocked_by_dependencies {
+            suggestions
+                .push("All workable backlog stories are blocked by implementation dependencies."
+                    .to_string());
+            suggestions
+                .push("Run `keel next --agent --parallel` to inspect sequential chains.".to_string());
+        }
         if queue_policy_snapshot.verification.has_items() {
             suggestions.push("Waiting for human acceptance of completed work".to_string());
         }
@@ -276,7 +294,7 @@ mod tests {
     use crate::domain::policy::queue::{
         FLOW_VERIFY_BLOCK_THRESHOLD, HUMAN_NEXT_VERIFY_BLOCK_THRESHOLD,
     };
-    use crate::test_helpers::{TestBoardBuilder, TestStory};
+    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
 
     fn assert_human_queue_decision(next: NextDecision) {
         match next {
@@ -510,5 +528,44 @@ mod tests {
         let summary = flow_action_summary(&board).to_lowercase();
         assert!(summary.contains("blocked"));
         assert!(summary.contains("accept"));
+    }
+
+    #[test]
+    fn agent_mode_reports_dependency_blocked_backlog_instead_of_empty_board() {
+        let srs = "# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req1 | test |\n| SRS-02 | req2 | test |\nEND FUNCTIONAL_REQUIREMENTS";
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("keel"))
+            .voyage(
+                TestVoyage::new("01-test", "keel")
+                    .status("planned")
+                    .srs_content(srs),
+            )
+            .story(
+                TestStory::new("S1")
+                    .scope("keel/01-test")
+                    .body("- [ ] [SRS-01/AC-01] req1\n- [ ] [SRS-02/AC-01] req2"),
+            )
+            .story(
+                TestStory::new("S2")
+                    .scope("keel/01-test")
+                    .body("- [ ] [SRS-01/AC-02] req1b\n- [ ] [SRS-02/AC-02] req2b"),
+            )
+            .build();
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+
+        let next = calculate_next(&board, temp.path(), true, None).unwrap();
+        match next {
+            NextDecision::Empty(empty) => {
+                assert!(empty
+                    .suggestions
+                    .iter()
+                    .any(|s| s.contains("blocked by implementation dependencies")));
+                assert!(!empty
+                    .suggestions
+                    .iter()
+                    .any(|s| s.contains("Board is empty")));
+            }
+            _ => panic!("Expected Empty decision with dependency-blocked suggestions"),
+        }
     }
 }
