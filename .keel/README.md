@@ -15,7 +15,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Add Hard Cutover Regression Coverage](stories/1vxH84jzB/README.md) | chore | [Template Contract Hard Cutover](epics/1vxGy5tco/) / [Doctor And Transition Hard Enforcement](epics/1vxGy5tco/voyages/1vxGzVpw5/) |
 
 ## In Progress
 
@@ -37,12 +36,12 @@
 
 ## Epics
 
-### [Template Contract Hard Cutover](epics/1vxGy5tco/) (active) - 2 voyages, 0 done
+### [Template Contract Hard Cutover](epics/1vxGy5tco/) (active) - 2 voyages, 1 done
 
 | Voyage | Status |
 |--------|--------|
 | [Template And CLI Contract Canonicalization](epics/1vxGy5tco/voyages/1vxGzV3oR/) | in-progress |
-| [Doctor And Transition Hard Enforcement](epics/1vxGy5tco/voyages/1vxGzVpw5/) | in-progress |
+| [Doctor And Transition Hard Enforcement](epics/1vxGy5tco/voyages/1vxGzVpw5/) | done |
 
 <details>
 <summary><h2>Done</h2></summary>

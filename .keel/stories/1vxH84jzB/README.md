@@ -2,13 +2,14 @@
 id: 1vxH84jzB
 title: Add Hard Cutover Regression Coverage
 type: chore
-status: needs-human-verification
+status: done
 created_at: 2026-03-02T20:13:04
-updated_at: 2026-03-03T11:50:46
+updated_at: 2026-03-03T11:52:36
 scope: 1vxGy5tco/1vxGzVpw5
 index: 4
 started_at: 2026-03-03T10:55:35
 submitted_at: 2026-03-03T11:50:46
+completed_at: 2026-03-03T11:52:36
 ---
 
 # Add Hard Cutover Regression Coverage
