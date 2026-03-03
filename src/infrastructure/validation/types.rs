@@ -189,6 +189,7 @@ pub enum CheckId {
     StoryMissingVerification,
     StoryMalformedVerification,
     StoryMissingSrsRef,
+    StoryDependencyCycle,
     StoryUnexpectedReflection,
     StoryMissingManifest,
     StoryManifestTampered,

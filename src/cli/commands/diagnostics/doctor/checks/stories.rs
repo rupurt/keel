@@ -745,6 +745,184 @@ pub fn check_scoped_story_evidence(board: &Board) -> Vec<Problem> {
     problems
 }
 
+/// Check for cycles in derived implementation dependencies.
+///
+/// Cycles indicate conflicting AC/SRS traceability where no story can be started
+/// without completing another unfinished story in the same cycle.
+pub fn check_story_dependency_cycles(board: &Board) -> Vec<Problem> {
+    let active_story_ids: HashSet<String> = board
+        .stories
+        .values()
+        .filter(|story| story.stage != StoryState::Done)
+        .map(|story| story.id().to_string())
+        .collect();
+
+    if active_story_ids.is_empty() {
+        return Vec::new();
+    }
+
+    let dependencies = crate::read_model::traceability::derive_implementation_dependencies(board);
+    let mut graph: HashMap<String, Vec<String>> = HashMap::new();
+
+    for story_id in &active_story_ids {
+        let mut active_dependencies: Vec<String> = dependencies
+            .get(story_id)
+            .cloned()
+            .unwrap_or_default()
+            .into_iter()
+            .filter(|dependency_id| active_story_ids.contains(dependency_id))
+            .collect();
+        active_dependencies.sort();
+        active_dependencies.dedup();
+        graph.insert(story_id.clone(), active_dependencies);
+    }
+
+    let cycles = find_dependency_cycles(&graph);
+    let mut problems = Vec::new();
+
+    for cycle in cycles {
+        let Some(anchor_story) = board.stories.get(&cycle[0]) else {
+            continue;
+        };
+
+        let mut scopes: HashSet<String> = HashSet::new();
+        for story_id in &cycle {
+            if let Some(scope) = board
+                .stories
+                .get(story_id)
+                .and_then(|story| story.scope())
+                .map(|scope| scope.to_string())
+            {
+                scopes.insert(scope);
+            }
+        }
+
+        let mut scope_list: Vec<String> = scopes.into_iter().collect();
+        scope_list.sort();
+
+        let scope_hint = if scope_list.is_empty() {
+            String::new()
+        } else {
+            format!("scope(s): {}. ", scope_list.join(", "))
+        };
+
+        problems.push(
+            Problem::error(
+                anchor_story.path.clone(),
+                format!(
+                    "implementation dependency cycle detected among stories [{}]. {}Update AC SRS references so dependency order is acyclic.",
+                    cycle.join(", "),
+                    scope_hint
+                ),
+            )
+            .with_check_id(CheckId::StoryDependencyCycle)
+            .with_scope(anchor_story.scope().unwrap_or_default()),
+        );
+    }
+
+    problems
+}
+
+fn find_dependency_cycles(graph: &HashMap<String, Vec<String>>) -> Vec<Vec<String>> {
+    struct Tarjan<'a> {
+        graph: &'a HashMap<String, Vec<String>>,
+        index: usize,
+        indices: HashMap<String, usize>,
+        low_links: HashMap<String, usize>,
+        stack: Vec<String>,
+        on_stack: HashSet<String>,
+        components: Vec<Vec<String>>,
+    }
+
+    impl<'a> Tarjan<'a> {
+        fn new(graph: &'a HashMap<String, Vec<String>>) -> Self {
+            Self {
+                graph,
+                index: 0,
+                indices: HashMap::new(),
+                low_links: HashMap::new(),
+                stack: Vec::new(),
+                on_stack: HashSet::new(),
+                components: Vec::new(),
+            }
+        }
+
+        fn run(mut self) -> Vec<Vec<String>> {
+            let mut nodes: Vec<String> = self.graph.keys().cloned().collect();
+            nodes.sort();
+
+            for node in nodes {
+                if !self.indices.contains_key(&node) {
+                    self.strong_connect(node);
+                }
+            }
+
+            self.components
+        }
+
+        fn strong_connect(&mut self, node: String) {
+            self.indices.insert(node.clone(), self.index);
+            self.low_links.insert(node.clone(), self.index);
+            self.index += 1;
+
+            self.stack.push(node.clone());
+            self.on_stack.insert(node.clone());
+
+            let neighbors = self.graph.get(&node).cloned().unwrap_or_default();
+            for neighbor in neighbors {
+                if !self.indices.contains_key(&neighbor) {
+                    self.strong_connect(neighbor.clone());
+                    let node_low = *self.low_links.get(&node).unwrap();
+                    let neighbor_low = *self.low_links.get(&neighbor).unwrap();
+                    self.low_links
+                        .insert(node.clone(), std::cmp::min(node_low, neighbor_low));
+                } else if self.on_stack.contains(&neighbor) {
+                    let node_low = *self.low_links.get(&node).unwrap();
+                    let neighbor_index = *self.indices.get(&neighbor).unwrap();
+                    self.low_links
+                        .insert(node.clone(), std::cmp::min(node_low, neighbor_index));
+                }
+            }
+
+            let node_low = *self.low_links.get(&node).unwrap();
+            let node_index = *self.indices.get(&node).unwrap();
+            if node_low == node_index {
+                let mut component = Vec::new();
+                while let Some(current) = self.stack.pop() {
+                    self.on_stack.remove(&current);
+                    component.push(current.clone());
+                    if current == node {
+                        break;
+                    }
+                }
+                self.components.push(component);
+            }
+        }
+    }
+
+    let components = Tarjan::new(graph).run();
+
+    let mut cycles = Vec::new();
+    for mut component in components {
+        let has_cycle = if component.len() > 1 {
+            true
+        } else {
+            let node = &component[0];
+            graph
+                .get(node)
+                .is_some_and(|dependencies| dependencies.iter().any(|dep| dep == node))
+        };
+
+        if has_cycle {
+            component.sort();
+            cycles.push(component);
+        }
+    }
+
+    cycles.sort_by(|a, b| a[0].cmp(&b[0]));
+    cycles
+}
+
 /// Check that REFLECT.md is only present for active or terminal stories.
 /// Stories in backlog or icebox should not have reflections.
 pub fn check_reflection_coherence(board: &Board) -> Vec<Problem> {
@@ -775,7 +953,7 @@ pub fn check_reflection_coherence(board: &Board) -> Vec<Problem> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::{TestBoardBuilder, TestStory};
+    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
 
     #[test]
     fn test_check_verification_annotations_detects_malformed() {
@@ -850,5 +1028,65 @@ mod tests {
         let has_out_of_order = problems.iter().any(|p| p.message.contains("out of order"));
 
         assert!(has_out_of_order);
+    }
+
+    #[test]
+    fn test_check_story_dependency_cycles_detects_cycle() {
+        let srs = "# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req1 | test |\n| SRS-02 | req2 | test |\nEND FUNCTIONAL_REQUIREMENTS";
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("keel"))
+            .voyage(
+                TestVoyage::new("01-test", "keel")
+                    .status("planned")
+                    .srs_content(srs),
+            )
+            .story(
+                TestStory::new("S1")
+                    .scope("keel/01-test")
+                    .body("- [ ] [SRS-01/AC-01] req1\n- [ ] [SRS-02/AC-01] req2"),
+            )
+            .story(
+                TestStory::new("S2")
+                    .scope("keel/01-test")
+                    .body("- [ ] [SRS-01/AC-02] req1b\n- [ ] [SRS-02/AC-02] req2b"),
+            )
+            .build();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_story_dependency_cycles(&board);
+
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].severity, Severity::Error);
+        assert_eq!(problems[0].check_id, CheckId::StoryDependencyCycle);
+        assert!(problems[0].message.contains("S1"));
+        assert!(problems[0].message.contains("S2"));
+    }
+
+    #[test]
+    fn test_check_story_dependency_cycles_allows_acyclic_ordering() {
+        let srs = "# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req1 | test |\n| SRS-02 | req2 | test |\nEND FUNCTIONAL_REQUIREMENTS";
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("keel"))
+            .voyage(
+                TestVoyage::new("01-test", "keel")
+                    .status("planned")
+                    .srs_content(srs),
+            )
+            .story(
+                TestStory::new("S1")
+                    .scope("keel/01-test")
+                    .body("- [ ] [SRS-01/AC-01] req1"),
+            )
+            .story(
+                TestStory::new("S2")
+                    .scope("keel/01-test")
+                    .body("- [ ] [SRS-02/AC-01] req2"),
+            )
+            .build();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_story_dependency_cycles(&board);
+
+        assert!(problems.is_empty());
     }
 }

@@ -114,6 +114,15 @@ pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
         duration: Duration::from_millis(0),
     });
 
+    let dependency_cycle_problems = checks::stories::check_story_dependency_cycles(&board);
+    story_checks.push(CheckResult {
+        name: "Implementation dependency cycles",
+        evaluations: board.stories.len(),
+        passed: dependency_cycle_problems.is_empty(),
+        problems: dependency_cycle_problems,
+        duration: Duration::from_millis(0),
+    });
+
     let scoped_evidence_problems = checks::stories::check_scoped_story_evidence(&board);
     story_checks.push(CheckResult {
         name: "Scoped evidence coverage",
