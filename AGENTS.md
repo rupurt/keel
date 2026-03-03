@@ -7,27 +7,36 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
 
 1. **Pull Context**: Read current board health and identify bottlenecks with `just keel flow`.
 2. **Claim Work**: Pull the highest-priority implementation item with `just keel next --agent`. Use `--parallel` to identify safe concurrent tasks.
-3. **Execute (TDD)**: Follow test-driven development:
+3. **Check Story Coherence Before Coding**: Confirm acceptance criteria are traceable and verifiable:
+   - Acceptance criteria are linked to source requirements (for example `[SRS-XX/AC-YY]`).
+   - Evidence strategy is clear for each criterion (test, CLI proof, or manual proof).
+   - If requirements are ambiguous, loop back to planning artifacts before implementation.
+4. **Execute (TDD)**: Follow test-driven development:
    - Write a failing test first.
    - Implement only enough to pass.
    - Refactor within the same change slice.
-4. **Record Evidence**: Capture proof of requirement satisfaction for each acceptance criterion:
+5. **Record Evidence**: Capture proof of requirement satisfaction for each acceptance criterion:
    - `just keel story record <ID> --ac <NUM> --msg "Description of the proof"`
    - For manual proofs, use the `--msg` flag or editor integration.
-5. **Reflect**: Mandatory observational capture. Run `just keel story reflect <ID>` and document what was learned or discovered during implementation.
-6. **Submit**: Move to the human queue for review with `just keel story submit <ID>`. This triggers automated verification and generates the verification manifest.
+6. **Reflect**: Mandatory observational capture. Run `just keel story reflect <ID>` and document what was learned or discovered during implementation.
+7. **Submit**: Move to the human queue for review with `just keel story submit <ID>`. This triggers automated verification and generates the verification manifest.
 
 ## Planning Workflow (Architect)
 
 1. **Identify Gaps**: Use `just keel flow` or `just keel status` to find Epics needing tactical decomposition.
 2. **Scaffold Voyage**: Create a new tactical unit:
    - `just keel voyage new "<Title>" --epic <epic-id> --goal "<The specific outcome>"`
-3. **Define Requirements (SRS)**: Fill out the `SRS.md` in the new voyage bundle. Ensure requirements are atomic and uniquely identified (e.g., `SRS-01`).
-4. **Detail Design (SDD)**: Fill out the `SDD.md` describing the architectural approach and component changes.
+3. **Define Requirements (SRS)**: Fill out the `SRS.md` in the new voyage bundle. Ensure requirements are atomic, uniquely identified (e.g., `SRS-01`), and written so they can map directly to story acceptance criteria and verification evidence.
+4. **Detail Design (SDD)**: Fill out the `SDD.md` describing the architectural approach and component changes, with enough specificity that implementers can produce objective proofs.
 5. **Decompose Stories**: Break the design into implementable units:
    - `just keel story new "<Title>" --epic <epic-id> --voyage <voyage-id>`
    - Link stories to SRS requirements using `[SRS-XX/AC-YY]` markers in the acceptance criteria.
-6. **Seal Planning**: Promote the voyage from `draft` to `planned` with `just keel voyage plan <id>`. This validates requirement coverage and thaws stories into the agent backlog.
+6. **Run Coherence Review (Downstream Check)**: Before planning is sealed, review the full chain:
+   - Every SRS requirement has at least one linked story acceptance criterion.
+   - Every acceptance criterion has a clear verification approach (automated test, CLI proof, or documented manual evidence).
+   - CLI options and authored entity content are explicit enough for downstream automation and transitions.
+7. **Loop Back Upstream if Needed**: If decomposition or verification design exposes ambiguity, update SRS/SDD first, then re-check story acceptance criteria.
+8. **Seal Planning**: Promote the voyage from `draft` to `planned` with `just keel voyage plan <id>`. This validates requirement coverage and thaws stories into the agent backlog.
 
 ## Research Workflow (Explorer)
 
@@ -80,27 +89,8 @@ This repository is the `keel` Rust crate — a CLI for agentic SDLC management.
 |------|---------|
 | `Cargo.toml` | Crate manifest (single `[[bin]]` target) |
 | `src/` | All Rust source organized by layer roots: `cli`, `application`, `domain`, `infrastructure`, `read_model` |
-| `templates/` | Markdown templates for ADRs, epics, voyages, stories, and bearings |
 | `justfile` | Task runner recipes (build, test, quality, coverage) |
 | `flake.nix` | Nix dev environment |
-
-### Templates
-
-The `templates/` directory contains markdown scaffolds that are **embedded into the
-binary at compile time** via `include_str!()` in `src/infrastructure/templates.rs`. When the CLI
-creates a new entity (`story new`, `epic new`, `voyage new`, `bearing new`, `adr new`),
-it renders the matching template by replacing `{{placeholder}}` tokens with actual
-values. If you edit a template file, the binary must be recompiled for changes to
-take effect.
-
-| Template | Created by |
-|----------|------------|
-| `templates/stories/STORY.md` | `keel story new` |
-| `templates/epic/README.md`, `templates/epic/PRD.md` | `keel epic new` |
-| `templates/epic/voyages/README.md`, `SRS.md`, `SDD.md` | `keel voyage new` |
-| `templates/bearings/BRIEF.md` | `keel bearing new` |
-| `templates/bearings/SURVEY.md`, `ASSESSMENT.md` | bearing state transitions |
-| `templates/adrs/ADR.md` | `keel adr new` |
 
 ### Board directory (`.keel/`)
 
