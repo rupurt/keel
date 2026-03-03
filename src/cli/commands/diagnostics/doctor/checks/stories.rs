@@ -923,6 +923,63 @@ fn find_dependency_cycles(graph: &HashMap<String, Vec<String>>) -> Vec<Vec<Strin
     cycles
 }
 
+/// Check terminal stories for unresolved scaffold/default text in README and REFLECT artifacts.
+pub fn check_terminal_story_coherence(board: &Board) -> Vec<Problem> {
+    let mut problems = Vec::new();
+
+    for story in board.stories.values() {
+        if story.stage != StoryState::NeedsHumanVerification && story.stage != StoryState::Done {
+            continue;
+        }
+
+        let scope = story.scope().unwrap_or_default().to_string();
+
+        if let Ok(content) = fs::read_to_string(&story.path)
+            && let Some(pattern) = structural::first_unfilled_placeholder_pattern(&content)
+        {
+            problems.push(
+                Problem::error(
+                    story.path.clone(),
+                    format!(
+                        "README has unresolved scaffold/default text (pattern: {})",
+                        pattern
+                    ),
+                )
+                .with_check_id(CheckId::StoryTerminalScaffold)
+                .with_scope(scope.clone())
+                .with_fix(Fix::ClearPlaceholder {
+                    path: story.path.clone(),
+                    pattern,
+                }),
+            );
+        }
+
+        let reflect_path = story.path.parent().unwrap().join("REFLECT.md");
+        if reflect_path.exists()
+            && let Ok(content) = fs::read_to_string(&reflect_path)
+            && let Some(pattern) = structural::first_unfilled_placeholder_pattern(&content)
+        {
+            problems.push(
+                Problem::error(
+                    reflect_path.clone(),
+                    format!(
+                        "REFLECT has unresolved scaffold/default text (pattern: {})",
+                        pattern
+                    ),
+                )
+                .with_check_id(CheckId::StoryTerminalScaffold)
+                .with_scope(scope.clone())
+                .with_fix(Fix::ClearPlaceholder {
+                    path: reflect_path,
+                    pattern,
+                }),
+            );
+        }
+    }
+
+    problems
+}
+
 /// Check that REFLECT.md is only present for active or terminal stories.
 /// Stories in backlog or icebox should not have reflections.
 pub fn check_reflection_coherence(board: &Board) -> Vec<Problem> {
@@ -954,6 +1011,7 @@ pub fn check_reflection_coherence(board: &Board) -> Vec<Problem> {
 mod tests {
     use super::*;
     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use std::fs;
 
     #[test]
     fn test_check_verification_annotations_detects_malformed() {
@@ -1088,5 +1146,85 @@ mod tests {
         let problems = check_story_dependency_cycles(&board);
 
         assert!(problems.is_empty());
+    }
+
+    #[test]
+    fn terminal_coherence_fails_story_readme_scaffold_in_needs_human_verification() {
+        let temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("S1")
+                    .stage(StoryState::NeedsHumanVerification)
+                    .body("## Summary\n\nTODO: Describe the story\n\n## Acceptance Criteria\n\n- [x] [SRS-02/AC-01] done <!-- verify: manual, SRS-02:start:end -->"),
+            )
+            .build();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_terminal_story_coherence(&board);
+
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].severity, Severity::Error);
+        assert_eq!(problems[0].check_id, CheckId::StoryTerminalScaffold);
+        assert!(
+            problems[0]
+                .message
+                .contains("README has unresolved scaffold/default text")
+        );
+    }
+
+    #[test]
+    fn terminal_coherence_fails_reflect_scaffold_in_done_stage() {
+        let temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("S1")
+                    .stage(StoryState::Done)
+                    .body("## Summary\n\nImplemented.\n\n## Acceptance Criteria\n\n- [x] [SRS-03/AC-01] done <!-- verify: manual, SRS-03:start:end -->"),
+            )
+            .build();
+
+        let reflect_path = temp.path().join("stories").join("S1").join("REFLECT.md");
+        fs::write(
+            &reflect_path,
+            "# Reflection - Test\n\n## Observations\n\nTODO: What went well?",
+        )
+        .unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_terminal_story_coherence(&board);
+
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].severity, Severity::Error);
+        assert_eq!(problems[0].check_id, CheckId::StoryTerminalScaffold);
+        assert_eq!(problems[0].path, reflect_path);
+        assert!(
+            problems[0]
+                .message
+                .contains("REFLECT has unresolved scaffold/default text")
+        );
+    }
+
+    #[test]
+    fn terminal_coherence_skips_non_terminal_stories() {
+        let temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("S1")
+                    .stage(StoryState::InProgress)
+                    .body("## Summary\n\nTODO: Describe the story\n\n## Acceptance Criteria\n\n- [ ] [SRS-02/AC-02] todo <!-- verify: manual, SRS-02:start:end -->"),
+            )
+            .build();
+
+        let reflect_path = temp.path().join("stories").join("S1").join("REFLECT.md");
+        fs::write(
+            reflect_path,
+            "# Reflection - Test\n\n## Observations\n\nTODO: What went well?",
+        )
+        .unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_terminal_story_coherence(&board);
+
+        assert!(
+            problems.is_empty(),
+            "non-terminal stories should not be checked for terminal scaffold coherence"
+        );
     }
 }

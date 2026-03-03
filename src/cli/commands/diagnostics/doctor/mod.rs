@@ -150,6 +150,15 @@ pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
         duration: Duration::from_millis(0),
     });
 
+    let terminal_coherence_problems = checks::stories::check_terminal_story_coherence(&board);
+    story_checks.push(CheckResult {
+        name: "Terminal artifact coherence",
+        evaluations: board.stories.len(),
+        passed: terminal_coherence_problems.is_empty(),
+        problems: terminal_coherence_problems,
+        duration: Duration::from_millis(0),
+    });
+
     let manifest_problems = checks::stories::check_verification_manifests(&board);
     story_checks.push(CheckResult {
         name: "Verification manifest integrity",
@@ -548,5 +557,30 @@ mod tests {
         }
 
         assert!(found);
+    }
+
+    #[test]
+    fn validate_detects_terminal_story_scaffold_text() {
+        let temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("S1")
+                    .stage(StoryState::NeedsHumanVerification)
+                    .body("## Summary\n\nTODO: Describe the story\n\n## Acceptance Criteria\n\n- [x] [SRS-02/AC-01] done <!-- verify: manual, SRS-02:start:end -->"),
+            )
+            .build();
+
+        let report = validate(temp.path()).unwrap();
+        let has_terminal_scaffold_problem = report.story_checks.iter().any(|check| {
+            check.name == "Terminal artifact coherence"
+                && check.problems.iter().any(|problem| {
+                    problem.check_id
+                        == crate::infrastructure::validation::CheckId::StoryTerminalScaffold
+                })
+        });
+
+        assert!(
+            has_terminal_scaffold_problem,
+            "expected terminal artifact coherence check to flag unresolved scaffold text"
+        );
     }
 }

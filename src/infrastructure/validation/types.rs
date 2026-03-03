@@ -191,6 +191,7 @@ pub enum CheckId {
     StoryMissingSrsRef,
     StoryDependencyCycle,
     StoryUnexpectedReflection,
+    StoryTerminalScaffold,
     StoryMissingManifest,
     StoryManifestTampered,
     EpicMissingReadme,
