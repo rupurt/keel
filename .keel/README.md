@@ -25,7 +25,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Align Next Command Guidance In Human And Json Output](stories/1vxZ0DxDl/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Decision And Verification Guidance Parity](epics/1vxYzSury/voyages/1vxYzrwma/) |
 | [Add Canonical Guidance To Verify And Audit Commands](stories/1vxZ0EXHC/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Decision And Verification Guidance Parity](epics/1vxYzSury/voyages/1vxYzrwma/) |
 | [Add Canonical Guidance To Play Command Outcomes](stories/1vxZ0Eoj9/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Decision And Verification Guidance Parity](epics/1vxYzSury/voyages/1vxYzrwma/) |
 | [Add Drift Tests For Canonical Guidance Contracts](stories/1vxZ0FGSF/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Command Classification Drift Guards](epics/1vxYzSury/voyages/1vxYzsAxT/) |
@@ -42,14 +41,14 @@
 
 ## Epics
 
-### [Deterministic Command Guidance](epics/1vxYzSury/) (active) - 5 voyages, 2 done
+### [Deterministic Command Guidance](epics/1vxYzSury/) (active) - 5 voyages, 3 done
 
 | Voyage | Status |
 |--------|--------|
 | [Output Contract And Shared Renderer](epics/1vxYzSury/voyages/1vxYzh8ep/) | done |
-| [Governance And Research Guidance](epics/1vxYzSury/voyages/1vxYzjVMv/) | in-progress |
+| [Governance And Research Guidance](epics/1vxYzSury/voyages/1vxYzjVMv/) | done |
 | [Story And Voyage Lifecycle Guidance](epics/1vxYzSury/voyages/1vxYzjiwH/) | done |
-| [Decision And Verification Guidance Parity](epics/1vxYzSury/voyages/1vxYzrwma/) | planned |
+| [Decision And Verification Guidance Parity](epics/1vxYzSury/voyages/1vxYzrwma/) | in-progress |
 | [Command Classification Drift Guards](epics/1vxYzSury/voyages/1vxYzsAxT/) | planned |
 
 <details>

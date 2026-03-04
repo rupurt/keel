@@ -52,14 +52,6 @@ fn format_work(d: &StoryDecision) -> String {
         out.push_str(&format!("\n{} {}\n", "⚠".yellow(), warning.yellow()));
     }
 
-    // Recommended command line
-    let cmd = if d.is_continuation {
-        format!("keel story submit {}", d.story.id())
-    } else {
-        format!("keel story start {}", d.story.id())
-    };
-    out.push_str(&format!("\nNext step:\n  {}\n", cmd.bold()));
-
     out
 }
 
@@ -144,10 +136,7 @@ fn format_research(d: &ResearchDecision) -> String {
         ));
     }
 
-    out.push_str(&format!(
-        "\nRun {} to start a discovery session.",
-        "keel play".bold()
-    ));
+    out.push_str("\nUse the discovery workflow to advance one of these bearings.");
     out
 }
 
@@ -213,10 +202,7 @@ fn format_needs_planning(d: &DecomposeDecision) -> String {
         out.push_str(&format!("  - {}\n", voyage_header(voyage)));
     }
 
-    out.push_str(&format!(
-        "\nReview and move these voyages to 'planned' state:\n  {} voyage plan <id>",
-        "keel".bold()
-    ));
+    out.push_str("\nReview these voyages and move one into planned state.");
     out
 }
 

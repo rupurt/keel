@@ -2,10 +2,11 @@
 id: 1vxYzrwma
 index: 4
 title: Decision And Verification Guidance Parity
-status: planned
+status: in-progress
 epic: 1vxYzSury
 created_at: 2026-03-03T15:17:47
 updated_at: 2026-03-03T15:49:33
+started_at: 2026-03-03T19:41:26
 ---
 
 # Decision And Verification Guidance Parity
@@ -24,11 +25,11 @@ updated_at: 2026-03-03T15:49:33
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/3 stories complete
+**Progress:** 1/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Align Next Command Guidance In Human And Json Output](../../../../stories/1vxZ0DxDl/README.md) | feat | backlog |
+| [Align Next Command Guidance In Human And Json Output](../../../../stories/1vxZ0DxDl/README.md) | feat | done |
 | [Add Canonical Guidance To Verify And Audit Commands](../../../../stories/1vxZ0EXHC/README.md) | feat | backlog |
 | [Add Canonical Guidance To Play Command Outcomes](../../../../stories/1vxZ0Eoj9/README.md) | feat | backlog |
 <!-- END GENERATED -->

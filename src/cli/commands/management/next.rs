@@ -112,6 +112,7 @@ pub fn run(
         println!("{}", serde_json::to_string_pretty(&result)?);
     } else {
         println!("{}", format_decision(&decision));
+        print_human_guidance(guidance_for_decision(&decision).as_ref());
 
         // Surface relevant knowledge for the work decision
         if let NextDecision::Work(d) = &decision {
@@ -249,6 +250,33 @@ fn guidance_for_decision(decision: &NextDecision) -> Option<CanonicalGuidance> {
     render_command_guidance(command_guidance)
 }
 
+fn guidance_for_parallel_ready(ready: &[&Story]) -> Option<CanonicalGuidance> {
+    render_command_guidance(
+        ready
+            .first()
+            .map(|story| CommandGuidance::next(format!("keel story start {}", story.id()))),
+    )
+}
+
+fn render_human_guidance(guidance: Option<&CanonicalGuidance>) -> String {
+    if let Some(step) = guidance.and_then(|g| g.next_step.as_ref()) {
+        return format!("\nNext step:\n  {}\n", step.command.bold());
+    }
+
+    if let Some(step) = guidance.and_then(|g| g.recovery_step.as_ref()) {
+        return format!("\nRecovery step:\n  {}\n", step.command.bold());
+    }
+
+    String::new()
+}
+
+fn print_human_guidance(guidance: Option<&CanonicalGuidance>) {
+    let rendered = render_human_guidance(guidance);
+    if !rendered.is_empty() {
+        print!("{rendered}");
+    }
+}
+
 fn run_parallel(
     board: &crate::domain::model::Board,
     board_dir: &Path,
@@ -331,18 +359,15 @@ fn run_parallel(
             ready_json.remove(0);
         }
 
-        let result =
-            JsonResult {
-                decision: "parallel_work".to_string(),
-                details: JsonDetails::ParallelWork {
-                    next,
-                    ready: ready_json,
-                    sequential_chains: sequential_json,
-                },
-                guidance: render_command_guidance(ready.first().map(|story| {
-                    CommandGuidance::next(format!("keel story start {}", story.id()))
-                })),
-            };
+        let result = JsonResult {
+            decision: "parallel_work".to_string(),
+            details: JsonDetails::ParallelWork {
+                next,
+                ready: ready_json,
+                sequential_chains: sequential_json,
+            },
+            guidance: guidance_for_parallel_ready(&ready),
+        };
         println!("{}", serde_json::to_string_pretty(&result)?);
     } else {
         println!("Ready for Work (Parallel Safe):");
@@ -408,6 +433,8 @@ fn run_parallel(
                 }
             }
         }
+
+        print_human_guidance(guidance_for_parallel_ready(&ready).as_ref());
     }
 
     Ok(())
@@ -434,7 +461,9 @@ mod tests {
     use super::*;
     use crate::domain::model::Story;
     use crate::domain::model::StoryState;
-    use crate::test_helpers::{StoryFactory, TestBoardBuilder, TestStory};
+    use crate::test_helpers::{
+        AdrFactory, BearingFactory, StoryFactory, TestBoardBuilder, TestStory, VoyageFactory,
+    };
 
     #[test]
     fn exit_code_work_is_0() {
@@ -481,6 +510,37 @@ mod tests {
 
     fn make_story(id: &str) -> Story {
         StoryFactory::new(id).title("Story").build()
+    }
+
+    fn assert_human_json_guidance_parity(decision: &NextDecision) {
+        let guidance = guidance_for_decision(decision);
+        let rendered = render_human_guidance(guidance.as_ref());
+        let json = serde_json::to_value(decision_to_json(decision)).unwrap();
+
+        match guidance.as_ref() {
+            Some(g) if g.next_step.is_some() => {
+                let command = &g.next_step.as_ref().unwrap().command;
+                assert_eq!(json["guidance"]["next_step"]["command"], command.as_str());
+                assert!(json["guidance"]["recovery_step"].is_null());
+                assert!(rendered.contains("Next step:"));
+                assert!(rendered.contains(command));
+            }
+            Some(g) if g.recovery_step.is_some() => {
+                let command = &g.recovery_step.as_ref().unwrap().command;
+                assert_eq!(
+                    json["guidance"]["recovery_step"]["command"],
+                    command.as_str()
+                );
+                assert!(json["guidance"]["next_step"].is_null());
+                assert!(rendered.contains("Recovery step:"));
+                assert!(rendered.contains(command));
+            }
+            None => {
+                assert!(json.get("guidance").is_none());
+                assert!(rendered.is_empty());
+            }
+            _ => panic!("Guidance must contain exactly one canonical command"),
+        }
     }
 
     #[test]
@@ -566,5 +626,75 @@ mod tests {
         let json = serde_json::to_value(payload).unwrap();
 
         assert!(json.get("guidance").is_none());
+    }
+
+    #[test]
+    fn actionable_decisions_keep_human_and_json_guidance_in_sync() {
+        let work = NextDecision::Work(StoryDecision {
+            story: make_story("S10"),
+            is_continuation: false,
+            warning: None,
+        });
+        assert_human_json_guidance_parity(&work);
+
+        let continuation = NextDecision::Work(StoryDecision {
+            story: make_story("S11"),
+            is_continuation: true,
+            warning: None,
+        });
+        assert_human_json_guidance_parity(&continuation);
+
+        let decision = NextDecision::Decision(AdrDecision {
+            adrs: vec![AdrFactory::new("ADR10").title("Decision 10").build()],
+            blocked_stories: vec![make_story("S12")],
+        });
+        assert_human_json_guidance_parity(&decision);
+
+        let accept = NextDecision::Accept(AcceptDecision {
+            stories: vec![make_story("S13")],
+        });
+        assert_human_json_guidance_parity(&accept);
+
+        let research = NextDecision::Research(ResearchDecision {
+            bearings: vec![BearingFactory::new("B10").title("Research 10").build()],
+        });
+        assert_human_json_guidance_parity(&research);
+
+        let needs_stories = NextDecision::NeedsStories(DecomposeDecision {
+            voyages: vec![VoyageFactory::new("V10", "E10").title("Voyage 10").build()],
+        });
+        assert_human_json_guidance_parity(&needs_stories);
+
+        let needs_planning = NextDecision::NeedsPlanning(DecomposeDecision {
+            voyages: vec![VoyageFactory::new("V11", "E11").title("Voyage 11").build()],
+        });
+        assert_human_json_guidance_parity(&needs_planning);
+    }
+
+    #[test]
+    fn blocked_and_empty_decisions_keep_human_and_json_guidance_in_sync() {
+        let blocked = NextDecision::Blocked(BlockedDecision {
+            story: make_story("SBLOCK"),
+            count: 4,
+        });
+        assert_human_json_guidance_parity(&blocked);
+
+        let empty = NextDecision::Empty(EmptyDecision {
+            suggestions: vec!["Refuel".to_string()],
+        });
+        assert_human_json_guidance_parity(&empty);
+    }
+
+    #[test]
+    fn parallel_ready_guidance_matches_json_and_human_rendering() {
+        let ready_story = make_story("SREADY");
+        let guidance = guidance_for_parallel_ready(&[&ready_story]).unwrap();
+        let json = serde_json::to_value(&guidance).unwrap();
+        let rendered = render_human_guidance(Some(&guidance));
+
+        assert_eq!(json["next_step"]["command"], "keel story start SREADY");
+        assert!(json["recovery_step"].is_null());
+        assert!(rendered.contains("Next step:"));
+        assert!(rendered.contains("keel story start SREADY"));
     }
 }

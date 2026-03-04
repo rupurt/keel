@@ -1,0 +1,28 @@
+---
+recorded_at: 2026-03-03T19:45:40.299613978-08:00
+command: cargo test --lib cli::commands::management::next::tests
+---
+
+running 11 tests
+test cli::commands::management::next::tests::decision_to_json_accept_maps_to_accept_command ... ok
+test cli::commands::management::next::tests::decision_to_json_blocked_includes_recovery_guidance ... ok
+test cli::commands::management::next::tests::blocked_and_empty_decisions_keep_human_and_json_guidance_in_sync ... ok
+test cli::commands::management::next::tests::actionable_decisions_keep_human_and_json_guidance_in_sync ... ok
+test cli::commands::management::next::tests::decision_to_json_empty_omits_guidance ... ok
+test cli::commands::management::next::tests::decision_to_json_work_includes_next_step_guidance ... ok
+test cli::commands::management::next::tests::decision_to_json_continuation_work_maps_to_submit_command ... ok
+test cli::commands::management::next::tests::parallel_ready_guidance_matches_json_and_human_rendering ... ok
+test cli::commands::management::next::tests::parallel_story_with_scope_uses_shared_id_colors ... ok
+test cli::commands::management::next::tests::exit_code_work_is_0 ... ok
+test cli::commands::management::next::tests::parallel_story_uses_shared_story_id_color ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 1007 filtered out; finished in 0.01s
+
+
+--- stderr ---
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.13s
+     Running unittests src/lib.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-bec18a36668a42b8)
