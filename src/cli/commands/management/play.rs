@@ -6,6 +6,8 @@ use std::path::Path;
 
 use anyhow::{Context, Result, bail};
 
+use super::play_guidance::{guidance_for_suggest, informational_for_exploration, print_human};
+
 /// Run the play command
 pub fn run(
     board_dir: &Path,
@@ -17,27 +19,29 @@ pub fn run(
 ) -> Result<()> {
     let play_dir = board_dir.join("play");
 
-    if let Some(ids) = cross {
+    let guidance = if let Some(ids) = cross {
         if ids.len() != 2 {
             bail!("`--cross` requires exactly two bearing IDs");
         }
-        return run_cross(board_dir, &ids[0], &ids[1]);
-    }
+        run_cross(board_dir, &ids[0], &ids[1])?;
+        informational_for_exploration()
+    } else if let Some(ref bearing) = suggest {
+        let recommended_prop = run_suggest(board_dir, bearing)?;
+        guidance_for_suggest(bearing, &recommended_prop)
+    } else if list_props {
+        list_available_props(&play_dir)?;
+        informational_for_exploration()
+    } else if let Some(ref bearing) = bearing_id {
+        play_bearing(board_dir, &play_dir, bearing, prop.as_deref())?;
+        informational_for_exploration()
+    } else {
+        // Freeform play
+        freeform_play(&play_dir, prop.as_deref())?;
+        informational_for_exploration()
+    };
 
-    if let Some(ref bearing) = suggest {
-        return run_suggest(board_dir, bearing);
-    }
-
-    if list_props {
-        return list_available_props(&play_dir);
-    }
-
-    if let Some(ref bearing) = bearing_id {
-        return play_bearing(board_dir, &play_dir, bearing, prop.as_deref());
-    }
-
-    // Freeform play
-    freeform_play(&play_dir, prop.as_deref())
+    print_human(guidance.as_ref());
+    Ok(())
 }
 
 /// List all available props by category
@@ -585,7 +589,7 @@ fn find_prop_file(props_dir: &Path, name: &str) -> Option<std::path::PathBuf> {
 }
 
 /// Suggest a mask for a bearing based on its content
-fn run_suggest(board_dir: &Path, bearing_id: &str) -> Result<()> {
+fn run_suggest(board_dir: &Path, bearing_id: &str) -> Result<String> {
     let brief = load_bearing_brief(board_dir, bearing_id)?;
     let scores = score_masks(&brief);
 
@@ -617,7 +621,7 @@ fn run_suggest(board_dir: &Path, bearing_id: &str) -> Result<()> {
         top_mask.to_lowercase()
     );
 
-    Ok(())
+    Ok(top_mask.to_lowercase())
 }
 
 /// Score each mask based on heuristic signals in the brief content
