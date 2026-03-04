@@ -25,11 +25,11 @@ started_at: 2026-03-03T19:41:26
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/3 stories complete
+**Progress:** 2/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Align Next Command Guidance In Human And Json Output](../../../../stories/1vxZ0DxDl/README.md) | feat | done |
-| [Add Canonical Guidance To Verify And Audit Commands](../../../../stories/1vxZ0EXHC/README.md) | feat | backlog |
+| [Add Canonical Guidance To Verify And Audit Commands](../../../../stories/1vxZ0EXHC/README.md) | feat | done |
 | [Add Canonical Guidance To Play Command Outcomes](../../../../stories/1vxZ0Eoj9/README.md) | feat | backlog |
 <!-- END GENERATED -->

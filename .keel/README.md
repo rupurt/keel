@@ -25,7 +25,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Add Canonical Guidance To Verify And Audit Commands](stories/1vxZ0EXHC/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Decision And Verification Guidance Parity](epics/1vxYzSury/voyages/1vxYzrwma/) |
 | [Add Canonical Guidance To Play Command Outcomes](stories/1vxZ0Eoj9/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Decision And Verification Guidance Parity](epics/1vxYzSury/voyages/1vxYzrwma/) |
 | [Add Drift Tests For Canonical Guidance Contracts](stories/1vxZ0FGSF/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Command Classification Drift Guards](epics/1vxYzSury/voyages/1vxYzsAxT/) |
 | [Implement Command Capability Classification Map](stories/1vxZ0FZaN/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Command Classification Drift Guards](epics/1vxYzSury/voyages/1vxYzsAxT/) |

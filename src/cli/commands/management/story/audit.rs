@@ -5,6 +5,9 @@ use owo_colors::OwoColorize;
 use std::collections::HashMap;
 use std::path::Path;
 
+use crate::cli::commands::management::verification_guidance::{
+    audit_error_with_recovery, guidance_for_audit_story, print_human,
+};
 use crate::cli::style;
 use crate::domain::model::Board;
 use crate::infrastructure::loader::load_board;
@@ -12,51 +15,65 @@ use crate::read_model::evidence::{self, EvidenceEntry};
 
 /// Run the audit command
 pub fn run(board_dir: &Path, id: Option<&str>) -> Result<()> {
-    let board = load_board(board_dir)?;
+    let result: Result<Option<_>> = (|| {
+        let board = load_board(board_dir)?;
 
-    if let Some(id) = id {
-        // Audit specific entity
-        if let Some(story) = board.stories.get(id) {
+        if let Some(id) = id {
+            // Audit specific entity
+            if let Some(story) = board.stories.get(id) {
+                println!(
+                    "{}",
+                    "Story Evidence Audit".bright_blue().bold().underline()
+                );
+                println!();
+                audit_story(story, 0)?;
+                Ok(guidance_for_audit_story(story.id(), story.stage))
+            } else if let Some(voyage) = board.voyages.get(id) {
+                println!("{}", "Voyage Evidence Audit".magenta().bold().underline());
+                println!();
+                audit_voyage(&board, voyage, 0)?;
+                Ok(None)
+            } else if let Some(epic) = board.epics.get(id) {
+                println!("{}", "Epic Evidence Audit".cyan().bold().underline());
+                println!();
+                audit_epic(&board, epic)?;
+                Ok(None)
+            } else {
+                anyhow::bail!("Entity not found: {}", id);
+            }
+        } else {
+            // Audit entire board
+            println!();
             println!(
                 "{}",
-                "Story Evidence Audit".bright_blue().bold().underline()
+                "Board Evidence Audit".bright_white().bold().underline()
             );
             println!();
-            audit_story(story, 0)?;
-        } else if let Some(voyage) = board.voyages.get(id) {
-            println!("{}", "Voyage Evidence Audit".magenta().bold().underline());
-            println!();
-            audit_voyage(&board, voyage, 0)?;
-        } else if let Some(epic) = board.epics.get(id) {
-            println!("{}", "Epic Evidence Audit".cyan().bold().underline());
-            println!();
-            audit_epic(&board, epic)?;
-        } else {
-            anyhow::bail!("Entity not found: {}", id);
-        }
-    } else {
-        // Audit entire board
-        println!(
-            "{}",
-            "Board Evidence Audit".bright_white().bold().underline()
-        );
-        println!();
 
-        let mut epics: Vec<_> = board.epics.values().collect();
-        epics.sort_by(|a, b| match (a.index(), b.index()) {
-            (Some(idx_a), Some(idx_b)) => idx_a.cmp(&idx_b),
-            (Some(_), None) => std::cmp::Ordering::Less,
-            (None, Some(_)) => std::cmp::Ordering::Greater,
-            (None, None) => a.id().cmp(b.id()),
-        });
+            let mut epics: Vec<_> = board.epics.values().collect();
+            epics.sort_by(|a, b| match (a.index(), b.index()) {
+                (Some(idx_a), Some(idx_b)) => idx_a.cmp(&idx_b),
+                (Some(_), None) => std::cmp::Ordering::Less,
+                (None, Some(_)) => std::cmp::Ordering::Greater,
+                (None, None) => a.id().cmp(b.id()),
+            });
 
-        for epic in epics {
-            audit_epic(&board, epic)?;
-            println!();
+            for epic in epics {
+                audit_epic(&board, epic)?;
+                println!();
+            }
+
+            Ok(None)
         }
+    })();
+
+    match result {
+        Ok(guidance) => {
+            print_human(guidance.as_ref());
+            Ok(())
+        }
+        Err(error) => Err(audit_error_with_recovery(id, error)),
     }
-
-    Ok(())
 }
 
 fn audit_story(story: &crate::domain::model::Story, indent_level: usize) -> Result<()> {
@@ -364,10 +381,10 @@ mod tests {
 
         let result = run(temp.path(), Some("NONEXISTENT"));
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err().to_string(),
-            "Entity not found: NONEXISTENT"
-        );
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("Entity not found: NONEXISTENT"));
+        assert!(err.contains("Recovery step:"));
+        assert!(err.contains("keel story list"));
     }
 
     #[test]

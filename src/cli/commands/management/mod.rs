@@ -9,5 +9,6 @@ pub mod next;
 mod next_support;
 pub mod play;
 pub mod story;
+pub(crate) mod verification_guidance;
 pub mod verify;
 pub mod voyage;
