@@ -25,9 +25,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Surface Technique Recommendations In Planning Shows](stories/1vxqNFHpk/README.md) | feat | [Automated Verification Techniques Bank](epics/1vxqMtskC/) / [Technique Catalog Configuration And Autodetection](epics/1vxqMtskC/voyages/1vxqN5jnA/) |
-| [Implement Keel.toml Technique Configuration Overrides](stories/1vxqNFJOf/README.md) | feat | [Automated Verification Techniques Bank](epics/1vxqMtskC/) / [Technique Catalog Configuration And Autodetection](epics/1vxqMtskC/voyages/1vxqN5jnA/) |
-| [Implement Project Autodetection And Recommendation Engine](stories/1vxqNFNdN/README.md) | feat | [Automated Verification Techniques Bank](epics/1vxqMtskC/) / [Technique Catalog Configuration And Autodetection](epics/1vxqMtskC/voyages/1vxqN5jnA/) |
 
 <details>
 <summary><h2>Icebox</h2></summary>
@@ -38,18 +35,6 @@
 </details>
 
 ## Epics
-
-### [Deterministic Command Guidance](epics/1vxYzSury/) (active) - 7 voyages, 6 done
-
-| Voyage | Status |
-|--------|--------|
-| [Output Contract And Shared Renderer](epics/1vxYzSury/voyages/1vxYzh8ep/) | done |
-| [Governance And Research Guidance](epics/1vxYzSury/voyages/1vxYzjVMv/) | done |
-| [Story And Voyage Lifecycle Guidance](epics/1vxYzSury/voyages/1vxYzjiwH/) | done |
-| [Decision And Verification Guidance Parity](epics/1vxYzSury/voyages/1vxYzrwma/) | done |
-| [Command Classification Drift Guards](epics/1vxYzSury/voyages/1vxYzsAxT/) | done |
-| [Planning Read Surfaces And Evidence Visibility](epics/1vxYzSury/voyages/1vxpomgnN/) | in-progress |
-| [Icebox-First Story Intake](epics/1vxYzSury/voyages/1vxqEChvp/) | done |
 
 ### [Automated Verification Techniques Bank](epics/1vxqMtskC/) (active) - 1 voyages, 0 done
 
@@ -68,5 +53,6 @@
 - [System Coherence and Intelligent Flow](epics/1vv7YWzw2/)
 - [Domain Driven Design Restructure](epics/1vwq96cpt/)
 - [Template Contract Hard Cutover](epics/1vxGy5tco/)
+- [Deterministic Command Guidance](epics/1vxYzSury/)
 
 </details>
