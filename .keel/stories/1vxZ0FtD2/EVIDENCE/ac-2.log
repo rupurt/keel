@@ -1,0 +1,7 @@
+---
+recorded_at: 2026-03-03T20:48:23.723991038-08:00
+command: rg --line-number -e Actionable: -e Informational: -e next-step ../README.md
+---
+153:5. Single canonical next-step rule: Keel emits one deterministic command even when multiple follow-ups could be valid.
+157:- Actionable: ADR transitions (`adr accept/reject/deprecate/supersede`), bearing transitions (`bearing survey/assess/park/decline/lay`), guided play suggestion (`play --suggest`), story-scoped verification (`verify <story-id>`), story-scoped audit (`audit <story-id>`).
+158:- Informational: read/list commands (`adr list/show`, `bearing list/show`) and exploratory play outputs (`play`, `play --list-props`, `play <bearing>`, `play --cross`).

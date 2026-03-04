@@ -135,6 +135,57 @@ Diagnostics
 | `gaps` | Identify missing requirements or design coverage |
 | `verify` | Execute automated verification proofs |
 
+### Harness Guidance Contract
+
+Harness integrations should consume canonical command guidance from management command responses using an optional `guidance` object.
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `guidance.next_step.command` | `string` | Single canonical follow-up command for a successful actionable outcome. |
+| `guidance.recovery_step.command` | `string` | Single canonical recovery command for a blocked/failed actionable outcome. |
+
+Contract rules:
+
+1. `guidance` is emitted only for actionable commands.
+2. Informational commands omit `guidance` entirely.
+3. Exactly one step type is emitted when guidance exists: `next_step` or `recovery_step` (never both).
+4. Command strings are canonical, copy-paste-ready `keel ...` commands with explicit IDs/flags.
+5. Single canonical next-step rule: Keel emits one deterministic command even when multiple follow-ups could be valid.
+
+Capability classification:
+
+- Actionable: ADR transitions (`adr accept/reject/deprecate/supersede`), bearing transitions (`bearing survey/assess/park/decline/lay`), guided play suggestion (`play --suggest`), story-scoped verification (`verify <story-id>`), story-scoped audit (`audit <story-id>`).
+- Informational: read/list commands (`adr list/show`, `bearing list/show`) and exploratory play outputs (`play`, `play --list-props`, `play <bearing>`, `play --cross`).
+
+Examples (minimal contract snippets):
+
+```json
+{
+  "guidance": {
+    "next_step": {
+      "command": "keel story submit 1vxZ0FtD2"
+    }
+  }
+}
+```
+
+```json
+{
+  "guidance": {
+    "recovery_step": {
+      "command": "keel story audit 1vxZ0EXHC"
+    }
+  }
+}
+```
+
+```json
+{
+  "type": "informational",
+  "result": "no-action-required"
+}
+```
+
 ## Installation
 
 ### Using Nix Flakes

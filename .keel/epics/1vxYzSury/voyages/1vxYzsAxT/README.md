@@ -25,11 +25,11 @@ started_at: 2026-03-03T20:15:46
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 2/3 stories complete
+**Progress:** 3/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Add Drift Tests For Canonical Guidance Contracts](../../../../stories/1vxZ0FGSF/README.md) | feat | done |
 | [Implement Command Capability Classification Map](../../../../stories/1vxZ0FZaN/README.md) | feat | done |
-| [Document Command Guidance Contract For Harness Consumers](../../../../stories/1vxZ0FtD2/README.md) | feat | backlog |
+| [Document Command Guidance Contract For Harness Consumers](../../../../stories/1vxZ0FtD2/README.md) | feat | done |
 <!-- END GENERATED -->

@@ -1,0 +1,9 @@
+---
+recorded_at: 2026-03-03T20:48:23.303763918-08:00
+command: rg --line-number -e no-action-required -e recovery_step -e 1vxZ0FtD2 ../README.md
+---
+145:| `guidance.recovery_step.command` | `string` | Single canonical recovery command for a blocked/failed actionable outcome. |
+151:3. Exactly one step type is emitted when guidance exists: `next_step` or `recovery_step` (never both).
+166:      "command": "keel story submit 1vxZ0FtD2"
+175:    "recovery_step": {
+185:  "result": "no-action-required"

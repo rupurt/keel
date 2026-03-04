@@ -1,0 +1,6 @@
+---
+recorded_at: 2026-03-03T20:48:21.967531415-08:00
+command: rg --line-number -e guidance.next_step.command -e guidance.recovery_step.command ../README.md
+---
+144:| `guidance.next_step.command` | `string` | Single canonical follow-up command for a successful actionable outcome. |
+145:| `guidance.recovery_step.command` | `string` | Single canonical recovery command for a blocked/failed actionable outcome. |
