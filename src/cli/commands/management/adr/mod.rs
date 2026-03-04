@@ -227,6 +227,7 @@ pub fn run_list(status_filter: Option<&str>) -> Result<()> {
         } else {
             println!("No ADRs found.");
         }
+        guidance::print_human(guidance::informational_for_list().as_ref());
         return Ok(());
     }
 
@@ -241,6 +242,7 @@ pub fn run_list(status_filter: Option<&str>) -> Result<()> {
         ]);
     }
     table.print();
+    guidance::print_human(guidance::informational_for_list().as_ref());
 
     Ok(())
 }
@@ -278,6 +280,7 @@ pub fn run_show(pattern: &str) -> Result<()> {
     // Print file path
     println!();
     println!("File: {}", adr.path.display());
+    guidance::print_human(guidance::informational_for_show().as_ref());
 
     Ok(())
 }

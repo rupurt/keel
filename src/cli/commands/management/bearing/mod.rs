@@ -66,7 +66,10 @@ use crate::infrastructure::loader::load_board;
 use crate::infrastructure::scoring::{calculate_score, load_assessment};
 use crate::infrastructure::template_rendering;
 use crate::infrastructure::templates;
-use guidance::{BearingLifecycleAction, error_with_recovery, guidance_for_action, print_human};
+use guidance::{
+    BearingLifecycleAction, error_with_recovery, guidance_for_action, informational_for_list,
+    informational_for_show, print_human,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum FogType {
@@ -212,6 +215,7 @@ pub fn run_list(status_filter: Option<&str>) -> Result<()> {
         } else {
             println!("No bearings found.");
         }
+        print_human(informational_for_list().as_ref());
         return Ok(());
     }
 
@@ -232,6 +236,7 @@ pub fn run_list(status_filter: Option<&str>) -> Result<()> {
         ]);
     }
     table.print();
+    print_human(informational_for_list().as_ref());
 
     Ok(())
 }
@@ -317,6 +322,7 @@ pub fn run_show(pattern: &str) -> Result<()> {
         println!();
         println!("Decline Reason: {}", reason);
     }
+    print_human(informational_for_show().as_ref());
 
     Ok(())
 }

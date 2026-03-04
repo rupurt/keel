@@ -25,7 +25,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Keep Informational Governance Commands Non Prescriptive](stories/1vxZ0Dvw9/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Governance And Research Guidance](epics/1vxYzSury/voyages/1vxYzjVMv/) |
 | [Align Next Command Guidance In Human And Json Output](stories/1vxZ0DxDl/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Decision And Verification Guidance Parity](epics/1vxYzSury/voyages/1vxYzrwma/) |
 | [Add Canonical Guidance To Verify And Audit Commands](stories/1vxZ0EXHC/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Decision And Verification Guidance Parity](epics/1vxYzSury/voyages/1vxYzrwma/) |
 | [Add Canonical Guidance To Play Command Outcomes](stories/1vxZ0Eoj9/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Decision And Verification Guidance Parity](epics/1vxYzSury/voyages/1vxYzrwma/) |

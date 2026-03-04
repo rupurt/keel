@@ -15,6 +15,16 @@ pub enum BearingLifecycleAction {
     Lay,
 }
 
+/// Informational list command guidance: intentionally non-prescriptive.
+pub fn informational_for_list() -> Option<CanonicalGuidance> {
+    None
+}
+
+/// Informational show command guidance: intentionally non-prescriptive.
+pub fn informational_for_show() -> Option<CanonicalGuidance> {
+    None
+}
+
 /// Build canonical next-step guidance for successful bearing transitions.
 pub fn guidance_for_action(
     action: BearingLifecycleAction,
@@ -125,7 +135,14 @@ pub fn print_human(guidance: Option<&CanonicalGuidance>) {
 mod tests {
     use super::*;
     use anyhow::anyhow;
+    use serde::Serialize;
     use serde_json::json;
+
+    #[derive(Serialize)]
+    struct GuidanceEnvelope {
+        #[serde(skip_serializing_if = "Option::is_none")]
+        guidance: Option<CanonicalGuidance>,
+    }
 
     #[test]
     fn survey_success_guidance_maps_to_assess() {
@@ -167,6 +184,29 @@ mod tests {
                 })
             );
         }
+    }
+
+    #[test]
+    fn informational_commands_emit_no_guidance() {
+        assert!(informational_for_list().is_none());
+        assert!(informational_for_show().is_none());
+        assert!(render_human(informational_for_list().as_ref()).is_empty());
+        assert!(render_human(informational_for_show().as_ref()).is_empty());
+    }
+
+    #[test]
+    fn informational_json_path_omits_guidance_field() {
+        let list_json = serde_json::to_value(GuidanceEnvelope {
+            guidance: informational_for_list(),
+        })
+        .unwrap();
+        let show_json = serde_json::to_value(GuidanceEnvelope {
+            guidance: informational_for_show(),
+        })
+        .unwrap();
+
+        assert!(list_json.get("guidance").is_none());
+        assert!(show_json.get("guidance").is_none());
     }
 
     #[test]

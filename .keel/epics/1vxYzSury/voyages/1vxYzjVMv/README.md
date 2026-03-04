@@ -2,11 +2,12 @@
 id: 1vxYzjVMv
 index: 2
 title: Governance And Research Guidance
-status: in-progress
+status: done
 epic: 1vxYzSury
 created_at: 2026-03-03T15:17:39
 updated_at: 2026-03-03T15:49:33
 started_at: 2026-03-03T18:22:50
+completed_at: 2026-03-03T19:38:29
 ---
 
 # Governance And Research Guidance
@@ -25,11 +26,11 @@ started_at: 2026-03-03T18:22:50
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 2/3 stories complete
+**Progress:** 3/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Add Canonical Guidance To ADR Transition Commands](../../../../stories/1vxZ0C7OF/README.md) | feat | done |
 | [Add Canonical Guidance To Bearing Transition Commands](../../../../stories/1vxZ0DAeT/README.md) | feat | done |
-| [Keep Informational Governance Commands Non Prescriptive](../../../../stories/1vxZ0Dvw9/README.md) | feat | backlog |
+| [Keep Informational Governance Commands Non Prescriptive](../../../../stories/1vxZ0Dvw9/README.md) | feat | done |
 <!-- END GENERATED -->
