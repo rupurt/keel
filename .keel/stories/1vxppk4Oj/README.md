@@ -17,5 +17,5 @@ Define a shared planning/evidence projection contract that all three `show` comm
 ## Acceptance Criteria
 
 - [ ] [SRS-05/AC-01] Introduce shared projection types and builders for epic/voyage/story `show` data so command renderers read one canonical contract. <!-- verify: cargo test --lib planning_show_projection_contract, SRS-05:start -->
-- [ ] [SRS-05/AC-02] Add parsing utilities that extract authored planning sections (problem, goals/objectives, key requirements, verification strategy) from PRD/SRS content while ignoring scaffold comments. <!-- verify: cargo test --lib planning_doc_extractor, SRS-05:continues -->
-- [ ] [SRS-NFR-01/AC-01] Add deterministic-order tests proving projections emit stable section, requirement, story, and artifact ordering across equivalent board states. <!-- verify: cargo test --lib planning_show_projection_deterministic, SRS-NFR-01:start -->
+- [ ] [SRS-05/AC-02] Add parsing utilities that extract authored planning sections (problem, goals/objectives, key requirements, verification strategy) from PRD/SRS content while ignoring scaffold comments. <!-- verify: cargo test --lib planning_doc_extractor, SRS-05:end -->
+- [ ] [SRS-NFR-01/AC-01] Add deterministic-order tests proving projections emit stable section, requirement, story, and artifact ordering across equivalent board states. <!-- verify: cargo test --lib planning_show_projection_deterministic, SRS-NFR-01:start:end -->

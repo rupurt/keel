@@ -17,5 +17,5 @@ Build the autodetection and ranking pipeline that infers project stack signals a
 ## Acceptance Criteria
 
 - [ ] [SRS-03/AC-01] Detect project stack signals from repository artifacts (for example Rust CLI and browser test stack markers) and compute confidence scores. <!-- verify: cargo test --lib technique_project_signal_detection, SRS-03:start -->
-- [ ] [SRS-03/AC-02] Produce ranked recommendations from the merged catalog with rationale and applicability metadata per recommendation. <!-- verify: cargo test --lib technique_recommendation_ranking, SRS-03:continues -->
-- [ ] [SRS-NFR-01/AC-02] Recommendation ranking is deterministic for equivalent repository inputs. <!-- verify: cargo test --lib technique_recommendation_deterministic, SRS-NFR-01:continues -->
+- [ ] [SRS-03/AC-02] Produce ranked recommendations from the merged catalog with rationale and applicability metadata per recommendation. <!-- verify: cargo test --lib technique_recommendation_ranking, SRS-03:end -->
+- [ ] [SRS-NFR-01/AC-02] Recommendation ranking is deterministic for equivalent repository inputs. <!-- verify: cargo test --lib technique_recommendation_deterministic, SRS-NFR-01:start:end -->

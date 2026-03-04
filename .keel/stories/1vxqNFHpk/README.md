@@ -17,5 +17,5 @@ Expose technique recommendations in planning read commands so teams can see whic
 ## Acceptance Criteria
 
 - [ ] [SRS-04/AC-01] `keel epic show`, `keel voyage show`, and `keel story show` render a recommendation section with ranked techniques and rationale. <!-- verify: cargo test --lib show_recommendation_sections, SRS-04:start -->
-- [ ] [SRS-04/AC-02] Recommendation output identifies whether techniques like `vhs` and `llm-judge` are configured/unused and provides adoption guidance snippets. <!-- verify: cargo test --lib show_recommendation_usage_status, SRS-04:continues -->
-- [ ] [SRS-NFR-02/AC-02] Show rendering remains advisory-only and does not trigger execution of recommended techniques. <!-- verify: cargo test --lib show_recommendations_do_not_execute, SRS-NFR-02:continues -->
+- [ ] [SRS-04/AC-02] Recommendation output identifies whether techniques like `vhs` and `llm-judge` are configured/unused and provides adoption guidance snippets. <!-- verify: cargo test --lib show_recommendation_usage_status, SRS-04:end -->
+- [ ] [SRS-NFR-02/AC-02] Show rendering remains advisory-only and does not trigger execution of recommended techniques. <!-- verify: cargo test --lib show_recommendations_do_not_execute, SRS-NFR-02:start:end -->

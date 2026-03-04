@@ -19,8 +19,8 @@ created_at: 2026-03-04T09:50:43
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 0/4 stories done
+**Progress:** 0/1 voyages complete, 1/4 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Technique Catalog Configuration And Autodetection](voyages/1vxqN5jnA/) | planned | 0/4 |
+| [Technique Catalog Configuration And Autodetection](voyages/1vxqN5jnA/) | in-progress | 1/4 |
 <!-- END GENERATED -->
