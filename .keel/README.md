@@ -29,6 +29,7 @@
 | [Implement Voyage Show Requirement Progress](stories/1vxppkB6M/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Planning Read Surfaces And Evidence Visibility](epics/1vxYzSury/voyages/1vxpomgnN/) |
 | [Render Concrete Evidence In Story Show](stories/1vxppkEH9/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Planning Read Surfaces And Evidence Visibility](epics/1vxYzSury/voyages/1vxpomgnN/) |
 | [Implement Epic Show Planning Summary](stories/1vxppkN0w/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Planning Read Surfaces And Evidence Visibility](epics/1vxYzSury/voyages/1vxpomgnN/) |
+| [Default New Stories To Icebox](stories/1vxqELhgo/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Icebox-First Story Intake](epics/1vxYzSury/voyages/1vxqEChvp/) |
 
 <details>
 <summary><h2>Icebox</h2></summary>
@@ -40,7 +41,7 @@
 
 ## Epics
 
-### [Deterministic Command Guidance](epics/1vxYzSury/) (active) - 6 voyages, 5 done
+### [Deterministic Command Guidance](epics/1vxYzSury/) (active) - 7 voyages, 5 done
 
 | Voyage | Status |
 |--------|--------|
@@ -50,6 +51,7 @@
 | [Decision And Verification Guidance Parity](epics/1vxYzSury/voyages/1vxYzrwma/) | done |
 | [Command Classification Drift Guards](epics/1vxYzSury/voyages/1vxYzsAxT/) | done |
 | [Planning Read Surfaces And Evidence Visibility](epics/1vxYzSury/voyages/1vxpomgnN/) | planned |
+| [Icebox-First Story Intake](epics/1vxYzSury/voyages/1vxqEChvp/) | planned |
 
 <details>
 <summary><h2>Done</h2></summary>

@@ -10,6 +10,7 @@ In scope:
 - Upgrade `keel epic show`, `keel voyage show`, and `keel story show` to surface authored planning and verification evidence (not only metadata or lineage labels).
 - Add deterministic progress and requirement coverage views so planning status is actionable from the terminal.
 - Surface proof artifacts (including media such as `.gif`) in human-review friendly output.
+- Add project-aware automated verification recommendations so planning views suggest stronger proof strategies.
 
 Out of scope:
 - Changes to lifecycle transitions (`start`, `submit`, `accept`, etc.).
@@ -38,9 +39,9 @@ Out of scope:
 | ID | Requirement | Source | Verification |
 |----|-------------|--------|--------------|
 | SRS-01 | `keel epic show` MUST render a planning summary that surfaces the epic problem, goals/objectives, and key requirements from authored planning docs. | FR-01 | parser unit tests + CLI snapshot tests |
-| SRS-02 | `keel epic show` MUST render progress and verification readiness, including automated/manual verification coverage, evidence artifact inventory, and a time-to-complete estimate when throughput is available. | FR-01 | read-model tests + CLI snapshot tests |
+| SRS-02 | `keel epic show` MUST render progress and verification readiness, including automated/manual verification coverage, evidence artifact inventory, a time-to-complete estimate using a 4-week throughput window, and project-aware automated verification recommendations. | FR-01 | read-model tests + CLI snapshot tests |
 | SRS-03 | `keel voyage show` MUST render voyage goal/scope and a requirements progress table mapping requirements to linked stories and completion state. | FR-01 | requirements mapping tests + CLI snapshot tests |
-| SRS-04 | `keel story show` MUST render concrete evidence details (proof file, metadata, excerpt, and supplemental/media artifacts) for each acceptance criterion instead of only abstract evidence-chain lines. | FR-01 | filesystem fixture tests + CLI snapshot tests |
+| SRS-04 | `keel story show` MUST render concrete evidence details (proof file, metadata, 10-line text excerpt, and supplemental/media artifacts with playback guidance) for each acceptance criterion instead of only abstract evidence-chain lines. | FR-01 | filesystem fixture tests + CLI snapshot tests |
 | SRS-05 | The three `show` commands MUST consume a shared planning-read projection so contracts remain consistent and reusable for future chat summaries. | FR-01 | shared projection unit tests + command integration tests |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 

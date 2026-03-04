@@ -47,8 +47,9 @@ Out of bounds:
 |----------|--------|-----------|
 | Shared projection | Add a single planning/evidence projection module consumed by all three show commands. | Prevents drift and enables reuse for future chat summary surfaces. |
 | Markdown extraction strategy | Parse authored sections/tables with explicit fallback placeholders for scaffold-only content. | Maintains usefulness on partially-authored planning docs. |
-| Verification rollup | Classify AC evidence as automated/manual/missing and aggregate artifact inventory (including media extensions). | Surfaces acceptance readiness directly in `show` commands. |
-| ETA signal | Estimate epic completion using remaining stories divided by recent average stories/week; degrade when denominator is zero. | Gives directional planning signal without false precision. |
+| Verification rollup | Classify AC evidence as automated/manual/missing, aggregate artifact inventory (including media extensions), and suggest additional automated verification techniques from project signals. | Surfaces acceptance readiness and raises verification quality directly in `show` commands. |
+| ETA signal | Estimate epic completion using remaining stories divided by the most recent 4-week average stories/week; degrade when denominator is zero. | Gives directional planning signal without false precision and uses a consistent short-horizon window. |
+| Evidence preview limits | Show up to 10 lines for text proofs; for media artifacts provide whole-asset playback guidance from the terminal when supported. | Keeps text output concise while still making visual artifacts directly reviewable. |
 | Contract testing | Snapshot-style CLI output tests and deterministic ordering assertions. | Prevents regressions in user-visible command output. |
 
 ## Architecture
@@ -74,7 +75,11 @@ Out of bounds:
 - Evidence Surface Builder:
   - Joins AC verify annotations to proof files in `EVIDENCE/`.
   - Reads proof frontmatter metadata (`recorded_at`, `mode`, `command`) when present.
-  - Classifies artifacts by type (text/log, media, supplemental) and computes missing-proof flags.
+  - Classifies artifacts by type (text/log, media, supplemental), computes missing-proof flags, and emits playback commands/fallback hints for media.
+
+- Verification Recommendation Builder:
+  - Detects project stack/tooling signals from repository files (for example Rust crates, web E2E harnesses, snapshot/fuzz tooling).
+  - Produces ranked automated verification recommendations suitable for epic-level planning output.
 
 - Progress/ETA Calculator:
   - Computes epic progress from voyage/story completion counts.
@@ -94,6 +99,7 @@ Each projection should expose:
 - Verification summary
 - Deterministically ordered requirement/story/artifact collections
 - Placeholder reasons when data is missing
+- Recommended automated verification additions (when inferable)
 
 ## Data Flow
 
@@ -109,4 +115,5 @@ Each projection should expose:
 | PRD/SRS file missing or unreadable | File read fails | Show section with explicit "not available" message; keep command successful when possible | Author/fix missing planning file |
 | Requirement table malformed | Parse yields zero/partial IDs | Render warning placeholder and continue with available data | Repair SRS table markers/rows |
 | Proof file referenced but missing | Annotation proof path absent in `EVIDENCE/` | Render missing-proof warning for affected AC | Re-run `story record` or repair proof reference |
-| Throughput insufficient for ETA | Zero completed stories in window | Render "insufficient throughput data" ETA state | Complete stories or widen history window |
+| Throughput insufficient for ETA | Zero completed stories in 4-week window | Render "insufficient throughput data (4-week window)" ETA state | Complete stories or widen history window |
+| Media playback tool unavailable | No supported terminal/media helper discovered | Render artifact path plus explicit command suggestion for local playback | Install/enable supported viewer tooling |

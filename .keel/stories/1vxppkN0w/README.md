@@ -17,6 +17,7 @@ Upgrade `keel epic show` to render an actionable planning report: authored summa
 ## Acceptance Criteria
 
 - [ ] [SRS-01/AC-02] `keel epic show <id>` renders authored problem statement, goals/objectives, and key requirements in a compact planning summary section. <!-- verify: cargo test --lib epic_show_planning_summary, SRS-01:end -->
-- [ ] [SRS-02/AC-01] `keel epic show <id>` renders progress metrics (voyages/stories complete) plus a time-to-complete estimate derived from recent throughput with fallback messaging when data is insufficient. <!-- verify: cargo test --lib epic_show_eta_projection, SRS-02:start -->
+- [ ] [SRS-02/AC-01] `keel epic show <id>` renders progress metrics (voyages/stories complete) plus a time-to-complete estimate derived from a 4-week throughput window with fallback messaging when data is insufficient. <!-- verify: cargo test --lib epic_show_eta_projection_4w, SRS-02:start -->
 - [ ] [SRS-02/AC-02] `keel epic show <id>` renders verification readiness including automated/manual requirement coverage and linked artifact inventory (text + media). <!-- verify: cargo test --lib epic_show_verification_surface, SRS-02:continues -->
+- [ ] [SRS-02/AC-03] `keel epic show <id>` renders project-aware automated verification recommendations (for example stack-specific tooling suggestions) with rationale tied to detected project signals. <!-- verify: cargo test --lib epic_show_verification_recommendations, SRS-02:end -->
 - [ ] [SRS-NFR-02/AC-01] When authored planning sections or evidence are missing, `epic show` prints explicit placeholders/warnings instead of omitting sections. <!-- verify: cargo test --lib epic_show_missing_data_placeholders, SRS-NFR-02:start -->
