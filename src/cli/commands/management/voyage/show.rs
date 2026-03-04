@@ -1,7 +1,5 @@
 //! Show voyage command
 
-use std::collections::BTreeSet;
-use std::fs;
 use std::path::Path;
 
 use anyhow::Result;
@@ -10,9 +8,7 @@ use owo_colors::OwoColorize;
 use crate::cli::style;
 use crate::domain::model::{Board, Voyage};
 use crate::infrastructure::loader::load_board;
-use crate::infrastructure::verification::parser::parse_verify_annotations;
 use crate::read_model::planning_show::{self, VoyageShowProjection};
-use crate::read_model::verification_techniques::{self, ShowRecommendationReport};
 
 const GOAL_PLACEHOLDER: &str = "(goal not authored yet)";
 const SCOPE_PLACEHOLDER: &str = "(scope not authored in SRS.md yet)";
@@ -50,12 +46,6 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     render_goal_scope(&report);
     render_progress(&report);
     render_requirement_matrix(&report);
-    let used_techniques = collect_used_techniques_for_voyage(&board, voyage);
-    let recommendation_report = verification_techniques::build_show_recommendation_report(
-        project_root_from_board_dir(board_dir),
-        &used_techniques,
-    );
-    render_recommendations(&recommendation_report);
 
     println!();
     println!("Path: {}", voyage.path.display().dimmed());
@@ -151,80 +141,6 @@ fn render_requirement_matrix(report: &VoyageShowProjection) {
             "  | {}: {} | {} | {} | {} |",
             row.id, row.description, row.completion, row.verification, linked
         );
-    }
-}
-
-pub(crate) fn recommendation_lines(report: &ShowRecommendationReport) -> Vec<String> {
-    let mut lines = Vec::new();
-    lines.push(format!("{}", "Technique Recommendations".bold()));
-
-    if report.recommendations.is_empty() {
-        lines.push("  (no recommendations available)".to_string());
-    } else {
-        for recommendation in &report.recommendations {
-            lines.push(format!(
-                "  - {} ({})",
-                recommendation.label, recommendation.usage_status
-            ));
-            lines.push(format!("    Rationale: {}", recommendation.rationale));
-            lines.push(format!("    {}", recommendation.adoption_guidance));
-        }
-    }
-
-    if !report.diagnostics.is_empty() {
-        lines.push("  Config diagnostics:".to_string());
-        for diagnostic in report.diagnostics.iter().take(5) {
-            lines.push(format!("    - {}", diagnostic));
-        }
-    }
-
-    lines.push(
-        "  Advisory only: recommended techniques are not executed by show commands.".to_string(),
-    );
-    lines
-}
-
-fn render_recommendations(report: &ShowRecommendationReport) {
-    println!();
-    for line in recommendation_lines(report) {
-        println!("{}", line);
-    }
-}
-
-fn collect_used_techniques_for_voyage(board: &Board, voyage: &Voyage) -> BTreeSet<String> {
-    let scope = voyage.scope_path();
-    let mut used = BTreeSet::new();
-
-    for story in board
-        .stories
-        .values()
-        .filter(|story| story.scope() == Some(scope.as_str()))
-    {
-        if let Ok(content) = fs::read_to_string(&story.path) {
-            for annotation in parse_verify_annotations(&content) {
-                if let Some(command) = annotation.command {
-                    for technique_id in verification_techniques::infer_used_technique_ids(&command)
-                    {
-                        used.insert(technique_id);
-                    }
-                }
-            }
-        }
-    }
-
-    used
-}
-
-fn project_root_from_board_dir(board_dir: &Path) -> &Path {
-    if board_dir
-        .file_name()
-        .and_then(|name| name.to_str())
-        .map(|name| name == ".keel")
-        .unwrap_or(false)
-    {
-        board_dir.parent().unwrap_or(board_dir)
-    } else {
-        board_dir
     }
 }
 

@@ -33,20 +33,25 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
 5. **Decompose Stories**: Break the design into implementable units:
    - `just keel story new "<Title>" --epic <epic-id> --voyage <voyage-id>`
    - Link stories to SRS requirements using `[SRS-XX/AC-YY]` markers in the acceptance criteria.
-6. **Run Coherence Review (Downstream Check)**: Before planning is sealed, review the full chain:
+6. **Align Verification Techniques From Config**: Run `just keel config show` and plan verification against the surfaced technique bank:
+   - Prefer the `Active configured options` as the default automated-verification set.
+   - Use `Found options for this project (ranked)` to add stack-appropriate techniques that are configured but underused.
+   - If needed techniques are missing, update `keel.toml` first, then continue decomposition.
+7. **Run Coherence Review (Downstream Check)**: Before planning is sealed, review the full chain:
    - Every SRS requirement has at least one linked story acceptance criterion.
    - Every acceptance criterion has a clear verification approach (automated test, CLI proof, or documented manual evidence).
+   - Verification commands align with `just keel config show` active options unless explicitly justified.
    - CLI options and authored entity content are explicit enough for downstream automation and transitions.
-7. **Loop Back Upstream if Needed**: If decomposition or verification design exposes ambiguity, update SRS/SDD first, then re-check story acceptance criteria.
-8. **Generate Planning Summary Report In Chat (Required)**: For every newly planned Epic or Voyage, publish a terse, actionable planning summary directly in the chat/harness response (do not create a dedicated summary file).
+8. **Loop Back Upstream if Needed**: If decomposition or verification design exposes ambiguity, update SRS/SDD first, then re-check story acceptance criteria.
+9. **Generate Planning Summary Report In Chat (Required)**: For every newly planned Epic or Voyage, publish a terse, actionable planning summary directly in the chat/harness response (do not create a dedicated summary file).
    - Include:
      - Objective and scope boundaries
      - Requirement-to-story coverage status
      - Verification strategy summary (how requirements will be proven)
      - Key risks/assumptions
      - Canonical next step command
-9. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this planning unit before sealing. Do not batch unrelated planning units into one commit.
-10. **Seal Planning**: Promote the voyage from `draft` to `planned` with `just keel voyage plan <id>`. This validates requirement coverage and thaws stories into the agent backlog.
+10. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this planning unit before sealing. Do not batch unrelated planning units into one commit.
+11. **Seal Planning**: Promote the voyage from `draft` to `planned` with `just keel voyage plan <id>`. This validates requirement coverage and thaws stories into the agent backlog.
 
 ## Research Workflow (Explorer)
 
@@ -159,7 +164,7 @@ Run `just keel --help` for the full command tree. The core commands you should r
 | Discovery | `just keel bearing new <name>` `just keel bearing survey <id>` `just keel bearing assess <id>` `just keel bearing list` |
 | Planning | `just keel epic new <name> --goal <goal>` `just keel voyage new <name> --epic <epic-id> --goal <goal>` |
 | Execution | `just keel story new <title> --epic <epic-id> --voyage <voyage-id>` |
-| Board Ops | `just keel next --agent` `just keel next` `just keel status` `just keel flow` `just keel doctor` `just keel generate` |
+| Board Ops | `just keel next --agent` `just keel next` `just keel status` `just keel flow` `just keel doctor` `just keel generate` `just keel config show` |
 | Lifecycle | Story/voyage/epic transitions in the table below |
 
 ## Story and Milestone State Changes

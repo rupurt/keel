@@ -1,6 +1,5 @@
 //! Show story command
 
-use std::collections::BTreeSet;
 use std::path::Path;
 
 use anyhow::Result;
@@ -9,7 +8,6 @@ use owo_colors::OwoColorize;
 use crate::cli::style;
 use crate::infrastructure::loader::load_board;
 use crate::read_model::planning_show::{self, EvidenceReport};
-use crate::read_model::verification_techniques::{self, ShowRecommendationReport};
 
 const NO_EVIDENCE_DIR_PLACEHOLDER: &str = "(EVIDENCE directory not found)";
 const NO_LINKED_PROOFS_PLACEHOLDER: &str = "(no annotation-linked proof artifacts)";
@@ -138,12 +136,6 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     }
 
     render_evidence_report(story.id(), &projection.evidence);
-    let used_techniques = collect_used_techniques_from_evidence(&projection.evidence);
-    let recommendation_report = verification_techniques::build_show_recommendation_report(
-        project_root_from_board_dir(board_dir),
-        &used_techniques,
-    );
-    render_recommendations(&recommendation_report);
 
     Ok(())
 }
@@ -243,68 +235,6 @@ fn render_evidence_report(story_id: &str, report: &EvidenceReport) {
     println!();
     for line in evidence_lines(story_id, report) {
         println!("{}", line);
-    }
-}
-
-pub(crate) fn recommendation_lines(report: &ShowRecommendationReport) -> Vec<String> {
-    let mut lines = Vec::new();
-    lines.push(format!("{}", "Technique Recommendations".bold()));
-
-    if report.recommendations.is_empty() {
-        lines.push("  (no recommendations available)".to_string());
-    } else {
-        for recommendation in &report.recommendations {
-            lines.push(format!(
-                "  - {} ({})",
-                recommendation.label, recommendation.usage_status
-            ));
-            lines.push(format!("    Rationale: {}", recommendation.rationale));
-            lines.push(format!("    {}", recommendation.adoption_guidance));
-        }
-    }
-
-    if !report.diagnostics.is_empty() {
-        lines.push("  Config diagnostics:".to_string());
-        for diagnostic in report.diagnostics.iter().take(5) {
-            lines.push(format!("    - {}", diagnostic));
-        }
-    }
-
-    lines.push(
-        "  Advisory only: recommended techniques are not executed by show commands.".to_string(),
-    );
-    lines
-}
-
-fn render_recommendations(report: &ShowRecommendationReport) {
-    println!();
-    for line in recommendation_lines(report) {
-        println!("{}", line);
-    }
-}
-
-fn collect_used_techniques_from_evidence(report: &EvidenceReport) -> BTreeSet<String> {
-    let mut used = BTreeSet::new();
-    for item in &report.items {
-        if let Some(command) = &item.command {
-            for technique_id in verification_techniques::infer_used_technique_ids(command) {
-                used.insert(technique_id);
-            }
-        }
-    }
-    used
-}
-
-fn project_root_from_board_dir(board_dir: &Path) -> &Path {
-    if board_dir
-        .file_name()
-        .and_then(|name| name.to_str())
-        .map(|name| name == ".keel")
-        .unwrap_or(false)
-    {
-        board_dir.parent().unwrap_or(board_dir)
-    } else {
-        board_dir
     }
 }
 
