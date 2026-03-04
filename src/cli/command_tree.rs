@@ -590,7 +590,14 @@ pub fn build_cli() -> Command {
                 .about("Configuration commands")
                 .hide(true)
                 .subcommand(
-                    Command::new("show").about("Show resolved configuration and source"),
+                    Command::new("show")
+                        .about("Show resolved configuration and source")
+                        .arg(
+                            Arg::new("json")
+                                .long("json")
+                                .help("Output as JSON for scripting")
+                                .action(ArgAction::SetTrue),
+                        ),
                 )
                 .subcommand(
                     Command::new("mode")

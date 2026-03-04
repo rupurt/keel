@@ -2,10 +2,11 @@
 id: 1vxvFrNta
 index: 2
 title: Verification Technique Command Surface Cutover
-status: planned
+status: in-progress
 epic: 1vxqMtskC
 created_at: 2026-03-04T15:03:47
 updated_at: 2026-03-04T15:16:24
+started_at: 2026-03-04T15:30:33
 ---
 
 # Verification Technique Command Surface Cutover

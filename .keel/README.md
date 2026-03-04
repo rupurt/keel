@@ -51,7 +51,7 @@
 | Voyage | Status |
 |--------|--------|
 | [Technique Catalog Configuration And Autodetection](epics/1vxqMtskC/voyages/1vxqN5jnA/) | done |
-| [Verification Technique Command Surface Cutover](epics/1vxqMtskC/voyages/1vxvFrNta/) | planned |
+| [Verification Technique Command Surface Cutover](epics/1vxqMtskC/voyages/1vxvFrNta/) | in-progress |
 
 <details>
 <summary><h2>Done</h2></summary>

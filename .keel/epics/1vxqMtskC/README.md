@@ -23,5 +23,5 @@ created_at: 2026-03-04T09:50:43
 | Voyage | Status | Stories |
 |--------|--------|---------|
 | [Technique Catalog Configuration And Autodetection](voyages/1vxqN5jnA/) | done | 4/4 |
-| [Verification Technique Command Surface Cutover](voyages/1vxvFrNta/) | planned | 0/4 |
+| [Verification Technique Command Surface Cutover](voyages/1vxvFrNta/) | in-progress | 0/4 |
 <!-- END GENERATED -->

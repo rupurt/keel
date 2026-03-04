@@ -6,18 +6,20 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Result, bail};
 use clap::Subcommand;
+use serde::Serialize;
 
 use crate::infrastructure::config::{self, Config};
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::verification::parser::parse_verify_annotations;
-use crate::read_model::verification_techniques::{
-    self, ProjectStack, TechniqueDefinition, TechniqueModality,
-};
+use crate::read_model::verification_techniques::{self, TechniqueDefinition, TechniqueModality};
 
 #[derive(Subcommand, Debug)]
 pub enum ConfigAction {
     /// Show resolved configuration and source
-    Show,
+    Show {
+        /// Output as JSON for scripting
+        json: bool,
+    },
     /// Show or change scoring mode
     Mode {
         /// Mode to switch to (omit to show current mode)
@@ -26,52 +28,132 @@ pub enum ConfigAction {
 }
 
 /// Show resolved configuration and source
-pub fn run_show() -> Result<()> {
+pub fn run_show(json: bool) -> Result<()> {
     let (config, source) = config::load_config();
     let project_root = resolve_project_root(&config);
-    for line in build_show_lines(&config, &source, &project_root) {
-        println!("{}", line);
+    let payload = build_show_payload(&config, &source, &project_root);
+
+    if json {
+        println!("{}", serde_json::to_string_pretty(&payload)?);
+    } else {
+        for line in render_show_payload(&payload) {
+            println!("{}", line);
+        }
     }
 
     Ok(())
 }
 
-fn build_show_lines(
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct TechniqueStatusProjection {
+    summary: TechniqueStatusSummary,
+    rows: Vec<TechniqueStatusRow>,
+    diagnostics: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+struct TechniqueStatusSummary {
+    total: usize,
+    detected: usize,
+    disabled: usize,
+    active: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+struct TechniqueStatusRow {
+    label: String,
+    name: String,
+    detected: bool,
+    disabled: bool,
+    active: bool,
+    modality: String,
+    command: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+struct ConfigShowVerificationPayload {
+    summary: TechniqueStatusSummary,
+    techniques: Vec<TechniqueStatusRow>,
+    diagnostics: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+struct ConfigShowPayload {
+    source: String,
+    project_root: String,
+    board_dir: String,
+    verification: ConfigShowVerificationPayload,
+}
+
+fn build_show_payload(
     config: &Config,
     source: &config::ConfigSource,
     project_root: &Path,
-) -> Vec<String> {
+) -> ConfigShowPayload {
+    let projection = build_verification_technique_projection(config, project_root);
+
+    ConfigShowPayload {
+        source: source.to_string(),
+        project_root: project_root.display().to_string(),
+        board_dir: config.board_dir().to_string(),
+        verification: ConfigShowVerificationPayload {
+            summary: projection.summary,
+            techniques: projection.rows,
+            diagnostics: projection.diagnostics,
+        },
+    }
+}
+
+fn render_show_payload(payload: &ConfigShowPayload) -> Vec<String> {
     let mut lines = Vec::new();
-    lines.push(format!("Configuration source: {}", source));
-    lines.push(format!("project_root = \"{}\"", project_root.display()));
+    lines.push(format!("Configuration source: {}", payload.source));
+    lines.push(format!("project_root = \"{}\"", payload.project_root));
     lines.push(String::new());
-    lines.push(format!("board_dir = \"{}\"", config.board_dir()));
+    lines.push(format!("board_dir = \"{}\"", payload.board_dir));
     lines.push(String::new());
-    lines.push("[scoring]".to_string());
-    lines.push(format!("mode = \"{}\"", config.scoring.mode));
+    lines.push("[verification.techniques]".to_string());
+    lines.push(format!("total = {}", payload.verification.summary.total));
+    lines.push(format!(
+        "detected = {}",
+        payload.verification.summary.detected
+    ));
+    lines.push(format!(
+        "disabled = {}",
+        payload.verification.summary.disabled
+    ));
+    lines.push(format!("active = {}", payload.verification.summary.active));
     lines.push(String::new());
 
-    let weights = config.current_weights();
-    lines.push("# Current mode weights:".to_string());
-    lines.push(format!("impact_weight = {}", weights.impact_weight));
-    lines.push(format!("confidence_weight = {}", weights.confidence_weight));
-    lines.push(format!("effort_weight = {}", weights.effort_weight));
-    lines.push(format!("risk_weight = {}", weights.risk_weight));
-
-    if !config.scoring.modes.is_empty() {
-        lines.push(String::new());
-        lines.push("# Custom modes defined:".to_string());
-        for name in config.scoring.modes.keys() {
-            lines.push(format!("  - {}", name));
+    lines.push("# Technique status:".to_string());
+    if payload.verification.techniques.is_empty() {
+        lines.push("  (none)".to_string());
+    } else {
+        for technique in &payload.verification.techniques {
+            lines.push(format!("  - label = \"{}\"", technique.label));
+            lines.push(format!("    name = \"{}\"", technique.name));
+            lines.push(format!("    detected = {}", technique.detected));
+            lines.push(format!("    disabled = {}", technique.disabled));
+            lines.push(format!("    active = {}", technique.active));
+            lines.push(format!("    modality = \"{}\"", technique.modality));
+            lines.push(format!("    command = \"{}\"", technique.command));
         }
     }
 
-    lines.extend(build_verification_technique_lines(config, project_root));
+    if !payload.verification.diagnostics.is_empty() {
+        lines.push(String::new());
+        lines.push("# Config diagnostics:".to_string());
+        for diagnostic in &payload.verification.diagnostics {
+            lines.push(format!("  - {}", diagnostic));
+        }
+    }
+
     lines
 }
 
-fn build_verification_technique_lines(config: &Config, project_root: &Path) -> Vec<String> {
-    let mut lines = Vec::new();
+fn build_verification_technique_projection(
+    config: &Config,
+    project_root: &Path,
+) -> TechniqueStatusProjection {
     let keel_toml_path = project_root.join("keel.toml");
     let keel_toml_content = fs::read_to_string(&keel_toml_path).unwrap_or_default();
     let parsed =
@@ -82,16 +164,6 @@ fn build_verification_technique_lines(config: &Config, project_root: &Path) -> V
     );
     let signals = verification_techniques::detect_project_signals(project_root);
     let used_techniques = collect_used_techniques(config, project_root);
-    let found_report =
-        verification_techniques::build_show_recommendation_report(project_root, &used_techniques);
-
-    let mut active: Vec<&TechniqueDefinition> = merged
-        .catalog
-        .iter()
-        .filter(|technique| technique.enabled_by_default)
-        .collect();
-    active.sort_by(|left, right| left.id.cmp(&right.id));
-
     let mut disabled: Vec<&TechniqueDefinition> = merged
         .catalog
         .iter()
@@ -99,88 +171,54 @@ fn build_verification_technique_lines(config: &Config, project_root: &Path) -> V
         .collect();
     disabled.sort_by(|left, right| left.id.cmp(&right.id));
 
-    lines.push(String::new());
-    lines.push("[verification.techniques]".to_string());
-    lines.push(format!("available = {}", merged.catalog.len()));
-    lines.push(format!("active = {}", active.len()));
-    lines.push(format!("disabled = {}", disabled.len()));
-
-    lines.push(String::new());
-    lines.push("# Active configured options:".to_string());
-    if active.is_empty() {
-        lines.push("  (none)".to_string());
-    } else {
-        for technique in active {
-            lines.push(format!(
-                "  - {} [{}] ({})",
-                technique.label,
-                technique.id,
-                modality_name(technique.modality)
-            ));
-            lines.push(format!("    Command: {}", technique.default_command));
-        }
-    }
-
-    if !disabled.is_empty() {
-        lines.push(String::new());
-        lines.push("# Disabled options:".to_string());
-        for technique in disabled {
-            lines.push(format!("  - {} [{}]", technique.label, technique.id));
-        }
-    }
-
-    lines.push(String::new());
-    lines.push("# Found project signals:".to_string());
-    if signals.stack_confidence.is_empty()
-        && signals.detected_files.is_empty()
-        && signals.hints.is_empty()
-    {
-        lines.push("  (none detected)".to_string());
-    } else {
-        if !signals.stack_confidence.is_empty() {
-            let mut stack_confidences: Vec<(String, f64)> = signals
-                .stack_confidence
-                .iter()
-                .map(|(stack, confidence)| (stack_name(*stack).to_string(), *confidence))
-                .collect();
-            stack_confidences.sort_by(|left, right| left.0.cmp(&right.0));
-            for (stack, confidence) in stack_confidences {
-                lines.push(format!("  - stack:{stack} confidence:{confidence:.2}"));
+    let mut rows: Vec<TechniqueStatusRow> = merged
+        .catalog
+        .iter()
+        .map(|technique| {
+            let detected = technique_is_detected(technique, &signals, &used_techniques);
+            let disabled = !technique.enabled_by_default;
+            let active = detected && !disabled;
+            TechniqueStatusRow {
+                label: technique.id.clone(),
+                name: technique.label.clone(),
+                detected,
+                disabled,
+                active,
+                modality: modality_name(technique.modality).to_string(),
+                command: technique.default_command.clone(),
             }
-        }
-        if !signals.detected_files.is_empty() {
-            lines.push(format!("  - files: {}", signals.detected_files.join(", ")));
-        }
-        if !signals.hints.is_empty() {
-            let hints = signals.hints.iter().cloned().collect::<Vec<_>>().join(", ");
-            lines.push(format!("  - hints: {}", hints));
-        }
-    }
+        })
+        .collect();
+    rows.sort_by(|left, right| left.label.cmp(&right.label));
 
-    lines.push(String::new());
-    lines.push("# Found options for this project (ranked):".to_string());
-    if found_report.recommendations.is_empty() {
-        lines.push("  (no recommendations available)".to_string());
-    } else {
-        for recommendation in &found_report.recommendations {
-            lines.push(format!(
-                "  - {} [{}] ({})",
-                recommendation.label, recommendation.id, recommendation.usage_status
-            ));
-            lines.push(format!("    Rationale: {}", recommendation.rationale));
-            lines.push(format!("    {}", recommendation.adoption_guidance));
-        }
-    }
+    let summary = TechniqueStatusSummary {
+        total: rows.len(),
+        detected: rows.iter().filter(|row| row.detected).count(),
+        disabled: disabled.len(),
+        active: rows.iter().filter(|row| row.active).count(),
+    };
 
-    if !found_report.diagnostics.is_empty() {
-        lines.push(String::new());
-        lines.push("# Config diagnostics:".to_string());
-        for diagnostic in &found_report.diagnostics {
-            lines.push(format!("  - {}", diagnostic));
-        }
-    }
+    let mut diagnostics = Vec::new();
+    diagnostics.extend(
+        parsed
+            .diagnostics
+            .into_iter()
+            .map(|diagnostic| format!("{}: {}", diagnostic.path, diagnostic.message)),
+    );
+    diagnostics.extend(
+        merged
+            .diagnostics
+            .into_iter()
+            .map(|diagnostic| format!("{}: {}", diagnostic.path, diagnostic.message)),
+    );
+    diagnostics.sort();
+    diagnostics.dedup();
 
-    lines
+    TechniqueStatusProjection {
+        summary,
+        rows,
+        diagnostics,
+    }
 }
 
 fn collect_used_techniques(config: &Config, project_root: &Path) -> BTreeSet<String> {
@@ -210,6 +248,40 @@ fn collect_used_techniques(config: &Config, project_root: &Path) -> BTreeSet<Str
     used
 }
 
+fn technique_is_detected(
+    technique: &TechniqueDefinition,
+    signals: &verification_techniques::ProjectSignalReport,
+    used_techniques: &BTreeSet<String>,
+) -> bool {
+    if used_techniques.contains(&technique.id) {
+        return true;
+    }
+
+    if technique.applicable_stacks.iter().any(|stack| {
+        signals
+            .stack_confidence
+            .get(stack)
+            .copied()
+            .unwrap_or_default()
+            > 0.0
+    }) {
+        return true;
+    }
+
+    if technique
+        .signal_keywords
+        .iter()
+        .any(|keyword| signals.hints.contains(&keyword.to_ascii_lowercase()))
+    {
+        return true;
+    }
+
+    technique
+        .prerequisites
+        .iter()
+        .any(|requirement| signals.hints.contains(&requirement.to_ascii_lowercase()))
+}
+
 fn resolve_project_root(config: &Config) -> PathBuf {
     if let Ok(board_dir) = config::find_board_dir() {
         if config.board_dir() == "." {
@@ -219,14 +291,6 @@ fn resolve_project_root(config: &Config) -> PathBuf {
     }
 
     std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
-}
-
-fn stack_name(stack: ProjectStack) -> &'static str {
-    match stack {
-        ProjectStack::Rust => "rust",
-        ProjectStack::Browser => "browser",
-        ProjectStack::Cli => "cli",
-    }
 }
 
 fn modality_name(modality: TechniqueModality) -> &'static str {
@@ -324,7 +388,7 @@ mod tests {
     }
 
     #[test]
-    fn config_show_surfaces_active_and_found_verification_options() {
+    fn config_show_renders_technique_flag_matrix() {
         let temp = TempDir::new().unwrap();
         fs::create_dir_all(temp.path().join(".keel")).unwrap();
         fs::write(
@@ -346,19 +410,22 @@ disable = ["rust-coverage"]
         .unwrap();
 
         let config = Config::default();
-        let lines = build_show_lines(&config, &config::ConfigSource::Defaults, temp.path());
+        let payload = build_show_payload(&config, &config::ConfigSource::Defaults, temp.path());
+        let lines = render_show_payload(&payload);
         let rendered = lines.join("\n");
 
         assert!(rendered.contains("[verification.techniques]"));
-        assert!(rendered.contains("# Active configured options:"));
-        assert!(rendered.contains("# Found options for this project (ranked):"));
-        assert!(rendered.contains("Rust Unit/Integration Tests [rust-unit-tests]"));
-        assert!(rendered.contains("VHS CLI Recording [vhs]"));
-        assert!(rendered.contains("Rust Coverage Gate [rust-coverage]"));
+        assert!(!rendered.contains("[scoring]"));
+        assert!(!rendered.contains("impact_weight"));
+        assert!(rendered.contains("# Technique status:"));
+        assert!(rendered.contains("label = \"rust-unit-tests\""));
+        assert!(rendered.contains("label = \"vhs\""));
+        assert!(rendered.contains("label = \"rust-coverage\""));
+        assert!(rendered.contains("disabled = true"));
     }
 
     #[test]
-    fn config_show_marks_configured_in_use_techniques() {
+    fn config_show_lists_all_techniques_deterministically() {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S1")
@@ -382,9 +449,60 @@ enable = ["llm-judge"]
             board_dir: ".".to_string(),
             ..Config::default()
         };
-        let lines = build_show_lines(&config, &config::ConfigSource::Defaults, temp.path());
-        let rendered = lines.join("\n");
+        let payload = build_show_payload(&config, &config::ConfigSource::Defaults, temp.path());
+        let labels: Vec<&str> = payload
+            .verification
+            .techniques
+            .iter()
+            .map(|row| row.label.as_str())
+            .collect();
+        let mut sorted = labels.clone();
+        sorted.sort_unstable();
+        assert_eq!(labels, sorted);
 
-        assert!(rendered.contains("LLM-Judge [llm-judge] (configured-in-use)"));
+        assert!(
+            payload
+                .verification
+                .techniques
+                .iter()
+                .any(|row| row.label == "llm-judge" && row.detected && row.active)
+        );
+        assert!(
+            payload
+                .verification
+                .techniques
+                .iter()
+                .any(|row| row.label == "browser-playwright-e2e" && !row.detected)
+        );
+    }
+
+    #[test]
+    fn config_show_json_contract_contains_required_flags() {
+        let temp = TempDir::new().unwrap();
+        fs::create_dir_all(temp.path().join(".keel")).unwrap();
+        fs::write(
+            temp.path().join("Cargo.toml"),
+            "[package]\nname=\"demo\"\nversion=\"0.1.0\"\n",
+        )
+        .unwrap();
+        let config = Config::default();
+        let payload = build_show_payload(&config, &config::ConfigSource::Defaults, temp.path());
+        let json = serde_json::to_value(payload).unwrap();
+
+        assert_eq!(
+            json["source"],
+            serde_json::Value::String(config::ConfigSource::Defaults.to_string())
+        );
+        assert!(json["verification"]["summary"]["total"].as_u64().unwrap() >= 1);
+        let techniques = json["verification"]["techniques"]
+            .as_array()
+            .unwrap()
+            .clone();
+        assert!(!techniques.is_empty());
+        let first = &techniques[0];
+        assert!(first.get("label").is_some());
+        assert!(first.get("detected").is_some());
+        assert!(first.get("disabled").is_some());
+        assert!(first.get("active").is_some());
     }
 }

@@ -354,7 +354,10 @@ fn handle_config_command(matches: &ArgMatches) -> Result<()> {
         .subcommand()
         .ok_or_else(|| anyhow::anyhow!("Missing config subcommand"))?;
     match command {
-        ("show", _) => super::commands::setup::config::run_show(),
+        ("show", m) => {
+            let json = *m.get_one::<bool>("json").unwrap_or(&false);
+            super::commands::setup::config::run_show(json)
+        }
         ("mode", m) => {
             let name = m.get_one::<String>("name").cloned();
             super::commands::setup::config::run_mode(name)
