@@ -7,6 +7,8 @@ use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 use clap::Subcommand;
 
+mod guidance;
+
 #[derive(Subcommand, Debug)]
 pub enum BearingAction {
     /// Create a new bearing
@@ -64,6 +66,7 @@ use crate::infrastructure::loader::load_board;
 use crate::infrastructure::scoring::{calculate_score, load_assessment};
 use crate::infrastructure::template_rendering;
 use crate::infrastructure::templates;
+use guidance::{BearingLifecycleAction, error_with_recovery, guidance_for_action, print_human};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum FogType {
@@ -103,6 +106,11 @@ pub fn run(action: BearingAction) -> Result<()> {
 
 /// Run the survey command - adds SURVEY.md to a bearing
 pub fn run_survey(pattern: &str) -> Result<()> {
+    run_survey_impl(pattern)
+        .map_err(|err| error_with_recovery(BearingLifecycleAction::Survey, pattern, err))
+}
+
+fn run_survey_impl(pattern: &str) -> Result<()> {
     use crate::domain::transitions::bearing::{bearing_transitions, execute};
 
     let board_dir = find_board_dir()?;
@@ -112,12 +120,19 @@ pub fn run_survey(pattern: &str) -> Result<()> {
         println!("Created: {}", path);
     }
     println!("  {} → {}", result.from, result.to);
+    let guidance = guidance_for_action(BearingLifecycleAction::Survey, &result.bearing_id);
+    print_human(guidance.as_ref());
 
     Ok(())
 }
 
 /// Run the assess command - adds ASSESSMENT.md to a bearing
 pub fn run_assess(pattern: &str) -> Result<()> {
+    run_assess_impl(pattern)
+        .map_err(|err| error_with_recovery(BearingLifecycleAction::Assess, pattern, err))
+}
+
+fn run_assess_impl(pattern: &str) -> Result<()> {
     use crate::domain::transitions::bearing::{bearing_transitions, execute};
 
     let board_dir = find_board_dir()?;
@@ -127,6 +142,8 @@ pub fn run_assess(pattern: &str) -> Result<()> {
         println!("Created: {}", path);
     }
     println!("  {} → {}", result.from, result.to);
+    let guidance = guidance_for_action(BearingLifecycleAction::Assess, &result.bearing_id);
+    print_human(guidance.as_ref());
 
     Ok(())
 }
@@ -306,18 +323,30 @@ pub fn run_show(pattern: &str) -> Result<()> {
 
 /// Run the park command - shelve a bearing for later
 pub fn run_park(pattern: &str) -> Result<()> {
+    run_park_impl(pattern)
+        .map_err(|err| error_with_recovery(BearingLifecycleAction::Park, pattern, err))
+}
+
+fn run_park_impl(pattern: &str) -> Result<()> {
     use crate::domain::transitions::bearing::{bearing_transitions, execute};
 
     let board_dir = find_board_dir()?;
     let result = execute(&board_dir, pattern, &bearing_transitions::PARK)?;
 
     println!("Parked: {} → {}", result.from, result.to);
+    let guidance = guidance_for_action(BearingLifecycleAction::Park, &result.bearing_id);
+    print_human(guidance.as_ref());
 
     Ok(())
 }
 
 /// Run the decline command - reject a bearing with reason
 pub fn run_decline(pattern: &str, reason: &str) -> Result<()> {
+    run_decline_impl(pattern, reason)
+        .map_err(|err| error_with_recovery(BearingLifecycleAction::Decline, pattern, err))
+}
+
+fn run_decline_impl(pattern: &str, reason: &str) -> Result<()> {
     let board_dir = find_board_dir()?;
     let board = load_board(&board_dir)?;
     let bearing = board.require_bearing(pattern)?;
@@ -332,6 +361,8 @@ pub fn run_decline(pattern: &str, reason: &str) -> Result<()> {
 
     println!("Declined: {} ({} → declined)", bearing.id(), old_status);
     println!("  Reason: {}", reason);
+    let guidance = guidance_for_action(BearingLifecycleAction::Decline, bearing.id());
+    print_human(guidance.as_ref());
 
     Ok(())
 }
@@ -366,6 +397,11 @@ fn update_bearing_status_with_decline(
 
 /// Run the lay command - graduate bearing to epic
 pub fn run_lay(pattern: &str) -> Result<()> {
+    run_lay_impl(pattern)
+        .map_err(|err| error_with_recovery(BearingLifecycleAction::Lay, pattern, err))
+}
+
+fn run_lay_impl(pattern: &str) -> Result<()> {
     let board_dir = find_board_dir()?;
     let board = load_board(&board_dir)?;
     let bearing = board.require_bearing(pattern)?;
@@ -451,6 +487,8 @@ pub fn run_lay(pattern: &str) -> Result<()> {
     println!("Laid: {} → epics/{}/", bearing.id(), epic_id);
     println!("  Epic created with PRD.md seeded from bearing documents");
     println!("  Bearing status: {} → laid", old_status);
+    let guidance = guidance_for_action(BearingLifecycleAction::Lay, bearing.id());
+    print_human(guidance.as_ref());
 
     // Regenerate board
     crate::cli::commands::generate::run(&board_dir)?;

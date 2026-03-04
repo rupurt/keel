@@ -25,11 +25,11 @@ started_at: 2026-03-03T18:22:50
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/3 stories complete
+**Progress:** 2/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Add Canonical Guidance To ADR Transition Commands](../../../../stories/1vxZ0C7OF/README.md) | feat | done |
-| [Add Canonical Guidance To Bearing Transition Commands](../../../../stories/1vxZ0DAeT/README.md) | feat | backlog |
+| [Add Canonical Guidance To Bearing Transition Commands](../../../../stories/1vxZ0DAeT/README.md) | feat | done |
 | [Keep Informational Governance Commands Non Prescriptive](../../../../stories/1vxZ0Dvw9/README.md) | feat | backlog |
 <!-- END GENERATED -->

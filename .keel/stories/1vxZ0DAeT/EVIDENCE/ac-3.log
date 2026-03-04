@@ -1,0 +1,24 @@
+---
+recorded_at: 2026-03-03T19:27:36.382040671-08:00
+command: cargo test --lib cli::commands::management::bearing::guidance::tests
+---
+
+running 7 tests
+test cli::commands::management::bearing::guidance::tests::assess_success_guidance_maps_to_lay ... ok
+test cli::commands::management::bearing::guidance::tests::error_with_recovery_embeds_human_recovery_block ... ok
+test cli::commands::management::bearing::guidance::tests::lay_epic_exists_recovery_maps_to_epic_show ... ok
+test cli::commands::management::bearing::guidance::tests::render_human_supports_recovery_step_block ... ok
+test cli::commands::management::bearing::guidance::tests::not_found_recovery_maps_to_bearing_list ... ok
+test cli::commands::management::bearing::guidance::tests::survey_success_guidance_maps_to_assess ... ok
+test cli::commands::management::bearing::guidance::tests::terminal_actions_map_to_next_human ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 1004 filtered out; finished in 0.00s
+
+
+--- stderr ---
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.10s
+     Running unittests src/lib.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-bec18a36668a42b8)
