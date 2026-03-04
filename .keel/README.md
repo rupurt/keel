@@ -25,7 +25,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Add Canonical Guidance To ADR Transition Commands](stories/1vxZ0C7OF/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Governance And Research Guidance](epics/1vxYzSury/voyages/1vxYzjVMv/) |
 | [Add Canonical Guidance To Voyage Lifecycle Commands](stories/1vxZ0C8QB/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Story And Voyage Lifecycle Guidance](epics/1vxYzSury/voyages/1vxYzjiwH/) |
 | [Add Canonical Recovery Guidance To Story Lifecycle Errors](stories/1vxZ0CBPx/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Story And Voyage Lifecycle Guidance](epics/1vxYzSury/voyages/1vxYzjiwH/) |
 | [Add Canonical Guidance To Bearing Transition Commands](stories/1vxZ0DAeT/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Governance And Research Guidance](epics/1vxYzSury/voyages/1vxYzjVMv/) |
@@ -47,12 +46,12 @@
 
 ## Epics
 
-### [Deterministic Command Guidance](epics/1vxYzSury/) (active) - 5 voyages, 0 done
+### [Deterministic Command Guidance](epics/1vxYzSury/) (active) - 5 voyages, 1 done
 
 | Voyage | Status |
 |--------|--------|
-| [Output Contract And Shared Renderer](epics/1vxYzSury/voyages/1vxYzh8ep/) | in-progress |
-| [Governance And Research Guidance](epics/1vxYzSury/voyages/1vxYzjVMv/) | planned |
+| [Output Contract And Shared Renderer](epics/1vxYzSury/voyages/1vxYzh8ep/) | done |
+| [Governance And Research Guidance](epics/1vxYzSury/voyages/1vxYzjVMv/) | in-progress |
 | [Story And Voyage Lifecycle Guidance](epics/1vxYzSury/voyages/1vxYzjiwH/) | in-progress |
 | [Decision And Verification Guidance Parity](epics/1vxYzSury/voyages/1vxYzrwma/) | planned |
 | [Command Classification Drift Guards](epics/1vxYzSury/voyages/1vxYzsAxT/) | planned |

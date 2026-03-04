@@ -6,6 +6,8 @@ use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 use clap::Subcommand;
 
+mod guidance;
+
 #[derive(Subcommand, Debug)]
 pub enum AdrAction {
     /// Create a new ADR
@@ -305,14 +307,22 @@ fn update_adr_status(
 pub fn run_accept(pattern: &str) -> Result<()> {
     let board_dir = find_board_dir()?;
     let board = load_board(&board_dir)?;
-    let adr = board.require_adr(pattern)?;
+    let adr = board.require_adr(pattern).map_err(|e| {
+        guidance::error_with_recovery(e.to_string(), guidance::recovery_for_missing())
+    })?;
 
     // Check if ADR is in proposed status
     if adr.frontmatter.status != crate::domain::model::AdrStatus::Proposed {
         return Err(anyhow!(
-            "Cannot accept ADR {} - status is '{}', expected 'proposed'",
-            adr.id(),
-            adr.frontmatter.status
+            "{}",
+            guidance::error_with_recovery(
+                format!(
+                    "Cannot accept ADR {} - status is '{}', expected 'proposed'",
+                    adr.id(),
+                    adr.frontmatter.status
+                ),
+                guidance::recovery_for_status_mismatch(adr.id())
+            )
         ));
     }
 
@@ -320,6 +330,7 @@ pub fn run_accept(pattern: &str) -> Result<()> {
 
     println!("Accepted: {}", adr.id());
     println!("  {} (proposed → accepted)", adr.frontmatter.title);
+    guidance::print_human(guidance::success_for_accept().as_ref());
 
     Ok(())
 }
@@ -328,14 +339,22 @@ pub fn run_accept(pattern: &str) -> Result<()> {
 pub fn run_reject(pattern: &str, reason: &str) -> Result<()> {
     let board_dir = find_board_dir()?;
     let board = load_board(&board_dir)?;
-    let adr = board.require_adr(pattern)?;
+    let adr = board.require_adr(pattern).map_err(|e| {
+        guidance::error_with_recovery(e.to_string(), guidance::recovery_for_missing())
+    })?;
 
     // Check if ADR is in proposed status
     if adr.frontmatter.status != crate::domain::model::AdrStatus::Proposed {
         return Err(anyhow!(
-            "Cannot reject ADR {} - status is '{}', expected 'proposed'",
-            adr.id(),
-            adr.frontmatter.status
+            "{}",
+            guidance::error_with_recovery(
+                format!(
+                    "Cannot reject ADR {} - status is '{}', expected 'proposed'",
+                    adr.id(),
+                    adr.frontmatter.status
+                ),
+                guidance::recovery_for_status_mismatch(adr.id())
+            )
         ));
     }
 
@@ -344,6 +363,7 @@ pub fn run_reject(pattern: &str, reason: &str) -> Result<()> {
     println!("Rejected: {}", adr.id());
     println!("  {} (proposed → rejected)", adr.frontmatter.title);
     println!("  Reason: {}", reason);
+    guidance::print_human(guidance::success_for_reject().as_ref());
 
     Ok(())
 }
@@ -352,14 +372,22 @@ pub fn run_reject(pattern: &str, reason: &str) -> Result<()> {
 pub fn run_deprecate(pattern: &str, reason: &str) -> Result<()> {
     let board_dir = find_board_dir()?;
     let board = load_board(&board_dir)?;
-    let adr = board.require_adr(pattern)?;
+    let adr = board.require_adr(pattern).map_err(|e| {
+        guidance::error_with_recovery(e.to_string(), guidance::recovery_for_missing())
+    })?;
 
     // Check if ADR is in accepted status
     if adr.frontmatter.status != crate::domain::model::AdrStatus::Accepted {
         return Err(anyhow!(
-            "Cannot deprecate ADR {} - status is '{}', expected 'accepted'",
-            adr.id(),
-            adr.frontmatter.status
+            "{}",
+            guidance::error_with_recovery(
+                format!(
+                    "Cannot deprecate ADR {} - status is '{}', expected 'accepted'",
+                    adr.id(),
+                    adr.frontmatter.status
+                ),
+                guidance::recovery_for_status_mismatch(adr.id())
+            )
         ));
     }
 
@@ -384,6 +412,7 @@ pub fn run_deprecate(pattern: &str, reason: &str) -> Result<()> {
     println!("Deprecated: {}", adr.id());
     println!("  {} (accepted → deprecated)", adr.frontmatter.title);
     println!("  Reason: {}", reason);
+    guidance::print_human(guidance::success_for_deprecate().as_ref());
 
     Ok(())
 }
@@ -398,24 +427,40 @@ pub fn run_supersede(new_pattern: &str, old_pattern: &str) -> Result<()> {
     let board = load_board(&board_dir)?;
 
     // Find both ADRs
-    let new_adr = board.require_adr(new_pattern)?;
-    let old_adr = board.require_adr(old_pattern)?;
+    let new_adr = board.require_adr(new_pattern).map_err(|e| {
+        guidance::error_with_recovery(e.to_string(), guidance::recovery_for_missing())
+    })?;
+    let old_adr = board.require_adr(old_pattern).map_err(|e| {
+        guidance::error_with_recovery(e.to_string(), guidance::recovery_for_missing())
+    })?;
 
     // Validate: new ADR must be accepted
     if new_adr.frontmatter.status != crate::domain::model::AdrStatus::Accepted {
         return Err(anyhow!(
-            "Cannot supersede: new ADR {} is '{}', expected 'accepted'",
-            new_adr.id(),
-            new_adr.frontmatter.status
+            "{}",
+            guidance::error_with_recovery(
+                format!(
+                    "Cannot supersede: new ADR {} is '{}', expected 'accepted'",
+                    new_adr.id(),
+                    new_adr.frontmatter.status
+                ),
+                guidance::recovery_for_status_mismatch(new_adr.id())
+            )
         ));
     }
 
     // Validate: old ADR must be accepted (can't supersede something already superseded/deprecated)
     if old_adr.frontmatter.status != crate::domain::model::AdrStatus::Accepted {
         return Err(anyhow!(
-            "Cannot supersede ADR {} - status is '{}', expected 'accepted'",
-            old_adr.id(),
-            old_adr.frontmatter.status
+            "{}",
+            guidance::error_with_recovery(
+                format!(
+                    "Cannot supersede ADR {} - status is '{}', expected 'accepted'",
+                    old_adr.id(),
+                    old_adr.frontmatter.status
+                ),
+                guidance::recovery_for_status_mismatch(old_adr.id())
+            )
         ));
     }
 
@@ -452,6 +497,7 @@ pub fn run_supersede(new_pattern: &str, old_pattern: &str) -> Result<()> {
     println!("Superseded: {} → {}", old_adr.id(), new_adr.id());
     println!("  {} (accepted → superseded)", old_adr.frontmatter.title);
     println!("  Replaced by: {}", new_adr.frontmatter.title);
+    guidance::print_human(guidance::success_for_supersede().as_ref());
 
     Ok(())
 }
