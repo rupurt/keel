@@ -12,7 +12,9 @@ pub use super::next_support::{
     AcceptDecision, AdrDecision, BlockedDecision, DecomposeDecision, EmptyDecision, NextDecision,
     ResearchDecision, StoryDecision, calculate_next, format_decision,
 };
-use crate::cli::commands::management::guidance::CanonicalGuidance;
+use crate::cli::commands::management::guidance::{
+    CanonicalGuidance, CommandGuidance, render_command_guidance,
+};
 use crate::domain::model::Story;
 use crate::infrastructure::loader::load_board;
 
@@ -208,38 +210,30 @@ fn decision_kind(decision: &NextDecision) -> &'static str {
 }
 
 fn guidance_for_decision(decision: &NextDecision) -> Option<CanonicalGuidance> {
-    match decision {
-        NextDecision::Work(d) => {
-            if d.is_continuation {
-                Some(CanonicalGuidance::next(format!(
-                    "keel story submit {}",
-                    d.story.id()
-                )))
-            } else {
-                Some(CanonicalGuidance::next(format!(
-                    "keel story start {}",
-                    d.story.id()
-                )))
-            }
-        }
+    let command_guidance = match decision {
+        NextDecision::Work(d) => Some(if d.is_continuation {
+            CommandGuidance::next(format!("keel story submit {}", d.story.id()))
+        } else {
+            CommandGuidance::next(format!("keel story start {}", d.story.id()))
+        }),
         NextDecision::Decision(d) => d
             .adrs
             .first()
-            .map(|adr| CanonicalGuidance::next(format!("keel adr accept {}", adr.id()))),
+            .map(|adr| CommandGuidance::next(format!("keel adr accept {}", adr.id()))),
         NextDecision::Accept(d) => d
             .stories
             .first()
-            .map(|story| CanonicalGuidance::next(format!("keel story accept {}", story.id()))),
+            .map(|story| CommandGuidance::next(format!("keel story accept {}", story.id()))),
         NextDecision::Research(d) => d
             .bearings
             .first()
-            .map(|bearing| CanonicalGuidance::next(format!("keel play {}", bearing.id()))),
-        NextDecision::Blocked(d) => Some(CanonicalGuidance::recovery(format!(
+            .map(|bearing| CommandGuidance::next(format!("keel play {}", bearing.id()))),
+        NextDecision::Blocked(d) => Some(CommandGuidance::recovery(format!(
             "keel story accept {}",
             d.story.id()
         ))),
         NextDecision::NeedsStories(d) => d.voyages.first().map(|voyage| {
-            CanonicalGuidance::next(format!(
+            CommandGuidance::next(format!(
                 "keel story new \"<title>\" --epic {} --voyage {}",
                 voyage.epic_id,
                 voyage.id()
@@ -248,9 +242,11 @@ fn guidance_for_decision(decision: &NextDecision) -> Option<CanonicalGuidance> {
         NextDecision::NeedsPlanning(d) => d
             .voyages
             .first()
-            .map(|voyage| CanonicalGuidance::next(format!("keel voyage plan {}", voyage.id()))),
+            .map(|voyage| CommandGuidance::next(format!("keel voyage plan {}", voyage.id()))),
         NextDecision::Empty(_) => None,
-    }
+    };
+
+    render_command_guidance(command_guidance)
 }
 
 fn run_parallel(
@@ -335,17 +331,18 @@ fn run_parallel(
             ready_json.remove(0);
         }
 
-        let result = JsonResult {
-            decision: "parallel_work".to_string(),
-            details: JsonDetails::ParallelWork {
-                next,
-                ready: ready_json,
-                sequential_chains: sequential_json,
-            },
-            guidance: ready
-                .first()
-                .map(|story| CanonicalGuidance::next(format!("keel story start {}", story.id()))),
-        };
+        let result =
+            JsonResult {
+                decision: "parallel_work".to_string(),
+                details: JsonDetails::ParallelWork {
+                    next,
+                    ready: ready_json,
+                    sequential_chains: sequential_json,
+                },
+                guidance: render_command_guidance(ready.first().map(|story| {
+                    CommandGuidance::next(format!("keel story start {}", story.id()))
+                })),
+            };
         println!("{}", serde_json::to_string_pretty(&result)?);
     } else {
         println!("Ready for Work (Parallel Safe):");

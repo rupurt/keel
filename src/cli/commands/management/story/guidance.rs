@@ -2,7 +2,9 @@
 
 use owo_colors::OwoColorize;
 
-use crate::cli::commands::management::guidance::CanonicalGuidance;
+use crate::cli::commands::management::guidance::{
+    CanonicalGuidance, CommandGuidance, render_command_guidance,
+};
 use crate::domain::model::StoryState;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -25,7 +27,9 @@ pub fn guidance_for_action(
         return None;
     }
 
-    next_command_for_state(resulting_state, story_id).map(CanonicalGuidance::next)
+    render_command_guidance(
+        next_command_for_state(resulting_state, story_id).map(CommandGuidance::next),
+    )
 }
 
 /// Return the canonical next lifecycle command for the given story state.

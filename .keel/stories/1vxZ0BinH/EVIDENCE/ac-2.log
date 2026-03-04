@@ -1,0 +1,18 @@
+---
+recorded_at: 2026-03-03T18:17:33.619206197-08:00
+command: cargo test --lib decision_to_json_
+---
+
+running 5 tests
+test cli::commands::management::next::tests::decision_to_json_continuation_work_maps_to_submit_command ... ok
+test cli::commands::management::next::tests::decision_to_json_blocked_includes_recovery_guidance ... ok
+test cli::commands::management::next::tests::decision_to_json_accept_maps_to_accept_command ... ok
+test cli::commands::management::next::tests::decision_to_json_empty_omits_guidance ... ok
+test cli::commands::management::next::tests::decision_to_json_work_includes_next_step_guidance ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 984 filtered out; finished in 0.00s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.06s
+     Running unittests src/lib.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-bec18a36668a42b8)
