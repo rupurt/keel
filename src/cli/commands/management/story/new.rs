@@ -6,7 +6,7 @@ use std::path::Path;
 use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 
-use crate::domain::model::{AdrStatus, Board, StoryState, VoyageState};
+use crate::domain::model::{AdrStatus, Board, StoryState};
 use crate::domain::transitions::{TimestampUpdates, update_frontmatter};
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::story_id::generate_story_id;
@@ -101,6 +101,18 @@ fn find_blocking_adrs(board: &Board, context: &str) -> Vec<BlockingAdr> {
     blocking
 }
 
+fn icebox_guidance_commands(story_id: &str) -> [String; 2] {
+    [
+        format!("keel story thaw {story_id}"),
+        format!("keel story start {story_id}"),
+    ]
+}
+
+fn render_icebox_guidance(story_id: &str) -> String {
+    let [thaw, start] = icebox_guidance_commands(story_id);
+    format!("\nNext steps:\n  {thaw}\n  {start}\n")
+}
+
 /// Create a new story
 fn new_story(
     board_dir: &Path,
@@ -155,7 +167,7 @@ fn new_story(
         }
     }
 
-    let voyage_is_draft = if let (Some(epic_id), Some(voyage_id)) = (epic, voyage) {
+    if let (Some(epic_id), Some(voyage_id)) = (epic, voyage) {
         let voyage = board.require_voyage(voyage_id)?;
         if voyage.epic_id != epic_id {
             return Err(anyhow!(
@@ -165,10 +177,7 @@ fn new_story(
                 epic_id
             ));
         }
-        voyage.status() == VoyageState::Draft
-    } else {
-        false
-    };
+    }
 
     let index = scope.as_ref().map(|s| find_next_index(&board, s));
 
@@ -228,13 +237,12 @@ fn new_story(
         );
     }
 
-    if voyage_is_draft {
-        content = update_frontmatter(
-            &content,
-            StoryState::Icebox,
-            &TimestampUpdates::updated_only(),
-        )?;
-    }
+    // Canonical hard-cutover path: all newly created stories enter Icebox.
+    content = update_frontmatter(
+        &content,
+        StoryState::Icebox,
+        &TimestampUpdates::updated_only(),
+    )?;
 
     fs::write(&story_path, content)
         .with_context(|| format!("Failed to write story: {}", story_path.display()))?;
@@ -251,6 +259,7 @@ fn new_story(
     println!("Created: stories/{}/", story_id);
 
     crate::cli::commands::generate::run(board_dir)?;
+    print!("{}", render_icebox_guidance(&story_id));
 
     Ok(())
 }
@@ -258,9 +267,25 @@ fn new_story(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cli::commands::diagnostics::doctor::checks::stories::check_index_validation;
     use crate::domain::model::StoryState;
     use crate::test_helpers::{TestAdr, TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use std::fs;
+
+    fn story_content_by_title(board_dir: &Path, title: &str) -> Option<String> {
+        let stories_dir = board_dir.join("stories");
+        for entry in fs::read_dir(stories_dir).ok()?.flatten() {
+            let readme = entry.path().join("README.md");
+            if !readme.exists() {
+                continue;
+            }
+            let content = fs::read_to_string(readme).ok()?;
+            if content.contains(&format!("title: {title}")) {
+                return Some(content);
+            }
+        }
+        None
+    }
 
     #[test]
     fn render_template_replaces_placeholders() {
@@ -328,7 +353,7 @@ status: in-progress
                 if content.contains("title: Test Feature") {
                     found = true;
                     assert!(content.contains("type: feat"));
-                    assert!(content.contains("status: backlog"));
+                    assert!(content.contains("status: icebox"));
                     assert!(!reflect.exists(), "REFLECT.md should NOT exist in bundle");
                     assert!(
                         evidence.is_dir(),
@@ -339,6 +364,119 @@ status: in-progress
             }
         }
         assert!(found, "New story bundle should exist with correct content");
+    }
+
+    #[test]
+    fn story_new_defaults_to_icebox() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("epic1"))
+            .voyage(TestVoyage::new("v1", "epic1").status("planned"))
+            .build();
+        let board_dir = temp.path();
+
+        new_story(board_dir, "Unscoped Story", "feat", None, None).unwrap();
+        new_story(
+            board_dir,
+            "Scoped Story",
+            "feat",
+            Some("epic1"),
+            Some("v1"),
+        )
+        .unwrap();
+
+        let unscoped = story_content_by_title(board_dir, "Unscoped Story").unwrap();
+        let scoped = story_content_by_title(board_dir, "Scoped Story").unwrap();
+        assert!(unscoped.contains("status: icebox"));
+        assert!(scoped.contains("status: icebox"));
+        assert!(!unscoped.contains("status: backlog"));
+        assert!(!scoped.contains("status: backlog"));
+    }
+
+    #[test]
+    fn story_new_icebox_guidance() {
+        let rendered = render_icebox_guidance("STORY123");
+        assert!(rendered.contains("keel story thaw STORY123"));
+        assert!(rendered.contains("keel story start STORY123"));
+    }
+
+    #[test]
+    fn story_new_planned_voyage_doctor_coherence() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("epic1"))
+            .voyage(TestVoyage::new("v1", "epic1").status("planned"))
+            .story(
+                TestStory::new("S1")
+                    .scope("epic1/v1")
+                    .index(1)
+                    .stage(StoryState::Icebox),
+            )
+            .build();
+        let board_dir = temp.path();
+
+        new_story(
+            board_dir,
+            "Second Planned Story",
+            "feat",
+            Some("epic1"),
+            Some("v1"),
+        )
+        .unwrap();
+
+        let board = load_board(board_dir).unwrap();
+        let problems = check_index_validation(&board);
+        assert!(
+            problems.iter().all(|p| !p.message.contains("out of order")),
+            "new story default should not trigger planned-voyage out-of-order warning: {:?}",
+            problems
+        );
+    }
+
+    #[test]
+    fn story_new_canonical_stage_path() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("epic1"))
+            .voyage(TestVoyage::new("draft-v", "epic1").status("draft"))
+            .voyage(TestVoyage::new("planned-v", "epic1").status("planned"))
+            .build();
+        let board_dir = temp.path();
+
+        new_story(board_dir, "Canonical Unscoped", "feat", None, None).unwrap();
+        new_story(
+            board_dir,
+            "Canonical Draft Scoped",
+            "feat",
+            Some("epic1"),
+            Some("draft-v"),
+        )
+        .unwrap();
+        new_story(
+            board_dir,
+            "Canonical Planned Scoped",
+            "feat",
+            Some("epic1"),
+            Some("planned-v"),
+        )
+        .unwrap();
+
+        for title in [
+            "Canonical Unscoped",
+            "Canonical Draft Scoped",
+            "Canonical Planned Scoped",
+        ] {
+            let content = story_content_by_title(board_dir, title).unwrap();
+            assert!(
+                content.contains("status: icebox"),
+                "expected icebox stage for {}:\n{}",
+                title,
+                content
+            );
+            assert!(
+                !content.contains("status: backlog"),
+                "legacy backlog default should not remain for {}:\n{}",
+                title,
+                content
+            );
+        }
     }
 
     #[test]
