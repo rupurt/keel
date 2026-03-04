@@ -25,6 +25,10 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
+| [Refactor Config Show Into Technique Flag Matrix](stories/1vxvIZRXy/README.md) | feat | [Automated Verification Techniques Bank](epics/1vxqMtskC/) / [Verification Technique Command Surface Cutover](epics/1vxqMtskC/voyages/1vxvFrNta/) |
+| [Remove Planning Show Recommendations And Update Planning Guidance](stories/1vxvIa2RC/README.md) | feat | [Automated Verification Techniques Bank](epics/1vxqMtskC/) / [Verification Technique Command Surface Cutover](epics/1vxqMtskC/voyages/1vxvFrNta/) |
+| [Implement Verify Recommend For Active Detected Techniques](stories/1vxvIaM4w/README.md) | feat | [Automated Verification Techniques Bank](epics/1vxqMtskC/) / [Verification Technique Command Surface Cutover](epics/1vxqMtskC/voyages/1vxvFrNta/) |
+| [Hard Cutover Verify Command To Subcommands](stories/1vxvIaPe8/README.md) | feat | [Automated Verification Techniques Bank](epics/1vxqMtskC/) / [Verification Technique Command Surface Cutover](epics/1vxqMtskC/voyages/1vxvFrNta/) |
 
 <details>
 <summary><h2>Icebox</h2></summary>
@@ -34,13 +38,20 @@
 
 </details>
 
+## Bearings
+
+| Bearing | Status | Survey | Assessment |
+|---------|--------|--------|------------|
+| [Semantic Search and Ranking in Keel](bearings/semantic-search-research/) | evaluating | ✓ | ✓ |
+
 ## Epics
 
-### [Automated Verification Techniques Bank](epics/1vxqMtskC/) (active) - 1 voyages, 0 done
+### [Automated Verification Techniques Bank](epics/1vxqMtskC/) (active) - 2 voyages, 1 done
 
 | Voyage | Status |
 |--------|--------|
-| [Technique Catalog Configuration And Autodetection](epics/1vxqMtskC/voyages/1vxqN5jnA/) | in-progress |
+| [Technique Catalog Configuration And Autodetection](epics/1vxqMtskC/voyages/1vxqN5jnA/) | done |
+| [Verification Technique Command Surface Cutover](epics/1vxqMtskC/voyages/1vxvFrNta/) | planned |
 
 <details>
 <summary><h2>Done</h2></summary>

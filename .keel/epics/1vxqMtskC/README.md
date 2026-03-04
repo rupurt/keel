@@ -19,8 +19,9 @@ created_at: 2026-03-04T09:50:43
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 4/4 stories done
+**Progress:** 1/2 voyages complete, 4/8 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Technique Catalog Configuration And Autodetection](voyages/1vxqN5jnA/) | in-progress | 4/4 |
+| [Technique Catalog Configuration And Autodetection](voyages/1vxqN5jnA/) | done | 4/4 |
+| [Verification Technique Command Surface Cutover](voyages/1vxvFrNta/) | planned | 0/4 |
 <!-- END GENERATED -->
