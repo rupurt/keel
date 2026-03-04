@@ -1,6 +1,8 @@
 //! Canonical verification-technique catalog model and built-in entries.
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::fs;
+use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
@@ -128,6 +130,26 @@ pub struct TechniqueOverrideParseResult {
 pub struct TechniqueCatalogMergeResult {
     pub catalog: Vec<TechniqueDefinition>,
     pub diagnostics: Vec<TechniqueOverrideDiagnostic>,
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct ProjectSignalReport {
+    /// Confidence by project stack (0.0 - 1.0).
+    pub stack_confidence: BTreeMap<ProjectStack, f64>,
+    /// Normalized hint tokens detected from files/config.
+    pub hints: BTreeSet<String>,
+    /// Deterministic list of matched repository artifacts.
+    pub detected_files: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TechniqueRecommendation {
+    pub id: String,
+    pub label: String,
+    pub rationale: String,
+    pub score: i64,
+    pub matched_stacks: Vec<ProjectStack>,
+    pub applicable_stacks: Vec<ProjectStack>,
 }
 
 /// Built-in technique bank used as the canonical base catalog.
@@ -335,6 +357,197 @@ pub fn merge_technique_catalog_with_overrides(
     TechniqueCatalogMergeResult {
         catalog: by_id.into_values().collect(),
         diagnostics,
+    }
+}
+
+/// Detect project stack signals and confidence from repository artifacts.
+pub fn detect_project_signals(project_root: &Path) -> ProjectSignalReport {
+    let mut report = ProjectSignalReport::default();
+
+    let cargo_toml = project_root.join("Cargo.toml");
+    if cargo_toml.exists() {
+        bump_stack_confidence(&mut report, ProjectStack::Rust, 0.75);
+        report.hints.insert("cargo".to_string());
+        report.hints.insert("rust".to_string());
+        report.detected_files.push("Cargo.toml".to_string());
+    }
+
+    let src_main = project_root.join("src/main.rs");
+    let src_bin = project_root.join("src/bin");
+    let justfile = project_root.join("justfile");
+    if src_main.exists() || src_bin.exists() || justfile.exists() {
+        bump_stack_confidence(&mut report, ProjectStack::Cli, 0.55);
+        report.hints.insert("cli".to_string());
+        if src_main.exists() {
+            report.detected_files.push("src/main.rs".to_string());
+        }
+        if src_bin.exists() {
+            report.detected_files.push("src/bin".to_string());
+        }
+        if justfile.exists() {
+            report.detected_files.push("justfile".to_string());
+        }
+    }
+
+    let package_json = project_root.join("package.json");
+    let package_json_content = fs::read_to_string(&package_json).unwrap_or_default();
+    if package_json.exists() {
+        bump_stack_confidence(&mut report, ProjectStack::Browser, 0.35);
+        report.hints.insert("node".to_string());
+        report.detected_files.push("package.json".to_string());
+    }
+
+    let playwright_ts = project_root.join("playwright.config.ts");
+    let playwright_js = project_root.join("playwright.config.js");
+    if playwright_ts.exists()
+        || playwright_js.exists()
+        || package_json_content.contains("playwright")
+    {
+        bump_stack_confidence(&mut report, ProjectStack::Browser, 0.55);
+        report.hints.insert("playwright".to_string());
+        report.hints.insert("browser".to_string());
+        report.hints.insert("e2e".to_string());
+        if playwright_ts.exists() {
+            report
+                .detected_files
+                .push("playwright.config.ts".to_string());
+        }
+        if playwright_js.exists() {
+            report
+                .detected_files
+                .push("playwright.config.js".to_string());
+        }
+    }
+
+    let flake_nix = project_root.join("flake.nix");
+    let flake_content = fs::read_to_string(&flake_nix).unwrap_or_default();
+    if flake_nix.exists() {
+        report.detected_files.push("flake.nix".to_string());
+    }
+    if flake_content.contains("pkgs.vhs")
+        || flake_content.contains(" vhs")
+        || flake_content.contains("\tvhs")
+    {
+        bump_stack_confidence(&mut report, ProjectStack::Cli, 0.20);
+        report.hints.insert("vhs".to_string());
+        report.hints.insert("recording".to_string());
+    }
+    if flake_content.contains("pkgs.ffmpeg")
+        || flake_content.contains(" ffmpeg")
+        || flake_content.contains("\tffmpeg")
+    {
+        bump_stack_confidence(&mut report, ProjectStack::Cli, 0.10);
+        report.hints.insert("ffmpeg".to_string());
+        report.hints.insert("video".to_string());
+    }
+
+    report.detected_files.sort();
+    report.detected_files.dedup();
+    report
+}
+
+/// Build ranked recommendation output from a technique catalog and project signal report.
+pub fn recommend_techniques(
+    catalog: &[TechniqueDefinition],
+    signals: &ProjectSignalReport,
+) -> Vec<TechniqueRecommendation> {
+    let mut out = Vec::new();
+
+    for technique in catalog
+        .iter()
+        .filter(|technique| technique.enabled_by_default)
+    {
+        let matched_stacks: Vec<ProjectStack> = technique
+            .applicable_stacks
+            .iter()
+            .copied()
+            .filter(|stack| {
+                signals
+                    .stack_confidence
+                    .get(stack)
+                    .copied()
+                    .unwrap_or_default()
+                    > 0.0
+            })
+            .collect();
+
+        let stack_score = matched_stacks
+            .iter()
+            .filter_map(|stack| signals.stack_confidence.get(stack))
+            .copied()
+            .fold(0.0_f64, f64::max);
+
+        let keyword_matches = technique
+            .signal_keywords
+            .iter()
+            .filter(|keyword| signals.hints.contains(&keyword.to_ascii_lowercase()))
+            .count() as i64;
+
+        let prerequisite_matches = technique
+            .prerequisites
+            .iter()
+            .filter(|requirement| signals.hints.contains(&requirement.to_ascii_lowercase()))
+            .count() as i64;
+
+        let score = technique.priority as i64
+            + (stack_score * 100.0).round() as i64
+            + keyword_matches * 7
+            + prerequisite_matches * 5;
+
+        let mut rationale_parts = Vec::new();
+        if !matched_stacks.is_empty() {
+            let stacks = matched_stacks
+                .iter()
+                .map(stack_name)
+                .collect::<Vec<_>>()
+                .join(", ");
+            rationale_parts.push(format!(
+                "matched stack signals: {stacks} (confidence {:.2})",
+                stack_score
+            ));
+        }
+        if keyword_matches > 0 {
+            rationale_parts.push(format!("matched {} signal keyword(s)", keyword_matches));
+        }
+        if prerequisite_matches > 0 {
+            rationale_parts.push(format!(
+                "matched {} prerequisite token(s)",
+                prerequisite_matches
+            ));
+        }
+        if rationale_parts.is_empty() {
+            rationale_parts.push("baseline recommendation from built-in priority".to_string());
+        }
+
+        out.push(TechniqueRecommendation {
+            id: technique.id.clone(),
+            label: technique.label.clone(),
+            rationale: rationale_parts.join("; "),
+            score,
+            matched_stacks: normalize_copy_vec(&matched_stacks),
+            applicable_stacks: normalize_copy_vec(&technique.applicable_stacks),
+        });
+    }
+
+    out.sort_by(|left, right| {
+        right
+            .score
+            .cmp(&left.score)
+            .then_with(|| left.id.cmp(&right.id))
+    });
+    out
+}
+
+fn bump_stack_confidence(report: &mut ProjectSignalReport, stack: ProjectStack, delta: f64) {
+    let entry = report.stack_confidence.entry(stack).or_insert(0.0);
+    *entry = (*entry + delta).min(1.0);
+}
+
+fn stack_name(stack: &ProjectStack) -> &'static str {
+    match stack {
+        ProjectStack::Rust => "rust",
+        ProjectStack::Browser => "browser",
+        ProjectStack::Cli => "cli",
     }
 }
 
@@ -967,6 +1180,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+    use tempfile::TempDir;
 
     #[test]
     fn technique_definition_model_has_required_fields() {
@@ -1172,5 +1387,170 @@ default_command = ""
                 .iter()
                 .any(|technique| technique.id == "broken")
         );
+    }
+
+    #[test]
+    fn technique_project_signal_detection() {
+        let temp = TempDir::new().unwrap();
+        fs::create_dir_all(temp.path().join("src")).unwrap();
+        fs::write(temp.path().join("Cargo.toml"), "[package]\nname=\"demo\"\n").unwrap();
+        fs::write(temp.path().join("src/main.rs"), "fn main() {}").unwrap();
+        fs::write(
+            temp.path().join("package.json"),
+            r#"{ "devDependencies": { "playwright": "^1.0.0" } }"#,
+        )
+        .unwrap();
+        fs::write(
+            temp.path().join("playwright.config.ts"),
+            "export default {};",
+        )
+        .unwrap();
+        fs::write(
+            temp.path().join("flake.nix"),
+            "buildInputs = [ pkgs.vhs pkgs.ffmpeg ];",
+        )
+        .unwrap();
+
+        let report = detect_project_signals(temp.path());
+
+        assert!(
+            report
+                .stack_confidence
+                .get(&ProjectStack::Rust)
+                .copied()
+                .unwrap_or_default()
+                > 0.0
+        );
+        assert!(
+            report
+                .stack_confidence
+                .get(&ProjectStack::Browser)
+                .copied()
+                .unwrap_or_default()
+                > 0.0
+        );
+        assert!(
+            report
+                .stack_confidence
+                .get(&ProjectStack::Cli)
+                .copied()
+                .unwrap_or_default()
+                > 0.0
+        );
+
+        assert!(report.hints.contains("cargo"));
+        assert!(report.hints.contains("playwright"));
+        assert!(report.hints.contains("vhs"));
+        assert!(
+            report
+                .detected_files
+                .iter()
+                .any(|entry| entry == "Cargo.toml")
+        );
+        assert!(
+            report
+                .detected_files
+                .iter()
+                .any(|entry| entry == "playwright.config.ts")
+        );
+    }
+
+    #[test]
+    fn technique_recommendation_ranking() {
+        let catalog = vec![
+            TechniqueDefinition::new(
+                "alpha-rust",
+                "Alpha Rust",
+                "Rust checks",
+                TechniqueModality::Command,
+                "cargo test",
+                true,
+                40,
+                vec!["cargo"],
+                vec![ProjectStack::Rust],
+                vec![ArtifactKind::Log],
+                vec!["rust", "cargo"],
+            ),
+            TechniqueDefinition::new(
+                "beta-browser",
+                "Beta Browser",
+                "Browser checks",
+                TechniqueModality::Command,
+                "npx playwright test",
+                true,
+                55,
+                vec!["playwright"],
+                vec![ProjectStack::Browser],
+                vec![ArtifactKind::Video],
+                vec!["playwright", "browser"],
+            ),
+        ];
+
+        let mut signals = ProjectSignalReport::default();
+        signals.stack_confidence.insert(ProjectStack::Rust, 0.95);
+        signals.stack_confidence.insert(ProjectStack::Browser, 0.20);
+        signals.hints.insert("cargo".to_string());
+        signals.hints.insert("rust".to_string());
+
+        let recommendations = recommend_techniques(&catalog, &signals);
+        assert_eq!(recommendations.len(), 2);
+        assert_eq!(recommendations[0].id, "alpha-rust");
+        assert!(recommendations[0].score > recommendations[1].score);
+        assert!(
+            recommendations[0]
+                .rationale
+                .contains("matched stack signals")
+        );
+        assert!(recommendations[0].rationale.contains("keyword"));
+        assert!(
+            recommendations[0]
+                .matched_stacks
+                .contains(&ProjectStack::Rust)
+        );
+    }
+
+    #[test]
+    fn technique_recommendation_deterministic() {
+        let first_catalog = vec![
+            TechniqueDefinition::new(
+                "zeta",
+                "Zeta",
+                "Z",
+                TechniqueModality::Command,
+                "zeta",
+                true,
+                30,
+                vec!["zeta"],
+                vec![ProjectStack::Cli],
+                vec![ArtifactKind::Log],
+                vec!["zeta"],
+            ),
+            TechniqueDefinition::new(
+                "alpha",
+                "Alpha",
+                "A",
+                TechniqueModality::Command,
+                "alpha",
+                true,
+                30,
+                vec!["alpha"],
+                vec![ProjectStack::Cli],
+                vec![ArtifactKind::Log],
+                vec!["alpha"],
+            ),
+        ];
+        let second_catalog = vec![first_catalog[1].clone(), first_catalog[0].clone()];
+
+        let mut signals = ProjectSignalReport::default();
+        signals.stack_confidence.insert(ProjectStack::Cli, 0.8);
+        signals.hints.insert("alpha".to_string());
+        signals.hints.insert("zeta".to_string());
+
+        let first = recommend_techniques(&first_catalog, &signals);
+        let second = recommend_techniques(&second_catalog, &signals);
+
+        assert_eq!(first, second);
+        assert_eq!(first[0].id, "alpha");
+        assert_eq!(first[1].id, "zeta");
     }
 }

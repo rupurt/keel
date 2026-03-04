@@ -25,12 +25,12 @@ started_at: 2026-03-04T10:21:27
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 2/4 stories complete
+**Progress:** 3/4 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Surface Technique Recommendations In Planning Shows](../../../../stories/1vxqNFHpk/README.md) | feat | backlog |
 | [Implement Keel.toml Technique Configuration Overrides](../../../../stories/1vxqNFJOf/README.md) | feat | done |
-| [Implement Project Autodetection And Recommendation Engine](../../../../stories/1vxqNFNdN/README.md) | feat | backlog |
+| [Implement Project Autodetection And Recommendation Engine](../../../../stories/1vxqNFNdN/README.md) | feat | done |
 | [Define Verification Technique Catalog Model](../../../../stories/1vxqNFaR9/README.md) | feat | done |
 <!-- END GENERATED -->
