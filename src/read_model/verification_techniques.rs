@@ -152,6 +152,21 @@ pub struct TechniqueRecommendation {
     pub applicable_stacks: Vec<ProjectStack>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ShowRecommendation {
+    pub id: String,
+    pub label: String,
+    pub rationale: String,
+    pub usage_status: String,
+    pub adoption_guidance: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct ShowRecommendationReport {
+    pub recommendations: Vec<ShowRecommendation>,
+    pub diagnostics: Vec<String>,
+}
+
 /// Built-in technique bank used as the canonical base catalog.
 ///
 /// The list is sorted by technique id to guarantee deterministic ordering across runs.
@@ -538,6 +553,96 @@ pub fn recommend_techniques(
     out
 }
 
+/// Build show-surface recommendation output from merged catalog and usage signals.
+///
+/// - Reads optional `keel.toml` override section.
+/// - Parses/merges overrides as advisory diagnostics.
+/// - Detects project signals and ranks enabled techniques.
+/// - Annotates each recommendation as configured-used/configured-unused.
+pub fn build_show_recommendation_report(
+    project_root: &Path,
+    used_techniques: &BTreeSet<String>,
+) -> ShowRecommendationReport {
+    let keel_toml = project_root.join("keel.toml");
+    let keel_toml_content = fs::read_to_string(&keel_toml).unwrap_or_default();
+
+    let parsed = parse_technique_overrides_from_keel_toml(&keel_toml_content);
+    let merged =
+        merge_technique_catalog_with_overrides(builtin_technique_catalog(), &parsed.overrides);
+    let signals = detect_project_signals(project_root);
+    let ranked = recommend_techniques(&merged.catalog, &signals);
+
+    let recommendations = ranked
+        .into_iter()
+        .take(6)
+        .map(|recommendation| {
+            let usage_status = if technique_used(&recommendation.id, used_techniques) {
+                "configured-in-use"
+            } else {
+                "configured-unused"
+            };
+            let adoption_guidance = merged
+                .catalog
+                .iter()
+                .find(|technique| technique.id == recommendation.id)
+                .map(adoption_guidance_for)
+                .unwrap_or_else(|| {
+                    "Adopt: add verification annotations for this technique.".to_string()
+                });
+
+            ShowRecommendation {
+                id: recommendation.id,
+                label: recommendation.label,
+                rationale: recommendation.rationale,
+                usage_status: usage_status.to_string(),
+                adoption_guidance,
+            }
+        })
+        .collect();
+
+    let mut diagnostics = Vec::new();
+    diagnostics.extend(
+        parsed
+            .diagnostics
+            .into_iter()
+            .map(|diagnostic| format!("{}: {}", diagnostic.path, diagnostic.message)),
+    );
+    diagnostics.extend(
+        merged
+            .diagnostics
+            .into_iter()
+            .map(|diagnostic| format!("{}: {}", diagnostic.path, diagnostic.message)),
+    );
+    diagnostics.sort();
+    diagnostics.dedup();
+
+    ShowRecommendationReport {
+        recommendations,
+        diagnostics,
+    }
+}
+
+/// Infer known technique ids from a verify command string.
+pub fn infer_used_technique_ids(command: &str) -> Vec<String> {
+    let command = command.trim();
+    let mut ids = Vec::new();
+
+    if command.starts_with("vhs ") || command == "vhs" {
+        ids.push("vhs".to_string());
+    }
+    if command.starts_with("llm-judge") || command == "llm-judge" {
+        ids.push("llm-judge".to_string());
+    }
+    if command.contains("playwright") {
+        ids.push("playwright".to_string());
+        ids.push("browser-playwright-e2e".to_string());
+    }
+
+    ids.sort();
+    ids.dedup();
+    ids
+}
+
 fn bump_stack_confidence(report: &mut ProjectSignalReport, stack: ProjectStack, delta: f64) {
     let entry = report.stack_confidence.entry(stack).or_insert(0.0);
     *entry = (*entry + delta).min(1.0);
@@ -548,6 +653,32 @@ fn stack_name(stack: &ProjectStack) -> &'static str {
         ProjectStack::Rust => "rust",
         ProjectStack::Browser => "browser",
         ProjectStack::Cli => "cli",
+    }
+}
+
+fn technique_used(technique_id: &str, used_techniques: &BTreeSet<String>) -> bool {
+    if used_techniques.contains(technique_id) {
+        return true;
+    }
+
+    match technique_id {
+        "browser-playwright-e2e" => used_techniques.contains("playwright"),
+        _ => false,
+    }
+}
+
+fn adoption_guidance_for(technique: &TechniqueDefinition) -> String {
+    match technique.id.as_str() {
+        "vhs" => {
+            "Adopt: add `<!-- verify: vhs demo.tape, SRS-XX:start -->` and attach the generated recording.".to_string()
+        }
+        "llm-judge" => {
+            "Adopt: add `<!-- verify: llm-judge, SRS-XX:start -->` for semantic acceptance checks.".to_string()
+        }
+        _ => format!(
+            "Adopt: use `{}` in verify annotations where this technique applies.",
+            technique.default_command
+        ),
     }
 }
 

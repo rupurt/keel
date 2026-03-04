@@ -11,6 +11,7 @@ use crate::domain::model::{Board, Epic, Story, StoryState, Voyage};
 use crate::infrastructure::verification::parser::{
     Comparison, parse_ac_references, parse_verify_annotations,
 };
+use crate::read_model::verification_techniques;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct PlanningDocSummary {
@@ -273,7 +274,31 @@ pub fn build_epic_show_projection(
 
     let signals = detect_project_signals(board_dir);
     let project_signals = render_project_signals(&signals);
-    let recommendations = build_verification_recommendations(&signals, &verification);
+    let project_root = project_root_from_board_dir(board_dir);
+    let recommendation_report = verification_techniques::build_show_recommendation_report(
+        project_root,
+        &verification.used_techniques,
+    );
+    let mut recommendations: Vec<VerificationRecommendation> = recommendation_report
+        .recommendations
+        .into_iter()
+        .map(|recommendation| VerificationRecommendation {
+            technique: format!("{} [{}]", recommendation.label, recommendation.usage_status),
+            rationale: format!(
+                "{} | {}",
+                recommendation.rationale, recommendation.adoption_guidance
+            ),
+        })
+        .collect();
+    recommendations.extend(
+        recommendation_report
+            .diagnostics
+            .into_iter()
+            .map(|diagnostic| VerificationRecommendation {
+                technique: "Config Diagnostic".to_string(),
+                rationale: diagnostic,
+            }),
+    );
 
     Ok(EpicShowProjection {
         doc,
@@ -964,16 +989,7 @@ pub fn is_media_artifact(path: &str) -> bool {
 }
 
 fn detect_project_signals(board_dir: &Path) -> ProjectSignals {
-    let project_root = if board_dir
-        .file_name()
-        .and_then(|name| name.to_str())
-        .map(|name| name == ".keel")
-        .unwrap_or(false)
-    {
-        board_dir.parent().unwrap_or(board_dir)
-    } else {
-        board_dir
-    };
+    let project_root = project_root_from_board_dir(board_dir);
 
     let flake_content = fs::read_to_string(project_root.join("flake.nix")).unwrap_or_default();
     let package_json = fs::read_to_string(project_root.join("package.json")).unwrap_or_default();
@@ -995,6 +1011,19 @@ fn detect_project_signals(board_dir: &Path) -> ProjectSignals {
     }
 }
 
+fn project_root_from_board_dir(board_dir: &Path) -> &Path {
+    if board_dir
+        .file_name()
+        .and_then(|name| name.to_str())
+        .map(|name| name == ".keel")
+        .unwrap_or(false)
+    {
+        board_dir.parent().unwrap_or(board_dir)
+    } else {
+        board_dir
+    }
+}
+
 fn render_project_signals(signals: &ProjectSignals) -> Vec<String> {
     let mut out = Vec::new();
     if signals.rust_workspace {
@@ -1013,50 +1042,6 @@ fn render_project_signals(signals: &ProjectSignals) -> Vec<String> {
         out.push("flake.nix includes ffmpeg".to_string());
     }
     out
-}
-
-fn build_verification_recommendations(
-    signals: &ProjectSignals,
-    verification: &VerificationRollup,
-) -> Vec<VerificationRecommendation> {
-    let mut recommendations = Vec::new();
-
-    if signals.rust_workspace {
-        recommendations.push(VerificationRecommendation {
-            technique: "Coverage Gate".to_string(),
-            rationale: "Detected Cargo.toml: add coverage threshold checks to reduce silent test gaps (for example `just coverage`).".to_string(),
-        });
-        recommendations.push(VerificationRecommendation {
-            technique: "Property/Fuzz Tests".to_string(),
-            rationale: "Rust parser/state-machine code is present: add `cargo fuzz` targets for high-risk boundary behavior.".to_string(),
-        });
-    }
-
-    if signals.playwright_project && !verification.used_techniques.contains("playwright") {
-        recommendations.push(VerificationRecommendation {
-            technique: "Playwright Video E2E".to_string(),
-            rationale: "Detected Playwright project signals: record browser acceptance runs with video and traces for faster review.".to_string(),
-        });
-    }
-
-    if signals.vhs_available && !verification.used_techniques.contains("vhs") {
-        recommendations.push(VerificationRecommendation {
-            technique: "VHS CLI Recording".to_string(),
-            rationale: "Detected vhs in flake.nix: capture deterministic terminal acceptance evidence with tape-driven recordings.".to_string(),
-        });
-    }
-
-    if verification.manual_criteria > 0 && !verification.used_techniques.contains("llm-judge") {
-        recommendations.push(VerificationRecommendation {
-            technique: "LLM-Judge Semantic Checks".to_string(),
-            rationale: format!(
-                "Detected {} manual criterion/criteria: convert high-value manual checks into repeatable `llm-judge` assertions where possible.",
-                verification.manual_criteria
-            ),
-        });
-    }
-
-    recommendations
 }
 
 #[cfg(test)]

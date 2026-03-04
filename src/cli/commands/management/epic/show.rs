@@ -207,23 +207,34 @@ fn render_verification_readiness(report: &EpicShowProjection) {
         );
     }
 
-    println!("  Automated verification additions:");
+    for line in recommendation_lines(report) {
+        println!("{}", line);
+    }
+}
+
+pub(crate) fn recommendation_lines(report: &EpicShowProjection) -> Vec<String> {
+    let mut lines = Vec::new();
+    lines.push("  Technique Recommendations:".to_string());
     if report.recommendations.is_empty() {
-        println!("    - {}", RECOMMENDATION_PLACEHOLDER.dimmed());
+        lines.push(format!("    - {}", RECOMMENDATION_PLACEHOLDER.dimmed()));
     } else {
         for recommendation in report.recommendations.iter().take(5) {
-            println!(
+            lines.push(format!(
                 "    - {}: {}",
                 recommendation.technique, recommendation.rationale
-            );
+            ));
         }
         if report.recommendations.len() > 5 {
-            println!(
+            lines.push(format!(
                 "    - ... {} more",
                 report.recommendations.len().saturating_sub(5)
-            );
+            ));
         }
     }
+    lines.push(
+        "  Advisory only: recommended techniques are not executed by show commands.".to_string(),
+    );
+    lines
 }
 
 fn render_voyages(board: &Board, epic: &Epic) {
@@ -256,8 +267,10 @@ mod tests {
     use super::*;
     use crate::domain::model::StoryState;
     use crate::infrastructure::loader::load_board;
+    use crate::read_model::verification_techniques;
     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use chrono::{Duration, Local};
+    use std::collections::BTreeSet;
     use std::fs;
 
     #[test]
@@ -515,7 +528,7 @@ edition = "2021"
             report
                 .recommendations
                 .iter()
-                .any(|recommendation| recommendation.technique.contains("Coverage Gate"))
+                .any(|recommendation| recommendation.technique.contains("Rust Coverage Gate"))
         );
         assert!(
             report
@@ -523,10 +536,111 @@ edition = "2021"
                 .iter()
                 .any(|recommendation| recommendation.technique.contains("VHS CLI Recording"))
         );
-        assert!(report.recommendations.iter().any(|recommendation| {
-            recommendation
-                .technique
-                .contains("LLM-Judge Semantic Checks")
-        }));
+        assert!(
+            report
+                .recommendations
+                .iter()
+                .any(|recommendation| { recommendation.technique.contains("LLM-Judge") })
+        );
+    }
+
+    #[test]
+    fn show_recommendation_sections() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1"))
+            .story(TestStory::new("S1").scope("e1/v1").body(
+                r#"
+## Acceptance Criteria
+- [x] [SRS-04/AC-01] show recommendations <!-- verify: cargo test --lib show_recommendation_sections, SRS-04:start -->
+"#,
+            ))
+            .build();
+
+        fs::write(temp.path().join("Cargo.toml"), "[package]\nname=\"demo\"\n").unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let epic = board.require_epic("e1").unwrap();
+        let epic_report = build_epic_show_report(temp.path(), &board, epic).unwrap();
+        let epic_lines = recommendation_lines(&epic_report);
+
+        let recommendation_report = verification_techniques::build_show_recommendation_report(
+            temp.path(),
+            &BTreeSet::new(),
+        );
+        let voyage_lines = crate::cli::commands::management::voyage::show::recommendation_lines(
+            &recommendation_report,
+        );
+        let story_lines = crate::cli::commands::management::story::show::recommendation_lines(
+            &recommendation_report,
+        );
+
+        assert!(
+            epic_lines
+                .iter()
+                .any(|line| line.contains("Technique Recommendations"))
+        );
+        assert!(
+            voyage_lines
+                .iter()
+                .any(|line| line.contains("Technique Recommendations"))
+        );
+        assert!(
+            story_lines
+                .iter()
+                .any(|line| line.contains("Technique Recommendations"))
+        );
+    }
+
+    #[test]
+    fn show_recommendation_usage_status() {
+        let temp = TestBoardBuilder::new().build();
+        fs::write(temp.path().join("Cargo.toml"), "[package]\nname=\"demo\"\n").unwrap();
+        fs::write(
+            temp.path().join("flake.nix"),
+            "buildInputs = [ pkgs.vhs pkgs.ffmpeg ];",
+        )
+        .unwrap();
+
+        let mut used = BTreeSet::new();
+        used.insert("llm-judge".to_string());
+
+        let report = verification_techniques::build_show_recommendation_report(temp.path(), &used);
+        let lines = crate::cli::commands::management::story::show::recommendation_lines(&report);
+
+        assert!(lines.iter().any(|line| line.contains("configured-in-use")));
+        assert!(lines.iter().any(|line| line.contains("configured-unused")));
+        assert!(lines.iter().any(|line| line.contains("LLM-Judge")));
+        assert!(lines.iter().any(|line| line.contains("VHS CLI Recording")));
+    }
+
+    #[test]
+    fn show_recommendations_do_not_execute() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1"))
+            .story(TestStory::new("S1").scope("e1/v1").body(
+                r#"
+## Acceptance Criteria
+- [x] [SRS-04/AC-02] advisory recommendation surface <!-- verify: vhs demo.tape, SRS-NFR-02:start:end -->
+"#,
+            ))
+            .build();
+
+        let evidence_dir = temp.path().join("stories/S1/EVIDENCE");
+        let before_count = fs::read_dir(&evidence_dir).unwrap().count();
+
+        run_with_dir(temp.path(), "e1").unwrap();
+        crate::cli::commands::management::voyage::show::run_with_dir(temp.path(), "v1").unwrap();
+        crate::cli::commands::management::story::show::run_with_dir(temp.path(), "S1").unwrap();
+
+        let after_count = fs::read_dir(&evidence_dir).unwrap().count();
+        assert_eq!(before_count, after_count);
+
+        let board = load_board(temp.path()).unwrap();
+        let epic = board.require_epic("e1").unwrap();
+        let report = build_epic_show_report(temp.path(), &board, epic).unwrap();
+        let lines = recommendation_lines(&report);
+        assert!(lines.iter().any(|line| line.contains("Advisory only")));
     }
 }
