@@ -19,7 +19,8 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
    - `just keel story record <ID> --ac <NUM> --msg "Description of the proof"`
    - For manual proofs, use the `--msg` flag or editor integration.
 6. **Reflect**: Mandatory observational capture. Run `just keel story reflect <ID>` and document what was learned or discovered during implementation.
-7. **Submit**: Move to the human queue for review with `just keel story submit <ID>`. This triggers automated verification and generates the verification manifest.
+7. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this story before submission. Do not batch multiple stories into one commit.
+8. **Submit**: Move to the human queue for review with `just keel story submit <ID>`. This triggers automated verification and generates the verification manifest.
 
 ## Planning Workflow (Architect)
 
@@ -44,7 +45,8 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
      - Verification strategy summary (how requirements will be proven)
      - Key risks/assumptions
      - Canonical next step command
-9. **Seal Planning**: Promote the voyage from `draft` to `planned` with `just keel voyage plan <id>`. This validates requirement coverage and thaws stories into the agent backlog.
+9. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this planning unit before sealing. Do not batch unrelated planning units into one commit.
+10. **Seal Planning**: Promote the voyage from `draft` to `planned` with `just keel voyage plan <id>`. This validates requirement coverage and thaws stories into the agent backlog.
 
 ## Research Workflow (Explorer)
 
@@ -55,7 +57,8 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
 4. **Seal Survey**: Transition to the surveying phase with `just keel bearing survey <id>`.
 5. **Assess Impact**: Perform impact analysis and document recommendations (Proceed, Park, or Decline) in `ASSESSMENT.md`.
 6. **Seal Assessment**: Transition to the assessing phase with `just keel bearing assess <id>`.
-7. **Graduate**: If research is conclusive, graduate the bearing to a strategic Epic with `just keel bearing lay <id>`.
+7. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this bearing research package before graduation.
+8. **Graduate**: If research is conclusive, graduate the bearing to a strategic Epic with `just keel bearing lay <id>`.
 
 ## Global Hygiene Checklist
 
