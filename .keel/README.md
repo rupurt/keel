@@ -25,7 +25,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Implement Command Capability Classification Map](stories/1vxZ0FZaN/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Command Classification Drift Guards](epics/1vxYzSury/voyages/1vxYzsAxT/) |
 | [Document Command Guidance Contract For Harness Consumers](stories/1vxZ0FtD2/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Command Classification Drift Guards](epics/1vxYzSury/voyages/1vxYzsAxT/) |
 
 <details>

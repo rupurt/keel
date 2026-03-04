@@ -2,6 +2,7 @@
 
 pub mod adr;
 pub mod bearing;
+pub(crate) mod capability_map;
 pub mod epic;
 pub mod guidance;
 pub mod knowledge;

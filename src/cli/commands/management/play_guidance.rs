@@ -2,20 +2,27 @@
 
 use owo_colors::OwoColorize;
 
-use crate::cli::commands::management::guidance::{
-    CanonicalGuidance, CommandGuidance, render_command_guidance,
+use crate::cli::commands::management::capability_map::{
+    ManagementCommand, render_guidance_for_command,
 };
+use crate::cli::commands::management::guidance::{CanonicalGuidance, CommandGuidance};
 
 /// Deterministic guidance for a `keel play --suggest` outcome.
 pub fn guidance_for_suggest(bearing_id: &str, prop_name: &str) -> Option<CanonicalGuidance> {
-    render_command_guidance(Some(CommandGuidance::next(format!(
-        "keel play {bearing_id} --prop {prop_name}"
-    ))))
+    render_guidance_for_command(
+        ManagementCommand::PlaySuggest,
+        Some(CommandGuidance::next(format!(
+            "keel play {bearing_id} --prop {prop_name}"
+        ))),
+    )
 }
 
 /// Exploratory play outcomes are intentionally non-prescriptive.
 pub fn informational_for_exploration() -> Option<CanonicalGuidance> {
-    None
+    render_guidance_for_command(
+        ManagementCommand::PlayExplore,
+        Some(CommandGuidance::next("keel play --prop improviser")),
+    )
 }
 
 fn render_human(guidance: Option<&CanonicalGuidance>) -> String {

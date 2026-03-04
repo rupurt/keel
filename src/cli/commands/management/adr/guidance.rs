@@ -2,9 +2,10 @@
 
 use owo_colors::OwoColorize;
 
-use crate::cli::commands::management::guidance::{
-    CanonicalGuidance, CommandGuidance, render_command_guidance,
+use crate::cli::commands::management::capability_map::{
+    ManagementCommand, render_guidance_for_command,
 };
+use crate::cli::commands::management::guidance::{CanonicalGuidance, CommandGuidance};
 
 fn success_command() -> CommandGuidance {
     CommandGuidance::next("keel next --human")
@@ -12,40 +13,50 @@ fn success_command() -> CommandGuidance {
 
 /// Informational list command guidance: intentionally non-prescriptive.
 pub fn informational_for_list() -> Option<CanonicalGuidance> {
-    None
+    render_guidance_for_command(
+        ManagementCommand::AdrList,
+        Some(CommandGuidance::next("keel next --human")),
+    )
 }
 
 /// Informational show command guidance: intentionally non-prescriptive.
 pub fn informational_for_show() -> Option<CanonicalGuidance> {
-    None
+    render_guidance_for_command(
+        ManagementCommand::AdrShow,
+        Some(CommandGuidance::next("keel next --human")),
+    )
 }
 
 pub fn success_for_accept() -> Option<CanonicalGuidance> {
-    render_command_guidance(Some(success_command()))
+    render_guidance_for_command(ManagementCommand::AdrAccept, Some(success_command()))
 }
 
 pub fn success_for_reject() -> Option<CanonicalGuidance> {
-    render_command_guidance(Some(success_command()))
+    render_guidance_for_command(ManagementCommand::AdrReject, Some(success_command()))
 }
 
 pub fn success_for_deprecate() -> Option<CanonicalGuidance> {
-    render_command_guidance(Some(success_command()))
+    render_guidance_for_command(ManagementCommand::AdrDeprecate, Some(success_command()))
 }
 
 pub fn success_for_supersede() -> Option<CanonicalGuidance> {
-    render_command_guidance(Some(success_command()))
+    render_guidance_for_command(ManagementCommand::AdrSupersede, Some(success_command()))
 }
 
 pub fn recovery_for_status_mismatch(adr_id: &str) -> CanonicalGuidance {
-    render_command_guidance(Some(CommandGuidance::recovery(format!(
-        "keel adr show {adr_id}"
-    ))))
+    render_guidance_for_command(
+        ManagementCommand::AdrAccept,
+        Some(CommandGuidance::recovery(format!("keel adr show {adr_id}"))),
+    )
     .expect("recovery guidance should be present")
 }
 
 pub fn recovery_for_missing() -> CanonicalGuidance {
-    render_command_guidance(Some(CommandGuidance::recovery("keel adr list")))
-        .expect("recovery guidance should be present")
+    render_guidance_for_command(
+        ManagementCommand::AdrAccept,
+        Some(CommandGuidance::recovery("keel adr list")),
+    )
+    .expect("recovery guidance should be present")
 }
 
 pub fn error_with_recovery(

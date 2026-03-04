@@ -2,9 +2,10 @@
 
 use owo_colors::OwoColorize;
 
-use crate::cli::commands::management::guidance::{
-    CanonicalGuidance, CommandGuidance, render_command_guidance,
+use crate::cli::commands::management::capability_map::{
+    ManagementCommand, render_guidance_for_command,
 };
+use crate::cli::commands::management::guidance::{CanonicalGuidance, CommandGuidance};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BearingLifecycleAction {
@@ -17,12 +18,18 @@ pub enum BearingLifecycleAction {
 
 /// Informational list command guidance: intentionally non-prescriptive.
 pub fn informational_for_list() -> Option<CanonicalGuidance> {
-    None
+    render_guidance_for_command(
+        ManagementCommand::BearingList,
+        Some(CommandGuidance::next("keel next --human")),
+    )
 }
 
 /// Informational show command guidance: intentionally non-prescriptive.
 pub fn informational_for_show() -> Option<CanonicalGuidance> {
-    None
+    render_guidance_for_command(
+        ManagementCommand::BearingShow,
+        Some(CommandGuidance::next("keel next --human")),
+    )
 }
 
 /// Build canonical next-step guidance for successful bearing transitions.
@@ -30,14 +37,30 @@ pub fn guidance_for_action(
     action: BearingLifecycleAction,
     bearing_id: &str,
 ) -> Option<CanonicalGuidance> {
-    let command = match action {
-        BearingLifecycleAction::Survey => Some(format!("keel bearing assess {bearing_id}")),
-        BearingLifecycleAction::Assess => Some(format!("keel bearing lay {bearing_id}")),
-        BearingLifecycleAction::Park
-        | BearingLifecycleAction::Decline
-        | BearingLifecycleAction::Lay => Some("keel next --human".to_string()),
+    let (command_type, command) = match action {
+        BearingLifecycleAction::Survey => (
+            ManagementCommand::BearingSurvey,
+            Some(format!("keel bearing assess {bearing_id}")),
+        ),
+        BearingLifecycleAction::Assess => (
+            ManagementCommand::BearingAssess,
+            Some(format!("keel bearing lay {bearing_id}")),
+        ),
+        BearingLifecycleAction::Park => (
+            ManagementCommand::BearingPark,
+            Some("keel next --human".to_string()),
+        ),
+        BearingLifecycleAction::Decline => (
+            ManagementCommand::BearingDecline,
+            Some("keel next --human".to_string()),
+        ),
+        BearingLifecycleAction::Lay => (
+            ManagementCommand::BearingLay,
+            Some("keel next --human".to_string()),
+        ),
     };
-    render_command_guidance(command.map(CommandGuidance::next))
+
+    render_guidance_for_command(command_type, command.map(CommandGuidance::next))
 }
 
 /// Build canonical recovery guidance for bearing transition failures.
@@ -46,7 +69,8 @@ pub fn recovery_for_error(
     bearing_ref: &str,
     message: &str,
 ) -> Option<CanonicalGuidance> {
-    render_command_guidance(
+    render_guidance_for_command(
+        command_type_for_action(action),
         recovery_command_for_error(action, bearing_ref, message).map(CommandGuidance::recovery),
     )
 }
@@ -94,6 +118,16 @@ fn recovery_command_for_error(
     }
 
     None
+}
+
+fn command_type_for_action(action: BearingLifecycleAction) -> ManagementCommand {
+    match action {
+        BearingLifecycleAction::Survey => ManagementCommand::BearingSurvey,
+        BearingLifecycleAction::Assess => ManagementCommand::BearingAssess,
+        BearingLifecycleAction::Park => ManagementCommand::BearingPark,
+        BearingLifecycleAction::Decline => ManagementCommand::BearingDecline,
+        BearingLifecycleAction::Lay => ManagementCommand::BearingLay,
+    }
 }
 
 fn extract_epic_id(message: &str) -> Option<String> {

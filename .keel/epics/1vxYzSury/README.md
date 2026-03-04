@@ -19,12 +19,12 @@ created_at: 2026-03-03T15:17:22
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 4/5 voyages complete, 13/15 stories done
+**Progress:** 4/5 voyages complete, 14/15 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
 | [Output Contract And Shared Renderer](voyages/1vxYzh8ep/) | done | 3/3 |
 | [Governance And Research Guidance](voyages/1vxYzjVMv/) | done | 3/3 |
 | [Story And Voyage Lifecycle Guidance](voyages/1vxYzjiwH/) | done | 3/3 |
 | [Decision And Verification Guidance Parity](voyages/1vxYzrwma/) | done | 3/3 |
-| [Command Classification Drift Guards](voyages/1vxYzsAxT/) | in-progress | 1/3 |
+| [Command Classification Drift Guards](voyages/1vxYzsAxT/) | in-progress | 2/3 |
 <!-- END GENERATED -->

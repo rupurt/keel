@@ -2,9 +2,10 @@
 
 use owo_colors::OwoColorize;
 
-use crate::cli::commands::management::guidance::{
-    CanonicalGuidance, CommandGuidance, render_command_guidance,
+use crate::cli::commands::management::capability_map::{
+    ManagementCommand, render_guidance_for_command,
 };
+use crate::cli::commands::management::guidance::{CanonicalGuidance, CommandGuidance};
 use crate::cli::commands::management::story::guidance::next_command_for_state;
 use crate::domain::model::StoryState;
 use crate::infrastructure::verification::VerificationReport;
@@ -23,7 +24,7 @@ pub fn guidance_for_verify_story(
         )))
     };
 
-    render_command_guidance(guidance)
+    render_guidance_for_command(ManagementCommand::VerifyStory, guidance)
 }
 
 /// Build canonical guidance for a successful story audit outcome.
@@ -31,7 +32,8 @@ pub fn guidance_for_audit_story(
     story_id: &str,
     story_state: StoryState,
 ) -> Option<CanonicalGuidance> {
-    render_command_guidance(
+    render_guidance_for_command(
+        ManagementCommand::AuditStory,
         next_command_for_state(story_state, story_id).map(CommandGuidance::next),
     )
 }
@@ -60,7 +62,10 @@ fn recovery_for_verify_error(story_ref: Option<&str>, message: &str) -> Option<C
         Some("keel doctor".to_string())
     };
 
-    render_command_guidance(command.map(CommandGuidance::recovery))
+    render_guidance_for_command(
+        ManagementCommand::VerifyStory,
+        command.map(CommandGuidance::recovery),
+    )
 }
 
 fn recovery_for_audit_error(entity_ref: Option<&str>, message: &str) -> Option<CanonicalGuidance> {
@@ -73,7 +78,10 @@ fn recovery_for_audit_error(entity_ref: Option<&str>, message: &str) -> Option<C
         Some("keel doctor".to_string())
     };
 
-    render_command_guidance(command.map(CommandGuidance::recovery))
+    render_guidance_for_command(
+        ManagementCommand::AuditStory,
+        command.map(CommandGuidance::recovery),
+    )
 }
 
 fn error_with_recovery(message: String, guidance: Option<CanonicalGuidance>) -> anyhow::Error {
