@@ -886,3 +886,254 @@ mod queue_policy_docs {
         }
     }
 }
+
+// ============================================================
+// Story 1vxZ0FGSF: Canonical guidance contract drift checks
+// ============================================================
+
+mod guidance_contracts {
+    use std::collections::HashSet;
+
+    use serde::Serialize;
+    use serde_json::Value;
+
+    use crate::cli::commands::management::adr::guidance as adr_guidance;
+    use crate::cli::commands::management::bearing::guidance as bearing_guidance;
+    use crate::cli::commands::management::guidance::CanonicalGuidance;
+    use crate::cli::commands::management::play_guidance;
+    use crate::cli::commands::management::story::guidance as story_guidance;
+    use crate::cli::commands::management::verification_guidance;
+    use crate::cli::commands::management::voyage::guidance as voyage_guidance;
+    use crate::domain::model::StoryState;
+    use crate::infrastructure::verification::{VerificationReport, VerificationResult};
+
+    #[derive(Serialize)]
+    struct GuidanceEnvelope {
+        #[serde(skip_serializing_if = "Option::is_none")]
+        guidance: Option<CanonicalGuidance>,
+    }
+
+    fn verification_report(story_id: &str, passed: bool) -> VerificationReport {
+        VerificationReport {
+            story_id: story_id.to_string(),
+            results: vec![VerificationResult {
+                criterion: "AC-01".to_string(),
+                passed,
+                expected: "exit code 0".to_string(),
+                actual: if passed {
+                    "exit code 0".to_string()
+                } else {
+                    "exit code 1".to_string()
+                },
+                requires_human_review: false,
+            }],
+        }
+    }
+
+    fn mapping_keys(value: &Value) -> HashSet<String> {
+        match value {
+            Value::Object(map) => map.keys().cloned().collect(),
+            _ => panic!("expected JSON mapping"),
+        }
+    }
+
+    fn assert_canonical_shape(
+        label: &str,
+        guidance: Option<CanonicalGuidance>,
+        expected_key: &str,
+    ) {
+        let guidance = guidance.expect("actionable command must emit guidance");
+        let json = serde_json::to_value(&guidance).expect("guidance should serialize");
+
+        let actual_keys = mapping_keys(&json);
+        let expected_keys: HashSet<String> = [expected_key.to_string()].into_iter().collect();
+        assert_eq!(
+            actual_keys, expected_keys,
+            "{label} should emit only canonical `{expected_key}` key"
+        );
+
+        let command = json
+            .get(expected_key)
+            .and_then(|v| v.get("command"))
+            .and_then(Value::as_str);
+        assert!(
+            command.is_some_and(|value| !value.is_empty()),
+            "{label} should emit non-empty `{expected_key}.command`"
+        );
+
+        for forbidden in [
+            "next",
+            "recovery",
+            "next_command",
+            "recovery_command",
+            "nextCommand",
+            "recoveryCommand",
+        ] {
+            assert!(
+                json.get(forbidden).is_none(),
+                "{label} emitted forbidden legacy key `{forbidden}`"
+            );
+        }
+    }
+
+    #[test]
+    fn actionable_commands_emit_canonical_guidance_shape() {
+        let actionable_cases = vec![
+            (
+                "story start",
+                story_guidance::guidance_for_action(
+                    story_guidance::StoryLifecycleAction::Start,
+                    StoryState::InProgress,
+                    "S1",
+                ),
+                "next_step",
+            ),
+            (
+                "voyage plan",
+                voyage_guidance::guidance_for_action(
+                    voyage_guidance::VoyageLifecycleAction::Plan,
+                    "V1",
+                ),
+                "next_step",
+            ),
+            (
+                "bearing survey",
+                bearing_guidance::guidance_for_action(
+                    bearing_guidance::BearingLifecycleAction::Survey,
+                    "B1",
+                ),
+                "next_step",
+            ),
+            (
+                "adr accept",
+                adr_guidance::success_for_accept(),
+                "next_step",
+            ),
+            (
+                "play suggest",
+                play_guidance::guidance_for_suggest("B2", "improviser"),
+                "next_step",
+            ),
+            (
+                "verify success",
+                verification_guidance::guidance_for_verify_story(
+                    "S2",
+                    StoryState::InProgress,
+                    &verification_report("S2", true),
+                ),
+                "next_step",
+            ),
+            (
+                "verify failure",
+                verification_guidance::guidance_for_verify_story(
+                    "S2",
+                    StoryState::InProgress,
+                    &verification_report("S2", false),
+                ),
+                "recovery_step",
+            ),
+        ];
+
+        for (label, guidance, expected_key) in actionable_cases {
+            assert_canonical_shape(label, guidance, expected_key);
+        }
+    }
+
+    #[test]
+    fn informational_commands_omit_guidance_fields() {
+        let informational_cases = vec![
+            ("adr list", adr_guidance::informational_for_list()),
+            ("adr show", adr_guidance::informational_for_show()),
+            ("bearing list", bearing_guidance::informational_for_list()),
+            ("bearing show", bearing_guidance::informational_for_show()),
+            (
+                "play exploratory",
+                play_guidance::informational_for_exploration(),
+            ),
+        ];
+
+        for (label, guidance) in informational_cases {
+            assert!(guidance.is_none(), "{label} should not emit guidance");
+
+            let envelope = GuidanceEnvelope { guidance };
+            let json = serde_json::to_value(envelope).expect("envelope should serialize");
+            assert!(
+                json.get("guidance").is_none(),
+                "{label} should omit `guidance` field from JSON envelope"
+            );
+        }
+    }
+
+    #[test]
+    fn canonical_guidance_key_contract_remains_stable() {
+        let next = serde_json::to_value(CanonicalGuidance::next("keel story start S1")).unwrap();
+        let recovery =
+            serde_json::to_value(CanonicalGuidance::recovery("keel story list")).unwrap();
+
+        let next_keys = mapping_keys(&next);
+        let recovery_keys = mapping_keys(&recovery);
+
+        assert_eq!(next_keys, HashSet::from([String::from("next_step")]));
+        assert_eq!(
+            recovery_keys,
+            HashSet::from([String::from("recovery_step")])
+        );
+
+        let next_step_keys = mapping_keys(next.get("next_step").expect("next_step missing"));
+        let recovery_step_keys = mapping_keys(
+            recovery
+                .get("recovery_step")
+                .expect("recovery_step missing"),
+        );
+        assert_eq!(next_step_keys, HashSet::from([String::from("command")]));
+        assert_eq!(recovery_step_keys, HashSet::from([String::from("command")]));
+    }
+
+    #[test]
+    fn actionable_and_informational_classification_remains_stable() {
+        let actionable = [
+            story_guidance::guidance_for_action(
+                story_guidance::StoryLifecycleAction::Reflect,
+                StoryState::NeedsHumanVerification,
+                "S3",
+            ),
+            voyage_guidance::guidance_for_action(
+                voyage_guidance::VoyageLifecycleAction::Start,
+                "V3",
+            ),
+            bearing_guidance::guidance_for_action(
+                bearing_guidance::BearingLifecycleAction::Assess,
+                "B3",
+            ),
+            adr_guidance::success_for_supersede(),
+            play_guidance::guidance_for_suggest("B3", "bard"),
+            verification_guidance::guidance_for_verify_story(
+                "S3",
+                StoryState::InProgress,
+                &verification_report("S3", true),
+            ),
+        ];
+
+        let informational = [
+            adr_guidance::informational_for_list(),
+            adr_guidance::informational_for_show(),
+            bearing_guidance::informational_for_list(),
+            bearing_guidance::informational_for_show(),
+            play_guidance::informational_for_exploration(),
+        ];
+
+        for guidance in actionable {
+            assert!(
+                guidance.is_some(),
+                "actionable command should emit guidance"
+            );
+        }
+
+        for guidance in informational {
+            assert!(
+                guidance.is_none(),
+                "informational command must not emit guidance"
+            );
+        }
+    }
+}

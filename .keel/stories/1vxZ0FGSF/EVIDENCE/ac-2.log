@@ -1,0 +1,14 @@
+---
+recorded_at: 2026-03-03T20:30:27.501838374-08:00
+command: cargo test --lib guidance_contracts::informational_commands_omit_guidance_fields
+---
+
+running 1 test
+test drift_tests::guidance_contracts::informational_commands_omit_guidance_fields ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1032 filtered out; finished in 0.00s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.06s
+     Running unittests src/lib.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-bec18a36668a42b8)

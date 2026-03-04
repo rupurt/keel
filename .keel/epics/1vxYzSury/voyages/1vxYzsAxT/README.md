@@ -2,10 +2,11 @@
 id: 1vxYzsAxT
 index: 5
 title: Command Classification Drift Guards
-status: planned
+status: in-progress
 epic: 1vxYzSury
 created_at: 2026-03-03T15:17:48
 updated_at: 2026-03-03T15:49:33
+started_at: 2026-03-03T20:15:46
 ---
 
 # Command Classification Drift Guards
@@ -24,11 +25,11 @@ updated_at: 2026-03-03T15:49:33
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/3 stories complete
+**Progress:** 1/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Add Drift Tests For Canonical Guidance Contracts](../../../../stories/1vxZ0FGSF/README.md) | feat | backlog |
+| [Add Drift Tests For Canonical Guidance Contracts](../../../../stories/1vxZ0FGSF/README.md) | feat | done |
 | [Implement Command Capability Classification Map](../../../../stories/1vxZ0FZaN/README.md) | feat | backlog |
 | [Document Command Guidance Contract For Harness Consumers](../../../../stories/1vxZ0FtD2/README.md) | feat | backlog |
 <!-- END GENERATED -->

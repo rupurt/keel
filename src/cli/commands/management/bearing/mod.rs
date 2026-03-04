@@ -7,7 +7,7 @@ use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 use clap::Subcommand;
 
-mod guidance;
+pub(crate) mod guidance;
 
 #[derive(Subcommand, Debug)]
 pub enum BearingAction {
