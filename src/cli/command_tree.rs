@@ -206,15 +206,47 @@ pub fn build_cli() -> Command {
                 .hide(true)
                 .arg(
                     Arg::new("id")
-                        .help("ID of story, voyage, or epic to verify (default: all)")
+                        .help("Legacy syntax (unsupported): ID of story, voyage, or epic to verify")
                         .value_name("ID")
-                        .index(1),
+                        .index(1)
+                        .hide(true),
                 )
                 .arg(
                     Arg::new("all")
                         .long("all")
-                        .help("Verify all stories on the board")
-                        .action(ArgAction::SetTrue),
+                        .help("Legacy syntax (unsupported): Verify all stories on the board")
+                        .action(ArgAction::SetTrue)
+                        .hide(true),
+                )
+                .arg(
+                    Arg::new("json")
+                        .long("json")
+                        .help("Legacy syntax (unsupported): Output as JSON for scripting")
+                        .action(ArgAction::SetTrue)
+                        .hide(true),
+                )
+                .args_conflicts_with_subcommands(true)
+                .subcommand(
+                    Command::new("run")
+                        .about("Execute verification proofs")
+                        .arg(
+                            Arg::new("id")
+                                .help("ID of story, voyage, or epic to verify (default: all)")
+                                .value_name("ID")
+                                .index(1),
+                        )
+                        .arg(
+                            Arg::new("all")
+                                .long("all")
+                                .help("Verify all stories on the board")
+                                .action(ArgAction::SetTrue),
+                        )
+                        .arg(
+                            Arg::new("json")
+                                .long("json")
+                                .help("Output as JSON for scripting")
+                                .action(ArgAction::SetTrue),
+                        ),
                 ),
         )
         .subcommand(

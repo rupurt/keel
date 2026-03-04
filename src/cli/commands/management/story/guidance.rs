@@ -105,7 +105,7 @@ fn recovery_command_for_error(
                 || lower.contains("verification failed")
                 || lower.contains("unresolved scaffold/default text")
             {
-                Some(format!("keel verify {story_id}"))
+                Some(format!("keel verify run {story_id}"))
             } else if lower.contains("cannot submit") {
                 Some(format!("keel story show {story_id}"))
             } else {
@@ -120,7 +120,7 @@ fn recovery_command_for_error(
             } else if lower.contains("evidence directory missing in bundle")
                 || lower.contains("unresolved scaffold/default text")
             {
-                Some(format!("keel verify {story_id}"))
+                Some(format!("keel verify run {story_id}"))
             } else if lower.contains("cannot accept") {
                 Some(format!("keel story show {story_id}"))
             } else {
@@ -166,7 +166,7 @@ fn recovery_command_for_error(
             {
                 Some(format!("keel story show {story_id}"))
             } else if lower.contains("command failed with exit code") {
-                Some(format!("keel verify {story_id}"))
+                Some(format!("keel verify run {story_id}"))
             } else {
                 None
             }

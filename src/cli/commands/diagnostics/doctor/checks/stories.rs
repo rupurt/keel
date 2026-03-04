@@ -433,7 +433,7 @@ pub fn check_verification_manifests(board: &Board) -> Vec<Problem> {
             problems.push(
                 Problem::error(
                     story.path.clone(),
-                    "missing verification manifest (run `keel verify` to generate)",
+                    "missing verification manifest (run `keel verify run` to generate)",
                 )
                 .with_check_id(CheckId::StoryMissingManifest)
                 .with_scope(story.scope().unwrap_or_default()),
@@ -540,7 +540,7 @@ pub fn check_verification_manifests(board: &Board) -> Vec<Problem> {
 
                                     manifest_path.clone(),
 
-                                    format!("new evidence file not in manifest: {} (run `keel verify` to update)", rel_path),
+                                    format!("new evidence file not in manifest: {} (run `keel verify run` to update)", rel_path),
 
                                 )
 

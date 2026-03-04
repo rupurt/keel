@@ -27,7 +27,6 @@
 |-------|------|-------|
 | [Remove Planning Show Recommendations And Update Planning Guidance](stories/1vxvIa2RC/README.md) | feat | [Automated Verification Techniques Bank](epics/1vxqMtskC/) / [Verification Technique Command Surface Cutover](epics/1vxqMtskC/voyages/1vxvFrNta/) |
 | [Implement Verify Recommend For Active Detected Techniques](stories/1vxvIaM4w/README.md) | feat | [Automated Verification Techniques Bank](epics/1vxqMtskC/) / [Verification Technique Command Surface Cutover](epics/1vxqMtskC/voyages/1vxvFrNta/) |
-| [Hard Cutover Verify Command To Subcommands](stories/1vxvIaPe8/README.md) | feat | [Automated Verification Techniques Bank](epics/1vxqMtskC/) / [Verification Technique Command Surface Cutover](epics/1vxqMtskC/voyages/1vxvFrNta/) |
 
 <details>
 <summary><h2>Icebox</h2></summary>

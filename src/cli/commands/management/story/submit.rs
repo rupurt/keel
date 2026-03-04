@@ -129,7 +129,7 @@ mod tests {
         let err = result.unwrap_err().to_string();
         assert!(err.contains("unchecked acceptance criteria"));
         assert!(err.contains("Recovery step:"));
-        assert!(err.contains("keel verify 1vkqtsCCC"));
+        assert!(err.contains("keel verify run 1vkqtsCCC"));
     }
 
     #[test]

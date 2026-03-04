@@ -192,15 +192,17 @@ fn cli_rejects_removed_migrate_command() {
 #[test]
 fn cli_parses_verify_command() {
     let matches = crate::build_cli()
-        .try_get_matches_from(["keel", "verify", "S1", "--all"])
+        .try_get_matches_from(["keel", "verify", "run", "S1", "--all", "--json"])
         .unwrap();
     assert_eq!(matches.subcommand_name(), Some("verify"));
     let sub_m = matches.subcommand_matches("verify").unwrap();
+    let run_m = sub_m.subcommand_matches("run").unwrap();
     assert_eq!(
-        sub_m.get_one::<String>("id").map(|s| s.as_str()),
+        run_m.get_one::<String>("id").map(|s| s.as_str()),
         Some("S1")
     );
-    assert!(*sub_m.get_one::<bool>("all").unwrap());
+    assert!(*run_m.get_one::<bool>("all").unwrap());
+    assert!(*run_m.get_one::<bool>("json").unwrap());
 }
 
 #[test]

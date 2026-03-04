@@ -85,9 +85,15 @@ pub fn run() -> Result<()> {
             super::commands::management::story::audit::run(&resolve_board_dir()?, id.as_deref())
         }
         Some(("verify", m)) => {
-            let id = m.get_one::<String>("id").map(|s| s.as_str());
-            let all = *m.get_one::<bool>("all").unwrap_or(&false);
-            super::commands::management::verify::run(&resolve_board_dir()?, id, all)
+            if let Some(("run", run_m)) = m.subcommand() {
+                let id = run_m.get_one::<String>("id").map(|s| s.as_str());
+                let all = *run_m.get_one::<bool>("all").unwrap_or(&false);
+                let json = *run_m.get_one::<bool>("json").unwrap_or(&false);
+                super::commands::management::verify::run(&resolve_board_dir()?, id, all, json)
+            } else {
+                let legacy_id = m.get_one::<String>("id").map(String::as_str);
+                super::commands::management::verify::run_legacy(legacy_id)
+            }
         }
         Some(("knowledge", m)) => handle_knowledge_command(m),
         Some(("generate", _)) => super::commands::setup::generate::run(&resolve_board_dir()?),

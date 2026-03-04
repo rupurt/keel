@@ -25,12 +25,12 @@ started_at: 2026-03-04T15:30:33
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/4 stories complete
+**Progress:** 2/4 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Refactor Config Show Into Technique Flag Matrix](../../../../stories/1vxvIZRXy/README.md) | feat | done |
 | [Remove Planning Show Recommendations And Update Planning Guidance](../../../../stories/1vxvIa2RC/README.md) | feat | backlog |
 | [Implement Verify Recommend For Active Detected Techniques](../../../../stories/1vxvIaM4w/README.md) | feat | backlog |
-| [Hard Cutover Verify Command To Subcommands](../../../../stories/1vxvIaPe8/README.md) | feat | backlog |
+| [Hard Cutover Verify Command To Subcommands](../../../../stories/1vxvIaPe8/README.md) | feat | done |
 <!-- END GENERATED -->
