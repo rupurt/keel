@@ -25,6 +25,10 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
+| [Define Planning Show Output Contracts](stories/1vxppk4Oj/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Planning Read Surfaces And Evidence Visibility](epics/1vxYzSury/voyages/1vxpomgnN/) |
+| [Implement Voyage Show Requirement Progress](stories/1vxppkB6M/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Planning Read Surfaces And Evidence Visibility](epics/1vxYzSury/voyages/1vxpomgnN/) |
+| [Render Concrete Evidence In Story Show](stories/1vxppkEH9/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Planning Read Surfaces And Evidence Visibility](epics/1vxYzSury/voyages/1vxpomgnN/) |
+| [Implement Epic Show Planning Summary](stories/1vxppkN0w/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Planning Read Surfaces And Evidence Visibility](epics/1vxYzSury/voyages/1vxpomgnN/) |
 
 <details>
 <summary><h2>Icebox</h2></summary>
@@ -36,7 +40,7 @@
 
 ## Epics
 
-### [Deterministic Command Guidance](epics/1vxYzSury/) (active) - 5 voyages, 4 done
+### [Deterministic Command Guidance](epics/1vxYzSury/) (active) - 6 voyages, 5 done
 
 | Voyage | Status |
 |--------|--------|
@@ -44,7 +48,8 @@
 | [Governance And Research Guidance](epics/1vxYzSury/voyages/1vxYzjVMv/) | done |
 | [Story And Voyage Lifecycle Guidance](epics/1vxYzSury/voyages/1vxYzjiwH/) | done |
 | [Decision And Verification Guidance Parity](epics/1vxYzSury/voyages/1vxYzrwma/) | done |
-| [Command Classification Drift Guards](epics/1vxYzSury/voyages/1vxYzsAxT/) | in-progress |
+| [Command Classification Drift Guards](epics/1vxYzSury/voyages/1vxYzsAxT/) | done |
+| [Planning Read Surfaces And Evidence Visibility](epics/1vxYzSury/voyages/1vxpomgnN/) | planned |
 
 <details>
 <summary><h2>Done</h2></summary>
