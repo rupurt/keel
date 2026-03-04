@@ -9,3 +9,4 @@ pub mod knowledge;
 pub mod queue_policy;
 pub mod throughput_history;
 pub mod traceability;
+pub mod verification_techniques;
