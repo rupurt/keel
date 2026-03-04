@@ -25,7 +25,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Define Canonical Guidance Output Contract](stories/1vxZ0AFJK/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Output Contract And Shared Renderer](epics/1vxYzSury/voyages/1vxYzh8ep/) |
 | [Add Canonical Next Guidance To Story Lifecycle Commands](stories/1vxZ0BXgR/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Story And Voyage Lifecycle Guidance](epics/1vxYzSury/voyages/1vxYzjiwH/) |
 | [Add Contract Tests For Canonical Guidance Fields](stories/1vxZ0Bh0v/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Output Contract And Shared Renderer](epics/1vxYzSury/voyages/1vxYzh8ep/) |
 | [Implement Shared Guidance Renderer Helpers](stories/1vxZ0BinH/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Output Contract And Shared Renderer](epics/1vxYzSury/voyages/1vxYzh8ep/) |

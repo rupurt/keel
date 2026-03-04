@@ -2,11 +2,12 @@
 id: 1vxZ0AFJK
 title: Define Canonical Guidance Output Contract
 type: feat
-status: in-progress
+status: done
 created_at: 2026-03-03T15:18:06
-updated_at: 2026-03-03T15:55:59
+updated_at: 2026-03-03T16:32:24
 scope: 1vxYzSury/1vxYzh8ep
 started_at: 2026-03-03T15:55:59
+completed_at: 2026-03-03T16:32:24
 ---
 
 # Define Canonical Guidance Output Contract

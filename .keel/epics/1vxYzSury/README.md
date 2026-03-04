@@ -19,10 +19,10 @@ created_at: 2026-03-03T15:17:22
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/5 voyages complete, 0/15 stories done
+**Progress:** 0/5 voyages complete, 1/15 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Output Contract And Shared Renderer](voyages/1vxYzh8ep/) | in-progress | 0/3 |
+| [Output Contract And Shared Renderer](voyages/1vxYzh8ep/) | in-progress | 1/3 |
 | [Governance And Research Guidance](voyages/1vxYzjVMv/) | planned | 0/3 |
 | [Story And Voyage Lifecycle Guidance](voyages/1vxYzjiwH/) | planned | 0/3 |
 | [Decision And Verification Guidance Parity](voyages/1vxYzrwma/) | planned | 0/3 |
