@@ -4,11 +4,13 @@ use std::path::Path;
 
 use anyhow::Result;
 
+use super::guidance::{StoryLifecycleAction, error_with_recovery};
 use crate::application::story_lifecycle::StoryLifecycleService;
 
 /// Run the thaw command
 pub fn run(board_dir: &Path, id: &str) -> Result<()> {
     StoryLifecycleService::thaw(board_dir, id)
+        .map_err(|err| error_with_recovery(StoryLifecycleAction::Thaw, id, err))
 }
 
 #[cfg(test)]
@@ -70,7 +72,10 @@ mod tests {
         let result = run(temp.path(), "0002");
 
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("Cannot thaw"));
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("Cannot thaw"));
+        assert!(err.contains("Recovery step:"));
+        assert!(err.contains("keel story show 0002"));
     }
 
     #[test]

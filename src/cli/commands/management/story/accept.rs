@@ -7,11 +7,14 @@ use anyhow::Result;
 use crate::application::story_lifecycle::StoryLifecycleService;
 use crate::infrastructure::loader::load_board;
 
-use super::guidance::{StoryLifecycleAction, guidance_for_action, print_human};
+use super::guidance::{
+    StoryLifecycleAction, error_with_recovery, guidance_for_action, print_human,
+};
 
 /// Run the accept command
 pub fn run(board_dir: &Path, id: &str, human: bool, reflect: Option<&str>) -> Result<()> {
-    StoryLifecycleService::accept(board_dir, id, human, reflect)?;
+    StoryLifecycleService::accept(board_dir, id, human, reflect)
+        .map_err(|err| error_with_recovery(StoryLifecycleAction::Accept, id, err))?;
 
     let board = load_board(board_dir)?;
     let story = board.require_story(id)?;
@@ -105,6 +108,8 @@ mod tests {
             "Error should mention manual verification: {}",
             err
         );
+        assert!(err.contains("Recovery step:"));
+        assert!(err.contains("keel story accept 1vkqtsHH1 --human"));
     }
 
     #[test]

@@ -11,10 +11,26 @@ use crate::infrastructure::utils::get_manual_input;
 use crate::infrastructure::verification::executor::execute;
 use crate::infrastructure::verification::parser::{Comparison, parse_verify_annotations};
 
-use super::guidance::{StoryLifecycleAction, guidance_for_action, print_human};
+use super::guidance::{
+    StoryLifecycleAction, error_with_recovery, guidance_for_action, print_human,
+};
 
 /// Run the record command
 pub fn run(
+    board_dir: &Path,
+    id: String,
+    ac_index: Option<usize>,
+    cmd_override: Option<String>,
+    msg: Option<String>,
+    judge: bool,
+    files: Vec<String>,
+) -> Result<()> {
+    let story_id = id.clone();
+    run_impl(board_dir, id, ac_index, cmd_override, msg, judge, files)
+        .map_err(|err| error_with_recovery(StoryLifecycleAction::Record, &story_id, err))
+}
+
+fn run_impl(
     board_dir: &Path,
     id: String,
     ac_index: Option<usize>,

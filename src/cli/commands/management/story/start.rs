@@ -10,11 +10,14 @@ use crate::application::story_lifecycle::StoryLifecycleService;
 use crate::domain::model::StoryState;
 use crate::infrastructure::loader::load_board;
 
-use super::guidance::{StoryLifecycleAction, guidance_for_action, print_human};
+use super::guidance::{
+    StoryLifecycleAction, error_with_recovery, guidance_for_action, print_human,
+};
 
 /// Run the start story command
 pub fn run(board_dir: &Path, id: &str, version: Option<u64>) -> Result<()> {
-    StoryLifecycleService::start(board_dir, id, version)?;
+    StoryLifecycleService::start(board_dir, id, version)
+        .map_err(|err| error_with_recovery(StoryLifecycleAction::Start, id, err))?;
 
     let board = load_board(board_dir)?;
     let story = board.require_story(id)?;
@@ -158,7 +161,10 @@ mod tests {
         let result = run(temp.path(), "READY1", None);
 
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("Cannot start"));
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("Cannot start"));
+        assert!(err.contains("Recovery step:"));
+        assert!(err.contains("keel story show READY1"));
     }
 
     #[test]
@@ -225,12 +231,10 @@ mod tests {
         // Pass an old version (0 instead of current)
         let result = run(temp.path(), "S1", Some(9999));
         assert!(result.is_err());
-        assert!(
-            result
-                .unwrap_err()
-                .to_string()
-                .contains("Board state has changed")
-        );
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("Board state has changed"));
+        assert!(err.contains("Recovery step:"));
+        assert!(err.contains("keel status"));
     }
 
     #[test]

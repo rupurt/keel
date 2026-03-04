@@ -4,6 +4,7 @@ use std::path::Path;
 
 use anyhow::Result;
 
+use super::guidance::{StoryLifecycleAction, error_with_recovery};
 #[cfg(test)]
 use crate::application::story_lifecycle;
 use crate::application::story_lifecycle::StoryLifecycleService;
@@ -11,6 +12,7 @@ use crate::application::story_lifecycle::StoryLifecycleService;
 /// Run the reject command
 pub fn run(board_dir: &Path, id: &str, reason: &str) -> Result<()> {
     StoryLifecycleService::reject(board_dir, id, reason)
+        .map_err(|err| error_with_recovery(StoryLifecycleAction::Reject, id, err))
 }
 
 /// Append rejection reason to the story markdown
@@ -96,7 +98,10 @@ mod tests {
         let result = run(temp.path(), "0002", "Still missing tests");
 
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("Cannot reject"));
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("Cannot reject"));
+        assert!(err.contains("Recovery step:"));
+        assert!(err.contains("keel story show 0002"));
     }
 
     #[test]

@@ -7,11 +7,14 @@ use anyhow::Result;
 use crate::application::story_lifecycle::StoryLifecycleService;
 use crate::infrastructure::loader::load_board;
 
-use super::guidance::{StoryLifecycleAction, guidance_for_action, print_human};
+use super::guidance::{
+    StoryLifecycleAction, error_with_recovery, guidance_for_action, print_human,
+};
 
 /// Run the submit story command
 pub fn run(board_dir: &Path, id: &str) -> Result<()> {
-    StoryLifecycleService::submit(board_dir, id)?;
+    StoryLifecycleService::submit(board_dir, id)
+        .map_err(|err| error_with_recovery(StoryLifecycleAction::Submit, id, err))?;
 
     let board = load_board(board_dir)?;
     let story = board.require_story(id)?;
@@ -123,12 +126,34 @@ mod tests {
 
         let result = run(temp.path(), "1vkqtsCCC");
         assert!(result.is_err());
-        assert!(
-            result
-                .unwrap_err()
-                .to_string()
-                .contains("unchecked acceptance criteria")
-        );
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("unchecked acceptance criteria"));
+        assert!(err.contains("Recovery step:"));
+        assert!(err.contains("keel verify 1vkqtsCCC"));
+    }
+
+    #[test]
+    fn submit_errors_on_missing_reflect_with_recovery_guidance() {
+        let temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("1vkqtsREF")
+                    .stage(StoryState::InProgress)
+                    .body("## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Done <!-- verify: manual, SRS-01:start:end -->"),
+            )
+            .build();
+
+        fs::create_dir_all(temp.path().join("stories/1vkqtsREF/EVIDENCE")).unwrap();
+        let reflect_path = temp.path().join("stories/1vkqtsREF/REFLECT.md");
+        if reflect_path.exists() {
+            fs::remove_file(reflect_path).unwrap();
+        }
+        let result = run(temp.path(), "1vkqtsREF");
+
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("REFLECT.md missing in bundle"));
+        assert!(err.contains("Recovery step:"));
+        assert!(err.contains("keel story reflect 1vkqtsREF"));
     }
 
     #[test]

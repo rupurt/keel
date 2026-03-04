@@ -9,10 +9,17 @@ use crate::domain::model::StoryState;
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::template_rendering;
 
-use super::guidance::{StoryLifecycleAction, guidance_for_action, print_human};
+use super::guidance::{
+    StoryLifecycleAction, error_with_recovery, guidance_for_action, print_human,
+};
 
 /// Run the reflect command
 pub fn run(board_dir: &Path, id: &str) -> Result<()> {
+    run_impl(board_dir, id)
+        .map_err(|err| error_with_recovery(StoryLifecycleAction::Reflect, id, err))
+}
+
+fn run_impl(board_dir: &Path, id: &str) -> Result<()> {
     let board = load_board(board_dir)?;
     let story = board.require_story(id)?;
 
@@ -94,6 +101,8 @@ mod tests {
         let err = run(temp.path(), "SREF02").unwrap_err().to_string();
         assert!(err.contains("Cannot create REFLECT.md"));
         assert!(err.contains("backlog"));
+        assert!(err.contains("Recovery step:"));
+        assert!(err.contains("keel story start SREF02"));
     }
 
     #[test]

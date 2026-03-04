@@ -25,7 +25,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Add Canonical Recovery Guidance To Story Lifecycle Errors](stories/1vxZ0CBPx/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Story And Voyage Lifecycle Guidance](epics/1vxYzSury/voyages/1vxYzjiwH/) |
 | [Add Canonical Guidance To Bearing Transition Commands](stories/1vxZ0DAeT/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Governance And Research Guidance](epics/1vxYzSury/voyages/1vxYzjVMv/) |
 | [Keep Informational Governance Commands Non Prescriptive](stories/1vxZ0Dvw9/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Governance And Research Guidance](epics/1vxYzSury/voyages/1vxYzjVMv/) |
 | [Align Next Command Guidance In Human And Json Output](stories/1vxZ0DxDl/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Decision And Verification Guidance Parity](epics/1vxYzSury/voyages/1vxYzrwma/) |
