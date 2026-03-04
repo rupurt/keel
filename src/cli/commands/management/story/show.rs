@@ -1,7 +1,5 @@
 //! Show story command
 
-use std::collections::BTreeSet;
-use std::fs;
 use std::path::Path;
 
 use anyhow::Result;
@@ -9,42 +7,13 @@ use owo_colors::OwoColorize;
 
 use crate::cli::style;
 use crate::infrastructure::loader::load_board;
-use crate::infrastructure::verification::parser::{Comparison, parse_verify_annotations};
+use crate::read_model::planning_show::{self, EvidenceReport};
 
 const NO_EVIDENCE_DIR_PLACEHOLDER: &str = "(EVIDENCE directory not found)";
 const NO_LINKED_PROOFS_PLACEHOLDER: &str = "(no annotation-linked proof artifacts)";
 const NO_SUPPLEMENTARY_PLACEHOLDER: &str = "(no supplementary artifacts)";
 const NO_MEDIA_PLACEHOLDER: &str = "(no media artifacts)";
 const NO_VERIFY_PLACEHOLDER: &str = "(no verify annotations found)";
-
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
-struct ProofMetadata {
-    recorded_at: Option<String>,
-    mode: Option<String>,
-    command: Option<String>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct EvidenceItem {
-    criterion: String,
-    requirement: Option<String>,
-    mode: String,
-    command: Option<String>,
-    proof_filename: Option<String>,
-    proof_metadata: ProofMetadata,
-    excerpt_lines: Vec<String>,
-    missing_proof: bool,
-}
-
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
-struct EvidenceReport {
-    items: Vec<EvidenceItem>,
-    evidence_dir_missing: bool,
-    linked_proofs: Vec<String>,
-    supplementary_artifacts: Vec<String>,
-    media_artifacts: Vec<String>,
-    missing_proofs: Vec<String>,
-}
 
 /// Run the show story command
 pub fn run(id: &str) -> Result<()> {
@@ -56,10 +25,7 @@ pub fn run(id: &str) -> Result<()> {
 pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     let board = load_board(board_dir)?;
     let story = board.require_story(id)?;
-
-    let content = fs::read_to_string(&story.path)?;
-    let body = extract_body(&content);
-    let (checked, total) = body.map(count_acs).unwrap_or((0, 0));
+    let projection = planning_show::build_story_show_projection(story)?;
 
     let width = crate::cli::presentation::terminal::get_terminal_width();
     println!("{}", style::heavy_rule(width, None));
@@ -98,18 +64,23 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
         println!("Updated:  {}", updated_at.dimmed());
     }
 
-    if total > 0 {
+    if projection.total_criteria > 0 {
         println!();
         println!(
             "Progress: {}",
-            style::progress_bar(checked, total, 20, None)
+            style::progress_bar(
+                projection.checked_criteria,
+                projection.total_criteria,
+                20,
+                None
+            )
         );
     }
 
     println!();
     println!("Path: {}", story.path.display().dimmed());
 
-    if let Some(body_text) = body
+    if let Some(body_text) = &projection.body
         && !body_text.trim().is_empty()
     {
         println!();
@@ -164,161 +135,14 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
         }
     }
 
-    let evidence = build_evidence_report(&story.path, &content);
-    render_evidence_report(story.id(), &evidence);
+    render_evidence_report(story.id(), &projection.evidence);
 
     Ok(())
 }
 
+#[cfg(test)]
 fn build_evidence_report(story_path: &Path, content: &str) -> EvidenceReport {
-    let evidence_dir = story_path.parent().unwrap().join("EVIDENCE");
-    let evidence_dir_missing = !evidence_dir.exists();
-
-    let mut all_artifacts = Vec::new();
-    if !evidence_dir_missing
-        && let Ok(entries) = fs::read_dir(&evidence_dir)
-    {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_file() {
-                all_artifacts.push(entry.file_name().to_string_lossy().to_string());
-            }
-        }
-    }
-    all_artifacts.sort();
-
-    let mut linked = BTreeSet::new();
-    let mut missing = BTreeSet::new();
-    let mut items = Vec::new();
-
-    for ann in parse_verify_annotations(content) {
-        let proof_filename = ann.proof.clone();
-        let requirement = ann
-            .requirement
-            .as_ref()
-            .map(|req| req.id.clone())
-            .or_else(|| ann.ac_ref.as_ref().map(|ac| ac.srs_id.clone()));
-
-        let mut proof_metadata = ProofMetadata::default();
-        let mut excerpt_lines = Vec::new();
-        let mut missing_proof = false;
-
-        if let Some(proof) = &proof_filename {
-            let proof_path = evidence_dir.join(proof);
-            if proof_path.exists() {
-                linked.insert(proof.clone());
-                if is_text_artifact(proof) {
-                    let (metadata, excerpt) = parse_proof_metadata_and_excerpt(&proof_path);
-                    proof_metadata = metadata;
-                    excerpt_lines = excerpt;
-                } else {
-                    proof_metadata = parse_proof_metadata_only(&proof_path);
-                }
-            } else {
-                missing_proof = true;
-                missing.insert(proof.clone());
-            }
-        }
-
-        let mode = if ann.comparison == Comparison::Manual {
-            "manual".to_string()
-        } else {
-            "command".to_string()
-        };
-
-        items.push(EvidenceItem {
-            criterion: ann.criterion,
-            requirement,
-            mode,
-            command: ann.command,
-            proof_filename,
-            proof_metadata,
-            excerpt_lines,
-            missing_proof,
-        });
-    }
-
-    let linked_proofs: Vec<String> = linked.iter().cloned().collect();
-    let media_artifacts: Vec<String> = all_artifacts
-        .iter()
-        .filter(|name| is_media_artifact(name))
-        .cloned()
-        .collect();
-    let supplementary_artifacts: Vec<String> = all_artifacts
-        .iter()
-        .filter(|name| !linked.contains(*name))
-        .filter(|name| !is_media_artifact(name))
-        .cloned()
-        .collect();
-
-    EvidenceReport {
-        items,
-        evidence_dir_missing,
-        linked_proofs,
-        supplementary_artifacts,
-        media_artifacts,
-        missing_proofs: missing.iter().cloned().collect(),
-    }
-}
-
-fn parse_proof_metadata_and_excerpt(path: &Path) -> (ProofMetadata, Vec<String>) {
-    let content = match fs::read_to_string(path) {
-        Ok(content) => content,
-        Err(_) => return (ProofMetadata::default(), Vec::new()),
-    };
-    let (meta, body) = split_frontmatter(&content);
-    let excerpt = body
-        .lines()
-        .take(10)
-        .map(ToOwned::to_owned)
-        .collect::<Vec<_>>();
-    (meta, excerpt)
-}
-
-fn parse_proof_metadata_only(path: &Path) -> ProofMetadata {
-    let content = match fs::read_to_string(path) {
-        Ok(content) => content,
-        Err(_) => return ProofMetadata::default(),
-    };
-    let (meta, _) = split_frontmatter(&content);
-    meta
-}
-
-fn split_frontmatter(content: &str) -> (ProofMetadata, String) {
-    let mut metadata = ProofMetadata::default();
-    if !content.starts_with("---\n") {
-        return (metadata, content.to_string());
-    }
-
-    let mut lines = content.lines();
-    let _ = lines.next();
-    let mut header = Vec::new();
-    for line in lines.by_ref() {
-        if line.trim() == "---" {
-            break;
-        }
-        header.push(line.to_string());
-    }
-
-    for line in header {
-        let mut parts = line.splitn(2, ':');
-        let Some(key) = parts.next() else {
-            continue;
-        };
-        let Some(value) = parts.next() else {
-            continue;
-        };
-        let value = value.trim().to_string();
-        match key.trim() {
-            "recorded_at" => metadata.recorded_at = Some(value),
-            "mode" => metadata.mode = Some(value),
-            "command" => metadata.command = Some(value),
-            _ => {}
-        }
-    }
-
-    let body = lines.collect::<Vec<_>>().join("\n");
-    (metadata, body)
+    planning_show::build_story_evidence_projection(story_path, content)
 }
 
 fn evidence_lines(story_id: &str, report: &EvidenceReport) -> Vec<String> {
@@ -414,63 +238,12 @@ fn render_evidence_report(story_id: &str, report: &EvidenceReport) {
     }
 }
 
-fn is_text_artifact(path: &str) -> bool {
-    let lower = path.to_ascii_lowercase();
-    [".log", ".txt", ".md", ".json", ".yaml", ".yml", ".toml"]
-        .iter()
-        .any(|ext| lower.ends_with(ext))
-}
-
-fn is_media_artifact(path: &str) -> bool {
-    let lower = path.to_ascii_lowercase();
-    [".gif", ".png", ".jpg", ".jpeg", ".webm", ".mp4", ".mov"]
-        .iter()
-        .any(|ext| lower.ends_with(ext))
-}
-
-/// Extract body content after frontmatter
-fn extract_body(content: &str) -> Option<&str> {
-    let mut delimiter_count = 0;
-
-    for (idx, line) in content.lines().enumerate() {
-        if line == "---" {
-            delimiter_count += 1;
-            if delimiter_count == 2 {
-                let lines: Vec<&str> = content.lines().collect();
-                if idx + 1 < lines.len() {
-                    let prefix_len: usize = lines[..=idx].iter().map(|l| l.len() + 1).sum();
-                    return Some(&content[prefix_len..]);
-                }
-            }
-        }
-    }
-
-    None
-}
-
-/// Count checked and total acceptance criteria in body text
-fn count_acs(body: &str) -> (usize, usize) {
-    let mut checked = 0;
-    let mut total = 0;
-
-    for line in body.lines() {
-        let trimmed = line.trim();
-        if trimmed.starts_with("- [x]") || trimmed.starts_with("- [X]") {
-            checked += 1;
-            total += 1;
-        } else if trimmed.starts_with("- [ ]") {
-            total += 1;
-        }
-    }
-
-    (checked, total)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::domain::model::StoryState;
     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use std::fs;
 
     #[test]
     fn show_displays_story() {
@@ -492,7 +265,7 @@ mod tests {
     #[test]
     fn extract_body_works() {
         let content = "---\nid: test\n---\n\n# Body\n\nContent here.";
-        let body = extract_body(content).unwrap();
+        let body = planning_show::extract_story_body(content).unwrap();
         assert!(body.contains("# Body"));
         assert!(body.contains("Content here."));
     }
@@ -500,7 +273,7 @@ mod tests {
     #[test]
     fn count_acs_counts_correctly() {
         let body = "## Acceptance Criteria\n\n- [x] Done\n- [ ] Not done\n- [x] Also done\n";
-        let (checked, total) = count_acs(body);
+        let (checked, total) = planning_show::count_story_acceptance_criteria(body);
         assert_eq!(checked, 2);
         assert_eq!(total, 3);
     }
@@ -537,7 +310,10 @@ ok
             report.items[0].proof_metadata.recorded_at.as_deref(),
             Some("2026-03-04T18:00:00Z")
         );
-        assert_eq!(report.items[0].proof_metadata.mode.as_deref(), Some("command"));
+        assert_eq!(
+            report.items[0].proof_metadata.mode.as_deref(),
+            Some("command")
+        );
         assert_eq!(
             report.items[0].proof_metadata.command.as_deref(),
             Some("cargo test --lib story_show_proof_metadata")
@@ -567,7 +343,11 @@ ok
 
         assert!(report.linked_proofs.contains(&"ac-1.log".to_string()));
         assert!(report.linked_proofs.contains(&"demo.gif".to_string()));
-        assert!(report.supplementary_artifacts.contains(&"notes.txt".to_string()));
+        assert!(
+            report
+                .supplementary_artifacts
+                .contains(&"notes.txt".to_string())
+        );
         assert!(report.media_artifacts.contains(&"demo.gif".to_string()));
         assert!(report.media_artifacts.contains(&"capture.mp4".to_string()));
     }
@@ -624,9 +404,21 @@ ok
         let lines = evidence_lines("S1", &report);
 
         assert!(report.evidence_dir_missing);
-        assert!(lines.iter().any(|line| line.contains(NO_EVIDENCE_DIR_PLACEHOLDER)));
-        assert!(lines.iter().any(|line| line.contains(NO_LINKED_PROOFS_PLACEHOLDER)));
-        assert!(lines.iter().any(|line| line.contains(NO_SUPPLEMENTARY_PLACEHOLDER)));
+        assert!(
+            lines
+                .iter()
+                .any(|line| line.contains(NO_EVIDENCE_DIR_PLACEHOLDER))
+        );
+        assert!(
+            lines
+                .iter()
+                .any(|line| line.contains(NO_LINKED_PROOFS_PLACEHOLDER))
+        );
+        assert!(
+            lines
+                .iter()
+                .any(|line| line.contains(NO_SUPPLEMENTARY_PLACEHOLDER))
+        );
         assert!(lines.iter().any(|line| line.contains(NO_MEDIA_PLACEHOLDER)));
     }
 }

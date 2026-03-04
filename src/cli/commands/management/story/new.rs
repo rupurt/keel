@@ -375,14 +375,7 @@ status: in-progress
         let board_dir = temp.path();
 
         new_story(board_dir, "Unscoped Story", "feat", None, None).unwrap();
-        new_story(
-            board_dir,
-            "Scoped Story",
-            "feat",
-            Some("epic1"),
-            Some("v1"),
-        )
-        .unwrap();
+        new_story(board_dir, "Scoped Story", "feat", Some("epic1"), Some("v1")).unwrap();
 
         let unscoped = story_content_by_title(board_dir, "Unscoped Story").unwrap();
         let scoped = story_content_by_title(board_dir, "Scoped Story").unwrap();

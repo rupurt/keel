@@ -2,11 +2,12 @@
 id: 1vxpomgnN
 index: 6
 title: Planning Read Surfaces And Evidence Visibility
-status: in-progress
+status: done
 epic: 1vxYzSury
 created_at: 2026-03-04T09:15:28
 updated_at: 2026-03-04T09:19:42
 started_at: 2026-03-04T09:56:05
+completed_at: 2026-03-04T11:56:17
 ---
 
 # Planning Read Surfaces And Evidence Visibility
@@ -25,12 +26,12 @@ started_at: 2026-03-04T09:56:05
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/4 stories complete
+**Progress:** 4/4 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Define Planning Show Output Contracts](../../../../stories/1vxppk4Oj/README.md) | feat | backlog |
-| [Implement Voyage Show Requirement Progress](../../../../stories/1vxppkB6M/README.md) | feat | backlog |
-| [Render Concrete Evidence In Story Show](../../../../stories/1vxppkEH9/README.md) | feat | backlog |
+| [Define Planning Show Output Contracts](../../../../stories/1vxppk4Oj/README.md) | feat | done |
+| [Implement Voyage Show Requirement Progress](../../../../stories/1vxppkB6M/README.md) | feat | done |
+| [Render Concrete Evidence In Story Show](../../../../stories/1vxppkEH9/README.md) | feat | done |
 | [Implement Epic Show Planning Summary](../../../../stories/1vxppkN0w/README.md) | feat | done |
 <!-- END GENERATED -->

@@ -1,0 +1,1381 @@
+//! Canonical planning-show projection contracts shared by epic/voyage/story show commands.
+
+use std::cmp::Ordering;
+use std::collections::{BTreeMap, BTreeSet};
+use std::fs;
+use std::path::Path;
+
+use anyhow::Result;
+
+use crate::domain::model::{Board, Epic, Story, StoryState, Voyage};
+use crate::infrastructure::verification::parser::{
+    Comparison, parse_ac_references, parse_verify_annotations,
+};
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct PlanningDocSummary {
+    pub problem_statement: Option<String>,
+    pub goals: Vec<String>,
+    pub key_requirements: Vec<String>,
+    pub verification_strategy: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct EtaSummary {
+    pub throughput_stories_per_week: f64,
+    pub remaining_stories: usize,
+    pub eta_weeks: Option<f64>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct VerificationRollup {
+    pub automated_requirements: BTreeSet<String>,
+    pub manual_requirements: BTreeSet<String>,
+    pub automated_criteria: usize,
+    pub manual_criteria: usize,
+    pub used_techniques: BTreeSet<String>,
+    pub linked_artifacts: BTreeSet<String>,
+    pub all_artifacts: BTreeSet<String>,
+    pub missing_linked_proofs: usize,
+}
+
+impl VerificationRollup {
+    pub fn artifact_counts(&self) -> (usize, usize, usize) {
+        let mut text = 0;
+        let mut media = 0;
+        let mut other = 0;
+
+        for artifact in &self.all_artifacts {
+            if is_media_artifact(artifact) {
+                media += 1;
+            } else if is_text_artifact(artifact) {
+                text += 1;
+            } else {
+                other += 1;
+            }
+        }
+
+        (text, media, other)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VerificationRecommendation {
+    pub technique: String,
+    pub rationale: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct EpicShowProjection {
+    pub doc: PlanningDocSummary,
+    pub total_voyages: usize,
+    pub done_voyages: usize,
+    pub total_stories: usize,
+    pub done_stories: usize,
+    pub eta: EtaSummary,
+    pub verification: VerificationRollup,
+    pub project_signals: Vec<String>,
+    pub recommendations: Vec<VerificationRecommendation>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct ScopeSummary {
+    pub in_scope: Vec<String>,
+    pub out_of_scope: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StoryRef {
+    pub id: String,
+    pub stage: StoryState,
+    pub index: Option<u32>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RequirementRow {
+    pub id: String,
+    pub description: String,
+    pub linked_stories: Vec<StoryRef>,
+    pub completion: String,
+    pub verification: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VoyageShowProjection {
+    pub goal: Option<String>,
+    pub scope: ScopeSummary,
+    pub requirements: Vec<RequirementRow>,
+    pub done_stories: usize,
+    pub total_stories: usize,
+    pub done_requirements: usize,
+    pub total_requirements: usize,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct ProofMetadata {
+    pub recorded_at: Option<String>,
+    pub mode: Option<String>,
+    pub command: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EvidenceItem {
+    pub criterion: String,
+    pub requirement: Option<String>,
+    pub mode: String,
+    pub command: Option<String>,
+    pub proof_filename: Option<String>,
+    pub proof_metadata: ProofMetadata,
+    pub excerpt_lines: Vec<String>,
+    pub missing_proof: bool,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct EvidenceReport {
+    pub items: Vec<EvidenceItem>,
+    pub evidence_dir_missing: bool,
+    pub linked_proofs: Vec<String>,
+    pub supplementary_artifacts: Vec<String>,
+    pub media_artifacts: Vec<String>,
+    pub missing_proofs: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StoryShowProjection {
+    pub body: Option<String>,
+    pub checked_criteria: usize,
+    pub total_criteria: usize,
+    pub evidence: EvidenceReport,
+}
+
+#[derive(Debug, Clone)]
+struct StoryEvidence {
+    id: String,
+    stage: StoryState,
+    index: Option<u32>,
+    references: Vec<String>,
+    automated_count_by_req: BTreeMap<String, usize>,
+    manual_count_by_req: BTreeMap<String, usize>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+struct RequirementEntry {
+    id: String,
+    description: String,
+    verification: Option<String>,
+}
+
+#[derive(Debug, Default)]
+struct ProjectSignals {
+    rust_workspace: bool,
+    node_workspace: bool,
+    playwright_project: bool,
+    vhs_available: bool,
+    ffmpeg_available: bool,
+}
+
+pub fn build_epic_show_projection(
+    board_dir: &Path,
+    board: &Board,
+    epic: &Epic,
+) -> Result<EpicShowProjection> {
+    let prd_path = epic.path.parent().unwrap().join("PRD.md");
+    let prd_content = fs::read_to_string(&prd_path).unwrap_or_default();
+    let doc = extract_planning_doc_summary(&prd_content);
+
+    let voyages = board.voyages_for_epic_id(epic.id());
+    let done_voyages = voyages
+        .iter()
+        .filter(|voyage| voyage.status().to_string() == "done")
+        .count();
+
+    let mut stories: Vec<_> = board
+        .stories
+        .values()
+        .filter(|story| story.epic() == Some(epic.id()))
+        .collect();
+    stories.sort_by(|a, b| a.id().cmp(b.id()));
+
+    let done_stories = stories
+        .iter()
+        .filter(|story| story.stage.to_string() == "done")
+        .count();
+    let total_stories = stories.len();
+    let remaining_stories = total_stories.saturating_sub(done_stories);
+
+    let throughput = crate::cli::presentation::flow::throughput::calculate_throughput(board, 4);
+    let throughput_stories_per_week = throughput.avg_stories_per_week;
+    let eta_weeks = if remaining_stories > 0 && throughput_stories_per_week > 0.0 {
+        Some(remaining_stories as f64 / throughput_stories_per_week)
+    } else {
+        None
+    };
+
+    let mut verification = VerificationRollup::default();
+    for story in stories {
+        let story_content = fs::read_to_string(&story.path).unwrap_or_default();
+        for ann in parse_verify_annotations(&story_content) {
+            if let Some(command) = ann.command.as_deref() {
+                let command = command.trim();
+                if command.starts_with("vhs ") || command == "vhs" {
+                    verification.used_techniques.insert("vhs".to_string());
+                }
+                if command.starts_with("llm-judge") || command == "llm-judge" {
+                    verification.used_techniques.insert("llm-judge".to_string());
+                }
+                if command.contains("playwright") {
+                    verification
+                        .used_techniques
+                        .insert("playwright".to_string());
+                }
+            }
+
+            if ann.comparison == Comparison::Manual {
+                verification.manual_criteria += 1;
+                if let Some(req) = ann.requirement {
+                    verification.manual_requirements.insert(req.id);
+                }
+            } else {
+                verification.automated_criteria += 1;
+                if let Some(req) = ann.requirement {
+                    verification.automated_requirements.insert(req.id);
+                }
+            }
+
+            if let Some(proof) = ann.proof {
+                let proof_path = story.path.parent().unwrap().join("EVIDENCE").join(&proof);
+                let rel = format!("stories/{}/EVIDENCE/{}", story.id(), proof);
+                if proof_path.exists() {
+                    verification.linked_artifacts.insert(rel);
+                } else {
+                    verification.missing_linked_proofs += 1;
+                }
+            }
+        }
+
+        let evidence_dir = story.path.parent().unwrap().join("EVIDENCE");
+        if evidence_dir.exists()
+            && let Ok(entries) = fs::read_dir(evidence_dir)
+        {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_file() {
+                    let name = entry.file_name().to_string_lossy().to_string();
+                    verification.all_artifacts.insert(format!(
+                        "stories/{}/EVIDENCE/{}",
+                        story.id(),
+                        name
+                    ));
+                }
+            }
+        }
+    }
+
+    let signals = detect_project_signals(board_dir);
+    let project_signals = render_project_signals(&signals);
+    let recommendations = build_verification_recommendations(&signals, &verification);
+
+    Ok(EpicShowProjection {
+        doc,
+        total_voyages: voyages.len(),
+        done_voyages,
+        total_stories,
+        done_stories,
+        eta: EtaSummary {
+            throughput_stories_per_week,
+            remaining_stories,
+            eta_weeks,
+        },
+        verification,
+        project_signals,
+        recommendations,
+    })
+}
+
+pub fn build_voyage_show_projection(
+    board: &Board,
+    voyage: &Voyage,
+) -> Result<VoyageShowProjection> {
+    let srs_path = voyage.path.parent().unwrap().join("SRS.md");
+    let srs = fs::read_to_string(&srs_path).unwrap_or_default();
+
+    let goal = voyage
+        .frontmatter
+        .goal
+        .as_ref()
+        .map(|goal| goal.trim().to_string())
+        .filter(|goal| !goal.is_empty())
+        .or_else(|| extract_goal_from_srs(&srs));
+
+    let scope = parse_scope_summary(&srs);
+    let mut requirements = parse_srs_requirement_rows(&srs);
+    requirements.sort_by(|a, b| a.id.cmp(&b.id));
+
+    let scope_key = voyage.scope_path();
+    let mut story_evidence: Vec<StoryEvidence> = board
+        .stories
+        .values()
+        .filter(|story| story.scope() == Some(scope_key.as_str()))
+        .filter_map(|story| {
+            let content = fs::read_to_string(&story.path).ok()?;
+            let mut references: Vec<String> = parse_ac_references(&content)
+                .into_iter()
+                .map(|reference| reference.srs_id)
+                .collect();
+
+            let mut automated_count_by_req: BTreeMap<String, usize> = BTreeMap::new();
+            let mut manual_count_by_req: BTreeMap<String, usize> = BTreeMap::new();
+
+            for ann in parse_verify_annotations(&content) {
+                let req_id = ann
+                    .requirement
+                    .as_ref()
+                    .map(|req| req.id.clone())
+                    .or_else(|| ann.ac_ref.as_ref().map(|ac| ac.srs_id.clone()));
+                let Some(req_id) = req_id else {
+                    continue;
+                };
+
+                references.push(req_id.clone());
+                if ann.comparison == Comparison::Manual {
+                    *manual_count_by_req.entry(req_id).or_insert(0) += 1;
+                } else {
+                    *automated_count_by_req.entry(req_id).or_insert(0) += 1;
+                }
+            }
+
+            references.sort();
+            references.dedup();
+
+            Some(StoryEvidence {
+                id: story.id().to_string(),
+                stage: story.stage,
+                index: story.index(),
+                references,
+                automated_count_by_req,
+                manual_count_by_req,
+            })
+        })
+        .collect();
+    story_evidence.sort_by(story_evidence_ordering);
+
+    let total_stories = story_evidence.len();
+    let done_stories = story_evidence
+        .iter()
+        .filter(|story| story.stage == StoryState::Done)
+        .count();
+
+    let mut rows = Vec::new();
+    for requirement in requirements {
+        let mut linked_stories: Vec<StoryRef> = story_evidence
+            .iter()
+            .filter(|story| story.references.iter().any(|req| req == &requirement.id))
+            .map(|story| StoryRef {
+                id: story.id.clone(),
+                stage: story.stage,
+                index: story.index,
+            })
+            .collect();
+        linked_stories.sort_by(story_ref_ordering);
+
+        let completion = requirement_completion_label(&linked_stories);
+        let automated = story_evidence
+            .iter()
+            .filter_map(|story| story.automated_count_by_req.get(&requirement.id))
+            .sum::<usize>();
+        let manual = story_evidence
+            .iter()
+            .filter_map(|story| story.manual_count_by_req.get(&requirement.id))
+            .sum::<usize>();
+
+        rows.push(RequirementRow {
+            id: requirement.id,
+            description: requirement.description,
+            linked_stories,
+            completion,
+            verification: requirement_verification_label(automated, manual),
+        });
+    }
+
+    let done_requirements = rows.iter().filter(|row| row.completion == "done").count();
+
+    Ok(VoyageShowProjection {
+        goal,
+        scope,
+        done_stories,
+        total_stories,
+        done_requirements,
+        total_requirements: rows.len(),
+        requirements: rows,
+    })
+}
+
+pub fn build_story_show_projection(story: &Story) -> Result<StoryShowProjection> {
+    let content = fs::read_to_string(&story.path)?;
+    let body = extract_story_body(&content);
+    let (checked_criteria, total_criteria) = body
+        .as_deref()
+        .map(count_story_acceptance_criteria)
+        .unwrap_or((0, 0));
+
+    Ok(StoryShowProjection {
+        body,
+        checked_criteria,
+        total_criteria,
+        evidence: build_story_evidence_projection(&story.path, &content),
+    })
+}
+
+pub fn build_story_evidence_projection(story_path: &Path, content: &str) -> EvidenceReport {
+    let evidence_dir = story_path.parent().unwrap().join("EVIDENCE");
+    let evidence_dir_missing = !evidence_dir.exists();
+
+    let mut all_artifacts = Vec::new();
+    if !evidence_dir_missing && let Ok(entries) = fs::read_dir(&evidence_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file() {
+                all_artifacts.push(entry.file_name().to_string_lossy().to_string());
+            }
+        }
+    }
+    all_artifacts.sort();
+
+    let mut linked = BTreeSet::new();
+    let mut missing = BTreeSet::new();
+    let mut items = Vec::new();
+
+    for ann in parse_verify_annotations(content) {
+        let proof_filename = ann.proof.clone();
+        let requirement = ann
+            .requirement
+            .as_ref()
+            .map(|req| req.id.clone())
+            .or_else(|| ann.ac_ref.as_ref().map(|ac| ac.srs_id.clone()));
+
+        let mut proof_metadata = ProofMetadata::default();
+        let mut excerpt_lines = Vec::new();
+        let mut missing_proof = false;
+
+        if let Some(proof) = &proof_filename {
+            let proof_path = evidence_dir.join(proof);
+            if proof_path.exists() {
+                linked.insert(proof.clone());
+                if is_text_artifact(proof) {
+                    let (metadata, excerpt) = parse_proof_metadata_and_excerpt(&proof_path);
+                    proof_metadata = metadata;
+                    excerpt_lines = excerpt;
+                } else {
+                    proof_metadata = parse_proof_metadata_only(&proof_path);
+                }
+            } else {
+                missing_proof = true;
+                missing.insert(proof.clone());
+            }
+        }
+
+        let mode = if ann.comparison == Comparison::Manual {
+            "manual".to_string()
+        } else {
+            "command".to_string()
+        };
+
+        items.push(EvidenceItem {
+            criterion: ann.criterion,
+            requirement,
+            mode,
+            command: ann.command,
+            proof_filename,
+            proof_metadata,
+            excerpt_lines,
+            missing_proof,
+        });
+    }
+
+    let linked_proofs: Vec<String> = linked.into_iter().collect();
+    let media_artifacts: Vec<String> = all_artifacts
+        .iter()
+        .filter(|name| is_media_artifact(name))
+        .cloned()
+        .collect();
+    let supplementary_artifacts: Vec<String> = all_artifacts
+        .iter()
+        .filter(|name| !linked_proofs.contains(*name))
+        .filter(|name| !is_media_artifact(name))
+        .cloned()
+        .collect();
+
+    EvidenceReport {
+        items,
+        evidence_dir_missing,
+        linked_proofs,
+        supplementary_artifacts,
+        media_artifacts,
+        missing_proofs: missing.into_iter().collect(),
+    }
+}
+
+pub fn extract_story_body(content: &str) -> Option<String> {
+    let mut delimiter_count = 0;
+
+    for (idx, line) in content.lines().enumerate() {
+        if line == "---" {
+            delimiter_count += 1;
+            if delimiter_count == 2 {
+                let lines: Vec<&str> = content.lines().collect();
+                if idx + 1 < lines.len() {
+                    let prefix_len: usize = lines[..=idx].iter().map(|line| line.len() + 1).sum();
+                    return Some(content[prefix_len..].to_string());
+                }
+            }
+        }
+    }
+
+    None
+}
+
+pub fn count_story_acceptance_criteria(body: &str) -> (usize, usize) {
+    let mut checked = 0;
+    let mut total = 0;
+
+    for line in body.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with("- [x]") || trimmed.starts_with("- [X]") {
+            checked += 1;
+            total += 1;
+        } else if trimmed.starts_with("- [ ]") {
+            total += 1;
+        }
+    }
+
+    (checked, total)
+}
+
+pub fn extract_planning_doc_summary(content: &str) -> PlanningDocSummary {
+    let problem_statement = extract_section(content, "## Problem Statement")
+        .and_then(|section| first_authored_text(&section));
+
+    let goals = extract_section(content, "## Goals & Objectives")
+        .map(|section| parse_goals(&section))
+        .unwrap_or_default();
+
+    let mut requirements = parse_requirement_entries(
+        content,
+        "BEGIN FUNCTIONAL_REQUIREMENTS",
+        "END FUNCTIONAL_REQUIREMENTS",
+    );
+    requirements.extend(parse_requirement_entries(
+        content,
+        "BEGIN NON_FUNCTIONAL_REQUIREMENTS",
+        "END NON_FUNCTIONAL_REQUIREMENTS",
+    ));
+    requirements.sort_by(|a, b| a.id.cmp(&b.id));
+
+    let key_requirements = requirements
+        .iter()
+        .map(|entry| format!("{}: {}", entry.id, entry.description))
+        .collect();
+
+    let mut verification_strategy = extract_section(content, "## Verification Strategy")
+        .map(|section| parse_verification_strategy(&section))
+        .unwrap_or_default();
+
+    for requirement in &requirements {
+        if let Some(verification) = &requirement.verification {
+            verification_strategy.push(format!("{}: {}", requirement.id, verification));
+        }
+    }
+    verification_strategy.sort();
+    verification_strategy.dedup();
+
+    PlanningDocSummary {
+        problem_statement,
+        goals,
+        key_requirements,
+        verification_strategy,
+    }
+}
+
+pub fn extract_goal_from_srs(srs: &str) -> Option<String> {
+    srs.lines()
+        .map(str::trim)
+        .find(|line| line.starts_with('>'))
+        .map(|line| line.trim_start_matches('>').trim().to_string())
+        .filter(|line| !line.is_empty())
+}
+
+pub fn parse_scope_summary(srs: &str) -> ScopeSummary {
+    let mut summary = ScopeSummary::default();
+    let Some(section) = extract_section(srs, "## Scope") else {
+        return summary;
+    };
+
+    enum Mode {
+        None,
+        In,
+        Out,
+    }
+
+    let mut mode = Mode::None;
+    for line in section.lines() {
+        let trimmed = line.trim();
+        if trimmed.eq_ignore_ascii_case("In scope:") {
+            mode = Mode::In;
+            continue;
+        }
+        if trimmed.eq_ignore_ascii_case("Out of scope:") {
+            mode = Mode::Out;
+            continue;
+        }
+
+        let Some(item) = trimmed.strip_prefix("- ") else {
+            continue;
+        };
+        let item = item.trim();
+        if item.is_empty() || is_scaffold_text(item) {
+            continue;
+        }
+
+        match mode {
+            Mode::In => summary.in_scope.push(item.to_string()),
+            Mode::Out => summary.out_of_scope.push(item.to_string()),
+            Mode::None => {}
+        }
+    }
+
+    summary
+}
+
+fn parse_srs_requirement_rows(srs: &str) -> Vec<RequirementEntry> {
+    let mut rows = parse_requirement_entries(
+        srs,
+        "BEGIN FUNCTIONAL_REQUIREMENTS",
+        "END FUNCTIONAL_REQUIREMENTS",
+    );
+    rows.extend(parse_requirement_entries(
+        srs,
+        "BEGIN NON_FUNCTIONAL_REQUIREMENTS",
+        "END NON_FUNCTIONAL_REQUIREMENTS",
+    ));
+    rows
+}
+
+pub fn extract_section(content: &str, heading: &str) -> Option<String> {
+    let mut in_section = false;
+    let mut result = String::new();
+    let heading_level = heading.chars().take_while(|ch| *ch == '#').count();
+
+    for line in content.lines() {
+        if line.starts_with(heading) {
+            in_section = true;
+            continue;
+        }
+        if in_section {
+            if line.starts_with('#') {
+                let level = line.chars().take_while(|ch| *ch == '#').count();
+                if level <= heading_level {
+                    break;
+                }
+            }
+            result.push_str(line);
+            result.push('\n');
+        }
+    }
+
+    if result.trim().is_empty() {
+        None
+    } else {
+        Some(result)
+    }
+}
+
+pub fn first_authored_text(section: &str) -> Option<String> {
+    section
+        .lines()
+        .map(str::trim)
+        .find(|line| {
+            !line.is_empty()
+                && !line.starts_with("<!--")
+                && !line.starts_with('|')
+                && !line.starts_with('-')
+                && !is_scaffold_text(line)
+        })
+        .map(ToOwned::to_owned)
+}
+
+pub fn parse_goals(section: &str) -> Vec<String> {
+    let mut goals = Vec::new();
+
+    for line in section.lines() {
+        let trimmed = line.trim();
+
+        if trimmed.starts_with('|') {
+            let cols: Vec<&str> = trimmed
+                .split('|')
+                .map(str::trim)
+                .filter(|col| !col.is_empty())
+                .collect();
+            if cols.len() >= 3
+                && !cols[0].eq_ignore_ascii_case("Goal")
+                && !cols[0].starts_with("---")
+                && !is_scaffold_text(cols[0])
+            {
+                goals.push(format!("{} ({} -> {})", cols[0], cols[1], cols[2]));
+            }
+            continue;
+        }
+
+        if let Some(item) = trimmed.strip_prefix("- ") {
+            if !item.is_empty() && !is_scaffold_text(item) {
+                goals.push(item.to_string());
+            }
+        }
+    }
+
+    goals
+}
+
+fn parse_verification_strategy(section: &str) -> Vec<String> {
+    let mut strategy = Vec::new();
+
+    for line in section.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() || trimmed.starts_with("<!--") {
+            continue;
+        }
+
+        if trimmed.starts_with('|') {
+            let cols: Vec<&str> = trimmed
+                .split('|')
+                .map(str::trim)
+                .filter(|col| !col.is_empty())
+                .collect();
+            if cols.len() >= 2
+                && !cols[0].eq_ignore_ascii_case("Requirement")
+                && !cols[0].starts_with("---")
+                && !is_scaffold_text(cols[0])
+                && !is_scaffold_text(cols[1])
+            {
+                strategy.push(format!("{}: {}", cols[0], cols[1]));
+            }
+            continue;
+        }
+
+        if let Some(item) = trimmed.strip_prefix("- ") {
+            if !item.is_empty() && !is_scaffold_text(item) {
+                strategy.push(item.to_string());
+            }
+            continue;
+        }
+
+        if !is_scaffold_text(trimmed) {
+            strategy.push(trimmed.to_string());
+        }
+    }
+
+    strategy
+}
+
+fn parse_requirement_entries(
+    content: &str,
+    start_marker: &str,
+    end_marker: &str,
+) -> Vec<RequirementEntry> {
+    let mut entries = Vec::new();
+    let mut in_block = false;
+
+    for line in content.lines() {
+        if line.contains(start_marker) {
+            in_block = true;
+            continue;
+        }
+        if line.contains(end_marker) {
+            break;
+        }
+        if !in_block {
+            continue;
+        }
+
+        let trimmed = line.trim();
+        if !trimmed.starts_with('|') {
+            continue;
+        }
+
+        let cols: Vec<&str> = trimmed
+            .split('|')
+            .map(str::trim)
+            .filter(|col| !col.is_empty())
+            .collect();
+        if cols.len() < 2 {
+            continue;
+        }
+
+        let id = cols[0];
+        let requirement = cols[1];
+        if id.eq_ignore_ascii_case("ID")
+            || id.starts_with("---")
+            || requirement.eq_ignore_ascii_case("TODO")
+            || is_scaffold_text(id)
+            || is_scaffold_text(requirement)
+        {
+            continue;
+        }
+
+        let verification = cols
+            .iter()
+            .skip(2)
+            .map(|col| col.trim())
+            .find(|value| !value.is_empty() && !is_scaffold_text(value))
+            .map(ToOwned::to_owned);
+
+        entries.push(RequirementEntry {
+            id: id.to_string(),
+            description: requirement.to_string(),
+            verification,
+        });
+    }
+
+    entries
+}
+
+fn is_scaffold_text(value: &str) -> bool {
+    let lower = value.to_ascii_lowercase();
+    lower.contains("todo")
+        || lower.contains("what user problem")
+        || lower.contains("primary user workflow")
+        || lower.contains("operational reliability")
+        || lower.contains("add goals")
+        || lower.contains("placeholder")
+        || lower.contains("example")
+}
+
+fn story_evidence_ordering(a: &StoryEvidence, b: &StoryEvidence) -> Ordering {
+    match (a.index, b.index) {
+        (Some(ai), Some(bi)) if ai != bi => ai.cmp(&bi),
+        (Some(_), None) => Ordering::Less,
+        (None, Some(_)) => Ordering::Greater,
+        _ => a.id.cmp(&b.id),
+    }
+}
+
+fn story_ref_ordering(a: &StoryRef, b: &StoryRef) -> Ordering {
+    match (a.index, b.index) {
+        (Some(ai), Some(bi)) if ai != bi => ai.cmp(&bi),
+        (Some(_), None) => Ordering::Less,
+        (None, Some(_)) => Ordering::Greater,
+        _ => a.id.cmp(&b.id),
+    }
+}
+
+fn requirement_completion_label(linked: &[StoryRef]) -> String {
+    if linked.is_empty() {
+        "unmapped".to_string()
+    } else if linked.iter().all(|story| story.stage == StoryState::Done) {
+        "done".to_string()
+    } else if linked.iter().any(|story| {
+        story.stage == StoryState::InProgress || story.stage == StoryState::NeedsHumanVerification
+    }) {
+        "in-progress".to_string()
+    } else {
+        "queued".to_string()
+    }
+}
+
+fn requirement_verification_label(automated: usize, manual: usize) -> String {
+    match (automated, manual) {
+        (0, 0) => "none".to_string(),
+        (count, 0) => format!("automated ({count})"),
+        (0, count) => format!("manual ({count})"),
+        (automated, manual) => format!("mixed (a:{automated}/m:{manual})"),
+    }
+}
+
+fn parse_proof_metadata_and_excerpt(path: &Path) -> (ProofMetadata, Vec<String>) {
+    let content = match fs::read_to_string(path) {
+        Ok(content) => content,
+        Err(_) => return (ProofMetadata::default(), Vec::new()),
+    };
+
+    let (metadata, body) = split_frontmatter(&content);
+    let excerpt_lines = body.lines().take(10).map(ToOwned::to_owned).collect();
+    (metadata, excerpt_lines)
+}
+
+fn parse_proof_metadata_only(path: &Path) -> ProofMetadata {
+    let content = match fs::read_to_string(path) {
+        Ok(content) => content,
+        Err(_) => return ProofMetadata::default(),
+    };
+
+    let (metadata, _) = split_frontmatter(&content);
+    metadata
+}
+
+fn split_frontmatter(content: &str) -> (ProofMetadata, String) {
+    let mut metadata = ProofMetadata::default();
+    if !content.starts_with("---\n") {
+        return (metadata, content.to_string());
+    }
+
+    let mut lines = content.lines();
+    let _ = lines.next();
+
+    let mut header = Vec::new();
+    for line in lines.by_ref() {
+        if line.trim() == "---" {
+            break;
+        }
+        header.push(line.to_string());
+    }
+
+    for line in header {
+        let mut parts = line.splitn(2, ':');
+        let Some(key) = parts.next() else {
+            continue;
+        };
+        let Some(value) = parts.next() else {
+            continue;
+        };
+        let value = value.trim().to_string();
+        match key.trim() {
+            "recorded_at" => metadata.recorded_at = Some(value),
+            "mode" => metadata.mode = Some(value),
+            "command" => metadata.command = Some(value),
+            _ => {}
+        }
+    }
+
+    let body = lines.collect::<Vec<_>>().join("\n");
+    (metadata, body)
+}
+
+pub fn is_text_artifact(path: &str) -> bool {
+    let lower = path.to_ascii_lowercase();
+    [".log", ".txt", ".md", ".json", ".yaml", ".yml", ".toml"]
+        .iter()
+        .any(|ext| lower.ends_with(ext))
+}
+
+pub fn is_media_artifact(path: &str) -> bool {
+    let lower = path.to_ascii_lowercase();
+    [".gif", ".png", ".jpg", ".jpeg", ".webm", ".mp4", ".mov"]
+        .iter()
+        .any(|ext| lower.ends_with(ext))
+}
+
+fn detect_project_signals(board_dir: &Path) -> ProjectSignals {
+    let project_root = if board_dir
+        .file_name()
+        .and_then(|name| name.to_str())
+        .map(|name| name == ".keel")
+        .unwrap_or(false)
+    {
+        board_dir.parent().unwrap_or(board_dir)
+    } else {
+        board_dir
+    };
+
+    let flake_content = fs::read_to_string(project_root.join("flake.nix")).unwrap_or_default();
+    let package_json = fs::read_to_string(project_root.join("package.json")).unwrap_or_default();
+
+    let playwright_project = project_root.join("playwright.config.ts").exists()
+        || project_root.join("playwright.config.js").exists()
+        || package_json.contains("playwright");
+
+    ProjectSignals {
+        rust_workspace: project_root.join("Cargo.toml").exists(),
+        node_workspace: project_root.join("package.json").exists(),
+        playwright_project,
+        vhs_available: flake_content.contains("pkgs.vhs")
+            || flake_content.contains(" vhs")
+            || flake_content.contains("\tvhs"),
+        ffmpeg_available: flake_content.contains("pkgs.ffmpeg")
+            || flake_content.contains(" ffmpeg")
+            || flake_content.contains("\tffmpeg"),
+    }
+}
+
+fn render_project_signals(signals: &ProjectSignals) -> Vec<String> {
+    let mut out = Vec::new();
+    if signals.rust_workspace {
+        out.push("Cargo.toml (Rust workspace)".to_string());
+    }
+    if signals.node_workspace {
+        out.push("package.json (Node workspace)".to_string());
+    }
+    if signals.playwright_project {
+        out.push("Playwright config/dependency".to_string());
+    }
+    if signals.vhs_available {
+        out.push("flake.nix includes vhs".to_string());
+    }
+    if signals.ffmpeg_available {
+        out.push("flake.nix includes ffmpeg".to_string());
+    }
+    out
+}
+
+fn build_verification_recommendations(
+    signals: &ProjectSignals,
+    verification: &VerificationRollup,
+) -> Vec<VerificationRecommendation> {
+    let mut recommendations = Vec::new();
+
+    if signals.rust_workspace {
+        recommendations.push(VerificationRecommendation {
+            technique: "Coverage Gate".to_string(),
+            rationale: "Detected Cargo.toml: add coverage threshold checks to reduce silent test gaps (for example `just coverage`).".to_string(),
+        });
+        recommendations.push(VerificationRecommendation {
+            technique: "Property/Fuzz Tests".to_string(),
+            rationale: "Rust parser/state-machine code is present: add `cargo fuzz` targets for high-risk boundary behavior.".to_string(),
+        });
+    }
+
+    if signals.playwright_project && !verification.used_techniques.contains("playwright") {
+        recommendations.push(VerificationRecommendation {
+            technique: "Playwright Video E2E".to_string(),
+            rationale: "Detected Playwright project signals: record browser acceptance runs with video and traces for faster review.".to_string(),
+        });
+    }
+
+    if signals.vhs_available && !verification.used_techniques.contains("vhs") {
+        recommendations.push(VerificationRecommendation {
+            technique: "VHS CLI Recording".to_string(),
+            rationale: "Detected vhs in flake.nix: capture deterministic terminal acceptance evidence with tape-driven recordings.".to_string(),
+        });
+    }
+
+    if verification.manual_criteria > 0 && !verification.used_techniques.contains("llm-judge") {
+        recommendations.push(VerificationRecommendation {
+            technique: "LLM-Judge Semantic Checks".to_string(),
+            rationale: format!(
+                "Detected {} manual criterion/criteria: convert high-value manual checks into repeatable `llm-judge` assertions where possible.",
+                verification.manual_criteria
+            ),
+        });
+    }
+
+    recommendations
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::infrastructure::loader::load_board;
+    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+
+    #[test]
+    fn planning_show_projection_contract() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").srs_content(
+                r#"# SRS
+> Improve show output quality.
+
+## Scope
+In scope:
+- Goal and scope summaries.
+
+Out of scope:
+- Lifecycle changes.
+
+## Requirements
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Verification |
+|----|-------------|--------------|
+| SRS-01 | Render a requirement matrix. | cargo test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+            ))
+            .story(TestStory::new("S1").scope("e1/v1").body(
+                r#"## Acceptance Criteria
+- [x] [SRS-01/AC-01] matrix shown <!-- verify: cargo test --lib planning_show_projection_contract, SRS-01:start, proof: ac-1.log -->
+"#,
+            ))
+            .build();
+
+        std::fs::write(
+            temp.path().join("epics/e1/PRD.md"),
+            r#"# PRD
+
+## Problem Statement
+Operators cannot quickly evaluate planning state.
+
+## Goals & Objectives
+| Goal | Success Metric | Target |
+|------|----------------|--------|
+| Improve readability | acceptance speed | 2x |
+
+## Verification Strategy
+- Use automated command proofs.
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Verification |
+|----|-------------|--------------|
+| FR-01 | Surface planning summaries. | cargo test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        std::fs::write(temp.path().join("stories/S1/EVIDENCE/ac-1.log"), "ok").unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let epic = board.require_epic("e1").unwrap();
+        let voyage = board.require_voyage("v1").unwrap();
+        let story = board.require_story("S1").unwrap();
+
+        let epic_projection = build_epic_show_projection(temp.path(), &board, epic).unwrap();
+        let voyage_projection = build_voyage_show_projection(&board, voyage).unwrap();
+        let story_projection = build_story_show_projection(story).unwrap();
+
+        assert_eq!(
+            epic_projection.doc.problem_statement.as_deref(),
+            Some("Operators cannot quickly evaluate planning state.")
+        );
+        assert!(
+            epic_projection
+                .doc
+                .key_requirements
+                .iter()
+                .any(|row| row.contains("FR-01"))
+        );
+
+        assert_eq!(
+            voyage_projection.goal.as_deref(),
+            Some("Improve show output quality.")
+        );
+        assert_eq!(voyage_projection.requirements.len(), 1);
+        assert_eq!(voyage_projection.requirements[0].id, "SRS-01");
+
+        assert_eq!(story_projection.total_criteria, 1);
+        assert_eq!(story_projection.evidence.items.len(), 1);
+    }
+
+    #[test]
+    fn planning_doc_extractor() {
+        let doc = r#"# Planning Doc
+
+## Problem Statement
+<!-- What user problem does this solve? -->
+Planners cannot quickly inspect requirement readiness.
+
+## Goals & Objectives
+<!-- TODO: Add goals -->
+| Goal | Success Metric | Target |
+|------|----------------|--------|
+| Improve signal quality | operator confidence | 90% |
+
+## Verification Strategy
+<!-- TODO: Add strategy -->
+- capture command proof logs
+- include artifact inventory with media links
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Verification |
+|----|-------------|--------------|
+| FR-01 | Render planning summary. | cargo test |
+| FR-02 | TODO | TODO |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+
+<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Verification |
+|----|-------------|--------------|
+| SRS-NFR-01 | Deterministic ordering. | cargo test |
+<!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+"#;
+
+        let summary = extract_planning_doc_summary(doc);
+
+        assert_eq!(
+            summary.problem_statement.as_deref(),
+            Some("Planners cannot quickly inspect requirement readiness.")
+        );
+        assert_eq!(summary.goals.len(), 1);
+        assert!(summary.goals[0].contains("Improve signal quality"));
+        assert_eq!(
+            summary.key_requirements,
+            vec![
+                "FR-01: Render planning summary.".to_string(),
+                "SRS-NFR-01: Deterministic ordering.".to_string(),
+            ]
+        );
+        assert!(
+            summary
+                .verification_strategy
+                .iter()
+                .any(|entry| entry.contains("capture command proof logs"))
+        );
+        assert!(
+            summary
+                .verification_strategy
+                .iter()
+                .any(|entry| entry.contains("FR-01: cargo test"))
+        );
+        assert!(
+            !summary
+                .verification_strategy
+                .iter()
+                .any(|entry| entry.to_ascii_lowercase().contains("todo"))
+        );
+    }
+
+    #[test]
+    fn planning_show_projection_deterministic() {
+        let board_a = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").srs_content(
+                r#"# SRS
+> Deterministic projections.
+
+## Requirements
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Verification |
+|----|-------------|--------------|
+| SRS-10 | Ten. | manual |
+| SRS-01 | One. | command |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+            ))
+            .story(TestStory::new("S2").scope("e1/v1").index(2).body(
+                r#"## Acceptance Criteria
+- [ ] [SRS-01/AC-01] queued <!-- verify: manual, SRS-01:start:end, proof: b.log -->
+"#,
+            ))
+            .story(TestStory::new("S1").scope("e1/v1").index(1).body(
+                r#"## Acceptance Criteria
+- [x] [SRS-01/AC-02] done A <!-- verify: cargo test, SRS-01:start, proof: z.log -->
+- [x] [SRS-01/AC-03] done B <!-- verify: cargo test, SRS-01:end, proof: a.log -->
+"#,
+            ))
+            .build();
+
+        let board_b = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").srs_content(
+                r#"# SRS
+> Deterministic projections.
+
+## Requirements
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Verification |
+|----|-------------|--------------|
+| SRS-10 | Ten. | manual |
+| SRS-01 | One. | command |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+            ))
+            .story(TestStory::new("S1").scope("e1/v1").index(1).body(
+                r#"## Acceptance Criteria
+- [x] [SRS-01/AC-02] done A <!-- verify: cargo test, SRS-01:start, proof: z.log -->
+- [x] [SRS-01/AC-03] done B <!-- verify: cargo test, SRS-01:end, proof: a.log -->
+"#,
+            ))
+            .story(TestStory::new("S2").scope("e1/v1").index(2).body(
+                r#"## Acceptance Criteria
+- [ ] [SRS-01/AC-01] queued <!-- verify: manual, SRS-01:start:end, proof: b.log -->
+"#,
+            ))
+            .build();
+
+        std::fs::write(
+            board_a.path().join("epics/e1/PRD.md"),
+            "# PRD\n\n## Problem Statement\nA\n\n## Goals & Objectives\n- G1\n",
+        )
+        .unwrap();
+        std::fs::write(
+            board_b.path().join("epics/e1/PRD.md"),
+            "# PRD\n\n## Problem Statement\nA\n\n## Goals & Objectives\n- G1\n",
+        )
+        .unwrap();
+
+        std::fs::write(board_a.path().join("stories/S1/EVIDENCE/a.log"), "a").unwrap();
+        std::fs::write(board_a.path().join("stories/S1/EVIDENCE/z.log"), "z").unwrap();
+        std::fs::write(
+            board_a.path().join("stories/S1/EVIDENCE/notes.txt"),
+            "notes",
+        )
+        .unwrap();
+        std::fs::write(board_a.path().join("stories/S1/EVIDENCE/clip.mp4"), "vid").unwrap();
+        std::fs::write(board_a.path().join("stories/S2/EVIDENCE/b.log"), "b").unwrap();
+
+        std::fs::write(board_b.path().join("stories/S1/EVIDENCE/z.log"), "z").unwrap();
+        std::fs::write(board_b.path().join("stories/S1/EVIDENCE/a.log"), "a").unwrap();
+        std::fs::write(board_b.path().join("stories/S1/EVIDENCE/clip.mp4"), "vid").unwrap();
+        std::fs::write(
+            board_b.path().join("stories/S1/EVIDENCE/notes.txt"),
+            "notes",
+        )
+        .unwrap();
+        std::fs::write(board_b.path().join("stories/S2/EVIDENCE/b.log"), "b").unwrap();
+
+        let loaded_a = load_board(board_a.path()).unwrap();
+        let loaded_b = load_board(board_b.path()).unwrap();
+
+        let epic_a = build_epic_show_projection(
+            board_a.path(),
+            &loaded_a,
+            loaded_a.require_epic("e1").unwrap(),
+        )
+        .unwrap();
+        let epic_b = build_epic_show_projection(
+            board_b.path(),
+            &loaded_b,
+            loaded_b.require_epic("e1").unwrap(),
+        )
+        .unwrap();
+
+        let voyage_a =
+            build_voyage_show_projection(&loaded_a, loaded_a.require_voyage("v1").unwrap())
+                .unwrap();
+        let voyage_b =
+            build_voyage_show_projection(&loaded_b, loaded_b.require_voyage("v1").unwrap())
+                .unwrap();
+
+        let story_a = build_story_show_projection(loaded_a.require_story("S1").unwrap()).unwrap();
+        let story_b = build_story_show_projection(loaded_b.require_story("S1").unwrap()).unwrap();
+
+        let req_ids_a: Vec<String> = voyage_a
+            .requirements
+            .iter()
+            .map(|row| row.id.clone())
+            .collect();
+        assert_eq!(req_ids_a, vec!["SRS-01", "SRS-10"]);
+        assert_eq!(voyage_a.requirements, voyage_b.requirements);
+
+        let linked_story_ids: Vec<String> = voyage_a.requirements[0]
+            .linked_stories
+            .iter()
+            .map(|story| story.id.clone())
+            .collect();
+        assert_eq!(linked_story_ids, vec!["S1", "S2"]);
+
+        let epic_linked_a: Vec<String> = epic_a
+            .verification
+            .linked_artifacts
+            .iter()
+            .cloned()
+            .collect();
+        let epic_linked_b: Vec<String> = epic_b
+            .verification
+            .linked_artifacts
+            .iter()
+            .cloned()
+            .collect();
+        assert_eq!(epic_linked_a, epic_linked_b);
+
+        assert_eq!(story_a.evidence.linked_proofs, vec!["a.log", "z.log"]);
+        assert_eq!(
+            story_a.evidence.linked_proofs,
+            story_b.evidence.linked_proofs
+        );
+        assert_eq!(story_a.evidence.supplementary_artifacts, vec!["notes.txt"]);
+        assert_eq!(story_a.evidence.media_artifacts, vec!["clip.mp4"]);
+
+        // Stable section ordering/contents from authored planning docs.
+        assert_eq!(epic_a.doc.problem_statement, epic_b.doc.problem_statement);
+        assert_eq!(epic_a.doc.goals, epic_b.doc.goals);
+        assert_eq!(epic_a.doc.key_requirements, epic_b.doc.key_requirements);
+    }
+}
