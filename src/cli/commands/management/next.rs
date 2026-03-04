@@ -506,6 +506,42 @@ mod tests {
     }
 
     #[test]
+    fn decision_to_json_continuation_work_maps_to_submit_command() {
+        let decision = NextDecision::Work(StoryDecision {
+            story: make_story("S1"),
+            is_continuation: true,
+            warning: None,
+        });
+
+        let payload = decision_to_json(&decision);
+        let json = serde_json::to_value(payload).unwrap();
+
+        assert_eq!(json["decision"], "work");
+        assert_eq!(
+            json["guidance"]["next_step"]["command"],
+            "keel story submit S1"
+        );
+        assert!(json["guidance"]["recovery_step"].is_null());
+    }
+
+    #[test]
+    fn decision_to_json_accept_maps_to_accept_command() {
+        let decision = NextDecision::Accept(AcceptDecision {
+            stories: vec![make_story("S2")],
+        });
+
+        let payload = decision_to_json(&decision);
+        let json = serde_json::to_value(payload).unwrap();
+
+        assert_eq!(json["decision"], "accept");
+        assert_eq!(
+            json["guidance"]["next_step"]["command"],
+            "keel story accept S2"
+        );
+        assert!(json["guidance"]["recovery_step"].is_null());
+    }
+
+    #[test]
     fn decision_to_json_blocked_includes_recovery_guidance() {
         let decision = NextDecision::Blocked(BlockedDecision {
             story: make_story("S9"),

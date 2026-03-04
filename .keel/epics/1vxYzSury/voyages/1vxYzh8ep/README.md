@@ -25,11 +25,11 @@ started_at: 2026-03-03T15:55:59
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/3 stories complete
+**Progress:** 2/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Define Canonical Guidance Output Contract](../../../../stories/1vxZ0AFJK/README.md) | feat | done |
-| [Add Contract Tests For Canonical Guidance Fields](../../../../stories/1vxZ0Bh0v/README.md) | feat | backlog |
+| [Add Contract Tests For Canonical Guidance Fields](../../../../stories/1vxZ0Bh0v/README.md) | feat | done |
 | [Implement Shared Guidance Renderer Helpers](../../../../stories/1vxZ0BinH/README.md) | feat | backlog |
 <!-- END GENERATED -->

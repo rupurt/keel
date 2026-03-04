@@ -42,14 +42,19 @@ impl CanonicalGuidance {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
 
     #[test]
     fn serializes_next_step_only() {
         let guidance = CanonicalGuidance::next("keel story start S1");
         let json = serde_json::to_value(guidance).unwrap();
 
-        assert_eq!(json["next_step"]["command"], "keel story start S1");
-        assert!(json.get("recovery_step").is_none());
+        assert_eq!(
+            json,
+            json!({
+                "next_step": { "command": "keel story start S1" }
+            })
+        );
     }
 
     #[test]
@@ -57,7 +62,22 @@ mod tests {
         let guidance = CanonicalGuidance::recovery("keel story accept S1");
         let json = serde_json::to_value(guidance).unwrap();
 
-        assert_eq!(json["recovery_step"]["command"], "keel story accept S1");
-        assert!(json.get("next_step").is_none());
+        assert_eq!(
+            json,
+            json!({
+                "recovery_step": { "command": "keel story accept S1" }
+            })
+        );
+    }
+
+    #[test]
+    fn serializes_omitted_guidance_as_empty_object() {
+        let guidance = CanonicalGuidance {
+            next_step: None,
+            recovery_step: None,
+        };
+        let json = serde_json::to_value(guidance).unwrap();
+
+        assert_eq!(json, json!({}));
     }
 }
