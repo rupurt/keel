@@ -3,7 +3,11 @@
 pub mod structural;
 pub mod types;
 
+use regex::Regex;
+use std::sync::LazyLock;
 pub use types::{CheckId, Fix, GapCategory, Problem, Severity};
+
+static AC_REQ_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\[(SRS-\d+)/AC-\d+\]").unwrap());
 
 /// Result of acceptance criteria validation
 #[derive(Debug, Default)]
@@ -27,6 +31,27 @@ impl AcceptanceCriteriaResult {
         self.unchecked.iter().any(|c| c.contains("verify: manual"))
             || self.checked.iter().any(|c| c.contains("verify: manual"))
     }
+}
+
+fn criterion_text_without_annotation(criterion: &str) -> &str {
+    criterion.split("<!--").next().unwrap_or(criterion).trim()
+}
+
+/// Return acceptance criteria entries that are missing `[SRS-XX/AC-YY]` references.
+pub fn missing_srs_references(criteria: &AcceptanceCriteriaResult) -> Vec<String> {
+    let mut missing = Vec::new();
+
+    for criterion in criteria.checked.iter().chain(criteria.unchecked.iter()) {
+        let text = criterion_text_without_annotation(criterion);
+        if text.is_empty() {
+            continue;
+        }
+        if !AC_REQ_RE.is_match(text) {
+            missing.push(text.to_string());
+        }
+    }
+
+    missing
 }
 
 /// Parse acceptance criteria from story content
@@ -244,5 +269,22 @@ Just some content without acceptance criteria.
         // None of these match the current regex/starts_with logic strictly
         assert!(result.unchecked.is_empty());
         assert!(result.checked.is_empty());
+    }
+
+    #[test]
+    fn missing_srs_references_ignores_criteria_with_refs() {
+        let content = "## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Good criterion";
+        let criteria = parse_acceptance_criteria(content);
+        let missing = missing_srs_references(&criteria);
+        assert!(missing.is_empty());
+    }
+
+    #[test]
+    fn missing_srs_references_flags_criteria_without_refs() {
+        let content =
+            "## Acceptance Criteria\n\n- [ ] Criterion without ref <!-- verify: manual -->";
+        let criteria = parse_acceptance_criteria(content);
+        let missing = missing_srs_references(&criteria);
+        assert_eq!(missing, vec!["Criterion without ref".to_string()]);
     }
 }

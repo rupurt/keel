@@ -124,4 +124,41 @@ mod tests {
         assert!(result.is_err());
         assert!(result.unwrap_err().to_string().contains("Cannot thaw"));
     }
+
+    #[test]
+    fn thaw_blocks_scoped_story_missing_srs_traceability() {
+        let temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("TSCOPE01")
+                    .title("Scoped Frozen Story")
+                    .scope("test-epic/01-draft")
+                    .stage(StoryState::Icebox)
+                    .body("\n## Acceptance Criteria\n\n- [ ] Missing traceability"),
+            )
+            .build();
+
+        let result = run(temp.path(), "TSCOPE01");
+
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("missing SRS refs"), "Error was: {}", err);
+    }
+
+    #[test]
+    fn thaw_allows_scoped_story_with_srs_traceability() {
+        let temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("TSCOPE02")
+                    .title("Scoped Frozen Story")
+                    .scope("test-epic/01-draft")
+                    .stage(StoryState::Icebox)
+                    .body("\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Valid traceability"),
+            )
+            .build();
+
+        run(temp.path(), "TSCOPE02").unwrap();
+
+        let content = fs::read_to_string(temp.path().join("stories/TSCOPE02/README.md")).unwrap();
+        assert!(content.contains("status: backlog"));
+    }
 }

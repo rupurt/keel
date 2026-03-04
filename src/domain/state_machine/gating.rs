@@ -70,6 +70,7 @@ pub fn evaluate_story_transition(
 ) -> Vec<Problem> {
     match transition {
         StoryTransition::Start => evaluate_story_start(board, story),
+        StoryTransition::Thaw => evaluate_story_thaw(story),
         StoryTransition::Submit => evaluate_story_submit(board, story),
         StoryTransition::Accept => {
             evaluate_story_accept(board, story, require_human_review_for_manual_acceptance)
@@ -116,6 +117,13 @@ fn evaluate_story_start(board: &Board, story: &Story) -> Vec<Problem> {
     }
 
     problems
+}
+
+fn evaluate_story_thaw(story: &Story) -> Vec<Problem> {
+    if story.scope().is_none() {
+        return Vec::new();
+    }
+    check_story_ready_for_backlog_transition(story)
 }
 
 fn check_epic_documents_complete(epic: &crate::domain::model::Epic) -> Vec<Problem> {
@@ -420,7 +428,7 @@ fn evaluate_voyage_plan(
     // Stories thawed to backlog by `voyage plan` must be actionable.
     // Reject scaffold/default story content before allowing the transition.
     for story in stories {
-        problems.extend(check_story_ready_for_plan_transition(story));
+        problems.extend(check_story_ready_for_backlog_transition(story));
     }
 
     if require_requirements_coverage {
@@ -442,7 +450,7 @@ fn evaluate_voyage_plan(
     problems
 }
 
-fn check_story_ready_for_plan_transition(story: &Story) -> Vec<Problem> {
+fn check_story_ready_for_backlog_transition(story: &Story) -> Vec<Problem> {
     let mut problems = Vec::new();
     let content = match fs::read_to_string(&story.path) {
         Ok(content) => content,
@@ -484,6 +492,29 @@ fn check_story_ready_for_plan_transition(story: &Story) -> Vec<Problem> {
             fix: None,
             category: None,
             check_id: CheckId::StoryIncompleteAcceptance,
+        });
+    }
+
+    let missing_refs = crate::infrastructure::validation::missing_srs_references(&criteria);
+    if !missing_refs.is_empty() {
+        let list = missing_refs
+            .iter()
+            .map(|criterion| format!("      - {}", criterion))
+            .collect::<Vec<_>>()
+            .join("\n");
+        problems.push(Problem {
+            severity: Severity::Error,
+            path: story.path.clone(),
+            scope: story.scope().map(String::from),
+            message: format!(
+                "Story {} has {} acceptance criteria missing SRS refs:\n{}",
+                story.id(),
+                missing_refs.len(),
+                list
+            ),
+            fix: None,
+            category: None,
+            check_id: CheckId::StoryMissingSrsRef,
         });
     }
 

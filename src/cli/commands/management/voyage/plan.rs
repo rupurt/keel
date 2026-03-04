@@ -135,7 +135,7 @@ mod tests {
             .story(
                 TestStory::new("0001")
                     .scope("test-epic/01-draft")
-                    .body("\n## Acceptance Criteria\n\n- [ ] test"),
+                    .body("\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] test"),
             )
             .build();
 
@@ -210,7 +210,7 @@ mod tests {
             .story(
                 TestStory::new("0003")
                     .scope("test-epic/01-draft")
-                    .body("\n## Acceptance Criteria\n\n- [ ] test"),
+                    .body("\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] test"),
             )
             .build();
 
@@ -318,5 +318,24 @@ mod tests {
 
         assert!(thawed_story.contains("status: backlog"));
         assert!(backlog_story.contains("status: backlog"));
+    }
+
+    #[test]
+    fn plan_voyage_blocks_story_without_srs_traceability() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("test-epic"))
+            .voyage(TestVoyage::new("01-draft", "test-epic").status("draft"))
+            .story(
+                TestStory::new("0010")
+                    .scope("test-epic/01-draft")
+                    .body("\n## Acceptance Criteria\n\n- [ ] Missing traceability marker"),
+            )
+            .build();
+
+        let result = run_with_dir(temp.path(), "01-draft", true);
+
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("missing SRS refs"), "Error was: {}", err);
     }
 }

@@ -665,7 +665,8 @@ pub fn check_srs_traceability(board: &Board) -> Vec<Problem> {
     let mut problems = Vec::new();
 
     for story in board.stories.values() {
-        if story.stage != StoryState::InProgress
+        if story.stage != StoryState::Backlog
+            && story.stage != StoryState::InProgress
             && story.stage != StoryState::NeedsHumanVerification
             && story.stage != StoryState::Done
         {
@@ -677,20 +678,8 @@ pub fn check_srs_traceability(board: &Board) -> Vec<Problem> {
             Err(_) => continue,
         };
 
-        let mut missing_refs = Vec::new();
-
         let criteria = parse_acceptance_criteria(&content);
-        for criterion in criteria.checked.into_iter().chain(criteria.unchecked) {
-            let text = criterion.split("<!--").next().unwrap_or(&criterion).trim();
-
-            if text.is_empty() {
-                continue;
-            }
-
-            if !AC_REQ_RE.is_match(text) {
-                missing_refs.push(text.to_string());
-            }
-        }
+        let missing_refs = crate::infrastructure::validation::missing_srs_references(&criteria);
 
         if !missing_refs.is_empty() {
             let list = missing_refs
@@ -1448,5 +1437,39 @@ mod tests {
             problems.is_empty(),
             "draft voyage stories should be skipped"
         );
+    }
+
+    #[test]
+    fn srs_traceability_flags_backlog_story_missing_refs() {
+        let temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("S1")
+                    .stage(StoryState::Backlog)
+                    .body("## Acceptance Criteria\n\n- [ ] Missing traceability marker"),
+            )
+            .build();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_srs_traceability(&board);
+
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].check_id, CheckId::StoryMissingSrsRef);
+        assert!(problems[0].message.contains("missing SRS refs"));
+    }
+
+    #[test]
+    fn srs_traceability_skips_icebox_story_missing_refs() {
+        let temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("S1")
+                    .stage(StoryState::Icebox)
+                    .body("## Acceptance Criteria\n\n- [ ] Missing traceability marker"),
+            )
+            .build();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_srs_traceability(&board);
+
+        assert!(problems.is_empty());
     }
 }
