@@ -52,13 +52,23 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
 
 1. **Identify Fog**: Create a new Bearing when the path forward is ambiguous or requires exploration:
    - `just keel bearing new "<Name>"`
+   - **Mandatory Structure**: Always use the CLI to scaffold. A bearing must contain:
+     - `README.md`: Entry point with frontmatter.
+     - `BRIEF.md`: Core research details (see required sections below).
+     - `SURVEY.md`: Market and technical research.
+     - `ASSESSMENT.md`: Impact scoring and recommendation.
 2. **Discovery (Play)**: Use `just keel play <id>` to trigger discovery sessions and explore the problem space through different "masks" or perspectives.
-3. **Survey Findings**: Document research, competitive landscape, and technical constraints in `SURVEY.md`.
-4. **Seal Survey**: Transition to the surveying phase with `just keel bearing survey <id>`.
-5. **Assess Impact**: Perform impact analysis and document recommendations (Proceed, Park, or Decline) in `ASSESSMENT.md`.
-6. **Seal Assessment**: Transition to the assessing phase with `just keel bearing assess <id>`.
-7. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this bearing research package before graduation.
-8. **Graduate**: If research is conclusive, graduate the bearing to a strategic Epic with `just keel bearing lay <id>`.
+3. **Draft Brief**: Fill out `BRIEF.md`. The following sections are **mandatory** for `keel doctor` to pass:
+   - `## Hypothesis`
+   - `## Problem Space`
+   - `## Success Criteria`
+   - `## Open Questions`
+4. **Survey Findings**: Document research, competitive landscape, and technical constraints in `SURVEY.md`.
+5. **Seal Survey**: Transition to the surveying phase with `just keel bearing survey <id>`.
+6. **Assess Impact**: Perform impact analysis and document recommendations (Proceed, Park, or Decline) in `ASSESSMENT.md`.
+7. **Seal Assessment**: Transition to the assessing phase with `just keel bearing assess <id>`.
+8. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this bearing research package before graduation.
+9. **Graduate**: If research is conclusive, graduate the bearing to a strategic Epic with `just keel bearing lay <id>`.
 
 ## Global Hygiene Checklist
 
