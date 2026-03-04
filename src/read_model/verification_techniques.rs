@@ -58,6 +58,7 @@ pub struct TechniqueDefinition {
 }
 
 impl TechniqueDefinition {
+    #[allow(clippy::too_many_arguments)]
     fn new(
         id: &str,
         label: &str,
@@ -1046,9 +1047,7 @@ fn parse_optional_string(
     path: &str,
     diagnostics: &mut Vec<TechniqueOverrideDiagnostic>,
 ) -> Option<String> {
-    let Some(value) = value else {
-        return None;
-    };
+    let value = value?;
 
     let Some(text) = value
         .as_str()
@@ -1070,9 +1069,7 @@ fn parse_optional_bool(
     path: &str,
     diagnostics: &mut Vec<TechniqueOverrideDiagnostic>,
 ) -> Option<bool> {
-    let Some(value) = value else {
-        return None;
-    };
+    let value = value?;
 
     let Some(boolean) = value.as_bool() else {
         diagnostics.push(TechniqueOverrideDiagnostic {
@@ -1090,9 +1087,7 @@ fn parse_optional_u16(
     path: &str,
     diagnostics: &mut Vec<TechniqueOverrideDiagnostic>,
 ) -> Option<u16> {
-    let Some(value) = value else {
-        return None;
-    };
+    let value = value?;
 
     let Some(raw) = value.as_integer() else {
         diagnostics.push(TechniqueOverrideDiagnostic {
@@ -1118,9 +1113,7 @@ fn parse_optional_string_vec(
     path: &str,
     diagnostics: &mut Vec<TechniqueOverrideDiagnostic>,
 ) -> Option<Vec<String>> {
-    let Some(value) = value else {
-        return None;
-    };
+    let value = value?;
 
     let Some(items) = value.as_array() else {
         diagnostics.push(TechniqueOverrideDiagnostic {
@@ -1193,9 +1186,7 @@ fn parse_optional_stack_vec(
     path: &str,
     diagnostics: &mut Vec<TechniqueOverrideDiagnostic>,
 ) -> Option<Vec<ProjectStack>> {
-    let Some(value) = value else {
-        return None;
-    };
+    let value = value?;
 
     let Some(items) = value.as_array() else {
         diagnostics.push(TechniqueOverrideDiagnostic {
@@ -1241,9 +1232,7 @@ fn parse_optional_artifact_vec(
     path: &str,
     diagnostics: &mut Vec<TechniqueOverrideDiagnostic>,
 ) -> Option<Vec<ArtifactKind>> {
-    let Some(value) = value else {
-        return None;
-    };
+    let value = value?;
 
     let Some(items) = value.as_array() else {
         diagnostics.push(TechniqueOverrideDiagnostic {

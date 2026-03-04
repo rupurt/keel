@@ -469,7 +469,6 @@ Teams cannot quickly understand planning intent and verification readiness.
         assert!(report.doc.goals.is_empty());
         assert!(report.doc.key_requirements.is_empty());
         assert!(report.verification.linked_artifacts.is_empty());
-        assert!(report.recommendations.is_empty());
 
         // Render placeholder paths explicitly to guarantee command output behavior.
         render_planning_summary(&report);

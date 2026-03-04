@@ -6,6 +6,7 @@ use std::fs;
 use std::path::Path;
 
 use anyhow::Result;
+use chrono::{Datelike, Duration, Local, NaiveDate};
 
 use crate::domain::model::{Board, Epic, Story, StoryState, Voyage};
 use crate::infrastructure::verification::parser::{
@@ -204,8 +205,7 @@ pub fn build_epic_show_projection(
     let total_stories = stories.len();
     let remaining_stories = total_stories.saturating_sub(done_stories);
 
-    let throughput = crate::cli::presentation::flow::throughput::calculate_throughput(board, 4);
-    let throughput_stories_per_week = throughput.avg_stories_per_week;
+    let throughput_stories_per_week = average_story_throughput_per_week(board, 4);
     let eta_weeks = if remaining_stories > 0 && throughput_stories_per_week > 0.0 {
         Some(remaining_stories as f64 / throughput_stories_per_week)
     } else {
@@ -750,10 +750,11 @@ pub fn parse_goals(section: &str) -> Vec<String> {
             continue;
         }
 
-        if let Some(item) = trimmed.strip_prefix("- ") {
-            if !item.is_empty() && !is_scaffold_text(item) {
-                goals.push(item.to_string());
-            }
+        if let Some(item) = trimmed.strip_prefix("- ")
+            && !item.is_empty()
+            && !is_scaffold_text(item)
+        {
+            goals.push(item.to_string());
         }
     }
 
@@ -861,6 +862,76 @@ fn parse_requirement_entries(
     }
 
     entries
+}
+
+fn average_story_throughput_per_week(board: &Board, weeks: usize) -> f64 {
+    if weeks == 0 {
+        return 0.0;
+    }
+
+    let today = Local::now().date_naive();
+    let current_week_start = start_of_week_monday(today);
+    let mut total = 0usize;
+    let mut week_start = current_week_start;
+
+    for _ in 0..weeks {
+        let week_end = week_start + Duration::days(7);
+        total += board
+            .stories
+            .values()
+            .filter(|story| {
+                story
+                    .frontmatter
+                    .completed_at
+                    .map(|dt| {
+                        let date = dt.date();
+                        date >= week_start && date < week_end
+                    })
+                    .unwrap_or(false)
+            })
+            .count();
+        week_start -= Duration::days(7);
+    }
+
+    let denominator = effective_story_weeks(board, weeks, current_week_start);
+    if denominator == 0 {
+        return 0.0;
+    }
+
+    total as f64 / denominator as f64
+}
+
+fn effective_story_weeks(
+    board: &Board,
+    requested_weeks: usize,
+    current_week_start: NaiveDate,
+) -> usize {
+    if requested_weeks == 0 {
+        return 0;
+    }
+
+    let oldest_completion_week = board
+        .stories
+        .values()
+        .filter_map(|story| {
+            story
+                .frontmatter
+                .completed_at
+                .map(|dt| start_of_week_monday(dt.date()))
+        })
+        .min();
+
+    match oldest_completion_week {
+        Some(oldest_week) => {
+            let elapsed_weeks = ((current_week_start - oldest_week).num_days() / 7) + 1;
+            (elapsed_weeks.max(1) as usize).min(requested_weeks)
+        }
+        None => requested_weeks,
+    }
+}
+
+fn start_of_week_monday(date: NaiveDate) -> NaiveDate {
+    date - Duration::days(date.weekday().num_days_from_monday() as i64)
 }
 
 fn is_scaffold_text(value: &str) -> bool {
