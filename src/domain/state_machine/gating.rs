@@ -417,6 +417,12 @@ fn evaluate_voyage_plan(
     // Check for unfilled placeholders in planning documents
     problems.extend(check_voyage_documents_complete(voyage));
 
+    // Stories thawed to backlog by `voyage plan` must be actionable.
+    // Reject scaffold/default story content before allowing the transition.
+    for story in stories {
+        problems.extend(check_story_ready_for_plan_transition(story));
+    }
+
     if require_requirements_coverage {
         problems.extend(
             uncovered_requirements_gate_problems(voyage, board)
@@ -431,6 +437,72 @@ fn evaluate_voyage_plan(
                     check_id: CheckId::Unknown,
                 }),
         );
+    }
+
+    problems
+}
+
+fn check_story_ready_for_plan_transition(story: &Story) -> Vec<Problem> {
+    let mut problems = Vec::new();
+    let content = match fs::read_to_string(&story.path) {
+        Ok(content) => content,
+        Err(err) => {
+            problems.push(Problem {
+                severity: Severity::Error,
+                path: story.path.clone(),
+                scope: story.scope().map(String::from),
+                message: format!("Story {} README cannot be read: {}", story.id(), err),
+                fix: None,
+                category: None,
+                check_id: CheckId::Unknown,
+            });
+            return problems;
+        }
+    };
+
+    let criteria = crate::infrastructure::validation::parse_acceptance_criteria(&content);
+    let criteria_count = criteria.checked.len() + criteria.unchecked.len();
+    if !criteria.has_section {
+        problems.push(Problem {
+            severity: Severity::Error,
+            path: story.path.clone(),
+            scope: story.scope().map(String::from),
+            message: format!("Story {} has no acceptance criteria section", story.id()),
+            fix: None,
+            category: None,
+            check_id: CheckId::StoryIncompleteAcceptance,
+        });
+    } else if criteria_count == 0 {
+        problems.push(Problem {
+            severity: Severity::Error,
+            path: story.path.clone(),
+            scope: story.scope().map(String::from),
+            message: format!(
+                "Story {} has no acceptance criteria checklist items",
+                story.id()
+            ),
+            fix: None,
+            category: None,
+            check_id: CheckId::StoryIncompleteAcceptance,
+        });
+    }
+
+    if let Some(pattern) =
+        crate::infrastructure::validation::structural::first_unfilled_placeholder_pattern(&content)
+    {
+        problems.push(Problem {
+            severity: Severity::Error,
+            path: story.path.clone(),
+            scope: story.scope().map(String::from),
+            message: format!(
+                "Story {} README has unresolved scaffold/default text (pattern: {})",
+                story.id(),
+                pattern
+            ),
+            fix: None,
+            category: None,
+            check_id: CheckId::StoryPlanningScaffold,
+        });
     }
 
     problems
@@ -835,7 +907,10 @@ mod tests {
             .story(
                 TestStory::new("PLAN01")
                     .scope("test-epic/01-planned")
-                    .stage(StoryState::Backlog),
+                    .stage(StoryState::Backlog)
+                    .body(
+                        "## Summary\n\nReady for work.\n\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Planned item",
+                    ),
             )
             .build();
 
@@ -874,7 +949,7 @@ mod tests {
                     .scope("test-epic/01-draft")
                     .stage(StoryState::Backlog)
                     .body(
-                        "- [ ] [SRS-01/AC-01] Requirement 1 covered <!-- verify: cargo test SRS-01:start:end -->",
+                        "## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Requirement 1 covered <!-- verify: cargo test SRS-01:start:end -->",
                     ),
             )
             .build();
@@ -917,7 +992,7 @@ mod tests {
                     .scope("test-epic/01-draft")
                     .stage(StoryState::Backlog)
                     .body(
-                        "- [ ] [SRS-01/AC-01] Requirement 1 covered <!-- verify: cargo test SRS-01:start:end -->",
+                        "## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Requirement 1 covered <!-- verify: cargo test SRS-01:start:end -->",
                     ),
             )
             .build();
@@ -928,6 +1003,62 @@ mod tests {
         let problems = evaluate_voyage_transition(&board, voyage, VoyageTransition::Plan, false);
 
         assert!(problems.is_empty(), "coverage should be skippable");
+    }
+
+    #[test]
+    fn evaluate_voyage_transition_plan_rejects_story_scaffold_text() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("test-epic"))
+            .voyage(TestVoyage::new("01-draft", "test-epic").status("draft"))
+            .story(
+                TestStory::new("PLAN01")
+                    .scope("test-epic/01-draft")
+                    .stage(StoryState::Backlog)
+                    .body(
+                        "## Summary\n\nImplemented details pending.\n\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Define acceptance criteria for this slice",
+                    ),
+            )
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+        let voyage = board.require_voyage("01-draft").unwrap();
+
+        let problems = evaluate_voyage_transition(&board, voyage, VoyageTransition::Plan, false);
+
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].severity, Severity::Error);
+        assert_eq!(problems[0].check_id, CheckId::StoryPlanningScaffold);
+        assert!(has_message(
+            &problems,
+            "PLAN01 README has unresolved scaffold/default text"
+        ));
+    }
+
+    #[test]
+    fn evaluate_voyage_transition_plan_requires_acceptance_criteria_items() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("test-epic"))
+            .voyage(TestVoyage::new("01-draft", "test-epic").status("draft"))
+            .story(
+                TestStory::new("PLAN01")
+                    .scope("test-epic/01-draft")
+                    .stage(StoryState::Backlog)
+                    .body("## Summary\n\nReady.\n\n## Acceptance Criteria\n\nTBD"),
+            )
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+        let voyage = board.require_voyage("01-draft").unwrap();
+
+        let problems = evaluate_voyage_transition(&board, voyage, VoyageTransition::Plan, false);
+
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].severity, Severity::Error);
+        assert_eq!(problems[0].check_id, CheckId::StoryIncompleteAcceptance);
+        assert!(has_message(
+            &problems,
+            "PLAN01 has no acceptance criteria checklist items"
+        ));
     }
 
     #[test]

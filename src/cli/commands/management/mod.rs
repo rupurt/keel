@@ -3,6 +3,7 @@
 pub mod adr;
 pub mod bearing;
 pub mod epic;
+pub mod guidance;
 pub mod knowledge;
 pub mod next;
 mod next_support;

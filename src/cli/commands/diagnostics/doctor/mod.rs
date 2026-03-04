@@ -150,6 +150,15 @@ pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
         duration: Duration::from_millis(0),
     });
 
+    let active_coherence_problems = checks::stories::check_active_story_coherence(&board);
+    story_checks.push(CheckResult {
+        name: "Active story coherence",
+        evaluations: board.stories.len(),
+        passed: active_coherence_problems.is_empty(),
+        problems: active_coherence_problems,
+        duration: Duration::from_millis(0),
+    });
+
     let terminal_coherence_problems = checks::stories::check_terminal_story_coherence(&board);
     story_checks.push(CheckResult {
         name: "Terminal artifact coherence",
@@ -480,7 +489,7 @@ mod tests {
     use super::*;
     use crate::domain::model::StoryState;
     use crate::infrastructure::validation::{CheckId, Severity};
-    use crate::test_helpers::{TestBoardBuilder, TestStory};
+    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use std::fs;
     use tempfile::TempDir;
 
@@ -603,6 +612,42 @@ mod tests {
                 .message
                 .contains("README has unresolved scaffold/default text")),
             "expected README scaffold violation message"
+        );
+    }
+
+    #[test]
+    fn validate_detects_active_story_scaffold_text() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").status("planned"))
+            .story(
+                TestStory::new("S1")
+                    .scope("e1/v1")
+                    .stage(StoryState::Backlog)
+                    .body(
+                        "## Summary\n\nTODO: Describe the story\n\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Define acceptance criteria for this slice",
+                    ),
+            )
+            .build();
+
+        let report = validate(temp.path()).unwrap();
+        let active_scaffold_problems: Vec<_> = report
+            .story_checks
+            .iter()
+            .filter(|check| check.name == "Active story coherence")
+            .flat_map(|check| check.problems.iter())
+            .filter(|problem| problem.check_id == CheckId::StoryPlanningScaffold)
+            .collect();
+
+        assert!(
+            !active_scaffold_problems.is_empty(),
+            "expected active story coherence check to flag unresolved scaffold text"
+        );
+        assert!(
+            active_scaffold_problems
+                .iter()
+                .all(|problem| problem.severity == Severity::Error),
+            "active story scaffold violations must be hard errors"
         );
     }
 }

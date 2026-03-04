@@ -191,7 +191,11 @@ mod tests {
 
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
-        assert!(err.contains("stories with issues"), "Error was: {}", err);
+        assert!(
+            err.contains("has no acceptance criteria section"),
+            "Error was: {}",
+            err
+        );
     }
 
     #[test]
@@ -209,6 +213,29 @@ mod tests {
         let result = run_with_dir(temp.path(), "01-draft", false);
 
         assert!(result.is_ok(), "Expected success, got: {:?}", result);
+    }
+
+    #[test]
+    fn plan_voyage_blocks_story_scaffold_even_when_review_is_disabled() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("test-epic"))
+            .voyage(TestVoyage::new("01-draft", "test-epic").status("draft"))
+            .story(
+                TestStory::new("0009")
+                    .scope("test-epic/01-draft")
+                    .body("\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Define acceptance criteria for this slice"),
+            )
+            .build();
+
+        let result = run_with_dir(temp.path(), "01-draft", true);
+
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(
+            err.contains("unresolved scaffold/default text"),
+            "Error was: {}",
+            err
+        );
     }
 
     #[test]
@@ -269,12 +296,14 @@ mod tests {
             .story(
                 TestStory::new("0005")
                     .scope("test-epic/01-draft")
-                    .stage(StoryState::Icebox),
+                    .stage(StoryState::Icebox)
+                    .body("\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] test"),
             )
             .story(
                 TestStory::new("0006")
                     .scope("test-epic/01-draft")
-                    .stage(StoryState::Backlog),
+                    .stage(StoryState::Backlog)
+                    .body("\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-02] test"),
             )
             .build();
 

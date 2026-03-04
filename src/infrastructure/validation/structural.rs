@@ -13,6 +13,7 @@ use crate::infrastructure::validation::types::{CheckId, Fix, Problem, Severity};
 
 static TEMPLATE_TOKEN_RE: LazyLock<regex::Regex> =
     LazyLock::new(|| regex::Regex::new(r"\{\{([^}]+)\}\}").unwrap());
+static LEGACY_SCAFFOLD_MARKERS: &[&str] = &["Define acceptance criteria for this slice"];
 
 /// Check for date field naming and type consistency.
 ///
@@ -191,12 +192,19 @@ fn strip_html_comments(content: &str) -> String {
 ///
 /// Markers are either:
 /// - literal `TODO:`
+/// - known scaffold defaults from older templates
 /// - unresolved `{{token}}` placeholders
 pub fn first_unfilled_placeholder_pattern(content: &str) -> Option<String> {
     let search_text = strip_html_comments(content);
 
     if search_text.contains("TODO:") {
         return Some("TODO:".to_string());
+    }
+
+    for marker in LEGACY_SCAFFOLD_MARKERS {
+        if search_text.contains(marker) {
+            return Some((*marker).to_string());
+        }
     }
 
     TEMPLATE_TOKEN_RE
@@ -827,6 +835,22 @@ mod tests {
         assert_eq!(
             first_unfilled_placeholder_pattern("Real TODO: remains"),
             Some("TODO:".to_string())
+        );
+    }
+
+    #[test]
+    fn test_first_unfilled_placeholder_pattern_detects_legacy_story_scaffold() {
+        assert_eq!(
+            first_unfilled_placeholder_pattern(
+                "## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Define acceptance criteria for this slice"
+            ),
+            Some("Define acceptance criteria for this slice".to_string())
+        );
+        assert_eq!(
+            first_unfilled_placeholder_pattern(
+                "<!-- Define acceptance criteria for this slice -->\nReady content"
+            ),
+            None
         );
     }
 

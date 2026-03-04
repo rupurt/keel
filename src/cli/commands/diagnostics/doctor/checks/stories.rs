@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 use super::super::AC_REQ_RE;
 use super::super::types::*;
-use crate::domain::model::{Board, StoryState};
+use crate::domain::model::{Board, StoryState, VoyageState};
 use crate::infrastructure::validation::parse_acceptance_criteria;
 use crate::infrastructure::validation::structural;
 
@@ -1023,6 +1023,78 @@ pub fn check_reflection_coherence(board: &Board) -> Vec<Problem> {
     problems
 }
 
+/// Check stories in active voyage scopes for unresolved scaffold/default text.
+///
+/// Stories in planned/in-progress voyages are actionable queue items, so their
+/// README artifacts must be fully authored before execution begins.
+pub fn check_active_story_coherence(board: &Board) -> Vec<Problem> {
+    let mut problems = Vec::new();
+
+    for story in board.stories.values() {
+        let Some(scope) = story.scope() else {
+            continue;
+        };
+
+        let Some(voyage) = board
+            .voyages
+            .values()
+            .find(|voyage| voyage.scope_path() == scope)
+        else {
+            continue;
+        };
+
+        if voyage.status() != VoyageState::Planned && voyage.status() != VoyageState::InProgress {
+            continue;
+        }
+
+        let content = match fs::read_to_string(&story.path) {
+            Ok(content) => content,
+            Err(_) => continue,
+        };
+
+        let criteria = parse_acceptance_criteria(&content);
+        let criteria_count = criteria.checked.len() + criteria.unchecked.len();
+        if !criteria.has_section {
+            problems.push(
+                Problem::error(
+                    story.path.clone(),
+                    format!("Story {} has no acceptance criteria section", story.id()),
+                )
+                .with_check_id(CheckId::StoryIncompleteAcceptance)
+                .with_scope(scope),
+            );
+        } else if criteria_count == 0 {
+            problems.push(
+                Problem::error(
+                    story.path.clone(),
+                    format!(
+                        "Story {} has no acceptance criteria checklist items",
+                        story.id()
+                    ),
+                )
+                .with_check_id(CheckId::StoryIncompleteAcceptance)
+                .with_scope(scope),
+            );
+        }
+
+        if let Some(pattern) = structural::first_unfilled_placeholder_pattern(&content) {
+            problems.push(
+                Problem::error(
+                    story.path.clone(),
+                    format!(
+                        "README has unresolved scaffold/default text (pattern: {})",
+                        pattern
+                    ),
+                )
+                .with_check_id(CheckId::StoryPlanningScaffold)
+                .with_scope(scope),
+            );
+        }
+    }
+
+    problems
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1297,6 +1369,84 @@ mod tests {
         assert!(
             problems.is_empty(),
             "non-terminal stories should not be checked for terminal scaffold coherence"
+        );
+    }
+
+    #[test]
+    fn active_story_coherence_flags_scaffold_in_planned_voyage() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").status("planned"))
+            .story(
+                TestStory::new("S1")
+                    .scope("e1/v1")
+                    .stage(StoryState::Backlog)
+                    .body(
+                        "## Summary\n\nTODO: Describe the story\n\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Define acceptance criteria for this slice",
+                    ),
+            )
+            .build();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_active_story_coherence(&board);
+
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].severity, Severity::Error);
+        assert_eq!(problems[0].check_id, CheckId::StoryPlanningScaffold);
+        assert!(
+            problems[0]
+                .message
+                .contains("README has unresolved scaffold/default text")
+        );
+    }
+
+    #[test]
+    fn active_story_coherence_requires_acceptance_criteria_items() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").status("in-progress"))
+            .story(
+                TestStory::new("S1")
+                    .scope("e1/v1")
+                    .stage(StoryState::Backlog)
+                    .body("## Summary\n\nReady.\n\n## Acceptance Criteria\n\nTBD"),
+            )
+            .build();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_active_story_coherence(&board);
+
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].severity, Severity::Error);
+        assert_eq!(problems[0].check_id, CheckId::StoryIncompleteAcceptance);
+        assert!(
+            problems[0]
+                .message
+                .contains("has no acceptance criteria checklist items")
+        );
+    }
+
+    #[test]
+    fn active_story_coherence_skips_draft_voyage_stories() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").status("draft"))
+            .story(
+                TestStory::new("S1")
+                    .scope("e1/v1")
+                    .stage(StoryState::Icebox)
+                    .body(
+                        "## Summary\n\nTODO: Describe the story\n\n## Acceptance Criteria\n\n- [ ] TODO: Add criteria",
+                    ),
+            )
+            .build();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_active_story_coherence(&board);
+
+        assert!(
+            problems.is_empty(),
+            "draft voyage stories should be skipped"
         );
     }
 }

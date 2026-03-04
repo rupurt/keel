@@ -112,7 +112,9 @@ mod tests {
             .story(
                 TestStory::new("STORY01")
                     .scope("test-epic/01-draft")
-                    .body("- [ ] [SRS-01/AC-01] First criteria <!-- verify: manual -->"),
+                    .body(
+                        "## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] First criteria <!-- verify: manual -->",
+                    ),
             )
             .build();
 
@@ -155,7 +157,9 @@ mod tests {
             .story(
                 TestStory::new("STORY01")
                     .scope("test-epic/01-draft")
-                    .body("- [ ] [SRS-01/AC-01] First criteria <!-- verify: manual -->"),
+                    .body(
+                        "## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] First criteria <!-- verify: manual -->",
+                    ),
             )
             .build();
 
@@ -193,7 +197,9 @@ mod tests {
             .story(
                 TestStory::new("STORY01")
                     .scope("test-epic/01-draft")
-                    .body("- [ ] [SRS-01/AC-01] First criteria <!-- verify: manual -->"),
+                    .body(
+                        "## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] First criteria <!-- verify: manual -->",
+                    ),
             )
             .build();
 

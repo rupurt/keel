@@ -12,6 +12,7 @@ pub use super::next_support::{
     AcceptDecision, AdrDecision, BlockedDecision, DecomposeDecision, EmptyDecision, NextDecision,
     ResearchDecision, StoryDecision, calculate_next, format_decision,
 };
+use crate::cli::commands::management::guidance::CanonicalGuidance;
 use crate::domain::model::Story;
 use crate::infrastructure::loader::load_board;
 
@@ -19,6 +20,8 @@ use crate::infrastructure::loader::load_board;
 struct JsonResult {
     decision: String,
     details: JsonDetails,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    guidance: Option<CanonicalGuidance>,
 }
 
 #[derive(Serialize)]
@@ -103,64 +106,7 @@ pub fn run(
     let decision = calculate_next(&board, board_dir, agent_mode, actor_role)?;
 
     if json {
-        let result = match &decision {
-            NextDecision::Work(d) => JsonResult {
-                decision: "work".to_string(),
-                details: JsonDetails::Work {
-                    id: d.story.id().to_string(),
-                    title: d.story.title().to_string(),
-                    is_continuation: d.is_continuation,
-                },
-            },
-            NextDecision::Decision(d) => JsonResult {
-                decision: "decision".to_string(),
-                details: JsonDetails::Decision {
-                    adrs: d.adrs.iter().map(|a| a.id().to_string()).collect(),
-                    blocked_stories: d
-                        .blocked_stories
-                        .iter()
-                        .map(|s| s.id().to_string())
-                        .collect(),
-                },
-            },
-            NextDecision::Accept(d) => JsonResult {
-                decision: "accept".to_string(),
-                details: JsonDetails::Accept {
-                    stories: d.stories.iter().map(|s| s.id().to_string()).collect(),
-                },
-            },
-            NextDecision::Research(d) => JsonResult {
-                decision: "research".to_string(),
-                details: JsonDetails::Research {
-                    bearings: d.bearings.iter().map(|b| b.id().to_string()).collect(),
-                },
-            },
-            NextDecision::Blocked(d) => JsonResult {
-                decision: "blocked".to_string(),
-                details: JsonDetails::Blocked {
-                    story_id: d.story.id().to_string(),
-                    total_blocked: d.count,
-                },
-            },
-            NextDecision::NeedsStories(d) => JsonResult {
-                decision: "needs_stories".to_string(),
-                details: JsonDetails::NeedsStories {
-                    voyages: d.voyages.iter().map(|v| v.id().to_string()).collect(),
-                },
-            },
-            NextDecision::NeedsPlanning(d) => JsonResult {
-                decision: "needs_planning".to_string(),
-                details: JsonDetails::NeedsPlanning {
-                    voyages: d.voyages.iter().map(|v| v.id().to_string()).collect(),
-                },
-            },
-            NextDecision::Empty(d) => JsonResult {
-                decision: "empty".to_string(),
-                details: JsonDetails::Empty {
-                    suggestions: d.suggestions.clone(),
-                },
-            },
-        };
+        let result = decision_to_json(&decision);
         println!("{}", serde_json::to_string_pretty(&result)?);
     } else {
         println!("{}", format_decision(&decision));
@@ -203,6 +149,108 @@ pub fn run(
     }
 
     Ok(())
+}
+
+fn decision_to_json(decision: &NextDecision) -> JsonResult {
+    let details = match decision {
+        NextDecision::Work(d) => JsonDetails::Work {
+            id: d.story.id().to_string(),
+            title: d.story.title().to_string(),
+            is_continuation: d.is_continuation,
+        },
+        NextDecision::Decision(d) => JsonDetails::Decision {
+            adrs: d.adrs.iter().map(|a| a.id().to_string()).collect(),
+            blocked_stories: d
+                .blocked_stories
+                .iter()
+                .map(|s| s.id().to_string())
+                .collect(),
+        },
+        NextDecision::Accept(d) => JsonDetails::Accept {
+            stories: d.stories.iter().map(|s| s.id().to_string()).collect(),
+        },
+        NextDecision::Research(d) => JsonDetails::Research {
+            bearings: d.bearings.iter().map(|b| b.id().to_string()).collect(),
+        },
+        NextDecision::Blocked(d) => JsonDetails::Blocked {
+            story_id: d.story.id().to_string(),
+            total_blocked: d.count,
+        },
+        NextDecision::NeedsStories(d) => JsonDetails::NeedsStories {
+            voyages: d.voyages.iter().map(|v| v.id().to_string()).collect(),
+        },
+        NextDecision::NeedsPlanning(d) => JsonDetails::NeedsPlanning {
+            voyages: d.voyages.iter().map(|v| v.id().to_string()).collect(),
+        },
+        NextDecision::Empty(d) => JsonDetails::Empty {
+            suggestions: d.suggestions.clone(),
+        },
+    };
+
+    JsonResult {
+        decision: decision_kind(decision).to_string(),
+        details,
+        guidance: guidance_for_decision(decision),
+    }
+}
+
+fn decision_kind(decision: &NextDecision) -> &'static str {
+    match decision {
+        NextDecision::Work(_) => "work",
+        NextDecision::Decision(_) => "decision",
+        NextDecision::Accept(_) => "accept",
+        NextDecision::Research(_) => "research",
+        NextDecision::Blocked(_) => "blocked",
+        NextDecision::NeedsStories(_) => "needs_stories",
+        NextDecision::NeedsPlanning(_) => "needs_planning",
+        NextDecision::Empty(_) => "empty",
+    }
+}
+
+fn guidance_for_decision(decision: &NextDecision) -> Option<CanonicalGuidance> {
+    match decision {
+        NextDecision::Work(d) => {
+            if d.is_continuation {
+                Some(CanonicalGuidance::next(format!(
+                    "keel story submit {}",
+                    d.story.id()
+                )))
+            } else {
+                Some(CanonicalGuidance::next(format!(
+                    "keel story start {}",
+                    d.story.id()
+                )))
+            }
+        }
+        NextDecision::Decision(d) => d
+            .adrs
+            .first()
+            .map(|adr| CanonicalGuidance::next(format!("keel adr accept {}", adr.id()))),
+        NextDecision::Accept(d) => d
+            .stories
+            .first()
+            .map(|story| CanonicalGuidance::next(format!("keel story accept {}", story.id()))),
+        NextDecision::Research(d) => d
+            .bearings
+            .first()
+            .map(|bearing| CanonicalGuidance::next(format!("keel play {}", bearing.id()))),
+        NextDecision::Blocked(d) => Some(CanonicalGuidance::recovery(format!(
+            "keel story accept {}",
+            d.story.id()
+        ))),
+        NextDecision::NeedsStories(d) => d.voyages.first().map(|voyage| {
+            CanonicalGuidance::next(format!(
+                "keel story new \"<title>\" --epic {} --voyage {}",
+                voyage.epic_id,
+                voyage.id()
+            ))
+        }),
+        NextDecision::NeedsPlanning(d) => d
+            .voyages
+            .first()
+            .map(|voyage| CanonicalGuidance::next(format!("keel voyage plan {}", voyage.id()))),
+        NextDecision::Empty(_) => None,
+    }
 }
 
 fn run_parallel(
@@ -294,6 +342,9 @@ fn run_parallel(
                 ready: ready_json,
                 sequential_chains: sequential_json,
             },
+            guidance: ready
+                .first()
+                .map(|story| CanonicalGuidance::next(format!("keel story start {}", story.id()))),
         };
         println!("{}", serde_json::to_string_pretty(&result)?);
     } else {
@@ -384,8 +435,9 @@ fn parallel_story_with_scope(story: &Story) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::domain::model::Story;
     use crate::domain::model::StoryState;
-    use crate::test_helpers::{TestBoardBuilder, TestStory};
+    use crate::test_helpers::{StoryFactory, TestBoardBuilder, TestStory};
 
     #[test]
     fn exit_code_work_is_0() {
@@ -428,5 +480,58 @@ mod tests {
 
         let line = parallel_story(story);
         assert!(line.contains(&crate::cli::style::styled_story_id("S2")));
+    }
+
+    fn make_story(id: &str) -> Story {
+        StoryFactory::new(id).title("Story").build()
+    }
+
+    #[test]
+    fn decision_to_json_work_includes_next_step_guidance() {
+        let decision = NextDecision::Work(StoryDecision {
+            story: make_story("S1"),
+            is_continuation: false,
+            warning: None,
+        });
+
+        let payload = decision_to_json(&decision);
+        let json = serde_json::to_value(payload).unwrap();
+
+        assert_eq!(json["decision"], "work");
+        assert_eq!(
+            json["guidance"]["next_step"]["command"],
+            "keel story start S1"
+        );
+        assert!(json["guidance"]["recovery_step"].is_null());
+    }
+
+    #[test]
+    fn decision_to_json_blocked_includes_recovery_guidance() {
+        let decision = NextDecision::Blocked(BlockedDecision {
+            story: make_story("S9"),
+            count: 9,
+        });
+
+        let payload = decision_to_json(&decision);
+        let json = serde_json::to_value(payload).unwrap();
+
+        assert_eq!(json["decision"], "blocked");
+        assert_eq!(
+            json["guidance"]["recovery_step"]["command"],
+            "keel story accept S9"
+        );
+        assert!(json["guidance"]["next_step"].is_null());
+    }
+
+    #[test]
+    fn decision_to_json_empty_omits_guidance() {
+        let decision = NextDecision::Empty(EmptyDecision {
+            suggestions: vec!["Refuel".to_string()],
+        });
+
+        let payload = decision_to_json(&decision);
+        let json = serde_json::to_value(payload).unwrap();
+
+        assert!(json.get("guidance").is_none());
     }
 }
