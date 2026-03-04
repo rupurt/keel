@@ -6,6 +6,8 @@ use crate::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
 use crate::infrastructure::config::find_board_dir;
 use anyhow::Result;
 
+use super::guidance::{VoyageLifecycleAction, guidance_for_action, print_human};
+
 /// Run the done-voyage command
 pub fn run(
     id: &str,
@@ -25,7 +27,10 @@ pub fn run_with_dir(
     hard: Option<String>,
     different: Option<String>,
 ) -> Result<()> {
-    VoyageEpicLifecycleService::complete_voyage(board_dir, id, well, hard, different)
+    VoyageEpicLifecycleService::complete_voyage(board_dir, id, well, hard, different)?;
+    let guidance = guidance_for_action(VoyageLifecycleAction::Done, id);
+    print_human(guidance.as_ref());
+    Ok(())
 }
 
 #[cfg(test)]

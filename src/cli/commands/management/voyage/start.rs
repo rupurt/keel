@@ -9,6 +9,8 @@ use crate::infrastructure::config::find_board_dir;
 #[cfg(test)]
 use crate::infrastructure::loader::load_board;
 
+use super::guidance::{VoyageLifecycleAction, guidance_for_action, print_human};
+
 /// Run the start-voyage command
 pub fn run(id: &str, force: bool, expect_version: Option<u64>) -> Result<()> {
     let board_dir = find_board_dir()?;
@@ -28,7 +30,10 @@ pub fn run_with_options(
     force: bool,
     expect_version: Option<u64>,
 ) -> Result<()> {
-    VoyageEpicLifecycleService::start_voyage(board_dir, id, force, expect_version)
+    VoyageEpicLifecycleService::start_voyage(board_dir, id, force, expect_version)?;
+    let guidance = guidance_for_action(VoyageLifecycleAction::Start, id);
+    print_human(guidance.as_ref());
+    Ok(())
 }
 
 /// Check that all stories in the voyage are in valid states for starting.

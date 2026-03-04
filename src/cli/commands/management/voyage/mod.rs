@@ -1,6 +1,7 @@
 //! Voyage command implementations
 
 pub mod done;
+pub(crate) mod guidance;
 pub mod list;
 pub mod new;
 pub mod plan;

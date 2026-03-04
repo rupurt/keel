@@ -25,11 +25,11 @@ started_at: 2026-03-03T16:41:46
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/3 stories complete
+**Progress:** 2/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Add Canonical Next Guidance To Story Lifecycle Commands](../../../../stories/1vxZ0BXgR/README.md) | feat | done |
-| [Add Canonical Guidance To Voyage Lifecycle Commands](../../../../stories/1vxZ0C8QB/README.md) | feat | backlog |
+| [Add Canonical Guidance To Voyage Lifecycle Commands](../../../../stories/1vxZ0C8QB/README.md) | feat | done |
 | [Add Canonical Recovery Guidance To Story Lifecycle Errors](../../../../stories/1vxZ0CBPx/README.md) | feat | backlog |
 <!-- END GENERATED -->

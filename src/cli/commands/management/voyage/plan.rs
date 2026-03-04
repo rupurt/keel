@@ -15,6 +15,8 @@ use crate::infrastructure::config::find_board_dir;
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::validation::parse_acceptance_criteria;
 
+use super::guidance::{VoyageLifecycleAction, guidance_for_action, print_human};
+
 /// Run the plan-voyage command
 pub fn run(id: &str, no_review: bool) -> Result<()> {
     let board_dir = find_board_dir()?;
@@ -114,6 +116,8 @@ pub fn run_with_dir(board_dir: &Path, id: &str, no_review: bool) -> Result<()> {
 
     // Regenerate board
     crate::cli::commands::generate::run(board_dir)?;
+    let guidance = guidance_for_action(VoyageLifecycleAction::Plan, voyage.id());
+    print_human(guidance.as_ref());
 
     Ok(())
 }

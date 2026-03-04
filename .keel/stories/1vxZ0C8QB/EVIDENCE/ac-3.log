@@ -1,0 +1,18 @@
+---
+recorded_at: 2026-03-03T19:00:20.103951436-08:00
+command: cargo test --lib voyage::guidance
+---
+
+running 5 tests
+test cli::commands::management::voyage::guidance::tests::done_action_omits_next_step_guidance ... ok
+test cli::commands::management::voyage::guidance::tests::plan_action_suggests_start_transition ... ok
+test cli::commands::management::voyage::guidance::tests::render_human_formats_next_step_block ... ok
+test cli::commands::management::voyage::guidance::tests::start_action_suggests_done_transition ... ok
+test cli::commands::management::voyage::guidance::tests::serializes_plan_guidance_with_canonical_next_step_shape ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 994 filtered out; finished in 0.00s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.06s
+     Running unittests src/lib.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-bec18a36668a42b8)
