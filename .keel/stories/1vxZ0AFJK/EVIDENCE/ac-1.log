@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-03T15:59:41.562284818-08:00
+mode: manual
+---
+Added shared canonical guidance contract types in management/guidance with stable serialized fields.

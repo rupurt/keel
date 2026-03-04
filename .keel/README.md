@@ -51,18 +51,11 @@
 
 ## Epics
 
-### [Template Contract Hard Cutover](epics/1vxGy5tco/) (active) - 2 voyages, 1 done
-
-| Voyage | Status |
-|--------|--------|
-| [Template And CLI Contract Canonicalization](epics/1vxGy5tco/voyages/1vxGzV3oR/) | in-progress |
-| [Doctor And Transition Hard Enforcement](epics/1vxGy5tco/voyages/1vxGzVpw5/) | done |
-
 ### [Deterministic Command Guidance](epics/1vxYzSury/) (active) - 5 voyages, 0 done
 
 | Voyage | Status |
 |--------|--------|
-| [Output Contract And Shared Renderer](epics/1vxYzSury/voyages/1vxYzh8ep/) | planned |
+| [Output Contract And Shared Renderer](epics/1vxYzSury/voyages/1vxYzh8ep/) | in-progress |
 | [Governance And Research Guidance](epics/1vxYzSury/voyages/1vxYzjVMv/) | planned |
 | [Story And Voyage Lifecycle Guidance](epics/1vxYzSury/voyages/1vxYzjiwH/) | planned |
 | [Decision And Verification Guidance Parity](epics/1vxYzSury/voyages/1vxYzrwma/) | planned |
@@ -78,5 +71,6 @@
 - [Flow Coherence Refactor](epics/1vuz8K4NM/)
 - [System Coherence and Intelligent Flow](epics/1vv7YWzw2/)
 - [Domain Driven Design Restructure](epics/1vwq96cpt/)
+- [Template Contract Hard Cutover](epics/1vxGy5tco/)
 
 </details>

@@ -12,8 +12,10 @@ scope: 1vxYzSury/1vxYzsAxT
 
 ## Summary
 
-TODO: Describe the story
+Implement a single command-capability classification map so guidance rendering can consistently distinguish actionable from informational commands.
 
 ## Acceptance Criteria
 
-- [ ] [SRS-01/AC-01] Define acceptance criteria for this slice
+- [ ] [SRS-01/AC-01] Introduce a canonical classification map that labels management commands as actionable or informational.
+- [ ] [SRS-01/AC-02] Use the classification map in guidance rendering paths to control when `next_step` or `recovery_step` guidance is emitted.
+- [ ] [SRS-01/AC-03] Add tests covering representative commands in both categories to ensure deterministic classification behavior.

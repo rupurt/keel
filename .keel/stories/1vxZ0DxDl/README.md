@@ -12,8 +12,10 @@ scope: 1vxYzSury/1vxYzrwma
 
 ## Summary
 
-TODO: Describe the story
+Align `keel next` guidance rendering across human-readable and JSON outputs so both surfaces expose the same canonical next or recovery command.
 
 ## Acceptance Criteria
 
-- [ ] [SRS-01/AC-01] Define acceptance criteria for this slice
+- [ ] [SRS-01/AC-01] Ensure every actionable `keel next` decision renders the same canonical command in human and JSON outputs.
+- [ ] [SRS-01/AC-02] Ensure blocked `keel next` decisions expose canonical recovery guidance consistently across output modes.
+- [ ] [SRS-01/AC-03] Add parity tests that fail if human formatter and JSON payload diverge for next/recovery guidance.

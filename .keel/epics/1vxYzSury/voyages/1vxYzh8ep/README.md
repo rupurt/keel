@@ -2,10 +2,11 @@
 id: 1vxYzh8ep
 index: 1
 title: Output Contract And Shared Renderer
-status: planned
+status: in-progress
 epic: 1vxYzSury
 created_at: 2026-03-03T15:17:37
 updated_at: 2026-03-03T15:32:56
+started_at: 2026-03-03T15:55:59
 ---
 
 # Output Contract And Shared Renderer

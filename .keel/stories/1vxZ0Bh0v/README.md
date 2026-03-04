@@ -12,8 +12,10 @@ scope: 1vxYzSury/1vxYzh8ep
 
 ## Summary
 
-TODO: Describe the story
+Add regression tests that lock the canonical guidance payload shape so downstream harnesses can rely on stable `next_step` and `recovery_step` semantics.
 
 ## Acceptance Criteria
 
-- [ ] [SRS-01/AC-01] Define acceptance criteria for this slice
+- [ ] [SRS-01/AC-01] Add unit tests for canonical guidance serialization covering `next_step`-only, `recovery_step`-only, and omitted guidance cases.
+- [ ] [SRS-01/AC-02] Add mapping tests that validate deterministic command strings for both actionable and blocked decisions.
+- [ ] [SRS-01/AC-03] Ensure tests fail on contract drift in field names or object shape expected by harness consumers.

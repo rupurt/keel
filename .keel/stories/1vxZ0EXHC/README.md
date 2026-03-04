@@ -12,8 +12,10 @@ scope: 1vxYzSury/1vxYzrwma
 
 ## Summary
 
-TODO: Describe the story
+Add canonical guidance output to verification and audit command outcomes so success and failure paths provide deterministic next or recovery actions.
 
 ## Acceptance Criteria
 
-- [ ] [SRS-01/AC-01] Define acceptance criteria for this slice
+- [ ] [SRS-01/AC-01] Add canonical `next_step` guidance for successful `verify` and `story audit` outcomes when a deterministic follow-up action exists.
+- [ ] [SRS-01/AC-02] Add canonical `recovery_step` guidance for failed verification and audit outcomes with actionable remediation commands.
+- [ ] [SRS-01/AC-03] Add tests covering verify/audit guidance parity across human-readable and JSON command outputs.

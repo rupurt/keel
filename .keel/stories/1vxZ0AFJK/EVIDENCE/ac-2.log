@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-03T15:59:41.692638223-08:00
+mode: manual
+---
+Refactored next JSON emission through decision_to_json and guidance_for_decision to emit deterministic next/recovery commands.

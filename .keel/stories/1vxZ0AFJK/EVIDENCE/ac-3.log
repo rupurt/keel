@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-03T15:59:41.842151354-08:00
+mode: manual
+---
+Added regression coverage for work/blocked/empty JSON guidance behavior and contract serialization.
