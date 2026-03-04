@@ -1,0 +1,14 @@
+---
+recorded_at: 2026-03-03T16:51:28.387735975-08:00
+command: cargo test --lib cli::commands::management::story::guidance::tests::record_action_suggests_start_for_rejected_story
+---
+
+running 1 test
+test cli::commands::management::story::guidance::tests::record_action_suggests_start_for_rejected_story ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 981 filtered out; finished in 0.00s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.06s
+     Running unittests src/lib.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-bec18a36668a42b8)

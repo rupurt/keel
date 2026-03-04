@@ -5,10 +5,20 @@ use std::path::Path;
 use anyhow::Result;
 
 use crate::application::story_lifecycle::StoryLifecycleService;
+use crate::infrastructure::loader::load_board;
+
+use super::guidance::{StoryLifecycleAction, guidance_for_action, print_human};
 
 /// Run the submit story command
 pub fn run(board_dir: &Path, id: &str) -> Result<()> {
-    StoryLifecycleService::submit(board_dir, id)
+    StoryLifecycleService::submit(board_dir, id)?;
+
+    let board = load_board(board_dir)?;
+    let story = board.require_story(id)?;
+    let guidance = guidance_for_action(StoryLifecycleAction::Submit, story.stage, story.id());
+    print_human(guidance.as_ref());
+
+    Ok(())
 }
 
 #[cfg(test)]

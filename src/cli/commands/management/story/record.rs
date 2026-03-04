@@ -11,6 +11,8 @@ use crate::infrastructure::utils::get_manual_input;
 use crate::infrastructure::verification::executor::execute;
 use crate::infrastructure::verification::parser::{Comparison, parse_verify_annotations};
 
+use super::guidance::{StoryLifecycleAction, guidance_for_action, print_human};
+
 /// Run the record command
 pub fn run(
     board_dir: &Path,
@@ -194,6 +196,8 @@ pub fn run(
         "Story {} updated with link to proof.",
         story.id().bright_blue()
     );
+    let guidance = guidance_for_action(StoryLifecycleAction::Record, story.stage, story.id());
+    print_human(guidance.as_ref());
 
     Ok(())
 }

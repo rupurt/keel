@@ -7,10 +7,25 @@ use anyhow::Result;
 #[cfg(test)]
 use crate::application::story_lifecycle;
 use crate::application::story_lifecycle::StoryLifecycleService;
+use crate::domain::model::StoryState;
+use crate::infrastructure::loader::load_board;
+
+use super::guidance::{StoryLifecycleAction, guidance_for_action, print_human};
 
 /// Run the start story command
 pub fn run(board_dir: &Path, id: &str, version: Option<u64>) -> Result<()> {
-    StoryLifecycleService::start(board_dir, id, version)
+    StoryLifecycleService::start(board_dir, id, version)?;
+
+    let board = load_board(board_dir)?;
+    let story = board.require_story(id)?;
+    let guidance = guidance_for_action(
+        StoryLifecycleAction::Start,
+        StoryState::InProgress,
+        story.id(),
+    );
+    print_human(guidance.as_ref());
+
+    Ok(())
 }
 
 /// Check if knowledge is relevant to the given epic and voyage scope

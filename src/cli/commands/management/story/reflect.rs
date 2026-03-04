@@ -9,6 +9,8 @@ use crate::domain::model::StoryState;
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::template_rendering;
 
+use super::guidance::{StoryLifecycleAction, guidance_for_action, print_human};
+
 /// Run the reflect command
 pub fn run(board_dir: &Path, id: &str) -> Result<()> {
     let board = load_board(board_dir)?;
@@ -47,6 +49,8 @@ pub fn run(board_dir: &Path, id: &str) -> Result<()> {
     })?;
 
     println!("Created: stories/{}/REFLECT.md", story.id());
+    let guidance = guidance_for_action(StoryLifecycleAction::Reflect, story.stage, story.id());
+    print_human(guidance.as_ref());
 
     Ok(())
 }

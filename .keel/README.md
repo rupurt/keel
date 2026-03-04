@@ -25,7 +25,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Add Canonical Next Guidance To Story Lifecycle Commands](stories/1vxZ0BXgR/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Story And Voyage Lifecycle Guidance](epics/1vxYzSury/voyages/1vxYzjiwH/) |
 | [Add Contract Tests For Canonical Guidance Fields](stories/1vxZ0Bh0v/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Output Contract And Shared Renderer](epics/1vxYzSury/voyages/1vxYzh8ep/) |
 | [Implement Shared Guidance Renderer Helpers](stories/1vxZ0BinH/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Output Contract And Shared Renderer](epics/1vxYzSury/voyages/1vxYzh8ep/) |
 | [Add Canonical Guidance To ADR Transition Commands](stories/1vxZ0C7OF/README.md) | feat | [Deterministic Command Guidance](epics/1vxYzSury/) / [Governance And Research Guidance](epics/1vxYzSury/voyages/1vxYzjVMv/) |
@@ -56,7 +55,7 @@
 |--------|--------|
 | [Output Contract And Shared Renderer](epics/1vxYzSury/voyages/1vxYzh8ep/) | in-progress |
 | [Governance And Research Guidance](epics/1vxYzSury/voyages/1vxYzjVMv/) | planned |
-| [Story And Voyage Lifecycle Guidance](epics/1vxYzSury/voyages/1vxYzjiwH/) | planned |
+| [Story And Voyage Lifecycle Guidance](epics/1vxYzSury/voyages/1vxYzjiwH/) | in-progress |
 | [Decision And Verification Guidance Parity](epics/1vxYzSury/voyages/1vxYzrwma/) | planned |
 | [Command Classification Drift Guards](epics/1vxYzSury/voyages/1vxYzsAxT/) | planned |
 

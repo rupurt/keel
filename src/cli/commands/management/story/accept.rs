@@ -5,10 +5,20 @@ use std::path::Path;
 use anyhow::Result;
 
 use crate::application::story_lifecycle::StoryLifecycleService;
+use crate::infrastructure::loader::load_board;
+
+use super::guidance::{StoryLifecycleAction, guidance_for_action, print_human};
 
 /// Run the accept command
 pub fn run(board_dir: &Path, id: &str, human: bool, reflect: Option<&str>) -> Result<()> {
-    StoryLifecycleService::accept(board_dir, id, human, reflect)
+    StoryLifecycleService::accept(board_dir, id, human, reflect)?;
+
+    let board = load_board(board_dir)?;
+    let story = board.require_story(id)?;
+    let guidance = guidance_for_action(StoryLifecycleAction::Accept, story.stage, story.id());
+    print_human(guidance.as_ref());
+
+    Ok(())
 }
 
 #[cfg(test)]
