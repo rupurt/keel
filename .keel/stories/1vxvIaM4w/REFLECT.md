@@ -2,7 +2,7 @@
 
 ## Knowledge
 
-### L001: Centralize technique status before rendering
+### 1vyDuwmNc: Centralize technique status before rendering
 | Field | Value |
 |-------|-------|
 | **Category** | architecture |

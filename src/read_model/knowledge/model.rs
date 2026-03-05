@@ -3,11 +3,12 @@
 //! Represents knowledge extracted from stories, voyages, and ad-hoc files.
 
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::path::PathBuf;
 
 /// Source of an extracted knowledge
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum KnowledgeSourceType {
     /// Knowledge from a completed story's ## Knowledge section
     Story,
@@ -28,9 +29,9 @@ impl fmt::Display for KnowledgeSourceType {
 }
 
 /// A single unit of knowledge extracted from implementation or research
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Knowledge {
-    /// Unique identifier (e.g., L001, ML001)
+    /// Canonical globally unique identifier (9-character base62)
     pub id: String,
     /// Source file path
     pub source: PathBuf,
@@ -38,6 +39,8 @@ pub struct Knowledge {
     pub source_type: KnowledgeSourceType,
     /// Scope (epic/voyage) where it was discovered
     pub scope: Option<String>,
+    /// Story ID that produced this knowledge (if known)
+    pub source_story_id: Option<String>,
     /// Short descriptive title
     pub title: String,
     /// Thematic category (e.g., code, testing, process)
@@ -58,6 +61,12 @@ pub struct Knowledge {
     pub score: f64,
     /// Confidence 0.0-1.0 in the insight quality
     pub confidence: f64,
+    /// Structured links to other canonical knowledge IDs
+    pub linked_ids: Vec<String>,
+    /// Most similar related knowledge ID (if any)
+    pub similar_to: Option<String>,
+    /// Similarity score to `similar_to` in 0.0-1.0
+    pub similarity_score: Option<f64>,
 }
 
 impl Knowledge {
@@ -129,6 +138,7 @@ mod tests {
             source: Path::new("test.md").to_path_buf(),
             source_type: KnowledgeSourceType::Story,
             scope: None,
+            source_story_id: None,
             title: "Test".to_string(),
             category: "code".to_string(),
             context: String::new(),
@@ -139,6 +149,9 @@ mod tests {
             observed_at: None,
             score: 0.5,
             confidence: 0.8,
+            linked_ids: Vec::new(),
+            similar_to: None,
+            similarity_score: None,
         };
         assert!(k.is_pending());
         assert!(!k.is_applied());
@@ -151,6 +164,7 @@ mod tests {
             source: Path::new("test.md").to_path_buf(),
             source_type: KnowledgeSourceType::Story,
             scope: None,
+            source_story_id: None,
             title: "Test".to_string(),
             category: "code".to_string(),
             context: String::new(),
@@ -161,6 +175,9 @@ mod tests {
             observed_at: None,
             score: 0.5,
             confidence: 0.8,
+            linked_ids: Vec::new(),
+            similar_to: None,
+            similarity_score: None,
         };
         assert!(!k.is_pending());
         assert!(k.is_applied());
@@ -180,6 +197,7 @@ mod tests {
                 source: Path::new("a.md").to_path_buf(),
                 source_type: KnowledgeSourceType::Story,
                 scope: None,
+                source_story_id: None,
                 title: "A".to_string(),
                 category: "code".to_string(),
                 context: String::new(),
@@ -190,12 +208,16 @@ mod tests {
                 observed_at: None,
                 score: 0.5,
                 confidence: 0.8,
+                linked_ids: Vec::new(),
+                similar_to: None,
+                similarity_score: None,
             },
             Knowledge {
                 id: "L002".to_string(),
                 source: Path::new("b.md").to_path_buf(),
                 source_type: KnowledgeSourceType::Story,
                 scope: None,
+                source_story_id: None,
                 title: "B".to_string(),
                 category: "code".to_string(),
                 context: String::new(),
@@ -206,12 +228,16 @@ mod tests {
                 observed_at: None,
                 score: 0.5,
                 confidence: 0.8,
+                linked_ids: Vec::new(),
+                similar_to: None,
+                similarity_score: None,
             },
             Knowledge {
                 id: "L003".to_string(),
                 source: Path::new("c.md").to_path_buf(),
                 source_type: KnowledgeSourceType::Story,
                 scope: None,
+                source_story_id: None,
                 title: "C".to_string(),
                 category: "process".to_string(),
                 context: String::new(),
@@ -222,6 +248,9 @@ mod tests {
                 observed_at: None,
                 score: 0.5,
                 confidence: 0.8,
+                linked_ids: Vec::new(),
+                similar_to: None,
+                similarity_score: None,
             },
         ];
 
@@ -247,6 +276,7 @@ mod tests {
             source: Path::new("test.md").to_path_buf(),
             source_type: KnowledgeSourceType::Story,
             scope: None,
+            source_story_id: None,
             title: "Test".to_string(),
             category: "code".to_string(),
             context: String::new(),
@@ -257,6 +287,9 @@ mod tests {
             observed_at: None,
             score: 0.5,
             confidence: 0.8,
+            linked_ids: Vec::new(),
+            similar_to: None,
+            similarity_score: None,
         };
         assert!(k.is_applied());
     }

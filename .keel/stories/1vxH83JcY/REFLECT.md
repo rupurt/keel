@@ -2,7 +2,7 @@
 
 ## Knowledge
 
-### L001: Keep Token Names Equal To Frontmatter Keys
+### 1vyDuwE2r: Keep Token Names Equal To Frontmatter Keys
 
 | Field | Value |
 |-------|-------|

@@ -9,6 +9,13 @@ use crate::read_model::knowledge::scanner;
 
 /// Show detailed information for a single knowledge unit
 pub fn run(board_dir: &Path, id: &str) -> Result<()> {
+    if !crate::read_model::knowledge::is_canonical_knowledge_id(id) {
+        return Err(anyhow!(
+            "Knowledge show expects a canonical global ID (9-character base62): {}",
+            id
+        ));
+    }
+
     let knowledge_list = scanner::scan_all_knowledge(board_dir)?;
 
     let k = knowledge_list
@@ -22,6 +29,7 @@ pub fn run(board_dir: &Path, id: &str) -> Result<()> {
         .row("Title:", format!("{}", k.title.bold()))
         .row("ID:", k.id.to_string())
         .row("Category:", k.category.to_string())
+        .row_optional("Story:", k.source_story_id.clone())
         .row(
             "Source:",
             format!("{}:{}", k.source_type, k.source.display()),
@@ -50,6 +58,18 @@ pub fn run(board_dir: &Path, id: &str) -> Result<()> {
     let mut document = ShowDocument::new();
     document.push_header(metadata, None);
     let mut sections = vec![context, insight, action, applies_to];
+
+    if !k.linked_ids.is_empty() {
+        let mut linked = ShowSection::new("Linked Knowledge");
+        linked.push_lines([k.linked_ids.join(", ")]);
+        sections.push(linked);
+    }
+
+    if let (Some(similar_to), Some(score)) = (&k.similar_to, k.similarity_score) {
+        let mut similar = ShowSection::new("Nearest Similarity");
+        similar.push_lines([format!("{similar_to} ({score:.2})")]);
+        sections.push(similar);
+    }
 
     if k.is_applied() {
         let mut applied = ShowSection::new("Applied");

@@ -19,7 +19,7 @@ Format:
 | **Applied** | |
 -->
 
-### L001: Frontmatter-rewrite adapters preserve markdown parity with low migration risk
+### 1vyDuwPS4: Frontmatter-rewrite adapters preserve markdown parity with low migration risk
 
 | Field | Value |
 |-------|-------|

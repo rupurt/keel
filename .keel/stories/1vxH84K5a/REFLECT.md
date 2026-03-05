@@ -19,7 +19,7 @@ Format:
 | **Applied** | |
 -->
 
-### L001: Keep token inventories and CLI `new` surfaces coupled by drift tests
+### 1vyDuwGh9: Keep token inventories and CLI `new` surfaces coupled by drift tests
 
 | Field | Value |
 |-------|-------|

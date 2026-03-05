@@ -2,7 +2,7 @@
 
 ## Knowledge
 
-### L001: Deterministic ranking requires total-order tie breaks
+### 1vyDuwiA5: Deterministic ranking requires total-order tie breaks
 | Field | Value |
 |-------|-------|
 | **Category** | code |

@@ -4,7 +4,19 @@
 
 use crate::domain::model::{Board, Voyage};
 use anyhow::{Context, Result};
+use std::collections::hash_map::DefaultHasher;
 use std::fs;
+use std::hash::{Hash, Hasher};
+
+fn synthesized_knowledge_id(voyage_id: &str, story_id: &str, source_knowledge_id: &str) -> String {
+    let mut hasher = DefaultHasher::new();
+    voyage_id.hash(&mut hasher);
+    story_id.hash(&mut hasher);
+    source_knowledge_id.hash(&mut hasher);
+
+    let raw = hasher.finish() % 13_537_086_546_263_552_u64; // 62^9
+    crate::infrastructure::story_id::encode_base62(raw, 9)
+}
 
 /// Synthesize reflections for a voyage into a KNOWLEDGE.md file
 pub fn synthesize_voyage_knowledge(board: &Board, voyage: &Voyage) -> Result<()> {
@@ -18,7 +30,9 @@ pub fn synthesize_voyage_knowledge(board: &Board, voyage: &Voyage) -> Result<()>
         voyage.id()
     );
 
+    let mut synthesized_units = Vec::new();
     let mut found_reflections = false;
+    synthesis.push_str("## Story Knowledge\n\n");
     for story in stories {
         let story_dir = story.path.parent().unwrap();
         let reflect_path = story_dir.join("REFLECT.md");
@@ -55,6 +69,8 @@ pub fn synthesize_voyage_knowledge(board: &Board, voyage: &Voyage) -> Result<()>
                 ));
                 synthesis.push_str(&format!("| **Applies To** | {} |\n", insight.applies_to));
                 synthesis.push_str(&format!("| **Applied** | {} |\n\n", insight.applied));
+
+                synthesized_units.push((story.id().to_string(), insight));
             }
             synthesis.push_str(
                 "
@@ -64,6 +80,28 @@ pub fn synthesize_voyage_knowledge(board: &Board, voyage: &Voyage) -> Result<()>
 ",
             );
             found_reflections = true;
+        }
+    }
+
+    if found_reflections {
+        synthesis.push_str("## Synthesis\n\n");
+        for (story_id, insight) in &synthesized_units {
+            let synth_id = synthesized_knowledge_id(voyage.id(), story_id, &insight.id);
+            synthesis.push_str(&format!("### {}: {}\n\n", synth_id, insight.title));
+            synthesis.push_str("| Field | Value |\n");
+            synthesis.push_str("|-------|-------|\n");
+            synthesis.push_str(&format!("| **Category** | {} |\n", insight.category));
+            synthesis.push_str(&format!("| **Context** | {} |\n", insight.context));
+            synthesis.push_str(&format!("| **Insight** | {} |\n", insight.insight));
+            synthesis.push_str(&format!(
+                "| **Suggested Action** | {} |\n",
+                insight.suggested_action
+            ));
+            synthesis.push_str(&format!("| **Applies To** | {} |\n", insight.applies_to));
+            synthesis.push_str(&format!("| **Linked Knowledge IDs** | {} |\n", insight.id));
+            synthesis.push_str(&format!("| **Score** | {:.2} |\n", insight.score));
+            synthesis.push_str(&format!("| **Confidence** | {:.2} |\n", insight.confidence));
+            synthesis.push_str(&format!("| **Applied** | {} |\n\n", insight.applied));
         }
     }
 

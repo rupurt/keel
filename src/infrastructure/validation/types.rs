@@ -197,6 +197,7 @@ pub enum CheckId {
     StoryUnexpectedReflection,
     StoryPlanningScaffold,
     StoryTerminalScaffold,
+    KnowledgeManifestIntegrity,
     StoryMissingManifest,
     StoryManifestTampered,
     VoyageStatusDrift,

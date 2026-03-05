@@ -2,7 +2,7 @@
 
 ## Knowledge
 
-### L001: Stage-gate scaffold checks to avoid noisy early warnings
+### 1vyDuwdbL: Stage-gate scaffold checks to avoid noisy early warnings
 
 | Field | Value |
 |-------|-------|

@@ -2,7 +2,7 @@
 
 ## Knowledge
 
-### L001: Intake Stage Must Be Canonical In Creation Code
+### 1vyDuwoz6: Intake Stage Must Be Canonical In Creation Code
 | Field | Value |
 |-------|-------|
 | **Category** | architecture |

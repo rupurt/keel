@@ -19,7 +19,7 @@ Format:
 | **Applied** | |
 -->
 
-### L001: Interface Adapters Should Delegate Instead Of Recompute
+### 1vyDuwCgL: Interface Adapters Should Delegate Instead Of Recompute
 
 | Field | Value |
 |-------|-------|

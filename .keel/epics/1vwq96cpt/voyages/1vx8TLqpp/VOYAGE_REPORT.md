@@ -25,7 +25,7 @@ boundaries are violated.
 - [x] [SRS-05/AC-03] Story-level evidence includes test output proving normalized contracts and behavior parity. <!-- verify: manual, SRS-05:end, proof: ac-3.log -->
 
 #### Implementation Insights
-- **L001: Enforce Root Layout With Contracts**
+- **1vyDuw8wW: Enforce Root Layout With Contracts**
   - Insight: Physical moves alone are not stable; contract tests must also assert forbidden `main.rs` module declarations and removed root file paths
   - Suggested Action: Pair every structural move with architecture contracts that check both declaration edges and on-disk paths
   - Applies To: src/main.rs, src/architecture_contract_tests.rs, src/**/mod.rs
@@ -53,7 +53,7 @@ are physically separated from domain and application logic.
 - [x] [SRS-03/AC-04] Regression and lifecycle tests stay green after infrastructure relocation. <!-- verify: manual, SRS-03:end, proof: ac-4.log -->
 
 #### Implementation Insights
-- **L001: Relocated Source Files May Break Compile-Time Template Paths**
+- **1vyDuwGDS: Relocated Source Files May Break Compile-Time Template Paths**
   - Insight: Compile-time embedded asset paths are location-sensitive; module moves must include immediate path rebasing for `include_str!` constants.
   - Suggested Action: After moving infrastructure modules, run a targeted compile/test immediately and patch relative asset paths before broader refactors.
   - Applies To: src/infrastructure/templates.rs
@@ -81,7 +81,7 @@ code into `src/cli/**` so the physical layout matches the DDD interface boundary
 - [x] [SRS-04/AC-02] `just test` remains green after CLI relocation. <!-- verify: manual, SRS-04:end, proof: ac-4.log -->
 
 #### Implementation Insights
-- **L001: Path-Wide Module Moves Need Import Rewrite First**
+- **1vyDuwLDX: Path-Wide Module Moves Need Import Rewrite First**
   - Insight: Bulk file moves are low-risk only when import rewrites and architecture path fixtures are updated in the same slice; otherwise compile passes but contract tests drift.
   - Suggested Action: For physical normalization stories, perform move + import rewrite + fixture path updates atomically before running full test and doctor checks.
   - Applies To: src/main.rs, src/cli/**, src/architecture_contract_tests.rs
@@ -110,7 +110,7 @@ grouped and independent from adapters.
 - [x] [SRS-02/AC-04] Domain move preserves behavior validated by existing test suites. <!-- verify: manual, SRS-02:end, proof: ac-4.log -->
 
 #### Implementation Insights
-- **L001: Multi-Requirement Stories Can Create Queue Cycles**
+- **1vyDuwdhQ: Multi-Requirement Stories Can Create Queue Cycles**
   - Insight: Implementation dependency derivation is SRS-order based; a story that references both early and later requirements can create circular dependencies across siblings.
   - Suggested Action: Keep each implementation story mapped to a primary SRS requirement in sequence, and reserve aggregate contract cleanup requirements for the final story.
   - Applies To: .keel/stories/*/README.md, src/traceability.rs

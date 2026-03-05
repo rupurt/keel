@@ -2,7 +2,7 @@
 
 ## Knowledge
 
-### L001: Catalog Entries Should Be Declarative And Sorted By ID
+### 1vyDuwZW6: Catalog Entries Should Be Declarative And Sorted By ID
 | Field | Value |
 |-------|-------|
 | **Category** | architecture |

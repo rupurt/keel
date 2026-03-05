@@ -174,6 +174,7 @@ mod tests {
             source: std::path::PathBuf::from("/test.md"),
             source_type: crate::read_model::knowledge::KnowledgeSourceType::Story,
             scope: Some("board-cli/01-core".to_string()),
+            source_story_id: Some("1abcDEF23".to_string()),
             title: "Test".to_string(),
             category: "code".to_string(),
             context: String::new(),
@@ -184,6 +185,9 @@ mod tests {
             observed_at: None,
             score: 0.5,
             confidence: 0.8,
+            linked_ids: Vec::new(),
+            similar_to: None,
+            similarity_score: None,
         };
 
         // Same epic is relevant

@@ -19,7 +19,7 @@ Format:
 | **Applied** | |
 -->
 
-### L001: Enforce policy invariants in application services, not command handlers
+### 1vyDuwnad: Enforce policy invariants in application services, not command handlers
 
 | Field | Value |
 |-------|-------|

@@ -58,7 +58,15 @@ mod tests {
     use super::*;
     use std::collections::BTreeSet;
 
-    const CLI_OWNED_TOKENS: &[&str] = &["applies_to", "context", "epic", "goal", "title", "type"];
+    const CLI_OWNED_TOKENS: &[&str] = &[
+        "applies_to",
+        "context",
+        "epic",
+        "goal",
+        "knowledge_example_id",
+        "title",
+        "type",
+    ];
     const SYSTEM_OWNED_TOKENS: &[&str] = &[
         "created_at",
         "decided_at",
@@ -349,7 +357,7 @@ mod tests {
     #[test]
     fn story_reflect_template_contains_placeholders() {
         assert!(story::REFLECT.contains("{{title}}"));
-        assert!(story::REFLECT.contains("### L001:"));
+        assert!(story::REFLECT.contains("{{knowledge_example_id}}"));
     }
 
     #[test]

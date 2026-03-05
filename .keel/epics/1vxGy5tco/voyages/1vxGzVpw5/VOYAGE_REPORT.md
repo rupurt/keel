@@ -23,7 +23,7 @@ Enforce submit/accept lifecycle gating so unresolved scaffold/default story and 
 - [x] [SRS-05/AC-01] Generated report artifacts remain excluded from unresolved-scaffold enforcement scope. <!-- verify: cargo test -p keel domain::state_machine::gating::tests::evaluate_story_accept_ignores_generated_manifest_for_scaffold_gate, SRS-05:start:end, proof: ac-3.log -->
 
 #### Implementation Insights
-- **L001: Reuse the structural placeholder detector in runtime gates**
+- **1vyDuwoFf: Reuse the structural placeholder detector in runtime gates**
   - Insight: Reusing `first_unfilled_placeholder_pattern` keeps runtime and doctor behavior consistent while avoiding duplicate marker logic.
   - Suggested Action: Add lifecycle gate checks by composing existing structural validators before adding new regex or scanners.
   - Applies To: src/domain/state_machine/gating.rs, src/infrastructure/validation/structural.rs
@@ -48,7 +48,7 @@ Add regression coverage that enforces hard-cutover behavior across doctor and tr
 - [x] [SRS-06/AC-03] Ensure updated suites remain green under `just quality` and `just test`. <!-- verify: manual, SRS-06:end, proof: ac-3.log -->
 
 #### Implementation Insights
-- **L001: Assert check identity and severity for hard-cutover gates**
+- **1vyDuwFj5: Assert check identity and severity for hard-cutover gates**
   - Insight: Message-only assertions can pass even if a hard error silently downgrades to a warning; check-id plus severity assertions prevent this regression class
   - Suggested Action: For each enforcement rule, add at least one integration test that asserts both `check_id` and `severity`
   - Applies To: `src/cli/commands/diagnostics/doctor/mod.rs`, `src/domain/state_machine/gating.rs`
@@ -73,7 +73,7 @@ Promote unresolved scaffold/default text findings from warning-level to error-le
 - [x] [SRS-01/AC-03] Enforcement remains hard-cutover and does not downgrade unresolved scaffold/default findings to warnings. <!-- verify: manual, SRS-01:end, proof: ac-3.log-->
 
 #### Implementation Insights
-- **L001: Report Pattern And Severity From One Shared Placeholder Extractor**
+- **1vyDuwBAC: Report Pattern And Severity From One Shared Placeholder Extractor**
   - Insight: A shared unresolved-pattern extractor enables deterministic detection and allows every check to emit the same actionable `pattern: ...` output while enforcing error severity.
   - Suggested Action: Route all new scaffold/default-text checks through the shared extractor and assert severity/message structure in unit tests.
   - Applies To: `src/infrastructure/validation/structural.rs`, `src/cli/commands/diagnostics/doctor/checks/*.rs`
@@ -98,7 +98,7 @@ Add stage-aware story/reflection coherency checks so unresolved default scaffold
 - [x] [SRS-02/AC-02] Non-terminal stories are excluded from these terminal coherency checks. <!-- verify: manual, SRS-02:end, proof: ac-3.log-->
 
 #### Implementation Insights
-- **L001: Stage-gate scaffold checks to avoid noisy early warnings**
+- **1vyDuwdbL: Stage-gate scaffold checks to avoid noisy early warnings**
   - Insight: Stage filtering is critical: terminal-only checks avoid penalizing in-progress drafting while still hard-failing review-complete states.
   - Suggested Action: Reuse a shared unresolved-pattern detector and explicitly gate by story stage (`needs-human-verification`, `done`) for terminal coherency rules.
   - Applies To: src/cli/commands/diagnostics/doctor/checks/stories.rs, src/infrastructure/validation/structural.rs

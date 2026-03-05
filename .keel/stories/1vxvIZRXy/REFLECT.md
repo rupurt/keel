@@ -2,7 +2,7 @@
 
 ## Knowledge
 
-### L001: Prefer direct status flags over aggregated recommendation blocks
+### 1vyDuwBfG: Prefer direct status flags over aggregated recommendation blocks
 | Field | Value |
 |-------|-------|
 | **Category** | architecture |

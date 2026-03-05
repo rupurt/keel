@@ -46,7 +46,14 @@ fn run_impl(board_dir: &Path, id: &str) -> Result<()> {
 
     let content = template_rendering::render(
         crate::infrastructure::templates::story::REFLECT,
-        &[("id", story.id()), ("title", story.title())],
+        &[
+            ("id", story.id()),
+            ("title", story.title()),
+            (
+                "knowledge_example_id",
+                &crate::infrastructure::story_id::generate_story_id(),
+            ),
+        ],
     );
     fs::write(&reflect_path, content).with_context(|| {
         format!(
@@ -85,7 +92,8 @@ mod tests {
 
         let content = fs::read_to_string(reflect_path).unwrap();
         assert!(content.contains("# Reflection - Reflect Story"));
-        assert!(content.contains("### L001:"));
+        assert!(content.contains("### "));
+        assert!(content.contains(": Title"));
     }
 
     #[test]

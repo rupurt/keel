@@ -21,7 +21,7 @@ Introduce application use cases for story lifecycle orchestration.
 - [x] [SRS-01/AC-01] Story lifecycle command paths delegate orchestration to application use-case services. <!-- verify: manual, SRS-01:start:end, proof: ac-1.log-->
 
 #### Implementation Insights
-- **L001: Thin Command Adapters Preserve Behavior During Refactors**
+- **1vyDuwDTq: Thin Command Adapters Preserve Behavior During Refactors**
   - Insight: Moving orchestration to an application service is low-risk when command handlers become thin pass-through adapters and existing command tests remain the compatibility suite.
   - Suggested Action: For future migrations, extract service logic first, then convert command files to wrappers and keep legacy helper behavior behind `#[cfg(test)]` shims only where needed.
   - Applies To: src/application/story_lifecycle.rs, src/commands/story/{start,submit,accept,reject,ice,thaw}.rs
@@ -42,7 +42,7 @@ Implement domain events and process managers for cross-aggregate flows.
 - [x] [SRS-02/AC-01] Domain events and process managers coordinate cross-aggregate flows such as automatic voyage/epic progression. <!-- verify: manual, SRS-02:start:end, proof: ac-1.log-->
 
 #### Implementation Insights
-- **L001: Event-First Cross-Aggregate Orchestration Preserves Boundaries**
+- **1vyDuwiVQ: Event-First Cross-Aggregate Orchestration Preserves Boundaries**
   - Insight: Emitting explicit domain events and routing follow-on actions through a process manager keeps use cases focused while preserving existing behavior.
   - Suggested Action: Keep cross-aggregate progression in process managers and add event/action tests whenever new lifecycle automation is introduced.
   - Applies To: src/application/story_lifecycle.rs, src/application/voyage_epic_lifecycle.rs, src/application/process_manager.rs
@@ -63,7 +63,7 @@ Introduce application use cases for voyage and epic lifecycle orchestration.
 - [x] [SRS-01/AC-02] Voyage and epic lifecycle orchestration is implemented through application use-case services rather than interface handlers. <!-- verify: manual, SRS-01:start:end, proof: ac-1.log-->
 
 #### Implementation Insights
-- **L001: Keep Lifecycle Command Handlers As Thin Adapters**
+- **1vyDuwgcV: Keep Lifecycle Command Handlers As Thin Adapters**
   - Insight: Moving orchestration into a dedicated application service lets command modules stay stable adapters while preserving behavior through existing command tests
   - Suggested Action: Add use-case methods first, then delegate command `run` entrypoints to those methods and update cross-command callsites to service APIs
   - Applies To: src/application/*.rs; src/commands/voyage/*.rs; src/commands/epic/*.rs
@@ -85,7 +85,7 @@ Rewire command handlers to use application services and enforcement entrypoints.
 - [x] [SRS-04/AC-01] Transition enforcement policies are invoked through application orchestration paths and covered by service-level tests. <!-- verify: manual, SRS-04:start:end, proof: ac-2.log-->
 
 #### Implementation Insights
-- **L001: Enforce policy invariants in application services, not command handlers**
+- **1vyDuwnad: Enforce policy invariants in application services, not command handlers**
   - Insight: Putting enforcement in application services centralizes lifecycle invariants and avoids drift across multiple command entrypoints.
   - Suggested Action: Keep command handlers thin and add service-level tests for every lifecycle policy; use architecture contract tests to block direct transition orchestration from handlers.
   - Applies To: `src/application/story_lifecycle.rs`, `src/application/voyage_epic_lifecycle.rs`, `src/commands/{story,voyage,epic}/*.rs`, `src/architecture_contract_tests.rs`

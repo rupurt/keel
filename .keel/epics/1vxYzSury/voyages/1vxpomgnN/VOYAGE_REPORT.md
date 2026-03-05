@@ -23,7 +23,7 @@ Define a shared planning/evidence projection contract that all three `show` comm
 - [x] [SRS-05/AC-03] Add deterministic-order tests proving projections emit stable section, requirement, story, and artifact ordering across equivalent board states. <!-- verify: cargo test --lib planning_show_projection_deterministic, SRS-NFR-01:start:end, proof: ac-3.log -->
 
 #### Implementation Insights
-- **L001: Centralized show projections reduce drift**
+- **1vyDuwrAD: Centralized show projections reduce drift**
   - Insight: A shared read-model projection layer stabilizes data contracts, keeps ordering deterministic, and lets renderers remain thin.
   - Suggested Action: Add new planning/read surfaces by extending `read_model::planning_show` first, then adapt renderer output only.
   - Applies To: `src/read_model/planning_show.rs`, `src/cli/commands/management/*/show.rs`
@@ -49,7 +49,7 @@ Upgrade `keel voyage show` so it reports voyage intent, scope boundaries, and re
 - [x] [SRS-03/AC-04] [SRS-NFR-01/AC-02] Voyage requirement and story rows are deterministically sorted so equivalent board state yields stable output. <!-- verify: cargo test --lib voyage_show_deterministic_ordering, SRS-NFR-01:start:end, proof: ac-4.log-->
 
 #### Implementation Insights
-- **L001: Voyage Requirement Views Need Both AC And Verify Mapping**
+- **1vyDuwuY1: Voyage Requirement Views Need Both AC And Verify Mapping**
   - Insight: Requirement linkage should combine AC references and verify requirement IDs; relying on one source undercounts coverage/verification state.
   - Suggested Action: Build requirement matrices from both marker channels, then deterministically sort rows and linked stories.
   - Applies To: `src/cli/commands/management/voyage/show.rs`, planning-read projections
@@ -76,7 +76,7 @@ Rework `keel story show` evidence output to display real proof details (metadata
 - [x] [SRS-04/AC-04] [SRS-NFR-02/AC-02] Evidence sections render explicit placeholder text when no proof artifacts exist or when evidence directories are absent. <!-- verify: cargo test --lib story_show_missing_evidence_placeholders, SRS-NFR-02:start:end, proof: ac-4.log-->
 
 #### Implementation Insights
-- **L001: Evidence UX Needs Structured Inventory Layers**
+- **1vyDuwUSB: Evidence UX Needs Structured Inventory Layers**
   - Insight: A clear split between linked proofs, supplementary artifacts, and media playback hints makes acceptance decisions possible without opening files manually.
   - Suggested Action: Keep evidence rendering model-driven and test each layer (metadata, excerpts, missing warnings, placeholders) independently.
   - Applies To: `src/cli/commands/management/story/show.rs`, future evidence/report renderers
@@ -104,7 +104,7 @@ Upgrade `keel epic show` to render an actionable planning report: authored summa
 - [x] [SRS-02/AC-04] [SRS-NFR-02/AC-01] When authored planning sections or evidence are missing, `epic show` prints explicit placeholders/warnings instead of omitting sections. <!-- verify: cargo test --lib epic_show_missing_data_placeholders, SRS-NFR-02:start:end, proof: ac-5.log-->
 
 #### Implementation Insights
-- **L001: Planning Show Parsing Needs Scaffold Filters**
+- **1vyDuwuBj: Planning Show Parsing Needs Scaffold Filters**
   - Insight: Requirement parsing must explicitly ignore scaffold rows like `TODO`/template defaults or placeholder mode appears complete when it is not.
   - Suggested Action: Keep placeholder filters and add fixture tests that assert empty summaries on scaffold-only PRDs.
   - Applies To: `src/cli/commands/management/epic/show.rs`, planning projection parsers

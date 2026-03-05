@@ -130,44 +130,66 @@ pub fn run(
         println!("{}", format_decision(&decision));
         print_human_guidance(guidance_for_decision(&decision).as_ref());
 
-        // Surface relevant knowledge for the work decision
-        if let NextDecision::Work(d) = &decision {
-            let epic = d.story.epic();
-            let scope = d.story.frontmatter.scope.as_deref();
-
-            if let Ok(all_knowledge) = crate::read_model::knowledge::scan_all_knowledge(board_dir) {
-                let relevant: Vec<_> = all_knowledge
-                    .into_iter()
-                    .filter(|k| {
-                        // is_relevant logic duplicated here or we can export it from story::start
-                        if let Some(s) = scope
-                            && k.scope.as_deref() == Some(s)
-                        {
-                            return true;
-                        }
-                        if let Some(e) = epic
-                            && let Some(k_scope) = &k.scope
-                            && k_scope.starts_with(e)
-                        {
-                            return true;
-                        }
-                        false
-                    })
-                    .filter(|k| k.applied.is_empty())
-                    .collect();
-
-                if !relevant.is_empty() {
-                    println!("\n{}", "Relevant knowledge for this task:".yellow().bold());
-                    for k in relevant {
-                        println!("  - [{}] {}", k.id.cyan(), k.title);
-                        println!("    Insight: {}", k.insight);
-                    }
+        match &decision {
+            NextDecision::Work(d) => {
+                surface_ranked_knowledge(
+                    board_dir,
+                    "Relevant knowledge for this task:",
+                    d.story.epic(),
+                    d.story.frontmatter.scope.as_deref(),
+                    5,
+                );
+            }
+            NextDecision::NeedsPlanning(d) => {
+                if let Some(voyage) = d.voyages.first() {
+                    let scope = voyage.scope_path();
+                    surface_ranked_knowledge(
+                        board_dir,
+                        "Relevant knowledge for planning:",
+                        Some(&voyage.epic_id),
+                        Some(&scope),
+                        5,
+                    );
                 }
             }
+            NextDecision::NeedsStories(d) => {
+                if let Some(voyage) = d.voyages.first() {
+                    let scope = voyage.scope_path();
+                    surface_ranked_knowledge(
+                        board_dir,
+                        "Relevant knowledge for planning:",
+                        Some(&voyage.epic_id),
+                        Some(&scope),
+                        5,
+                    );
+                }
+            }
+            NextDecision::Research(_) => {
+                surface_ranked_knowledge(
+                    board_dir,
+                    "Relevant knowledge for research:",
+                    None,
+                    None,
+                    5,
+                );
+            }
+            _ => {}
         }
     }
 
     Ok(())
+}
+
+fn surface_ranked_knowledge(
+    board_dir: &Path,
+    heading: &str,
+    epic: Option<&str>,
+    scope: Option<&str>,
+    limit: usize,
+) {
+    let _ = crate::application::knowledge_context::surface_ranked_knowledge(
+        board_dir, heading, epic, scope, limit, None,
+    );
 }
 
 fn decision_to_json(decision: &NextDecision) -> JsonResult {
@@ -469,47 +491,16 @@ fn run_parallel(
 
             // Surface relevant knowledge for the first ready story
             if let Some(story) = projection.ready.first() {
-                let epic = story.epic();
-                let scope = story.frontmatter.scope.as_deref();
-
-                if let Ok(all_knowledge) =
-                    crate::read_model::knowledge::scan_all_knowledge(board_dir)
-                {
-                    let relevant: Vec<_> = all_knowledge
-                        .into_iter()
-                        .filter(|k| {
-                            if let Some(s) = scope
-                                && k.scope.as_deref() == Some(s)
-                            {
-                                return true;
-                            }
-                            if let Some(e) = epic
-                                && let Some(k_scope) = &k.scope
-                                && k_scope.starts_with(e)
-                            {
-                                return true;
-                            }
-                            false
-                        })
-                        .filter(|k| k.applied.is_empty())
-                        .collect();
-
-                    if !relevant.is_empty() {
-                        println!(
-                            "\n{}",
-                            format!(
-                                "Relevant knowledge for [{}]:",
-                                crate::cli::style::styled_story_id(story.id())
-                            )
-                            .yellow()
-                            .bold()
-                        );
-                        for k in relevant {
-                            println!("  - [{}] {}", k.id.cyan(), k.title);
-                            println!("    Insight: {}", k.insight);
-                        }
-                    }
-                }
+                surface_ranked_knowledge(
+                    board_dir,
+                    &format!(
+                        "Relevant knowledge for [{}]:",
+                        crate::cli::style::styled_story_id(story.id())
+                    ),
+                    story.epic(),
+                    story.frontmatter.scope.as_deref(),
+                    5,
+                );
             }
         }
 

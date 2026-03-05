@@ -19,7 +19,7 @@ Format:
 | **Applied** | |
 -->
 
-### L001: Build Typed Command Actions Before Dispatching
+### 1vyDuwf3P: Build Typed Command Actions Before Dispatching
 
 | Field | Value |
 |-------|-------|

@@ -2,7 +2,7 @@
 
 ## Knowledge
 
-### L001: Keep Blocker Schema Shared Across Human and JSON Paths
+### 1vyDuwzyf: Keep Blocker Schema Shared Across Human and JSON Paths
 | Field | Value |
 |-------|-------|
 | **Category** | architecture |

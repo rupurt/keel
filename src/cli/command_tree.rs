@@ -266,6 +266,14 @@ pub fn build_cli() -> Command {
                     Command::new("list")
                         .about("List all knowledge units")
                         .arg(Arg::new("category").long("category").short('c').value_name("CATEGORY"))
+                        .arg(
+                            Arg::new("sort")
+                                .long("sort")
+                                .value_name("MODE")
+                                .value_parser(["id", "story"])
+                                .default_value("id")
+                                .help("Sort mode: id | story"),
+                        )
                         .arg(Arg::new("pending").long("pending").short('p').help("Only show pending (unapplied) knowledge").action(ArgAction::SetTrue)),
                 )
                 .subcommand(
@@ -284,6 +292,10 @@ pub fn build_cli() -> Command {
                 .subcommand(
                     Command::new("impact")
                         .about("Impact/Drift analysis"),
+                )
+                .subcommand(
+                    Command::new("migrate")
+                        .about("Migrate knowledge IDs to canonical global IDs"),
                 )
                 .subcommand_required(true),
         )

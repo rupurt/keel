@@ -1141,6 +1141,106 @@ pub fn check_terminal_story_coherence(board: &Board) -> Vec<Problem> {
     problems
 }
 
+/// Validate canonical knowledge manifest integrity and cross-unit linkage.
+pub fn check_knowledge_manifest_integrity(board_dir: &Path) -> Vec<Problem> {
+    let mut problems = Vec::new();
+    let manifest_path = board_dir.join("knowledge").join("manifest.json");
+
+    let manifest = match crate::read_model::knowledge::sync_knowledge_manifest(board_dir) {
+        Ok(manifest) => manifest,
+        Err(error) => {
+            problems.push(
+                Problem::error(
+                    manifest_path,
+                    format!("knowledge manifest is invalid: {}", error),
+                )
+                .with_check_id(CheckId::KnowledgeManifestIntegrity),
+            );
+            return problems;
+        }
+    };
+
+    let mut seen = HashSet::new();
+    let mut all_ids = HashSet::new();
+    for unit in &manifest.units {
+        all_ids.insert(unit.id.clone());
+
+        if !crate::read_model::knowledge::is_canonical_knowledge_id(&unit.id) {
+            problems.push(
+                Problem::error(
+                    unit.source.clone(),
+                    format!(
+                        "knowledge unit '{}' must use canonical generated format (9-character base62)",
+                        unit.id
+                    ),
+                )
+                .with_check_id(CheckId::KnowledgeManifestIntegrity),
+            );
+        }
+
+        if !seen.insert(unit.id.clone()) {
+            problems.push(
+                Problem::error(
+                    unit.source.clone(),
+                    format!("duplicate canonical knowledge id '{}'", unit.id),
+                )
+                .with_check_id(CheckId::KnowledgeManifestIntegrity),
+            );
+        }
+    }
+
+    for unit in &manifest.units {
+        for linked_id in &unit.linked_ids {
+            if !all_ids.contains(linked_id) {
+                problems.push(
+                    Problem::error(
+                        unit.source.clone(),
+                        format!(
+                            "knowledge unit '{}' links to unknown canonical id '{}'",
+                            unit.id, linked_id
+                        ),
+                    )
+                    .with_check_id(CheckId::KnowledgeManifestIntegrity),
+                );
+            }
+        }
+
+        if unit.source_type == crate::read_model::knowledge::KnowledgeSourceType::Voyage
+            && unit.linked_ids.is_empty()
+        {
+            problems.push(
+                Problem::error(
+                    unit.source.clone(),
+                    format!(
+                        "voyage synthesized knowledge '{}' must include Linked Knowledge IDs",
+                        unit.id
+                    ),
+                )
+                .with_check_id(CheckId::KnowledgeManifestIntegrity),
+            );
+        }
+
+        if unit.source_type == crate::read_model::knowledge::KnowledgeSourceType::Voyage
+            && let (Some(similar_to), Some(score)) = (&unit.similar_to, unit.similarity_score)
+            && score >= 0.95
+            && !unit.linked_ids.iter().any(|linked| linked == similar_to)
+        {
+            problems.push(
+                Problem::error(
+                    unit.source.clone(),
+                    format!(
+                        "knowledge '{}' is near-duplicate of '{}' (similarity {:.2}) without explicit linkage",
+                        unit.id, similar_to, score
+                    ),
+                )
+                .with_check_id(CheckId::KnowledgeManifestIntegrity),
+            );
+        }
+    }
+
+    problems
+}
+
 /// Check that REFLECT.md is only present for active or terminal stories.
 /// Stories in backlog or icebox should not have reflections.
 pub fn check_reflection_coherence(board: &Board) -> Vec<Problem> {

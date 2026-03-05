@@ -24,7 +24,7 @@ Refactor `keel config show` to present verification techniques as a canonical fl
 - [x] [SRS-01/AC-03] `keel config show --json` emits deterministic machine-readable rows using the same `label/detected/disabled/active` contract. <!-- verify: cargo test -p keel config_show_json_contract, SRS-01:end, proof: ac-4.log-->
 
 #### Implementation Insights
-- **L001: Prefer direct status flags over aggregated recommendation blocks**
+- **1vyDuwBfG: Prefer direct status flags over aggregated recommendation blocks**
   - Insight: A per-technique flag matrix (`detected`, `disabled`, `active`) is a better contract boundary than mixed narrative sections because it cleanly separates inventory from recommendation logic.
   - Suggested Action: Keep config/read commands focused on canonical state and move advisory ranking/commentary to dedicated recommend commands.
   - Applies To: `src/cli/commands/setup/config.rs`, `src/read_model/verification_techniques.rs`
@@ -50,7 +50,7 @@ Remove recommendation sections from planning read commands and update architect 
 - [x] [SRS-06/AC-01] `AGENTS.md` planning workflow explicitly references `just keel config show` (inventory) and `just keel verify recommend` (detected+active options) for verification planning. <!-- verify: manual, SRS-06:start:end, proof: ac-3.log -->
 
 #### Implementation Insights
-- **L001: Keep recommendation sourcing decoupled from planning read surfaces**
+- **1vyDuwUUO: Keep recommendation sourcing decoupled from planning read surfaces**
   - Insight: Moving recommendation concerns to dedicated commands (`config show` inventory + `verify recommend`) keeps planning show outputs focused on planning state and avoids mixed concerns.
   - Suggested Action: Keep epic/voyage/story show projections limited to planning progress/evidence summaries; centralize recommendation logic in verification/config read models.
   - Applies To: `src/read_model/planning_show.rs`, `src/cli/commands/management/verify.rs`, `AGENTS.md`
@@ -75,7 +75,7 @@ Introduce `keel verify recommend` as the recommendation surface, filtered to det
 - [x] [SRS-04/AC-02] `keel verify recommend --json` emits deterministic machine-readable recommendations using the same filter contract. <!-- verify: cargo test -p keel verify_recommend_json_contract, SRS-04:end, proof: ac-3.log-->
 
 #### Implementation Insights
-- **L001: Centralize technique status before rendering**
+- **1vyDuwmNc: Centralize technique status before rendering**
   - Insight: A shared status report API in the read model removes duplicated filtering logic and keeps recommendation output consistent across surfaces.
   - Suggested Action: Route all verification-technique render paths through `resolve_technique_status_report` rather than command-local detection code.
   - Applies To: `src/read_model/verification_techniques.rs`, `src/cli/commands/setup/config.rs`, `src/cli/commands/management/verify.rs`
@@ -100,7 +100,7 @@ Perform a hard cutover of verification execution to `keel verify run`, preservin
 - [x] [SRS-03/AC-02] `keel verify run --json` returns deterministic machine-readable execution results equivalent to the text path. <!-- verify: cargo test -p keel verify_run_json_contract, SRS-03:end, proof: ac-3.log-->
 
 #### Implementation Insights
-- **L001: Parse legacy forms but block execution paths**
+- **1vyDuwu3r: Parse legacy forms but block execution paths**
   - Insight: Keeping hidden legacy root args allows deterministic migration errors without relying on generic clap parse failures, while still forcing execution through the new subcommand path.
   - Suggested Action: For future command cutovers, preserve temporary parse compatibility only for guidance and route all execution through explicit new subcommands.
   - Applies To: `src/cli/command_tree.rs`, `src/cli/runtime.rs`, `src/cli/commands/management/verify.rs`

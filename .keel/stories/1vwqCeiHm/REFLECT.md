@@ -2,7 +2,7 @@
 
 ## Knowledge
 
-### L001: Declarative Frontmatter Patches Reduce Drift Across Commands
+### 1vyDuwJXq: Declarative Frontmatter Patches Reduce Drift Across Commands
 
 | Field | Value |
 |-------|-------|

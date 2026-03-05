@@ -19,7 +19,7 @@ Format:
 | **Applied** | |
 -->
 
-### L001: Reuse the structural placeholder detector in runtime gates
+### 1vyDuwoFf: Reuse the structural placeholder detector in runtime gates
 
 | Field | Value |
 |-------|-------|

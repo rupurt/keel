@@ -16,4 +16,9 @@ pub use navigator::{
     SeedBlocker, bearing_draft, detect_rising_patterns, rank_seed_candidates, rollout_batches,
     seed_blockers,
 };
-pub use scanner::{filter_by_category, filter_unapplied, parse_applies_to, scan_all_knowledge};
+pub use scanner::{
+    KnowledgeManifest, KnowledgeMigrationReport, KnowledgeSort, RankedKnowledge,
+    filter_by_category, filter_unapplied, is_canonical_knowledge_id, load_knowledge_manifest,
+    migrate_legacy_knowledge_ids, parse_applies_to, rank_relevant_knowledge, scan_all_knowledge,
+    sync_knowledge_manifest,
+};

@@ -2,7 +2,7 @@
 
 ## Knowledge
 
-### L001: Centralized recommendation projection keeps show commands coherent
+### 1vyDuwLvf: Centralized recommendation projection keeps show commands coherent
 | Field | Value |
 |-------|-------|
 | **Category** | architecture |

@@ -2,7 +2,7 @@
 
 ## Knowledge
 
-### L001: Evidence UX Needs Structured Inventory Layers
+### 1vyDuwUSB: Evidence UX Needs Structured Inventory Layers
 | Field | Value |
 |-------|-------|
 | **Category** | architecture |

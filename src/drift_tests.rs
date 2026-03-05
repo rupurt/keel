@@ -593,7 +593,15 @@ mod template_generator {
 mod token_bucket_contract {
     use std::collections::BTreeSet;
 
-    const CLI_OWNED_TOKENS: &[&str] = &["applies_to", "context", "epic", "goal", "title", "type"];
+    const CLI_OWNED_TOKENS: &[&str] = &[
+        "applies_to",
+        "context",
+        "epic",
+        "goal",
+        "knowledge_example_id",
+        "title",
+        "type",
+    ];
     const SYSTEM_OWNED_TOKENS: &[&str] = &[
         "created_at",
         "decided_at",

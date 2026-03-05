@@ -19,7 +19,7 @@ Format:
 | **Applied** | |
 -->
 
-### L001: Thin Command Adapters Preserve Behavior During Refactors
+### 1vyDuwDTq: Thin Command Adapters Preserve Behavior During Refactors
 
 | Field | Value |
 |-------|-------|

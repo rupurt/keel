@@ -24,7 +24,7 @@ Change story creation defaults so all new stories start in `icebox`, with explic
 - [x] [SRS-03/AC-02] [SRS-NFR-01/AC-01] Stage default enforcement is covered by a single canonical creation path test (no alternate backlog default path remains). <!-- verify: cargo test --lib story_new_canonical_stage_path, SRS-NFR-01:start:end, proof: ac-4.log-->
 
 #### Implementation Insights
-- **L001: Intake Stage Must Be Canonical In Creation Code**
+- **1vyDuwoz6: Intake Stage Must Be Canonical In Creation Code**
   - Insight: Canonical defaults are safest when enforced once in creation code and not left to template/state-condition combinations.
   - Suggested Action: Keep `story new` stage assignment unconditional and test it across unscoped/draft/planned scopes.
   - Applies To: `src/cli/commands/management/story/new.rs`, story template/frontmatter defaults

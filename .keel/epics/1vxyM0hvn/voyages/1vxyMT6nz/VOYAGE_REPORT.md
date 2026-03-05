@@ -22,7 +22,7 @@ Implement deterministic semantic feature extraction for candidate story pairs so
 - [x] [SRS-01/AC-02] Extractor emits explicit unresolved-context signals when architectural semantics are insufficient. <!-- verify: cargo test --lib next_parallel_feature_vectors_emit_unknown_risk, SRS-01:start:end, proof: ac-2.log-->
 
 #### Implementation Insights
-- **L001: Work Item Comparator Is Not Lexical**
+- **1vyDuw9iN: Work Item Comparator Is Not Lexical**
   - Insight: `compare_work_item_ids` can order IDs differently from naive lexical sorting (for example `S10` before `S2`)
   - Suggested Action: Use `compare_work_item_ids` for all deterministic work-item ordering and avoid hard-coded lexical expectations in tests
   - Applies To: `src/cli/commands/management/next_support/*`
@@ -45,7 +45,7 @@ Render pairwise blocker explanations so operators can see exactly which story pa
 - [x] [SRS-04/AC-02] JSON output includes the same pairwise blocker semantics with stable field names. <!-- verify: cargo test --lib next_parallel_pairwise_blockers_render_json, SRS-04:start:end, proof: ac-2.log-->
 
 #### Implementation Insights
-- **L001: Keep Blocker Schema Shared Across Human and JSON Paths**
+- **1vyDuwzyf: Keep Blocker Schema Shared Across Human and JSON Paths**
   - Insight: A single blocker model (`story_id`, `blocked_by_story_id`, `reasons`, `confidence`) makes it easy to keep human and JSON outputs in sync
   - Suggested Action: Build future blocker explanations from the same canonical blocker payload and only vary presentation
   - Applies To: `src/cli/commands/management/next.rs`, `src/cli/commands/management/next_support/parallel_threshold.rs`
@@ -68,7 +68,7 @@ Implement conservative scoring that transforms semantic feature vectors into pai
 - [x] [SRS-02/AC-02] Unresolved architectural signals reduce confidence and raise conservative conflict risk. <!-- verify: cargo test --lib next_parallel_pairwise_scoring_penalizes_uncertainty, SRS-02:start:end, proof: ac-2.log-->
 
 #### Implementation Insights
-- **L001: Unknown Context Should Force Risk Floor**
+- **1vyDuwXCw: Unknown Context Should Force Risk Floor**
   - Insight: Unresolved semantic context is easiest to keep safe when scoring applies an explicit risk floor and confidence ceiling instead of only additive penalties
   - Suggested Action: Keep conservative fallback thresholds as first-class scoring invariants and assert them directly in tests
   - Applies To: `src/cli/commands/management/next_support/parallel_*.rs`
@@ -91,7 +91,7 @@ Integrate confidence thresholding into parallel selection so only high-confidenc
 - [x] [SRS-03/AC-02] Threshold gating blocks uncertain pairs conservatively by default when confidence is unresolved. <!-- verify: cargo test --lib next_parallel_threshold_blocks_uncertain_pairs, SRS-03:start:end, proof: ac-2.log-->
 
 #### Implementation Insights
-- **L001: Greedy Threshold Gate Gives Deterministic Safe Subset**
+- **1vyDuwBZS: Greedy Threshold Gate Gives Deterministic Safe Subset**
   - Insight: Sorting candidates by canonical work-item comparator before threshold filtering yields deterministic, reproducible safe subsets
   - Suggested Action: Keep canonical ID ordering and missing-pair fallback confidence (`0.0`) as hard invariants in gate logic
   - Applies To: `src/cli/commands/management/next_support/parallel_threshold.rs`
@@ -114,7 +114,7 @@ Add optional story-level `blocked_by` metadata so planners can explicitly encode
 - [x] [SRS-05/AC-02] `blocked_by` overrides inferred allow decisions and forces pairwise blocking in `next --parallel`. <!-- verify: cargo test --lib next_parallel_blocked_by_override_enforced, SRS-05:start:end, proof: ac-2.log-->
 
 #### Implementation Insights
-- **L001: Frontmatter Field Additions Need Builder + Literal Sweep**
+- **1vyDuwlIj: Frontmatter Field Additions Need Builder + Literal Sweep**
   - Insight: `#[serde(default)]` handles runtime parsing, but compile-time struct literals and test builders still require explicit wiring or defaults to avoid breakage and hidden drift in fixture generation.
   - Suggested Action: When adding frontmatter fields, immediately update `TestStory`, `StoryFactory`, and all explicit `StoryFrontmatter { ... }` literals in one slice before running broader checks.
   - Applies To: `src/domain/model/story.rs`, `src/test_helpers.rs`, read-model fixture tests
@@ -137,7 +137,7 @@ Add command-level and projection-level contract tests to keep human/JSON paralle
 - [x] [SRS-06/AC-03] Human and JSON projections expose consistent pairwise blocker semantics for selected and blocked candidates. <!-- verify: cargo test --lib next_parallel_pairwise_blockers_render_consistently, SRS-06:start:end, proof: ac-2.log-->
 
 #### Implementation Insights
-- **L001: Deterministic Projection Requires Ordered Containers End-To-End**
+- **1vyDuwMlz: Deterministic Projection Requires Ordered Containers End-To-End**
   - Insight: Stable candidate sorting is not enough; projection containers must also preserve ordering or serialized output can still drift across runs.
   - Suggested Action: Use ordered maps (`BTreeMap`) for projection payloads and shared projection helpers for all render paths.
   - Applies To: `src/cli/commands/management/next.rs` and other CLI JSON projection builders
@@ -160,7 +160,7 @@ Add doctor checks that validate explicit and inferred parallel conflict signals 
 - [x] [SRS-07/AC-02] Doctor output includes specific story pairs and remediation guidance. <!-- verify: cargo test --lib doctor_parallel_conflict_reports_actionable_pairs, SRS-07:start:end, proof: ac-2.log-->
 
 #### Implementation Insights
-- **L001: Coherence Checks Need Canonical Pair Normalization**
+- **1vyDuw2wf: Coherence Checks Need Canonical Pair Normalization**
   - Insight: Pair-level diagnostics become deterministic and deduplicated only when pair IDs are normalized (`min/max`) before reporting.
   - Suggested Action: Always canonicalize relationship IDs before emitting pair-based doctor findings.
   - Applies To: `src/cli/commands/diagnostics/doctor/checks/stories.rs` and similar relationship validators

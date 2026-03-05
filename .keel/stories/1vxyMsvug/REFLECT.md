@@ -2,7 +2,7 @@
 
 ## Knowledge
 
-### L001: Greedy Threshold Gate Gives Deterministic Safe Subset
+### 1vyDuwBZS: Greedy Threshold Gate Gives Deterministic Safe Subset
 | Field | Value |
 |-------|-------|
 | **Category** | code |

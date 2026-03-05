@@ -23,7 +23,7 @@ Expose technique recommendations in planning read commands so teams can see whic
 - [x] [SRS-04/AC-03] Show rendering remains advisory-only and does not trigger execution of recommended techniques. <!-- verify: cargo test --lib show_recommendations_do_not_execute, SRS-NFR-02:start:end, proof: ac-3.log-->
 
 #### Implementation Insights
-- **L001: Centralized recommendation projection keeps show commands coherent**
+- **1vyDuwLvf: Centralized recommendation projection keeps show commands coherent**
   - Insight: A shared recommendation report model plus per-command input extraction avoids drift between epic/voyage/story rendering.
   - Suggested Action: Add new recommendation behavior in `verification_techniques` first, then wire each show command through the same renderer helper.
   - Applies To: `src/read_model/verification_techniques.rs`, `src/cli/commands/management/*/show.rs`
@@ -48,7 +48,7 @@ Allow projects to configure the technique bank through `keel.toml`, including en
 - [x] [SRS-02/AC-03] Invalid overrides never trigger technique execution and produce explicit diagnostics. <!-- verify: cargo test --lib technique_override_invalid_is_advisory_only, SRS-NFR-02:start:end, proof: ac-3.log -->
 
 #### Implementation Insights
-- **L001: Advisory parser keeps keel.toml resilient**
+- **1vyDuwSon: Advisory parser keeps keel.toml resilient**
   - Insight: Parsing overrides from raw TOML with per-field diagnostics allows invalid entries to be ignored safely without blocking normal command behavior.
   - Suggested Action: Keep optional/advanced config surfaces advisory by default, then merge validated entries into canonical models with explicit diagnostics.
   - Applies To: `src/read_model/verification_techniques.rs`
@@ -73,7 +73,7 @@ Build the autodetection and ranking pipeline that infers project stack signals a
 - [x] [SRS-03/AC-03] Recommendation ranking is deterministic for equivalent repository inputs. <!-- verify: cargo test --lib technique_recommendation_deterministic, SRS-NFR-01:start:end, proof: ac-3.log -->
 
 #### Implementation Insights
-- **L001: Deterministic ranking requires total-order tie breaks**
+- **1vyDuwiA5: Deterministic ranking requires total-order tie breaks**
   - Insight: Deterministic ordering is guaranteed only when ranking sorts by score and then by stable id as a total-order tie breaker.
   - Suggested Action: Keep recommendation outputs sorted by `(score desc, id asc)` and normalize lists/sets before scoring.
   - Applies To: `src/read_model/verification_techniques.rs`
@@ -98,7 +98,7 @@ Define the canonical automated-verification technique model and built-in catalog
 - [x] [SRS-01/AC-03] [SRS-NFR-01/AC-01] Built-in technique ordering is deterministic across runs and fixtures. <!-- verify: cargo test --lib builtin_technique_catalog_deterministic, SRS-NFR-01:start:end, proof: ac-3.log-->
 
 #### Implementation Insights
-- **L001: Catalog Entries Should Be Declarative And Sorted By ID**
+- **1vyDuwZW6: Catalog Entries Should Be Declarative And Sorted By ID**
   - Insight: A stable schema plus ID-sorted built-ins gives deterministic output and a predictable merge base for later override/ranking stages.
   - Suggested Action: Keep all built-ins in one constructor and enforce sort-by-ID before returning catalog vectors.
   - Applies To: `src/read_model/verification_techniques.rs`, upcoming config merge/recommendation modules

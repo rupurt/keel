@@ -2,7 +2,7 @@
 
 ## Knowledge
 
-### L001: Keep recommendation sourcing decoupled from planning read surfaces
+### 1vyDuwUUO: Keep recommendation sourcing decoupled from planning read surfaces
 | Field | Value |
 |-------|-------|
 | **Category** | architecture |

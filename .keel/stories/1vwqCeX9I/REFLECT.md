@@ -19,7 +19,7 @@ Format:
 | **Applied** | |
 -->
 
-### L001: Shared template rendering reduces cross-command coupling
+### 1vyDuwrqB: Shared template rendering reduces cross-command coupling
 
 | Field | Value |
 |-------|-------|

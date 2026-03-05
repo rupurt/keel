@@ -4,6 +4,7 @@ pub mod explore;
 pub mod graph;
 pub mod impact;
 pub mod list;
+pub mod migrate;
 pub mod show;
 
 use anyhow::Result;
@@ -20,10 +21,13 @@ pub enum KnowledgeAction {
         /// Only show pending (unapplied) knowledge
         #[arg(long, short)]
         pending: bool,
+        /// Sort mode: id | story
+        #[arg(long, value_name = "MODE", default_value = "id")]
+        sort: String,
     },
     /// Show detailed knowledge unit
     Show {
-        /// Knowledge ID (e.g., L001)
+        /// Canonical knowledge ID (9-character base62)
         id: String,
     },
     /// Explore thematic threads and rising patterns
@@ -32,16 +36,28 @@ pub enum KnowledgeAction {
     Graph,
     /// Impact/Drift analysis: identify where knowledge is missing or successfully applied
     Impact,
+    /// One-time migration to canonical global knowledge IDs and manifest
+    Migrate,
 }
 
 pub fn run(board_dir: &Path, action: KnowledgeAction) -> Result<()> {
     match action {
-        KnowledgeAction::List { category, pending } => {
-            list::run(board_dir, category.as_deref(), pending)
+        KnowledgeAction::List {
+            category,
+            pending,
+            sort,
+        } => {
+            let sort = match sort.as_str() {
+                "id" => crate::read_model::knowledge::KnowledgeSort::Id,
+                "story" => crate::read_model::knowledge::KnowledgeSort::Story,
+                other => anyhow::bail!("invalid sort mode '{}'; expected 'id' or 'story'", other),
+            };
+            list::run(board_dir, category.as_deref(), pending, sort)
         }
         KnowledgeAction::Show { id } => show::run(board_dir, &id),
         KnowledgeAction::Explore => explore::run(board_dir),
         KnowledgeAction::Graph => graph::run(board_dir),
         KnowledgeAction::Impact => impact::run(board_dir),
+        KnowledgeAction::Migrate => migrate::run(board_dir),
     }
 }

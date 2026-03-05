@@ -333,9 +333,17 @@ fn handle_knowledge_command(matches: &ArgMatches) -> Result<()> {
         ("list", m) => {
             let category = m.get_one::<String>("category").cloned();
             let pending = *m.get_one::<bool>("pending").unwrap_or(&false);
+            let sort = m
+                .get_one::<String>("sort")
+                .cloned()
+                .unwrap_or_else(|| "id".to_string());
             super::commands::management::knowledge::run(
                 &resolve_board_dir()?,
-                super::commands::management::knowledge::KnowledgeAction::List { category, pending },
+                super::commands::management::knowledge::KnowledgeAction::List {
+                    category,
+                    pending,
+                    sort,
+                },
             )
         }
         ("show", m) => {
@@ -356,6 +364,10 @@ fn handle_knowledge_command(matches: &ArgMatches) -> Result<()> {
         ("impact", _) => super::commands::management::knowledge::run(
             &resolve_board_dir()?,
             super::commands::management::knowledge::KnowledgeAction::Impact,
+        ),
+        ("migrate", _) => super::commands::management::knowledge::run(
+            &resolve_board_dir()?,
+            super::commands::management::knowledge::KnowledgeAction::Migrate,
         ),
         (name, _) => Err(anyhow::anyhow!("Unsupported knowledge subcommand: {name}")),
     }

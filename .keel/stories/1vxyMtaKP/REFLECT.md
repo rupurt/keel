@@ -2,7 +2,7 @@
 
 ## Knowledge
 
-### L001: Coherence Checks Need Canonical Pair Normalization
+### 1vyDuw2wf: Coherence Checks Need Canonical Pair Normalization
 | Field | Value |
 |-------|-------|
 | **Category** | code |

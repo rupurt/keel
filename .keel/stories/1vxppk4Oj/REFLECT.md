@@ -2,7 +2,7 @@
 
 ## Knowledge
 
-### L001: Centralized show projections reduce drift
+### 1vyDuwrAD: Centralized show projections reduce drift
 | Field | Value |
 |-------|-------|
 | **Category** | architecture |

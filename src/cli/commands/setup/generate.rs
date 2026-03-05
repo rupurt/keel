@@ -26,6 +26,9 @@ pub fn run(board_dir: &Path) -> Result<()> {
         crate::infrastructure::generate::voyage_readme::generate(board_dir, &board, voyage)?;
 
         if voyage.status() == VoyageState::Done {
+            crate::infrastructure::generate::knowledge_synthesis::synthesize_voyage_knowledge(
+                &board, voyage,
+            )?;
             crate::infrastructure::generate::voyage_report::generate(board_dir, &board, voyage)?;
             crate::infrastructure::generate::compliance_report::generate(
                 board_dir, &board, voyage,
@@ -38,6 +41,9 @@ pub fn run(board_dir: &Path) -> Result<()> {
     // 4. Regenerate persistent weekly throughput history for diagnostics graphs.
     let history = crate::read_model::throughput_history::project_default(&board);
     crate::infrastructure::throughput_history_store::save_if_changed(board_dir, &history)?;
+
+    // 5. Rebuild centralized knowledge manifest.
+    crate::read_model::knowledge::sync_knowledge_manifest(board_dir)?;
 
     if backfill_stats.stories_updated > 0 || backfill_stats.voyages_updated > 0 {
         println!(

@@ -177,6 +177,16 @@ pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
         duration: Duration::from_millis(0),
     });
 
+    let knowledge_manifest_problems =
+        checks::stories::check_knowledge_manifest_integrity(board_dir);
+    story_checks.push(CheckResult {
+        name: "Knowledge manifest integrity",
+        evaluations: board.stories.len(),
+        passed: knowledge_manifest_problems.is_empty(),
+        problems: knowledge_manifest_problems,
+        duration: Duration::from_millis(0),
+    });
+
     let manifest_problems = checks::stories::check_verification_manifests(&board);
     story_checks.push(CheckResult {
         name: "Verification manifest integrity",

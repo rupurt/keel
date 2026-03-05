@@ -21,7 +21,7 @@ Refactor top-level CLI dispatch into thin interface adapters.
 - [x] [SRS-01/AC-01] Main CLI dispatch and command handlers are rewritten as thin adapters that delegate to application/read-model APIs. <!-- verify: manual, SRS-01:start:end, proof: ac-1.log-->
 
 #### Implementation Insights
-- **L001: Build Typed Command Actions Before Dispatching**
+- **1vyDuwf3P: Build Typed Command Actions Before Dispatching**
   - Insight: Converting `ArgMatches` into typed action enums at the boundary and routing through module `run(action)` functions keeps `main` focused on parsing while pushing interface adaptation into command-group modules
   - Suggested Action: Keep adding action enums and single entrypoint adapters per command group so architecture tests can enforce delegation contracts cleanly
   - Applies To: src/main.rs; src/commands/*/mod.rs
@@ -42,7 +42,7 @@ Add architecture verification suites that enforce layering and context contracts
 - [x] [SRS-02/AC-01] Architecture verification suite fails when forbidden cross-layer or cross-context imports are introduced. <!-- verify: manual, SRS-02:start:end, proof: ac-1.log-->
 
 #### Implementation Insights
-- **L001: Production-only import checks reduce false positives**
+- **1vyDuwvt7: Production-only import checks reduce false positives**
   - Insight: Import-boundary checks should target production sections to avoid test-only imports triggering invalid architectural failures.
   - Suggested Action: Split source at `#[cfg(test)]` and enforce forbidden-edge patterns only on production content for adapter boundary tests.
   - Applies To: `src/architecture_contract_tests.rs`, `src/commands/diagnostics/*.rs`, `src/main.rs`, `src/next/algorithm.rs`
@@ -63,7 +63,7 @@ Publish migration completion criteria and rollout checklist for maintainers.
 - [x] [SRS-04/AC-01] Migration checklist documents completion criteria, verification gates, and rollout order for maintainers. <!-- verify: manual, SRS-04:start:end, proof: ac-1.log-->
 
 #### Implementation Insights
-- **L001: Rollout Docs Need Explicit Gate Ownership**
+- **1vyDuwiKv: Rollout Docs Need Explicit Gate Ownership**
   - Insight: Checklist quality improves when each gate and rollout step is phrased as an explicit maintainer action with clear command references
   - Suggested Action: Keep voyage-local migration checklists with completion criteria, gate commands, rollout order, and deferred-item tracking
   - Applies To: `.keel/epics/*/voyages/*/MIGRATION_CHECKLIST.md`, voyage `README.md` document tables
@@ -84,7 +84,7 @@ Add regression suites for key command behavior and output parity.
 - [x] [SRS-03/AC-01] Regression tests cover key command behaviors (`next`, `flow`, lifecycle transitions) for parity during migration. <!-- verify: manual, SRS-03:start:end, proof: ac-1.log-->
 
 #### Implementation Insights
-- **L001: Regression Parity Needs Cross-Command Coverage**
+- **1vyDuw5Ob: Regression Parity Needs Cross-Command Coverage**
   - Insight: Policy thresholds can drift silently unless `next` and `flow` are asserted together at the same boundary conditions
   - Suggested Action: Add paired regression tests that validate both command-level decisions and dashboard summaries for each queue policy boundary
   - Applies To: `src/next/*`, `src/flow/*`, `src/commands/story/*`, `src/command_regression_tests.rs`

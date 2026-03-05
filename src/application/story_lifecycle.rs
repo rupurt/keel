@@ -7,11 +7,8 @@ use std::fs;
 use std::io::Write;
 use std::path::Path;
 
-use anyhow::{Context, Result, anyhow};
-use chrono::Local;
-use owo_colors::OwoColorize;
-
 use crate::application::domain_events::DomainEvent;
+use crate::application::knowledge_context;
 use crate::application::process_manager::DomainProcessManager;
 use crate::domain::model::StoryState;
 use crate::domain::state_machine::{
@@ -22,6 +19,9 @@ use crate::domain::transitions::{execute, transitions};
 use crate::infrastructure::frontmatter_mutation::{Mutation, apply};
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::verification;
+use anyhow::{Context, Result, anyhow};
+use chrono::Local;
+use owo_colors::OwoColorize;
 
 pub struct StoryLifecycleService;
 
@@ -87,24 +87,14 @@ impl StoryLifecycleService {
             println!("Started: {}", story.id());
         }
 
-        // Show relevant knowledge hints.
-        let all_knowledge = crate::read_model::knowledge::scan_all_knowledge(board_dir)?;
-        let relevant: Vec<_> = all_knowledge
-            .into_iter()
-            .filter(|l| is_relevant_knowledge(l, epic.as_deref(), scope.as_deref()))
-            .filter(|l| l.applied.is_empty())
-            .collect();
-
-        if !relevant.is_empty() {
-            println!();
-            println!("Relevant knowledge found for this scope:");
-            for knowledge in relevant {
-                println!("  - [{}] {}", knowledge.id, knowledge.title);
-                println!("    Insight: {}", knowledge.insight);
-            }
-            println!();
-            println!("Consider applying these to your implementation.");
-        }
+        knowledge_context::surface_ranked_knowledge(
+            board_dir,
+            "Relevant knowledge found for this scope:",
+            epic.as_deref(),
+            scope.as_deref(),
+            5,
+            Some("Consider applying these to your implementation."),
+        )?;
 
         Ok(())
     }
@@ -128,6 +118,15 @@ impl StoryLifecycleService {
                 &enforcement.blocking_problems
             )));
         }
+
+        knowledge_context::surface_ranked_knowledge(
+            board_dir,
+            "Relevant knowledge to reference in reflection:",
+            story.epic(),
+            story.scope(),
+            5,
+            Some("Link reused insights in REFLECT.md before submitting when appropriate."),
+        )?;
 
         let content = fs::read_to_string(&story.path)?;
         println!("Running verification for {}...", story.id());
@@ -338,6 +337,7 @@ fn set_started_at(path: &Path, datetime: &str) -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 pub(crate) fn is_relevant_knowledge(
     knowledge: &crate::read_model::knowledge::Knowledge,
     epic_id: Option<&str>,
