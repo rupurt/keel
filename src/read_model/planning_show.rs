@@ -12,7 +12,6 @@ use crate::domain::model::{Board, Epic, Story, StoryState, Voyage};
 use crate::infrastructure::verification::parser::{
     Comparison, parse_ac_references, parse_verify_annotations,
 };
-use crate::read_model::verification_techniques;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct PlanningDocSummary {
@@ -61,12 +60,6 @@ impl VerificationRollup {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct VerificationRecommendation {
-    pub technique: String,
-    pub rationale: String,
-}
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct EpicShowProjection {
     pub doc: PlanningDocSummary,
@@ -76,8 +69,6 @@ pub struct EpicShowProjection {
     pub done_stories: usize,
     pub eta: EtaSummary,
     pub verification: VerificationRollup,
-    pub project_signals: Vec<String>,
-    pub recommendations: Vec<VerificationRecommendation>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -167,17 +158,8 @@ struct RequirementEntry {
     verification: Option<String>,
 }
 
-#[derive(Debug, Default)]
-struct ProjectSignals {
-    rust_workspace: bool,
-    node_workspace: bool,
-    playwright_project: bool,
-    vhs_available: bool,
-    ffmpeg_available: bool,
-}
-
 pub fn build_epic_show_projection(
-    board_dir: &Path,
+    _board_dir: &Path,
     board: &Board,
     epic: &Epic,
 ) -> Result<EpicShowProjection> {
@@ -272,34 +254,6 @@ pub fn build_epic_show_projection(
         }
     }
 
-    let signals = detect_project_signals(board_dir);
-    let project_signals = render_project_signals(&signals);
-    let project_root = project_root_from_board_dir(board_dir);
-    let recommendation_report = verification_techniques::build_show_recommendation_report(
-        project_root,
-        &verification.used_techniques,
-    );
-    let mut recommendations: Vec<VerificationRecommendation> = recommendation_report
-        .recommendations
-        .into_iter()
-        .map(|recommendation| VerificationRecommendation {
-            technique: format!("{} [{}]", recommendation.label, recommendation.usage_status),
-            rationale: format!(
-                "{} | {}",
-                recommendation.rationale, recommendation.adoption_guidance
-            ),
-        })
-        .collect();
-    recommendations.extend(
-        recommendation_report
-            .diagnostics
-            .into_iter()
-            .map(|diagnostic| VerificationRecommendation {
-                technique: "Config Diagnostic".to_string(),
-                rationale: diagnostic,
-            }),
-    );
-
     Ok(EpicShowProjection {
         doc,
         total_voyages: voyages.len(),
@@ -312,8 +266,6 @@ pub fn build_epic_show_projection(
             eta_weeks,
         },
         verification,
-        project_signals,
-        recommendations,
     })
 }
 
@@ -1059,62 +1011,6 @@ pub fn is_media_artifact(path: &str) -> bool {
         .any(|ext| lower.ends_with(ext))
 }
 
-fn detect_project_signals(board_dir: &Path) -> ProjectSignals {
-    let project_root = project_root_from_board_dir(board_dir);
-
-    let flake_content = fs::read_to_string(project_root.join("flake.nix")).unwrap_or_default();
-    let package_json = fs::read_to_string(project_root.join("package.json")).unwrap_or_default();
-
-    let playwright_project = project_root.join("playwright.config.ts").exists()
-        || project_root.join("playwright.config.js").exists()
-        || package_json.contains("playwright");
-
-    ProjectSignals {
-        rust_workspace: project_root.join("Cargo.toml").exists(),
-        node_workspace: project_root.join("package.json").exists(),
-        playwright_project,
-        vhs_available: flake_content.contains("pkgs.vhs")
-            || flake_content.contains(" vhs")
-            || flake_content.contains("\tvhs"),
-        ffmpeg_available: flake_content.contains("pkgs.ffmpeg")
-            || flake_content.contains(" ffmpeg")
-            || flake_content.contains("\tffmpeg"),
-    }
-}
-
-fn project_root_from_board_dir(board_dir: &Path) -> &Path {
-    if board_dir
-        .file_name()
-        .and_then(|name| name.to_str())
-        .map(|name| name == ".keel")
-        .unwrap_or(false)
-    {
-        board_dir.parent().unwrap_or(board_dir)
-    } else {
-        board_dir
-    }
-}
-
-fn render_project_signals(signals: &ProjectSignals) -> Vec<String> {
-    let mut out = Vec::new();
-    if signals.rust_workspace {
-        out.push("Cargo.toml (Rust workspace)".to_string());
-    }
-    if signals.node_workspace {
-        out.push("package.json (Node workspace)".to_string());
-    }
-    if signals.playwright_project {
-        out.push("Playwright config/dependency".to_string());
-    }
-    if signals.vhs_available {
-        out.push("flake.nix includes vhs".to_string());
-    }
-    if signals.ffmpeg_available {
-        out.push("flake.nix includes ffmpeg".to_string());
-    }
-    out
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1433,5 +1329,157 @@ Planners cannot quickly inspect requirement readiness.
         assert_eq!(epic_a.doc.problem_statement, epic_b.doc.problem_statement);
         assert_eq!(epic_a.doc.goals, epic_b.doc.goals);
         assert_eq!(epic_a.doc.key_requirements, epic_b.doc.key_requirements);
+    }
+
+    #[test]
+    fn planning_show_omits_verification_recommendations() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1"))
+            .story(TestStory::new("S1").scope("e1/v1").body(
+                r#"## Acceptance Criteria
+- [x] [SRS-01/AC-01] has verification <!-- verify: cargo test -p keel planning_show_omits_verification_recommendations, SRS-01:start:end -->
+"#,
+            ))
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+        let epic =
+            build_epic_show_projection(temp.path(), &board, board.require_epic("e1").unwrap())
+                .unwrap();
+        let voyage =
+            build_voyage_show_projection(&board, board.require_voyage("v1").unwrap()).unwrap();
+        let story = build_story_show_projection(board.require_story("S1").unwrap()).unwrap();
+
+        let EpicShowProjection {
+            doc,
+            total_voyages,
+            done_voyages,
+            total_stories,
+            done_stories,
+            eta,
+            verification,
+        } = epic;
+        let _ = (
+            doc,
+            total_voyages,
+            done_voyages,
+            total_stories,
+            done_stories,
+            eta,
+            verification,
+        );
+
+        let VoyageShowProjection {
+            goal,
+            scope,
+            requirements,
+            done_stories,
+            total_stories,
+            done_requirements,
+            total_requirements,
+        } = voyage;
+        let _ = (
+            goal,
+            scope,
+            requirements,
+            done_stories,
+            total_stories,
+            done_requirements,
+            total_requirements,
+        );
+
+        let StoryShowProjection {
+            body,
+            checked_criteria,
+            total_criteria,
+            evidence,
+        } = story;
+        let _ = (body, checked_criteria, total_criteria, evidence);
+    }
+
+    #[test]
+    fn planning_show_preserves_existing_sections() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").srs_content(
+                r#"# SRS
+> Preserve planning section content.
+
+## Scope
+In scope:
+- Render goal/scope/progress.
+
+Out of scope:
+- Lifecycle transition changes.
+
+## Requirements
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Verification |
+|----|-------------|--------------|
+| SRS-01 | Keep voyage requirement matrix. | cargo test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+            ))
+            .story(TestStory::new("S1").scope("e1/v1").stage(StoryState::Done).body(
+                r#"## Acceptance Criteria
+- [x] [SRS-01/AC-01] preserve evidence section <!-- verify: cargo test -p keel planning_show_preserves_existing_sections, SRS-01:start:end, proof: ac-1.log -->
+"#,
+            ))
+            .build();
+
+        std::fs::write(
+            temp.path().join("epics/e1/PRD.md"),
+            r#"# PRD
+
+## Problem Statement
+Planning readers need concise summaries without recommendation noise.
+
+## Goals & Objectives
+- Keep planning summary and progress sections.
+
+## Verification Strategy
+- Keep automated and manual verification rollups.
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Verification |
+|----|-------------|--------------|
+| FR-01 | Preserve planning show sections. | cargo test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+        std::fs::write(temp.path().join("stories/S1/EVIDENCE/ac-1.log"), "proof").unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let epic =
+            build_epic_show_projection(temp.path(), &board, board.require_epic("e1").unwrap())
+                .unwrap();
+        let voyage =
+            build_voyage_show_projection(&board, board.require_voyage("v1").unwrap()).unwrap();
+        let story = build_story_show_projection(board.require_story("S1").unwrap()).unwrap();
+
+        assert_eq!(
+            epic.doc.problem_statement.as_deref(),
+            Some("Planning readers need concise summaries without recommendation noise.")
+        );
+        assert_eq!(epic.total_voyages, 1);
+        assert_eq!(epic.total_stories, 1);
+        assert_eq!(epic.done_stories, 1);
+        assert_eq!(epic.verification.automated_criteria, 1);
+
+        assert_eq!(
+            voyage.goal.as_deref(),
+            Some("Preserve planning section content.")
+        );
+        assert_eq!(voyage.total_stories, 1);
+        assert_eq!(voyage.done_stories, 1);
+        assert_eq!(voyage.total_requirements, 1);
+        assert_eq!(voyage.done_requirements, 1);
+
+        assert_eq!(story.total_criteria, 1);
+        assert_eq!(story.checked_criteria, 1);
+        assert_eq!(story.evidence.items.len(), 1);
+        assert_eq!(story.evidence.linked_proofs, vec!["ac-1.log".to_string()]);
     }
 }

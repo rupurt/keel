@@ -15,6 +15,7 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
+| [Remove Planning Show Recommendations And Update Planning Guidance](stories/1vxvIa2RC/README.md) | feat | [Automated Verification Techniques Bank](epics/1vxqMtskC/) / [Verification Technique Command Surface Cutover](epics/1vxqMtskC/voyages/1vxvFrNta/) |
 
 ## In Progress
 
@@ -25,7 +26,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Remove Planning Show Recommendations And Update Planning Guidance](stories/1vxvIa2RC/README.md) | feat | [Automated Verification Techniques Bank](epics/1vxqMtskC/) / [Verification Technique Command Surface Cutover](epics/1vxqMtskC/voyages/1vxvFrNta/) |
 
 <details>
 <summary><h2>Icebox</h2></summary>
