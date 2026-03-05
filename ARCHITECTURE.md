@@ -2,13 +2,9 @@
 
 This document describes the current architecture of `keel`: the normalized DDD layer layout, the 2-queue pull model, entity state machines, and transition gating.
 
-## Foundational Documents
+## Scope
 
-| Document | Purpose |
-|----------|---------|
-| [MANIFESTO.md](MANIFESTO.md) | Human-agent collaboration philosophy and decision hierarchy |
-
-This architecture implements the principles in `MANIFESTO.md` and is constrained by accepted ADRs.
+This document is the implementation contract for source layout, dependency boundaries, runtime flows, and state-machine behavior. Governance philosophy and document hierarchy are defined upstream in `README.md` and `AGENTS.md`.
 
 ## Layered Source Layout
 
@@ -225,8 +221,9 @@ draft -> planned -> in-progress -> done
 ### Bearing State Machine
 
 ```
-exploring -> surveying -> assessing -> laid
-                            \-> parked
+exploring -> evaluating -> ready -> laid
+                    \-> parked
+                    \-> declined
 ```
 
 ## Gating Architecture
@@ -317,12 +314,3 @@ src/
 │   └── knowledge/
 └── main.rs
 ```
-
-## Design Principles
-
-1. Pull over push: actors pull work when ready.
-2. Files as truth: state is markdown plus frontmatter.
-3. Explicit layer roots: architecture is visible in directory structure.
-4. Derived flow state: system health is computed from board facts.
-5. Gated transitions: illegal or unsafe state changes are blocked.
-6. Verifiable contracts: architecture expectations are codified in tests.

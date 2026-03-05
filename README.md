@@ -26,6 +26,15 @@ Keel structures work into a **research → planning → execution → verificati
 
 **Everything loops back**: Reflection → Knowledge → Patterns → Bearings → Architecture.
 
+## Foundational Document Flow
+
+Use this order when authoring or reviewing decisions:
+
+1. ADRs (`.keel/adrs/`) — binding architectural decisions
+2. [CONSTITUTION.md](CONSTITUTION.md) — collaboration philosophy and governance intent
+3. [ARCHITECTURE.md](ARCHITECTURE.md) — implementation structure and technical constraints
+4. Planning artifacts (`PRD.md` → `SRS.md`/`SDD.md` → story `README.md`) — scoped executable work
+
 ## Core Concepts & Architecture
 
 Keel's architecture is built on formal state machines and a pull-based coordination model. See [ARCHITECTURE.md](ARCHITECTURE.md) for full details and onboarding diagrams (layer dependencies, command execution, queue lifecycle).
@@ -154,7 +163,7 @@ Contract rules:
 
 Capability classification:
 
-- Actionable: ADR transitions (`adr accept/reject/deprecate/supersede`), bearing transitions (`bearing survey/assess/park/decline/lay`), guided play suggestion (`play --suggest`), story-scoped verification (`verify <story-id>`), story-scoped audit (`audit <story-id>`).
+- Actionable: ADR transitions (`adr accept/reject/deprecate/supersede`), bearing lifecycle transitions (`bearing new/survey/assess/park/decline/lay`), guided play suggestion (`play --suggest`), story-scoped verification (`verify <story-id>`), story-scoped audit (`audit <story-id>`).
 - Informational: read/list commands (`adr list/show`, `bearing list/show`) and exploratory play outputs (`play`, `play --list-props`, `play <bearing>`, `play --cross`).
 
 Examples (minimal contract snippets):

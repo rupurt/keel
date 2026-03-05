@@ -116,8 +116,12 @@ At this stage of development, this repository uses a **hard cutover** policy by 
 
 These define constraints and workflow:
 
-- `MANIFESTO.md` — collaboration philosophy and decision hierarchy.
-- `ARCHITECTURE.md` — architecture, state machines, and flow model.
+- `README.md` — entrypoint and canonical document navigation.
+- `.keel/adrs/` — binding architecture decisions.
+- `CONSTITUTION.md` — collaboration philosophy and decision hierarchy.
+- `ARCHITECTURE.md` — implementation architecture, state machines, and flow model.
+
+Use this order when interpreting constraints: ADRs → Constitution → Architecture → Planning artifacts.
 
 ## Project Overview
 

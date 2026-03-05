@@ -1,8 +1,21 @@
-# Keel Manifesto
+# Keel Constitution
 
 > Minimize drift through planning, execution, and verification.
 
-This document captures the foundational principles of how keel operates — the human-agent collaboration model, decision-making structure, and the philosophy that enables autonomous agents to work effectively within clear boundaries.
+This document captures the foundational principles of how keel operates: the human-agent collaboration model, decision hierarchy, and governance boundaries that keep autonomous delivery aligned.
+
+## Document Hierarchy
+
+Keel documentation is intentionally layered:
+
+```
+ADRs -> CONSTITUTION.md -> ARCHITECTURE.md -> Planning documents (PRD/SRS/SDD/stories)
+```
+
+- **ADRs** define binding architectural decisions.
+- **CONSTITUTION.md** defines collaboration philosophy and governance intent.
+- **ARCHITECTURE.md** defines implementation structure and executable constraints.
+- **Planning documents** define scoped work that must comply with all upstream layers.
 
 ## Core Belief
 
@@ -224,7 +237,7 @@ Automated verification confirms implementation matches requirements. When verifi
 
 ## Evolution
 
-This manifesto will evolve. When it does, the change should be captured in an ADR explaining why the philosophy shifted. The manifesto is not immutable — but changes to it are significant and should be deliberate.
+This constitution will evolve. When it does, capture the change in an ADR explaining why the philosophy shifted. The constitution is not immutable, but changes to it are significant and should be deliberate.
 
 ---
 
