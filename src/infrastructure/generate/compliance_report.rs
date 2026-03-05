@@ -193,6 +193,7 @@ mod tests {
                 submitted_at: None,
                 index: None,
                 governed_by: Vec::new(),
+                blocked_by: Vec::new(),
                 role: None,
             },
             path: story_dir.join("README.md"),

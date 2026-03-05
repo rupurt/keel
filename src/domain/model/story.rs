@@ -41,6 +41,9 @@ pub struct StoryFrontmatter {
     /// ADR IDs that govern this story's implementation
     #[serde(default, rename = "governed-by")]
     pub governed_by: Vec<String>,
+    /// Story IDs that should not be run in parallel with this story
+    #[serde(default)]
+    pub blocked_by: Vec<String>,
     /// Role taxonomy string specifying required actor capabilities
     #[serde(default)]
     pub role: Option<String>,
@@ -534,5 +537,32 @@ governed-by: []
         let fm: StoryFrontmatter = serde_yaml::from_str(yaml).unwrap();
 
         assert!(fm.governed_by.is_empty());
+    }
+
+    #[test]
+    fn next_parallel_blocked_by_frontmatter_parses() {
+        let yaml = r#"
+id: FEAT0001
+title: Test story
+type: feat
+status: backlog
+blocked_by: [FEAT0002, FEAT0003]
+"#;
+        let fm: StoryFrontmatter = serde_yaml::from_str(yaml).unwrap();
+
+        assert_eq!(fm.blocked_by, vec!["FEAT0002", "FEAT0003"]);
+    }
+
+    #[test]
+    fn story_frontmatter_without_blocked_by_defaults_empty() {
+        let yaml = r#"
+id: FEAT0001
+title: Test story
+type: feat
+status: backlog
+"#;
+        let fm: StoryFrontmatter = serde_yaml::from_str(yaml).unwrap();
+
+        assert!(fm.blocked_by.is_empty());
     }
 }

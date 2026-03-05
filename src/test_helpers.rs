@@ -31,6 +31,7 @@ pub struct TestStory {
     pub index: Option<u32>,
     pub body: String,
     pub role: Option<String>,
+    pub blocked_by: Vec<String>,
 }
 
 /// Configuration for a test epic.
@@ -80,6 +81,7 @@ impl Default for TestStory {
             index: None,
             body: "Body content".to_string(),
             role: None,
+            blocked_by: vec![],
         }
     }
 }
@@ -127,6 +129,11 @@ impl TestStory {
         self
     }
 
+    pub fn blocked_by(mut self, story_ids: &[&str]) -> Self {
+        self.blocked_by = story_ids.iter().map(|id| (*id).to_string()).collect();
+        self
+    }
+
     /// Generate frontmatter for this story.
     fn frontmatter(&self) -> String {
         let mut fm = format!(
@@ -144,6 +151,13 @@ impl TestStory {
 
         if let Some(ref role) = self.role {
             fm.push_str(&format!("role: \"{}\"\n", role));
+        }
+
+        if !self.blocked_by.is_empty() {
+            fm.push_str("blocked_by:\n");
+            for blocked_story_id in &self.blocked_by {
+                fm.push_str(&format!("  - {}\n", blocked_story_id));
+            }
         }
 
         fm.push_str("---\n");
@@ -600,6 +614,7 @@ pub struct StoryFactory {
     submitted_at: Option<NaiveDateTime>,
     completed_at: Option<NaiveDateTime>,
     role: Option<String>,
+    blocked_by: Vec<String>,
 }
 
 impl Default for StoryFactory {
@@ -613,6 +628,7 @@ impl Default for StoryFactory {
             submitted_at: None,
             completed_at: None,
             role: None,
+            blocked_by: vec![],
         }
     }
 }
@@ -657,6 +673,12 @@ impl StoryFactory {
         self
     }
 
+    /// Set blocked_by story IDs.
+    pub fn blocked_by(mut self, story_ids: &[&str]) -> Self {
+        self.blocked_by = story_ids.iter().map(|id| (*id).to_string()).collect();
+        self
+    }
+
     /// Set the submitted_at datetime.
     pub fn submitted_at(mut self, datetime: NaiveDateTime) -> Self {
         self.submitted_at = Some(datetime);
@@ -686,6 +708,7 @@ impl StoryFactory {
                 submitted_at: self.submitted_at,
                 index: self.index,
                 governed_by: vec![],
+                blocked_by: self.blocked_by,
                 role: self.role,
             },
             path: PathBuf::from(format!("{}.md", self.id)),

@@ -315,6 +315,7 @@ mod template_struct_fields {
             submitted_at: Some(dt),
             index: Some(1),
             governed_by: vec!["g".to_string()],
+            blocked_by: vec!["b".to_string()],
             role: Some("r".to_string()),
         }
     }

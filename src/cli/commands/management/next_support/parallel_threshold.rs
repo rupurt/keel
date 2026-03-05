@@ -50,7 +50,18 @@ pub fn select_parallel_candidates_with_confidence_threshold<'a>(
         for selected_story in &selected {
             let pair_key = canonical_pair_key(candidate.id(), selected_story.id());
             let pair_confidence = confidence_by_pair.get(&pair_key).copied().unwrap_or(0.0);
-            if pair_confidence < PARALLEL_CONFIDENCE_THRESHOLD {
+            if blocked_by_override(candidate, selected_story) {
+                candidate_blockers.push(PairwiseBlocker {
+                    story_id: candidate.id().to_string(),
+                    blocked_by_story_id: selected_story.id().to_string(),
+                    reasons: vec![format!(
+                        "metadata override: blocked_by constraint between {} and {}",
+                        candidate.id(),
+                        selected_story.id()
+                    )],
+                    confidence: pair_confidence,
+                });
+            } else if pair_confidence < PARALLEL_CONFIDENCE_THRESHOLD {
                 candidate_blockers.push(PairwiseBlocker {
                     story_id: candidate.id().to_string(),
                     blocked_by_story_id: selected_story.id().to_string(),
@@ -82,6 +93,18 @@ fn canonical_pair_key(left: &str, right: &str) -> (String, String) {
         Ordering::Greater => (right.to_string(), left.to_string()),
         _ => (left.to_string(), right.to_string()),
     }
+}
+
+fn blocked_by_override(left: &Story, right: &Story) -> bool {
+    left.frontmatter
+        .blocked_by
+        .iter()
+        .any(|story_id| story_id == right.id())
+        || right
+            .frontmatter
+            .blocked_by
+            .iter()
+            .any(|story_id| story_id == left.id())
 }
 
 fn stable_blocker_order(left: &PairwiseBlocker, right: &PairwiseBlocker) -> Ordering {
@@ -149,6 +172,45 @@ mod tests {
         assert_eq!(selection.blocked_pairs[0].blocked_by_story_id, "S1");
         assert!(
             selection.blocked_pairs[0].reasons[0].contains("confidence 0.50 below threshold 0.70")
+        );
+    }
+
+    #[test]
+    fn next_parallel_blocked_by_override_enforced() {
+        let temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("S1")
+                    .title("Structured core work")
+                    .scope("core/01-structured")
+                    .stage(StoryState::Backlog),
+            )
+            .story(
+                TestStory::new("S2")
+                    .title("Structured ops work")
+                    .scope("ops/01-structured")
+                    .blocked_by(&["S1"])
+                    .stage(StoryState::Backlog),
+            )
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+        let s1 = board.stories.get("S1").unwrap();
+        let s2 = board.stories.get("S2").unwrap();
+
+        let ready = vec![s2, s1];
+        let feature_vectors = extract_parallel_feature_vectors(&board, &ready);
+        let pairwise_scores = score_parallel_pairwise_conflicts(&feature_vectors);
+        let selection =
+            select_parallel_candidates_with_confidence_threshold(&ready, &pairwise_scores);
+
+        let selected_ids: Vec<_> = selection.selected.iter().map(|story| story.id()).collect();
+        assert_eq!(selected_ids, vec!["S1"]);
+        assert_eq!(selection.blocked_pairs.len(), 1);
+        assert_eq!(selection.blocked_pairs[0].story_id, "S2");
+        assert_eq!(selection.blocked_pairs[0].blocked_by_story_id, "S1");
+        assert!(
+            selection.blocked_pairs[0].reasons[0].contains("metadata override"),
+            "expected blocked_by metadata override reason"
         );
     }
 }

@@ -201,6 +201,7 @@ mod tests {
                 submitted_at: submitted_at.map(parse_dt),
                 index: None,
                 governed_by: vec![],
+                blocked_by: vec![],
                 role: None,
             },
             path: PathBuf::from(format!("{id}.md")),

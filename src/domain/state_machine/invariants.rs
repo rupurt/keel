@@ -228,6 +228,7 @@ mod tests {
                 completed_at: None,
                 index: None,
                 governed_by: vec![],
+                blocked_by: vec![],
                 role: None,
             },
             path: std::path::PathBuf::from(format!("{}.md", id)),
