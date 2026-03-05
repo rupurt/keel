@@ -26,6 +26,14 @@ struct JsonResult {
     guidance: Option<CanonicalGuidance>,
 }
 
+#[derive(Serialize, Clone)]
+struct JsonPairwiseBlocker {
+    story_id: String,
+    blocked_by: String,
+    reasons: Vec<String>,
+    confidence: f64,
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "snake_case")]
 enum JsonDetails {
@@ -61,6 +69,7 @@ enum JsonDetails {
         next: Option<JsonStory>,
         ready: Vec<JsonStory>,
         sequential_chains: HashMap<String, Vec<JsonStory>>,
+        blocked_pairs: Vec<JsonPairwiseBlocker>,
     },
 }
 
@@ -277,6 +286,27 @@ fn print_human_guidance(guidance: Option<&CanonicalGuidance>) {
     }
 }
 
+fn render_parallel_blockers_human(
+    blocked_pairs: &[crate::cli::commands::management::next_support::parallel_threshold::PairwiseBlocker],
+) -> String {
+    if blocked_pairs.is_empty() {
+        return String::new();
+    }
+
+    let mut out = String::new();
+    out.push_str("\nPairwise Blockers:\n");
+    for blocker in blocked_pairs {
+        out.push_str(&format!(
+            "  - {} -> {}: {}\n",
+            crate::cli::style::styled_story_id(&blocker.story_id),
+            crate::cli::style::styled_story_id(&blocker.blocked_by_story_id),
+            blocker.reasons.join("; ")
+        ));
+    }
+
+    out
+}
+
 fn run_parallel(
     board: &crate::domain::model::Board,
     board_dir: &Path,
@@ -338,11 +368,12 @@ fn run_parallel(
         crate::cli::commands::management::next_support::parallel_scoring::score_parallel_pairwise_conflicts(
             &pairwise_feature_vectors,
         );
-    ready =
+    let threshold_selection =
         crate::cli::commands::management::next_support::parallel_threshold::select_parallel_candidates_with_confidence_threshold(
             &ready,
             &pairwise_scores,
         );
+    ready = threshold_selection.selected;
 
     if json {
         let mut ready_json: Vec<JsonStory> = ready
@@ -380,6 +411,16 @@ fn run_parallel(
                 next,
                 ready: ready_json,
                 sequential_chains: sequential_json,
+                blocked_pairs: threshold_selection
+                    .blocked_pairs
+                    .iter()
+                    .map(|blocker| JsonPairwiseBlocker {
+                        story_id: blocker.story_id.clone(),
+                        blocked_by: blocker.blocked_by_story_id.clone(),
+                        reasons: blocker.reasons.clone(),
+                        confidence: blocker.confidence,
+                    })
+                    .collect(),
             },
             guidance: guidance_for_parallel_ready(&ready),
         };
@@ -447,6 +488,11 @@ fn run_parallel(
                     println!("    - {}", parallel_story(story));
                 }
             }
+        }
+
+        let blockers_human = render_parallel_blockers_human(&threshold_selection.blocked_pairs);
+        if !blockers_human.is_empty() {
+            print!("{blockers_human}");
         }
 
         print_human_guidance(guidance_for_parallel_ready(&ready).as_ref());
@@ -711,5 +757,61 @@ mod tests {
         assert!(json["recovery_step"].is_null());
         assert!(rendered.contains("Next step:"));
         assert!(rendered.contains("keel story start SREADY"));
+    }
+
+    #[test]
+    fn next_parallel_pairwise_blockers_render_human() {
+        let blocked_pairs = vec![
+            crate::cli::commands::management::next_support::parallel_threshold::PairwiseBlocker {
+                story_id: "S2".to_string(),
+                blocked_by_story_id: "S1".to_string(),
+                reasons: vec!["confidence 0.50 below threshold 0.70".to_string()],
+                confidence: 0.5,
+            },
+        ];
+
+        let rendered = render_parallel_blockers_human(&blocked_pairs);
+        assert!(rendered.contains("Pairwise Blockers:"));
+        assert!(rendered.contains("S2"));
+        assert!(rendered.contains("S1"));
+        assert!(rendered.contains("->"));
+        assert!(rendered.contains("confidence 0.50 below threshold 0.70"));
+    }
+
+    #[test]
+    fn next_parallel_pairwise_blockers_render_json() {
+        let result = JsonResult {
+            decision: "parallel_work".to_string(),
+            details: JsonDetails::ParallelWork {
+                next: None,
+                ready: vec![],
+                sequential_chains: HashMap::new(),
+                blocked_pairs: vec![JsonPairwiseBlocker {
+                    story_id: "S2".to_string(),
+                    blocked_by: "S1".to_string(),
+                    reasons: vec!["confidence 0.50 below threshold 0.70".to_string()],
+                    confidence: 0.5,
+                }],
+            },
+            guidance: None,
+        };
+
+        let json = serde_json::to_value(result).unwrap();
+        assert_eq!(
+            json["details"]["parallel_work"]["blocked_pairs"][0]["story_id"],
+            "S2"
+        );
+        assert_eq!(
+            json["details"]["parallel_work"]["blocked_pairs"][0]["blocked_by"],
+            "S1"
+        );
+        assert_eq!(
+            json["details"]["parallel_work"]["blocked_pairs"][0]["reasons"][0],
+            "confidence 0.50 below threshold 0.70"
+        );
+        assert_eq!(
+            json["details"]["parallel_work"]["blocked_pairs"][0]["confidence"],
+            0.5
+        );
     }
 }

@@ -10,12 +10,28 @@ use crate::domain::policy::queue::compare_work_item_ids;
 /// Global confidence threshold for parallel eligibility.
 pub const PARALLEL_CONFIDENCE_THRESHOLD: f64 = 0.70;
 
+/// Pairwise blocker emitted when a candidate fails confidence gating.
+#[derive(Debug, Clone, PartialEq)]
+pub struct PairwiseBlocker {
+    pub story_id: String,
+    pub blocked_by_story_id: String,
+    pub reasons: Vec<String>,
+    pub confidence: f64,
+}
+
+/// Result of threshold-based parallel candidate selection.
+#[derive(Debug, Clone)]
+pub struct ParallelThresholdSelection<'a> {
+    pub selected: Vec<&'a Story>,
+    pub blocked_pairs: Vec<PairwiseBlocker>,
+}
+
 /// Select a deterministic subset of candidates whose pairwise confidence
 /// meets the global threshold.
 pub fn select_parallel_candidates_with_confidence_threshold<'a>(
     ready: &[&'a Story],
     pairwise_scores: &[PairwiseConflictScore],
-) -> Vec<&'a Story> {
+) -> ParallelThresholdSelection<'a> {
     let mut ordered_candidates = ready.to_vec();
     ordered_candidates.sort_by(|left, right| compare_work_item_ids(left.id(), right.id()));
 
@@ -28,19 +44,37 @@ pub fn select_parallel_candidates_with_confidence_threshold<'a>(
     }
 
     let mut selected: Vec<&'a Story> = Vec::new();
+    let mut blocked_pairs = Vec::new();
     for candidate in ordered_candidates {
-        let eligible = selected.iter().all(|selected_story| {
+        let mut candidate_blockers = Vec::new();
+        for selected_story in &selected {
             let pair_key = canonical_pair_key(candidate.id(), selected_story.id());
             let pair_confidence = confidence_by_pair.get(&pair_key).copied().unwrap_or(0.0);
-            pair_confidence >= PARALLEL_CONFIDENCE_THRESHOLD
-        });
+            if pair_confidence < PARALLEL_CONFIDENCE_THRESHOLD {
+                candidate_blockers.push(PairwiseBlocker {
+                    story_id: candidate.id().to_string(),
+                    blocked_by_story_id: selected_story.id().to_string(),
+                    reasons: vec![format!(
+                        "confidence {:.2} below threshold {:.2}",
+                        pair_confidence, PARALLEL_CONFIDENCE_THRESHOLD
+                    )],
+                    confidence: pair_confidence,
+                });
+            }
+        }
 
-        if eligible {
+        if candidate_blockers.is_empty() {
             selected.push(candidate);
+        } else {
+            blocked_pairs.extend(candidate_blockers);
         }
     }
 
-    selected
+    blocked_pairs.sort_by(stable_blocker_order);
+    ParallelThresholdSelection {
+        selected,
+        blocked_pairs,
+    }
 }
 
 fn canonical_pair_key(left: &str, right: &str) -> (String, String) {
@@ -48,6 +82,11 @@ fn canonical_pair_key(left: &str, right: &str) -> (String, String) {
         Ordering::Greater => (right.to_string(), left.to_string()),
         _ => (left.to_string(), right.to_string()),
     }
+}
+
+fn stable_blocker_order(left: &PairwiseBlocker, right: &PairwiseBlocker) -> Ordering {
+    compare_work_item_ids(&left.story_id, &right.story_id)
+        .then_with(|| compare_work_item_ids(&left.blocked_by_story_id, &right.blocked_by_story_id))
 }
 
 #[cfg(test)]
@@ -96,14 +135,20 @@ mod tests {
             .unwrap();
         assert!(unknown_pair.confidence < PARALLEL_CONFIDENCE_THRESHOLD);
 
-        let selected =
+        let selection =
             select_parallel_candidates_with_confidence_threshold(&ready, &pairwise_scores);
-        let selected_ids: Vec<_> = selected.iter().map(|story| story.id()).collect();
+        let selected_ids: Vec<_> = selection.selected.iter().map(|story| story.id()).collect();
 
         assert_eq!(selected_ids, vec!["S1", "S3"]);
         assert!(
             !selected_ids.contains(&"S2"),
             "uncertain story should be conservatively excluded"
+        );
+        assert_eq!(selection.blocked_pairs.len(), 1);
+        assert_eq!(selection.blocked_pairs[0].story_id, "S2");
+        assert_eq!(selection.blocked_pairs[0].blocked_by_story_id, "S1");
+        assert!(
+            selection.blocked_pairs[0].reasons[0].contains("confidence 0.50 below threshold 0.70")
         );
     }
 }
