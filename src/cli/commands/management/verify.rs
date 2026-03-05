@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 use serde::Serialize;
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
 use super::guidance::CanonicalGuidance;
@@ -13,7 +13,9 @@ use crate::infrastructure::config;
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::verification;
 use crate::infrastructure::verification::parse_verify_annotations;
-use crate::read_model::verification_techniques::{self, TechniqueModality};
+use crate::read_model::verification_techniques::{self, ProjectStack, TechniqueModality};
+
+const MAX_RECOMMENDATIONS: usize = 3;
 
 #[derive(Debug, Clone, Serialize)]
 struct VerifyStoryPayload {
@@ -35,8 +37,7 @@ struct VerifyRunPayload {
 
 #[derive(Debug, Clone, Serialize)]
 struct VerifyRecommendRow {
-    label: String,
-    name: String,
+    id: String,
     modality: String,
     command: String,
 }
@@ -44,6 +45,26 @@ struct VerifyRecommendRow {
 #[derive(Debug, Clone, Serialize)]
 struct VerifyRecommendPayload {
     recommendations: Vec<VerifyRecommendRow>,
+    diagnostics: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct VerifyDetectTechniqueRow {
+    id: String,
+    detected: bool,
+    disabled: bool,
+    active: bool,
+    modality: String,
+    command: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct VerifyDetectPayload {
+    project_root: String,
+    hints: Vec<String>,
+    detected_files: Vec<String>,
+    stack_confidence: BTreeMap<String, f64>,
+    techniques: Vec<VerifyDetectTechniqueRow>,
     diagnostics: Vec<String>,
 }
 
@@ -122,27 +143,23 @@ pub fn recommend(board_dir: &Path, json: bool) -> Result<()> {
         return Ok(());
     }
 
-    println!("[verification.recommend]");
-    println!("count = {}", payload.recommendations.len());
-    println!();
-    println!("# Detected + active techniques:");
-    if payload.recommendations.is_empty() {
-        println!("  (none)");
-    } else {
-        for recommendation in &payload.recommendations {
-            println!("  - label = \"{}\"", recommendation.label);
-            println!("    name = \"{}\"", recommendation.name);
-            println!("    modality = \"{}\"", recommendation.modality);
-            println!("    command = \"{}\"", recommendation.command);
-        }
+    for line in render_recommend_payload(&payload) {
+        println!("{line}");
     }
 
-    if !payload.diagnostics.is_empty() {
-        println!();
-        println!("# Config diagnostics:");
-        for diagnostic in &payload.diagnostics {
-            println!("  - {}", diagnostic);
-        }
+    Ok(())
+}
+
+pub fn detect(board_dir: &Path, json: bool) -> Result<()> {
+    let payload = build_detect_payload(board_dir)?;
+
+    if json {
+        println!("{}", serde_json::to_string_pretty(&payload)?);
+        return Ok(());
+    }
+
+    for line in render_detect_payload(&payload) {
+        println!("{line}");
     }
 
     Ok(())
@@ -188,23 +205,149 @@ fn build_recommend_payload(board_dir: &Path) -> Result<VerifyRecommendPayload> {
     let used_techniques = collect_used_techniques(board_dir)?;
     let status_report =
         verification_techniques::resolve_technique_status_report(&project_root, &used_techniques);
+    let ranked_report =
+        verification_techniques::build_show_recommendation_report(&project_root, &used_techniques);
 
-    let recommendations = status_report
+    let mut recommendations = Vec::new();
+    for ranked in ranked_report
+        .recommendations
+        .into_iter()
+        .take(MAX_RECOMMENDATIONS)
+    {
+        if let Some(status) = status_report
+            .techniques
+            .iter()
+            .find(|status| status.id == ranked.id)
+            .filter(|status| status.detected && status.active)
+        {
+            recommendations.push(VerifyRecommendRow {
+                id: status.id.clone(),
+                modality: modality_name(status.modality).to_string(),
+                command: status.default_command.clone(),
+            });
+        }
+    }
+
+    if recommendations.is_empty() {
+        recommendations = status_report
+            .techniques
+            .iter()
+            .filter(|status| status.detected && status.active)
+            .map(|status| VerifyRecommendRow {
+                id: status.id.clone(),
+                modality: modality_name(status.modality).to_string(),
+                command: status.default_command.clone(),
+            })
+            .collect();
+    }
+
+    let mut diagnostics = status_report.diagnostics;
+    diagnostics.extend(ranked_report.diagnostics);
+    diagnostics.sort();
+    diagnostics.dedup();
+
+    Ok(VerifyRecommendPayload {
+        recommendations,
+        diagnostics,
+    })
+}
+
+fn build_detect_payload(board_dir: &Path) -> Result<VerifyDetectPayload> {
+    let (config, _) = config::load_config();
+    let project_root = resolve_project_root(board_dir, &config);
+    let used_techniques = collect_used_techniques(board_dir)?;
+    let status_report =
+        verification_techniques::resolve_technique_status_report(&project_root, &used_techniques);
+    let signal_report = verification_techniques::detect_project_signals(&project_root);
+
+    let techniques = status_report
         .techniques
         .iter()
-        .filter(|status| status.detected && status.active)
-        .map(|status| VerifyRecommendRow {
-            label: status.id.clone(),
-            name: status.label.clone(),
+        .map(|status| VerifyDetectTechniqueRow {
+            id: status.id.clone(),
+            detected: status.detected,
+            disabled: status.disabled,
+            active: status.active,
             modality: modality_name(status.modality).to_string(),
             command: status.default_command.clone(),
         })
         .collect();
 
-    Ok(VerifyRecommendPayload {
-        recommendations,
+    let mut stack_confidence = BTreeMap::new();
+    for (stack, confidence) in signal_report.stack_confidence {
+        stack_confidence.insert(stack_name(stack).to_string(), confidence);
+    }
+
+    Ok(VerifyDetectPayload {
+        project_root: project_root.display().to_string(),
+        hints: signal_report.hints.into_iter().collect(),
+        detected_files: signal_report.detected_files,
+        stack_confidence,
+        techniques,
         diagnostics: status_report.diagnostics,
     })
+}
+
+fn render_recommend_payload(payload: &VerifyRecommendPayload) -> Vec<String> {
+    let mut lines = Vec::new();
+    if payload.recommendations.is_empty() {
+        lines.push("[verification.recommend]".to_string());
+        lines.push("none = true".to_string());
+    } else {
+        for recommendation in &payload.recommendations {
+            lines.push("[[verification.recommend]]".to_string());
+            lines.push(format!("id = \"{}\"", recommendation.id));
+            lines.push(format!("modality = \"{}\"", recommendation.modality));
+            lines.push(format!("command = \"{}\"", recommendation.command));
+            lines.push(String::new());
+        }
+    }
+
+    if !payload.diagnostics.is_empty() {
+        for diagnostic in &payload.diagnostics {
+            lines.push("[[verification.recommend.diagnostics]]".to_string());
+            lines.push(format!("message = \"{}\"", diagnostic));
+            lines.push(String::new());
+        }
+    }
+
+    lines
+}
+
+fn render_detect_payload(payload: &VerifyDetectPayload) -> Vec<String> {
+    let mut lines = Vec::new();
+    lines.push("[verification.detect]".to_string());
+    lines.push(format!("project_root = \"{}\"", payload.project_root));
+    lines.push(format!("hints = {:?}", payload.hints));
+    lines.push(format!("detected_files = {:?}", payload.detected_files));
+    lines.push(String::new());
+
+    lines.push("[verification.detect.stack_confidence]".to_string());
+    for (stack, confidence) in &payload.stack_confidence {
+        lines.push(format!("{stack} = {confidence:.2}"));
+    }
+    lines.push(String::new());
+
+    for technique in &payload.techniques {
+        lines.push("[[verification.detect.techniques]]".to_string());
+        lines.push(format!("id = \"{}\"", technique.id));
+        lines.push(format!("detected = {}", technique.detected));
+        lines.push(format!("disabled = {}", technique.disabled));
+        lines.push(format!("active = {}", technique.active));
+        lines.push(format!("modality = \"{}\"", technique.modality));
+        lines.push(format!("command = \"{}\"", technique.command));
+        lines.push(String::new());
+    }
+
+    if !payload.diagnostics.is_empty() {
+        for diagnostic in &payload.diagnostics {
+            lines.push("[[verification.detect.diagnostics]]".to_string());
+            lines.push(format!("message = \"{}\"", diagnostic));
+            lines.push(String::new());
+        }
+    }
+
+    lines
 }
 
 fn collect_used_techniques(board_dir: &Path) -> Result<BTreeSet<String>> {
@@ -242,6 +385,14 @@ fn modality_name(modality: TechniqueModality) -> &'static str {
         TechniqueModality::Command => "command",
         TechniqueModality::Recording => "recording",
         TechniqueModality::Judge => "judge",
+    }
+}
+
+fn stack_name(stack: ProjectStack) -> &'static str {
+    match stack {
+        ProjectStack::Rust => "rust",
+        ProjectStack::Browser => "browser",
+        ProjectStack::Cli => "cli",
     }
 }
 
@@ -304,19 +455,19 @@ disable = ["rust-unit-tests"]
             payload
                 .recommendations
                 .iter()
-                .all(|row| row.label != "rust-unit-tests")
+                .all(|row| row.id != "rust-unit-tests")
         );
         assert!(
             payload
                 .recommendations
                 .iter()
-                .all(|row| row.label != "browser-playwright-e2e")
+                .all(|row| row.id != "browser-playwright-e2e")
         );
         assert!(
             payload
                 .recommendations
                 .iter()
-                .any(|row| row.label == "llm-judge")
+                .any(|row| row.id == "llm-judge")
         );
     }
 
@@ -338,11 +489,28 @@ disable = ["rust-unit-tests"]
     }
 
     #[test]
+    fn verify_recommend_limits_output_size() {
+        let temp = TestBoardBuilder::new().build();
+        fs::write(
+            temp.path().join("Cargo.toml"),
+            "[package]\nname=\"demo\"\nversion=\"0.1.0\"\n",
+        )
+        .unwrap();
+        fs::write(
+            temp.path().join("flake.nix"),
+            "buildInputs = [ pkgs.vhs pkgs.ffmpeg ];",
+        )
+        .unwrap();
+
+        let payload = build_recommend_payload(temp.path()).unwrap();
+        assert!(payload.recommendations.len() <= MAX_RECOMMENDATIONS);
+    }
+
+    #[test]
     fn verify_recommend_json_contract() {
         let payload = VerifyRecommendPayload {
             recommendations: vec![VerifyRecommendRow {
-                label: "llm-judge".to_string(),
-                name: "LLM-Judge".to_string(),
+                id: "llm-judge".to_string(),
                 modality: "judge".to_string(),
                 command: "llm-judge".to_string(),
             }],
@@ -352,8 +520,44 @@ disable = ["rust-unit-tests"]
         let value = serde_json::to_value(payload).unwrap();
         assert!(value["recommendations"].is_array());
         let first = &value["recommendations"][0];
-        assert!(first.get("label").is_some());
-        assert!(first.get("name").is_some());
+        assert!(first.get("id").is_some());
+        assert!(first.get("modality").is_some());
+        assert!(first.get("command").is_some());
+    }
+
+    #[test]
+    fn verify_detect_json_contract() {
+        let payload = VerifyDetectPayload {
+            project_root: "/tmp/project".to_string(),
+            hints: vec!["cargo".to_string(), "rust".to_string()],
+            detected_files: vec!["Cargo.toml".to_string()],
+            stack_confidence: BTreeMap::from([
+                ("browser".to_string(), 0.0),
+                ("cli".to_string(), 0.55),
+                ("rust".to_string(), 0.75),
+            ]),
+            techniques: vec![VerifyDetectTechniqueRow {
+                id: "rust-unit-tests".to_string(),
+                detected: true,
+                disabled: false,
+                active: true,
+                modality: "command".to_string(),
+                command: "cargo test".to_string(),
+            }],
+            diagnostics: Vec::new(),
+        };
+
+        let value = serde_json::to_value(payload).unwrap();
+        assert!(value.get("project_root").is_some());
+        assert!(value.get("hints").is_some());
+        assert!(value.get("detected_files").is_some());
+        assert!(value.get("stack_confidence").is_some());
+        assert!(value.get("techniques").is_some());
+        let first = &value["techniques"][0];
+        assert!(first.get("id").is_some());
+        assert!(first.get("detected").is_some());
+        assert!(first.get("disabled").is_some());
+        assert!(first.get("active").is_some());
         assert!(first.get("modality").is_some());
         assert!(first.get("command").is_some());
     }

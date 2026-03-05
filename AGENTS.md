@@ -33,14 +33,15 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
 5. **Decompose Stories**: Break the design into implementable units:
    - `just keel story new "<Title>" --epic <epic-id> --voyage <voyage-id>`
    - Link stories to SRS requirements using `[SRS-XX/AC-YY]` markers in the acceptance criteria.
-6. **Align Verification Techniques From Config**: Run `just keel config show` and `just keel verify recommend` before finalizing verification planning:
+6. **Align Verification Techniques From Config**: Run `just keel config show`, `just keel verify detect`, and `just keel verify recommend` before finalizing verification planning:
    - Use `just keel config show` as the full technique inventory (built-in + custom) and review each option's `detected`, `disabled`, and `active` flags.
+   - Use `just keel verify detect` to review project signal detection inputs (files, hints, stack confidence) and per-technique detected/active status.
    - Use `just keel verify recommend` to plan against detected+active options for the current project.
    - If needed techniques are missing or disabled, update `keel.toml` first, then continue decomposition.
 7. **Run Coherence Review (Downstream Check)**: Before planning is sealed, review the full chain:
    - Every SRS requirement has at least one linked story acceptance criterion.
    - Every acceptance criterion has a clear verification approach (automated test, CLI proof, or documented manual evidence).
-   - Verification commands align with `just keel verify recommend` output unless explicitly justified.
+   - Verification commands align with `just keel verify recommend` output, informed by `just keel verify detect`, unless explicitly justified.
    - CLI options and authored entity content are explicit enough for downstream automation and transitions.
 8. **Loop Back Upstream if Needed**: If decomposition or verification design exposes ambiguity, update SRS/SDD first, then re-check story acceptance criteria.
 9. **Generate Planning Summary Report In Chat (Required)**: For every newly planned Epic or Voyage, publish a terse, actionable planning summary directly in the chat/harness response (do not create a dedicated summary file).

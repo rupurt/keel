@@ -202,7 +202,7 @@ pub fn build_cli() -> Command {
         )
         .subcommand(
             Command::new("verify")
-                .about("Execute verification proofs")
+                .about("Verification operations")
                 .hide(true)
                 .arg(
                     Arg::new("id")
@@ -251,6 +251,16 @@ pub fn build_cli() -> Command {
                 .subcommand(
                     Command::new("recommend")
                         .about("Show detected+active verification techniques")
+                        .arg(
+                            Arg::new("json")
+                                .long("json")
+                                .help("Output as JSON for scripting")
+                                .action(ArgAction::SetTrue),
+                        ),
+                )
+                .subcommand(
+                    Command::new("detect")
+                        .about("Show verification detection signals and status")
                         .arg(
                             Arg::new("json")
                                 .long("json")

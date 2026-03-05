@@ -91,6 +91,10 @@ pub fn run() -> Result<()> {
                 let json = *run_m.get_one::<bool>("json").unwrap_or(&false);
                 super::commands::management::verify::run(&resolve_board_dir()?, id, all, json)
             }
+            Some(("detect", detect_m)) => {
+                let json = *detect_m.get_one::<bool>("json").unwrap_or(&false);
+                super::commands::management::verify::detect(&resolve_board_dir()?, json)
+            }
             Some(("recommend", recommend_m)) => {
                 let json = *recommend_m.get_one::<bool>("json").unwrap_or(&false);
                 super::commands::management::verify::recommend(&resolve_board_dir()?, json)
