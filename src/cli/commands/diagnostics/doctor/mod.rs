@@ -360,6 +360,15 @@ pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
         duration: Duration::from_millis(0),
     });
 
+    let bearing_id_format_problems = checks::bearings::check_bearing_id_format(&board);
+    bearing_checks.push(CheckResult {
+        name: "ID format",
+        evaluations: board.bearings.len(),
+        passed: bearing_id_format_problems.is_empty(),
+        problems: bearing_id_format_problems,
+        duration: Duration::from_millis(0),
+    });
+
     let bearing_duplicate_problems = checks::bearings::check_bearing_duplicates(board_dir);
     bearing_checks.push(CheckResult {
         name: "ID uniqueness",

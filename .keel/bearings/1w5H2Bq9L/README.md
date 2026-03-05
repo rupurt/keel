@@ -1,5 +1,5 @@
 ---
-id: semantic-search-research
+id: 1w5H2Bq9L
 title: Semantic Search and Ranking in Keel
 status: evaluating
 created_at: 2026-03-04T12:00:00

@@ -282,6 +282,36 @@ pub fn check_bearing_id_consistency(board: &Board) -> Vec<Problem> {
     problems
 }
 
+/// Check bearing ID format
+/// Validates that bearing IDs use the canonical generated 9-character base62 format.
+pub fn check_bearing_id_format(board: &Board) -> Vec<Problem> {
+    let mut problems = Vec::new();
+
+    for bearing in board.bearings.values() {
+        let id = bearing.id();
+        if !is_canonical_generated_id(id) {
+            problems.push(Problem {
+                severity: Severity::Error,
+                path: bearing.path.clone(),
+                message: format!(
+                    "bearing id '{}' must use the canonical generated format (9-character base62)",
+                    id
+                ),
+                fix: None,
+                scope: None,
+                category: Some(GapCategory::Convention),
+                check_id: CheckId::IdInconsistency,
+            });
+        }
+    }
+
+    problems
+}
+
+fn is_canonical_generated_id(id: &str) -> bool {
+    id.len() == 9 && id.chars().all(|ch| ch.is_ascii_alphanumeric())
+}
+
 /// Check bearing title case
 /// Validates that bearing titles follow Title Case convention
 pub fn check_bearing_title_case(board: &Board) -> Vec<Problem> {
@@ -588,6 +618,33 @@ mod tests {
         let problems = check_bearing_state_coherence(&board);
         assert!(!problems.is_empty());
         assert!(problems[0].message.contains("missing SURVEY.md"));
+    }
+
+    #[test]
+    fn check_bearing_id_format_flags_legacy_slug_ids() {
+        let temp = TestBoardBuilder::new()
+            .bearing(TestBearing::new("semantic-search-research"))
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_bearing_id_format(&board);
+        assert_eq!(problems.len(), 1);
+        assert!(
+            problems[0]
+                .message
+                .contains("must use the canonical generated format")
+        );
+    }
+
+    #[test]
+    fn check_bearing_id_format_accepts_generated_ids() {
+        let temp = TestBoardBuilder::new()
+            .bearing(TestBearing::new("1w5H2Bq9L"))
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_bearing_id_format(&board);
+        assert!(problems.is_empty());
     }
 
     #[test]

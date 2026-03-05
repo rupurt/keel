@@ -19,8 +19,8 @@ created_at: 2026-03-04T18:22:20
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 7/7 stories done
+**Progress:** 1/1 voyages complete, 7/7 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Semantic Conflict Detection For Parallel Next](voyages/1vxyMT6nz/) | in-progress | 7/7 |
+| [Semantic Conflict Detection For Parallel Next](voyages/1vxyMT6nz/) | done | 7/7 |
 <!-- END GENERATED -->

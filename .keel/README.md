@@ -38,15 +38,9 @@
 
 | Bearing | Status | Survey | Assessment |
 |---------|--------|--------|------------|
-| [Semantic Search and Ranking in Keel](bearings/semantic-search-research/) | evaluating | ✓ | ✓ |
+| [Semantic Search and Ranking in Keel](bearings/1w5H2Bq9L/) | evaluating | ✓ | ✓ |
 
 ## Epics
-
-### [Parallel Safety For Next](epics/1vxyM0hvn/) (active) - 1 voyages, 0 done
-
-| Voyage | Status |
-|--------|--------|
-| [Semantic Conflict Detection For Parallel Next](epics/1vxyM0hvn/voyages/1vxyMT6nz/) | in-progress |
 
 <details>
 <summary><h2>Done</h2></summary>
@@ -61,5 +55,6 @@
 - [Template Contract Hard Cutover](epics/1vxGy5tco/)
 - [Deterministic Command Guidance](epics/1vxYzSury/)
 - [Automated Verification Techniques Bank](epics/1vxqMtskC/)
+- [Parallel Safety For Next](epics/1vxyM0hvn/)
 
 </details>
