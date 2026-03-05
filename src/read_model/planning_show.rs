@@ -113,6 +113,7 @@ pub struct ProofMetadata {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EvidenceItem {
+    pub ac_label: Option<String>,
     pub criterion: String,
     pub requirement: Option<String>,
     pub mode: String,
@@ -423,6 +424,7 @@ pub fn build_story_evidence_projection(story_path: &Path, content: &str) -> Evid
     let mut items = Vec::new();
 
     for ann in parse_verify_annotations(content) {
+        let ac_label = ann.ac_ref.as_ref().map(|ac| format!("AC-{:02}", ac.ac_num));
         let proof_filename = ann.proof.clone();
         let requirement = ann
             .requirement
@@ -458,6 +460,7 @@ pub fn build_story_evidence_projection(story_path: &Path, content: &str) -> Evid
         };
 
         items.push(EvidenceItem {
+            ac_label,
             criterion: ann.criterion,
             requirement,
             mode,

@@ -10,10 +10,14 @@ use crate::infrastructure::loader::load_board;
 use crate::read_model::planning_show::{self, EvidenceReport};
 
 const NO_EVIDENCE_DIR_PLACEHOLDER: &str = "(EVIDENCE directory not found)";
-const NO_LINKED_PROOFS_PLACEHOLDER: &str = "(no annotation-linked proof artifacts)";
 const NO_SUPPLEMENTARY_PLACEHOLDER: &str = "(no supplementary artifacts)";
 const NO_MEDIA_PLACEHOLDER: &str = "(no media artifacts)";
 const NO_VERIFY_PLACEHOLDER: &str = "(no verify annotations found)";
+
+struct StoryHeading<'a> {
+    level: usize,
+    title: &'a str,
+}
 
 /// Run the show story command
 pub fn run(id: &str) -> Result<()> {
@@ -28,13 +32,7 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     let projection = planning_show::build_story_show_projection(story)?;
 
     let width = crate::cli::presentation::terminal::get_terminal_width();
-    println!("{}", style::heavy_rule(width, None));
-    println!(
-        "{}",
-        style::header(story.id(), &story.frontmatter.title, style::styled_story_id)
-    );
-    println!("{}", style::heavy_rule(width, None));
-    println!();
+    println!("{:<9} {}", "Title:", story.frontmatter.title.bold());
 
     println!("Type:     {}", style::styled_type(&story.story_type()));
     println!("Status:   {}", style::styled_stage(&story.stage));
@@ -65,7 +63,6 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     }
 
     if projection.total_criteria > 0 {
-        println!();
         println!(
             "Progress: {}",
             style::progress_bar(
@@ -77,8 +74,7 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
         );
     }
 
-    println!();
-    println!("Path: {}", story.path.display().dimmed());
+    println!("{:<9} {}", "Path:", story.path.display().dimmed());
 
     if let Some(body_text) = &projection.body
         && !body_text.trim().is_empty()
@@ -87,6 +83,7 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
         println!("{}", style::rule(width, None));
 
         let mut code_block: Option<(String, String)> = None;
+        let mut just_rendered_heading = false;
         for line in body_text.trim().lines() {
             let trimmed = line.trim();
 
@@ -112,15 +109,33 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
                 continue;
             }
 
+            if just_rendered_heading && trimmed.is_empty() {
+                just_rendered_heading = false;
+                continue;
+            }
+
             if trimmed.starts_with("- [x]")
                 || trimmed.starts_with("- [X]")
                 || trimmed.starts_with("- [ ]")
             {
                 println!("{}", style::styled_ac(trimmed));
-            } else if trimmed.starts_with("# ") || trimmed.starts_with("## ") {
-                println!("{}", line.bold());
+                just_rendered_heading = false;
+            } else if let Some(heading) = parse_story_body_heading(trimmed) {
+                if heading.level == 1
+                    && heading
+                        .title
+                        .eq_ignore_ascii_case(story.frontmatter.title.trim())
+                {
+                    // Suppress duplicate title in body when it matches frontmatter title.
+                    just_rendered_heading = true;
+                    continue;
+                }
+
+                println!("{}", heading.title.bold());
+                just_rendered_heading = true;
             } else {
                 println!("{}", line);
+                just_rendered_heading = false;
             }
         }
 
@@ -153,7 +168,11 @@ fn evidence_lines(story_id: &str, report: &EvidenceReport) -> Vec<String> {
         lines.push(format!("  {}", NO_VERIFY_PLACEHOLDER.dimmed()));
     } else {
         for (idx, item) in report.items.iter().enumerate() {
-            lines.push(format!("  AC {}: {}", idx + 1, item.criterion));
+            let ac_label = item
+                .ac_label
+                .clone()
+                .unwrap_or_else(|| format!("AC-{:02}", idx + 1));
+            lines.push(format!("  {}: {}", ac_label.cyan(), item.criterion));
             lines.push(format!("    Mode: {}", item.mode));
 
             if let Some(command) = &item.command {
@@ -192,15 +211,6 @@ fn evidence_lines(story_id: &str, report: &EvidenceReport) -> Vec<String> {
         lines.push(format!("  {}", NO_EVIDENCE_DIR_PLACEHOLDER.dimmed()));
     }
 
-    lines.push("  Linked proofs:".to_string());
-    if report.linked_proofs.is_empty() {
-        lines.push(format!("    {}", NO_LINKED_PROOFS_PLACEHOLDER.dimmed()));
-    } else {
-        for proof in &report.linked_proofs {
-            lines.push(format!("    - {}", proof));
-        }
-    }
-
     lines.push("  Supplementary artifacts:".to_string());
     if report.supplementary_artifacts.is_empty() {
         lines.push(format!("    {}", NO_SUPPLEMENTARY_PLACEHOLDER.dimmed()));
@@ -236,6 +246,26 @@ fn render_evidence_report(story_id: &str, report: &EvidenceReport) {
     for line in evidence_lines(story_id, report) {
         println!("{}", line);
     }
+}
+
+fn parse_story_body_heading(trimmed: &str) -> Option<StoryHeading<'_>> {
+    let mut level = 0usize;
+    let mut rest = trimmed;
+    while let Some(stripped) = rest.strip_prefix('#') {
+        level += 1;
+        rest = stripped;
+    }
+
+    if !(1..=6).contains(&level) {
+        return None;
+    }
+
+    let title = rest.strip_prefix(' ')?.trim();
+    if title.is_empty() {
+        return None;
+    }
+
+    Some(StoryHeading { level, title })
 }
 
 #[cfg(test)]
@@ -408,11 +438,6 @@ ok
             lines
                 .iter()
                 .any(|line| line.contains(NO_EVIDENCE_DIR_PLACEHOLDER))
-        );
-        assert!(
-            lines
-                .iter()
-                .any(|line| line.contains(NO_LINKED_PROOFS_PLACEHOLDER))
         );
         assert!(
             lines
