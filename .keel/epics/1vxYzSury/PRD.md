@@ -4,31 +4,40 @@
 
 ## Problem Statement
 
-<!-- What user problem does this solve? Include evidence/data if available -->
+Management commands have historically mixed informational output with inconsistent guidance phrasing, making automation brittle and operator behavior inconsistent across workflows. Without a canonical guidance contract, harnesses cannot reliably determine the next action or recovery action from command output, and teams must hand-interpret command-specific wording.
 
 ## Goals & Objectives
 
-<!-- Why this epic, why now? How does it align with product vision? -->
-
 | Goal | Success Metric | Target |
 |------|----------------|--------|
+| Establish one guidance contract | Actionable commands emit one canonical next or recovery step in text and JSON | 100% of actionable management commands in scope |
+| Keep informational commands non-prescriptive | Informational commands omit next/recovery directives by design | 0 informational command contract violations |
+| Reduce command-classification drift | Command capability map and drift tests cover actionable vs informational behavior | 100% drift-test pass rate |
+| Improve planning visibility | Show surfaces expose authored planning context and evidence status coherently | Epic/voyage/story show commands aligned to contract |
 
 ## Users
 
-<!-- Who benefits from this? Primary and secondary personas -->
-
 | Persona | Description | Primary Need |
 |---------|-------------|--------------|
+| Human planner | Runs queue and governance workflows directly in terminal | Consistent guidance for the next safe action |
+| Automation harness | Parses command output for orchestration and prompts | Deterministic machine-readable guidance fields |
+| Implementer agent | Executes lifecycle commands while delivering stories | Clear recovery instructions when a transition fails |
 
 ## Scope
 
 ### In Scope
 
-<!-- What this epic delivers -->
+- Define and enforce a shared guidance output contract with canonical next/recovery fields.
+- Apply deterministic guidance rules to story, voyage, governance, decision, and verification command groups in scope.
+- Preserve non-prescriptive behavior for informational commands.
+- Add command classification and drift tests to prevent contract regression.
+- Improve planning read surfaces so authored context and evidence status are visible and actionable.
 
 ### Out of Scope
 
-<!-- What this epic explicitly does NOT deliver (prevents scope creep) -->
+- Replacing command semantics beyond guidance and rendering contract requirements.
+- Expanding scope to external API protocols not currently served by CLI surfaces.
+- Introducing backward-compatible alternate guidance formats during this hard-cutover phase.
 
 ## Requirements
 
@@ -37,7 +46,12 @@
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Priority | Rationale |
 |----|-------------|----------|-----------|
-| FR-01 | Deliver the primary user workflow for this epic end-to-end. | must | Establishes the minimum functional capability needed to achieve the epic goal. |
+| FR-01 | Actionable management commands in scope must emit exactly one canonical next or recovery instruction. | must | Enables deterministic operator and harness behavior. |
+| FR-02 | JSON output for actionable commands must include parity fields for canonical guidance. | must | Keeps machine consumers aligned with terminal output behavior. |
+| FR-03 | Informational commands must remain non-prescriptive and omit canonical action directives. | must | Prevents misleading or noisy guidance on read-only surfaces. |
+| FR-04 | Shared renderer utilities must be used across command groups to prevent formatting drift. | must | Maintains one rendering contract and reduces duplication. |
+| FR-05 | Planning show commands must expose authored context, requirement/evidence status, and lifecycle metadata coherently. | should | Improves decision quality and acceptance flow. |
+| FR-06 | Story creation must default to icebox state for planning-first intake. | should | Preserves queue discipline and avoids accidental execution starts. |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ### Non-Functional Requirements
@@ -45,29 +59,39 @@
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Priority | Rationale |
 |----|-------------|----------|-----------|
-| NFR-01 | Maintain reliability and observability for all new workflow paths introduced by this epic. | must | Keeps operations stable and makes regressions detectable during rollout. |
+| NFR-01 | Guidance contract behavior must be deterministic and stable across releases. | must | Harness reliability depends on contract stability. |
+| NFR-02 | Command classification tests must detect drift before merge. | must | Prevents regression of actionable vs informational semantics. |
+| NFR-03 | Rendered output must remain readable in narrow terminal widths without losing key guidance fields. | should | Ensures practical usability in real operator environments. |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+
+## Verification Strategy
+
+- Add contract tests that validate canonical next/recovery presence, cardinality, and JSON parity for actionable commands.
+- Add negative tests ensuring informational commands do not emit prescriptive guidance fields.
+- Add drift tests tied to the command classification map so new commands cannot silently violate behavior categories.
+- Keep golden-output tests for epic/voyage/story show surfaces to lock rendering coherence for authored planning context.
 
 ## Assumptions
 
-<!-- What we're betting on; if proven wrong, may require re-planning -->
-
 | Assumption | Impact if Wrong | Validation |
 |------------|-----------------|------------|
+| Existing command taxonomy can cleanly classify actionable vs informational behavior. | Additional command families may require separate policy treatment. | Classification map review and drift-test enforcement. |
+| Shared rendering helpers can satisfy all guidance presentation needs without command-specific forks. | Contract may fragment again across command implementations. | Renderer adoption checks in tests and code review gates. |
 
 ## Open Questions & Risks
 
-<!-- Unknowns that need resolution; risks to track -->
-
 | Question/Risk | Owner | Status |
 |---------------|-------|--------|
+| Future command additions may bypass classification policy if onboarding guidance is weak. | Maintainer | Mitigated with drift tests and AGENTS guidance |
+| Overly verbose guidance text could reduce readability in constrained terminal contexts. | Epic owner | Monitoring |
 
 ## Success Criteria
 
-<!-- How we know this epic is complete -->
-
 <!-- BEGIN SUCCESS_CRITERIA -->
-- [ ] Users can complete the primary workflow described in this PRD without manual intervention.
+- [ ] Actionable commands in scope emit one canonical next or recovery step with JSON parity.
+- [ ] Informational commands remain non-prescriptive and pass classification drift tests.
+- [ ] Shared guidance renderer utilities are adopted across covered command families.
+- [ ] Planning show surfaces provide authored context and evidence visibility without contract regressions.
 <!-- END SUCCESS_CRITERIA -->
 
 ## Voyages
@@ -77,4 +101,11 @@
 <!-- BEGIN VOYAGES -->
 | Voyage | Status | Description |
 |--------|--------|-------------|
+| [1vxYzh8ep](voyages/1vxYzh8ep/) | done | Establish shared output contract and renderer utilities. |
+| [1vxYzjVMv](voyages/1vxYzjVMv/) | done | Add deterministic guidance in governance and research workflows. |
+| [1vxYzjiwH](voyages/1vxYzjiwH/) | done | Apply canonical guidance to story and voyage lifecycle commands. |
+| [1vxYzrwma](voyages/1vxYzrwma/) | done | Ensure parity for decision and verification command groups. |
+| [1vxYzsAxT](voyages/1vxYzsAxT/) | done | Add command classification drift guards. |
+| [1vxpomgnN](voyages/1vxpomgnN/) | done | Improve planning show surfaces and evidence visibility. |
+| [1vxqEChvp](voyages/1vxqEChvp/) | done | Default new stories to icebox for planning-first intake. |
 <!-- END VOYAGES -->

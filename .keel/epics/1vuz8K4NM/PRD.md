@@ -74,6 +74,12 @@ Keel currently has coherence gaps across planning and execution workflows:
 | NFR-04 | Documentation and CLI text must use canonical terminology only. | should | Reduce onboarding and operational confusion. |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
 
+## Verification Strategy
+
+- Add regression tests for queue policy parity so `next` and `flow` decisions remain aligned across shared thresholds.
+- Add transition-gating parity tests that compare runtime command blocking and doctor output for equivalent fixtures.
+- Run hard-migration fixture tests for acceptance and rejection paths, then gate completion on `just keel doctor` and `just test`.
+
 ## Assumptions
 
 | Assumption | Impact if Wrong | Validation |

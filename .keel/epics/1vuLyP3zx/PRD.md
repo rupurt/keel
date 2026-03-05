@@ -64,6 +64,12 @@ Unify the validation architecture to ensure that every domain rule is defined ex
 | NFR-02 | Error Actionability | must | All unified problems must provide clear paths to resolution |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
 
+## Verification Strategy
+
+- Add unit and integration tests that assert `doctor` and transition gates emit the same `Problem` set for equivalent board states.
+- Add regression tests for `story submit`, `voyage start`, and other gate paths that now delegate to `doctor/checks`.
+- Run `just keel doctor` and command-level lifecycle tests in CI to prevent gate/reporting drift.
+
 ## Assumptions
 
 | Assumption | Impact if Wrong | Validation |

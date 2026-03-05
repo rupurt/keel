@@ -66,6 +66,12 @@ The current codebase models strong domain concepts, but implementation is still 
 | NFR-04 | Traceability from story AC to SRS and PRD requirements must remain intact across migration. | must | Preserves governance and acceptance model integrity. |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
 
+## Verification Strategy
+
+- Enforce module boundary tests that fail on forbidden imports between domain/application/infrastructure/interface layers.
+- Keep command-regression tests for `flow`, `status`, `next`, and lifecycle transitions to ensure behavior parity during refactor.
+- Add read-model service tests that prove one canonical projection path is used by management commands.
+
 ## Assumptions
 
 | Assumption | Impact if Wrong | Validation |

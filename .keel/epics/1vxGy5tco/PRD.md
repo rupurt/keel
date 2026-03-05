@@ -70,6 +70,12 @@ Primary users are human planners and implementation agents relying on determinis
 | NFR-03 | New checks must provide actionable error messages that include the failing artifact context. | should | Reduces turnaround time when fixing coherency failures. |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
 
+## Verification Strategy
+
+- Add template-rendering tests that fail when deprecated tokens or scaffold defaults appear in generated planning docs.
+- Add CLI argument contract tests for `voyage new --goal` and `adr new --context/--applies-to` parsing behavior.
+- Assert unresolved scaffold text fails both doctor and transition gates via shared fixture tests.
+
 ## Assumptions
 
 | Assumption | Impact if Wrong | Validation |

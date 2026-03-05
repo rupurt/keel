@@ -28,15 +28,15 @@ Our goal is to turn Keel's evidence into a "living" audit trail that is continuo
 
 ### In Scope
 
-*   Automated re-verification of all linked proofs (`keel verify --all`).
-*   Rich provenance tracking for all recorded evidence.
-*   Stakeholder-ready audit and voyage narrative reports.
-*   Streamlined developer experience for capturing evidence.
+- Automated re-verification of all linked proofs (`keel verify --all`).
+- Rich provenance tracking for all recorded evidence.
+- Stakeholder-ready audit and voyage narrative reports.
+- Streamlined developer experience for capturing evidence.
 
 ### Out of Scope
 
-*   Integrating with external CI/CD platforms (initially).
-*   Non-Markdown based reporting (PDF/HTML generation is a future step, initially we focus on rich Markdown/Terminal).
+- Integrating with external CI/CD platforms (initially).
+- Non-Markdown based reporting (PDF/HTML generation is a future step, initially we focus on rich Markdown/Terminal).
 
 ## Requirements
 
@@ -59,6 +59,12 @@ Our goal is to turn Keel's evidence into a "living" audit trail that is continuo
 | NFR-01 | Comma-separated verify syntax | must | Clean, robust parsing of multiple attributes |
 | NFR-02 | Minimal E2E CLI testing | must | Ensures command-line interface reliability |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+
+## Verification Strategy
+
+- Maintain command-level tests for `verify detect`, `verify recommend`, and `verify --all` with fixture boards that include mixed manual and automated evidence.
+- Add regression tests that assert provenance metadata is persisted and surfaced in report output.
+- Use `just keel doctor`, `just test`, and at least one generated voyage report as release gates for this epic.
 
 ## Assumptions
 
