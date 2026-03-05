@@ -10,7 +10,9 @@ use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::style;
 use crate::domain::model::{Board, Voyage};
 use crate::infrastructure::loader::load_board;
-use crate::read_model::planning_show::{self, VoyageShowProjection};
+use crate::read_model::planning_show::{
+    self, RequirementKind, RequirementRow, VoyageShowProjection,
+};
 
 const GOAL_PLACEHOLDER: &str = "(goal not authored yet)";
 const SCOPE_PLACEHOLDER: &str = "(scope not authored in SRS.md yet)";
@@ -149,34 +151,68 @@ fn requirement_matrix_section(report: &VoyageShowProjection) -> ShowSection {
         return section;
     }
 
-    section
-        .push_lines(["  | Requirement | Completion | Verification | Linked Stories |".to_string()]);
-    section
-        .push_lines(["  |-------------|------------|--------------|----------------|".to_string()]);
-    for row in &report.requirements {
-        let linked = if row.linked_stories.is_empty() {
-            "none".to_string()
-        } else {
-            row.linked_stories
-                .iter()
-                .map(|story| format!("{}({})", story.id, story.stage))
-                .collect::<Vec<_>>()
-                .join(", ")
-        };
+    let functional: Vec<&RequirementRow> = report
+        .requirements
+        .iter()
+        .filter(|row| row.kind == RequirementKind::Functional)
+        .collect();
+    let non_functional: Vec<&RequirementRow> = report
+        .requirements
+        .iter()
+        .filter(|row| row.kind == RequirementKind::NonFunctional)
+        .collect();
 
-        section.push_lines([format!(
-            "  | {}: {} | {} | {} | {} |",
-            row.id, row.description, row.completion, row.verification, linked
-        )]);
+    push_requirement_group(&mut section, "Functional Requirements", &functional);
+    push_requirement_group(&mut section, "Non-Functional Requirements", &non_functional);
+
+    section
+}
+
+fn push_requirement_group(section: &mut ShowSection, title: &str, rows: &[&RequirementRow]) {
+    if rows.is_empty() {
+        return;
     }
 
-    section
+    section.push_lines([format!("  {title}")]);
+    for row in rows {
+        section.push_lines(requirement_lines(row));
+    }
+}
+
+fn requirement_lines(row: &RequirementRow) -> Vec<String> {
+    let completion_icon = requirement_completion_icon(&row.completion);
+    let linked = if row.linked_stories.is_empty() {
+        "none".to_string()
+    } else {
+        row.linked_stories
+            .iter()
+            .map(|story| format!("{} ({})", story.id, story.stage))
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+
+    vec![
+        format!("  {completion_icon} {} {}", row.id.cyan(), row.description),
+        format!("    Completion: {}", row.completion),
+        format!("    Verification: {}", row.verification),
+        format!("    Linked Stories: {linked}"),
+    ]
+}
+
+fn requirement_completion_icon(completion: &str) -> String {
+    match completion {
+        "done" => format!("{}", "[x]".green().bold()),
+        "in-progress" => format!("{}", "[~]".yellow().bold()),
+        "queued" => format!("{}", "[ ]".bright_blue()),
+        _ => format!("{}", "[-]".dimmed()),
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::domain::model::StoryState;
+    use crate::read_model::planning_show::StoryRef;
     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use chrono::NaiveDate;
 
@@ -396,5 +432,51 @@ Out of scope:
             .map(|story| story.id.clone())
             .collect();
         assert_eq!(linked_ids, vec!["S1", "S2"]);
+    }
+
+    #[test]
+    fn voyage_requirement_matrix_renders_functional_before_non_functional() {
+        let report = VoyageShowProjection {
+            goal: None,
+            scope: Default::default(),
+            requirements: vec![
+                RequirementRow {
+                    id: "SRS-NFR-01".to_string(),
+                    description: "Meet latency budget".to_string(),
+                    kind: RequirementKind::NonFunctional,
+                    linked_stories: vec![],
+                    completion: "queued".to_string(),
+                    verification: "manual (1)".to_string(),
+                },
+                RequirementRow {
+                    id: "SRS-01".to_string(),
+                    description: "Render grouped requirement output".to_string(),
+                    kind: RequirementKind::Functional,
+                    linked_stories: vec![StoryRef {
+                        id: "S1".to_string(),
+                        stage: StoryState::Done,
+                        index: Some(1),
+                    }],
+                    completion: "done".to_string(),
+                    verification: "automated (1)".to_string(),
+                },
+            ],
+            done_stories: 1,
+            total_stories: 1,
+            done_requirements: 1,
+            total_requirements: 2,
+        };
+
+        let mut document = ShowDocument::new();
+        document.push_section(requirement_matrix_section(&report));
+        let rendered = document.render();
+
+        let functional_idx = rendered.find("Functional Requirements").unwrap();
+        let non_functional_idx = rendered.find("Non-Functional Requirements").unwrap();
+
+        assert!(functional_idx < non_functional_idx);
+        assert!(rendered.contains("Completion:"));
+        assert!(rendered.contains("Verification:"));
+        assert!(rendered.contains("Linked Stories:"));
     }
 }

@@ -88,6 +88,7 @@ pub struct StoryRef {
 pub struct RequirementRow {
     pub id: String,
     pub description: String,
+    pub kind: RequirementKind,
     pub linked_stories: Vec<StoryRef>,
     pub completion: String,
     pub verification: String,
@@ -156,7 +157,15 @@ struct StoryEvidence {
 struct RequirementEntry {
     id: String,
     description: String,
+    kind: RequirementKind,
     verification: Option<String>,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum RequirementKind {
+    #[default]
+    Functional,
+    NonFunctional,
 }
 
 pub fn build_epic_show_projection(
@@ -369,6 +378,7 @@ pub fn build_voyage_show_projection(
         rows.push(RequirementRow {
             id: requirement.id,
             description: requirement.description,
+            kind: requirement.kind,
             linked_stories,
             completion,
             verification: requirement_verification_label(automated, manual),
@@ -543,11 +553,13 @@ pub fn extract_planning_doc_summary(content: &str) -> PlanningDocSummary {
         content,
         "BEGIN FUNCTIONAL_REQUIREMENTS",
         "END FUNCTIONAL_REQUIREMENTS",
+        RequirementKind::Functional,
     );
     requirements.extend(parse_requirement_entries(
         content,
         "BEGIN NON_FUNCTIONAL_REQUIREMENTS",
         "END NON_FUNCTIONAL_REQUIREMENTS",
+        RequirementKind::NonFunctional,
     ));
     requirements.sort_by(|a, b| a.id.cmp(&b.id));
 
@@ -631,11 +643,13 @@ fn parse_srs_requirement_rows(srs: &str) -> Vec<RequirementEntry> {
         srs,
         "BEGIN FUNCTIONAL_REQUIREMENTS",
         "END FUNCTIONAL_REQUIREMENTS",
+        RequirementKind::Functional,
     );
     rows.extend(parse_requirement_entries(
         srs,
         "BEGIN NON_FUNCTIONAL_REQUIREMENTS",
         "END NON_FUNCTIONAL_REQUIREMENTS",
+        RequirementKind::NonFunctional,
     ));
     rows
 }
@@ -761,6 +775,7 @@ fn parse_requirement_entries(
     content: &str,
     start_marker: &str,
     end_marker: &str,
+    kind: RequirementKind,
 ) -> Vec<RequirementEntry> {
     let mut entries = Vec::new();
     let mut in_block = false;
@@ -812,6 +827,7 @@ fn parse_requirement_entries(
         entries.push(RequirementEntry {
             id: id.to_string(),
             description: requirement.to_string(),
+            kind,
             verification,
         });
     }
