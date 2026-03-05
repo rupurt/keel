@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 //! Next command - selective action surfacing
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::path::Path;
 
 use anyhow::Result;
@@ -68,7 +68,7 @@ enum JsonDetails {
     ParallelWork {
         next: Option<JsonStory>,
         ready: Vec<JsonStory>,
-        sequential_chains: HashMap<String, Vec<JsonStory>>,
+        sequential_chains: BTreeMap<String, Vec<JsonStory>>,
         blocked_pairs: Vec<JsonPairwiseBlocker>,
     },
 }
@@ -91,6 +91,13 @@ struct JsonBlockedByAdr {
 struct JsonBearing {
     id: String,
     title: String,
+}
+
+struct ParallelProjection<'a> {
+    ready: Vec<&'a Story>,
+    sequential_chains: BTreeMap<String, Vec<&'a Story>>,
+    blocked_pairs:
+        Vec<crate::cli::commands::management::next_support::parallel_threshold::PairwiseBlocker>,
 }
 
 /// Parse optional actor role taxonomy string for `next` filtering.
@@ -307,16 +314,15 @@ fn render_parallel_blockers_human(
     out
 }
 
-fn run_parallel(
-    board: &crate::domain::model::Board,
+fn project_parallel_work<'a>(
+    board: &'a crate::domain::model::Board,
     board_dir: &Path,
-    json: bool,
     actor_role: Option<&crate::domain::model::taxonomy::RoleTaxonomy>,
-) -> Result<()> {
+) -> ParallelProjection<'a> {
     use crate::domain::state_machine::invariants;
     use crate::read_model::traceability::derive_implementation_dependencies;
 
-    // Get all workable stories, optionally filtered by role
+    // Get all workable stories, optionally filtered by role.
     let mut candidates: Vec<&Story> = board
         .stories
         .values()
@@ -332,9 +338,9 @@ fn run_parallel(
 
     let deps = derive_implementation_dependencies(board);
 
-    // Filter into parallel-safe (ready) and sequential chains
+    // Filter into parallel-safe (ready) and sequential chains.
     let mut ready = Vec::new();
-    let mut sequential: HashMap<String, Vec<&Story>> = HashMap::new();
+    let mut sequential: BTreeMap<String, Vec<&Story>> = BTreeMap::new();
 
     for story in candidates {
         let is_unblocked = deps.get(story.id()).is_none_or(|dep_ids| {
@@ -354,7 +360,7 @@ fn run_parallel(
         }
     }
 
-    // Sort sequential chains by index
+    // Sort sequential chains by index.
     for chain in sequential.values_mut() {
         chain.sort_by_key(|s| s.index());
     }
@@ -373,21 +379,44 @@ fn run_parallel(
             &ready,
             &pairwise_scores,
         );
-    ready = threshold_selection.selected;
 
-    if json {
-        let mut ready_json: Vec<JsonStory> = ready
-            .iter()
-            .map(|s| JsonStory {
-                id: s.id().to_string(),
-                title: s.title().to_string(),
-                scope: s.scope().map(|sc| sc.to_string()),
-                index: s.index(),
-            })
-            .collect();
+    ParallelProjection {
+        ready: threshold_selection.selected,
+        sequential_chains: sequential,
+        blocked_pairs: threshold_selection.blocked_pairs,
+    }
+}
 
-        let mut sequential_json = HashMap::new();
-        for (scope, stories) in sequential {
+fn json_pairwise_blockers(
+    blocked_pairs: &[crate::cli::commands::management::next_support::parallel_threshold::PairwiseBlocker],
+) -> Vec<JsonPairwiseBlocker> {
+    blocked_pairs
+        .iter()
+        .map(|blocker| JsonPairwiseBlocker {
+            story_id: blocker.story_id.clone(),
+            blocked_by: blocker.blocked_by_story_id.clone(),
+            reasons: blocker.reasons.clone(),
+            confidence: blocker.confidence,
+        })
+        .collect()
+}
+
+fn build_parallel_json_result(projection: &ParallelProjection<'_>) -> JsonResult {
+    let mut ready_json: Vec<JsonStory> = projection
+        .ready
+        .iter()
+        .map(|s| JsonStory {
+            id: s.id().to_string(),
+            title: s.title().to_string(),
+            scope: s.scope().map(|sc| sc.to_string()),
+            index: s.index(),
+        })
+        .collect();
+
+    let sequential_json = projection
+        .sequential_chains
+        .iter()
+        .map(|(scope, stories)| {
             let chain: Vec<JsonStory> = stories
                 .iter()
                 .map(|s| JsonStory {
@@ -397,45 +426,49 @@ fn run_parallel(
                     index: s.index(),
                 })
                 .collect();
-            sequential_json.insert(scope, chain);
-        }
+            (scope.clone(), chain)
+        })
+        .collect();
 
-        let next = ready_json.first().cloned();
-        if !ready_json.is_empty() {
-            ready_json.remove(0);
-        }
+    let next = ready_json.first().cloned();
+    if !ready_json.is_empty() {
+        ready_json.remove(0);
+    }
 
-        let result = JsonResult {
-            decision: "parallel_work".to_string(),
-            details: JsonDetails::ParallelWork {
-                next,
-                ready: ready_json,
-                sequential_chains: sequential_json,
-                blocked_pairs: threshold_selection
-                    .blocked_pairs
-                    .iter()
-                    .map(|blocker| JsonPairwiseBlocker {
-                        story_id: blocker.story_id.clone(),
-                        blocked_by: blocker.blocked_by_story_id.clone(),
-                        reasons: blocker.reasons.clone(),
-                        confidence: blocker.confidence,
-                    })
-                    .collect(),
-            },
-            guidance: guidance_for_parallel_ready(&ready),
-        };
+    JsonResult {
+        decision: "parallel_work".to_string(),
+        details: JsonDetails::ParallelWork {
+            next,
+            ready: ready_json,
+            sequential_chains: sequential_json,
+            blocked_pairs: json_pairwise_blockers(&projection.blocked_pairs),
+        },
+        guidance: guidance_for_parallel_ready(&projection.ready),
+    }
+}
+
+fn run_parallel(
+    board: &crate::domain::model::Board,
+    board_dir: &Path,
+    json: bool,
+    actor_role: Option<&crate::domain::model::taxonomy::RoleTaxonomy>,
+) -> Result<()> {
+    let projection = project_parallel_work(board, board_dir, actor_role);
+
+    if json {
+        let result = build_parallel_json_result(&projection);
         println!("{}", serde_json::to_string_pretty(&result)?);
     } else {
         println!("Ready for Work (Parallel Safe):");
-        if ready.is_empty() {
+        if projection.ready.is_empty() {
             println!("  (none)");
         } else {
-            for story in &ready {
+            for story in &projection.ready {
                 println!("  - {}", parallel_story_with_scope(story));
             }
 
             // Surface relevant knowledge for the first ready story
-            if let Some(story) = ready.first() {
+            if let Some(story) = projection.ready.first() {
                 let epic = story.epic();
                 let scope = story.frontmatter.scope.as_deref();
 
@@ -480,22 +513,22 @@ fn run_parallel(
             }
         }
 
-        if !sequential.is_empty() {
+        if !projection.sequential_chains.is_empty() {
             println!("\nSequential Chains (by Scope):");
-            for (scope, stories) in sequential {
-                println!("  {}:", crate::cli::style::styled_scope(Some(&scope)));
+            for (scope, stories) in &projection.sequential_chains {
+                println!("  {}:", crate::cli::style::styled_scope(Some(scope)));
                 for story in stories {
                     println!("    - {}", parallel_story(story));
                 }
             }
         }
 
-        let blockers_human = render_parallel_blockers_human(&threshold_selection.blocked_pairs);
+        let blockers_human = render_parallel_blockers_human(&projection.blocked_pairs);
         if !blockers_human.is_empty() {
             print!("{blockers_human}");
         }
 
-        print_human_guidance(guidance_for_parallel_ready(&ready).as_ref());
+        print_human_guidance(guidance_for_parallel_ready(&projection.ready).as_ref());
     }
 
     Ok(())
@@ -523,7 +556,8 @@ mod tests {
     use crate::domain::model::Story;
     use crate::domain::model::StoryState;
     use crate::test_helpers::{
-        AdrFactory, BearingFactory, StoryFactory, TestBoardBuilder, TestStory, VoyageFactory,
+        AdrFactory, BearingFactory, StoryFactory, TestBoardBuilder, TestEpic, TestStory,
+        TestVoyage, VoyageFactory,
     };
 
     #[test]
@@ -785,7 +819,7 @@ mod tests {
             details: JsonDetails::ParallelWork {
                 next: None,
                 ready: vec![],
-                sequential_chains: HashMap::new(),
+                sequential_chains: BTreeMap::new(),
                 blocked_pairs: vec![JsonPairwiseBlocker {
                     story_id: "S2".to_string(),
                     blocked_by: "S1".to_string(),
@@ -813,5 +847,107 @@ mod tests {
             json["details"]["parallel_work"]["blocked_pairs"][0]["confidence"],
             0.5
         );
+    }
+
+    #[test]
+    fn next_parallel_output_is_deterministic() {
+        let srs = "# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req1 | test |\n| SRS-02 | req2 | test |\nEND FUNCTIONAL_REQUIREMENTS";
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("keel"))
+            .voyage(TestVoyage::new("01-parallel", "keel").srs_content(srs))
+            .story(
+                TestStory::new("S2")
+                    .title("Follow-on core work")
+                    .scope("keel/01-parallel")
+                    .body("- [ ] [SRS-02/AC-01] follow-on")
+                    .stage(StoryState::Backlog),
+            )
+            .story(
+                TestStory::new("S1")
+                    .title("Core foundation")
+                    .scope("keel/01-parallel")
+                    .body("- [ ] [SRS-01/AC-01] foundation")
+                    .stage(StoryState::Backlog),
+            )
+            .story(
+                TestStory::new("S3")
+                    .title("Ops lane")
+                    .scope("ops/01-parallel")
+                    .stage(StoryState::Backlog),
+            )
+            .build();
+
+        let board_first = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board_second = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+
+        let first_projection = project_parallel_work(&board_first, temp.path(), None);
+        let second_projection = project_parallel_work(&board_second, temp.path(), None);
+
+        let first_output =
+            serde_json::to_string_pretty(&build_parallel_json_result(&first_projection)).unwrap();
+        let second_output =
+            serde_json::to_string_pretty(&build_parallel_json_result(&second_projection)).unwrap();
+
+        assert_eq!(first_output, second_output);
+
+        let json = serde_json::from_str::<serde_json::Value>(&first_output).unwrap();
+        assert_eq!(json["details"]["parallel_work"]["next"]["id"], "S1");
+        assert_eq!(json["details"]["parallel_work"]["ready"][0]["id"], "S3");
+        assert_eq!(
+            json["details"]["parallel_work"]["sequential_chains"]["keel/01-parallel"][0]["id"],
+            "S2"
+        );
+    }
+
+    #[test]
+    fn next_parallel_pairwise_blockers_render_consistently() {
+        let srs = "# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req1 | test |\nEND FUNCTIONAL_REQUIREMENTS";
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("keel"))
+            .voyage(TestVoyage::new("01-parallel", "keel").srs_content(srs))
+            .story(
+                TestStory::new("S1")
+                    .title("Core lane")
+                    .scope("keel/01-parallel")
+                    .stage(StoryState::Backlog),
+            )
+            .story(
+                TestStory::new("S2")
+                    .title("Ops lane")
+                    .scope("keel/01-parallel")
+                    .blocked_by(&["S1"])
+                    .stage(StoryState::Backlog),
+            )
+            .story(
+                TestStory::new("S3")
+                    .title("Docs lane")
+                    .scope("keel/01-parallel")
+                    .stage(StoryState::Backlog),
+            )
+            .build();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let projection = project_parallel_work(&board, temp.path(), None);
+
+        let selected_ids: Vec<_> = projection.ready.iter().map(|story| story.id()).collect();
+        assert_eq!(selected_ids, vec!["S1", "S3"]);
+        assert_eq!(projection.blocked_pairs.len(), 1);
+
+        let blocker = &projection.blocked_pairs[0];
+        let human = render_parallel_blockers_human(&projection.blocked_pairs);
+        let json =
+            serde_json::to_value(build_parallel_json_result(&projection)).expect("json payload");
+        let json_blocker = &json["details"]["parallel_work"]["blocked_pairs"][0];
+
+        assert_eq!(json_blocker["story_id"], blocker.story_id);
+        assert_eq!(json_blocker["blocked_by"], blocker.blocked_by_story_id);
+        assert_eq!(json_blocker["reasons"][0], blocker.reasons[0]);
+        assert_eq!(
+            json_blocker["confidence"].as_f64().unwrap(),
+            blocker.confidence
+        );
+        assert!(human.contains(&blocker.story_id));
+        assert!(human.contains(&blocker.blocked_by_story_id));
+        assert!(human.contains(blocker.reasons[0].as_str()));
     }
 }
