@@ -8,6 +8,23 @@ created_at: 2026-03-03T08:10:40
 
 ## Story Knowledge
 
+## Story: Align CLI Contracts For Creation Commands (1vxH83MOO)
+
+### 1vyDuwuNj: Keep CLI contract updates end-to-end
+
+| Field | Value |
+|-------|-------|
+| **Category** | code |
+| **Context** | When changing creation command flags and required inputs |
+| **Insight** | Command tree flags, runtime mappers, and user-facing suggestion strings drift unless updated in the same slice. |
+| **Suggested Action** | Pair every CLI contract edit with parser rejection tests for removed flags and updates to generated command hints. |
+| **Applies To** | src/cli/command_tree.rs, src/cli/runtime.rs, src/cli_tests.rs, src/cli/presentation/flow/next_up.rs |
+| **Applied** | yes |
+
+
+
+---
+
 ## Story: Codify Token Bucket Contract Tests (1vxH84K5a)
 
 ### 1vyDuwGh9: Keep token inventories and CLI `new` surfaces coupled by drift tests
@@ -59,9 +76,9 @@ created_at: 2026-03-03T08:10:40
 
 ---
 
-## Story: Align CLI Contracts For Creation Commands (1vxH83MOO)
+## Synthesis
 
-### 1vyDuwuNj: Keep CLI contract updates end-to-end
+### 60OXnfaXF: Keep CLI contract updates end-to-end
 
 | Field | Value |
 |-------|-------|
@@ -70,13 +87,10 @@ created_at: 2026-03-03T08:10:40
 | **Insight** | Command tree flags, runtime mappers, and user-facing suggestion strings drift unless updated in the same slice. |
 | **Suggested Action** | Pair every CLI contract edit with parser rejection tests for removed flags and updates to generated command hints. |
 | **Applies To** | src/cli/command_tree.rs, src/cli/runtime.rs, src/cli_tests.rs, src/cli/presentation/flow/next_up.rs |
+| **Linked Knowledge IDs** | 1vyDuwuNj |
+| **Score** | 0.82 |
+| **Confidence** | 0.90 |
 | **Applied** | yes |
-
-
-
----
-
-## Synthesis
 
 ### NzFf9pQSl: Keep token inventories and CLI `new` surfaces coupled by drift tests
 
@@ -118,19 +132,5 @@ created_at: 2026-03-03T08:10:40
 | **Linked Knowledge IDs** | 1vyDuwE2r |
 | **Score** | 0.82 |
 | **Confidence** | 0.89 |
-| **Applied** | yes |
-
-### 60OXnfaXF: Keep CLI contract updates end-to-end
-
-| Field | Value |
-|-------|-------|
-| **Category** | code |
-| **Context** | When changing creation command flags and required inputs |
-| **Insight** | Command tree flags, runtime mappers, and user-facing suggestion strings drift unless updated in the same slice. |
-| **Suggested Action** | Pair every CLI contract edit with parser rejection tests for removed flags and updates to generated command hints. |
-| **Applies To** | src/cli/command_tree.rs, src/cli/runtime.rs, src/cli_tests.rs, src/cli/presentation/flow/next_up.rs |
-| **Linked Knowledge IDs** | 1vyDuwuNj |
-| **Score** | 0.82 |
-| **Confidence** | 0.90 |
 | **Applied** | yes |
 

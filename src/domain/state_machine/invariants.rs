@@ -43,13 +43,16 @@ use std::sync::LazyLock;
 use regex::Regex;
 
 use crate::domain::model::{Board, Story, StoryState, Voyage, VoyageState};
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use std::fs;
 
 static REQ_TABLE_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^\|\s*(SRS-\d+)\s*\|").unwrap());
 static AC_REQ_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\[(SRS-\d+)/AC-\d+\]").unwrap());
 static REQ_REF_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\bSRS-[A-Z0-9-]+\b").unwrap());
+static PRD_FUNCTIONAL_REQ_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^FR-\d+$").unwrap());
+static PRD_NON_FUNCTIONAL_REQ_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^NFR-\d+$").unwrap());
 
 // Re-export coherence validation functions for a unified API
 #[allow(unused_imports)] // SuggestedFix exported for public API completeness
@@ -160,6 +163,156 @@ pub fn parse_requirements(srs_path: &Path) -> Vec<String> {
     }
 
     requirements
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum PrdRequirementKind {
+    Functional,
+    NonFunctional,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PrdRequirementEntry {
+    pub epic_id: String,
+    pub id: String,
+    pub description: String,
+    pub kind: PrdRequirementKind,
+    pub priority: Option<String>,
+    pub rationale: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct PrdRequirementLineage {
+    pub epic_id: String,
+    pub parent_requirements: BTreeMap<String, PrdRequirementEntry>,
+}
+
+impl PrdRequirementLineage {
+    pub fn get(&self, id: &str) -> Option<&PrdRequirementEntry> {
+        self.parent_requirements.get(id)
+    }
+
+    pub fn ordered_entries(&self) -> Vec<&PrdRequirementEntry> {
+        self.parent_requirements.values().collect()
+    }
+}
+
+pub fn parse_prd_requirement_lineage(epic_id: &str, prd_path: &Path) -> PrdRequirementLineage {
+    let prd_content = match fs::read_to_string(prd_path) {
+        Ok(content) => content,
+        Err(_) => {
+            return PrdRequirementLineage {
+                epic_id: epic_id.to_string(),
+                parent_requirements: BTreeMap::new(),
+            };
+        }
+    };
+
+    let mut parent_requirements = BTreeMap::new();
+    parse_prd_requirement_block(
+        &prd_content,
+        epic_id,
+        "BEGIN FUNCTIONAL_REQUIREMENTS",
+        "END FUNCTIONAL_REQUIREMENTS",
+        PrdRequirementKind::Functional,
+        &PRD_FUNCTIONAL_REQ_RE,
+        &mut parent_requirements,
+    );
+    parse_prd_requirement_block(
+        &prd_content,
+        epic_id,
+        "BEGIN NON_FUNCTIONAL_REQUIREMENTS",
+        "END NON_FUNCTIONAL_REQUIREMENTS",
+        PrdRequirementKind::NonFunctional,
+        &PRD_NON_FUNCTIONAL_REQ_RE,
+        &mut parent_requirements,
+    );
+
+    PrdRequirementLineage {
+        epic_id: epic_id.to_string(),
+        parent_requirements,
+    }
+}
+
+fn parse_prd_requirement_block(
+    content: &str,
+    epic_id: &str,
+    start_marker: &str,
+    end_marker: &str,
+    kind: PrdRequirementKind,
+    id_pattern: &Regex,
+    parent_requirements: &mut BTreeMap<String, PrdRequirementEntry>,
+) {
+    let mut in_block = false;
+    let mut priority_column_index: Option<usize> = None;
+    let mut rationale_column_index: Option<usize> = None;
+
+    for line in content.lines() {
+        if line.contains(start_marker) {
+            in_block = true;
+            priority_column_index = None;
+            rationale_column_index = None;
+            continue;
+        }
+        if line.contains(end_marker) {
+            break;
+        }
+        if !in_block {
+            continue;
+        }
+
+        let trimmed = line.trim();
+        if !trimmed.starts_with('|') {
+            continue;
+        }
+
+        let cols: Vec<&str> = trimmed
+            .split('|')
+            .map(str::trim)
+            .filter(|col| !col.is_empty())
+            .collect();
+        if cols.len() < 2 {
+            continue;
+        }
+
+        let id = cols[0];
+        if id.eq_ignore_ascii_case("ID") {
+            priority_column_index = cols
+                .iter()
+                .position(|col| col.eq_ignore_ascii_case("Priority"));
+            rationale_column_index = cols
+                .iter()
+                .position(|col| col.eq_ignore_ascii_case("Rationale"));
+            continue;
+        }
+
+        let description = cols[1];
+        if id.starts_with("---") || description.is_empty() || !id_pattern.is_match(id) {
+            continue;
+        }
+
+        let priority = priority_column_index
+            .and_then(|idx| cols.get(idx))
+            .map(|value| value.trim())
+            .filter(|value| !value.is_empty())
+            .map(ToOwned::to_owned);
+        let rationale = rationale_column_index
+            .and_then(|idx| cols.get(idx))
+            .map(|value| value.trim())
+            .filter(|value| !value.is_empty())
+            .map(ToOwned::to_owned);
+
+        parent_requirements
+            .entry(id.to_string())
+            .or_insert_with(|| PrdRequirementEntry {
+                epic_id: epic_id.to_string(),
+                id: id.to_string(),
+                description: description.to_string(),
+                kind,
+                priority,
+                rationale,
+            });
+    }
 }
 
 /// Return SRS requirements for a voyage that are not covered by any story
@@ -453,6 +606,146 @@ mod tests {
         let requirements = parse_requirements(&srs_path);
 
         assert!(requirements.is_empty());
+    }
+
+    #[test]
+    fn prd_lineage_parser_builds_canonical_parent_map() {
+        let temp = TempDir::new().unwrap();
+        let prd_path = temp.path().join("PRD.md");
+        fs::write(
+            &prd_path,
+            r#"# PRD
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-02 | Render epic coverage. | should | Coverage needs a parent contract. |
+| PRD-99 | legacy alias should be ignored | must | hard-cutover |
+| FR-01 | Parse canonical lineage. | must | Shared consumers need one parser. |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+
+<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| NFR-02 | Keep ordering deterministic. | must | Stable planning output. |
+<!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let lineage = parse_prd_requirement_lineage("epic-123", &prd_path);
+
+        assert_eq!(lineage.epic_id, "epic-123");
+        assert_eq!(lineage.parent_requirements.len(), 3);
+        assert!(!lineage.parent_requirements.contains_key("PRD-99"));
+
+        let functional = lineage.get("FR-01").unwrap();
+        assert_eq!(functional.epic_id, "epic-123");
+        assert_eq!(functional.kind, PrdRequirementKind::Functional);
+        assert_eq!(functional.description, "Parse canonical lineage.");
+        assert_eq!(functional.priority.as_deref(), Some("must"));
+        assert_eq!(
+            functional.rationale.as_deref(),
+            Some("Shared consumers need one parser.")
+        );
+
+        let non_functional = lineage.get("NFR-02").unwrap();
+        assert_eq!(non_functional.kind, PrdRequirementKind::NonFunctional);
+        assert_eq!(non_functional.description, "Keep ordering deterministic.");
+    }
+
+    #[test]
+    fn prd_lineage_model_exposes_reusable_parent_metadata() {
+        let temp = TempDir::new().unwrap();
+        let prd_path = temp.path().join("PRD.md");
+        fs::write(
+            &prd_path,
+            r#"# PRD
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-03 | Block invalid source lineage. | must | Gates and doctor must share one parent record. |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+
+<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| NFR-01 | Reject aliases. | must | Hard cutover only. |
+<!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let lineage = parse_prd_requirement_lineage("epic-abc", &prd_path);
+        let ordered = lineage.ordered_entries();
+
+        assert_eq!(ordered.len(), 2);
+        assert_eq!(ordered[0].id, "FR-03");
+        assert_eq!(ordered[0].epic_id, "epic-abc");
+        assert_eq!(ordered[0].priority.as_deref(), Some("must"));
+        assert_eq!(
+            ordered[0].rationale.as_deref(),
+            Some("Gates and doctor must share one parent record.")
+        );
+        assert_eq!(ordered[1].id, "NFR-01");
+        assert_eq!(ordered[1].kind, PrdRequirementKind::NonFunctional);
+    }
+
+    #[test]
+    fn prd_lineage_parser_is_deterministic() {
+        let temp = TempDir::new().unwrap();
+        let prd_path_a = temp.path().join("PRD-a.md");
+        let prd_path_b = temp.path().join("PRD-b.md");
+        fs::write(
+            &prd_path_a,
+            r#"# PRD
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-10 | Render planning coverage. | should | Coverage needs parent summaries. |
+| FR-02 | Parse parent lineage. | must | Shared parsing. |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+
+<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| NFR-03 | Emit actionable errors. | must | Diagnostics must stay useful. |
+<!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+        fs::write(
+            &prd_path_b,
+            r#"# PRD
+
+<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| NFR-03 | Emit actionable errors. | must | Diagnostics must stay useful. |
+<!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-02 | Parse parent lineage. | must | Shared parsing. |
+| FR-10 | Render planning coverage. | should | Coverage needs parent summaries. |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let lineage_a = parse_prd_requirement_lineage("epic-det", &prd_path_a);
+        let lineage_b = parse_prd_requirement_lineage("epic-det", &prd_path_b);
+
+        assert_eq!(lineage_a, lineage_b);
+        let ordered_ids: Vec<_> = lineage_a
+            .ordered_entries()
+            .into_iter()
+            .map(|entry| entry.id.clone())
+            .collect();
+        assert_eq!(ordered_ids, vec!["FR-02", "FR-10", "NFR-03"]);
     }
 
     #[test]

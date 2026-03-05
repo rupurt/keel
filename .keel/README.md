@@ -27,7 +27,6 @@
 |-------|------|-------|
 | [Gate Voyage Planning On PRD Lineage](stories/1vyGZEO8S/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Canonical PRD Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFiQPoH/) |
 | [Render Epic Requirement Coverage](stories/1vyGZEZNc/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Canonical PRD Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFiQPoH/) |
-| [Parse Canonical PRD Requirement Lineage](stories/1vyGZEowA/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Canonical PRD Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFiQPoH/) |
 | [Replace Epic Goal CLI With Problem Input](stories/1vyGZd1to/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Epic Problem Hydration](epics/1vyFgR2MA/voyages/1vyFlAgHB/) |
 | [Hydrate Epic Problem Into Fresh Scaffolds](stories/1vyGZdgBX/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Epic Problem Hydration](epics/1vyFgR2MA/voyages/1vyFlAgHB/) |
 | [Validate Goal Links In PRD Requirements](stories/1vyGZeEI7/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Goal-to-Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFmfjA9/) |
@@ -58,7 +57,7 @@
 
 | Voyage | Status |
 |--------|--------|
-| [Canonical PRD Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFiQPoH/) | planned |
+| [Canonical PRD Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFiQPoH/) | in-progress |
 | [Epic Problem Hydration](epics/1vyFgR2MA/voyages/1vyFlAgHB/) | planned |
 | [Goal-to-Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFmfjA9/) | planned |
 | [Scope Lineage and Drift Detection](epics/1vyFgR2MA/voyages/1vyFn0OuN/) | planned |

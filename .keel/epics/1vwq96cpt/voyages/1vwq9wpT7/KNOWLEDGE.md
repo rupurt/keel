@@ -8,23 +8,6 @@ created_at: 2026-03-02T10:42:29
 
 ## Story Knowledge
 
-## Story: Publish Migration Completion Checklist (1vwqCfeFP)
-
-### 1vyDuwiKv: Rollout Docs Need Explicit Gate Ownership
-
-| Field | Value |
-|-------|-------|
-| **Category** | process |
-| **Context** | Finalizing migration voyages where multiple maintainers coordinate acceptance and release sequencing |
-| **Insight** | Checklist quality improves when each gate and rollout step is phrased as an explicit maintainer action with clear command references |
-| **Suggested Action** | Keep voyage-local migration checklists with completion criteria, gate commands, rollout order, and deferred-item tracking |
-| **Applies To** | `.keel/epics/*/voyages/*/MIGRATION_CHECKLIST.md`, voyage `README.md` document tables |
-| **Applied** | Added `MIGRATION_CHECKLIST.md` for `1vwq9wpT7` and linked it from voyage documents |
-
-
-
----
-
 ## Story: Add Command Behavior Regression Suite (1vwqCffzr)
 
 ### 1vyDuw5Ob: Regression Parity Needs Cross-Command Coverage
@@ -37,6 +20,23 @@ created_at: 2026-03-02T10:42:29
 | **Suggested Action** | Add paired regression tests that validate both command-level decisions and dashboard summaries for each queue policy boundary |
 | **Applies To** | `src/next/*`, `src/flow/*`, `src/commands/story/*`, `src/command_regression_tests.rs` |
 | **Applied** | Added `command_regression_tests` cases for human-block and flow-block boundaries plus lifecycle start/submit/accept chain |
+
+
+
+---
+
+## Story: Publish Migration Completion Checklist (1vwqCfeFP)
+
+### 1vyDuwiKv: Rollout Docs Need Explicit Gate Ownership
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | Finalizing migration voyages where multiple maintainers coordinate acceptance and release sequencing |
+| **Insight** | Checklist quality improves when each gate and rollout step is phrased as an explicit maintainer action with clear command references |
+| **Suggested Action** | Keep voyage-local migration checklists with completion criteria, gate commands, rollout order, and deferred-item tracking |
+| **Applies To** | `.keel/epics/*/voyages/*/MIGRATION_CHECKLIST.md`, voyage `README.md` document tables |
+| **Applied** | Added `MIGRATION_CHECKLIST.md` for `1vwq9wpT7` and linked it from voyage documents |
 
 
 
@@ -78,20 +78,6 @@ created_at: 2026-03-02T10:42:29
 
 ## Synthesis
 
-### xGmZTe7kR: Rollout Docs Need Explicit Gate Ownership
-
-| Field | Value |
-|-------|-------|
-| **Category** | process |
-| **Context** | Finalizing migration voyages where multiple maintainers coordinate acceptance and release sequencing |
-| **Insight** | Checklist quality improves when each gate and rollout step is phrased as an explicit maintainer action with clear command references |
-| **Suggested Action** | Keep voyage-local migration checklists with completion criteria, gate commands, rollout order, and deferred-item tracking |
-| **Applies To** | `.keel/epics/*/voyages/*/MIGRATION_CHECKLIST.md`, voyage `README.md` document tables |
-| **Linked Knowledge IDs** | 1vyDuwiKv |
-| **Score** | 0.78 |
-| **Confidence** | 0.88 |
-| **Applied** | Added `MIGRATION_CHECKLIST.md` for `1vwq9wpT7` and linked it from voyage documents |
-
 ### gYNMP5JXn: Regression Parity Needs Cross-Command Coverage
 
 | Field | Value |
@@ -105,6 +91,20 @@ created_at: 2026-03-02T10:42:29
 | **Score** | 0.80 |
 | **Confidence** | 0.89 |
 | **Applied** | Added `command_regression_tests` cases for human-block and flow-block boundaries plus lifecycle start/submit/accept chain |
+
+### xGmZTe7kR: Rollout Docs Need Explicit Gate Ownership
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | Finalizing migration voyages where multiple maintainers coordinate acceptance and release sequencing |
+| **Insight** | Checklist quality improves when each gate and rollout step is phrased as an explicit maintainer action with clear command references |
+| **Suggested Action** | Keep voyage-local migration checklists with completion criteria, gate commands, rollout order, and deferred-item tracking |
+| **Applies To** | `.keel/epics/*/voyages/*/MIGRATION_CHECKLIST.md`, voyage `README.md` document tables |
+| **Linked Knowledge IDs** | 1vyDuwiKv |
+| **Score** | 0.78 |
+| **Confidence** | 0.88 |
+| **Applied** | Added `MIGRATION_CHECKLIST.md` for `1vwq9wpT7` and linked it from voyage documents |
 
 ### erV4YlxVN: Production-only import checks reduce false positives
 

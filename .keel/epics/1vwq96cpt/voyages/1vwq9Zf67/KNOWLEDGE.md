@@ -8,18 +8,18 @@ created_at: 2026-03-02T09:33:26
 
 ## Story Knowledge
 
-## Story: Rewire Command Handlers To Use Cases (1vwqCfPpe)
+## Story: Implement Voyage And Epic Lifecycle Use Cases (1vwqCejs5)
 
-### 1vyDuwnad: Enforce policy invariants in application services, not command handlers
+### 1vyDuwgcV: Keep Lifecycle Command Handlers As Thin Adapters
 
 | Field | Value |
 |-------|-------|
 | **Category** | architecture |
-| **Context** | Story and voyage lifecycle commands need consistent enforcement of manual-verification acceptance and requirements-coverage gating. |
-| **Insight** | Putting enforcement in application services centralizes lifecycle invariants and avoids drift across multiple command entrypoints. |
-| **Suggested Action** | Keep command handlers thin and add service-level tests for every lifecycle policy; use architecture contract tests to block direct transition orchestration from handlers. |
-| **Applies To** | `src/application/story_lifecycle.rs`, `src/application/voyage_epic_lifecycle.rs`, `src/commands/{story,voyage,epic}/*.rs`, `src/architecture_contract_tests.rs` |
-| **Applied** | story `1vwqCfPpe` |
+| **Context** | Refactoring voyage and epic lifecycle commands to align with application-service orchestration boundaries |
+| **Insight** | Moving orchestration into a dedicated application service lets command modules stay stable adapters while preserving behavior through existing command tests |
+| **Suggested Action** | Add use-case methods first, then delegate command `run` entrypoints to those methods and update cross-command callsites to service APIs |
+| **Applies To** | src/application/*.rs; src/commands/voyage/*.rs; src/commands/epic/*.rs |
+| **Applied** | 1vwqCejs5 |
 
 
 
@@ -42,6 +42,23 @@ created_at: 2026-03-02T09:33:26
 
 ---
 
+## Story: Rewire Command Handlers To Use Cases (1vwqCfPpe)
+
+### 1vyDuwnad: Enforce policy invariants in application services, not command handlers
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Story and voyage lifecycle commands need consistent enforcement of manual-verification acceptance and requirements-coverage gating. |
+| **Insight** | Putting enforcement in application services centralizes lifecycle invariants and avoids drift across multiple command entrypoints. |
+| **Suggested Action** | Keep command handlers thin and add service-level tests for every lifecycle policy; use architecture contract tests to block direct transition orchestration from handlers. |
+| **Applies To** | `src/application/story_lifecycle.rs`, `src/application/voyage_epic_lifecycle.rs`, `src/commands/{story,voyage,epic}/*.rs`, `src/architecture_contract_tests.rs` |
+| **Applied** | story `1vwqCfPpe` |
+
+
+
+---
+
 ## Story: Introduce Domain Events And Process Managers (1vwqCeVSm)
 
 ### 1vyDuwiVQ: Event-First Cross-Aggregate Orchestration Preserves Boundaries
@@ -59,9 +76,9 @@ created_at: 2026-03-02T09:33:26
 
 ---
 
-## Story: Implement Voyage And Epic Lifecycle Use Cases (1vwqCejs5)
+## Synthesis
 
-### 1vyDuwgcV: Keep Lifecycle Command Handlers As Thin Adapters
+### r1jV4LrNV: Keep Lifecycle Command Handlers As Thin Adapters
 
 | Field | Value |
 |-------|-------|
@@ -70,27 +87,10 @@ created_at: 2026-03-02T09:33:26
 | **Insight** | Moving orchestration into a dedicated application service lets command modules stay stable adapters while preserving behavior through existing command tests |
 | **Suggested Action** | Add use-case methods first, then delegate command `run` entrypoints to those methods and update cross-command callsites to service APIs |
 | **Applies To** | src/application/*.rs; src/commands/voyage/*.rs; src/commands/epic/*.rs |
+| **Linked Knowledge IDs** | 1vyDuwgcV |
+| **Score** | 0.82 |
+| **Confidence** | 0.88 |
 | **Applied** | 1vwqCejs5 |
-
-
-
----
-
-## Synthesis
-
-### LaLCqrPQZ: Enforce policy invariants in application services, not command handlers
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Story and voyage lifecycle commands need consistent enforcement of manual-verification acceptance and requirements-coverage gating. |
-| **Insight** | Putting enforcement in application services centralizes lifecycle invariants and avoids drift across multiple command entrypoints. |
-| **Suggested Action** | Keep command handlers thin and add service-level tests for every lifecycle policy; use architecture contract tests to block direct transition orchestration from handlers. |
-| **Applies To** | `src/application/story_lifecycle.rs`, `src/application/voyage_epic_lifecycle.rs`, `src/commands/{story,voyage,epic}/*.rs`, `src/architecture_contract_tests.rs` |
-| **Linked Knowledge IDs** | 1vyDuwnad |
-| **Score** | 0.90 |
-| **Confidence** | 0.96 |
-| **Applied** | story `1vwqCfPpe` |
 
 ### SrUkwz3sZ: Thin Command Adapters Preserve Behavior During Refactors
 
@@ -106,6 +106,20 @@ created_at: 2026-03-02T09:33:26
 | **Confidence** | 0.91 |
 | **Applied** | yes |
 
+### LaLCqrPQZ: Enforce policy invariants in application services, not command handlers
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Story and voyage lifecycle commands need consistent enforcement of manual-verification acceptance and requirements-coverage gating. |
+| **Insight** | Putting enforcement in application services centralizes lifecycle invariants and avoids drift across multiple command entrypoints. |
+| **Suggested Action** | Keep command handlers thin and add service-level tests for every lifecycle policy; use architecture contract tests to block direct transition orchestration from handlers. |
+| **Applies To** | `src/application/story_lifecycle.rs`, `src/application/voyage_epic_lifecycle.rs`, `src/commands/{story,voyage,epic}/*.rs`, `src/architecture_contract_tests.rs` |
+| **Linked Knowledge IDs** | 1vyDuwnad |
+| **Score** | 0.90 |
+| **Confidence** | 0.96 |
+| **Applied** | story `1vwqCfPpe` |
+
 ### t2UGk6lpx: Event-First Cross-Aggregate Orchestration Preserves Boundaries
 
 | Field | Value |
@@ -119,18 +133,4 @@ created_at: 2026-03-02T09:33:26
 | **Score** | 0.84 |
 | **Confidence** | 0.92 |
 | **Applied** | Introduced DomainEvent + DomainProcessManager and rewired lifecycle services to emit events. |
-
-### r1jV4LrNV: Keep Lifecycle Command Handlers As Thin Adapters
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Refactoring voyage and epic lifecycle commands to align with application-service orchestration boundaries |
-| **Insight** | Moving orchestration into a dedicated application service lets command modules stay stable adapters while preserving behavior through existing command tests |
-| **Suggested Action** | Add use-case methods first, then delegate command `run` entrypoints to those methods and update cross-command callsites to service APIs |
-| **Applies To** | src/application/*.rs; src/commands/voyage/*.rs; src/commands/epic/*.rs |
-| **Linked Knowledge IDs** | 1vyDuwgcV |
-| **Score** | 0.82 |
-| **Confidence** | 0.88 |
-| **Applied** | 1vwqCejs5 |
 

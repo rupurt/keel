@@ -42,23 +42,6 @@ created_at: 2026-03-03T11:50:46
 
 ---
 
-## Story: Gate Story Submit And Accept On Coherent Artifacts (1vxH84M8t)
-
-### 1vyDuwoFf: Reuse the structural placeholder detector in runtime gates
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Story submit/accept transitions need coherence checks aligned with doctor enforcement. |
-| **Insight** | Reusing `first_unfilled_placeholder_pattern` keeps runtime and doctor behavior consistent while avoiding duplicate marker logic. |
-| **Suggested Action** | Add lifecycle gate checks by composing existing structural validators before adding new regex or scanners. |
-| **Applies To** | src/domain/state_machine/gating.rs, src/infrastructure/validation/structural.rs |
-| **Applied** |  |
-
-
-
----
-
 ## Story: Enforce Terminal Story Coherency In Doctor (1vxH84nTQ)
 
 ### 1vyDuwdbL: Stage-gate scaffold checks to avoid noisy early warnings
@@ -71,6 +54,23 @@ created_at: 2026-03-03T11:50:46
 | **Suggested Action** | Reuse a shared unresolved-pattern detector and explicitly gate by story stage (`needs-human-verification`, `done`) for terminal coherency rules. |
 | **Applies To** | src/cli/commands/diagnostics/doctor/checks/stories.rs, src/infrastructure/validation/structural.rs |
 | **Applied** | yes |
+
+
+
+---
+
+## Story: Gate Story Submit And Accept On Coherent Artifacts (1vxH84M8t)
+
+### 1vyDuwoFf: Reuse the structural placeholder detector in runtime gates
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Story submit/accept transitions need coherence checks aligned with doctor enforcement. |
+| **Insight** | Reusing `first_unfilled_placeholder_pattern` keeps runtime and doctor behavior consistent while avoiding duplicate marker logic. |
+| **Suggested Action** | Add lifecycle gate checks by composing existing structural validators before adding new regex or scanners. |
+| **Applies To** | src/domain/state_machine/gating.rs, src/infrastructure/validation/structural.rs |
+| **Applied** |  |
 
 
 
@@ -106,20 +106,6 @@ created_at: 2026-03-03T11:50:46
 | **Confidence** | 0.91 |
 | **Applied** | yes |
 
-### W1jACJhp8: Reuse the structural placeholder detector in runtime gates
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Story submit/accept transitions need coherence checks aligned with doctor enforcement. |
-| **Insight** | Reusing `first_unfilled_placeholder_pattern` keeps runtime and doctor behavior consistent while avoiding duplicate marker logic. |
-| **Suggested Action** | Add lifecycle gate checks by composing existing structural validators before adding new regex or scanners. |
-| **Applies To** | src/domain/state_machine/gating.rs, src/infrastructure/validation/structural.rs |
-| **Linked Knowledge IDs** | 1vyDuwoFf |
-| **Score** | 0.86 |
-| **Confidence** | 0.93 |
-| **Applied** |  |
-
 ### uvyKHWaQn: Stage-gate scaffold checks to avoid noisy early warnings
 
 | Field | Value |
@@ -133,4 +119,18 @@ created_at: 2026-03-03T11:50:46
 | **Score** | 0.85 |
 | **Confidence** | 0.91 |
 | **Applied** | yes |
+
+### W1jACJhp8: Reuse the structural placeholder detector in runtime gates
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Story submit/accept transitions need coherence checks aligned with doctor enforcement. |
+| **Insight** | Reusing `first_unfilled_placeholder_pattern` keeps runtime and doctor behavior consistent while avoiding duplicate marker logic. |
+| **Suggested Action** | Add lifecycle gate checks by composing existing structural validators before adding new regex or scanners. |
+| **Applies To** | src/domain/state_machine/gating.rs, src/infrastructure/validation/structural.rs |
+| **Linked Knowledge IDs** | 1vyDuwoFf |
+| **Score** | 0.86 |
+| **Confidence** | 0.93 |
+| **Applied** |  |
 

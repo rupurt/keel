@@ -8,17 +8,17 @@ created_at: 2026-03-04T16:27:11
 
 ## Story Knowledge
 
-## Story: Hard Cutover Verify Command To Subcommands (1vxvIaPe8)
+## Story: Implement Verify Recommend For Active Detected Techniques (1vxvIaM4w)
 
-### 1vyDuwu3r: Parse legacy forms but block execution paths
+### 1vyDuwmNc: Centralize technique status before rendering
 
 | Field | Value |
 |-------|-------|
 | **Category** | architecture |
-| **Context** | CLI hard cutovers where old invocations should fail fast with recovery guidance |
-| **Insight** | Keeping hidden legacy root args allows deterministic migration errors without relying on generic clap parse failures, while still forcing execution through the new subcommand path. |
-| **Suggested Action** | For future command cutovers, preserve temporary parse compatibility only for guidance and route all execution through explicit new subcommands. |
-| **Applies To** | `src/cli/command_tree.rs`, `src/cli/runtime.rs`, `src/cli/commands/management/verify.rs` |
+| **Context** | Multiple commands (`config show`, `verify recommend`) need the same detected/disabled/active evaluation. |
+| **Insight** | A shared status report API in the read model removes duplicated filtering logic and keeps recommendation output consistent across surfaces. |
+| **Suggested Action** | Route all verification-technique render paths through `resolve_technique_status_report` rather than command-local detection code. |
+| **Applies To** | `src/read_model/verification_techniques.rs`, `src/cli/commands/setup/config.rs`, `src/cli/commands/management/verify.rs` |
 | **Applied** | yes |
 
 
@@ -59,26 +59,9 @@ created_at: 2026-03-04T16:27:11
 
 ---
 
-## Story: Implement Verify Recommend For Active Detected Techniques (1vxvIaM4w)
+## Story: Hard Cutover Verify Command To Subcommands (1vxvIaPe8)
 
-### 1vyDuwmNc: Centralize technique status before rendering
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Multiple commands (`config show`, `verify recommend`) need the same detected/disabled/active evaluation. |
-| **Insight** | A shared status report API in the read model removes duplicated filtering logic and keeps recommendation output consistent across surfaces. |
-| **Suggested Action** | Route all verification-technique render paths through `resolve_technique_status_report` rather than command-local detection code. |
-| **Applies To** | `src/read_model/verification_techniques.rs`, `src/cli/commands/setup/config.rs`, `src/cli/commands/management/verify.rs` |
-| **Applied** | yes |
-
-
-
----
-
-## Synthesis
-
-### 9c2bFuX0o: Parse legacy forms but block execution paths
+### 1vyDuwu3r: Parse legacy forms but block execution paths
 
 | Field | Value |
 |-------|-------|
@@ -87,9 +70,26 @@ created_at: 2026-03-04T16:27:11
 | **Insight** | Keeping hidden legacy root args allows deterministic migration errors without relying on generic clap parse failures, while still forcing execution through the new subcommand path. |
 | **Suggested Action** | For future command cutovers, preserve temporary parse compatibility only for guidance and route all execution through explicit new subcommands. |
 | **Applies To** | `src/cli/command_tree.rs`, `src/cli/runtime.rs`, `src/cli/commands/management/verify.rs` |
-| **Linked Knowledge IDs** | 1vyDuwu3r |
-| **Score** | 0.84 |
-| **Confidence** | 0.91 |
+| **Applied** | yes |
+
+
+
+---
+
+## Synthesis
+
+### tDRpzXuPC: Centralize technique status before rendering
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Multiple commands (`config show`, `verify recommend`) need the same detected/disabled/active evaluation. |
+| **Insight** | A shared status report API in the read model removes duplicated filtering logic and keeps recommendation output consistent across surfaces. |
+| **Suggested Action** | Route all verification-technique render paths through `resolve_technique_status_report` rather than command-local detection code. |
+| **Applies To** | `src/read_model/verification_techniques.rs`, `src/cli/commands/setup/config.rs`, `src/cli/commands/management/verify.rs` |
+| **Linked Knowledge IDs** | 1vyDuwmNc |
+| **Score** | 0.83 |
+| **Confidence** | 0.92 |
 | **Applied** | yes |
 
 ### gEqMvGXEE: Prefer direct status flags over aggregated recommendation blocks
@@ -120,17 +120,17 @@ created_at: 2026-03-04T16:27:11
 | **Confidence** | 0.89 |
 | **Applied** | yes |
 
-### tDRpzXuPC: Centralize technique status before rendering
+### 9c2bFuX0o: Parse legacy forms but block execution paths
 
 | Field | Value |
 |-------|-------|
 | **Category** | architecture |
-| **Context** | Multiple commands (`config show`, `verify recommend`) need the same detected/disabled/active evaluation. |
-| **Insight** | A shared status report API in the read model removes duplicated filtering logic and keeps recommendation output consistent across surfaces. |
-| **Suggested Action** | Route all verification-technique render paths through `resolve_technique_status_report` rather than command-local detection code. |
-| **Applies To** | `src/read_model/verification_techniques.rs`, `src/cli/commands/setup/config.rs`, `src/cli/commands/management/verify.rs` |
-| **Linked Knowledge IDs** | 1vyDuwmNc |
-| **Score** | 0.83 |
-| **Confidence** | 0.92 |
+| **Context** | CLI hard cutovers where old invocations should fail fast with recovery guidance |
+| **Insight** | Keeping hidden legacy root args allows deterministic migration errors without relying on generic clap parse failures, while still forcing execution through the new subcommand path. |
+| **Suggested Action** | For future command cutovers, preserve temporary parse compatibility only for guidance and route all execution through explicit new subcommands. |
+| **Applies To** | `src/cli/command_tree.rs`, `src/cli/runtime.rs`, `src/cli/commands/management/verify.rs` |
+| **Linked Knowledge IDs** | 1vyDuwu3r |
+| **Score** | 0.84 |
+| **Confidence** | 0.91 |
 | **Applied** | yes |
 
