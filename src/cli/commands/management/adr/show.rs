@@ -4,6 +4,7 @@ use anyhow::Result;
 use owo_colors::OwoColorize;
 
 use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
+use crate::cli::style;
 use crate::infrastructure::config::find_board_dir;
 use crate::infrastructure::loader::load_board;
 
@@ -37,11 +38,14 @@ pub fn run(pattern: &str) -> Result<()> {
         if !adr.frontmatter.supersedes.is_empty() {
             relationships.push_lines([format!(
                 "  Supersedes: {}",
-                adr.frontmatter.supersedes.join(", ")
+                style::styled_inline_markdown(&adr.frontmatter.supersedes.join(", "))
             )]);
         }
         if let Some(by) = &adr.frontmatter.superseded_by {
-            relationships.push_lines([format!("  Superseded by: {}", by)]);
+            relationships.push_lines([format!(
+                "  Superseded by: {}",
+                style::styled_inline_markdown(by)
+            )]);
         }
         sections.push(relationships);
     }

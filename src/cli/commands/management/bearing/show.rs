@@ -109,7 +109,7 @@ pub fn run(pattern: &str) -> Result<()> {
 
     if let Some(reason) = &bearing.frontmatter.decline_reason {
         let mut decline = ShowSection::new("Decline Reason");
-        decline.push_lines([reason.to_string()]);
+        decline.push_lines([style::styled_inline_markdown(reason)]);
         sections.push(decline);
     }
 
@@ -189,12 +189,12 @@ fn render_brief_section(summary: &BearingBriefSummary) -> ShowSection {
 
     section.push_labeled_bullets(
         "Open Questions:",
-        styled_inline_items(&summary.open_questions),
+        summary.open_questions.iter().cloned(),
         Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
     );
     section.push_labeled_bullets(
         "Unchecked Criteria:",
-        styled_inline_items(&summary.unchecked_success_criteria),
+        summary.unchecked_success_criteria.iter().cloned(),
         Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
     );
 
@@ -225,12 +225,12 @@ fn render_survey_section(summary: Option<&BearingSurveySummary>) -> ShowSection 
 
     section.push_labeled_bullets(
         "Key Findings:",
-        styled_inline_items(&summary.key_findings),
+        summary.key_findings.iter().cloned(),
         Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
     );
     section.push_labeled_bullets(
         "Unknowns:",
-        styled_inline_items(&summary.unknowns),
+        summary.unknowns.iter().cloned(),
         Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
     );
 
@@ -269,10 +269,7 @@ fn render_assessment_section(
 
     fields.push_optional_row(
         "Recommendation:",
-        summary
-            .recommendation
-            .as_deref()
-            .map(style::styled_inline_emphasis),
+        summary.recommendation.as_deref().map(ToString::to_string),
     );
 
     section.push_key_values(fields);
@@ -294,12 +291,12 @@ fn render_assessment_section(
 
     section.push_labeled_bullets(
         "Dependencies:",
-        styled_inline_items(&summary.dependencies),
+        summary.dependencies.iter().cloned(),
         Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
     );
     section.push_labeled_bullets(
         "Alternatives:",
-        styled_inline_items(&summary.alternatives),
+        summary.alternatives.iter().cloned(),
         Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
     );
 
@@ -307,25 +304,5 @@ fn render_assessment_section(
 }
 
 fn push_labeled_text_block(section: &mut ShowSection, label: &str, value: String) {
-    section.push_lines([format!("  {label}")]);
-
-    let mut value_lines: Vec<String> = value
-        .lines()
-        .map(str::trim)
-        .filter(|line| !line.is_empty())
-        .map(|line| format!("    {}", style::styled_inline_emphasis(line)))
-        .collect();
-
-    if value_lines.is_empty() {
-        value_lines.push(format!("    {}", NONE_PLACEHOLDER.dimmed()));
-    }
-
-    section.push_lines(value_lines);
-}
-
-fn styled_inline_items(items: &[String]) -> Vec<String> {
-    items
-        .iter()
-        .map(|item| style::styled_inline_emphasis(item))
-        .collect()
+    section.push_labeled_text_block(label, value);
 }

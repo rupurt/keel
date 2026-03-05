@@ -84,14 +84,14 @@ fn build_epic_show_report(
 
 fn render_planning_summary(report: &EpicShowProjection) -> ShowSection {
     let mut section = ShowSection::new("Planning Summary");
-    section.push_lines([format!(
-        "  Problem: {}",
+    section.push_labeled_text_block(
+        "Problem:",
         report
             .doc
             .problem_statement
             .as_deref()
-            .unwrap_or(PROBLEM_PLACEHOLDER)
-    )]);
+            .unwrap_or(PROBLEM_PLACEHOLDER),
+    );
 
     section.push_labeled_bullets(
         "Goals:",
@@ -267,7 +267,7 @@ fn render_voyages(board: &Board, epic: &Epic) -> Option<ShowSection> {
         section.push_lines([format!(
             "  {} - {} ({})",
             style::styled_voyage_id(voyage.id()),
-            voyage.frontmatter.title,
+            style::styled_inline_markdown(&voyage.frontmatter.title),
             style::styled_voyage_stage(&voyage.status())
         )]);
     }
@@ -588,5 +588,39 @@ More details.
         // Render placeholder paths explicitly to guarantee command output behavior.
         render_planning_summary(&report);
         render_verification_readiness(&report);
+    }
+
+    #[test]
+    fn render_planning_summary_places_problem_value_on_its_own_line() {
+        let report = EpicShowProjection {
+            doc: planning_show::PlanningDocSummary {
+                problem_statement: Some(
+                    "Inline `problem` values are hard to scan in show output.".to_string(),
+                ),
+                ..planning_show::PlanningDocSummary::default()
+            },
+            total_voyages: 0,
+            done_voyages: 0,
+            total_stories: 0,
+            done_stories: 0,
+            started_at: None,
+            completed_at: None,
+            updated_at: None,
+            eta: planning_show::EtaSummary {
+                throughput_stories_per_week: 0.0,
+                remaining_stories: 0,
+                eta_weeks: None,
+            },
+            verification: planning_show::VerificationRollup::default(),
+        };
+
+        let section = render_planning_summary(&report);
+        let mut document = ShowDocument::new();
+        document.push_sections_spaced([section]);
+        let rendered = document.render();
+
+        assert!(rendered.contains("  Problem:\n    Inline "));
+        assert!(rendered.contains("problem"));
+        assert!(!rendered.contains("  Problem: Inline "));
     }
 }

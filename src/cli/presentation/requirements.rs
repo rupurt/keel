@@ -56,11 +56,11 @@ pub fn requirement_lines(row: &RequirementRow) -> Vec<String> {
             "  {} {} {}",
             requirement_completion_icon(row.completion),
             style::styled_requirement_id(&row.id),
-            row.description
+            style::styled_inline_markdown(&row.description)
         ),
         format!(
             "    Verification: {} | Linked Stories: {linked}",
-            row.verification
+            style::styled_inline_markdown(&row.verification)
         ),
     ]
 }

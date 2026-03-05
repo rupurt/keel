@@ -5,6 +5,7 @@ use owo_colors::OwoColorize;
 use std::path::Path;
 
 use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
+use crate::cli::style;
 use crate::read_model::knowledge::scanner;
 
 /// Show detailed information for a single knowledge unit
@@ -44,16 +45,16 @@ pub fn run(board_dir: &Path, id: &str) -> Result<()> {
     metadata.push_row("Status:", status);
 
     let mut context = ShowSection::new("Context");
-    context.push_lines([k.context.to_string()]);
+    context.push_lines(styled_content_lines(&k.context));
 
     let mut insight = ShowSection::new("Insight");
-    insight.push_lines([k.insight.to_string()]);
+    insight.push_lines(styled_content_lines(&k.insight));
 
     let mut action = ShowSection::new("Suggested Action");
-    action.push_lines([k.suggested_action.to_string()]);
+    action.push_lines(styled_content_lines(&k.suggested_action));
 
     let mut applies_to = ShowSection::new("Applies To");
-    applies_to.push_lines([k.applies_to.to_string()]);
+    applies_to.push_lines(styled_content_lines(&k.applies_to));
 
     let mut document = ShowDocument::new();
     document.push_header(metadata, None);
@@ -61,19 +62,21 @@ pub fn run(board_dir: &Path, id: &str) -> Result<()> {
 
     if !k.linked_ids.is_empty() {
         let mut linked = ShowSection::new("Linked Knowledge");
-        linked.push_lines([k.linked_ids.join(", ")]);
+        linked.push_lines([style::styled_inline_markdown(&k.linked_ids.join(", "))]);
         sections.push(linked);
     }
 
     if let (Some(similar_to), Some(score)) = (&k.similar_to, k.similarity_score) {
         let mut similar = ShowSection::new("Nearest Similarity");
-        similar.push_lines([format!("{similar_to} ({score:.2})")]);
+        similar.push_lines([style::styled_inline_markdown(&format!(
+            "{similar_to} ({score:.2})"
+        ))]);
         sections.push(similar);
     }
 
     if k.is_applied() {
         let mut applied = ShowSection::new("Applied");
-        applied.push_lines([k.applied.to_string()]);
+        applied.push_lines(styled_content_lines(&k.applied));
         sections.push(applied);
     }
     document.push_spacer();
@@ -82,4 +85,8 @@ pub fn run(board_dir: &Path, id: &str) -> Result<()> {
     document.print();
 
     Ok(())
+}
+
+fn styled_content_lines(value: &str) -> Vec<String> {
+    value.lines().map(style::styled_inline_markdown).collect()
 }

@@ -155,7 +155,7 @@ fn story_body_lines(body_text: &str, story_title: &str, width: usize) -> Vec<Str
             lines.push(heading.title.bold().to_string());
             just_rendered_heading = true;
         } else {
-            lines.push(line.to_string());
+            lines.push(style::styled_inline_markdown(line));
             just_rendered_heading = false;
         }
     }
@@ -195,33 +195,58 @@ fn evidence_lines(story_id: &str, report: &EvidenceReport) -> Vec<String> {
                 .ac_label
                 .clone()
                 .unwrap_or_else(|| format!("AC-{:02}", idx + 1));
-            lines.push(format!("  {}: {}", ac_label.cyan(), item.criterion));
-            lines.push(format!("    Mode: {}", item.mode));
+            lines.push(format!(
+                "  {}: {}",
+                ac_label.cyan(),
+                style::styled_inline_markdown(&item.criterion)
+            ));
+            lines.push(format!(
+                "    Mode: {}",
+                style::styled_inline_markdown(&item.mode)
+            ));
 
             if let Some(command) = &item.command {
-                lines.push(format!("    Command: {}", command));
+                lines.push(format!(
+                    "    Command: {}",
+                    style::styled_inline_markdown(command)
+                ));
             }
             if let Some(requirement) = &item.requirement {
-                lines.push(format!("    Requirement: {}", requirement));
+                lines.push(format!(
+                    "    Requirement: {}",
+                    style::styled_inline_markdown(requirement)
+                ));
             }
             if let Some(proof) = &item.proof_filename {
-                lines.push(format!("    Proof: {}", proof));
+                lines.push(format!(
+                    "    Proof: {}",
+                    style::styled_inline_markdown(proof)
+                ));
             } else {
                 lines.push("    Proof: (none linked)".to_string());
             }
             if let Some(recorded_at) = &item.proof_metadata.recorded_at {
-                lines.push(format!("    recorded_at: {}", recorded_at));
+                lines.push(format!(
+                    "    recorded_at: {}",
+                    style::styled_inline_markdown(recorded_at)
+                ));
             }
             if let Some(mode) = &item.proof_metadata.mode {
-                lines.push(format!("    proof mode: {}", mode));
+                lines.push(format!(
+                    "    proof mode: {}",
+                    style::styled_inline_markdown(mode)
+                ));
             }
             if let Some(command) = &item.proof_metadata.command {
-                lines.push(format!("    proof command: {}", command));
+                lines.push(format!(
+                    "    proof command: {}",
+                    style::styled_inline_markdown(command)
+                ));
             }
             if !item.excerpt_lines.is_empty() {
                 lines.push(format!("    Excerpt ({} lines):", item.excerpt_lines.len()));
                 for line in &item.excerpt_lines {
-                    lines.push(format!("      {}", line));
+                    lines.push(format!("      {}", style::styled_inline_markdown(line)));
                 }
             }
             if item.missing_proof {
@@ -239,7 +264,7 @@ fn evidence_lines(story_id: &str, report: &EvidenceReport) -> Vec<String> {
         lines.push(format!("    {}", NO_SUPPLEMENTARY_PLACEHOLDER.dimmed()));
     } else {
         for artifact in &report.supplementary_artifacts {
-            lines.push(format!("    - {}", artifact));
+            lines.push(format!("    - {}", style::styled_inline_markdown(artifact)));
         }
     }
 
@@ -249,15 +274,18 @@ fn evidence_lines(story_id: &str, report: &EvidenceReport) -> Vec<String> {
     } else {
         for media in &report.media_artifacts {
             let rel = format!("stories/{}/EVIDENCE/{}", story_id, media);
-            lines.push(format!("    - {}", media));
-            lines.push(format!("      Playback: ffplay -autoexit {}", rel));
+            lines.push(format!("    - {}", style::styled_inline_markdown(media)));
+            lines.push(format!(
+                "      Playback: {}",
+                style::styled_inline_markdown(&format!("ffplay -autoexit {}", rel))
+            ));
         }
     }
 
     if !report.missing_proofs.is_empty() {
         lines.push(format!(
             "  Missing proofs: {}",
-            report.missing_proofs.join(", ")
+            style::styled_inline_markdown(&report.missing_proofs.join(", "))
         ));
     }
 

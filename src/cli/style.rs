@@ -3,7 +3,7 @@
 //! Provides consistent color theming across commands.
 //! Palette: subdued with strategic pops of color on what matters.
 
-use owo_colors::OwoColorize;
+use owo_colors::{OwoColorize, Style};
 use regex::Regex;
 use std::sync::LazyLock;
 use syntect::easy::HighlightLines;
@@ -23,6 +23,8 @@ static STRONG_EMPHASIS_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\*\*([^*]+)\*\*").expect("valid strong emphasis regex"));
 static EMPHASIS_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\*([^*]+)\*").expect("valid emphasis regex"));
+const GITHUB_INLINE_CODE_FG: (u8, u8, u8) = (230, 237, 243);
+const GITHUB_INLINE_CODE_BG: (u8, u8, u8) = (48, 54, 61);
 
 /// Color a stage label by its workflow meaning
 pub fn styled_stage(stage: &StoryState) -> String {
@@ -98,7 +100,7 @@ pub fn styled_ac(line: &str) -> String {
         result.push_str(&format!("{} ", req_ref.cyan()));
     }
 
-    result.push_str(description.trim());
+    result.push_str(&styled_inline_markdown(description.trim()));
 
     if let Some(verify) = verify_part {
         result.push_str(&format!(" {}", verify.dimmed()));
@@ -243,6 +245,56 @@ pub fn styled_inline_emphasis(value: &str) -> String {
             format!("{}", captures[1].to_string().italic())
         })
         .into_owned()
+}
+
+/// Render markdown-style inline content with terminal-friendly emphasis and code styling.
+pub fn styled_inline_markdown(value: &str) -> String {
+    let mut rendered = String::new();
+    let mut cursor = 0;
+
+    while let Some(start_offset) = value[cursor..].find('`') {
+        let start = cursor + start_offset;
+        rendered.push_str(&styled_inline_emphasis(&value[cursor..start]));
+
+        let tick_count = value[start..]
+            .chars()
+            .take_while(|ch| *ch == '`')
+            .count()
+            .max(1);
+        let delimiter = "`".repeat(tick_count);
+        let code_start = start + tick_count;
+
+        if let Some(end_offset) = value[code_start..].find(&delimiter) {
+            let code_end = code_start + end_offset;
+            rendered.push_str(&styled_inline_code(&value[code_start..code_end]));
+            cursor = code_end + tick_count;
+        } else {
+            rendered.push_str(&value[start..]);
+            return rendered;
+        }
+    }
+
+    rendered.push_str(&styled_inline_emphasis(&value[cursor..]));
+    rendered
+}
+
+fn styled_inline_code(value: &str) -> String {
+    format!(
+        "{}",
+        value.style(
+            Style::new()
+                .truecolor(
+                    GITHUB_INLINE_CODE_FG.0,
+                    GITHUB_INLINE_CODE_FG.1,
+                    GITHUB_INLINE_CODE_FG.2
+                )
+                .on_truecolor(
+                    GITHUB_INLINE_CODE_BG.0,
+                    GITHUB_INLINE_CODE_BG.1,
+                    GITHUB_INLINE_CODE_BG.2
+                )
+        )
+    )
 }
 
 /// Map common fenced code block language tags to syntect file extensions.
@@ -463,6 +515,15 @@ mod tests {
         assert!(!rendered.contains("*focus*"));
         assert!(rendered.contains("Content"));
         assert!(rendered.contains("focus"));
+    }
+
+    #[test]
+    fn styled_inline_markdown_highlights_backtick_spans() {
+        let rendered = styled_inline_markdown("Run `cargo test` for proof.");
+        assert!(!rendered.contains("`cargo test`"));
+        assert!(rendered.contains("cargo test"));
+        assert!(rendered.contains("\x1b[38;2;"));
+        assert!(rendered.contains(";48;2;"));
     }
 
     #[test]

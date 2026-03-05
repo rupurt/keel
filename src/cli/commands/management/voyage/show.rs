@@ -70,10 +70,7 @@ fn build_voyage_show_report(board: &Board, voyage: &Voyage) -> Result<VoyageShow
 
 fn goal_scope_section(report: &VoyageShowProjection) -> ShowSection {
     let mut section = ShowSection::new("Voyage Summary");
-    section.push_lines([format!(
-        "  Goal: {}",
-        report.goal.as_deref().unwrap_or(GOAL_PLACEHOLDER)
-    )]);
+    section.push_labeled_text_block("Goal:", report.goal.as_deref().unwrap_or(GOAL_PLACEHOLDER));
     section.push_labeled_bullets(
         "In scope:",
         report.scope.in_scope.iter().cloned(),

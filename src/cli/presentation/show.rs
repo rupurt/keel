@@ -4,6 +4,7 @@
 
 use owo_colors::OwoColorize;
 
+use crate::cli::style;
 use crate::infrastructure::utils::visible_width;
 
 #[derive(Debug, Clone, Default)]
@@ -172,21 +173,31 @@ impl ShowSection {
         empty_placeholder: Option<P>,
     ) where
         I: IntoIterator<Item = S>,
-        S: Into<String>,
-        P: Into<String>,
+        S: AsRef<str>,
+        P: AsRef<str>,
     {
         let label = label.into();
-        let items: Vec<String> = items.into_iter().map(Into::into).collect();
+        let items: Vec<String> = items
+            .into_iter()
+            .map(|item| item.as_ref().to_string())
+            .collect();
 
         if items.is_empty() {
             if let Some(placeholder) = empty_placeholder {
-                self.push_lines([format!("  {label} {}", placeholder.into())]);
+                self.push_lines([format!(
+                    "  {label} {}",
+                    style::styled_inline_markdown(placeholder.as_ref())
+                )]);
             }
             return;
         }
 
         self.push_lines([format!("  {label}")]);
-        self.push_lines(items.into_iter().map(|item| format!("    - {item}")));
+        self.push_lines(
+            items
+                .into_iter()
+                .map(|item| format!("    - {}", style::styled_inline_markdown(&item))),
+        );
     }
 
     pub fn push_labeled_bullets_limited<I, S, P>(
@@ -197,15 +208,21 @@ impl ShowSection {
         empty_placeholder: Option<P>,
     ) where
         I: IntoIterator<Item = S>,
-        S: Into<String>,
-        P: Into<String>,
+        S: AsRef<str>,
+        P: AsRef<str>,
     {
         let label = label.into();
-        let items: Vec<String> = items.into_iter().map(Into::into).collect();
+        let items: Vec<String> = items
+            .into_iter()
+            .map(|item| item.as_ref().to_string())
+            .collect();
 
         if items.is_empty() {
             if let Some(placeholder) = empty_placeholder {
-                self.push_lines([format!("  {label} {}", placeholder.into())]);
+                self.push_lines([format!(
+                    "  {label} {}",
+                    style::styled_inline_markdown(placeholder.as_ref())
+                )]);
             }
             return;
         }
@@ -216,7 +233,7 @@ impl ShowSection {
             items
                 .iter()
                 .take(max_items)
-                .map(|item| format!("    - {item}")),
+                .map(|item| format!("    - {}", style::styled_inline_markdown(item))),
         );
         if items.len() > max_items {
             self.push_lines([format!(
@@ -224,6 +241,25 @@ impl ShowSection {
                 items.len().saturating_sub(max_items)
             )]);
         }
+    }
+
+    pub fn push_labeled_text_block(&mut self, label: impl Into<String>, value: impl AsRef<str>) {
+        let label = label.into();
+        self.push_lines([format!("  {label}")]);
+
+        let value_lines: Vec<String> = value
+            .as_ref()
+            .lines()
+            .map(str::trim)
+            .filter(|line| !line.is_empty())
+            .map(|line| format!("    {}", style::styled_inline_markdown(line)))
+            .collect();
+
+        if value_lines.is_empty() {
+            return;
+        }
+
+        self.push_lines(value_lines);
     }
 
     fn render_into(&self, output: &mut Vec<String>) {
@@ -325,7 +361,11 @@ impl ShowKeyValues {
                 row.label.clone()
             };
             let pad = width.saturating_sub(visible_width(&row.label));
-            output.push(format!("{indent}{label}{} {}", " ".repeat(pad), row.value));
+            output.push(format!(
+                "{indent}{label}{} {}",
+                " ".repeat(pad),
+                style::styled_inline_markdown(&row.value)
+            ));
         }
     }
 }
@@ -416,6 +456,18 @@ mod tests {
         assert_eq!(lines[2], "    - A");
         assert_eq!(lines[3], "    - B");
         assert_eq!(lines[4], "    - ... 1 more");
+    }
+
+    #[test]
+    fn show_section_push_labeled_text_block_places_value_under_label() {
+        let mut section = ShowSection::new("Summary");
+        section.push_labeled_text_block("Problem:", "Readable planning output");
+
+        let mut lines = Vec::new();
+        section.render_into(&mut lines);
+
+        assert_eq!(lines[1], "  Problem:");
+        assert_eq!(lines[2], "    Readable planning output");
     }
 
     #[test]
