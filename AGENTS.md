@@ -38,6 +38,7 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
    - `## Assumptions`
    - `## Open Questions & Risks`
    - `## Success Criteria` (`SUCCESS_CRITERIA` marker block)
+   - Optional: create `epics/<epic-id>/PRESS_RELEASE.md` only for large user-facing value shifts. Skip it for incremental improvements, refactors, and architecture-only changes.
 4. **Define Requirements (SRS)**: Fill out the `SRS.md` in the new voyage bundle. Ensure requirements are atomic, uniquely identified (e.g., `SRS-01`), and written so they can map directly to story acceptance criteria and verification evidence.
 5. **Detail Design (SDD)**: Fill out the `SDD.md` describing the architectural approach and component changes, with enough specificity that implementers can produce objective proofs.
 6. **Decompose Stories**: Break the design into implementable units:

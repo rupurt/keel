@@ -131,11 +131,7 @@ fn check_epic_documents_complete(epic: &crate::domain::model::Epic) -> Vec<Probl
     let epic_dir = epic.path.parent().unwrap_or(&epic.path);
     let prd_path = epic_dir.join("PRD.md");
 
-    let files = [
-        ("README.md", "README"),
-        ("PRD.md", "PRD"),
-        ("PRESS_RELEASE.md", "Press Release"),
-    ];
+    let files = [("README.md", "README"), ("PRD.md", "PRD")];
 
     for (filename, label) in files {
         let path = epic_dir.join(filename);
@@ -178,6 +174,25 @@ fn check_epic_documents_complete(epic: &crate::domain::model::Epic) -> Vec<Probl
             }
         }
         problems.extend(prd_problems);
+    }
+
+    let press_release_path = epic_dir.join("PRESS_RELEASE.md");
+    if press_release_path.exists()
+        && let Ok(content) = fs::read_to_string(&press_release_path)
+        && crate::infrastructure::validation::structural::is_placeholder_unfilled(&content)
+    {
+        problems.push(Problem {
+            severity: Severity::Error,
+            path: press_release_path,
+            scope: Some(epic.id().to_string()),
+            message: format!(
+                "Epic {} has unfilled placeholders in optional Press Release",
+                epic.id()
+            ),
+            fix: None,
+            category: None,
+            check_id: CheckId::Unknown,
+        });
     }
 
     problems

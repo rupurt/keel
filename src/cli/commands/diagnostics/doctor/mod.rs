@@ -325,7 +325,7 @@ pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
 
     let epic_pr_problems = checks::epics::check_epic_press_release(&board);
     epic_checks.push(CheckResult {
-        name: "Press release coherence",
+        name: "Press release coherence (optional)",
         evaluations: board.epics.len(),
         passed: epic_pr_problems.is_empty(),
         problems: epic_pr_problems,

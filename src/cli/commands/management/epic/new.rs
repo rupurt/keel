@@ -89,18 +89,13 @@ fn new_epic(board_dir: &Path, name: &str, goal: &str) -> Result<()> {
     fs::write(&prd_path, prd_content)
         .with_context(|| format!("Failed to write epic PRD: {}", prd_path.display()))?;
 
-    // Write PRESS_RELEASE
-    let pr_content = template_rendering::render(
-        templates::epic::PRESS_RELEASE,
-        &[("title", name), ("goal", goal_text)],
-    );
-    let pr_path = epic_dir.join("PRESS_RELEASE.md");
-    fs::write(&pr_path, pr_content)
-        .with_context(|| format!("Failed to write epic press release: {}", pr_path.display()))?;
-
     println!("Created: epics/{}/", epic_id);
     println!(
         "  Next: author epics/{}/PRD.md before decomposing voyages",
+        epic_id
+    );
+    println!(
+        "  Optional: add epics/{}/PRESS_RELEASE.md only for large user-facing value shifts",
         epic_id
     );
 
@@ -113,8 +108,6 @@ fn new_epic(board_dir: &Path, name: &str, goal: &str) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cli::commands::diagnostics::doctor::checks::epics::check_epic_press_release;
-    use crate::infrastructure::loader::load_board;
     use crate::infrastructure::validation::{CheckId, structural};
     use crate::test_helpers::TestBoardBuilder;
     use regex::Regex;
@@ -140,7 +133,7 @@ mod tests {
         assert!(epic_dir.is_dir());
         assert!(epic_dir.join("README.md").exists());
         assert!(epic_dir.join("PRD.md").exists());
-        assert!(epic_dir.join("PRESS_RELEASE.md").exists());
+        assert!(!epic_dir.join("PRESS_RELEASE.md").exists());
 
         let readme = fs::read_to_string(epic_dir.join("README.md")).unwrap();
         assert!(readme.contains("title: My New Epic"));
@@ -159,14 +152,6 @@ mod tests {
             "PRD should not contain unfilled placeholders: {prd}"
         );
 
-        let pr = fs::read_to_string(epic_dir.join("PRESS_RELEASE.md")).unwrap();
-        assert!(pr.contains("# PRESS RELEASE: My New Epic"));
-        assert!(pr.contains("Keel introduces My New Epic: A goal"));
-        assert!(
-            !pr.contains("TODO:") && !pr.contains("{{"),
-            "PRESS_RELEASE should not contain unfilled placeholders: {pr}"
-        );
-
         let epic_date_problems = structural::check_date_consistency(
             &epic_dir.join("README.md"),
             CheckId::EpicDateConsistency,
@@ -180,13 +165,6 @@ mod tests {
         assert!(
             prd_problems.is_empty(),
             "Epic PRD should satisfy placeholder hygiene checks: {prd_problems:?}"
-        );
-
-        let board = load_board(board_dir).unwrap();
-        let pr_problems = check_epic_press_release(&board);
-        assert!(
-            pr_problems.is_empty(),
-            "Epic PRESS_RELEASE should satisfy placeholder hygiene checks: {pr_problems:?}"
         );
     }
 

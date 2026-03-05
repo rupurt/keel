@@ -11,6 +11,7 @@ use crate::infrastructure::loader::load_board;
 use crate::infrastructure::utils::cmp_optional_index_then_id;
 use crate::read_model::planning_show::{self, EpicShowProjection};
 
+use std::fs;
 use std::path::Path;
 
 const PROBLEM_PLACEHOLDER: &str = "(not authored in PRD.md yet)";
@@ -20,6 +21,7 @@ const VERIFICATION_STRATEGY_PLACEHOLDER: &str =
     "(no authored verification strategy found in PRD.md)";
 const ETA_PLACEHOLDER: &str = "insufficient throughput data (4-week window)";
 const VERIFICATION_PLACEHOLDER: &str = "no verification annotations found yet";
+const PRESS_RELEASE_GUIDANCE: &str = "optional; use for large user-facing value shifts";
 
 /// Show epic details
 pub fn run(id: &str) -> Result<()> {
@@ -59,6 +61,7 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     document.push_header(metadata, Some(width));
     let mut sections = vec![
         render_planning_summary(&report),
+        render_press_release(epic),
         render_progress(&report),
         render_verification_readiness(&report),
     ];
@@ -151,6 +154,59 @@ fn render_progress(report: &EpicShowProjection) -> ShowSection {
     fields.push_row("ETA:", eta);
     section.push_key_values(fields);
     section
+}
+
+fn render_press_release(epic: &Epic) -> ShowSection {
+    let mut section = ShowSection::new("Press Release");
+    let mut fields = ShowKeyValues::new().with_indent(2).with_min_label_width(11);
+    let press_release_path = epic
+        .path
+        .parent()
+        .unwrap_or(&epic.path)
+        .join("PRESS_RELEASE.md");
+
+    if !press_release_path.exists() {
+        fields.push_row("Status:", format!("{}", "not authored".dimmed()));
+        fields.push_row("Guidance:", PRESS_RELEASE_GUIDANCE);
+        section.push_key_values(fields);
+        return section;
+    }
+
+    fields.push_row("Status:", format!("{}", "authored".green()));
+    fields.push_row(
+        "Path:",
+        format!("{}", press_release_path.display().dimmed()),
+    );
+    if let Ok(content) = fs::read_to_string(&press_release_path)
+        && let Some(headline) = extract_press_release_headline(&content)
+    {
+        fields.push_row("Headline:", headline);
+    }
+    section.push_key_values(fields);
+    section
+}
+
+fn extract_press_release_headline(content: &str) -> Option<String> {
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty()
+            || trimmed.starts_with('#')
+            || trimmed.starts_with("<!--")
+            || trimmed == "---"
+        {
+            continue;
+        }
+
+        let normalized = trimmed
+            .trim_start_matches("**")
+            .trim_end_matches("**")
+            .trim();
+        if !normalized.is_empty() {
+            return Some(normalized.to_string());
+        }
+    }
+
+    None
 }
 
 fn render_verification_readiness(report: &EpicShowProjection) -> ShowSection {
@@ -371,6 +427,42 @@ Teams cannot quickly understand planning intent and verification readiness.
                 .iter()
                 .any(|req| req.contains("FR-10: Render actionable planning summaries."))
         );
+    }
+
+    #[test]
+    fn press_release_headline_extracts_first_authored_line() {
+        let content = r#"# PRESS RELEASE: Sample
+
+## FOR IMMEDIATE RELEASE
+
+**Keel introduces Sample Epic: Better outcomes**
+
+More details.
+"#;
+        assert_eq!(
+            extract_press_release_headline(content).as_deref(),
+            Some("Keel introduces Sample Epic: Better outcomes")
+        );
+    }
+
+    #[test]
+    fn render_press_release_reports_optional_when_missing() {
+        let temp = TestBoardBuilder::new().epic(TestEpic::new("epic1")).build();
+
+        let press_release = temp.path().join("epics/epic1/PRESS_RELEASE.md");
+        if press_release.exists() {
+            fs::remove_file(&press_release).unwrap();
+        }
+
+        let board = load_board(temp.path()).unwrap();
+        let epic = board.require_epic("epic1").unwrap();
+        let section = render_press_release(epic);
+        let mut doc = ShowDocument::new();
+        doc.push_sections_spaced([section]);
+        let rendered = doc.render();
+        assert!(rendered.contains("Status:"));
+        assert!(rendered.contains("not authored"));
+        assert!(rendered.contains(PRESS_RELEASE_GUIDANCE));
     }
 
     #[test]

@@ -13,7 +13,7 @@ created_at: {{created_at}}
 | Document | Description |
 |----------|-------------|
 | [PRD.md](PRD.md) | Product requirements and success criteria |
-| [PRESS_RELEASE.md](PRESS_RELEASE.md) | Future press release (Working Backwards) |
+| `PRESS_RELEASE.md` (optional) | Working-backwards artifact for large user-facing launches; usually skip for incremental/refactor/architecture-only work |
 
 ## Voyages
 

@@ -159,7 +159,7 @@ pub fn check_epic_duplicates(board_dir: &Path) -> Vec<Problem> {
     )
 }
 
-/// Check that epics have a PRESS_RELEASE.md and placeholders are cleared
+/// Check optional epic PRESS_RELEASE.md files for unresolved scaffold text.
 pub fn check_epic_press_release(board: &Board) -> Vec<Problem> {
     let mut problems = Vec::new();
 
@@ -167,11 +167,6 @@ pub fn check_epic_press_release(board: &Board) -> Vec<Problem> {
         let pr_path = epic.path.parent().unwrap().join("PRESS_RELEASE.md");
 
         if !pr_path.exists() {
-            problems.push(
-                Problem::warning(epic.path.clone(), "epic is missing PRESS_RELEASE.md")
-                    .with_check_id(CheckId::EpicMissingPressRelease)
-                    .with_scope(epic.id()),
-            );
             continue;
         }
 
@@ -219,6 +214,22 @@ mod tests {
         assert_eq!(problems[0].severity, Severity::Error);
         assert_eq!(problems[0].check_id, CheckId::EpicPressReleaseIncomplete);
         assert!(problems[0].message.contains("pattern: TODO:"));
+    }
+
+    #[test]
+    fn check_epic_press_release_allows_missing_press_release() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("epic-1"))
+            .build();
+
+        let pr_path = temp.path().join("epics/epic-1/PRESS_RELEASE.md");
+        if pr_path.exists() {
+            fs::remove_file(pr_path).unwrap();
+        }
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_epic_press_release(&board);
+        assert!(problems.is_empty());
     }
 
     #[test]
