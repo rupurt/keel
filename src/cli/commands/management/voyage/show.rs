@@ -186,25 +186,25 @@ fn requirement_lines(row: &RequirementRow) -> Vec<String> {
     } else {
         row.linked_stories
             .iter()
-            .map(|story| format!("{} ({})", story.id, story.stage))
+            .map(|story| style::styled_story_id(&story.id))
             .collect::<Vec<_>>()
             .join(", ")
     };
 
     vec![
         format!("  {completion_icon} {} {}", row.id.cyan(), row.description),
-        format!("    Completion: {}", row.completion),
-        format!("    Verification: {}", row.verification),
-        format!("    Linked Stories: {linked}"),
+        format!(
+            "    Completion: {completion_icon} | Verification: {} | Linked Stories: {linked}",
+            row.verification
+        ),
     ]
 }
 
 fn requirement_completion_icon(completion: &str) -> String {
-    match completion {
-        "done" => format!("{}", "[x]".green().bold()),
-        "in-progress" => format!("{}", "[~]".yellow().bold()),
-        "queued" => format!("{}", "[ ]".bright_blue()),
-        _ => format!("{}", "[-]".dimmed()),
+    if completion == "done" {
+        format!("{}", "[x]".green().bold())
+    } else {
+        format!("{}", "[ ]".bright_blue())
     }
 }
 
@@ -478,5 +478,28 @@ Out of scope:
         assert!(rendered.contains("Completion:"));
         assert!(rendered.contains("Verification:"));
         assert!(rendered.contains("Linked Stories:"));
+    }
+
+    #[test]
+    fn voyage_requirement_lines_render_inline_metadata_and_colored_story_ids() {
+        let row = RequirementRow {
+            id: "SRS-01".to_string(),
+            description: "Render grouped requirement output".to_string(),
+            kind: RequirementKind::Functional,
+            linked_stories: vec![StoryRef {
+                id: "S1".to_string(),
+                stage: StoryState::Done,
+                index: Some(1),
+            }],
+            completion: "done".to_string(),
+            verification: "automated (1)".to_string(),
+        };
+
+        let lines = requirement_lines(&row);
+        assert_eq!(lines.len(), 2);
+        assert!(lines[1].contains("| Verification:"));
+        assert!(lines[1].contains("| Linked Stories:"));
+        assert!(lines[1].contains(&style::styled_story_id("S1")));
+        assert!(!lines[1].contains("done"));
     }
 }
