@@ -6,9 +6,9 @@ use std::fs;
 use std::path::Path;
 
 use anyhow::Result;
-use chrono::{Datelike, Duration, Local, NaiveDate};
+use chrono::{Datelike, Duration, Local, NaiveDate, NaiveDateTime};
 
-use crate::domain::model::{Board, Epic, Story, StoryState, Voyage};
+use crate::domain::model::{Board, Epic, EpicState, Story, StoryState, Voyage};
 use crate::infrastructure::verification::parser::{
     Comparison, parse_ac_references, parse_verify_annotations,
 };
@@ -67,6 +67,9 @@ pub struct EpicShowProjection {
     pub done_voyages: usize,
     pub total_stories: usize,
     pub done_stories: usize,
+    pub started_at: Option<NaiveDateTime>,
+    pub completed_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
     pub eta: EtaSummary,
     pub verification: VerificationRollup,
 }
@@ -215,6 +218,49 @@ pub fn build_epic_show_projection(
     let total_stories = stories.len();
     let remaining_stories = total_stories.saturating_sub(done_stories);
 
+    let started_at = voyages
+        .iter()
+        .filter_map(|voyage| voyage.frontmatter.started_at)
+        .min();
+    let completed_at = if epic.status() == EpicState::Done {
+        voyages
+            .iter()
+            .filter_map(|voyage| voyage.frontmatter.completed_at)
+            .max()
+    } else {
+        None
+    };
+
+    let voyage_updated_at = voyages
+        .iter()
+        .flat_map(|voyage| {
+            [
+                voyage.frontmatter.updated_at,
+                voyage.frontmatter.completed_at,
+                voyage.frontmatter.started_at,
+                voyage.frontmatter.created_at,
+            ]
+        })
+        .flatten()
+        .max();
+    let story_updated_at = stories
+        .iter()
+        .flat_map(|story| {
+            [
+                story.frontmatter.updated_at,
+                story.frontmatter.completed_at,
+                story.frontmatter.submitted_at,
+                story.frontmatter.started_at,
+                story.frontmatter.created_at,
+            ]
+        })
+        .flatten()
+        .max();
+    let updated_at = [voyage_updated_at, story_updated_at]
+        .into_iter()
+        .flatten()
+        .max();
+
     let throughput_stories_per_week = average_story_throughput_per_week(board, 4);
     let eta_weeks = if remaining_stories > 0 && throughput_stories_per_week > 0.0 {
         Some(remaining_stories as f64 / throughput_stories_per_week)
@@ -288,6 +334,9 @@ pub fn build_epic_show_projection(
         done_voyages,
         total_stories,
         done_stories,
+        started_at,
+        completed_at,
+        updated_at,
         eta: EtaSummary {
             throughput_stories_per_week,
             remaining_stories,
@@ -820,10 +869,12 @@ fn parse_requirement_entries(
 ) -> Vec<RequirementEntry> {
     let mut entries = Vec::new();
     let mut in_block = false;
+    let mut verification_column_index: Option<usize> = None;
 
     for line in content.lines() {
         if line.contains(start_marker) {
             in_block = true;
+            verification_column_index = None;
             continue;
         }
         if line.contains(end_marker) {
@@ -849,8 +900,15 @@ fn parse_requirement_entries(
 
         let id = cols[0];
         let requirement = cols[1];
-        if id.eq_ignore_ascii_case("ID")
-            || id.starts_with("---")
+
+        if id.eq_ignore_ascii_case("ID") {
+            verification_column_index = cols
+                .iter()
+                .position(|col| col.eq_ignore_ascii_case("Verification"));
+            continue;
+        }
+
+        if id.starts_with("---")
             || requirement.eq_ignore_ascii_case("TODO")
             || is_scaffold_text(id)
             || is_scaffold_text(requirement)
@@ -858,11 +916,10 @@ fn parse_requirement_entries(
             continue;
         }
 
-        let verification = cols
-            .iter()
-            .skip(2)
-            .map(|col| col.trim())
-            .find(|value| !value.is_empty() && !is_scaffold_text(value))
+        let verification = verification_column_index
+            .and_then(|idx| cols.get(idx))
+            .map(|value| value.trim())
+            .filter(|value| !value.is_empty() && !is_scaffold_text(value))
             .map(ToOwned::to_owned);
 
         entries.push(RequirementEntry {
@@ -1234,6 +1291,46 @@ Planners cannot quickly inspect requirement readiness.
     }
 
     #[test]
+    fn planning_doc_extractor_does_not_treat_priority_as_verification() {
+        let doc = r#"# PRD
+
+## Problem Statement
+Operators need reliable planning summaries.
+
+## Goals & Objectives
+- Improve planning readability.
+
+## Verification Strategy
+- Validate with command-level and doctor checks.
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | Render canonical requirement summaries. | must | Keeps planning output actionable. |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#;
+
+        let summary = extract_planning_doc_summary(doc);
+
+        assert_eq!(
+            summary.key_requirements,
+            vec!["FR-01: Render canonical requirement summaries.".to_string()]
+        );
+        assert!(
+            summary
+                .verification_strategy
+                .iter()
+                .any(|entry| entry.contains("Validate with command-level and doctor checks."))
+        );
+        assert!(
+            !summary
+                .verification_strategy
+                .iter()
+                .any(|entry| entry.contains("FR-01: must"))
+        );
+    }
+
+    #[test]
     fn planning_show_projection_deterministic() {
         let board_a = TestBoardBuilder::new()
             .epic(TestEpic::new("e1"))
@@ -1417,6 +1514,9 @@ Planners cannot quickly inspect requirement readiness.
             done_voyages,
             total_stories,
             done_stories,
+            started_at,
+            completed_at,
+            updated_at,
             eta,
             verification,
         } = epic;
@@ -1426,6 +1526,9 @@ Planners cannot quickly inspect requirement readiness.
             done_voyages,
             total_stories,
             done_stories,
+            started_at,
+            completed_at,
+            updated_at,
             eta,
             verification,
         );

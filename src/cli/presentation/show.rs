@@ -35,6 +35,13 @@ impl ShowDocument {
         }
     }
 
+    pub fn push_header(&mut self, metadata: ShowKeyValues, rule_width: Option<usize>) {
+        self.push_key_values(metadata);
+        if let Some(width) = rule_width {
+            self.push_rule(width);
+        }
+    }
+
     pub fn push_lines<I, S>(&mut self, lines: I)
     where
         I: IntoIterator<Item = S>,
@@ -48,6 +55,20 @@ impl ShowDocument {
 
     pub fn push_spacer(&mut self) {
         self.push_block(ShowBlock::Spacer);
+    }
+
+    pub fn push_sections_spaced<I>(&mut self, sections: I)
+    where
+        I: IntoIterator<Item = ShowSection>,
+    {
+        let mut first = true;
+        for section in sections {
+            if !first {
+                self.push_spacer();
+            }
+            self.push_section(section);
+            first = false;
+        }
     }
 
     pub fn push_rule(&mut self, width: usize) {
@@ -270,6 +291,19 @@ impl ShowKeyValues {
         }
     }
 
+    pub fn push_standard_timestamps(
+        &mut self,
+        created: Option<String>,
+        started: Option<String>,
+        updated: Option<String>,
+        completed: Option<String>,
+    ) {
+        self.push_optional_row("Created:", created);
+        self.push_optional_row("Started:", started);
+        self.push_optional_row("Updated:", updated);
+        self.push_optional_row("Completed:", completed);
+    }
+
     pub fn is_empty(&self) -> bool {
         self.rows.is_empty()
     }
@@ -382,5 +416,36 @@ mod tests {
         assert_eq!(lines[2], "    - A");
         assert_eq!(lines[3], "    - B");
         assert_eq!(lines[4], "    - ... 1 more");
+    }
+
+    #[test]
+    fn show_document_push_sections_spaced_inserts_single_blank_lines() {
+        let mut doc = ShowDocument::new();
+        doc.push_sections_spaced(vec![
+            ShowSection::new("One").with_block(ShowBlock::Lines(vec!["  a".to_string()])),
+            ShowSection::new("Two").with_block(ShowBlock::Lines(vec!["  b".to_string()])),
+        ]);
+
+        let rendered = doc.render();
+        assert!(rendered.contains("\n  a\n\n"));
+        assert!(rendered.contains("\n\n"));
+        assert!(!rendered.contains("\n\n\n"));
+    }
+
+    #[test]
+    fn show_key_values_push_standard_timestamps_renders_present_values_only() {
+        let mut block = ShowKeyValues::new().with_min_label_width(9);
+        block.push_standard_timestamps(
+            Some("2026-03-05T10:00:00".to_string()),
+            None,
+            Some("2026-03-05T12:00:00".to_string()),
+            None,
+        );
+
+        let mut lines = Vec::new();
+        block.render_into(&mut lines);
+        assert_eq!(lines.len(), 2);
+        assert!(lines[0].starts_with("Created:"));
+        assert!(lines[1].starts_with("Updated:"));
     }
 }

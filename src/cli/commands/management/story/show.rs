@@ -42,29 +42,19 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
         "Scope:",
         story.frontmatter.scope.as_deref().map(styled_story_scope),
     );
-    metadata.push_optional_row(
-        "Created:",
+    metadata.push_standard_timestamps(
         story
             .frontmatter
             .created_at
             .map(|created_at| format!("{}", created_at.dimmed())),
-    );
-    metadata.push_optional_row(
-        "Started:",
         story
             .frontmatter
             .started_at
             .map(|started_at| format!("{}", started_at.dimmed())),
-    );
-    metadata.push_optional_row(
-        "Updated:",
         story
             .frontmatter
             .updated_at
             .map(|updated_at| format!("{}", updated_at.dimmed())),
-    );
-    metadata.push_optional_row(
-        "Completed:",
         story.frontmatter.completed_at.map(|completed_at| {
             render_completed_with_length(story.frontmatter.started_at, completed_at)
         }),
@@ -83,7 +73,7 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     metadata.push_row("Path:", format!("{}", story.path.display().dimmed()));
 
     let mut document = ShowDocument::new();
-    document.push_key_values(metadata);
+    document.push_header(metadata, None);
 
     if let Some(body_text) = &projection.body
         && !body_text.trim().is_empty()

@@ -48,22 +48,16 @@ pub fn run(board_dir: &Path, id: &str) -> Result<()> {
     applies_to.push_lines([k.applies_to.to_string()]);
 
     let mut document = ShowDocument::new();
-    document.push_key_values(metadata);
-    document.push_spacer();
-    document.push_section(context);
-    document.push_spacer();
-    document.push_section(insight);
-    document.push_spacer();
-    document.push_section(action);
-    document.push_spacer();
-    document.push_section(applies_to);
+    document.push_header(metadata, None);
+    let mut sections = vec![context, insight, action, applies_to];
 
     if k.is_applied() {
         let mut applied = ShowSection::new("Applied");
         applied.push_lines([k.applied.to_string()]);
-        document.push_spacer();
-        document.push_section(applied);
+        sections.push(applied);
     }
+    document.push_spacer();
+    document.push_sections_spaced(sections);
 
     document.print();
 

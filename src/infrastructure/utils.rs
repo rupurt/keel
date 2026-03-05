@@ -2,6 +2,7 @@
 //! Utility functions shared across the keel crate.
 
 use regex::Regex;
+use std::cmp::Ordering;
 use std::path::Path;
 use std::process::Command;
 use std::sync::LazyLock;
@@ -61,6 +62,23 @@ pub fn hash_file(path: &Path) -> anyhow::Result<String> {
 /// ignoring ANSI escape sequences.
 pub fn visible_width(s: &str) -> usize {
     ANSI_RE.replace_all(s, "").chars().count()
+}
+
+/// Compare entities by optional index and then by id.
+///
+/// Entities with an index sort before entities without an index.
+pub fn cmp_optional_index_then_id(
+    left_index: Option<u32>,
+    left_id: &str,
+    right_index: Option<u32>,
+    right_id: &str,
+) -> Ordering {
+    match (left_index, right_index) {
+        (Some(li), Some(ri)) if li != ri => li.cmp(&ri),
+        (Some(_), None) => Ordering::Less,
+        (None, Some(_)) => Ordering::Greater,
+        _ => left_id.cmp(right_id),
+    }
 }
 
 /// Returns the appropriate singular or plural form based on count.
@@ -216,6 +234,26 @@ mod tests {
     #[test]
     fn pluralize_returns_plural_for_two() {
         assert_eq!(pluralize(2, "story", "stories"), "stories");
+    }
+
+    #[test]
+    fn cmp_optional_index_then_id_sorts_indexed_before_unindexed() {
+        assert_eq!(
+            cmp_optional_index_then_id(Some(1), "b", None, "a"),
+            Ordering::Less
+        );
+    }
+
+    #[test]
+    fn cmp_optional_index_then_id_sorts_by_index_then_id() {
+        assert_eq!(
+            cmp_optional_index_then_id(Some(1), "b", Some(2), "a"),
+            Ordering::Less
+        );
+        assert_eq!(
+            cmp_optional_index_then_id(Some(2), "a", Some(2), "b"),
+            Ordering::Less
+        );
     }
 
     #[test]

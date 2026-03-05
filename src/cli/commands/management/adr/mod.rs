@@ -5,9 +5,9 @@ use std::fs;
 use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 use clap::Subcommand;
-use owo_colors::OwoColorize;
 
 pub(crate) mod guidance;
+pub mod show;
 
 #[derive(Subcommand, Debug)]
 pub enum AdrAction {
@@ -61,7 +61,6 @@ pub enum AdrAction {
     },
 }
 
-use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::table::Table;
 use crate::domain::model::{Adr, Board};
 use crate::infrastructure::config::find_board_dir;
@@ -81,7 +80,7 @@ pub fn run(action: AdrAction) -> Result<()> {
             applies_to,
         } => run_new(&title, context.as_deref(), &applies_to),
         AdrAction::List { status } => run_list(status.as_deref()),
-        AdrAction::Show { id } => run_show(&id),
+        AdrAction::Show { id } => show::run(&id),
         AdrAction::Accept { id } => run_accept(&id),
         AdrAction::Reject { id, reason } => run_reject(&id, &reason),
         AdrAction::Deprecate { id, reason } => run_deprecate(&id, &reason),
@@ -248,61 +247,6 @@ pub fn run_list(status_filter: Option<&str>) -> Result<()> {
     }
     table.print();
     guidance::print_human(guidance::informational_for_list().as_ref());
-
-    Ok(())
-}
-
-/// Show details for a specific ADR
-pub fn run_show(pattern: &str) -> Result<()> {
-    let board_dir = find_board_dir()?;
-    let board = load_board(&board_dir)?;
-    let adr = board.require_adr(pattern)?;
-
-    let mut metadata = ShowKeyValues::new()
-        .with_min_label_width(9)
-        .row("Title:", format!("{}", adr.frontmatter.title.bold()))
-        .row("ID:", adr.id().to_string())
-        .row("Status:", adr.frontmatter.status.to_string())
-        .row_optional("Context:", adr.frontmatter.context.clone());
-    if !adr.frontmatter.applies_to.is_empty() {
-        metadata.push_row("Applies:", adr.frontmatter.applies_to.join(", "));
-    }
-    metadata.push_optional_row(
-        "Date:",
-        adr.frontmatter
-            .decided_at
-            .map(|date| date.format("%Y-%m-%d").to_string()),
-    );
-
-    let mut document = ShowDocument::new();
-    document.push_key_values(metadata);
-
-    if !adr.frontmatter.supersedes.is_empty() {
-        let mut relationships = ShowSection::new("Relationships");
-        relationships.push_lines([format!(
-            "  Supersedes: {}",
-            adr.frontmatter.supersedes.join(", ")
-        )]);
-        if let Some(by) = &adr.frontmatter.superseded_by {
-            relationships.push_lines([format!("  Superseded by: {}", by)]);
-        }
-        document.push_spacer();
-        document.push_section(relationships);
-    } else if let Some(by) = &adr.frontmatter.superseded_by {
-        let mut relationships = ShowSection::new("Relationships");
-        relationships.push_lines([format!("  Superseded by: {}", by)]);
-        document.push_spacer();
-        document.push_section(relationships);
-    }
-
-    document.push_spacer();
-    document.push_key_values(
-        ShowKeyValues::new()
-            .with_min_label_width(9)
-            .row("File:", adr.path.display().to_string()),
-    );
-    document.print();
-    guidance::print_human(guidance::informational_for_show().as_ref());
 
     Ok(())
 }

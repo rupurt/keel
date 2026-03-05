@@ -30,46 +30,33 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     let report = build_voyage_show_report(&board, voyage)?;
     let width = crate::cli::presentation::terminal::get_terminal_width();
 
-    let metadata = ShowKeyValues::new()
+    let mut metadata = ShowKeyValues::new()
         .with_min_label_width(9)
         .row("Title:", format!("{}", voyage.frontmatter.title.bold()))
         .row("Epic:", style::styled_epic_id(&voyage.epic_id))
-        .row("Status:", style::styled_voyage_stage(&voyage.status()))
-        .row_optional(
-            "Created:",
-            voyage
-                .frontmatter
-                .created_at
-                .map(|created_at| format!("{}", created_at.dimmed())),
-        )
-        .row_optional(
-            "Started:",
-            voyage
-                .frontmatter
-                .started_at
-                .map(|started_at| format!("{}", started_at.dimmed())),
-        )
-        .row_optional(
-            "Updated:",
-            voyage
-                .frontmatter
-                .updated_at
-                .map(|updated_at| format!("{}", updated_at.dimmed())),
-        )
-        .row_optional(
-            "Completed:",
-            voyage.frontmatter.completed_at.map(|completed_at| {
-                render_completed_with_length(voyage.frontmatter.started_at, completed_at)
-            }),
-        )
-        .row("Path:", format!("{}", voyage.path.display().dimmed()));
+        .row("Status:", style::styled_voyage_stage(&voyage.status()));
+    metadata.push_standard_timestamps(
+        voyage
+            .frontmatter
+            .created_at
+            .map(|created_at| format!("{}", created_at.dimmed())),
+        voyage
+            .frontmatter
+            .started_at
+            .map(|started_at| format!("{}", started_at.dimmed())),
+        voyage
+            .frontmatter
+            .updated_at
+            .map(|updated_at| format!("{}", updated_at.dimmed())),
+        voyage.frontmatter.completed_at.map(|completed_at| {
+            render_completed_with_length(voyage.frontmatter.started_at, completed_at)
+        }),
+    );
+    metadata.push_row("Path:", format!("{}", voyage.path.display().dimmed()));
 
     let mut document = ShowDocument::new();
-    document.push_key_values(metadata);
-    document.push_rule(width);
-    document.push_section(goal_scope_section(&report));
-    document.push_spacer();
-    document.push_section(progress_section(&report));
+    document.push_header(metadata, Some(width));
+    document.push_sections_spaced(vec![goal_scope_section(&report), progress_section(&report)]);
     document.push_spacer();
     document.push_lines(requirement_matrix_lines(&report));
     document.print();
@@ -103,40 +90,50 @@ fn goal_scope_section(report: &VoyageShowProjection) -> ShowSection {
 
 fn progress_section(report: &VoyageShowProjection) -> ShowSection {
     let mut section = ShowSection::new("Progress");
+    let mut fields = ShowKeyValues::new().with_indent(2).with_min_label_width(13);
     if report.total_stories > 0 {
-        section.push_lines([format!(
-            "  Stories:      {}/{} {}",
-            report.done_stories,
-            report.total_stories,
-            style::progress_bar(report.done_stories, report.total_stories, 15, None)
-        )]);
+        fields.push_row(
+            "Stories:",
+            format!(
+                "{}/{} {}",
+                report.done_stories,
+                report.total_stories,
+                style::progress_bar(report.done_stories, report.total_stories, 15, None)
+            ),
+        );
     } else {
-        section.push_lines(["  Stories:      0/0".to_string()]);
+        fields.push_row("Stories:", "0/0");
     }
 
     if report.total_functional_requirements > 0 {
-        section.push_lines([format!(
-            "  Requirements: {}/{} {} (functional)",
-            report.done_functional_requirements,
-            report.total_functional_requirements,
-            style::progress_bar(
+        fields.push_row(
+            "Requirements:",
+            format!(
+                "{}/{} {} (functional)",
                 report.done_functional_requirements,
                 report.total_functional_requirements,
-                15,
-                None
-            )
-        )]);
+                style::progress_bar(
+                    report.done_functional_requirements,
+                    report.total_functional_requirements,
+                    15,
+                    None
+                )
+            ),
+        );
     } else {
-        section.push_lines(["  Requirements: 0/0 (functional)".to_string()]);
+        fields.push_row("Requirements:", "0/0 (functional)");
     }
 
     if report.total_non_functional_requirements > 0 {
-        section.push_lines([format!(
-            "  NFRs:         {}/{} (advisory, not counted toward completion)",
-            report.done_non_functional_requirements, report.total_non_functional_requirements
-        )]);
+        fields.push_row(
+            "NFRs:",
+            format!(
+                "{}/{} (advisory, not counted toward completion)",
+                report.done_non_functional_requirements, report.total_non_functional_requirements
+            ),
+        );
     }
-
+    section.push_key_values(fields);
     section
 }
 

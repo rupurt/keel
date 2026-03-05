@@ -5,6 +5,7 @@ use std::fs;
 use std::path::Path;
 
 use crate::domain::model::{Board, Epic, VoyageState};
+use crate::infrastructure::utils::cmp_optional_index_then_id;
 
 /// Generate and update an epic's README.md
 pub fn generate(board_dir: &Path, board: &Board, epic: &Epic) -> anyhow::Result<()> {
@@ -63,12 +64,8 @@ pub fn generate_epic_readme(board: &Board, epic: &Epic) -> String {
 
     if !voyages.is_empty() {
         let mut sorted_voyages = voyages;
-        sorted_voyages.sort_by(|a, b| match (a.frontmatter.index, b.frontmatter.index) {
-            (Some(ai), Some(bi)) if ai != bi => ai.cmp(&bi),
-            (Some(_), None) => std::cmp::Ordering::Less,
-            (None, Some(_)) => std::cmp::Ordering::Greater,
-            _ => a.id().cmp(b.id()),
-        });
+        sorted_voyages
+            .sort_by(|a, b| cmp_optional_index_then_id(a.index(), a.id(), b.index(), b.id()));
 
         for v in sorted_voyages {
             let v_stories = board.stories_for_voyage(v);

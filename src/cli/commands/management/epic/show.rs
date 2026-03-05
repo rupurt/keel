@@ -6,8 +6,9 @@ use owo_colors::OwoColorize;
 use crate::cli::presentation::duration::render_completed_with_length;
 use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::style;
-use crate::domain::model::{Board, Epic, EpicState};
+use crate::domain::model::{Board, Epic};
 use crate::infrastructure::loader::load_board;
+use crate::infrastructure::utils::cmp_optional_index_then_id;
 use crate::read_model::planning_show::{self, EpicShowProjection};
 
 use std::path::Path;
@@ -19,7 +20,6 @@ const VERIFICATION_STRATEGY_PLACEHOLDER: &str =
     "(no authored verification strategy found in PRD.md)";
 const ETA_PLACEHOLDER: &str = "insufficient throughput data (4-week window)";
 const VERIFICATION_PLACEHOLDER: &str = "no verification annotations found yet";
-const ARTIFACT_PLACEHOLDER: &str = "no evidence artifacts linked yet";
 
 /// Show epic details
 pub fn run(id: &str) -> Result<()> {
@@ -33,41 +33,39 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     let epic = board.require_epic(id)?;
     let report = build_epic_show_report(board_dir, &board, epic)?;
     let width = crate::cli::presentation::terminal::get_terminal_width();
-    let (started_at, completed_at) = derive_epic_timestamps(&board, epic);
 
     let mut metadata = ShowKeyValues::new()
         .with_min_label_width(9)
         .row("Title:", format!("{}", epic.frontmatter.title.bold()))
         .row("Status:", style::styled_epic_stage(&epic.status()));
-    metadata.push_optional_row(
-        "Created:",
+    metadata.push_standard_timestamps(
         epic.frontmatter
             .created_at
             .map(|created_at| format!("{}", created_at.dimmed())),
-    );
-    metadata.push_optional_row(
-        "Started:",
-        started_at.map(|started_at| format!("{}", started_at.dimmed())),
-    );
-    metadata.push_optional_row(
-        "Completed:",
-        completed_at.map(|completed_at| render_completed_with_length(started_at, completed_at)),
+        report
+            .started_at
+            .map(|started_at| format!("{}", started_at.dimmed())),
+        report
+            .updated_at
+            .map(|updated_at| format!("{}", updated_at.dimmed())),
+        report
+            .completed_at
+            .map(|completed_at| render_completed_with_length(report.started_at, completed_at)),
     );
     metadata.push_optional_row("Desc:", epic.frontmatter.description.clone());
     metadata.push_row("Path:", format!("{}", epic.path.display().dimmed()));
 
     let mut document = ShowDocument::new();
-    document.push_key_values(metadata);
-    document.push_rule(width);
-    document.push_section(render_planning_summary(&report));
-    document.push_spacer();
-    document.push_section(render_progress(&report));
-    document.push_spacer();
-    document.push_section(render_verification_readiness(&report));
+    document.push_header(metadata, Some(width));
+    let mut sections = vec![
+        render_planning_summary(&report),
+        render_progress(&report),
+        render_verification_readiness(&report),
+    ];
     if let Some(voyages) = render_voyages(&board, epic) {
-        document.push_spacer();
-        document.push_section(voyages);
+        sections.push(voyages);
     }
+    document.push_sections_spaced(sections);
     document.print();
 
     Ok(())
@@ -79,28 +77,6 @@ fn build_epic_show_report(
     epic: &Epic,
 ) -> Result<EpicShowProjection> {
     planning_show::build_epic_show_projection(board_dir, board, epic)
-}
-
-fn derive_epic_timestamps(
-    board: &Board,
-    epic: &Epic,
-) -> (Option<chrono::NaiveDateTime>, Option<chrono::NaiveDateTime>) {
-    let voyages = board.voyages_for_epic_id(epic.id());
-    let started_at = voyages
-        .iter()
-        .filter_map(|voyage| voyage.frontmatter.started_at)
-        .min();
-
-    let completed_at = if epic.status() == EpicState::Done {
-        voyages
-            .iter()
-            .filter_map(|voyage| voyage.frontmatter.completed_at)
-            .max()
-    } else {
-        None
-    };
-
-    (started_at, completed_at)
 }
 
 fn render_planning_summary(report: &EpicShowProjection) -> ShowSection {
@@ -119,16 +95,14 @@ fn render_planning_summary(report: &EpicShowProjection) -> ShowSection {
         report.doc.goals.iter().cloned(),
         Some(format!("{}", GOALS_PLACEHOLDER.dimmed())),
     );
-    section.push_labeled_bullets_limited(
+    section.push_labeled_bullets(
         "Key Requirements:",
         report.doc.key_requirements.iter().cloned(),
-        5,
         Some(format!("{}", REQUIREMENTS_PLACEHOLDER.dimmed())),
     );
-    section.push_labeled_bullets_limited(
+    section.push_labeled_bullets(
         "Verification Strategy:",
         report.doc.verification_strategy.iter().cloned(),
-        5,
         Some(format!("{}", VERIFICATION_STRATEGY_PLACEHOLDER.dimmed())),
     );
 
@@ -137,26 +111,33 @@ fn render_planning_summary(report: &EpicShowProjection) -> ShowSection {
 
 fn render_progress(report: &EpicShowProjection) -> ShowSection {
     let mut section = ShowSection::new("Progress");
+    let mut fields = ShowKeyValues::new().with_indent(2).with_min_label_width(21);
     if report.total_voyages > 0 {
-        section.push_lines([format!(
-            "  Voyages: {}/{} {}",
-            report.done_voyages,
-            report.total_voyages,
-            style::progress_bar(report.done_voyages, report.total_voyages, 15, None)
-        )]);
+        fields.push_row(
+            "Voyages:",
+            format!(
+                "{}/{} {}",
+                report.done_voyages,
+                report.total_voyages,
+                style::progress_bar(report.done_voyages, report.total_voyages, 15, None)
+            ),
+        );
     } else {
-        section.push_lines(["  Voyages: 0/0".to_string()]);
+        fields.push_row("Voyages:", "0/0");
     }
 
     if report.total_stories > 0 {
-        section.push_lines([format!(
-            "  Stories: {}/{} {}",
-            report.done_stories,
-            report.total_stories,
-            style::progress_bar(report.done_stories, report.total_stories, 15, None)
-        )]);
+        fields.push_row(
+            "Stories:",
+            format!(
+                "{}/{} {}",
+                report.done_stories,
+                report.total_stories,
+                style::progress_bar(report.done_stories, report.total_stories, 15, None)
+            ),
+        );
     } else {
-        section.push_lines(["  Stories: 0/0".to_string()]);
+        fields.push_row("Stories:", "0/0");
     }
 
     let eta = match report.eta.eta_weeks {
@@ -167,40 +148,45 @@ fn render_progress(report: &EpicShowProjection) -> ShowSection {
         None if report.eta.remaining_stories == 0 => "complete".to_string(),
         None => ETA_PLACEHOLDER.to_string(),
     };
-    section.push_lines([format!("  ETA:     {eta}")]);
+    fields.push_row("ETA:", eta);
+    section.push_key_values(fields);
     section
 }
 
 fn render_verification_readiness(report: &EpicShowProjection) -> ShowSection {
     let mut section = ShowSection::new("Verification Readiness");
+    let mut fields = ShowKeyValues::new().with_indent(2).with_min_label_width(22);
     let total_criteria =
         report.verification.automated_criteria + report.verification.manual_criteria;
     if total_criteria == 0 {
         section.push_lines([format!("  {}", VERIFICATION_PLACEHOLDER.dimmed())]);
     } else {
-        section.push_lines([format!(
-            "  Criteria: automated {} | manual {}",
-            report.verification.automated_criteria, report.verification.manual_criteria
-        )]);
-        section.push_lines([format!(
-            "  Requirement coverage: automated {} | manual {}",
-            report.verification.automated_requirements.len(),
-            report.verification.manual_requirements.len()
-        )]);
+        fields.push_row(
+            "Criteria:",
+            format!(
+                "automated {} | manual {}",
+                report.verification.automated_criteria, report.verification.manual_criteria
+            ),
+        );
+        fields.push_row(
+            "Requirement coverage:",
+            format!(
+                "automated {} | manual {}",
+                report.verification.automated_requirements.len(),
+                report.verification.manual_requirements.len()
+            ),
+        );
     }
 
     let (text_count, media_count, other_count) = report.verification.artifact_counts();
-    section.push_lines([format!(
-        "  Artifact inventory: text {} | media {} | other {}",
-        text_count, media_count, other_count
-    )]);
-
-    section.push_labeled_bullets_limited(
-        "Linked artifacts:",
-        report.verification.linked_artifacts.iter().cloned(),
-        6,
-        Some(format!("{}", ARTIFACT_PLACEHOLDER.dimmed())),
+    fields.push_row(
+        "Artifact inventory:",
+        format!(
+            "text {} | media {} | other {}",
+            text_count, media_count, other_count
+        ),
     );
+    section.push_key_values(fields);
 
     if report.verification.missing_linked_proofs > 0 {
         section.push_lines([format!(
@@ -214,12 +200,7 @@ fn render_verification_readiness(report: &EpicShowProjection) -> ShowSection {
 
 fn render_voyages(board: &Board, epic: &Epic) -> Option<ShowSection> {
     let mut voyages = board.voyages_for_epic_id(epic.id());
-    voyages.sort_by(|a, b| match (a.index(), b.index()) {
-        (Some(ai), Some(bi)) if ai != bi => ai.cmp(&bi),
-        (Some(_), None) => std::cmp::Ordering::Less,
-        (None, Some(_)) => std::cmp::Ordering::Greater,
-        _ => a.id().cmp(b.id()),
-    });
+    voyages.sort_by(|a, b| cmp_optional_index_then_id(a.index(), a.id(), b.index(), b.id()));
 
     if voyages.is_empty() {
         return None;
@@ -246,6 +227,37 @@ mod tests {
     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use chrono::{Duration, Local, NaiveDate};
     use std::fs;
+    use std::path::Path;
+
+    fn replace_frontmatter_timestamp(path: &Path, key: &str, value: &str) {
+        let content = fs::read_to_string(path).unwrap();
+        let mut replaced_or_inserted = false;
+        let mut frontmatter_fence_count = 0;
+        let mut lines = Vec::new();
+        for line in content.lines() {
+            if line.trim() == "---" {
+                frontmatter_fence_count += 1;
+                if !replaced_or_inserted && frontmatter_fence_count == 2 {
+                    lines.push(format!("{key}: {value}"));
+                    replaced_or_inserted = true;
+                }
+                lines.push(line.to_string());
+                continue;
+            }
+
+            if !replaced_or_inserted && line.starts_with(&format!("{key}:")) {
+                lines.push(format!("{key}: {value}"));
+                replaced_or_inserted = true;
+            } else {
+                lines.push(line.to_string());
+            }
+        }
+        assert!(
+            replaced_or_inserted,
+            "expected to find frontmatter block for key '{key}'"
+        );
+        fs::write(path, format!("{}\n", lines.join("\n"))).unwrap();
+    }
 
     #[test]
     fn epic_duration_rendering_formats_elapsed_time() {
@@ -261,6 +273,27 @@ mod tests {
         let value = render_completed_with_length(Some(started), completed);
 
         assert!(value.contains("1d 2h 30m"));
+    }
+
+    #[test]
+    fn epic_show_derives_updated_from_latest_story_or_voyage_activity() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("epic1"))
+            .voyage(TestVoyage::new("v1", "epic1").status("in-progress"))
+            .story(TestStory::new("S1").scope("epic1/v1"))
+            .build();
+
+        let story_path = temp.path().join("stories/S1/README.md");
+        replace_frontmatter_timestamp(&story_path, "updated_at", "2026-03-05T12:34:56");
+
+        let board = load_board(temp.path()).unwrap();
+        let epic = board.require_epic("epic1").unwrap();
+        let report = build_epic_show_report(temp.path(), &board, epic).unwrap();
+        let expected = NaiveDate::from_ymd_opt(2026, 3, 5)
+            .unwrap()
+            .and_hms_opt(12, 34, 56)
+            .unwrap();
+        assert_eq!(report.updated_at, Some(expected));
     }
 
     #[test]
