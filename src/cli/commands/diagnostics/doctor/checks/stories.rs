@@ -1141,18 +1141,18 @@ pub fn check_terminal_story_coherence(board: &Board) -> Vec<Problem> {
     problems
 }
 
-/// Validate canonical knowledge manifest integrity and cross-unit linkage.
+/// Validate canonical knowledge catalog integrity and cross-unit linkage.
 pub fn check_knowledge_manifest_integrity(board_dir: &Path) -> Vec<Problem> {
     let mut problems = Vec::new();
-    let manifest_path = board_dir.join("knowledge").join("manifest.json");
+    let knowledge_dir = board_dir.join("knowledge");
 
-    let manifest = match crate::read_model::knowledge::sync_knowledge_manifest(board_dir) {
-        Ok(manifest) => manifest,
+    let catalog = match crate::read_model::knowledge::sync_knowledge_catalog(board_dir) {
+        Ok(catalog) => catalog,
         Err(error) => {
             problems.push(
                 Problem::error(
-                    manifest_path,
-                    format!("knowledge manifest is invalid: {}", error),
+                    knowledge_dir,
+                    format!("knowledge catalog is invalid: {}", error),
                 )
                 .with_check_id(CheckId::KnowledgeManifestIntegrity),
             );
@@ -1162,7 +1162,7 @@ pub fn check_knowledge_manifest_integrity(board_dir: &Path) -> Vec<Problem> {
 
     let mut seen = HashSet::new();
     let mut all_ids = HashSet::new();
-    for unit in &manifest.units {
+    for unit in &catalog.units {
         all_ids.insert(unit.id.clone());
 
         if !crate::read_model::knowledge::is_canonical_knowledge_id(&unit.id) {
@@ -1189,7 +1189,7 @@ pub fn check_knowledge_manifest_integrity(board_dir: &Path) -> Vec<Problem> {
         }
     }
 
-    for unit in &manifest.units {
+    for unit in &catalog.units {
         for linked_id in &unit.linked_ids {
             if !all_ids.contains(linked_id) {
                 problems.push(

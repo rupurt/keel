@@ -56,18 +56,13 @@ pub fn generate_voyage_report(board: &Board, voyage: &Voyage) -> String {
         let story_dir = story.path.parent().unwrap();
         let reflect_path = story_dir.join("REFLECT.md");
         if reflect_path.exists()
-            && let Ok(reflect_content) = fs::read_to_string(&reflect_path)
+            && let Ok(insights) =
+                crate::read_model::knowledge::load_reflection_knowledge(&board.root, &reflect_path)
+            && !insights.is_empty()
         {
-            let insights = crate::read_model::knowledge::scanner::parse_knowledge_from_content(
-                &reflect_content,
-                &reflect_path,
-                crate::read_model::knowledge::KnowledgeSourceType::Story,
-            );
-            if !insights.is_empty() {
-                writeln!(narrative).unwrap();
-                writeln!(narrative, "#### Implementation Insights").unwrap();
-                render_knowledge_entries(&mut narrative, &insights);
-            }
+            writeln!(narrative).unwrap();
+            writeln!(narrative, "#### Implementation Insights").unwrap();
+            render_knowledge_entries(&mut narrative, &insights);
         }
 
         // Include Evidence links

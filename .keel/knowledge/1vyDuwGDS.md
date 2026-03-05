@@ -1,0 +1,21 @@
+---
+source_type: Story
+source: stories/1vx8V5VeE/REFLECT.md
+scope: 1vwq96cpt/1vx8TLqpp
+source_story_id: 1vx8V5VeE
+---
+
+### 1vyDuwGDS: Relocated Source Files May Break Compile-Time Template Paths
+
+| Field | Value |
+|-------|-------|
+| **Category** | code |
+| **Context** | Moving `templates.rs` under `src/infrastructure` changed relative path depth for `include_str!` macro calls. |
+| **Insight** | Compile-time embedded asset paths are location-sensitive; module moves must include immediate path rebasing for `include_str!` constants. |
+| **Suggested Action** | After moving infrastructure modules, run a targeted compile/test immediately and patch relative asset paths before broader refactors. |
+| **Applies To** | src/infrastructure/templates.rs |
+| **Linked Knowledge IDs** |  |
+| **Observed At** | 2026-03-02T19:38:18+00:00 |
+| **Score** | 0.86 |
+| **Confidence** | 0.96 |
+| **Applied** |  |

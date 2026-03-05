@@ -2,10 +2,8 @@
 
 use anyhow::Result;
 use owo_colors::OwoColorize;
-use regex::Regex;
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::LazyLock;
 
 use crate::cli::commands::management::verification_guidance::{
     audit_error_with_recovery, guidance_for_audit_story, print_human,
@@ -14,11 +12,6 @@ use crate::cli::style;
 use crate::domain::model::Board;
 use crate::infrastructure::loader::load_board;
 use crate::read_model::evidence::{self, EvidenceEntry};
-
-static KNOWLEDGE_HEADER_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?m)^###\s+([A-Za-z0-9]{9}|L\d+|ML\d+):\s*(.+)$")
-        .expect("valid knowledge header regex")
-});
 
 /// Run the audit command
 pub fn run(board_dir: &Path, id: Option<&str>) -> Result<()> {
@@ -164,9 +157,13 @@ fn audit_story(story: &crate::domain::model::Story, indent_level: usize) -> Resu
 
     let reflect_path = bundle_dir.join("REFLECT.md");
     if reflect_path.exists() {
-        let reflect_content = std::fs::read_to_string(&reflect_path)?;
-        // Only count as recorded if it contains at least one knowledge unit header
-        if KNOWLEDGE_HEADER_RE.is_match(&reflect_content) {
+        let board_dir = bundle_dir
+            .parent()
+            .and_then(|stories_dir| stories_dir.parent())
+            .unwrap_or(bundle_dir);
+        if !crate::read_model::knowledge::load_reflection_knowledge(board_dir, &reflect_path)?
+            .is_empty()
+        {
             println!("{}  {}", indent, "✓ Reflection recorded".green());
         }
     }

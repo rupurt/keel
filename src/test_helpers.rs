@@ -562,11 +562,11 @@ Test harness epic problem statement.
             let story_path = story_bundle_dir.join("README.md");
             fs::write(story_path, story.content()).unwrap();
 
-            // Mandatory REFLECT.md with at least one knowledge unit for hardened gates
+            // Mandatory REFLECT.md with an empty knowledge section for hardened gates
             fs::write(
                 story_bundle_dir.join("REFLECT.md"),
                 format!(
-                    "# Reflection - {}\n\n### L-01: Test lesson\n\nSome insight.",
+                    "# Reflection - {}\n\n## Knowledge\n\n## Observations\n\nNo reusable insight captured.\n",
                     story.title
                 ),
             )

@@ -38,13 +38,14 @@ pub fn synthesize_voyage_knowledge(board: &Board, voyage: &Voyage) -> Result<()>
         let reflect_path = story_dir.join("REFLECT.md");
 
         if reflect_path.exists() {
-            let content = fs::read_to_string(&reflect_path)
-                .with_context(|| format!("Failed to read reflection for story {}", story.id()))?;
-            let insights = crate::read_model::knowledge::scanner::parse_knowledge_from_content(
-                &content,
-                &reflect_path,
-                crate::read_model::knowledge::KnowledgeSourceType::Story,
-            );
+            let insights =
+                crate::read_model::knowledge::load_reflection_knowledge(&board.root, &reflect_path)
+                    .with_context(|| {
+                        format!(
+                            "Failed to read reflection knowledge for story {}",
+                            story.id()
+                        )
+                    })?;
             if insights.is_empty() {
                 continue;
             }

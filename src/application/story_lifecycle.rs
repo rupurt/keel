@@ -10,7 +10,7 @@ use std::path::Path;
 use crate::application::domain_events::DomainEvent;
 use crate::application::knowledge_context;
 use crate::application::process_manager::DomainProcessManager;
-use crate::domain::model::StoryState;
+use crate::domain::model::{Story, StoryState};
 use crate::domain::state_machine::{
     BlockingMode, EnforcementPolicy, StoryTransition, TransitionEntity, TransitionIntent,
     enforce_transition, format_enforcement_error,
@@ -19,7 +19,7 @@ use crate::domain::transitions::{execute, transitions};
 use crate::infrastructure::frontmatter_mutation::{Mutation, apply};
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::verification;
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context, Result, anyhow, bail};
 use chrono::Local;
 use owo_colors::OwoColorize;
 
@@ -128,6 +128,8 @@ impl StoryLifecycleService {
             Some("Link reused insights in REFLECT.md before submitting when appropriate."),
         )?;
 
+        guard_reflection_knowledge_uniqueness(board_dir, story)?;
+
         let content = fs::read_to_string(&story.path)?;
         println!("Running verification for {}...", story.id());
         let report = verification::verify_story(board_dir, story.id(), &content)?;
@@ -141,13 +143,18 @@ impl StoryLifecycleService {
             ));
         }
 
-        let spec = if report.requires_human_review() {
+        let auto_complete = !report.requires_human_review();
+        let spec = if !auto_complete {
             println!("Automated verification passed, but manual review is required.");
             &transitions::SUBMIT
         } else {
             println!("All automated verification passed. Auto-completing story.");
             &transitions::SUBMIT_DONE
         };
+
+        if auto_complete {
+            materialize_story_reflection_knowledge(board_dir, story)?;
+        }
 
         let result = execute(board_dir, story.id(), spec)?;
 
@@ -196,36 +203,18 @@ impl StoryLifecycleService {
             return Err(anyhow!(msg));
         }
 
+        let reflect_path = reflect_path_for_story(story)?;
+        if let Some(text) = reflect {
+            append_accept_reflection(&reflect_path, &story.frontmatter.title, text)?;
+        }
+
+        guard_reflection_knowledge_uniqueness(board_dir, story)?;
+        materialize_story_reflection_knowledge(board_dir, story)?;
+
         let result = execute(board_dir, story.id(), &transitions::ACCEPT)?;
 
         println!("Accepted: {}", result.story.id());
-
-        if let Some(text) = reflect {
-            let story_bundle_dir = result.story.path.parent().unwrap();
-            let reflect_path = story_bundle_dir.join("REFLECT.md");
-
-            let mut file = fs::OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(&reflect_path)
-                .with_context(|| {
-                    format!(
-                        "Failed to open REFLECT.md for story: {}",
-                        reflect_path.display()
-                    )
-                })?;
-
-            if reflect_path.metadata()?.len() > 0 {
-                write!(file, "\n---\n\n{}\n", text)
-                    .with_context(|| "Failed to append reflection")?;
-            } else {
-                write!(
-                    file,
-                    "# Reflection - {}\n\n{}\n",
-                    result.story.frontmatter.title, text
-                )
-                .with_context(|| "Failed to write reflection")?;
-            }
+        if reflect.is_some() {
             println!(
                 "  ✓ Reflection recorded in {}",
                 reflect_path.display().dimmed()
@@ -337,6 +326,93 @@ fn set_started_at(path: &Path, datetime: &str) -> Result<()> {
     Ok(())
 }
 
+fn reflect_path_for_story(story: &Story) -> Result<std::path::PathBuf> {
+    story
+        .path
+        .parent()
+        .map(|dir| dir.join("REFLECT.md"))
+        .with_context(|| format!("Story {} has no bundle directory", story.id()))
+}
+
+fn append_accept_reflection(reflect_path: &Path, title: &str, text: &str) -> Result<()> {
+    let mut file = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(reflect_path)
+        .with_context(|| {
+            format!(
+                "Failed to open REFLECT.md for story: {}",
+                reflect_path.display()
+            )
+        })?;
+
+    if reflect_path.metadata()?.len() > 0 {
+        write!(file, "\n---\n\n{}\n", text).with_context(|| "Failed to append reflection")?;
+    } else {
+        write!(file, "# Reflection - {}\n\n{}\n", title, text)
+            .with_context(|| "Failed to write reflection")?;
+    }
+    Ok(())
+}
+
+fn guard_reflection_knowledge_uniqueness(board_dir: &Path, story: &Story) -> Result<()> {
+    let reflect_path = reflect_path_for_story(story)?;
+    if !reflect_path.exists() {
+        return Ok(());
+    }
+
+    let candidates = crate::read_model::knowledge::parse_reflection_candidates(
+        &reflect_path,
+        story.scope(),
+        Some(story.id()),
+    )?;
+    if candidates.is_empty() {
+        return Ok(());
+    }
+
+    let existing = crate::read_model::knowledge::scan_all_knowledge(board_dir)?;
+    let conflicts = crate::read_model::knowledge::detect_similarity_conflicts(
+        &candidates,
+        &existing,
+        crate::read_model::knowledge::NEAR_DUPLICATE_KNOWLEDGE_THRESHOLD,
+    );
+
+    if conflicts.is_empty() {
+        return Ok(());
+    }
+
+    let details = conflicts
+        .into_iter()
+        .map(|conflict| {
+            format!(
+                "{} -> {} ({:.2})",
+                conflict.candidate_id, conflict.existing_id, conflict.similarity_score
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    bail!(
+        "Reflection knowledge is too similar to existing knowledge: {}. Link the existing `.keel/knowledge/<id>.md` file in REFLECT.md or add an explicit Linked Knowledge IDs reference before retrying.",
+        details
+    );
+}
+
+fn materialize_story_reflection_knowledge(board_dir: &Path, story: &Story) -> Result<()> {
+    let reflect_path = reflect_path_for_story(story)?;
+    if !reflect_path.exists() {
+        return Ok(());
+    }
+
+    let _ = crate::read_model::knowledge::materialize_reflection_knowledge(
+        board_dir,
+        &reflect_path,
+        story.scope(),
+        Some(story.id()),
+    )?;
+    Ok(())
+}
+
 #[allow(dead_code)]
 pub(crate) fn is_relevant_knowledge(
     knowledge: &crate::read_model::knowledge::Knowledge,
@@ -389,6 +465,7 @@ mod tests {
     use super::StoryLifecycleService;
     use crate::domain::model::StoryState;
     use crate::test_helpers::{TestBoardBuilder, TestStory};
+    use std::fs;
 
     #[test]
     fn accept_requires_human_flag_for_manual_verification_stories() {
@@ -426,5 +503,113 @@ mod tests {
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
         let story = board.require_story("MANUAL02").unwrap();
         assert_eq!(story.stage, StoryState::Done);
+    }
+
+    #[test]
+    fn submit_blocks_near_duplicate_reflection_knowledge() {
+        let temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("OLD000001")
+                    .title("Existing Story")
+                    .stage(StoryState::Done)
+                    .body(
+                        "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] done <!-- verify: manual, SRS-01:start:end -->",
+                    ),
+            )
+            .story(
+                TestStory::new("NEW000001")
+                    .title("New Story")
+                    .stage(StoryState::InProgress)
+                    .body(
+                        "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] done <!-- verify: manual, SRS-01:start:end -->",
+                    ),
+            )
+            .build();
+
+        fs::write(
+            temp.path().join("stories/OLD000001/REFLECT.md"),
+            r#"# Reflection - Existing Story
+
+## Knowledge
+
+### 1AbCdE239: Prefer Linked Reflection Knowledge
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | when a story discovers reusable reflection guidance |
+| **Insight** | Duplicate reflection knowledge should be linked instead of restated |
+| **Suggested Action** | Reference the existing catalog file in REFLECT.md |
+"#,
+        )
+        .unwrap();
+        fs::write(
+            temp.path().join("stories/NEW000001/REFLECT.md"),
+            r#"# Reflection - New Story
+
+## Knowledge
+
+### 1AbCdE240: Prefer Linked Reflection Knowledge
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | when a story discovers reusable reflection guidance |
+| **Insight** | Duplicate reflection knowledge should be linked instead of restated |
+| **Suggested Action** | Reference the existing catalog file in REFLECT.md |
+"#,
+        )
+        .unwrap();
+
+        let err = StoryLifecycleService::submit(temp.path(), "NEW000001")
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("too similar to existing knowledge"));
+        assert!(err.contains("1AbCdE239"));
+    }
+
+    #[test]
+    fn accept_materializes_unique_reflection_knowledge_when_story_reaches_done() {
+        let temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("DONE00001")
+                    .title("Done Story")
+                    .stage(StoryState::NeedsHumanVerification)
+                    .body(
+                        "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] done <!-- verify: manual, SRS-01:start:end -->",
+                    ),
+            )
+            .build();
+
+        fs::write(
+            temp.path().join("stories/DONE00001/REFLECT.md"),
+            r#"# Reflection - Done Story
+
+## Knowledge
+
+### 1AbCdE241: Materialize Reflection Knowledge
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | when a human accepts a story after verification |
+| **Insight** | Unique reflection knowledge should move into dedicated files |
+| **Suggested Action** | Rewrite the reflection to link the knowledge file after acceptance |
+
+## Observations
+
+The guard should run before acceptance completes.
+"#,
+        )
+        .unwrap();
+
+        StoryLifecycleService::accept(temp.path(), "DONE00001", true, None).unwrap();
+
+        let knowledge_path = temp.path().join("knowledge/1AbCdE241.md");
+        assert!(knowledge_path.exists());
+
+        let reflect = fs::read_to_string(temp.path().join("stories/DONE00001/REFLECT.md")).unwrap();
+        assert!(reflect.contains("- [1AbCdE241](../../knowledge/1AbCdE241.md)"));
+        assert!(!reflect.contains("### 1AbCdE241: Materialize Reflection Knowledge"));
     }
 }

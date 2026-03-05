@@ -3,7 +3,13 @@
 ## Knowledge
 
 <!--
-Capture only novel/actionable knowledge that is likely useful in future work.
+Link existing knowledge files when the insight already exists:
+- [123abcDEF](../../knowledge/123abcDEF.md) Existing knowledge title
+
+Capture only novel/actionable knowledge that is likely useful in future work as
+an inline candidate block. Unique entries are promoted into `.keel/knowledge/<id>.md`
+on submit/accept.
+
 If there is no reusable insight for this story, leave the Knowledge section empty.
 Format:
 ### {{knowledge_example_id}}: Title

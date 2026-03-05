@@ -42,8 +42,8 @@ pub fn run(board_dir: &Path) -> Result<()> {
     let history = crate::read_model::throughput_history::project_default(&board);
     crate::infrastructure::throughput_history_store::save_if_changed(board_dir, &history)?;
 
-    // 5. Rebuild centralized knowledge manifest.
-    crate::read_model::knowledge::sync_knowledge_manifest(board_dir)?;
+    // 5. Refresh canonical knowledge catalog files.
+    crate::read_model::knowledge::sync_knowledge_catalog(board_dir)?;
 
     if backfill_stats.stories_updated > 0 || backfill_stats.voyages_updated > 0 {
         println!(

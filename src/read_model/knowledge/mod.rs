@@ -17,8 +17,10 @@ pub use navigator::{
     seed_blockers,
 };
 pub use scanner::{
-    KnowledgeManifest, KnowledgeMigrationReport, KnowledgeSort, RankedKnowledge,
-    filter_by_category, filter_unapplied, is_canonical_knowledge_id, load_knowledge_manifest,
-    migrate_legacy_knowledge_ids, parse_applies_to, rank_relevant_knowledge, scan_all_knowledge,
-    sync_knowledge_manifest,
+    KnowledgeCatalog, KnowledgeMigrationReport, KnowledgeSimilarityConflict, KnowledgeSort,
+    NEAR_DUPLICATE_KNOWLEDGE_THRESHOLD, RankedKnowledge, detect_similarity_conflicts,
+    filter_by_category, filter_unapplied, is_canonical_knowledge_id, knowledge_file_path,
+    load_reflection_knowledge, materialize_reflection_knowledge, migrate_legacy_knowledge_ids,
+    parse_applies_to, parse_reflection_candidates, rank_relevant_knowledge, scan_all_knowledge,
+    sync_knowledge_catalog,
 };

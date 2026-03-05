@@ -12,6 +12,6 @@ pub fn run(board_dir: &Path) -> Result<()> {
     println!("{}", "Knowledge ID migration complete".green().bold());
     println!("  Files updated: {}", report.files_updated);
     println!("  IDs regenerated: {}", report.ids_regenerated);
-    println!("  Manifest entries: {}", report.manifest_entries);
+    println!("  Knowledge entries: {}", report.knowledge_entries);
     Ok(())
 }

@@ -180,7 +180,7 @@ pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
     let knowledge_manifest_problems =
         checks::stories::check_knowledge_manifest_integrity(board_dir);
     story_checks.push(CheckResult {
-        name: "Knowledge manifest integrity",
+        name: "Knowledge catalog integrity",
         evaluations: board.stories.len(),
         passed: knowledge_manifest_problems.is_empty(),
         problems: knowledge_manifest_problems,

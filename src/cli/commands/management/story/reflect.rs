@@ -5,6 +5,7 @@ use std::path::Path;
 
 use anyhow::{Context, Result, bail};
 
+use crate::application::knowledge_context;
 use crate::domain::model::StoryState;
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::template_rendering;
@@ -63,6 +64,14 @@ fn run_impl(board_dir: &Path, id: &str) -> Result<()> {
     })?;
 
     println!("Created: stories/{}/REFLECT.md", story.id());
+    knowledge_context::surface_ranked_knowledge(
+        board_dir,
+        "Existing knowledge worth reviewing before you reflect:",
+        story.epic(),
+        story.scope(),
+        5,
+        Some("Link existing knowledge in REFLECT.md when it already captures the insight."),
+    )?;
     let guidance = guidance_for_action(StoryLifecycleAction::Reflect, story.stage, story.id());
     print_human(guidance.as_ref());
 

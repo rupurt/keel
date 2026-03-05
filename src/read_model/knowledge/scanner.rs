@@ -3,10 +3,11 @@
 //! Scans stories, voyages, and ad-hoc files for knowledge.
 
 use std::collections::{HashMap, HashSet};
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 
-use anyhow::{Result, bail};
+use anyhow::{Context, Result, bail};
 use chrono::Utc;
 use rayon::prelude::*;
 use regex::Regex;
@@ -19,6 +20,8 @@ static KNOWLEDGE_HEADER_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?m)^###\s+([A-Za-z0-9]{9}|L\d+|ML\d+):\s*(.*)$").unwrap());
 static KNOWLEDGE_HEADER_LINE_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^(\s*###\s+)([A-Za-z0-9]{9}|L\d+|ML\d+)(:\s*.*)$").unwrap());
+static KNOWLEDGE_LINK_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"(?m)^\s*[-*]\s+\[([A-Za-z0-9]{9})\]\(([^)]+)\)"#).unwrap());
 static SCOPE_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?m)^scope:\s*(.+)$").unwrap());
 static LEGACY_KNOWLEDGE_ID_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^(L\d+|ML\d+)$").unwrap());
@@ -33,12 +36,21 @@ pub struct KnowledgeValidationIssue {
     pub reason: String,
 }
 
-/// Canonical knowledge manifest persisted in `.keel/knowledge/manifest.json`.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct KnowledgeManifest {
-    pub schema_version: u32,
+/// In-memory snapshot of the canonical knowledge catalog.
+#[derive(Debug, Clone)]
+pub struct KnowledgeCatalog {
     pub generated_at: chrono::DateTime<Utc>,
     pub units: Vec<Knowledge>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct KnowledgeFileFrontmatter {
+    source_type: KnowledgeSourceType,
+    source: String,
+    #[serde(default)]
+    scope: Option<String>,
+    #[serde(default)]
+    source_story_id: Option<String>,
 }
 
 /// One-time migration result for canonicalizing knowledge IDs.
@@ -46,7 +58,7 @@ pub struct KnowledgeManifest {
 pub struct KnowledgeMigrationReport {
     pub files_updated: usize,
     pub ids_regenerated: usize,
-    pub manifest_entries: usize,
+    pub knowledge_entries: usize,
 }
 
 /// Sort mode for `knowledge list`.
@@ -172,33 +184,82 @@ fn duplicate_ids(units: &[Knowledge]) -> Vec<String> {
     duplicates
 }
 
-pub fn knowledge_manifest_path(board_dir: &Path) -> PathBuf {
-    board_dir.join("knowledge").join("manifest.json")
+pub fn knowledge_dir(board_dir: &Path) -> PathBuf {
+    board_dir.join("knowledge")
 }
 
-pub fn load_knowledge_manifest(board_dir: &Path) -> Result<KnowledgeManifest> {
-    let manifest_path = knowledge_manifest_path(board_dir);
-    let content = std::fs::read_to_string(&manifest_path)?;
-    Ok(serde_json::from_str(&content)?)
+pub fn knowledge_file_path(board_dir: &Path, id: &str) -> PathBuf {
+    knowledge_dir(board_dir).join(format!("{id}.md"))
 }
 
-pub fn write_knowledge_manifest(
-    board_dir: &Path,
-    units: &[Knowledge],
-) -> Result<KnowledgeManifest> {
-    let manifest = KnowledgeManifest {
-        schema_version: 1,
-        generated_at: Utc::now(),
-        units: units.to_vec(),
+fn source_path_for_storage(board_dir: &Path, source: &Path) -> String {
+    source
+        .strip_prefix(board_dir)
+        .unwrap_or(source)
+        .to_string_lossy()
+        .replace('\\', "/")
+}
+
+fn source_path_from_storage(board_dir: &Path, stored: &str) -> PathBuf {
+    let stored_path = Path::new(stored);
+    if stored_path.is_absolute() {
+        stored_path.to_path_buf()
+    } else {
+        board_dir.join(stored_path)
+    }
+}
+
+fn render_knowledge_markdown(board_dir: &Path, knowledge: &Knowledge) -> Result<String> {
+    let frontmatter = KnowledgeFileFrontmatter {
+        source_type: knowledge.source_type,
+        source: source_path_for_storage(board_dir, &knowledge.source),
+        scope: knowledge.scope.clone(),
+        source_story_id: knowledge.source_story_id.clone(),
     };
 
-    let manifest_path = knowledge_manifest_path(board_dir);
-    if let Some(parent) = manifest_path.parent() {
-        std::fs::create_dir_all(parent)?;
+    Ok(format!(
+        "---\n{}---\n\n### {}: {}\n\n| Field | Value |\n|-------|-------|\n| **Category** | {} |\n| **Context** | {} |\n| **Insight** | {} |\n| **Suggested Action** | {} |\n| **Applies To** | {} |\n| **Linked Knowledge IDs** | {} |\n| **Observed At** | {} |\n| **Score** | {:.2} |\n| **Confidence** | {:.2} |\n| **Applied** | {} |\n",
+        serde_yaml::to_string(&frontmatter)?,
+        knowledge.id,
+        knowledge.title,
+        knowledge.category,
+        knowledge.context,
+        knowledge.insight,
+        knowledge.suggested_action,
+        knowledge.applies_to,
+        knowledge.linked_ids.join(", "),
+        knowledge
+            .observed_at
+            .map(|value| value.to_rfc3339())
+            .unwrap_or_default(),
+        knowledge.score,
+        knowledge.confidence,
+        knowledge.applied,
+    ))
+}
+
+fn load_knowledge_file(board_dir: &Path, path: &Path) -> Result<Knowledge> {
+    let content =
+        fs::read_to_string(path).with_context(|| format!("Failed to read {}", path.display()))?;
+    let (frontmatter, body): (KnowledgeFileFrontmatter, _) =
+        crate::infrastructure::parser::parse_frontmatter(&content)
+            .with_context(|| format!("Failed to parse frontmatter in {}", path.display()))?;
+    let mut units = parse_knowledge_from_content(body, path, frontmatter.source_type);
+    if units.len() != 1 {
+        bail!(
+            "knowledge file {} must contain exactly one knowledge block",
+            path.display()
+        );
     }
 
-    std::fs::write(&manifest_path, serde_json::to_string_pretty(&manifest)?)?;
-    Ok(manifest)
+    let mut unit = units.remove(0);
+    unit.source = source_path_from_storage(board_dir, &frontmatter.source);
+    unit.source_type = frontmatter.source_type;
+    unit.scope = frontmatter.scope;
+    unit.source_story_id = frontmatter
+        .source_story_id
+        .or_else(|| canonicalize_source_story_id(&unit.source));
+    Ok(unit)
 }
 
 /// Parse a knowledge table from markdown content.
@@ -452,12 +513,82 @@ fn extract_scope_from_frontmatter(content: &str) -> Option<String> {
         .map(|m| m.as_str().trim().to_string())
 }
 
+fn extract_reflection_knowledge_links(content: &str) -> Vec<(String, String)> {
+    let sanitized = strip_html_comments(content);
+    KNOWLEDGE_LINK_RE
+        .captures_iter(&sanitized)
+        .filter_map(|caps| {
+            let id = caps.get(1)?.as_str().to_string();
+            let target = caps.get(2)?.as_str().to_string();
+            Some((id, target))
+        })
+        .collect()
+}
+
+fn load_reflection_linked_knowledge(
+    board_dir: &Path,
+    reflect_path: &Path,
+    content: &str,
+) -> Result<Vec<Knowledge>> {
+    extract_reflection_knowledge_links(content)
+        .into_iter()
+        .map(|(id, target)| {
+            let knowledge_path = reflect_path
+                .parent()
+                .unwrap_or(board_dir)
+                .join(target)
+                .components()
+                .collect::<PathBuf>();
+            let knowledge = load_knowledge_file(board_dir, &knowledge_path).with_context(|| {
+                format!(
+                    "Failed to load linked knowledge '{}' from {}",
+                    id,
+                    reflect_path.display()
+                )
+            })?;
+            if knowledge.id != id {
+                bail!(
+                    "reflection link in {} points to knowledge '{}' but file contains '{}'",
+                    reflect_path.display(),
+                    id,
+                    knowledge.id
+                );
+            }
+            Ok(knowledge)
+        })
+        .collect()
+}
+
+fn apply_story_context(
+    units: &mut [Knowledge],
+    scope: Option<String>,
+    source_story_id: Option<String>,
+) {
+    for knowledge in units {
+        knowledge.scope = scope.clone().or_else(|| knowledge.scope.clone());
+        knowledge.source_story_id = source_story_id
+            .clone()
+            .or_else(|| knowledge.source_story_id.clone());
+    }
+}
+
+fn dedupe_by_id(units: Vec<Knowledge>) -> Vec<Knowledge> {
+    let mut deduped = HashMap::new();
+    for unit in units {
+        deduped.entry(unit.id.clone()).or_insert(unit);
+    }
+
+    let mut units: Vec<_> = deduped.into_values().collect();
+    units.sort_by(|a, b| a.id.cmp(&b.id));
+    units
+}
+
 /// Scan story bundles for knowledge (only done stories).
-fn scan_story_knowledge(board_dir: &Path) -> Vec<Knowledge> {
+fn scan_story_knowledge(board_dir: &Path) -> Result<Vec<Knowledge>> {
     let stories_dir = board_dir.join("stories");
 
     if !stories_dir.exists() {
-        return Vec::new();
+        return Ok(Vec::new());
     }
 
     // Iterate over story directories (bundles)
@@ -470,52 +601,45 @@ fn scan_story_knowledge(board_dir: &Path) -> Vec<Knowledge> {
         .collect();
 
     // Parse in parallel
-    entries
-        .par_iter()
-        .flat_map(|bundle_path| {
-            let readme_path = bundle_path.join("README.md");
-            let reflect_path = bundle_path.join("REFLECT.md");
+    let mut all = Vec::new();
+    for bundle_path in entries {
+        let readme_path = bundle_path.join("README.md");
+        let reflect_path = bundle_path.join("REFLECT.md");
 
-            if !readme_path.exists() || !reflect_path.exists() {
-                return Vec::new();
-            }
+        if !readme_path.exists() || !reflect_path.exists() {
+            continue;
+        }
 
-            let readme_content = match std::fs::read_to_string(&readme_path) {
-                Ok(c) => c,
-                Err(_) => return Vec::new(),
-            };
+        let readme_content = match fs::read_to_string(&readme_path) {
+            Ok(content) => content,
+            Err(_) => continue,
+        };
 
-            // Only scan done stories for knowledge
-            // Use simple string check for efficiency, similar to previous implementation
-            if !readme_content.contains("status: done") {
-                return Vec::new();
-            }
+        if !readme_content.contains("status: done") {
+            continue;
+        }
 
-            let reflect_content = match std::fs::read_to_string(&reflect_path) {
-                Ok(c) => c,
-                Err(_) => return Vec::new(),
-            };
+        let reflect_content = match fs::read_to_string(&reflect_path) {
+            Ok(content) => content,
+            Err(_) => continue,
+        };
 
-            let mut knowledge_list = parse_knowledge_from_content(
-                &reflect_content,
-                &reflect_path,
-                KnowledgeSourceType::Story,
-            );
+        let scope = extract_scope_from_frontmatter(&readme_content);
+        let source_story_id = bundle_path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .map(ToOwned::to_owned);
 
-            // Extract scope from README frontmatter
-            let scope = extract_scope_from_frontmatter(&readme_content);
-            let source_story_id = bundle_path
-                .file_name()
-                .and_then(|name| name.to_str())
-                .map(ToOwned::to_owned);
-            for knowledge in &mut knowledge_list {
-                knowledge.scope = scope.clone();
-                knowledge.source_story_id = source_story_id.clone();
-            }
+        let mut inline = parse_knowledge_from_content(
+            &reflect_content,
+            &reflect_path,
+            KnowledgeSourceType::Story,
+        );
+        apply_story_context(&mut inline, scope.clone(), source_story_id.clone());
+        all.extend(dedupe_by_id(inline));
+    }
 
-            knowledge_list
-        })
-        .collect()
+    Ok(all)
 }
 
 /// Scan voyage KNOWLEDGE.md files.
@@ -588,28 +712,88 @@ fn scan_adhoc_knowledge(board_dir: &Path) -> Vec<Knowledge> {
         .collect()
 }
 
-fn scan_all_knowledge_sources(board_dir: &Path) -> Vec<Knowledge> {
-    // Run all three scans in parallel using rayon
-    let (story, (voyage, adhoc)) = rayon::join(
-        || scan_story_knowledge(board_dir),
-        || {
-            rayon::join(
-                || scan_voyage_knowledge(board_dir),
-                || scan_adhoc_knowledge(board_dir),
-            )
-        },
-    );
+fn scan_catalog_knowledge(board_dir: &Path) -> Result<Vec<Knowledge>> {
+    let knowledge_dir = knowledge_dir(board_dir);
+    if !knowledge_dir.exists() {
+        return Ok(Vec::new());
+    }
 
-    let mut all = Vec::with_capacity(story.len() + voyage.len() + adhoc.len());
-    all.extend(story);
-    all.extend(voyage);
-    all.extend(adhoc);
-    all
+    let files: Vec<_> = WalkDir::new(&knowledge_dir)
+        .min_depth(1)
+        .max_depth(1)
+        .into_iter()
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "md"))
+        .map(|entry| entry.into_path())
+        .collect();
+
+    files
+        .into_iter()
+        .map(|path| load_knowledge_file(board_dir, &path))
+        .collect()
 }
 
-/// Scan all knowledge sources, enforce canonical IDs, and persist the manifest.
-pub fn sync_knowledge_manifest(board_dir: &Path) -> Result<KnowledgeManifest> {
-    let mut all = scan_all_knowledge_sources(board_dir);
+fn merge_catalog_units(catalog: Vec<Knowledge>, discovered: Vec<Knowledge>) -> Vec<Knowledge> {
+    let mut merged = HashMap::new();
+    for unit in catalog {
+        merged.insert(unit.id.clone(), unit);
+    }
+    for unit in discovered {
+        merged.insert(unit.id.clone(), unit);
+    }
+
+    let mut units: Vec<_> = merged.into_values().collect();
+    units.sort_by(|a, b| a.id.cmp(&b.id));
+    units
+}
+
+fn scan_all_knowledge_sources(board_dir: &Path) -> Result<Vec<Knowledge>> {
+    let story = scan_story_knowledge(board_dir)?;
+    let (voyage, adhoc) = rayon::join(
+        || scan_voyage_knowledge(board_dir),
+        || scan_adhoc_knowledge(board_dir),
+    );
+    let catalog = scan_catalog_knowledge(board_dir)?;
+
+    let mut discovered = Vec::with_capacity(story.len() + voyage.len() + adhoc.len());
+    discovered.extend(story);
+    discovered.extend(voyage);
+    discovered.extend(adhoc);
+    Ok(merge_catalog_units(catalog, discovered))
+}
+
+fn write_knowledge_catalog_files(board_dir: &Path, units: &[Knowledge]) -> Result<()> {
+    let knowledge_dir = knowledge_dir(board_dir);
+    fs::create_dir_all(&knowledge_dir)?;
+
+    let active_ids: HashSet<_> = units.iter().map(|unit| unit.id.clone()).collect();
+    for unit in units {
+        let path = knowledge_file_path(board_dir, &unit.id);
+        fs::write(&path, render_knowledge_markdown(board_dir, unit)?)
+            .with_context(|| format!("Failed to write {}", path.display()))?;
+    }
+
+    for entry in fs::read_dir(&knowledge_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.extension().is_none_or(|ext| ext != "md") {
+            continue;
+        }
+        let Some(stem) = path.file_stem().and_then(|stem| stem.to_str()) else {
+            continue;
+        };
+        if !active_ids.contains(stem) {
+            fs::remove_file(&path)
+                .with_context(|| format!("Failed to remove stale {}", path.display()))?;
+        }
+    }
+
+    Ok(())
+}
+
+/// Scan all knowledge sources, enforce canonical IDs, and persist the catalog files.
+pub fn sync_knowledge_catalog(board_dir: &Path) -> Result<KnowledgeCatalog> {
+    let mut all = scan_all_knowledge_sources(board_dir)?;
     normalize_units(&mut all);
 
     let invalid_ids: Vec<String> = all
@@ -636,12 +820,16 @@ pub fn sync_knowledge_manifest(board_dir: &Path) -> Result<KnowledgeManifest> {
     }
 
     normalize_similarity_fields(&mut all);
-    write_knowledge_manifest(board_dir, &all)
+    write_knowledge_catalog_files(board_dir, &all)?;
+    Ok(KnowledgeCatalog {
+        generated_at: Utc::now(),
+        units: all,
+    })
 }
 
 /// Scan all knowledge sources and return all knowledge units.
 pub fn scan_all_knowledge(board_dir: &Path) -> Result<Vec<Knowledge>> {
-    Ok(sync_knowledge_manifest(board_dir)?.units)
+    Ok(sync_knowledge_catalog(board_dir)?.units)
 }
 
 /// Filter knowledge to only unapplied units.
@@ -741,6 +929,221 @@ pub fn parse_applies_to(applies_to: &str) -> Vec<String> {
         .collect()
 }
 
+pub const NEAR_DUPLICATE_KNOWLEDGE_THRESHOLD: f64 = 0.95;
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct KnowledgeSimilarityConflict {
+    pub candidate_id: String,
+    pub existing_id: String,
+    pub similarity_score: f64,
+}
+
+fn similarity_tokens(unit: &Knowledge) -> HashSet<String> {
+    format!("{} {}", unit.title, unit.insight)
+        .split_whitespace()
+        .map(|token| {
+            token
+                .trim_matches(|ch: char| !ch.is_ascii_alphanumeric())
+                .to_ascii_lowercase()
+        })
+        .filter(|token| token.len() >= 3)
+        .collect()
+}
+
+fn similarity_score_between(left: &Knowledge, right: &Knowledge) -> f64 {
+    let left_tokens = similarity_tokens(left);
+    let right_tokens = similarity_tokens(right);
+    if left_tokens.is_empty() || right_tokens.is_empty() {
+        return 0.0;
+    }
+
+    let intersection = left_tokens.intersection(&right_tokens).count() as f64;
+    let union = left_tokens.union(&right_tokens).count() as f64;
+    if union <= 0.0 {
+        0.0
+    } else {
+        intersection / union
+    }
+}
+
+pub fn detect_similarity_conflicts(
+    candidates: &[Knowledge],
+    existing: &[Knowledge],
+    threshold: f64,
+) -> Vec<KnowledgeSimilarityConflict> {
+    let mut conflicts = Vec::new();
+
+    for candidate in candidates {
+        let mut best_existing: Option<(&Knowledge, f64)> = None;
+        for unit in existing {
+            if unit.id == candidate.id {
+                continue;
+            }
+
+            let score = similarity_score_between(candidate, unit);
+            if score < threshold {
+                continue;
+            }
+
+            match best_existing {
+                Some((_, best_score)) if best_score >= score => {}
+                _ => best_existing = Some((unit, score)),
+            }
+        }
+
+        if let Some((unit, score)) = best_existing
+            && !candidate.linked_ids.iter().any(|linked| linked == &unit.id)
+        {
+            conflicts.push(KnowledgeSimilarityConflict {
+                candidate_id: candidate.id.clone(),
+                existing_id: unit.id.clone(),
+                similarity_score: (score * 100.0).round() / 100.0,
+            });
+        }
+    }
+
+    conflicts
+}
+
+pub fn load_reflection_knowledge(board_dir: &Path, reflect_path: &Path) -> Result<Vec<Knowledge>> {
+    let content = fs::read_to_string(reflect_path)
+        .with_context(|| format!("Failed to read {}", reflect_path.display()))?;
+    let inline = parse_knowledge_from_content(&content, reflect_path, KnowledgeSourceType::Story);
+    let linked = load_reflection_linked_knowledge(board_dir, reflect_path, &content)?;
+    Ok(dedupe_by_id(inline.into_iter().chain(linked).collect()))
+}
+
+pub fn parse_reflection_candidates(
+    reflect_path: &Path,
+    scope: Option<&str>,
+    source_story_id: Option<&str>,
+) -> Result<Vec<Knowledge>> {
+    let content = fs::read_to_string(reflect_path)
+        .with_context(|| format!("Failed to read {}", reflect_path.display()))?;
+    let mut inline =
+        parse_knowledge_from_content(&content, reflect_path, KnowledgeSourceType::Story);
+    apply_story_context(
+        &mut inline,
+        scope.map(str::to_string),
+        source_story_id.map(str::to_string),
+    );
+    Ok(inline)
+}
+
+fn relative_path(from_dir: &Path, to_path: &Path) -> PathBuf {
+    let from_components: Vec<_> = from_dir.components().collect();
+    let to_components: Vec<_> = to_path.components().collect();
+
+    let mut shared = 0usize;
+    while shared < from_components.len()
+        && shared < to_components.len()
+        && from_components[shared] == to_components[shared]
+    {
+        shared += 1;
+    }
+
+    let mut relative = PathBuf::new();
+    for _ in shared..from_components.len() {
+        relative.push("..");
+    }
+    for component in &to_components[shared..] {
+        relative.push(component.as_os_str());
+    }
+
+    relative
+}
+
+fn render_reflection_knowledge_links(
+    board_dir: &Path,
+    reflect_path: &Path,
+    units: &[Knowledge],
+) -> String {
+    let reflect_dir = reflect_path.parent().unwrap_or(board_dir);
+    units
+        .iter()
+        .map(|unit| {
+            let target = relative_path(reflect_dir, &knowledge_file_path(board_dir, &unit.id))
+                .to_string_lossy()
+                .replace('\\', "/");
+            format!("- [{}]({}) {}", unit.id, target, unit.title)
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+fn replace_markdown_section(content: &str, header: &str, section_body: &str) -> String {
+    let header_with_newline = format!("{header}\n");
+    if let Some(start_idx) = content.find(&header_with_newline) {
+        let body_start = start_idx + header_with_newline.len();
+        let remaining = &content[body_start..];
+        let body_end = remaining
+            .find("\n## ")
+            .or_else(|| remaining.find("\n---"))
+            .map(|offset| body_start + offset)
+            .unwrap_or(content.len());
+
+        let mut rewritten = String::new();
+        rewritten.push_str(&content[..body_start]);
+        if !section_body.is_empty() {
+            rewritten.push('\n');
+            rewritten.push_str(section_body);
+            rewritten.push('\n');
+        } else {
+            rewritten.push('\n');
+        }
+        rewritten.push_str(&content[body_end..]);
+        return rewritten;
+    }
+
+    let mut rewritten = content.trim_end().to_string();
+    if !rewritten.is_empty() {
+        rewritten.push_str("\n\n");
+    }
+    rewritten.push_str(header);
+    rewritten.push('\n');
+    if !section_body.is_empty() {
+        rewritten.push('\n');
+        rewritten.push_str(section_body);
+        rewritten.push('\n');
+    }
+    rewritten
+}
+
+pub fn materialize_reflection_knowledge(
+    board_dir: &Path,
+    reflect_path: &Path,
+    scope: Option<&str>,
+    source_story_id: Option<&str>,
+) -> Result<Vec<Knowledge>> {
+    let content = fs::read_to_string(reflect_path)
+        .with_context(|| format!("Failed to read {}", reflect_path.display()))?;
+    let inline = parse_reflection_candidates(reflect_path, scope, source_story_id)?;
+
+    if inline.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    fs::create_dir_all(knowledge_dir(board_dir))?;
+    for unit in &inline {
+        let path = knowledge_file_path(board_dir, &unit.id);
+        fs::write(&path, render_knowledge_markdown(board_dir, unit)?)
+            .with_context(|| format!("Failed to write {}", path.display()))?;
+    }
+
+    let mut linked = load_reflection_linked_knowledge(board_dir, reflect_path, &content)?;
+    let mut all_links = dedupe_by_id(linked.drain(..).chain(inline.clone()).collect());
+    all_links.sort_by(|a, b| a.id.cmp(&b.id));
+    let rewritten = replace_markdown_section(
+        &content,
+        "## Knowledge",
+        &render_reflection_knowledge_links(board_dir, reflect_path, &all_links),
+    );
+    fs::write(reflect_path, rewritten)
+        .with_context(|| format!("Failed to update {}", reflect_path.display()))?;
+
+    Ok(inline)
+}
+
 fn collect_knowledge_markdown_files(board_dir: &Path) -> Vec<PathBuf> {
     let mut files = Vec::new();
 
@@ -828,7 +1231,7 @@ fn rewrite_knowledge_headers_with_generated_ids(
     (rewritten, regenerated)
 }
 
-/// One-time hard migration to regenerate canonical knowledge IDs and write a manifest.
+/// One-time hard migration to regenerate canonical knowledge IDs and refresh catalog files.
 pub fn migrate_legacy_knowledge_ids(board_dir: &Path) -> Result<KnowledgeMigrationReport> {
     let files = collect_knowledge_markdown_files(board_dir);
     let mut used_ids = HashSet::new();
@@ -846,11 +1249,11 @@ pub fn migrate_legacy_knowledge_ids(board_dir: &Path) -> Result<KnowledgeMigrati
         }
     }
 
-    let manifest = sync_knowledge_manifest(board_dir)?;
+    let catalog = sync_knowledge_catalog(board_dir)?;
     Ok(KnowledgeMigrationReport {
         files_updated,
         ids_regenerated,
-        manifest_entries: manifest.units.len(),
+        knowledge_entries: catalog.units.len(),
     })
 }
 
@@ -1013,7 +1416,7 @@ status: done
         fs::write(bundle_dir.join("README.md"), readme_content).unwrap();
         fs::write(bundle_dir.join("REFLECT.md"), reflect_content).unwrap();
 
-        let knowledge_list = scan_story_knowledge(temp.path());
+        let knowledge_list = scan_story_knowledge(temp.path()).unwrap();
 
         assert_eq!(knowledge_list.len(), 1);
         assert_eq!(knowledge_list[0].id, "L001");
@@ -1260,5 +1663,196 @@ status: done
         assert!(issues[0].reason.contains("title"));
         assert!(issues[0].reason.contains("insight"));
         assert!(issues[0].reason.contains("suggested action"));
+    }
+
+    #[test]
+    fn sync_knowledge_catalog_writes_individual_knowledge_files() {
+        let temp = create_test_board();
+        let bundle_dir = temp.path().join("stories/FEAT0002");
+        fs::create_dir_all(&bundle_dir).unwrap();
+
+        fs::write(
+            bundle_dir.join("README.md"),
+            "---\nid: FEAT0002\ntitle: Test Story\nscope: test-epic/01-test\nstatus: done\n---\n",
+        )
+        .unwrap();
+        fs::write(
+            bundle_dir.join("REFLECT.md"),
+            r#"# Reflection
+
+## Knowledge
+
+### 1AbCdE234: Guard Duplicate Reflection Knowledge
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | when promoting a story with reusable reflection notes |
+| **Insight** | Only unique knowledge should be promoted into the catalog |
+| **Suggested Action** | Materialize knowledge files before closing the story |
+"#,
+        )
+        .unwrap();
+
+        let catalog = sync_knowledge_catalog(temp.path()).unwrap();
+        assert_eq!(catalog.units.len(), 1);
+
+        let knowledge_path = knowledge_file_path(temp.path(), "1AbCdE234");
+        let content = fs::read_to_string(knowledge_path).unwrap();
+        assert!(content.contains("source_type: Story"));
+        assert!(content.contains("source: stories/FEAT0002/REFLECT.md"));
+        assert!(content.contains("### 1AbCdE234: Guard Duplicate Reflection Knowledge"));
+    }
+
+    #[test]
+    fn load_reflection_knowledge_reads_linked_catalog_files() {
+        let temp = create_test_board();
+        let story_dir = temp.path().join("stories/FEAT0003");
+        fs::create_dir_all(&story_dir).unwrap();
+        let reflect_path = story_dir.join("REFLECT.md");
+
+        let linked_knowledge = Knowledge {
+            id: "1AbCdE235".to_string(),
+            source: temp.path().join("stories/ORIGIN/REFLECT.md"),
+            source_type: KnowledgeSourceType::Story,
+            scope: Some("test-epic/01-test".to_string()),
+            source_story_id: Some("ORIGIN".to_string()),
+            title: "Prefer Linked Knowledge Files".to_string(),
+            category: "process".to_string(),
+            context: "when reflections should reference prior insight".to_string(),
+            insight: "Reflection links should resolve through the knowledge catalog".to_string(),
+            suggested_action: "Load linked knowledge files when rendering story context"
+                .to_string(),
+            applies_to: String::new(),
+            applied: String::new(),
+            observed_at: None,
+            score: 0.7,
+            confidence: 0.9,
+            linked_ids: Vec::new(),
+            similar_to: None,
+            similarity_score: None,
+        };
+        fs::create_dir_all(knowledge_dir(temp.path())).unwrap();
+        fs::write(
+            knowledge_file_path(temp.path(), &linked_knowledge.id),
+            render_knowledge_markdown(temp.path(), &linked_knowledge).unwrap(),
+        )
+        .unwrap();
+
+        fs::write(
+            &reflect_path,
+            "# Reflection\n\n## Knowledge\n\n- [1AbCdE235](../../knowledge/1AbCdE235.md) Prefer Linked Knowledge Files\n",
+        )
+        .unwrap();
+
+        let units = load_reflection_knowledge(temp.path(), &reflect_path).unwrap();
+        assert_eq!(units.len(), 1);
+        assert_eq!(units[0].id, "1AbCdE235");
+        assert_eq!(units[0].title, "Prefer Linked Knowledge Files");
+        assert_eq!(
+            units[0].source,
+            temp.path().join("stories/ORIGIN/REFLECT.md")
+        );
+    }
+
+    #[test]
+    fn materialize_reflection_knowledge_rewrites_reflect_to_catalog_links() {
+        let temp = create_test_board();
+        let story_dir = temp.path().join("stories/FEAT0004");
+        fs::create_dir_all(&story_dir).unwrap();
+        let reflect_path = story_dir.join("REFLECT.md");
+
+        fs::write(
+            &reflect_path,
+            r#"# Reflection
+
+## Knowledge
+
+### 1AbCdE236: Canonical Reflection Output
+
+| Field | Value |
+|-------|-------|
+| **Category** | testing |
+| **Context** | when submit auto-completes a story |
+| **Insight** | Reflection knowledge should move into dedicated files |
+| **Suggested Action** | Replace inline tables with catalog links once accepted |
+
+## Observations
+
+The reflection stayed readable after linking.
+"#,
+        )
+        .unwrap();
+
+        let units = materialize_reflection_knowledge(
+            temp.path(),
+            &reflect_path,
+            Some("test-epic/01-test"),
+            Some("FEAT0004"),
+        )
+        .unwrap();
+
+        assert_eq!(units.len(), 1);
+        assert!(knowledge_file_path(temp.path(), "1AbCdE236").exists());
+
+        let reflect = fs::read_to_string(&reflect_path).unwrap();
+        assert!(reflect.contains("- [1AbCdE236](../../knowledge/1AbCdE236.md)"));
+        assert!(!reflect.contains("### 1AbCdE236: Canonical Reflection Output"));
+    }
+
+    #[test]
+    fn detect_similarity_conflicts_blocks_unlinked_near_duplicates() {
+        let existing = Knowledge {
+            id: "1AbCdE237".to_string(),
+            source: Path::new("/existing.md").to_path_buf(),
+            source_type: KnowledgeSourceType::Story,
+            scope: None,
+            source_story_id: None,
+            title: "Avoid Duplicate Reflection Promotions".to_string(),
+            category: "process".to_string(),
+            context: String::new(),
+            insight: "Promoting the same reflection knowledge twice creates noisy duplicates"
+                .to_string(),
+            suggested_action: "Link the existing knowledge instead of restating it".to_string(),
+            applies_to: String::new(),
+            applied: String::new(),
+            observed_at: None,
+            score: 0.5,
+            confidence: 0.8,
+            linked_ids: Vec::new(),
+            similar_to: None,
+            similarity_score: None,
+        };
+        let candidate = Knowledge {
+            id: "1AbCdE238".to_string(),
+            source: Path::new("/candidate.md").to_path_buf(),
+            source_type: KnowledgeSourceType::Story,
+            scope: None,
+            source_story_id: None,
+            title: "Avoid Duplicate Reflection Promotions".to_string(),
+            category: "process".to_string(),
+            context: String::new(),
+            insight: "Promoting the same reflection knowledge twice creates noisy duplicates"
+                .to_string(),
+            suggested_action: "Link the existing knowledge instead of restating it".to_string(),
+            applies_to: String::new(),
+            applied: String::new(),
+            observed_at: None,
+            score: 0.5,
+            confidence: 0.8,
+            linked_ids: Vec::new(),
+            similar_to: None,
+            similarity_score: None,
+        };
+
+        let conflicts = detect_similarity_conflicts(
+            &[candidate],
+            &[existing],
+            NEAR_DUPLICATE_KNOWLEDGE_THRESHOLD,
+        );
+
+        assert_eq!(conflicts.len(), 1);
+        assert_eq!(conflicts[0].existing_id, "1AbCdE237");
+        assert_eq!(conflicts[0].similarity_score, 1.0);
     }
 }
