@@ -4,6 +4,7 @@ pub mod algorithm;
 pub mod format;
 pub mod parallel_features;
 pub mod parallel_scoring;
+pub mod parallel_threshold;
 pub mod staleness;
 
 pub use algorithm::{

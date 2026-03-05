@@ -334,9 +334,14 @@ fn run_parallel(
         crate::cli::commands::management::next_support::parallel_features::extract_parallel_feature_vectors(
             board, &ready,
         );
-    let _pairwise_scores =
+    let pairwise_scores =
         crate::cli::commands::management::next_support::parallel_scoring::score_parallel_pairwise_conflicts(
             &pairwise_feature_vectors,
+        );
+    ready =
+        crate::cli::commands::management::next_support::parallel_threshold::select_parallel_candidates_with_confidence_threshold(
+            &ready,
+            &pairwise_scores,
         );
 
     if json {
