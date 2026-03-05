@@ -2,10 +2,11 @@
 id: 1vxyMT6nz
 index: 1
 title: Semantic Conflict Detection For Parallel Next
-status: planned
+status: in-progress
 epic: 1vxyM0hvn
 created_at: 2026-03-04T18:22:49
 updated_at: 2026-03-04T18:25:50
+started_at: 2026-03-04T18:35:51
 ---
 
 # Semantic Conflict Detection For Parallel Next

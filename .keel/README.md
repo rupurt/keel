@@ -53,7 +53,7 @@
 
 | Voyage | Status |
 |--------|--------|
-| [Semantic Conflict Detection For Parallel Next](epics/1vxyM0hvn/voyages/1vxyMT6nz/) | planned |
+| [Semantic Conflict Detection For Parallel Next](epics/1vxyM0hvn/voyages/1vxyMT6nz/) | in-progress |
 
 <details>
 <summary><h2>Done</h2></summary>
