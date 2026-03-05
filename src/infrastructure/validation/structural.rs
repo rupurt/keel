@@ -13,6 +13,11 @@ use crate::infrastructure::validation::types::{CheckId, Fix, Problem, Severity};
 static TEMPLATE_TOKEN_RE: LazyLock<regex::Regex> =
     LazyLock::new(|| regex::Regex::new(r"\{\{([^}]+)\}\}").unwrap());
 static LEGACY_SCAFFOLD_MARKERS: &[&str] = &["Define acceptance criteria for this slice"];
+static EPIC_PRD_DEFAULT_ROW_MARKERS: &[&str] = &[
+    "Deliver the primary user workflow for this epic end-to-end.",
+    "Maintain reliability and observability for all new workflow paths introduced by this epic.",
+    "Users can complete the primary workflow described in this PRD without manual intervention.",
+];
 
 /// Check for date field naming and type consistency.
 ///
@@ -359,6 +364,7 @@ pub fn scan_epic_files(board_dir: &Path) -> Result<(Vec<Problem>, usize)> {
         let prd_path = entry.path().join("PRD.md");
         if prd_path.exists() {
             problems.extend(check_epic_prd_structure(&prd_path));
+            problems.extend(check_epic_prd_authored_content(&prd_path));
         } else {
             problems.push(
                 Problem::warning(prd_path, "missing PRD.md (Product Requirements Document)")
@@ -621,7 +627,7 @@ pub fn check_voyage_sdd_structure(path: &Path) -> Vec<Problem> {
     problems
 }
 
-/// Check epic PRD.md structure for section markers and content.
+/// Check epic PRD.md structure for scaffold markers and required marker pairs.
 pub fn check_epic_prd_structure(path: &Path) -> Vec<Problem> {
     let mut problems = Vec::new();
 
@@ -648,12 +654,12 @@ pub fn check_epic_prd_structure(path: &Path) -> Vec<Problem> {
     }
 
     let sections = [
-        ("FUNCTIONAL_REQUIREMENTS", true),
-        ("NON_FUNCTIONAL_REQUIREMENTS", true),
-        ("SUCCESS_CRITERIA", false),
+        "FUNCTIONAL_REQUIREMENTS",
+        "NON_FUNCTIONAL_REQUIREMENTS",
+        "SUCCESS_CRITERIA",
     ];
 
-    for (section_name, is_table) in sections {
+    for section_name in sections {
         let begin_marker = format!("<!-- BEGIN {} -->", section_name);
         let end_marker = format!("<!-- END {} -->", section_name);
 
@@ -665,52 +671,356 @@ pub fn check_epic_prd_structure(path: &Path) -> Vec<Problem> {
                 )
                 .with_check_id(CheckId::Unknown),
             );
-            continue;
-        }
-
-        if let Some(begin_idx) = content.find(&begin_marker) {
-            let after_begin = &content[begin_idx + begin_marker.len()..];
-            if let Some(end_idx) = after_begin.find(&end_marker) {
-                let section_content = after_begin[..end_idx].trim();
-
-                if is_table {
-                    let has_data_row = section_content.lines().any(|line| {
-                        let trimmed = line.trim();
-                        trimmed.starts_with("| FR-")
-                            || trimmed.starts_with("|FR-")
-                            || trimmed.starts_with("| NFR-")
-                            || trimmed.starts_with("|NFR-")
-                    });
-
-                    if !has_data_row {
-                        problems.push(
-                            Problem::warning(
-                                path.to_path_buf(),
-                                format!("PRD {} section is empty", section_name),
-                            )
-                            .with_check_id(CheckId::Unknown),
-                        );
-                    }
-                } else {
-                    let has_checkbox = section_content
-                        .lines()
-                        .any(|line| line.trim().starts_with("- ["));
-
-                    if !has_checkbox {
-                        problems.push(
-                            Problem::warning(
-                                path.to_path_buf(),
-                                format!("PRD {} section is empty", section_name),
-                            )
-                            .with_check_id(CheckId::Unknown),
-                        );
-                    }
-                }
-            }
         }
     }
 
     problems
+}
+
+/// Check epic PRD.md authored content completeness.
+///
+/// This is stricter than `check_epic_prd_structure` and is used for transition
+/// gates and doctor checks where scaffold-only sections must fail.
+pub fn check_epic_prd_authored_content(path: &Path) -> Vec<Problem> {
+    let mut problems = Vec::new();
+
+    let content = match fs::read_to_string(path) {
+        Ok(c) => c,
+        Err(_) => return problems,
+    };
+
+    let has_problem_statement = extract_markdown_section(&content, "## Problem Statement")
+        .as_deref()
+        .is_some_and(section_has_authored_paragraph);
+    if !has_problem_statement {
+        problems.push(
+            Problem::error(
+                path.to_path_buf(),
+                "PRD section 'Problem Statement' must include authored narrative content",
+            )
+            .with_check_id(CheckId::EpicPrdAuthoredContent),
+        );
+    }
+
+    let has_goals = extract_markdown_section(&content, "## Goals & Objectives")
+        .as_deref()
+        .is_some_and(section_has_authored_table_or_bullets);
+    if !has_goals {
+        problems.push(
+            Problem::error(
+                path.to_path_buf(),
+                "PRD section 'Goals & Objectives' must include at least one authored goal",
+            )
+            .with_check_id(CheckId::EpicPrdAuthoredContent),
+        );
+    }
+
+    let has_users = extract_markdown_section(&content, "## Users")
+        .as_deref()
+        .is_some_and(section_has_authored_table_row);
+    if !has_users {
+        problems.push(
+            Problem::error(
+                path.to_path_buf(),
+                "PRD section 'Users' must include at least one authored persona row",
+            )
+            .with_check_id(CheckId::EpicPrdAuthoredContent),
+        );
+    }
+
+    let scope = extract_markdown_section(&content, "## Scope");
+    let (in_scope_count, out_scope_count) =
+        scope.as_deref().map(parse_scope_bullets).unwrap_or((0, 0));
+    if in_scope_count == 0 {
+        problems.push(
+            Problem::error(
+                path.to_path_buf(),
+                "PRD section 'Scope' must include at least one 'In Scope' bullet",
+            )
+            .with_check_id(CheckId::EpicPrdAuthoredContent),
+        );
+    }
+    if out_scope_count == 0 {
+        problems.push(
+            Problem::error(
+                path.to_path_buf(),
+                "PRD section 'Scope' must include at least one 'Out of Scope' bullet",
+            )
+            .with_check_id(CheckId::EpicPrdAuthoredContent),
+        );
+    }
+
+    let functional_block = extract_marker_block(&content, "FUNCTIONAL_REQUIREMENTS");
+    if functional_block
+        .as_deref()
+        .is_none_or(|section| !section_has_authored_table_row(section))
+    {
+        problems.push(
+            Problem::error(
+                path.to_path_buf(),
+                "PRD section 'Functional Requirements' must include at least one authored requirement row",
+            )
+            .with_check_id(CheckId::EpicPrdAuthoredContent),
+        );
+    }
+
+    let non_functional_block = extract_marker_block(&content, "NON_FUNCTIONAL_REQUIREMENTS");
+    if non_functional_block
+        .as_deref()
+        .is_none_or(|section| !section_has_authored_table_row(section))
+    {
+        problems.push(
+            Problem::error(
+                path.to_path_buf(),
+                "PRD section 'Non-Functional Requirements' must include at least one authored requirement row",
+            )
+            .with_check_id(CheckId::EpicPrdAuthoredContent),
+        );
+    }
+
+    let has_verification_strategy = extract_markdown_section(&content, "## Verification Strategy")
+        .as_deref()
+        .is_some_and(section_has_authored_text_or_list_or_table);
+    if !has_verification_strategy {
+        problems.push(
+            Problem::error(
+                path.to_path_buf(),
+                "PRD section 'Verification Strategy' must include authored verification approach",
+            )
+            .with_check_id(CheckId::EpicPrdAuthoredContent),
+        );
+    }
+
+    let has_assumptions = extract_markdown_section(&content, "## Assumptions")
+        .as_deref()
+        .is_some_and(section_has_authored_table_row);
+    if !has_assumptions {
+        problems.push(
+            Problem::error(
+                path.to_path_buf(),
+                "PRD section 'Assumptions' must include at least one authored assumption row",
+            )
+            .with_check_id(CheckId::EpicPrdAuthoredContent),
+        );
+    }
+
+    let has_open_questions = extract_markdown_section(&content, "## Open Questions & Risks")
+        .as_deref()
+        .is_some_and(section_has_authored_table_row);
+    if !has_open_questions {
+        problems.push(
+            Problem::error(
+                path.to_path_buf(),
+                "PRD section 'Open Questions & Risks' must include at least one authored row",
+            )
+            .with_check_id(CheckId::EpicPrdAuthoredContent),
+        );
+    }
+
+    let success_criteria_block = extract_marker_block(&content, "SUCCESS_CRITERIA");
+    if success_criteria_block
+        .as_deref()
+        .is_none_or(|section| !section_has_authored_checkbox(section))
+    {
+        problems.push(
+            Problem::error(
+                path.to_path_buf(),
+                "PRD section 'Success Criteria' must include at least one authored checkbox item",
+            )
+            .with_check_id(CheckId::EpicPrdAuthoredContent),
+        );
+    }
+
+    problems
+}
+
+fn extract_markdown_section(content: &str, heading: &str) -> Option<String> {
+    let mut in_section = false;
+    let mut result = String::new();
+    let heading_level = heading.chars().take_while(|ch| *ch == '#').count();
+
+    for line in content.lines() {
+        if line.trim() == heading {
+            in_section = true;
+            continue;
+        }
+        if in_section {
+            if line.starts_with('#') {
+                let level = line.chars().take_while(|ch| *ch == '#').count();
+                if level <= heading_level {
+                    break;
+                }
+            }
+            result.push_str(line);
+            result.push('\n');
+        }
+    }
+
+    if result.trim().is_empty() {
+        None
+    } else {
+        Some(result)
+    }
+}
+
+fn extract_marker_block(content: &str, marker_name: &str) -> Option<String> {
+    let begin_marker = format!("<!-- BEGIN {marker_name} -->");
+    let end_marker = format!("<!-- END {marker_name} -->");
+
+    let begin_idx = content.find(&begin_marker)?;
+    let after_begin = &content[begin_idx + begin_marker.len()..];
+    let end_idx = after_begin.find(&end_marker)?;
+    Some(after_begin[..end_idx].to_string())
+}
+
+fn section_has_authored_paragraph(section: &str) -> bool {
+    section.lines().any(|line| {
+        let trimmed = line.trim();
+        !trimmed.is_empty()
+            && !trimmed.starts_with("<!--")
+            && !trimmed.starts_with('#')
+            && !trimmed.starts_with('|')
+            && !trimmed.starts_with("- ")
+    })
+}
+
+fn section_has_authored_table_or_bullets(section: &str) -> bool {
+    section_has_authored_table_row(section) || section_has_authored_bullets(section)
+}
+
+fn section_has_authored_text_or_list_or_table(section: &str) -> bool {
+    section_has_authored_paragraph(section)
+        || section_has_authored_bullets(section)
+        || section_has_authored_table_row(section)
+}
+
+fn section_has_authored_bullets(section: &str) -> bool {
+    section.lines().any(|line| {
+        let trimmed = line.trim();
+        let Some(item) = trimmed.strip_prefix("- ") else {
+            return false;
+        };
+        let item = item.trim();
+        !item.is_empty() && !is_default_prd_scaffold_row(item)
+    })
+}
+
+fn section_has_authored_table_row(section: &str) -> bool {
+    section.lines().any(|line| {
+        let trimmed = line.trim();
+        if !trimmed.starts_with('|') {
+            return false;
+        }
+
+        let cells: Vec<&str> = trimmed
+            .split('|')
+            .map(str::trim)
+            .filter(|cell| !cell.is_empty())
+            .collect();
+        if cells.is_empty() || is_table_separator_row(&cells) || is_table_header_row(&cells) {
+            return false;
+        }
+
+        let row_text = cells.join(" ");
+        !is_default_prd_scaffold_row(&row_text)
+    })
+}
+
+fn section_has_authored_checkbox(section: &str) -> bool {
+    section.lines().any(|line| {
+        let trimmed = line.trim();
+        let item = if let Some(item) = trimmed.strip_prefix("- [ ]") {
+            item.trim()
+        } else if let Some(item) = trimmed.strip_prefix("- [x]") {
+            item.trim()
+        } else if let Some(item) = trimmed.strip_prefix("- [X]") {
+            item.trim()
+        } else {
+            return false;
+        };
+
+        !item.is_empty() && !is_default_prd_scaffold_row(item)
+    })
+}
+
+fn parse_scope_bullets(scope_section: &str) -> (usize, usize) {
+    enum Mode {
+        None,
+        InScope,
+        OutScope,
+    }
+
+    let mut mode = Mode::None;
+    let mut in_scope_count = 0;
+    let mut out_scope_count = 0;
+
+    for line in scope_section.lines() {
+        let trimmed = line.trim();
+        if trimmed.eq_ignore_ascii_case("### In Scope") {
+            mode = Mode::InScope;
+            continue;
+        }
+        if trimmed.eq_ignore_ascii_case("### Out of Scope") {
+            mode = Mode::OutScope;
+            continue;
+        }
+
+        let Some(item) = trimmed.strip_prefix("- ") else {
+            continue;
+        };
+        let item = item.trim();
+        if item.is_empty() || is_default_prd_scaffold_row(item) {
+            continue;
+        }
+
+        match mode {
+            Mode::InScope => in_scope_count += 1,
+            Mode::OutScope => out_scope_count += 1,
+            Mode::None => {}
+        }
+    }
+
+    (in_scope_count, out_scope_count)
+}
+
+fn is_table_separator_row(cells: &[&str]) -> bool {
+    !cells.is_empty()
+        && cells
+            .iter()
+            .all(|cell| cell.chars().all(|ch| ch == '-' || ch == ':' || ch == ' '))
+}
+
+fn is_table_header_row(cells: &[&str]) -> bool {
+    cells.iter().all(|cell| {
+        matches!(
+            cell.to_ascii_lowercase().as_str(),
+            "goal"
+                | "success metric"
+                | "target"
+                | "persona"
+                | "description"
+                | "primary need"
+                | "id"
+                | "requirement"
+                | "priority"
+                | "rationale"
+                | "area"
+                | "method"
+                | "evidence"
+                | "assumption"
+                | "impact if wrong"
+                | "validation"
+                | "question/risk"
+                | "owner"
+                | "status"
+        )
+    })
+}
+
+fn is_default_prd_scaffold_row(value: &str) -> bool {
+    EPIC_PRD_DEFAULT_ROW_MARKERS
+        .iter()
+        .any(|marker| value.contains(marker))
 }
 
 #[cfg(test)]
@@ -814,26 +1124,138 @@ mod tests {
     }
 
     #[test]
-    fn test_check_epic_prd_structure_empty_sections() {
+    fn test_check_epic_prd_authored_content_flags_unfilled_sections() {
         let temp = TempDir::new().unwrap();
         let path = temp.path().join("PRD.md");
         fs::write(
             &path,
             r#"# PRD
+## Problem Statement
+
+## Goals & Objectives
+| Goal | Success Metric | Target |
+|------|----------------|--------|
+
+## Users
+| Persona | Description | Primary Need |
+|---------|-------------|--------------|
+
+## Scope
+### In Scope
+
+### Out of Scope
+
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
 <!-- END FUNCTIONAL_REQUIREMENTS -->
+<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+<!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+
+## Verification Strategy
+
+## Assumptions
+| Assumption | Impact if Wrong | Validation |
+|------------|-----------------|------------|
+
+## Open Questions & Risks
+| Question/Risk | Owner | Status |
+|---------------|-------|--------|
+
 <!-- BEGIN SUCCESS_CRITERIA -->
 <!-- END SUCCESS_CRITERIA -->
 "#,
         )
         .unwrap();
 
-        let problems = check_epic_prd_structure(&path);
+        let problems = check_epic_prd_authored_content(&path);
+        assert!(!problems.is_empty());
         assert!(
             problems
                 .iter()
-                .any(|p| p.message.contains("section is empty"))
+                .all(|p| p.check_id == CheckId::EpicPrdAuthoredContent)
         );
+        assert!(
+            problems
+                .iter()
+                .any(|p| p.message.contains("Problem Statement"))
+        );
+        assert!(problems.iter().any(|p| p.message.contains("In Scope")));
+        assert!(
+            problems
+                .iter()
+                .any(|p| p.message.contains("Success Criteria"))
+        );
+    }
+
+    #[test]
+    fn test_check_epic_prd_authored_content_accepts_filled_sections() {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("PRD.md");
+        fs::write(
+            &path,
+            r#"# PRD
+
+## Problem Statement
+Operators cannot reliably inspect deployment readiness across surfaces.
+
+## Goals & Objectives
+| Goal | Success Metric | Target |
+|------|----------------|--------|
+| Reduce decision latency | Median review time | < 5 minutes |
+
+## Users
+| Persona | Description | Primary Need |
+|---------|-------------|--------------|
+| Delivery Lead | Owns release quality | Fast confidence checks |
+
+## Scope
+### In Scope
+- Unified readiness reporting across core flows.
+
+### Out of Scope
+- Replacing external observability providers.
+
+## Requirements
+### Functional Requirements
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | Render readiness summaries in CLI show commands. | must | Enables rapid review decisions. |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+
+### Non-Functional Requirements
+<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| NFR-01 | Keep rendering deterministic across runs. | must | Prevents noisy diffs and confusion. |
+<!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+
+## Verification Strategy
+- Validate rendering behavior with unit tests and deterministic fixture snapshots.
+
+## Assumptions
+| Assumption | Impact if Wrong | Validation |
+|------------|-----------------|------------|
+| Operators prefer CLI-first workflows | Adoption risk | Weekly usability review |
+
+## Open Questions & Risks
+| Question/Risk | Owner | Status |
+|---------------|-------|--------|
+| Should summaries include trend deltas? | Product | Open |
+
+## Success Criteria
+<!-- BEGIN SUCCESS_CRITERIA -->
+- [ ] Reviews consistently complete within target latency.
+<!-- END SUCCESS_CRITERIA -->
+"#,
+        )
+        .unwrap();
+
+        let problems = check_epic_prd_authored_content(&path);
+        assert!(problems.is_empty(), "{problems:?}");
     }
 
     #[test]

@@ -448,9 +448,64 @@ impl TestBoardBuilder {
 
             // Create default PRD.md
             fs::write(
-                        epic_dir.join("PRD.md"),
-                        "# PRD\n\n<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->\n| FR-01 | Test |\n<!-- END FUNCTIONAL_REQUIREMENTS -->\n<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->\n| NFR-01 | Test |\n<!-- END NON_FUNCTIONAL_REQUIREMENTS -->\n<!-- BEGIN SUCCESS_CRITERIA -->\n- [ ] Success!\n<!-- END SUCCESS_CRITERIA -->\n"
-                    ).unwrap();
+                epic_dir.join("PRD.md"),
+                r#"# PRD
+
+## Problem Statement
+Test harness epic problem statement.
+
+## Goals & Objectives
+| Goal | Success Metric | Target |
+|------|----------------|--------|
+| Ship test harness behavior | Passing validation checks | 100% |
+
+## Users
+| Persona | Description | Primary Need |
+|---------|-------------|--------------|
+| Test Author | Maintains fixtures | Deterministic board artifacts |
+
+## Scope
+### In Scope
+- Provide valid baseline planning artifacts for tests.
+
+### Out of Scope
+- Product-level behavior design.
+
+## Requirements
+### Functional Requirements
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | Keep default fixture docs structurally valid. | must | Prevents unrelated test failures. |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+
+### Non-Functional Requirements
+<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| NFR-01 | Keep fixtures deterministic. | must | Stabilizes test outputs. |
+<!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+
+## Verification Strategy
+- Run structural, quality, and unit checks in CI.
+
+## Assumptions
+| Assumption | Impact if Wrong | Validation |
+|------------|-----------------|------------|
+| Fixture defaults are sufficient for most tests | Test friction | Update defaults alongside new invariants |
+
+## Open Questions & Risks
+| Question/Risk | Owner | Status |
+|---------------|-------|--------|
+| Are new template contracts reflected here quickly enough? | Maintainer | Open |
+
+## Success Criteria
+<!-- BEGIN SUCCESS_CRITERIA -->
+- [ ] Default test board passes structural epic PRD validation.
+<!-- END SUCCESS_CRITERIA -->
+"#,
+            )
+            .unwrap();
 
             // Create default PRESS_RELEASE.md
             fs::write(

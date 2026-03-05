@@ -28,31 +28,41 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
 2. **Scaffold Planning Unit**:
    - For new strategic work, create an Epic: `just keel epic new "<Title>" --goal "<Outcome>"`
    - For tactical decomposition, create a Voyage: `just keel voyage new "<Title>" --epic <epic-id> --goal "<The specific outcome>"`
-3. **Define Requirements (SRS)**: Fill out the `SRS.md` in the new voyage bundle. Ensure requirements are atomic, uniquely identified (e.g., `SRS-01`), and written so they can map directly to story acceptance criteria and verification evidence.
-4. **Detail Design (SDD)**: Fill out the `SDD.md` describing the architectural approach and component changes, with enough specificity that implementers can produce objective proofs.
-5. **Decompose Stories**: Break the design into implementable units:
+3. **Author Epic PRD Immediately After Creation**: Before decomposing into voyages/stories, fill out `epics/<epic-id>/PRD.md` with authored content for every required section:
+   - `## Problem Statement`
+   - `## Goals & Objectives`
+   - `## Users`
+   - `## Scope` (`### In Scope` and `### Out of Scope`)
+   - `## Requirements` (`FUNCTIONAL_REQUIREMENTS` and `NON_FUNCTIONAL_REQUIREMENTS` marker blocks)
+   - `## Verification Strategy`
+   - `## Assumptions`
+   - `## Open Questions & Risks`
+   - `## Success Criteria` (`SUCCESS_CRITERIA` marker block)
+4. **Define Requirements (SRS)**: Fill out the `SRS.md` in the new voyage bundle. Ensure requirements are atomic, uniquely identified (e.g., `SRS-01`), and written so they can map directly to story acceptance criteria and verification evidence.
+5. **Detail Design (SDD)**: Fill out the `SDD.md` describing the architectural approach and component changes, with enough specificity that implementers can produce objective proofs.
+6. **Decompose Stories**: Break the design into implementable units:
    - `just keel story new "<Title>" --epic <epic-id> --voyage <voyage-id>`
    - Link stories to SRS requirements using `[SRS-XX/AC-YY]` markers in the acceptance criteria.
-6. **Align Verification Techniques From Config**: Run `just keel config show`, `just keel verify detect`, and `just keel verify recommend` before finalizing verification planning:
+7. **Align Verification Techniques From Config**: Run `just keel config show`, `just keel verify detect`, and `just keel verify recommend` before finalizing verification planning:
    - Use `just keel config show` as the full technique inventory (built-in + custom) and review each option's `detected`, `disabled`, and `active` flags.
    - Use `just keel verify detect` to review project signal detection inputs (files, hints, stack confidence) and per-technique detected/active status.
    - Use `just keel verify recommend` to plan against detected+active options for the current project.
    - If needed techniques are missing or disabled, update `keel.toml` first, then continue decomposition.
-7. **Run Coherence Review (Downstream Check)**: Before planning is sealed, review the full chain:
+8. **Run Coherence Review (Downstream Check)**: Before planning is sealed, review the full chain:
    - Every SRS requirement has at least one linked story acceptance criterion.
    - Every acceptance criterion has a clear verification approach (automated test, CLI proof, or documented manual evidence).
    - Verification commands align with `just keel verify recommend` output, informed by `just keel verify detect`, unless explicitly justified.
    - CLI options and authored entity content are explicit enough for downstream automation and transitions.
-8. **Loop Back Upstream if Needed**: If decomposition or verification design exposes ambiguity, update SRS/SDD first, then re-check story acceptance criteria.
-9. **Generate Planning Summary Report In Chat (Required)**: For every newly planned Epic or Voyage, publish a terse, actionable planning summary directly in the chat/harness response (do not create a dedicated summary file).
+9. **Loop Back Upstream if Needed**: If decomposition or verification design exposes ambiguity, update PRD/SRS/SDD first, then re-check story acceptance criteria.
+10. **Generate Planning Summary Report In Chat (Required)**: For every newly planned Epic or Voyage, publish a terse, actionable planning summary directly in the chat/harness response (do not create a dedicated summary file).
    - Include:
      - Objective and scope boundaries
      - Requirement-to-story coverage status
      - Verification strategy summary (how requirements will be proven)
      - Key risks/assumptions
      - Canonical next step command
-10. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this planning unit before sealing. Do not batch unrelated planning units into one commit.
-11. **Seal Planning**: Promote the voyage from `draft` to `planned` with `just keel voyage plan <id>`. This validates requirement coverage and thaws stories into the agent backlog.
+11. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this planning unit before sealing. Do not batch unrelated planning units into one commit.
+12. **Seal Planning**: Promote the voyage from `draft` to `planned` with `just keel voyage plan <id>`. This validates requirement coverage and thaws stories into the agent backlog.
 
 ## Research Workflow (Explorer)
 

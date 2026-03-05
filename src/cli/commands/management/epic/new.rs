@@ -99,6 +99,10 @@ fn new_epic(board_dir: &Path, name: &str, goal: &str) -> Result<()> {
         .with_context(|| format!("Failed to write epic press release: {}", pr_path.display()))?;
 
     println!("Created: epics/{}/", epic_id);
+    println!(
+        "  Next: author epics/{}/PRD.md before decomposing voyages",
+        epic_id
+    );
 
     // Regenerate board
     crate::cli::commands::generate::run(board_dir)?;

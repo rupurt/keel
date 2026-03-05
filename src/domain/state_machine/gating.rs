@@ -129,6 +129,7 @@ fn evaluate_story_thaw(story: &Story) -> Vec<Problem> {
 fn check_epic_documents_complete(epic: &crate::domain::model::Epic) -> Vec<Problem> {
     let mut problems = Vec::new();
     let epic_dir = epic.path.parent().unwrap_or(&epic.path);
+    let prd_path = epic_dir.join("PRD.md");
 
     let files = [
         ("README.md", "README"),
@@ -164,6 +165,19 @@ fn check_epic_documents_complete(epic: &crate::domain::model::Epic) -> Vec<Probl
                 check_id: CheckId::Unknown,
             });
         }
+    }
+
+    if prd_path.exists() {
+        let mut prd_problems =
+            crate::infrastructure::validation::structural::check_epic_prd_authored_content(
+                &prd_path,
+            );
+        for problem in &mut prd_problems {
+            if problem.scope.is_none() {
+                problem.scope = Some(epic.id().to_string());
+            }
+        }
+        problems.extend(prd_problems);
     }
 
     problems
@@ -1181,6 +1195,49 @@ mod tests {
         let problems = evaluate_story_start(&board, story);
         assert_eq!(problems.len(), 1);
         assert!(has_message(&problems, "must be 'planned' or 'in-progress'"));
+    }
+
+    #[test]
+    fn test_evaluate_story_start_requires_authored_epic_prd() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("test-epic"))
+            .voyage(TestVoyage::new("01-planned", "test-epic").status("planned"))
+            .story(
+                TestStory::new("S1")
+                    .scope("test-epic/01-planned")
+                    .stage(StoryState::Backlog),
+            )
+            .build();
+        fs::write(
+            temp.path().join("epics/test-epic/PRD.md"),
+            r#"# PRD
+## Problem Statement
+
+## Goals & Objectives
+| Goal | Success Metric | Target |
+|------|----------------|--------|
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+<!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+<!-- BEGIN SUCCESS_CRITERIA -->
+<!-- END SUCCESS_CRITERIA -->
+"#,
+        )
+        .unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let story = board.require_story("S1").unwrap();
+        let problems = evaluate_story_start(&board, story);
+
+        assert!(problems.iter().any(|problem| {
+            problem.check_id == CheckId::EpicPrdAuthoredContent
+                && problem.message.contains("Problem Statement")
+        }));
     }
 
     #[test]

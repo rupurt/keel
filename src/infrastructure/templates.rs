@@ -196,11 +196,18 @@ mod tests {
     }
 
     #[test]
-    fn epic_prd_has_voyages_section() {
-        // PRD includes Voyages section as implementation roadmap overview
+    fn epic_prd_has_verification_strategy_section() {
         assert!(
-            epic::PRD.contains("## Voyages"),
-            "PRD should have Voyages section for implementation breakdown"
+            epic::PRD.contains("## Verification Strategy"),
+            "PRD should include a verification strategy section"
+        );
+    }
+
+    #[test]
+    fn epic_prd_does_not_embed_voyage_breakdown() {
+        assert!(
+            !epic::PRD.contains("## Voyages"),
+            "PRD should not include a voyages section"
         );
     }
 

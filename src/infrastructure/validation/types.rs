@@ -204,6 +204,7 @@ pub enum CheckId {
     EpicMissingReadme,
     EpicMissingPrd,
     EpicMissingPressRelease,
+    EpicPrdAuthoredContent,
     EpicPressReleaseIncomplete,
     EpicInvalidFrontmatter,
     EpicDuplicateId,

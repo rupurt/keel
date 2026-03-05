@@ -553,7 +553,7 @@ fn create_prd_from_bearing(board_dir: &Path, bearing: &Bearing) -> Result<String
     if !hypothesis.is_empty() {
         prd.push_str(&format!("> {}\n\n", hypothesis.trim()));
     } else {
-        prd.push_str("> TODO: Value proposition\n\n");
+        prd.push_str("> Research-informed outcome for this epic.\n\n");
     }
 
     // Problem Statement from bearing
@@ -561,36 +561,79 @@ fn create_prd_from_bearing(board_dir: &Path, bearing: &Bearing) -> Result<String
     if !problem_space.is_empty() {
         prd.push_str(&format!("{}\n\n", problem_space.trim()));
     } else {
-        prd.push_str("<!-- What user problem does this solve? -->\n\n");
+        prd.push_str("This epic addresses the validated problem surfaced by bearing research.\n\n");
     }
 
-    // Users section (placeholder)
-    prd.push_str("## Users\n\n");
-    prd.push_str("<!-- Who benefits from this? Primary and secondary users -->\n\n");
+    prd.push_str("## Goals & Objectives\n\n");
+    prd.push_str("| Goal | Success Metric | Target |\n");
+    prd.push_str("|------|----------------|--------|\n");
+    prd.push_str("| Validate bearing recommendation in delivery flow | Adoption signal | Initial rollout complete |\n\n");
 
-    // Requirements (placeholder with structure)
+    prd.push_str("## Users\n\n");
+    prd.push_str("| Persona | Description | Primary Need |\n");
+    prd.push_str("|---------|-------------|--------------|\n");
+    prd.push_str("| Product/Delivery Owner | Coordinates planning and execution | Reliable strategic direction |\n\n");
+
+    prd.push_str("## Scope\n\n");
+    prd.push_str("### In Scope\n\n");
+    prd.push_str("- Deliver the bearing-backed capability slice for this epic.\n\n");
+    prd.push_str("### Out of Scope\n\n");
+    prd.push_str("- Unrelated platform-wide refactors outside bearing findings.\n\n");
+
+    // Requirements
     prd.push_str("## Requirements\n\n");
     prd.push_str("### Functional Requirements\n\n");
-    prd.push_str("| ID | Requirement | Priority |\n");
-    prd.push_str("|----|-------------|----------|\n");
     prd.push_str("<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->\n");
-    prd.push_str("| FR-01 | TODO | must |\n");
+    prd.push_str("| ID | Requirement | Priority | Rationale |\n");
+    prd.push_str("|----|-------------|----------|-----------|\n");
+    prd.push_str("| FR-01 | Implement the core user workflow identified in bearing research. | must | Converts research recommendation into executable product capability. |\n");
     prd.push_str("<!-- END FUNCTIONAL_REQUIREMENTS -->\n\n");
 
     prd.push_str("### Non-Functional Requirements\n\n");
-    prd.push_str("| ID | Requirement | Priority |\n");
-    prd.push_str("|----|-------------|----------|\n");
     prd.push_str("<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->\n");
-    prd.push_str("| NFR-01 | TODO | must |\n");
+    prd.push_str("| ID | Requirement | Priority | Rationale |\n");
+    prd.push_str("|----|-------------|----------|-----------|\n");
+    prd.push_str("| NFR-01 | Ensure deterministic behavior and operational visibility for the delivered workflow. | must | Keeps delivery safe and auditable during rollout. |\n");
     prd.push_str("<!-- END NON_FUNCTIONAL_REQUIREMENTS -->\n\n");
+
+    prd.push_str("## Verification Strategy\n\n");
+    prd.push_str("- Prove functional behavior through story-level verification evidence mapped to voyage requirements.\n");
+    prd.push_str(
+        "- Validate non-functional posture with operational checks and documented artifacts.\n\n",
+    );
+
+    prd.push_str("## Assumptions\n\n");
+    prd.push_str("| Assumption | Impact if Wrong | Validation |\n");
+    prd.push_str("|------------|-----------------|------------|\n");
+    prd.push_str("| Bearing findings reflect current user needs | Scope may need re-planning | Re-check feedback during first voyage |\n\n");
+
+    prd.push_str("## Open Questions & Risks\n\n");
+    prd.push_str("| Question/Risk | Owner | Status |\n");
+    prd.push_str("|---------------|-------|--------|\n");
+    prd.push_str(
+        "| Which rollout constraints should gate broader adoption? | Product | Open |\n\n",
+    );
 
     // Success Criteria from bearing
     prd.push_str("## Success Criteria\n\n");
     prd.push_str("<!-- BEGIN SUCCESS_CRITERIA -->\n");
     if !success_criteria.is_empty() {
-        prd.push_str(&format!("{}\n", success_criteria.trim()));
+        let mut has_checkbox = false;
+        for line in success_criteria.lines() {
+            let trimmed = line.trim();
+            if trimmed.starts_with("- [") {
+                has_checkbox = true;
+                prd.push_str(trimmed);
+                prd.push('\n');
+            }
+        }
+        if !has_checkbox {
+            prd.push_str("- [ ] Bearing-backed workflow can be executed end-to-end in production conditions.\n");
+        }
     } else {
-        prd.push_str("- [ ] TODO: Add success criteria\n");
+        prd.push_str(
+            "- [ ] Bearing-backed workflow can be executed end-to-end in production conditions.\n",
+        );
     }
     prd.push_str("<!-- END SUCCESS_CRITERIA -->\n\n");
 
