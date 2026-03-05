@@ -25,11 +25,11 @@ started_at: 2026-03-05T15:37:46
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/3 stories complete
+**Progress:** 2/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Gate Voyage Planning On PRD Lineage](../../../../stories/1vyGZEO8S/README.md) | feat | backlog |
+| [Gate Voyage Planning On PRD Lineage](../../../../stories/1vyGZEO8S/README.md) | feat | done |
 | [Render Epic Requirement Coverage](../../../../stories/1vyGZEZNc/README.md) | feat | backlog |
 | [Parse Canonical PRD Requirement Lineage](../../../../stories/1vyGZEowA/README.md) | feat | done |
 <!-- END GENERATED -->

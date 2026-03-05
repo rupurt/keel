@@ -8,23 +8,6 @@ created_at: 2026-03-02T10:34:57
 
 ## Story Knowledge
 
-## Story: Build Canonical Flow Status Projection (1vwqCfS0F)
-
-### 1vyDuwXBN: Keep Operational Metrics In A Single Read Model
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Consolidating repeated queue/flow/status metrics used across diagnostics and next-decision logic |
-| **Insight** | A canonical projection DTO that embeds both flow metrics and status metrics removes drift and lets adapters format output without recalculating business metrics |
-| **Suggested Action** | Add read-model projection services first, then migrate every consumer to the projection API before deleting local metric structs |
-| **Applies To** | src/read_model/flow_status.rs; src/commands/diagnostics/{flow,status}.rs; src/next/algorithm.rs |
-| **Applied** | 1vwqCfS0F |
-
-
-
----
-
 ## Story: Unify Queue Policy Consumption (1vwqCfgC4)
 
 ### 1vyDuwSPf: Queue-policy facades prevent decision/rendering drift
@@ -42,18 +25,18 @@ created_at: 2026-03-02T10:34:57
 
 ---
 
-## Story: Build Canonical Capacity Projection (1vwqCfHz7)
+## Story: Build Canonical Flow Status Projection (1vwqCfS0F)
 
-### 1vyDuwl5B: Canonical read models remove adapter drift
+### 1vyDuwXBN: Keep Operational Metrics In A Single Read Model
 
 | Field | Value |
 |-------|-------|
 | **Category** | architecture |
-| **Context** | When both flow rendering and diagnostics need the same capacity semantics |
-| **Insight** | Duplicated DTOs and charge enums across adapters force conversion shims and create drift risk in UI logic. |
-| **Suggested Action** | Keep one projection type in `read_model` and make interface modules thin adapters over that projection. |
-| **Applies To** | `src/read_model/capacity.rs`, `src/flow/capacity.rs`, `src/commands/diagnostics/capacity.rs`, `src/flow/display.rs` |
-| **Applied** | story `1vwqCfHz7` |
+| **Context** | Consolidating repeated queue/flow/status metrics used across diagnostics and next-decision logic |
+| **Insight** | A canonical projection DTO that embeds both flow metrics and status metrics removes drift and lets adapters format output without recalculating business metrics |
+| **Suggested Action** | Add read-model projection services first, then migrate every consumer to the projection API before deleting local metric structs |
+| **Applies To** | src/read_model/flow_status.rs; src/commands/diagnostics/{flow,status}.rs; src/next/algorithm.rs |
+| **Applied** | 1vwqCfS0F |
 
 
 
@@ -76,21 +59,24 @@ created_at: 2026-03-02T10:34:57
 
 ---
 
-## Synthesis
+## Story: Build Canonical Capacity Projection (1vwqCfHz7)
 
-### IxTCT6ayY: Keep Operational Metrics In A Single Read Model
+### 1vyDuwl5B: Canonical read models remove adapter drift
 
 | Field | Value |
 |-------|-------|
 | **Category** | architecture |
-| **Context** | Consolidating repeated queue/flow/status metrics used across diagnostics and next-decision logic |
-| **Insight** | A canonical projection DTO that embeds both flow metrics and status metrics removes drift and lets adapters format output without recalculating business metrics |
-| **Suggested Action** | Add read-model projection services first, then migrate every consumer to the projection API before deleting local metric structs |
-| **Applies To** | src/read_model/flow_status.rs; src/commands/diagnostics/{flow,status}.rs; src/next/algorithm.rs |
-| **Linked Knowledge IDs** | 1vyDuwXBN |
-| **Score** | 0.84 |
-| **Confidence** | 0.89 |
-| **Applied** | 1vwqCfS0F |
+| **Context** | When both flow rendering and diagnostics need the same capacity semantics |
+| **Insight** | Duplicated DTOs and charge enums across adapters force conversion shims and create drift risk in UI logic. |
+| **Suggested Action** | Keep one projection type in `read_model` and make interface modules thin adapters over that projection. |
+| **Applies To** | `src/read_model/capacity.rs`, `src/flow/capacity.rs`, `src/commands/diagnostics/capacity.rs`, `src/flow/display.rs` |
+| **Applied** | story `1vwqCfHz7` |
+
+
+
+---
+
+## Synthesis
 
 ### qUF0j5GEl: Queue-policy facades prevent decision/rendering drift
 
@@ -106,19 +92,19 @@ created_at: 2026-03-02T10:34:57
 | **Confidence** | 0.95 |
 | **Applied** | story `1vwqCfgC4` |
 
-### ZXRUhJpNe: Canonical read models remove adapter drift
+### IxTCT6ayY: Keep Operational Metrics In A Single Read Model
 
 | Field | Value |
 |-------|-------|
 | **Category** | architecture |
-| **Context** | When both flow rendering and diagnostics need the same capacity semantics |
-| **Insight** | Duplicated DTOs and charge enums across adapters force conversion shims and create drift risk in UI logic. |
-| **Suggested Action** | Keep one projection type in `read_model` and make interface modules thin adapters over that projection. |
-| **Applies To** | `src/read_model/capacity.rs`, `src/flow/capacity.rs`, `src/commands/diagnostics/capacity.rs`, `src/flow/display.rs` |
-| **Linked Knowledge IDs** | 1vyDuwl5B |
-| **Score** | 0.89 |
-| **Confidence** | 0.96 |
-| **Applied** | story `1vwqCfHz7` |
+| **Context** | Consolidating repeated queue/flow/status metrics used across diagnostics and next-decision logic |
+| **Insight** | A canonical projection DTO that embeds both flow metrics and status metrics removes drift and lets adapters format output without recalculating business metrics |
+| **Suggested Action** | Add read-model projection services first, then migrate every consumer to the projection API before deleting local metric structs |
+| **Applies To** | src/read_model/flow_status.rs; src/commands/diagnostics/{flow,status}.rs; src/next/algorithm.rs |
+| **Linked Knowledge IDs** | 1vyDuwXBN |
+| **Score** | 0.84 |
+| **Confidence** | 0.89 |
+| **Applied** | 1vwqCfS0F |
 
 ### KwQM6oOZE: Interface Adapters Should Delegate Instead Of Recompute
 
@@ -133,4 +119,18 @@ created_at: 2026-03-02T10:34:57
 | **Score** | 0.83 |
 | **Confidence** | 0.90 |
 | **Applied** | Delegated diagnostics capacity command to `flow::capacity` and added explicit contract test for shared interface usage |
+
+### ZXRUhJpNe: Canonical read models remove adapter drift
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | When both flow rendering and diagnostics need the same capacity semantics |
+| **Insight** | Duplicated DTOs and charge enums across adapters force conversion shims and create drift risk in UI logic. |
+| **Suggested Action** | Keep one projection type in `read_model` and make interface modules thin adapters over that projection. |
+| **Applies To** | `src/read_model/capacity.rs`, `src/flow/capacity.rs`, `src/commands/diagnostics/capacity.rs`, `src/flow/display.rs` |
+| **Linked Knowledge IDs** | 1vyDuwl5B |
+| **Score** | 0.89 |
+| **Confidence** | 0.96 |
+| **Applied** | story `1vwqCfHz7` |
 

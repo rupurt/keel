@@ -37,7 +37,7 @@
 //! See [`state_machine::validation::validate_voyage_story_coherence`] and
 //! [`state_machine::validation::validate_epic_voyage_coherence`] for implementations.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 
 use regex::Regex;
@@ -50,9 +50,12 @@ static REQ_TABLE_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^\|\s*(SRS-\d+)\s*\|").unwrap());
 static AC_REQ_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\[(SRS-\d+)/AC-\d+\]").unwrap());
 static REQ_REF_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\bSRS-[A-Z0-9-]+\b").unwrap());
+static SRS_REQUIREMENT_ID_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^SRS(?:-NFR)?-\d+$").unwrap());
 static PRD_FUNCTIONAL_REQ_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^FR-\d+$").unwrap());
 static PRD_NON_FUNCTIONAL_REQ_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^NFR-\d+$").unwrap());
+static SOURCE_TOKEN_SPLIT_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[\s,;/]+").unwrap());
 
 // Re-export coherence validation functions for a unified API
 #[allow(unused_imports)] // SuggestedFix exported for public API completeness
@@ -197,6 +200,66 @@ impl PrdRequirementLineage {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum SrsRequirementKind {
+    Functional,
+    NonFunctional,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SrsRequirementEntry {
+    pub id: String,
+    pub description: String,
+    pub kind: SrsRequirementKind,
+    pub source: Option<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PrdLineageIssueKind {
+    MissingSource,
+    MultipleSources,
+    NonCanonicalSource,
+    UnknownParent,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PrdLineageIssue {
+    pub srs_path: PathBuf,
+    pub requirement_id: String,
+    pub source_value: Option<String>,
+    pub kind: PrdLineageIssueKind,
+}
+
+impl PrdLineageIssue {
+    pub fn message(&self) -> String {
+        match self.kind {
+            PrdLineageIssueKind::MissingSource => format!(
+                "{} in {} is missing Source (expected exactly one canonical FR-* or NFR-* token)",
+                self.requirement_id,
+                self.srs_path.display()
+            ),
+            PrdLineageIssueKind::MultipleSources => format!(
+                "{} in {} has invalid Source '{}' (expected exactly one canonical FR-* or NFR-* token)",
+                self.requirement_id,
+                self.srs_path.display(),
+                self.source_value.as_deref().unwrap_or("<empty>")
+            ),
+            PrdLineageIssueKind::NonCanonicalSource => format!(
+                "{} in {} uses non-canonical Source '{}' (expected FR-* or NFR-*)",
+                self.requirement_id,
+                self.srs_path.display(),
+                self.source_value.as_deref().unwrap_or("<empty>")
+            ),
+            PrdLineageIssueKind::UnknownParent => format!(
+                "{} in {} references unknown parent Source '{}' (expected an FR-* or NFR-* defined in the epic PRD)",
+                self.requirement_id,
+                self.srs_path.display(),
+                self.source_value.as_deref().unwrap_or("<empty>")
+            ),
+        }
+    }
+}
+
 pub fn parse_prd_requirement_lineage(epic_id: &str, prd_path: &Path) -> PrdRequirementLineage {
     let prd_content = match fs::read_to_string(prd_path) {
         Ok(content) => content,
@@ -234,6 +297,101 @@ pub fn parse_prd_requirement_lineage(epic_id: &str, prd_path: &Path) -> PrdRequi
     }
 }
 
+pub fn parse_srs_requirement_entries(srs_path: &Path) -> Vec<SrsRequirementEntry> {
+    let srs_content = match fs::read_to_string(srs_path) {
+        Ok(content) => content,
+        Err(_) => return Vec::new(),
+    };
+
+    let mut entries = Vec::new();
+    parse_srs_requirement_block(
+        &srs_content,
+        "BEGIN FUNCTIONAL_REQUIREMENTS",
+        "END FUNCTIONAL_REQUIREMENTS",
+        SrsRequirementKind::Functional,
+        &mut entries,
+    );
+    parse_srs_requirement_block(
+        &srs_content,
+        "BEGIN NON_FUNCTIONAL_REQUIREMENTS",
+        "END NON_FUNCTIONAL_REQUIREMENTS",
+        SrsRequirementKind::NonFunctional,
+        &mut entries,
+    );
+
+    entries
+}
+
+pub fn evaluate_prd_srs_lineage(voyage: &Voyage, board: &Board) -> Vec<PrdLineageIssue> {
+    let srs_path = voyage.path.parent().unwrap().join("SRS.md");
+    let Some(epic) = board.epics.get(&voyage.epic_id) else {
+        return Vec::new();
+    };
+    let prd_path = epic.path.parent().unwrap().join("PRD.md");
+    let parent_lineage = parse_prd_requirement_lineage(epic.id(), &prd_path);
+    let requirements = parse_srs_requirement_entries(&srs_path);
+
+    let mut issues = Vec::new();
+    for requirement in requirements {
+        let Some(raw_source) = requirement
+            .source
+            .as_deref()
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+        else {
+            issues.push(PrdLineageIssue {
+                srs_path: srs_path.clone(),
+                requirement_id: requirement.id,
+                source_value: None,
+                kind: PrdLineageIssueKind::MissingSource,
+            });
+            continue;
+        };
+
+        let source_tokens: Vec<&str> = SOURCE_TOKEN_SPLIT_RE
+            .split(raw_source)
+            .filter(|token| !token.is_empty())
+            .collect();
+
+        if source_tokens.len() != 1 {
+            issues.push(PrdLineageIssue {
+                srs_path: srs_path.clone(),
+                requirement_id: requirement.id,
+                source_value: Some(raw_source.to_string()),
+                kind: PrdLineageIssueKind::MultipleSources,
+            });
+            continue;
+        }
+
+        let source_token = source_tokens[0];
+        if !PRD_FUNCTIONAL_REQ_RE.is_match(source_token)
+            && !PRD_NON_FUNCTIONAL_REQ_RE.is_match(source_token)
+        {
+            issues.push(PrdLineageIssue {
+                srs_path: srs_path.clone(),
+                requirement_id: requirement.id,
+                source_value: Some(source_token.to_string()),
+                kind: PrdLineageIssueKind::NonCanonicalSource,
+            });
+            continue;
+        }
+
+        if !parent_lineage
+            .parent_requirements
+            .contains_key(source_token)
+        {
+            issues.push(PrdLineageIssue {
+                srs_path: srs_path.clone(),
+                requirement_id: requirement.id,
+                source_value: Some(source_token.to_string()),
+                kind: PrdLineageIssueKind::UnknownParent,
+            });
+        }
+    }
+
+    issues
+}
+
 fn parse_prd_requirement_block(
     content: &str,
     epic_id: &str,
@@ -266,11 +424,7 @@ fn parse_prd_requirement_block(
             continue;
         }
 
-        let cols: Vec<&str> = trimmed
-            .split('|')
-            .map(str::trim)
-            .filter(|col| !col.is_empty())
-            .collect();
+        let cols = markdown_row_columns(trimmed);
         if cols.len() < 2 {
             continue;
         }
@@ -313,6 +467,76 @@ fn parse_prd_requirement_block(
                 rationale,
             });
     }
+}
+
+fn parse_srs_requirement_block(
+    content: &str,
+    start_marker: &str,
+    end_marker: &str,
+    kind: SrsRequirementKind,
+    entries: &mut Vec<SrsRequirementEntry>,
+) {
+    let mut in_block = false;
+    let mut source_column_index: Option<usize> = None;
+
+    for line in content.lines() {
+        if line.contains(start_marker) {
+            in_block = true;
+            source_column_index = None;
+            continue;
+        }
+        if line.contains(end_marker) {
+            break;
+        }
+        if !in_block {
+            continue;
+        }
+
+        let trimmed = line.trim();
+        if !trimmed.starts_with('|') {
+            continue;
+        }
+
+        let cols = markdown_row_columns(trimmed);
+        if cols.len() < 2 {
+            continue;
+        }
+
+        let id = cols[0];
+        if id.eq_ignore_ascii_case("ID") {
+            source_column_index = cols
+                .iter()
+                .position(|col| col.eq_ignore_ascii_case("Source"));
+            continue;
+        }
+
+        let description = cols[1];
+        if id.starts_with("---") || description.is_empty() || !SRS_REQUIREMENT_ID_RE.is_match(id) {
+            continue;
+        }
+
+        let source = source_column_index
+            .and_then(|idx| cols.get(idx))
+            .map(|value| value.trim())
+            .filter(|value| !value.is_empty())
+            .map(ToOwned::to_owned);
+
+        entries.push(SrsRequirementEntry {
+            id: id.to_string(),
+            description: description.to_string(),
+            kind,
+            source,
+        });
+    }
+}
+
+fn markdown_row_columns(row: &str) -> Vec<&str> {
+    row.trim()
+        .trim_start_matches('|')
+        .trim_end_matches('|')
+        .split('|')
+        .map(str::trim)
+        .collect()
 }
 
 /// Return SRS requirements for a voyage that are not covered by any story
@@ -606,6 +830,86 @@ mod tests {
         let requirements = parse_requirements(&srs_path);
 
         assert!(requirements.is_empty());
+    }
+
+    #[test]
+    fn srs_source_requires_exactly_one_canonical_prd_parent() {
+        use crate::infrastructure::loader::load_board;
+        use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+
+        let srs = r#"# Test SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-01 | Valid parent source | FR-01 | test |
+| SRS-02 | Missing source |  | test |
+| SRS-03 | Multiple sources | FR-01, FR-02 | test |
+| SRS-04 | Legacy alias | PRD-01 | test |
+| SRS-05 | Unknown parent | FR-99 | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+
+<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-NFR-01 | Valid NFR source | NFR-01 | test |
+<!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+"#;
+
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("test-epic"))
+            .voyage(
+                TestVoyage::new("01-draft", "test-epic")
+                    .status("draft")
+                    .srs_content(srs),
+            )
+            .story(
+                TestStory::new("PLAN01")
+                    .scope("test-epic/01-draft")
+                    .body("## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] test"),
+            )
+            .build();
+        fs::write(
+            temp.path().join("epics/test-epic/PRD.md"),
+            r#"# PRD
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | Valid source. | must | test |
+| FR-02 | Extra valid source. | should | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+
+<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| NFR-01 | Valid NFR source. | must | test |
+<!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let voyage = board.require_voyage("01-draft").unwrap();
+        let issues = evaluate_prd_srs_lineage(voyage, &board);
+
+        assert_eq!(issues.len(), 4);
+        assert!(issues.iter().any(|issue| {
+            issue.requirement_id == "SRS-02" && issue.kind == PrdLineageIssueKind::MissingSource
+        }));
+        assert!(issues.iter().any(|issue| {
+            issue.requirement_id == "SRS-03" && issue.kind == PrdLineageIssueKind::MultipleSources
+        }));
+        assert!(issues.iter().any(|issue| {
+            issue.requirement_id == "SRS-04"
+                && issue.kind == PrdLineageIssueKind::NonCanonicalSource
+                && issue.source_value.as_deref() == Some("PRD-01")
+        }));
+        assert!(issues.iter().any(|issue| {
+            issue.requirement_id == "SRS-05"
+                && issue.kind == PrdLineageIssueKind::UnknownParent
+                && issue.source_value.as_deref() == Some("FR-99")
+        }));
     }
 
     #[test]

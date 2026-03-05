@@ -199,16 +199,21 @@ fn add_retrospective(
 mod tests {
     use super::VoyageEpicLifecycleService;
     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use std::fs;
+
+    fn write_prd(temp: &tempfile::TempDir, epic_id: &str, content: &str) {
+        fs::write(temp.path().join(format!("epics/{epic_id}/PRD.md")), content).unwrap();
+    }
 
     #[test]
     fn start_voyage_enforces_requirements_coverage_when_not_forced() {
         let srs = r#"# Test SRS
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Verification |
-|----|-------------|--------------|
-| SRS-01 | First requirement | test |
-| SRS-02 | Second requirement | test |
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-01 | First requirement | FR-01 | test |
+| SRS-02 | Second requirement | FR-02 | test |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 "#;
 
@@ -227,6 +232,20 @@ mod tests {
                     ),
             )
             .build();
+
+        write_prd(
+            &temp,
+            "test-epic",
+            r#"# PRD
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | First requirement | must | test |
+| FR-02 | Second requirement | must | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        );
 
         let err = VoyageEpicLifecycleService::start_voyage(temp.path(), "01-draft", false, None)
             .unwrap_err()
@@ -242,10 +261,10 @@ mod tests {
         let srs = r#"# Test SRS
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Verification |
-|----|-------------|--------------|
-| SRS-01 | First requirement | test |
-| SRS-02 | Second requirement | test |
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-01 | First requirement | FR-01 | test |
+| SRS-02 | Second requirement | FR-02 | test |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 "#;
 
@@ -264,6 +283,20 @@ mod tests {
                     ),
             )
             .build();
+
+        write_prd(
+            &temp,
+            "test-epic",
+            r#"# PRD
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | First requirement | must | test |
+| FR-02 | Second requirement | must | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        );
 
         let result = VoyageEpicLifecycleService::start_voyage(temp.path(), "01-draft", true, None);
         assert!(

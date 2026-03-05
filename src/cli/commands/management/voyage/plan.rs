@@ -127,6 +127,10 @@ mod tests {
     use super::*;
     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
 
+    fn write_prd(temp: &tempfile::TempDir, epic_id: &str, content: &str) {
+        fs::write(temp.path().join(format!("epics/{epic_id}/PRD.md")), content).unwrap();
+    }
+
     #[test]
     fn plan_voyage_updates_status_to_planned() {
         let temp = TestBoardBuilder::new()
@@ -244,19 +248,42 @@ mod tests {
 
     #[test]
     fn plan_voyage_blocks_uncovered_requirements() {
+        let srs = r#"# SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-01 | req1 | FR-01 | test |
+| SRS-02 | req2 | FR-02 | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#;
+
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
             .voyage(
                 TestVoyage::new("01-draft", "test-epic")
                     .status("draft")
-                    .srs_content("# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req1 | test |\n| SRS-02 | req2 | test |\nEND FUNCTIONAL_REQUIREMENTS")
+                    .srs_content(srs),
             )
             .story(
                 TestStory::new("0003")
                     .scope("test-epic/01-draft")
-                    .body("\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] test")
+                    .body("\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] test"),
             )
             .build();
+        write_prd(
+            &temp,
+            "test-epic",
+            r#"# PRD
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | req1 | must | test |
+| FR-02 | req2 | must | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        );
 
         let result = run_with_dir(temp.path(), "01-draft", true);
 
@@ -267,25 +294,139 @@ mod tests {
     }
 
     #[test]
-    fn plan_voyage_allows_covered_requirements() {
+    fn voyage_plan_blocks_invalid_prd_lineage() {
+        let srs = r#"# Test SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-01 | Requirement 1 | FR-99 | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#;
+
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
             .voyage(
                 TestVoyage::new("01-draft", "test-epic")
                     .status("draft")
-                    .srs_content("# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req1 | test |\n| SRS-02 | req2 | test |\nEND FUNCTIONAL_REQUIREMENTS")
+                    .srs_content(srs),
+            )
+            .story(
+                TestStory::new("0003")
+                    .scope("test-epic/01-draft")
+                    .body("\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] test"),
+            )
+            .build();
+        write_prd(
+            &temp,
+            "test-epic",
+            r#"# PRD
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | Requirement 1 | must | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        );
+
+        let result = run_with_dir(temp.path(), "01-draft", true);
+
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("Cannot plan voyage"));
+        assert!(err.contains("FR-99"));
+        assert!(err.contains("unknown parent Source"));
+    }
+
+    #[test]
+    fn prd_lineage_rejects_legacy_source_aliases() {
+        let srs = r#"# Test SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-01 | Requirement 1 | PRD-01 | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#;
+
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("test-epic"))
+            .voyage(
+                TestVoyage::new("01-draft", "test-epic")
+                    .status("draft")
+                    .srs_content(srs),
+            )
+            .story(
+                TestStory::new("0003")
+                    .scope("test-epic/01-draft")
+                    .body("\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] test"),
+            )
+            .build();
+        write_prd(
+            &temp,
+            "test-epic",
+            r#"# PRD
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | Requirement 1 | must | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        );
+
+        let result = run_with_dir(temp.path(), "01-draft", true);
+
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("PRD-01"));
+        assert!(err.contains("expected FR-* or NFR-*"));
+    }
+
+    #[test]
+    fn plan_voyage_allows_covered_requirements() {
+        let srs = r#"# SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-01 | req1 | FR-01 | test |
+| SRS-02 | req2 | FR-02 | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#;
+
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("test-epic"))
+            .voyage(
+                TestVoyage::new("01-draft", "test-epic")
+                    .status("draft")
+                    .srs_content(srs),
             )
             .story(
                 TestStory::new("0007")
                     .scope("test-epic/01-draft")
-                    .body("\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] test")
+                    .body("\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] test"),
             )
             .story(
                 TestStory::new("0008")
                     .scope("test-epic/01-draft")
-                    .body("\n## Acceptance Criteria\n\n- [ ] [SRS-02/AC-01] test")
+                    .body("\n## Acceptance Criteria\n\n- [ ] [SRS-02/AC-01] test"),
             )
             .build();
+        write_prd(
+            &temp,
+            "test-epic",
+            r#"# PRD
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | Requirement 1 | must | test |
+| FR-02 | Requirement 2 | must | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        );
 
         let result = run_with_dir(temp.path(), "01-draft", true);
 

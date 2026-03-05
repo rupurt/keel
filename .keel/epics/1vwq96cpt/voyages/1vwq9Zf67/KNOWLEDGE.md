@@ -25,23 +25,6 @@ created_at: 2026-03-02T09:33:26
 
 ---
 
-## Story: Implement Story Lifecycle Use Cases (1vwqCe5T0)
-
-### 1vyDuwDTq: Thin Command Adapters Preserve Behavior During Refactors
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Extracting orchestration out of CLI command handlers while keeping existing workflow behavior stable |
-| **Insight** | Moving orchestration to an application service is low-risk when command handlers become thin pass-through adapters and existing command tests remain the compatibility suite. |
-| **Suggested Action** | For future migrations, extract service logic first, then convert command files to wrappers and keep legacy helper behavior behind `#[cfg(test)]` shims only where needed. |
-| **Applies To** | src/application/story_lifecycle.rs, src/commands/story/{start,submit,accept,reject,ice,thaw}.rs |
-| **Applied** | yes |
-
-
-
----
-
 ## Story: Rewire Command Handlers To Use Cases (1vwqCfPpe)
 
 ### 1vyDuwnad: Enforce policy invariants in application services, not command handlers
@@ -76,6 +59,23 @@ created_at: 2026-03-02T09:33:26
 
 ---
 
+## Story: Implement Story Lifecycle Use Cases (1vwqCe5T0)
+
+### 1vyDuwDTq: Thin Command Adapters Preserve Behavior During Refactors
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Extracting orchestration out of CLI command handlers while keeping existing workflow behavior stable |
+| **Insight** | Moving orchestration to an application service is low-risk when command handlers become thin pass-through adapters and existing command tests remain the compatibility suite. |
+| **Suggested Action** | For future migrations, extract service logic first, then convert command files to wrappers and keep legacy helper behavior behind `#[cfg(test)]` shims only where needed. |
+| **Applies To** | src/application/story_lifecycle.rs, src/commands/story/{start,submit,accept,reject,ice,thaw}.rs |
+| **Applied** | yes |
+
+
+
+---
+
 ## Synthesis
 
 ### r1jV4LrNV: Keep Lifecycle Command Handlers As Thin Adapters
@@ -91,20 +91,6 @@ created_at: 2026-03-02T09:33:26
 | **Score** | 0.82 |
 | **Confidence** | 0.88 |
 | **Applied** | 1vwqCejs5 |
-
-### SrUkwz3sZ: Thin Command Adapters Preserve Behavior During Refactors
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Extracting orchestration out of CLI command handlers while keeping existing workflow behavior stable |
-| **Insight** | Moving orchestration to an application service is low-risk when command handlers become thin pass-through adapters and existing command tests remain the compatibility suite. |
-| **Suggested Action** | For future migrations, extract service logic first, then convert command files to wrappers and keep legacy helper behavior behind `#[cfg(test)]` shims only where needed. |
-| **Applies To** | src/application/story_lifecycle.rs, src/commands/story/{start,submit,accept,reject,ice,thaw}.rs |
-| **Linked Knowledge IDs** | 1vyDuwDTq |
-| **Score** | 0.90 |
-| **Confidence** | 0.91 |
-| **Applied** | yes |
 
 ### LaLCqrPQZ: Enforce policy invariants in application services, not command handlers
 
@@ -133,4 +119,18 @@ created_at: 2026-03-02T09:33:26
 | **Score** | 0.84 |
 | **Confidence** | 0.92 |
 | **Applied** | Introduced DomainEvent + DomainProcessManager and rewired lifecycle services to emit events. |
+
+### SrUkwz3sZ: Thin Command Adapters Preserve Behavior During Refactors
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Extracting orchestration out of CLI command handlers while keeping existing workflow behavior stable |
+| **Insight** | Moving orchestration to an application service is low-risk when command handlers become thin pass-through adapters and existing command tests remain the compatibility suite. |
+| **Suggested Action** | For future migrations, extract service logic first, then convert command files to wrappers and keep legacy helper behavior behind `#[cfg(test)]` shims only where needed. |
+| **Applies To** | src/application/story_lifecycle.rs, src/commands/story/{start,submit,accept,reject,ice,thaw}.rs |
+| **Linked Knowledge IDs** | 1vyDuwDTq |
+| **Score** | 0.90 |
+| **Confidence** | 0.91 |
+| **Applied** | yes |
 

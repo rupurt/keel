@@ -461,6 +461,7 @@ fn evaluate_voyage_plan(
     }
 
     if require_requirements_coverage {
+        problems.extend(prd_lineage_gate_problems(voyage, board));
         problems.extend(
             uncovered_requirements_gate_problems(voyage, board)
                 .into_iter()
@@ -659,6 +660,22 @@ fn uncovered_requirements_gate_problems(voyage: &Voyage, board: &Board) -> Vec<S
     invariants::uncovered_requirements_for_voyage(voyage, board)
         .into_iter()
         .map(|id| format!("{} requirements not covered by stories", id))
+        .collect()
+}
+
+fn prd_lineage_gate_problems(voyage: &Voyage, board: &Board) -> Vec<Problem> {
+    let srs_path = voyage.path.parent().unwrap_or(&voyage.path).join("SRS.md");
+    invariants::evaluate_prd_srs_lineage(voyage, board)
+        .into_iter()
+        .map(|issue| Problem {
+            severity: Severity::Error,
+            path: srs_path.clone(),
+            scope: Some(voyage.scope_path()),
+            message: issue.message(),
+            fix: None,
+            category: None,
+            check_id: CheckId::Unknown,
+        })
         .collect()
 }
 
@@ -959,6 +976,10 @@ mod tests {
         })
     }
 
+    fn write_prd(temp: &tempfile::TempDir, epic_id: &str, content: &str) {
+        fs::write(temp.path().join(format!("epics/{epic_id}/PRD.md")), content).unwrap();
+    }
+
     #[test]
     fn evaluate_voyage_transition_plan_skips_legality_checks() {
         let temp = TestBoardBuilder::new()
@@ -990,10 +1011,10 @@ mod tests {
         let srs = r#"# Test SRS
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Verification |
-|----|-------------|--------------|
-| SRS-01 | Requirement 1 | test |
-| SRS-02 | Requirement 2 | test |
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-01 | Requirement 1 | FR-01 | test |
+| SRS-02 | Requirement 2 | FR-02 | test |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 "#;
 
@@ -1013,6 +1034,19 @@ mod tests {
                     ),
             )
             .build();
+        write_prd(
+            &temp,
+            "test-epic",
+            r#"# PRD
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | Requirement 1 | must | test |
+| FR-02 | Requirement 2 | must | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        );
 
         let board = load_board(temp.path()).unwrap();
         let voyage = board.require_voyage("01-draft").unwrap();
@@ -1119,6 +1153,63 @@ mod tests {
             &problems,
             "PLAN01 has no acceptance criteria checklist items"
         ));
+    }
+
+    #[test]
+    fn prd_lineage_gate_errors_are_actionable() {
+        let srs = r#"# Test SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-01 | Requirement 1 | PRD-01 | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#;
+
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("test-epic"))
+            .voyage(
+                TestVoyage::new("01-draft", "test-epic")
+                    .status("draft")
+                    .srs_content(srs),
+            )
+            .story(
+                TestStory::new("PLAN01")
+                    .scope("test-epic/01-draft")
+                    .stage(StoryState::Backlog)
+                    .body(
+                        "## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Requirement 1 covered <!-- verify: cargo test SRS-01:start:end -->",
+                    ),
+            )
+            .build();
+        write_prd(
+            &temp,
+            "test-epic",
+            r#"# PRD
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | Requirement 1 | must | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        );
+
+        let board = load_board(temp.path()).unwrap();
+        let voyage = board.require_voyage("01-draft").unwrap();
+
+        let problems = evaluate_voyage_transition(&board, voyage, VoyageTransition::Plan, true);
+
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].severity, Severity::Error);
+        assert_eq!(
+            problems[0].path,
+            temp.path().join("epics/test-epic/voyages/01-draft/SRS.md")
+        );
+        assert!(has_message(&problems, "SRS-01"));
+        assert!(has_message(&problems, "PRD-01"));
+        assert!(has_message(&problems, "SRS.md"));
+        assert!(has_message(&problems, "FR-* or NFR-*"));
     }
 
     #[test]
