@@ -193,6 +193,7 @@ pub enum CheckId {
     StoryMalformedVerification,
     StoryMissingSrsRef,
     StoryDependencyCycle,
+    StoryParallelConflictCoherence,
     StoryUnexpectedReflection,
     StoryPlanningScaffold,
     StoryTerminalScaffold,

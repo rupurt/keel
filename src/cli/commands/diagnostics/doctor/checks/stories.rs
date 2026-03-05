@@ -812,6 +812,96 @@ pub fn check_story_dependency_cycles(board: &Board) -> Vec<Problem> {
     problems
 }
 
+/// Check explicit parallel conflict metadata (`blocked_by`) for coherence.
+///
+/// Flags:
+/// - Invalid references to non-existent story IDs.
+/// - Contradictory reciprocal constraints (A blocked_by B and B blocked_by A).
+pub fn check_parallel_conflict_coherence(board: &Board) -> Vec<Problem> {
+    let mut problems = Vec::new();
+    let mut reported_invalid: HashSet<(String, String)> = HashSet::new();
+    let mut reported_pairs: HashSet<(String, String)> = HashSet::new();
+
+    for story in board.stories.values() {
+        let scope = story.scope().unwrap_or_default().to_string();
+        for blocked_story_id in &story.frontmatter.blocked_by {
+            let edge_key = (story.id().to_string(), blocked_story_id.clone());
+
+            if blocked_story_id == story.id() {
+                if reported_invalid.insert(edge_key) {
+                    problems.push(
+                        Problem::error(
+                            story.path.clone(),
+                            format!(
+                                "invalid blocked_by reference: story '{}' cannot block itself ('{}'). Remediation: remove '{}' from blocked_by.",
+                                story.id(),
+                                blocked_story_id,
+                                blocked_story_id
+                            ),
+                        )
+                        .with_check_id(CheckId::StoryParallelConflictCoherence)
+                        .with_scope(scope.clone()),
+                    );
+                }
+                continue;
+            }
+
+            let Some(blocked_story) = board.stories.get(blocked_story_id) else {
+                if reported_invalid.insert(edge_key) {
+                    problems.push(
+                        Problem::error(
+                            story.path.clone(),
+                            format!(
+                                "invalid blocked_by reference: story '{}' points to missing story '{}'. Remediation: replace '{}' with a valid story ID or remove it.",
+                                story.id(),
+                                blocked_story_id,
+                                blocked_story_id
+                            ),
+                        )
+                        .with_check_id(CheckId::StoryParallelConflictCoherence)
+                        .with_scope(scope.clone()),
+                    );
+                }
+                continue;
+            };
+
+            let reciprocal = blocked_story
+                .frontmatter
+                .blocked_by
+                .iter()
+                .any(|id| id == story.id());
+            if reciprocal {
+                let (left, right) = if story.id() <= blocked_story.id() {
+                    (story.id().to_string(), blocked_story.id().to_string())
+                } else {
+                    (blocked_story.id().to_string(), story.id().to_string())
+                };
+
+                if reported_pairs.insert((left.clone(), right.clone())) {
+                    problems.push(
+                        Problem::error(
+                            story.path.clone(),
+                            format!(
+                                "contradictory blocked_by pair detected: {} <-> {}. Remediation: keep only one directional blocked_by edge to represent precedence.",
+                                left, right
+                            ),
+                        )
+                        .with_check_id(CheckId::StoryParallelConflictCoherence)
+                        .with_scope(scope.clone()),
+                    );
+                }
+            }
+        }
+    }
+
+    problems.sort_by(|left, right| {
+        left.path
+            .cmp(&right.path)
+            .then_with(|| left.message.cmp(&right.message))
+    });
+    problems
+}
+
 fn find_dependency_cycles(graph: &HashMap<String, Vec<String>>) -> Vec<Vec<String>> {
     struct Tarjan<'a> {
         graph: &'a HashMap<String, Vec<String>>,
@@ -1223,6 +1313,79 @@ mod tests {
         let problems = check_story_dependency_cycles(&board);
 
         assert!(problems.is_empty());
+    }
+
+    #[test]
+    fn doctor_parallel_conflict_coherence_checks() {
+        let temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("S1")
+                    .blocked_by(&["MISSING-STORY"])
+                    .stage(StoryState::Backlog),
+            )
+            .story(
+                TestStory::new("S2")
+                    .blocked_by(&["S3"])
+                    .stage(StoryState::Backlog),
+            )
+            .story(
+                TestStory::new("S3")
+                    .blocked_by(&["S2"])
+                    .stage(StoryState::Backlog),
+            )
+            .build();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_parallel_conflict_coherence(&board);
+
+        assert_eq!(problems.len(), 2);
+        assert!(problems.iter().all(|p| p.severity == Severity::Error));
+        assert!(
+            problems
+                .iter()
+                .all(|p| p.check_id == CheckId::StoryParallelConflictCoherence)
+        );
+        assert!(problems.iter().any(|p| {
+            p.message.contains("invalid blocked_by reference")
+                && p.message.contains("S1")
+                && p.message.contains("MISSING-STORY")
+        }));
+        assert!(problems.iter().any(|p| {
+            p.message.contains("contradictory blocked_by pair")
+                && p.message.contains("S2")
+                && p.message.contains("S3")
+        }));
+    }
+
+    #[test]
+    fn doctor_parallel_conflict_reports_actionable_pairs() {
+        let temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("PAIR-A")
+                    .blocked_by(&["PAIR-B"])
+                    .stage(StoryState::Backlog),
+            )
+            .story(
+                TestStory::new("PAIR-B")
+                    .blocked_by(&["PAIR-A"])
+                    .stage(StoryState::Backlog),
+            )
+            .build();
+
+        let report = crate::cli::commands::diagnostics::doctor::validate(temp.path()).unwrap();
+        let coherence_problems: Vec<_> = report
+            .story_checks
+            .iter()
+            .filter(|check| check.name == "Parallel conflict coherence")
+            .flat_map(|check| check.problems.iter())
+            .collect();
+
+        assert_eq!(coherence_problems.len(), 1);
+        let message = &coherence_problems[0].message;
+        assert!(message.contains("PAIR-A"));
+        assert!(message.contains("PAIR-B"));
+        assert!(message.contains("Remediation:"));
+        assert!(message.contains("directional blocked_by edge"));
     }
 
     #[test]

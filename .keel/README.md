@@ -25,10 +25,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Pairwise Blocker Rendering For Parallel Next](stories/1vxyMsbOj/README.md) | feat | [Parallel Safety For Next](epics/1vxyM0hvn/) / [Semantic Conflict Detection For Parallel Next](epics/1vxyM0hvn/voyages/1vxyMT6nz/) |
-| [Story Blocked By Metadata Override](stories/1vxyMtAbK/README.md) | feat | [Parallel Safety For Next](epics/1vxyM0hvn/) / [Semantic Conflict Detection For Parallel Next](epics/1vxyM0hvn/voyages/1vxyMT6nz/) |
-| [Command And Projection Tests For Parallel Safety](stories/1vxyMtVpK/README.md) | feat | [Parallel Safety For Next](epics/1vxyM0hvn/) / [Semantic Conflict Detection For Parallel Next](epics/1vxyM0hvn/voyages/1vxyMT6nz/) |
-| [Doctor Check For Parallel Conflict Coherence](stories/1vxyMtaKP/README.md) | feat | [Parallel Safety For Next](epics/1vxyM0hvn/) / [Semantic Conflict Detection For Parallel Next](epics/1vxyM0hvn/voyages/1vxyMT6nz/) |
 
 <details>
 <summary><h2>Icebox</h2></summary>

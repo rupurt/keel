@@ -123,6 +123,15 @@ pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
         duration: Duration::from_millis(0),
     });
 
+    let parallel_conflict_problems = checks::stories::check_parallel_conflict_coherence(&board);
+    story_checks.push(CheckResult {
+        name: "Parallel conflict coherence",
+        evaluations: board.stories.len(),
+        passed: parallel_conflict_problems.is_empty(),
+        problems: parallel_conflict_problems,
+        duration: Duration::from_millis(0),
+    });
+
     let scoped_evidence_problems = checks::stories::check_scoped_story_evidence(&board);
     story_checks.push(CheckResult {
         name: "Scoped evidence coverage",
