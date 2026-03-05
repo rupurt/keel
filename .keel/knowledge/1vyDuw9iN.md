@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vxyMr3U2/REFLECT.md
 scope: 1vxyM0hvn/1vxyMT6nz
 source_story_id: 1vxyMr3U2
+created_at: 2026-03-04T18:41:18
 ---
 
 ### 1vyDuw9iN: Work Item Comparator Is Not Lexical

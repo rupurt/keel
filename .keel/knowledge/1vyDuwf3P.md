@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vwqCf53S/REFLECT.md
 scope: 1vwq96cpt/1vwq9wpT7
 source_story_id: 1vwqCf53S
+created_at: 2026-03-01T17:04:57
 ---
 
 ### 1vyDuwf3P: Build Typed Command Actions Before Dispatching

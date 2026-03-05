@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vwqCeX9I/REFLECT.md
 scope: 1vwq96cpt/1vwq9RqCe
 source_story_id: 1vwqCeX9I
+created_at: 2026-03-02T09:23:09
 ---
 
 ### 1vyDuwrqB: Shared template rendering reduces cross-command coupling

@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-02T21:50:30
+---
+
 # Reflection - Escalate Unresolved Scaffold Checks To Doctor Errors
 
 ## Knowledge

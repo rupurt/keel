@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vxH84nTQ/REFLECT.md
 scope: 1vxGy5tco/1vxGzVpw5
 source_story_id: 1vxH84nTQ
+created_at: 2026-03-03T09:13:53
 ---
 
 ### 1vyDuwdbL: Stage-gate scaffold checks to avoid noisy early warnings

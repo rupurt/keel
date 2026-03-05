@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-01T17:04:57
+---
+
 # Reflection - Refactor Main Dispatch To Interface Adapters
 
 ## Knowledge

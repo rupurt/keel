@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vxyMtaKP/REFLECT.md
 scope: 1vxyM0hvn/1vxyMT6nz
 source_story_id: 1vxyMtaKP
+created_at: 2026-03-04T19:05:55
 ---
 
 ### 1vyDuw2wf: Coherence Checks Need Canonical Pair Normalization

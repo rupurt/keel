@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-01T20:32:11
+---
+
 # Reflection - Introduce Domain Events And Process Managers
 
 ## Knowledge

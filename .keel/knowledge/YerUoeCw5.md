@@ -1,8 +1,7 @@
 ---
 source_type: Voyage
 source: epics/1vwq96cpt/voyages/1vwq9RqCe/KNOWLEDGE.md
-scope: null
-source_story_id: null
+created_at: 2026-03-02T10:07:49
 ---
 
 ### YerUoeCw5: Declarative Frontmatter Patches Reduce Drift Across Commands

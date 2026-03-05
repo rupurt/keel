@@ -1,3 +1,7 @@
+---
+created_at: 2026-02-24T19:07:55
+---
+
 # Reflection - Add Regression Tests for Gate Runtime and Reporting Modes
 
 ### L-01: Keep parity assertions focused on normalized findings

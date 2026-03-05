@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-02T21:42:18
+---
+
 # Reflection - Canonicalize Template Tokens To Schema Names
 
 ## Knowledge

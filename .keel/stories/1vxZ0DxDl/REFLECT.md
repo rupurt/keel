@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-03T19:50:46
+---
+
 # Reflection - Align Next Command Guidance In Human And Json Output
 
 ## Knowledge

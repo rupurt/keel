@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-02T11:30:47
+---
+
 # Reflection - Relocate Domain Core Modules Into Src Domain
 
 ## Knowledge

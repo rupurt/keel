@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-02T07:57:52
+---
+
 # Reflection - Extract Frontmatter Mutation Service
 
 ## Knowledge

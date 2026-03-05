@@ -1,25 +1,12 @@
+---
+created_at: 2026-03-04T11:56:17
+---
+
 # Knowledge - 1vxpomgnN
 
 > Automated synthesis of story reflections.
 
 ## Story Knowledge
-
-## Story: Implement Voyage Show Requirement Progress (1vxppkB6M)
-
-### 1vyDuwuY1: Voyage Requirement Views Need Both AC And Verify Mapping
-
-| Field | Value |
-|-------|-------|
-| **Category** | code |
-| **Context** | Building requirement-level voyage progress from story artifacts |
-| **Insight** | Requirement linkage should combine AC references and verify requirement IDs; relying on one source undercounts coverage/verification state. |
-| **Suggested Action** | Build requirement matrices from both marker channels, then deterministically sort rows and linked stories. |
-| **Applies To** | `src/cli/commands/management/voyage/show.rs`, planning-read projections |
-| **Applied** | yes |
-
-
-
----
 
 ## Story: Render Concrete Evidence In Story Show (1vxppkEH9)
 
@@ -38,17 +25,17 @@
 
 ---
 
-## Story: Define Planning Show Output Contracts (1vxppk4Oj)
+## Story: Implement Voyage Show Requirement Progress (1vxppkB6M)
 
-### 1vyDuwrAD: Centralized show projections reduce drift
+### 1vyDuwuY1: Voyage Requirement Views Need Both AC And Verify Mapping
 
 | Field | Value |
 |-------|-------|
-| **Category** | architecture |
-| **Context** | Multiple show commands were independently parsing PRD/SRS/story evidence with diverging placeholder and ordering rules. |
-| **Insight** | A shared read-model projection layer stabilizes data contracts, keeps ordering deterministic, and lets renderers remain thin. |
-| **Suggested Action** | Add new planning/read surfaces by extending `read_model::planning_show` first, then adapt renderer output only. |
-| **Applies To** | `src/read_model/planning_show.rs`, `src/cli/commands/management/*/show.rs` |
+| **Category** | code |
+| **Context** | Building requirement-level voyage progress from story artifacts |
+| **Insight** | Requirement linkage should combine AC references and verify requirement IDs; relying on one source undercounts coverage/verification state. |
+| **Suggested Action** | Build requirement matrices from both marker channels, then deterministically sort rows and linked stories. |
+| **Applies To** | `src/cli/commands/management/voyage/show.rs`, planning-read projections |
 | **Applied** | yes |
 
 
@@ -72,21 +59,24 @@
 
 ---
 
-## Synthesis
+## Story: Define Planning Show Output Contracts (1vxppk4Oj)
 
-### F2f7FWwpy: Voyage Requirement Views Need Both AC And Verify Mapping
+### 1vyDuwrAD: Centralized show projections reduce drift
 
 | Field | Value |
 |-------|-------|
-| **Category** | code |
-| **Context** | Building requirement-level voyage progress from story artifacts |
-| **Insight** | Requirement linkage should combine AC references and verify requirement IDs; relying on one source undercounts coverage/verification state. |
-| **Suggested Action** | Build requirement matrices from both marker channels, then deterministically sort rows and linked stories. |
-| **Applies To** | `src/cli/commands/management/voyage/show.rs`, planning-read projections |
-| **Linked Knowledge IDs** | 1vyDuwuY1 |
-| **Score** | 0.82 |
-| **Confidence** | 0.90 |
+| **Category** | architecture |
+| **Context** | Multiple show commands were independently parsing PRD/SRS/story evidence with diverging placeholder and ordering rules. |
+| **Insight** | A shared read-model projection layer stabilizes data contracts, keeps ordering deterministic, and lets renderers remain thin. |
+| **Suggested Action** | Add new planning/read surfaces by extending `read_model::planning_show` first, then adapt renderer output only. |
+| **Applies To** | `src/read_model/planning_show.rs`, `src/cli/commands/management/*/show.rs` |
 | **Applied** | yes |
+
+
+
+---
+
+## Synthesis
 
 ### qjOtw5RNt: Evidence UX Needs Structured Inventory Layers
 
@@ -102,18 +92,18 @@
 | **Confidence** | 0.90 |
 | **Applied** | yes |
 
-### PpRjlSIuB: Centralized show projections reduce drift
+### F2f7FWwpy: Voyage Requirement Views Need Both AC And Verify Mapping
 
 | Field | Value |
 |-------|-------|
-| **Category** | architecture |
-| **Context** | Multiple show commands were independently parsing PRD/SRS/story evidence with diverging placeholder and ordering rules. |
-| **Insight** | A shared read-model projection layer stabilizes data contracts, keeps ordering deterministic, and lets renderers remain thin. |
-| **Suggested Action** | Add new planning/read surfaces by extending `read_model::planning_show` first, then adapt renderer output only. |
-| **Applies To** | `src/read_model/planning_show.rs`, `src/cli/commands/management/*/show.rs` |
-| **Linked Knowledge IDs** | 1vyDuwrAD |
-| **Score** | 0.84 |
-| **Confidence** | 0.89 |
+| **Category** | code |
+| **Context** | Building requirement-level voyage progress from story artifacts |
+| **Insight** | Requirement linkage should combine AC references and verify requirement IDs; relying on one source undercounts coverage/verification state. |
+| **Suggested Action** | Build requirement matrices from both marker channels, then deterministically sort rows and linked stories. |
+| **Applies To** | `src/cli/commands/management/voyage/show.rs`, planning-read projections |
+| **Linked Knowledge IDs** | 1vyDuwuY1 |
+| **Score** | 0.82 |
+| **Confidence** | 0.90 |
 | **Applied** | yes |
 
 ### 1ejHEDO4x: Planning Show Parsing Needs Scaffold Filters
@@ -128,5 +118,19 @@
 | **Linked Knowledge IDs** | 1vyDuwuBj |
 | **Score** | 0.83 |
 | **Confidence** | 0.92 |
+| **Applied** | yes |
+
+### PpRjlSIuB: Centralized show projections reduce drift
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Multiple show commands were independently parsing PRD/SRS/story evidence with diverging placeholder and ordering rules. |
+| **Insight** | A shared read-model projection layer stabilizes data contracts, keeps ordering deterministic, and lets renderers remain thin. |
+| **Suggested Action** | Add new planning/read surfaces by extending `read_model::planning_show` first, then adapt renderer output only. |
+| **Applies To** | `src/read_model/planning_show.rs`, `src/cli/commands/management/*/show.rs` |
+| **Linked Knowledge IDs** | 1vyDuwrAD |
+| **Score** | 0.84 |
+| **Confidence** | 0.89 |
 | **Applied** | yes |
 

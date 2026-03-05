@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-03T18:30:08
+---
+
 # Reflection - Add Canonical Guidance To ADR Transition Commands
 
 ## Knowledge

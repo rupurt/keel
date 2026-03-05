@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vxH84k3U/REFLECT.md
 scope: 1vxGy5tco/1vxGzVpw5
 source_story_id: 1vxH84k3U
+created_at: 2026-03-02T21:50:30
 ---
 
 ### 1vyDuwBAC: Report Pattern And Severity From One Shared Placeholder Extractor

@@ -1,3 +1,7 @@
+---
+created_at: 2026-02-24T21:46:56
+---
+
 # Reflection - Enforce Strict Datetime Parsing in All Frontmatter
 
 ## Knowledge

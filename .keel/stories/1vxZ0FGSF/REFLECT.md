@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-03T20:32:05
+---
+
 # Reflection - Add Drift Tests For Canonical Guidance Contracts
 
 ## Knowledge

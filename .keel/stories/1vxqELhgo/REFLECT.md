@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-04T10:21:20
+---
+
 # Reflection - Default New Stories To Icebox
 
 ## Knowledge

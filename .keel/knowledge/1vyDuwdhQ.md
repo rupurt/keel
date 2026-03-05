@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vx8V69uz/REFLECT.md
 scope: 1vwq96cpt/1vx8TLqpp
 source_story_id: 1vx8V69uz
+created_at: 2026-03-02T11:30:47
 ---
 
 ### 1vyDuwdhQ: Multi-Requirement Stories Can Create Queue Cycles

@@ -128,6 +128,7 @@ impl StoryLifecycleService {
             Some("Link reused insights in REFLECT.md before submitting when appropriate."),
         )?;
 
+        ensure_story_reflect_created_at(story)?;
         guard_reflection_knowledge_uniqueness(board_dir, story)?;
 
         let content = fs::read_to_string(&story.path)?;
@@ -208,6 +209,7 @@ impl StoryLifecycleService {
             append_accept_reflection(&reflect_path, &story.frontmatter.title, text)?;
         }
 
+        ensure_story_reflect_created_at(story)?;
         guard_reflection_knowledge_uniqueness(board_dir, story)?;
         materialize_story_reflection_knowledge(board_dir, story)?;
 
@@ -323,6 +325,21 @@ fn set_started_at(path: &Path, datetime: &str) -> Result<()> {
         fs::write(path, updated)
             .with_context(|| format!("Failed to write story: {}", path.display()))?;
     }
+    Ok(())
+}
+
+fn ensure_story_reflect_created_at(story: &Story) -> Result<()> {
+    let reflect_path = reflect_path_for_story(story)?;
+    if !reflect_path.exists() {
+        return Ok(());
+    }
+
+    let created_at = story
+        .frontmatter
+        .submitted_at
+        .unwrap_or_else(|| Local::now().naive_local());
+    let _ =
+        crate::infrastructure::artifact_frontmatter::ensure_created_at(&reflect_path, created_at)?;
     Ok(())
 }
 

@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vxqNFaR9/REFLECT.md
 scope: 1vxqMtskC/1vxqN5jnA
 source_story_id: 1vxqNFaR9
+created_at: 2026-03-04T10:24:21
 ---
 
 ### 1vyDuwZW6: Catalog Entries Should Be Declarative And Sorted By ID

@@ -1,3 +1,7 @@
+---
+created_at: 2026-02-24T06:23:38
+---
+
 # Reflection - Remove Stage and Status Compatibility Aliases
 
 ### Note 001: Alias removal is safest as a compile-driven codemod

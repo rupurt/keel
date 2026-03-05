@@ -28,14 +28,14 @@ pub fn run(board_dir: &Path, id: &str) -> Result<()> {
         .with_min_label_width(15)
         .with_bold_labels(true)
         .row("Title:", format!("{}", k.title.bold()))
-        .row("ID:", k.id.to_string())
         .row("Category:", k.category.to_string())
         .row_optional("Story:", k.source_story_id.clone())
-        .row(
-            "Source:",
-            format!("{}:{}", k.source_type, k.source.display()),
-        )
-        .row_optional("Scope:", k.scope.clone());
+        .row_optional("Scope:", k.scope.clone())
+        .row_optional(
+            "Created:",
+            k.created_at
+                .map(|created_at| format!("{}", created_at.dimmed())),
+        );
 
     let status = if k.is_applied() {
         "applied".green().bold().to_string()
@@ -43,6 +43,10 @@ pub fn run(board_dir: &Path, id: &str) -> Result<()> {
         "pending".yellow().bold().to_string()
     };
     metadata.push_row("Status:", status);
+    metadata.push_row(
+        "Source:",
+        format!("{}:{}", k.source_type, k.source.display()),
+    );
 
     let mut context = ShowSection::new("Context");
     context.push_lines(styled_content_lines(&k.context));
@@ -56,8 +60,9 @@ pub fn run(board_dir: &Path, id: &str) -> Result<()> {
     let mut applies_to = ShowSection::new("Applies To");
     applies_to.push_lines(styled_content_lines(&k.applies_to));
 
+    let width = crate::cli::presentation::terminal::get_terminal_width();
     let mut document = ShowDocument::new();
-    document.push_header(metadata, None);
+    document.push_header(metadata, Some(width));
     let mut sections = vec![context, insight, action, applies_to];
 
     if !k.linked_ids.is_empty() {
@@ -79,7 +84,6 @@ pub fn run(board_dir: &Path, id: &str) -> Result<()> {
         applied.push_lines(styled_content_lines(&k.applied));
         sections.push(applied);
     }
-    document.push_spacer();
     document.push_sections_spaced(sections);
 
     document.print();

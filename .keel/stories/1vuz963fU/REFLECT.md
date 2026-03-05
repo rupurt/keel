@@ -1,3 +1,7 @@
+---
+created_at: 2026-02-24T13:21:45
+---
+
 ### Note 001: Queue policy drift prevention
 Centralizing queue thresholds and classification helpers into one module removes duplicated literals and keeps `next`, flow bottleneck summaries, and flow state derivation coherent.
 

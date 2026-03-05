@@ -1,8 +1,7 @@
 ---
 source_type: Voyage
 source: epics/1vxqMtskC/voyages/1vxqN5jnA/KNOWLEDGE.md
-scope: null
-source_story_id: null
+created_at: 2026-03-04T13:06:23
 ---
 
 ### TQa285xzn: Centralized recommendation projection keeps show commands coherent

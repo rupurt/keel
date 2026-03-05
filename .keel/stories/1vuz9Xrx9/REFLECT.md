@@ -1,3 +1,7 @@
+---
+created_at: 2026-02-24T15:00:08
+---
+
 # Reflection - Route Story and Voyage Commands Through Unified Enforcer
 
 ### Note 001: Enforcer intent must match command semantics

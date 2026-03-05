@@ -1,8 +1,7 @@
 ---
 source_type: Voyage
 source: epics/1vxGy5tco/voyages/1vxGzV3oR/KNOWLEDGE.md
-scope: null
-source_story_id: null
+created_at: 2026-03-03T08:10:40
 ---
 
 ### Gd2KnPbv1: Keep Token Names Equal To Frontmatter Keys

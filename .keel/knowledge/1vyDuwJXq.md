@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vwqCeiHm/REFLECT.md
 scope: 1vwq96cpt/1vwq9RqCe
 source_story_id: 1vwqCeiHm
+created_at: 2026-03-02T07:57:52
 ---
 
 ### 1vyDuwJXq: Declarative Frontmatter Patches Reduce Drift Across Commands

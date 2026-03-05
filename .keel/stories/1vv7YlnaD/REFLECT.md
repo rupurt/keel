@@ -1,3 +1,7 @@
+---
+created_at: 2026-02-24T21:40:37
+---
+
 # Reflection - Define Schema for Observational Knowledge Artifacts
 
 ## Knowledge

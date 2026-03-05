@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-04T18:57:11
+---
+
 # Reflection - Story Blocked By Metadata Override
 
 ## Knowledge

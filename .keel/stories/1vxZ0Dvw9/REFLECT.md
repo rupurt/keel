@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-03T19:38:17
+---
+
 # Reflection - Keep Informational Governance Commands Non Prescriptive
 
 ## Knowledge

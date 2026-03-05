@@ -1,3 +1,7 @@
+---
+created_at: {{created_at}}
+---
+
 # Reflection - {{title}}
 
 ## Knowledge

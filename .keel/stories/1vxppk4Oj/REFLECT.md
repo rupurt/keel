@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-04T11:49:49
+---
+
 # Reflection - Define Planning Show Output Contracts
 
 ## Knowledge

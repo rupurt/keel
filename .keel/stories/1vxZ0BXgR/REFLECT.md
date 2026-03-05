@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-03T16:52:45
+---
+
 # Reflection - Add Canonical Next Guidance To Story Lifecycle Commands
 
 ## Knowledge

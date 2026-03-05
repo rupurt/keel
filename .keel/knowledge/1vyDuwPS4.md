@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vwqCeXD8/REFLECT.md
 scope: 1vwq96cpt/1vwq9RqCe
 source_story_id: 1vwqCeXD8
+created_at: 2026-03-02T10:07:49
 ---
 
 ### 1vyDuwPS4: Frontmatter-rewrite adapters preserve markdown parity with low migration risk

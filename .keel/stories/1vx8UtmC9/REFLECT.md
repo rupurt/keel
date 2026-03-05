@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-02T12:03:53
+---
+
 # Reflection - Remove Legacy Roots And Enforce Normalized Contracts
 
 ## Knowledge

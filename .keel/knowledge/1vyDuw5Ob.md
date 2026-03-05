@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vwqCffzr/REFLECT.md
 scope: 1vwq96cpt/1vwq9wpT7
 source_story_id: 1vwqCffzr
+created_at: 2026-03-02T10:20:43
 ---
 
 ### 1vyDuw5Ob: Regression Parity Needs Cross-Command Coverage

@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vwqCe8MK/REFLECT.md
 scope: 1vwq96cpt/1vwq9RqCe
 source_story_id: 1vwqCe8MK
+created_at: 2026-03-01T16:34:13
 ---
 
 ### 1vyDuwLCH: Ports Should Mirror Aggregate Boundaries

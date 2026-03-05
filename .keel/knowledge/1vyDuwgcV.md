@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vwqCejs5/REFLECT.md
 scope: 1vwq96cpt/1vwq9Zf67
 source_story_id: 1vwqCejs5
+created_at: 2026-03-01T16:50:35
 ---
 
 ### 1vyDuwgcV: Keep Lifecycle Command Handlers As Thin Adapters

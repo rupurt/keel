@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-02T11:19:10
+---
+
 # Reflection - Relocate Cli Command Surface Into Src Cli
 
 ## Knowledge

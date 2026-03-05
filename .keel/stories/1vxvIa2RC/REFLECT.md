@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-04T16:27:11
+---
+
 # Reflection - Remove Planning Show Recommendations And Update Planning Guidance
 
 ## Knowledge

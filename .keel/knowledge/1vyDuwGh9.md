@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vxH84K5a/REFLECT.md
 scope: 1vxGy5tco/1vxGzV3oR
 source_story_id: 1vxH84K5a
+created_at: 2026-03-03T10:53:41
 ---
 
 ### 1vyDuwGh9: Keep token inventories and CLI `new` surfaces coupled by drift tests

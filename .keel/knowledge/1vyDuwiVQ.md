@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vwqCeVSm/REFLECT.md
 scope: 1vwq96cpt/1vwq9Zf67
 source_story_id: 1vwqCeVSm
+created_at: 2026-03-01T20:32:11
 ---
 
 ### 1vyDuwiVQ: Event-First Cross-Aggregate Orchestration Preserves Boundaries

@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-03T16:32:24
+---
+
 # Reflection - Define Canonical Guidance Output Contract
 
 ## Knowledge

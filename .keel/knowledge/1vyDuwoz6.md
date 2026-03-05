@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vxqELhgo/REFLECT.md
 scope: 1vxYzSury/1vxqEChvp
 source_story_id: 1vxqELhgo
+created_at: 2026-03-04T10:21:20
 ---
 
 ### 1vyDuwoz6: Intake Stage Must Be Canonical In Creation Code

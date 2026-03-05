@@ -4,6 +4,7 @@
 
 use crate::domain::model::{Board, Voyage};
 use anyhow::{Context, Result};
+use chrono::NaiveDateTime;
 use std::collections::hash_map::DefaultHasher;
 use std::fs;
 use std::hash::{Hash, Hasher};
@@ -18,15 +19,31 @@ fn synthesized_knowledge_id(voyage_id: &str, story_id: &str, source_knowledge_id
     crate::infrastructure::story_id::encode_base62(raw, 9)
 }
 
+fn voyage_knowledge_created_at(board: &Board, voyage: &Voyage) -> Option<NaiveDateTime> {
+    board
+        .stories_for_voyage(voyage)
+        .into_iter()
+        .filter_map(|story| story.frontmatter.submitted_at)
+        .max()
+        .or(voyage.frontmatter.completed_at)
+        .or(voyage.frontmatter.started_at)
+        .or(voyage.frontmatter.created_at)
+}
+
 /// Synthesize reflections for a voyage into a KNOWLEDGE.md file
 pub fn synthesize_voyage_knowledge(board: &Board, voyage: &Voyage) -> Result<()> {
     let stories = board.stories_for_voyage(voyage);
+    let created_at = voyage_knowledge_created_at(board, voyage)
+        .map(crate::infrastructure::artifact_frontmatter::format_datetime);
     let mut synthesis = format!(
-        "# Knowledge - {}
+        "{}# Knowledge - {}
 
 > Automated synthesis of story reflections.
 
 ",
+        created_at
+            .map(|value| format!("---\ncreated_at: {value}\n---\n\n"))
+            .unwrap_or_default(),
         voyage.id()
     );
 

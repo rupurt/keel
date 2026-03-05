@@ -1,3 +1,7 @@
+---
+created_at: 2026-02-24T06:23:38
+---
+
 # Reflection - Normalize Epic Completion Field to Completed At
 
 ### Note 001: Canonical timestamp fields need both writer and validator alignment

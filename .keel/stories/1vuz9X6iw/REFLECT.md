@@ -1,3 +1,7 @@
+---
+created_at: 2026-02-24T17:25:15
+---
+
 # Reflection - Route Doctor Checks Through Gate Evaluators
 
 ### Note 001: Doctor parity is strongest when diagnostics consume enforcement outputs directly

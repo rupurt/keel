@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vxyMtVpK/REFLECT.md
 scope: 1vxyM0hvn/1vxyMT6nz
 source_story_id: 1vxyMtVpK
+created_at: 2026-03-04T19:02:37
 ---
 
 ### 1vyDuwMlz: Deterministic Projection Requires Ordered Containers End-To-End

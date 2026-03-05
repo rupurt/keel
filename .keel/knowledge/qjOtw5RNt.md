@@ -1,8 +1,7 @@
 ---
 source_type: Voyage
 source: epics/1vxYzSury/voyages/1vxpomgnN/KNOWLEDGE.md
-scope: null
-source_story_id: null
+created_at: 2026-03-04T11:56:17
 ---
 
 ### qjOtw5RNt: Evidence UX Needs Structured Inventory Layers

@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vxvIZRXy/REFLECT.md
 scope: 1vxqMtskC/1vxvFrNta
 source_story_id: 1vxvIZRXy
+created_at: 2026-03-04T15:42:57
 ---
 
 ### 1vyDuwBfG: Prefer direct status flags over aggregated recommendation blocks

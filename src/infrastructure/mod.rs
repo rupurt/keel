@@ -1,5 +1,6 @@
 //! Infrastructure services and adapters.
 
+pub mod artifact_frontmatter;
 pub mod config;
 pub mod duplicate_ids;
 pub mod frontmatter_mutation;

@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-04T16:13:11
+---
+
 # Reflection - Implement Verify Recommend For Active Detected Techniques
 
 ## Knowledge

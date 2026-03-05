@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-04T10:15:05
+---
+
 # Reflection - Implement Epic Show Planning Summary
 
 ## Knowledge

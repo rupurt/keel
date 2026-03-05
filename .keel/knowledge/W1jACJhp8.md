@@ -1,8 +1,7 @@
 ---
 source_type: Voyage
 source: epics/1vxGy5tco/voyages/1vxGzVpw5/KNOWLEDGE.md
-scope: null
-source_story_id: null
+created_at: 2026-03-03T11:50:46
 ---
 
 ### W1jACJhp8: Reuse the structural placeholder detector in runtime gates

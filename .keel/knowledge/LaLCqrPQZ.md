@@ -1,8 +1,7 @@
 ---
 source_type: Voyage
 source: epics/1vwq96cpt/voyages/1vwq9Zf67/KNOWLEDGE.md
-scope: null
-source_story_id: null
+created_at: 2026-03-02T09:33:26
 ---
 
 ### LaLCqrPQZ: Enforce policy invariants in application services, not command handlers

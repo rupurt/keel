@@ -1,8 +1,7 @@
 ---
 source_type: Voyage
 source: epics/1vwq96cpt/voyages/1vwq9rycE/KNOWLEDGE.md
-scope: null
-source_story_id: null
+created_at: 2026-03-02T10:34:57
 ---
 
 ### IxTCT6ayY: Keep Operational Metrics In A Single Read Model

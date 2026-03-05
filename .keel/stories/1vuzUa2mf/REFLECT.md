@@ -1,3 +1,7 @@
+---
+created_at: 2026-02-24T19:33:08
+---
+
 # Reflection - Fix Scaffold and Story Timestamp Doctor Findings at Source
 
 ### Note 001: Timestamp ownership belongs in transition/scaffold writes

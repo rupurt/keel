@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-01T15:56:49
+---
+
 # Reflection - Map Bounded Context Ownership
 
 ## Knowledge

@@ -1,8 +1,7 @@
 ---
 source_type: Voyage
 source: epics/1vxyM0hvn/voyages/1vxyMT6nz/KNOWLEDGE.md
-scope: null
-source_story_id: null
+created_at: 2026-03-04T19:11:59
 ---
 
 ### 0LMiWqrFa: Work Item Comparator Is Not Lexical

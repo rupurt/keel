@@ -1,3 +1,7 @@
+---
+created_at: 2026-02-24T21:43:12
+---
+
 # Reflection - Implement Dependency Graph Modeler for Stories
 
 ## Knowledge

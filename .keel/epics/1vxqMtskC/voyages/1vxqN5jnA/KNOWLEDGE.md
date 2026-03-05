@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-04T13:06:23
+---
+
 # Knowledge - 1vxqN5jnA
 
 > Automated synthesis of story reflections.
@@ -21,23 +25,6 @@
 
 ---
 
-## Story: Surface Technique Recommendations In Planning Shows (1vxqNFHpk)
-
-### 1vyDuwLvf: Centralized recommendation projection keeps show commands coherent
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Multiple read commands need consistent recommendation output while using different local data sources. |
-| **Insight** | A shared recommendation report model plus per-command input extraction avoids drift between epic/voyage/story rendering. |
-| **Suggested Action** | Add new recommendation behavior in `verification_techniques` first, then wire each show command through the same renderer helper. |
-| **Applies To** | `src/read_model/verification_techniques.rs`, `src/cli/commands/management/*/show.rs` |
-| **Applied** | yes |
-
-
-
----
-
 ## Story: Implement Keel.toml Technique Configuration Overrides (1vxqNFJOf)
 
 ### 1vyDuwSon: Advisory parser keeps keel.toml resilient
@@ -49,6 +36,23 @@
 | **Insight** | Parsing overrides from raw TOML with per-field diagnostics allows invalid entries to be ignored safely without blocking normal command behavior. |
 | **Suggested Action** | Keep optional/advanced config surfaces advisory by default, then merge validated entries into canonical models with explicit diagnostics. |
 | **Applies To** | `src/read_model/verification_techniques.rs` |
+| **Applied** | yes |
+
+
+
+---
+
+## Story: Surface Technique Recommendations In Planning Shows (1vxqNFHpk)
+
+### 1vyDuwLvf: Centralized recommendation projection keeps show commands coherent
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Multiple read commands need consistent recommendation output while using different local data sources. |
+| **Insight** | A shared recommendation report model plus per-command input extraction avoids drift between epic/voyage/story rendering. |
+| **Suggested Action** | Add new recommendation behavior in `verification_techniques` first, then wire each show command through the same renderer helper. |
+| **Applies To** | `src/read_model/verification_techniques.rs`, `src/cli/commands/management/*/show.rs` |
 | **Applied** | yes |
 
 
@@ -88,20 +92,6 @@
 | **Confidence** | 0.91 |
 | **Applied** | yes |
 
-### TQa285xzn: Centralized recommendation projection keeps show commands coherent
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Multiple read commands need consistent recommendation output while using different local data sources. |
-| **Insight** | A shared recommendation report model plus per-command input extraction avoids drift between epic/voyage/story rendering. |
-| **Suggested Action** | Add new recommendation behavior in `verification_techniques` first, then wire each show command through the same renderer helper. |
-| **Applies To** | `src/read_model/verification_techniques.rs`, `src/cli/commands/management/*/show.rs` |
-| **Linked Knowledge IDs** | 1vyDuwLvf |
-| **Score** | 0.85 |
-| **Confidence** | 0.93 |
-| **Applied** | yes |
-
 ### 9A5dbiPTG: Advisory parser keeps keel.toml resilient
 
 | Field | Value |
@@ -114,6 +104,20 @@
 | **Linked Knowledge IDs** | 1vyDuwSon |
 | **Score** | 0.82 |
 | **Confidence** | 0.88 |
+| **Applied** | yes |
+
+### TQa285xzn: Centralized recommendation projection keeps show commands coherent
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Multiple read commands need consistent recommendation output while using different local data sources. |
+| **Insight** | A shared recommendation report model plus per-command input extraction avoids drift between epic/voyage/story rendering. |
+| **Suggested Action** | Add new recommendation behavior in `verification_techniques` first, then wire each show command through the same renderer helper. |
+| **Applies To** | `src/read_model/verification_techniques.rs`, `src/cli/commands/management/*/show.rs` |
+| **Linked Knowledge IDs** | 1vyDuwLvf |
+| **Score** | 0.85 |
+| **Confidence** | 0.93 |
 | **Applied** | yes |
 
 ### Cn18kLEPl: Deterministic ranking requires total-order tie breaks

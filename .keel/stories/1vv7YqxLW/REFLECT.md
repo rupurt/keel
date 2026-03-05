@@ -1,3 +1,7 @@
+---
+created_at: 2026-02-24T21:48:02
+---
+
 # Reflection - Purge Unused Compatibility Fields from Model Structs
 
 ## Knowledge

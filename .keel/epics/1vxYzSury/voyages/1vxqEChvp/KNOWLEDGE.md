@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-04T10:27:26
+---
+
 # Knowledge - 1vxqEChvp
 
 > Automated synthesis of story reflections.

@@ -1,8 +1,7 @@
 ---
 source_type: Voyage
 source: epics/1vxqMtskC/voyages/1vxvFrNta/KNOWLEDGE.md
-scope: null
-source_story_id: null
+created_at: 2026-03-04T16:27:11
 ---
 
 ### gEqMvGXEE: Prefer direct status flags over aggregated recommendation blocks

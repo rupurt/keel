@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vwqCfHz7/REFLECT.md
 scope: 1vwq96cpt/1vwq9rycE
 source_story_id: 1vwqCfHz7
+created_at: 2026-03-02T08:14:31
 ---
 
 ### 1vyDuwl5B: Canonical read models remove adapter drift

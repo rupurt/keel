@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-03T09:13:53
+---
+
 # Reflection - Enforce Terminal Story Coherency In Doctor
 
 ## Knowledge

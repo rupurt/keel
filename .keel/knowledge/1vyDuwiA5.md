@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vxqNFNdN/REFLECT.md
 scope: 1vxqMtskC/1vxqN5jnA
 source_story_id: 1vxqNFNdN
+created_at: 2026-03-04T12:50:28
 ---
 
 ### 1vyDuwiA5: Deterministic ranking requires total-order tie breaks

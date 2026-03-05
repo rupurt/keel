@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vxppkB6M/REFLECT.md
 scope: 1vxYzSury/1vxpomgnN
 source_story_id: 1vxppkB6M
+created_at: 2026-03-04T11:16:01
 ---
 
 ### 1vyDuwuY1: Voyage Requirement Views Need Both AC And Verify Mapping

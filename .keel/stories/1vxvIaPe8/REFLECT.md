@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-04T15:55:40
+---
+
 # Reflection - Hard Cutover Verify Command To Subcommands
 
 ## Knowledge

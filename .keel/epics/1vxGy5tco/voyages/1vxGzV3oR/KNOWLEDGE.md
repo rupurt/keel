@@ -1,25 +1,12 @@
+---
+created_at: 2026-03-03T08:10:40
+---
+
 # Knowledge - 1vxGzV3oR
 
 > Automated synthesis of story reflections.
 
 ## Story Knowledge
-
-## Story: Canonicalize Template Tokens To Schema Names (1vxH83JcY)
-
-### 1vyDuwE2r: Keep Token Names Equal To Frontmatter Keys
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Template scaffolds and their renderer replacement maps drift when placeholder names are generic (`date`, `datetime`) instead of schema names. |
-| **Insight** | Canonical token names that mirror frontmatter fields (`created_at`, `updated_at`) remove ambiguity and make drift detection/test assertions straightforward. |
-| **Suggested Action** | For any new template token, require a matching model/frontmatter key name (or explicit documented exception) and add a regression guard against legacy aliases. |
-| **Applies To** | `templates/**`, `src/cli/commands/management/*/new.rs`, `src/infrastructure/templates.rs` |
-| **Applied** | yes |
-
-
-
----
 
 ## Story: Extend Adr Creation Inputs For Context Ownership (1vxH84Xh8)
 
@@ -38,17 +25,17 @@
 
 ---
 
-## Story: Align CLI Contracts For Creation Commands (1vxH83MOO)
+## Story: Canonicalize Template Tokens To Schema Names (1vxH83JcY)
 
-### 1vyDuwuNj: Keep CLI contract updates end-to-end
+### 1vyDuwE2r: Keep Token Names Equal To Frontmatter Keys
 
 | Field | Value |
 |-------|-------|
-| **Category** | code |
-| **Context** | When changing creation command flags and required inputs |
-| **Insight** | Command tree flags, runtime mappers, and user-facing suggestion strings drift unless updated in the same slice. |
-| **Suggested Action** | Pair every CLI contract edit with parser rejection tests for removed flags and updates to generated command hints. |
-| **Applies To** | src/cli/command_tree.rs, src/cli/runtime.rs, src/cli_tests.rs, src/cli/presentation/flow/next_up.rs |
+| **Category** | architecture |
+| **Context** | Template scaffolds and their renderer replacement maps drift when placeholder names are generic (`date`, `datetime`) instead of schema names. |
+| **Insight** | Canonical token names that mirror frontmatter fields (`created_at`, `updated_at`) remove ambiguity and make drift detection/test assertions straightforward. |
+| **Suggested Action** | For any new template token, require a matching model/frontmatter key name (or explicit documented exception) and add a regression guard against legacy aliases. |
+| **Applies To** | `templates/**`, `src/cli/commands/management/*/new.rs`, `src/infrastructure/templates.rs` |
 | **Applied** | yes |
 
 
@@ -72,21 +59,24 @@
 
 ---
 
-## Synthesis
+## Story: Align CLI Contracts For Creation Commands (1vxH83MOO)
 
-### Gd2KnPbv1: Keep Token Names Equal To Frontmatter Keys
+### 1vyDuwuNj: Keep CLI contract updates end-to-end
 
 | Field | Value |
 |-------|-------|
-| **Category** | architecture |
-| **Context** | Template scaffolds and their renderer replacement maps drift when placeholder names are generic (`date`, `datetime`) instead of schema names. |
-| **Insight** | Canonical token names that mirror frontmatter fields (`created_at`, `updated_at`) remove ambiguity and make drift detection/test assertions straightforward. |
-| **Suggested Action** | For any new template token, require a matching model/frontmatter key name (or explicit documented exception) and add a regression guard against legacy aliases. |
-| **Applies To** | `templates/**`, `src/cli/commands/management/*/new.rs`, `src/infrastructure/templates.rs` |
-| **Linked Knowledge IDs** | 1vyDuwE2r |
-| **Score** | 0.82 |
-| **Confidence** | 0.89 |
+| **Category** | code |
+| **Context** | When changing creation command flags and required inputs |
+| **Insight** | Command tree flags, runtime mappers, and user-facing suggestion strings drift unless updated in the same slice. |
+| **Suggested Action** | Pair every CLI contract edit with parser rejection tests for removed flags and updates to generated command hints. |
+| **Applies To** | src/cli/command_tree.rs, src/cli/runtime.rs, src/cli_tests.rs, src/cli/presentation/flow/next_up.rs |
 | **Applied** | yes |
+
+
+
+---
+
+## Synthesis
 
 ### Mb1Dyko1K: Keep CLI parser, runtime mapping, and template tokens aligned
 
@@ -102,18 +92,18 @@
 | **Confidence** | 0.91 |
 | **Applied** |  |
 
-### 60OXnfaXF: Keep CLI contract updates end-to-end
+### Gd2KnPbv1: Keep Token Names Equal To Frontmatter Keys
 
 | Field | Value |
 |-------|-------|
-| **Category** | code |
-| **Context** | When changing creation command flags and required inputs |
-| **Insight** | Command tree flags, runtime mappers, and user-facing suggestion strings drift unless updated in the same slice. |
-| **Suggested Action** | Pair every CLI contract edit with parser rejection tests for removed flags and updates to generated command hints. |
-| **Applies To** | src/cli/command_tree.rs, src/cli/runtime.rs, src/cli_tests.rs, src/cli/presentation/flow/next_up.rs |
-| **Linked Knowledge IDs** | 1vyDuwuNj |
+| **Category** | architecture |
+| **Context** | Template scaffolds and their renderer replacement maps drift when placeholder names are generic (`date`, `datetime`) instead of schema names. |
+| **Insight** | Canonical token names that mirror frontmatter fields (`created_at`, `updated_at`) remove ambiguity and make drift detection/test assertions straightforward. |
+| **Suggested Action** | For any new template token, require a matching model/frontmatter key name (or explicit documented exception) and add a regression guard against legacy aliases. |
+| **Applies To** | `templates/**`, `src/cli/commands/management/*/new.rs`, `src/infrastructure/templates.rs` |
+| **Linked Knowledge IDs** | 1vyDuwE2r |
 | **Score** | 0.82 |
-| **Confidence** | 0.90 |
+| **Confidence** | 0.89 |
 | **Applied** | yes |
 
 ### NzFf9pQSl: Keep token inventories and CLI `new` surfaces coupled by drift tests
@@ -129,4 +119,18 @@
 | **Score** | 0.83 |
 | **Confidence** | 0.92 |
 | **Applied** |  |
+
+### 60OXnfaXF: Keep CLI contract updates end-to-end
+
+| Field | Value |
+|-------|-------|
+| **Category** | code |
+| **Context** | When changing creation command flags and required inputs |
+| **Insight** | Command tree flags, runtime mappers, and user-facing suggestion strings drift unless updated in the same slice. |
+| **Suggested Action** | Pair every CLI contract edit with parser rejection tests for removed flags and updates to generated command hints. |
+| **Applies To** | src/cli/command_tree.rs, src/cli/runtime.rs, src/cli_tests.rs, src/cli/presentation/flow/next_up.rs |
+| **Linked Knowledge IDs** | 1vyDuwuNj |
+| **Score** | 0.82 |
+| **Confidence** | 0.90 |
+| **Applied** | yes |
 

@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vwqCfma0/REFLECT.md
 scope: 1vwq96cpt/1vwq9rycE
 source_story_id: 1vwqCfma0
+created_at: 2026-03-02T10:34:57
 ---
 
 ### 1vyDuwCgL: Interface Adapters Should Delegate Instead Of Recompute

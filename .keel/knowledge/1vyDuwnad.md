@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vwqCfPpe/REFLECT.md
 scope: 1vwq96cpt/1vwq9Zf67
 source_story_id: 1vwqCfPpe
+created_at: 2026-03-02T09:33:26
 ---
 
 ### 1vyDuwnad: Enforce policy invariants in application services, not command handlers

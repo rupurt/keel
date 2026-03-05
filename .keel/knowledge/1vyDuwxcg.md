@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vxH84Xh8/REFLECT.md
 scope: 1vxGy5tco/1vxGzV3oR
 source_story_id: 1vxH84Xh8
+created_at: 2026-03-03T10:41:12
 ---
 
 ### 1vyDuwxcg: Keep CLI parser, runtime mapping, and template tokens aligned

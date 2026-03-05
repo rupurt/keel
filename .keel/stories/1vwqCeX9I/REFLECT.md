@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-02T09:23:09
+---
+
 # Reflection - Extract Template Rendering Service
 
 ## Knowledge

@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vwqCfS0F/REFLECT.md
 scope: 1vwq96cpt/1vwq9rycE
 source_story_id: 1vwqCfS0F
+created_at: 2026-03-01T17:30:41
 ---
 
 ### 1vyDuwXBN: Keep Operational Metrics In A Single Read Model

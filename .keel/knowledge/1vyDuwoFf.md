@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vxH84M8t/REFLECT.md
 scope: 1vxGy5tco/1vxGzVpw5
 source_story_id: 1vxH84M8t
+created_at: 2026-03-03T09:56:48
 ---
 
 ### 1vyDuwoFf: Reuse the structural placeholder detector in runtime gates

@@ -1,3 +1,7 @@
+---
+created_at: 2026-02-24T15:44:00
+---
+
 # Reflection - Remove Legacy State and Status Deserializers
 
 ### Note 001: Hard-cut deserializers should fail with explicit replacement guidance

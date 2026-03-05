@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vxH84jzB/REFLECT.md
 scope: 1vxGy5tco/1vxGzVpw5
 source_story_id: 1vxH84jzB
+created_at: 2026-03-03T11:50:46
 ---
 
 ### 1vyDuwFj5: Assert check identity and severity for hard-cutover gates

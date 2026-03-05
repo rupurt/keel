@@ -1,8 +1,7 @@
 ---
 source_type: Voyage
 source: epics/1vwq96cpt/voyages/1vwq9Pj97/KNOWLEDGE.md
-scope: null
-source_story_id: null
+created_at: 2026-03-02T07:36:50
 ---
 
 ### 1jCvlheVL: Matrix Contracts Need Both Narrative and Table Forms

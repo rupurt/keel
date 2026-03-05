@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-03T08:10:40
+---
+
 # Reflection - Align CLI Contracts For Creation Commands
 
 ## Knowledge

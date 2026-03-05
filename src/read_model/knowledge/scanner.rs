@@ -8,9 +8,10 @@ use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 
 use anyhow::{Context, Result, bail};
-use chrono::Utc;
+use chrono::{NaiveDateTime, Utc};
 use rayon::prelude::*;
 use regex::Regex;
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
@@ -47,10 +48,25 @@ pub struct KnowledgeCatalog {
 struct KnowledgeFileFrontmatter {
     source_type: KnowledgeSourceType,
     source: String,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     scope: Option<String>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     source_story_id: Option<String>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::domain::model::deserialize_strict_datetime"
+    )]
+    created_at: Option<NaiveDateTime>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+struct KnowledgeArtifactFrontmatter {
+    #[serde(
+        default,
+        deserialize_with = "crate::domain::model::deserialize_strict_datetime"
+    )]
+    created_at: Option<NaiveDateTime>,
 }
 
 /// One-time migration result for canonicalizing knowledge IDs.
@@ -209,12 +225,38 @@ fn source_path_from_storage(board_dir: &Path, stored: &str) -> PathBuf {
     }
 }
 
+fn optional_frontmatter<T: DeserializeOwned>(content: &str) -> Option<T> {
+    let trimmed = content.trim_start();
+    if !trimmed.starts_with("---") {
+        return None;
+    }
+
+    crate::infrastructure::parser::parse_frontmatter::<T>(trimmed)
+        .ok()
+        .map(|(frontmatter, _)| frontmatter)
+}
+
+fn content_created_at(content: &str) -> Option<NaiveDateTime> {
+    optional_frontmatter::<KnowledgeArtifactFrontmatter>(content).and_then(|fm| fm.created_at)
+}
+
+fn apply_created_at(units: &mut [Knowledge], created_at: Option<NaiveDateTime>) {
+    let Some(created_at) = created_at else {
+        return;
+    };
+
+    for unit in units {
+        unit.created_at.get_or_insert(created_at);
+    }
+}
+
 fn render_knowledge_markdown(board_dir: &Path, knowledge: &Knowledge) -> Result<String> {
     let frontmatter = KnowledgeFileFrontmatter {
         source_type: knowledge.source_type,
         source: source_path_for_storage(board_dir, &knowledge.source),
         scope: knowledge.scope.clone(),
         source_story_id: knowledge.source_story_id.clone(),
+        created_at: knowledge.created_at,
     };
 
     Ok(format!(
@@ -256,6 +298,7 @@ fn load_knowledge_file(board_dir: &Path, path: &Path) -> Result<Knowledge> {
     unit.source = source_path_from_storage(board_dir, &frontmatter.source);
     unit.source_type = frontmatter.source_type;
     unit.scope = frontmatter.scope;
+    unit.created_at = frontmatter.created_at;
     unit.source_story_id = frontmatter
         .source_story_id
         .or_else(|| canonicalize_source_story_id(&unit.source));
@@ -373,6 +416,7 @@ fn parse_knowledge_table(
         suggested_action,
         applies_to: fields.get("appliesto").cloned().unwrap_or_default(),
         applied: fields.get("applied").cloned().unwrap_or_default(),
+        created_at: None,
         observed_at,
         score,
         confidence,
@@ -563,12 +607,14 @@ fn apply_story_context(
     units: &mut [Knowledge],
     scope: Option<String>,
     source_story_id: Option<String>,
+    created_at: Option<NaiveDateTime>,
 ) {
     for knowledge in units {
         knowledge.scope = scope.clone().or_else(|| knowledge.scope.clone());
         knowledge.source_story_id = source_story_id
             .clone()
             .or_else(|| knowledge.source_story_id.clone());
+        knowledge.created_at = knowledge.created_at.or(created_at);
     }
 }
 
@@ -625,6 +671,7 @@ fn scan_story_knowledge(board_dir: &Path) -> Result<Vec<Knowledge>> {
         };
 
         let scope = extract_scope_from_frontmatter(&readme_content);
+        let created_at = content_created_at(&reflect_content);
         let source_story_id = bundle_path
             .file_name()
             .and_then(|name| name.to_str())
@@ -635,7 +682,12 @@ fn scan_story_knowledge(board_dir: &Path) -> Result<Vec<Knowledge>> {
             &reflect_path,
             KnowledgeSourceType::Story,
         );
-        apply_story_context(&mut inline, scope.clone(), source_story_id.clone());
+        apply_story_context(
+            &mut inline,
+            scope.clone(),
+            source_story_id.clone(),
+            created_at,
+        );
         all.extend(dedupe_by_id(inline));
     }
 
@@ -667,13 +719,17 @@ fn scan_voyage_knowledge(board_dir: &Path) -> Vec<Knowledge> {
                 Ok(c) => c,
                 Err(_) => return Vec::new(),
             };
+            let created_at = content_created_at(&content);
 
             // Only extract from ## Synthesis section
             let section_content = extract_section(&content, "## Synthesis");
             let Some(section_content) = section_content else {
                 return Vec::new();
             };
-            parse_knowledge_from_content(&section_content, path, KnowledgeSourceType::Voyage)
+            let mut units =
+                parse_knowledge_from_content(&section_content, path, KnowledgeSourceType::Voyage);
+            apply_created_at(&mut units, created_at);
+            units
         })
         .collect()
 }
@@ -1008,7 +1064,9 @@ pub fn detect_similarity_conflicts(
 pub fn load_reflection_knowledge(board_dir: &Path, reflect_path: &Path) -> Result<Vec<Knowledge>> {
     let content = fs::read_to_string(reflect_path)
         .with_context(|| format!("Failed to read {}", reflect_path.display()))?;
-    let inline = parse_knowledge_from_content(&content, reflect_path, KnowledgeSourceType::Story);
+    let mut inline =
+        parse_knowledge_from_content(&content, reflect_path, KnowledgeSourceType::Story);
+    apply_created_at(&mut inline, content_created_at(&content));
     let linked = load_reflection_linked_knowledge(board_dir, reflect_path, &content)?;
     Ok(dedupe_by_id(inline.into_iter().chain(linked).collect()))
 }
@@ -1026,6 +1084,7 @@ pub fn parse_reflection_candidates(
         &mut inline,
         scope.map(str::to_string),
         source_story_id.map(str::to_string),
+        content_created_at(&content),
     );
     Ok(inline)
 }
@@ -1477,6 +1536,7 @@ status: done
                 suggested_action: String::new(),
                 applies_to: String::new(),
                 applied: "file.md (2026-01-20)".to_string(),
+                created_at: None,
                 observed_at: None,
                 score: 0.5,
                 confidence: 0.8,
@@ -1497,6 +1557,7 @@ status: done
                 suggested_action: String::new(),
                 applies_to: String::new(),
                 applied: String::new(),
+                created_at: None,
                 observed_at: None,
                 score: 0.5,
                 confidence: 0.8,
@@ -1527,6 +1588,7 @@ status: done
                 suggested_action: String::new(),
                 applies_to: String::new(),
                 applied: String::new(),
+                created_at: None,
                 observed_at: None,
                 score: 0.5,
                 confidence: 0.8,
@@ -1547,6 +1609,7 @@ status: done
                 suggested_action: String::new(),
                 applies_to: String::new(),
                 applied: String::new(),
+                created_at: None,
                 observed_at: None,
                 score: 0.5,
                 confidence: 0.8,
@@ -1725,6 +1788,7 @@ status: done
                 .to_string(),
             applies_to: String::new(),
             applied: String::new(),
+            created_at: None,
             observed_at: None,
             score: 0.7,
             confidence: 0.9,
@@ -1816,6 +1880,7 @@ The reflection stayed readable after linking.
             suggested_action: "Link the existing knowledge instead of restating it".to_string(),
             applies_to: String::new(),
             applied: String::new(),
+            created_at: None,
             observed_at: None,
             score: 0.5,
             confidence: 0.8,
@@ -1837,6 +1902,7 @@ The reflection stayed readable after linking.
             suggested_action: "Link the existing knowledge instead of restating it".to_string(),
             applies_to: String::new(),
             applied: String::new(),
+            created_at: None,
             observed_at: None,
             score: 0.5,
             confidence: 0.8,

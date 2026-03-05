@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vxppkN0w/REFLECT.md
 scope: 1vxYzSury/1vxpomgnN
 source_story_id: 1vxppkN0w
+created_at: 2026-03-04T10:15:05
 ---
 
 ### 1vyDuwuBj: Planning Show Parsing Needs Scaffold Filters

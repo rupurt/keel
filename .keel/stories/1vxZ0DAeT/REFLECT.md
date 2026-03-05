@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-03T19:30:15
+---
+
 # Reflection - Add Canonical Guidance To Bearing Transition Commands
 
 ## Knowledge

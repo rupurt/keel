@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vwqCe5T0/REFLECT.md
 scope: 1vwq96cpt/1vwq9Zf67
 source_story_id: 1vwqCe5T0
+created_at: 2026-03-01T16:26:39
 ---
 
 ### 1vyDuwDTq: Thin Command Adapters Preserve Behavior During Refactors

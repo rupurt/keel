@@ -1,8 +1,7 @@
 ---
 source_type: Voyage
 source: epics/1vwq96cpt/voyages/1vx8TLqpp/KNOWLEDGE.md
-scope: null
-source_story_id: null
+created_at: 2026-03-02T12:03:53
 ---
 
 ### 3kBfhLmlY: Enforce Root Layout With Contracts

@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-02T10:20:43
+---
+
 # Reflection - Add Command Behavior Regression Suite
 
 ## Knowledge

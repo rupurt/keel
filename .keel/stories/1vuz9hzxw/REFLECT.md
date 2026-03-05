@@ -1,3 +1,7 @@
+---
+created_at: 2026-02-24T15:26:41
+---
+
 # Reflection - Implement Hard Migration Command for Canonical Schema
 
 ### Note 001: Preflight validation prevents partial migrations

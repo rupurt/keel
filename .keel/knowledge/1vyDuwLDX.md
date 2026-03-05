@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vx8V5uUT/REFLECT.md
 scope: 1vwq96cpt/1vx8TLqpp
 source_story_id: 1vx8V5uUT
+created_at: 2026-03-02T11:19:10
 ---
 
 ### 1vyDuwLDX: Path-Wide Module Moves Need Import Rewrite First

@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vxH83MOO/REFLECT.md
 scope: 1vxGy5tco/1vxGzV3oR
 source_story_id: 1vxH83MOO
+created_at: 2026-03-03T08:10:40
 ---
 
 ### 1vyDuwuNj: Keep CLI contract updates end-to-end

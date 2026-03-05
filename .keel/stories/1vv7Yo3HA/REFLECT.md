@@ -1,3 +1,7 @@
+---
+created_at: 2026-02-24T21:42:13
+---
+
 # Reflection - Enhance ADR Blocking Messages in Next Decision
 
 ## Knowledge

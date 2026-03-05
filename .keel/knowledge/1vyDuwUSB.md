@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vxppkEH9/REFLECT.md
 scope: 1vxYzSury/1vxpomgnN
 source_story_id: 1vxppkEH9
+created_at: 2026-03-04T11:30:01
 ---
 
 ### 1vyDuwUSB: Evidence UX Needs Structured Inventory Layers

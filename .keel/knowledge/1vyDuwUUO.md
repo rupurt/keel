@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vxvIa2RC/REFLECT.md
 scope: 1vxqMtskC/1vxvFrNta
 source_story_id: 1vxvIa2RC
+created_at: 2026-03-04T16:27:11
 ---
 
 ### 1vyDuwUUO: Keep recommendation sourcing decoupled from planning read surfaces

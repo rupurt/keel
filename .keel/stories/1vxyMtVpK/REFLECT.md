@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-04T19:02:37
+---
+
 # Reflection - Command And Projection Tests For Parallel Safety
 
 ## Knowledge

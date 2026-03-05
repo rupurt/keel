@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-02T10:34:57
+---
+
 # Knowledge - 1vwq9rycE
 
 > Automated synthesis of story reflections.
@@ -16,23 +20,6 @@
 | **Suggested Action** | Add read-model projection services first, then migrate every consumer to the projection API before deleting local metric structs |
 | **Applies To** | src/read_model/flow_status.rs; src/commands/diagnostics/{flow,status}.rs; src/next/algorithm.rs |
 | **Applied** | 1vwqCfS0F |
-
-
-
----
-
-## Story: Build Canonical Capacity Projection (1vwqCfHz7)
-
-### 1vyDuwl5B: Canonical read models remove adapter drift
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | When both flow rendering and diagnostics need the same capacity semantics |
-| **Insight** | Duplicated DTOs and charge enums across adapters force conversion shims and create drift risk in UI logic. |
-| **Suggested Action** | Keep one projection type in `read_model` and make interface modules thin adapters over that projection. |
-| **Applies To** | `src/read_model/capacity.rs`, `src/flow/capacity.rs`, `src/commands/diagnostics/capacity.rs`, `src/flow/display.rs` |
-| **Applied** | story `1vwqCfHz7` |
 
 
 
@@ -72,6 +59,23 @@
 
 ---
 
+## Story: Build Canonical Capacity Projection (1vwqCfHz7)
+
+### 1vyDuwl5B: Canonical read models remove adapter drift
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | When both flow rendering and diagnostics need the same capacity semantics |
+| **Insight** | Duplicated DTOs and charge enums across adapters force conversion shims and create drift risk in UI logic. |
+| **Suggested Action** | Keep one projection type in `read_model` and make interface modules thin adapters over that projection. |
+| **Applies To** | `src/read_model/capacity.rs`, `src/flow/capacity.rs`, `src/commands/diagnostics/capacity.rs`, `src/flow/display.rs` |
+| **Applied** | story `1vwqCfHz7` |
+
+
+
+---
+
 ## Synthesis
 
 ### IxTCT6ayY: Keep Operational Metrics In A Single Read Model
@@ -87,20 +91,6 @@
 | **Score** | 0.84 |
 | **Confidence** | 0.89 |
 | **Applied** | 1vwqCfS0F |
-
-### ZXRUhJpNe: Canonical read models remove adapter drift
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | When both flow rendering and diagnostics need the same capacity semantics |
-| **Insight** | Duplicated DTOs and charge enums across adapters force conversion shims and create drift risk in UI logic. |
-| **Suggested Action** | Keep one projection type in `read_model` and make interface modules thin adapters over that projection. |
-| **Applies To** | `src/read_model/capacity.rs`, `src/flow/capacity.rs`, `src/commands/diagnostics/capacity.rs`, `src/flow/display.rs` |
-| **Linked Knowledge IDs** | 1vyDuwl5B |
-| **Score** | 0.89 |
-| **Confidence** | 0.96 |
-| **Applied** | story `1vwqCfHz7` |
 
 ### qUF0j5GEl: Queue-policy facades prevent decision/rendering drift
 
@@ -129,4 +119,18 @@
 | **Score** | 0.83 |
 | **Confidence** | 0.90 |
 | **Applied** | Delegated diagnostics capacity command to `flow::capacity` and added explicit contract test for shared interface usage |
+
+### ZXRUhJpNe: Canonical read models remove adapter drift
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | When both flow rendering and diagnostics need the same capacity semantics |
+| **Insight** | Duplicated DTOs and charge enums across adapters force conversion shims and create drift risk in UI logic. |
+| **Suggested Action** | Keep one projection type in `read_model` and make interface modules thin adapters over that projection. |
+| **Applies To** | `src/read_model/capacity.rs`, `src/flow/capacity.rs`, `src/commands/diagnostics/capacity.rs`, `src/flow/display.rs` |
+| **Linked Knowledge IDs** | 1vyDuwl5B |
+| **Score** | 0.89 |
+| **Confidence** | 0.96 |
+| **Applied** | story `1vwqCfHz7` |
 

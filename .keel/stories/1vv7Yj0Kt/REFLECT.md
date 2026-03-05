@@ -1,3 +1,7 @@
+---
+created_at: 2026-02-24T21:38:23
+---
+
 ### Note 001: Unified enforcement for tactical transitions
 The `voyage plan` and `voyage start` commands are now fully aligned with the unified enforcement service, ensuring that tactical planning and execution follow the same safety rules.
 

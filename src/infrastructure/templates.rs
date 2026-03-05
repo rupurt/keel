@@ -128,6 +128,12 @@ mod tests {
     }
 
     #[test]
+    fn story_reflect_contains_created_at_placeholder() {
+        assert!(story::REFLECT.contains("{{created_at}}"));
+        assert!(story::REFLECT.contains("created_at:"));
+    }
+
+    #[test]
     fn epic_readme_has_generated_section_markers() {
         // Epic README needs markers for auto-generated voyages section
         assert!(

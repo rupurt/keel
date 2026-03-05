@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vxppk4Oj/REFLECT.md
 scope: 1vxYzSury/1vxpomgnN
 source_story_id: 1vxppk4Oj
+created_at: 2026-03-04T11:49:49
 ---
 
 ### 1vyDuwrAD: Centralized show projections reduce drift

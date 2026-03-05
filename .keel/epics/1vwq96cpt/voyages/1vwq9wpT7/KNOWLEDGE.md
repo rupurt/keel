@@ -1,25 +1,12 @@
+---
+created_at: 2026-03-02T10:42:29
+---
+
 # Knowledge - 1vwq9wpT7
 
 > Automated synthesis of story reflections.
 
 ## Story Knowledge
-
-## Story: Add Architecture Contract Verification Suite (1vwqCfdUl)
-
-### 1vyDuwvt7: Production-only import checks reduce false positives
-
-| Field | Value |
-|-------|-------|
-| **Category** | testing |
-| **Context** | Architecture contract tests scanning modules that also contain `#[cfg(test)]` helper imports |
-| **Insight** | Import-boundary checks should target production sections to avoid test-only imports triggering invalid architectural failures. |
-| **Suggested Action** | Split source at `#[cfg(test)]` and enforce forbidden-edge patterns only on production content for adapter boundary tests. |
-| **Applies To** | `src/architecture_contract_tests.rs`, `src/commands/diagnostics/*.rs`, `src/main.rs`, `src/next/algorithm.rs` |
-| **Applied** | story `1vwqCfdUl` |
-
-
-
----
 
 ## Story: Add Command Behavior Regression Suite (1vwqCffzr)
 
@@ -33,23 +20,6 @@
 | **Suggested Action** | Add paired regression tests that validate both command-level decisions and dashboard summaries for each queue policy boundary |
 | **Applies To** | `src/next/*`, `src/flow/*`, `src/commands/story/*`, `src/command_regression_tests.rs` |
 | **Applied** | Added `command_regression_tests` cases for human-block and flow-block boundaries plus lifecycle start/submit/accept chain |
-
-
-
----
-
-## Story: Publish Migration Completion Checklist (1vwqCfeFP)
-
-### 1vyDuwiKv: Rollout Docs Need Explicit Gate Ownership
-
-| Field | Value |
-|-------|-------|
-| **Category** | process |
-| **Context** | Finalizing migration voyages where multiple maintainers coordinate acceptance and release sequencing |
-| **Insight** | Checklist quality improves when each gate and rollout step is phrased as an explicit maintainer action with clear command references |
-| **Suggested Action** | Keep voyage-local migration checklists with completion criteria, gate commands, rollout order, and deferred-item tracking |
-| **Applies To** | `.keel/epics/*/voyages/*/MIGRATION_CHECKLIST.md`, voyage `README.md` document tables |
-| **Applied** | Added `MIGRATION_CHECKLIST.md` for `1vwq9wpT7` and linked it from voyage documents |
 
 
 
@@ -72,9 +42,9 @@
 
 ---
 
-## Synthesis
+## Story: Add Architecture Contract Verification Suite (1vwqCfdUl)
 
-### erV4YlxVN: Production-only import checks reduce false positives
+### 1vyDuwvt7: Production-only import checks reduce false positives
 
 | Field | Value |
 |-------|-------|
@@ -83,10 +53,30 @@
 | **Insight** | Import-boundary checks should target production sections to avoid test-only imports triggering invalid architectural failures. |
 | **Suggested Action** | Split source at `#[cfg(test)]` and enforce forbidden-edge patterns only on production content for adapter boundary tests. |
 | **Applies To** | `src/architecture_contract_tests.rs`, `src/commands/diagnostics/*.rs`, `src/main.rs`, `src/next/algorithm.rs` |
-| **Linked Knowledge IDs** | 1vyDuwvt7 |
-| **Score** | 0.87 |
-| **Confidence** | 0.95 |
 | **Applied** | story `1vwqCfdUl` |
+
+
+
+---
+
+## Story: Publish Migration Completion Checklist (1vwqCfeFP)
+
+### 1vyDuwiKv: Rollout Docs Need Explicit Gate Ownership
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | Finalizing migration voyages where multiple maintainers coordinate acceptance and release sequencing |
+| **Insight** | Checklist quality improves when each gate and rollout step is phrased as an explicit maintainer action with clear command references |
+| **Suggested Action** | Keep voyage-local migration checklists with completion criteria, gate commands, rollout order, and deferred-item tracking |
+| **Applies To** | `.keel/epics/*/voyages/*/MIGRATION_CHECKLIST.md`, voyage `README.md` document tables |
+| **Applied** | Added `MIGRATION_CHECKLIST.md` for `1vwq9wpT7` and linked it from voyage documents |
+
+
+
+---
+
+## Synthesis
 
 ### gYNMP5JXn: Regression Parity Needs Cross-Command Coverage
 
@@ -102,20 +92,6 @@
 | **Confidence** | 0.89 |
 | **Applied** | Added `command_regression_tests` cases for human-block and flow-block boundaries plus lifecycle start/submit/accept chain |
 
-### xGmZTe7kR: Rollout Docs Need Explicit Gate Ownership
-
-| Field | Value |
-|-------|-------|
-| **Category** | process |
-| **Context** | Finalizing migration voyages where multiple maintainers coordinate acceptance and release sequencing |
-| **Insight** | Checklist quality improves when each gate and rollout step is phrased as an explicit maintainer action with clear command references |
-| **Suggested Action** | Keep voyage-local migration checklists with completion criteria, gate commands, rollout order, and deferred-item tracking |
-| **Applies To** | `.keel/epics/*/voyages/*/MIGRATION_CHECKLIST.md`, voyage `README.md` document tables |
-| **Linked Knowledge IDs** | 1vyDuwiKv |
-| **Score** | 0.78 |
-| **Confidence** | 0.88 |
-| **Applied** | Added `MIGRATION_CHECKLIST.md` for `1vwq9wpT7` and linked it from voyage documents |
-
 ### xb3Zn8PjR: Build Typed Command Actions Before Dispatching
 
 | Field | Value |
@@ -129,4 +105,32 @@
 | **Score** | 0.80 |
 | **Confidence** | 0.87 |
 | **Applied** | 1vwqCf53S |
+
+### erV4YlxVN: Production-only import checks reduce false positives
+
+| Field | Value |
+|-------|-------|
+| **Category** | testing |
+| **Context** | Architecture contract tests scanning modules that also contain `#[cfg(test)]` helper imports |
+| **Insight** | Import-boundary checks should target production sections to avoid test-only imports triggering invalid architectural failures. |
+| **Suggested Action** | Split source at `#[cfg(test)]` and enforce forbidden-edge patterns only on production content for adapter boundary tests. |
+| **Applies To** | `src/architecture_contract_tests.rs`, `src/commands/diagnostics/*.rs`, `src/main.rs`, `src/next/algorithm.rs` |
+| **Linked Knowledge IDs** | 1vyDuwvt7 |
+| **Score** | 0.87 |
+| **Confidence** | 0.95 |
+| **Applied** | story `1vwqCfdUl` |
+
+### xGmZTe7kR: Rollout Docs Need Explicit Gate Ownership
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | Finalizing migration voyages where multiple maintainers coordinate acceptance and release sequencing |
+| **Insight** | Checklist quality improves when each gate and rollout step is phrased as an explicit maintainer action with clear command references |
+| **Suggested Action** | Keep voyage-local migration checklists with completion criteria, gate commands, rollout order, and deferred-item tracking |
+| **Applies To** | `.keel/epics/*/voyages/*/MIGRATION_CHECKLIST.md`, voyage `README.md` document tables |
+| **Linked Knowledge IDs** | 1vyDuwiKv |
+| **Score** | 0.78 |
+| **Confidence** | 0.88 |
+| **Applied** | Added `MIGRATION_CHECKLIST.md` for `1vwq9wpT7` and linked it from voyage documents |
 

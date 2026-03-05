@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-02T10:42:29
+---
+
 # Reflection - Publish Migration Completion Checklist
 
 ## Knowledge

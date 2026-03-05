@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-01T17:30:41
+---
+
 # Reflection - Build Canonical Flow Status Projection
 
 ## Knowledge

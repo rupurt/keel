@@ -4,6 +4,7 @@ use std::fs;
 use std::path::Path;
 
 use anyhow::{Context, Result, bail};
+use chrono::Local;
 
 use crate::application::knowledge_context;
 use crate::domain::model::StoryState;
@@ -50,6 +51,12 @@ fn run_impl(board_dir: &Path, id: &str) -> Result<()> {
         &[
             ("id", story.id()),
             ("title", story.title()),
+            (
+                "created_at",
+                &crate::infrastructure::artifact_frontmatter::format_datetime(
+                    Local::now().naive_local(),
+                ),
+            ),
             (
                 "knowledge_example_id",
                 &crate::infrastructure::story_id::generate_story_id(),
@@ -100,6 +107,7 @@ mod tests {
         assert!(reflect_path.exists(), "REFLECT.md should be created");
 
         let content = fs::read_to_string(reflect_path).unwrap();
+        assert!(content.contains("created_at: "));
         assert!(content.contains("# Reflection - Reflect Story"));
         assert!(content.contains("### "));
         assert!(content.contains(": Title"));

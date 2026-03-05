@@ -1,3 +1,7 @@
+---
+created_at: 2026-02-24T21:38:47
+---
+
 # Reflection - Update Architecture Documentation for Enforcement Flow
 
 ## Knowledge

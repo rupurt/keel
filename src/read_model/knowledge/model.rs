@@ -2,7 +2,7 @@
 //!
 //! Represents knowledge extracted from stories, voyages, and ad-hoc files.
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::path::PathBuf;
@@ -55,6 +55,8 @@ pub struct Knowledge {
     pub applies_to: String,
     /// Record of where this insight has already been applied
     pub applied: String,
+    /// Artifact creation timestamp from reflection/knowledge frontmatter
+    pub created_at: Option<NaiveDateTime>,
     /// Timestamp of discovery (used for trend detection)
     pub observed_at: Option<DateTime<Utc>>,
     /// Numeric score 0.0-1.0 representing impact significance
@@ -146,6 +148,7 @@ mod tests {
             suggested_action: String::new(),
             applies_to: String::new(),
             applied: String::new(),
+            created_at: None,
             observed_at: None,
             score: 0.5,
             confidence: 0.8,
@@ -172,6 +175,7 @@ mod tests {
             suggested_action: String::new(),
             applies_to: String::new(),
             applied: "Applied in CLAUDE.md".to_string(),
+            created_at: None,
             observed_at: None,
             score: 0.5,
             confidence: 0.8,
@@ -205,6 +209,7 @@ mod tests {
                 suggested_action: String::new(),
                 applies_to: String::new(),
                 applied: "done".to_string(),
+                created_at: None,
                 observed_at: None,
                 score: 0.5,
                 confidence: 0.8,
@@ -225,6 +230,7 @@ mod tests {
                 suggested_action: String::new(),
                 applies_to: String::new(),
                 applied: String::new(),
+                created_at: None,
                 observed_at: None,
                 score: 0.5,
                 confidence: 0.8,
@@ -245,6 +251,7 @@ mod tests {
                 suggested_action: String::new(),
                 applies_to: String::new(),
                 applied: String::new(),
+                created_at: None,
                 observed_at: None,
                 score: 0.5,
                 confidence: 0.8,
@@ -284,6 +291,7 @@ mod tests {
             suggested_action: String::new(),
             applies_to: String::new(),
             applied: "   ".to_string(),
+            created_at: None,
             observed_at: None,
             score: 0.5,
             confidence: 0.8,

@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-02T07:36:50
+---
+
 # Reflection - Enforce Architecture Contract Tests
 
 ## Knowledge

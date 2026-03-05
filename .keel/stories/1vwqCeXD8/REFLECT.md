@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-02T10:07:49
+---
+
 # Reflection - Implement Filesystem Adapter Layer
 
 ## Knowledge

@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vxqNFHpk/REFLECT.md
 scope: 1vxqMtskC/1vxqN5jnA
 source_story_id: 1vxqNFHpk
+created_at: 2026-03-04T13:05:08
 ---
 
 ### 1vyDuwLvf: Centralized recommendation projection keeps show commands coherent

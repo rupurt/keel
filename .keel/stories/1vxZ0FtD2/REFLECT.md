@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-03T20:49:39
+---
+
 # Reflection - Document Command Guidance Contract For Harness Consumers
 
 ## Knowledge

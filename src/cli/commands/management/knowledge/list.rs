@@ -177,6 +177,7 @@ mod tests {
             suggested_action: String::new(),
             applies_to: String::new(),
             applied: String::new(),
+            created_at: None,
             observed_at: None,
             score: 0.8,
             confidence: 0.9,

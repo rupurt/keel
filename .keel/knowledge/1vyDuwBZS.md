@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vxyMsvug/REFLECT.md
 scope: 1vxyM0hvn/1vxyMT6nz
 source_story_id: 1vxyMsvug
+created_at: 2026-03-04T18:48:36
 ---
 
 ### 1vyDuwBZS: Greedy Threshold Gate Gives Deterministic Safe Subset

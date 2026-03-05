@@ -1,8 +1,7 @@
 ---
 source_type: Voyage
 source: epics/1vxYzSury/voyages/1vxqEChvp/KNOWLEDGE.md
-scope: null
-source_story_id: null
+created_at: 2026-03-04T10:27:26
 ---
 
 ### Vxfa8eEDb: Intake Stage Must Be Canonical In Creation Code

@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vx8V5VeE/REFLECT.md
 scope: 1vwq96cpt/1vx8TLqpp
 source_story_id: 1vx8V5VeE
+created_at: 2026-03-02T11:39:22
 ---
 
 ### 1vyDuwGDS: Relocated Source Files May Break Compile-Time Template Paths

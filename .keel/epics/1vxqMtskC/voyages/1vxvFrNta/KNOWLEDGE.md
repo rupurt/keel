@@ -1,20 +1,24 @@
+---
+created_at: 2026-03-04T16:27:11
+---
+
 # Knowledge - 1vxvFrNta
 
 > Automated synthesis of story reflections.
 
 ## Story Knowledge
 
-## Story: Implement Verify Recommend For Active Detected Techniques (1vxvIaM4w)
+## Story: Refactor Config Show Into Technique Flag Matrix (1vxvIZRXy)
 
-### 1vyDuwmNc: Centralize technique status before rendering
+### 1vyDuwBfG: Prefer direct status flags over aggregated recommendation blocks
 
 | Field | Value |
 |-------|-------|
 | **Category** | architecture |
-| **Context** | Multiple commands (`config show`, `verify recommend`) need the same detected/disabled/active evaluation. |
-| **Insight** | A shared status report API in the read model removes duplicated filtering logic and keeps recommendation output consistent across surfaces. |
-| **Suggested Action** | Route all verification-technique render paths through `resolve_technique_status_report` rather than command-local detection code. |
-| **Applies To** | `src/read_model/verification_techniques.rs`, `src/cli/commands/setup/config.rs`, `src/cli/commands/management/verify.rs` |
+| **Context** | Config introspection commands where automation depends on deterministic machine-readable state |
+| **Insight** | A per-technique flag matrix (`detected`, `disabled`, `active`) is a better contract boundary than mixed narrative sections because it cleanly separates inventory from recommendation logic. |
+| **Suggested Action** | Keep config/read commands focused on canonical state and move advisory ranking/commentary to dedicated recommend commands. |
+| **Applies To** | `src/cli/commands/setup/config.rs`, `src/read_model/verification_techniques.rs` |
 | **Applied** | yes |
 
 
@@ -55,26 +59,9 @@
 
 ---
 
-## Story: Refactor Config Show Into Technique Flag Matrix (1vxvIZRXy)
+## Story: Implement Verify Recommend For Active Detected Techniques (1vxvIaM4w)
 
-### 1vyDuwBfG: Prefer direct status flags over aggregated recommendation blocks
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Config introspection commands where automation depends on deterministic machine-readable state |
-| **Insight** | A per-technique flag matrix (`detected`, `disabled`, `active`) is a better contract boundary than mixed narrative sections because it cleanly separates inventory from recommendation logic. |
-| **Suggested Action** | Keep config/read commands focused on canonical state and move advisory ranking/commentary to dedicated recommend commands. |
-| **Applies To** | `src/cli/commands/setup/config.rs`, `src/read_model/verification_techniques.rs` |
-| **Applied** | yes |
-
-
-
----
-
-## Synthesis
-
-### tDRpzXuPC: Centralize technique status before rendering
+### 1vyDuwmNc: Centralize technique status before rendering
 
 | Field | Value |
 |-------|-------|
@@ -83,9 +70,26 @@
 | **Insight** | A shared status report API in the read model removes duplicated filtering logic and keeps recommendation output consistent across surfaces. |
 | **Suggested Action** | Route all verification-technique render paths through `resolve_technique_status_report` rather than command-local detection code. |
 | **Applies To** | `src/read_model/verification_techniques.rs`, `src/cli/commands/setup/config.rs`, `src/cli/commands/management/verify.rs` |
-| **Linked Knowledge IDs** | 1vyDuwmNc |
-| **Score** | 0.83 |
-| **Confidence** | 0.92 |
+| **Applied** | yes |
+
+
+
+---
+
+## Synthesis
+
+### gEqMvGXEE: Prefer direct status flags over aggregated recommendation blocks
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Config introspection commands where automation depends on deterministic machine-readable state |
+| **Insight** | A per-technique flag matrix (`detected`, `disabled`, `active`) is a better contract boundary than mixed narrative sections because it cleanly separates inventory from recommendation logic. |
+| **Suggested Action** | Keep config/read commands focused on canonical state and move advisory ranking/commentary to dedicated recommend commands. |
+| **Applies To** | `src/cli/commands/setup/config.rs`, `src/read_model/verification_techniques.rs` |
+| **Linked Knowledge IDs** | 1vyDuwBfG |
+| **Score** | 0.86 |
+| **Confidence** | 0.90 |
 | **Applied** | yes |
 
 ### ng7SivrJS: Keep recommendation sourcing decoupled from planning read surfaces
@@ -116,17 +120,17 @@
 | **Confidence** | 0.91 |
 | **Applied** | yes |
 
-### gEqMvGXEE: Prefer direct status flags over aggregated recommendation blocks
+### tDRpzXuPC: Centralize technique status before rendering
 
 | Field | Value |
 |-------|-------|
 | **Category** | architecture |
-| **Context** | Config introspection commands where automation depends on deterministic machine-readable state |
-| **Insight** | A per-technique flag matrix (`detected`, `disabled`, `active`) is a better contract boundary than mixed narrative sections because it cleanly separates inventory from recommendation logic. |
-| **Suggested Action** | Keep config/read commands focused on canonical state and move advisory ranking/commentary to dedicated recommend commands. |
-| **Applies To** | `src/cli/commands/setup/config.rs`, `src/read_model/verification_techniques.rs` |
-| **Linked Knowledge IDs** | 1vyDuwBfG |
-| **Score** | 0.86 |
-| **Confidence** | 0.90 |
+| **Context** | Multiple commands (`config show`, `verify recommend`) need the same detected/disabled/active evaluation. |
+| **Insight** | A shared status report API in the read model removes duplicated filtering logic and keeps recommendation output consistent across surfaces. |
+| **Suggested Action** | Route all verification-technique render paths through `resolve_technique_status_report` rather than command-local detection code. |
+| **Applies To** | `src/read_model/verification_techniques.rs`, `src/cli/commands/setup/config.rs`, `src/cli/commands/management/verify.rs` |
+| **Linked Knowledge IDs** | 1vyDuwmNc |
+| **Score** | 0.83 |
+| **Confidence** | 0.92 |
 | **Applied** | yes |
 

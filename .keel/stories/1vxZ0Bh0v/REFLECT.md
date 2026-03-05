@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-03T18:13:28
+---
+
 # Reflection - Add Contract Tests For Canonical Guidance Fields
 
 ## Knowledge

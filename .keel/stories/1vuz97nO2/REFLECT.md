@@ -1,3 +1,7 @@
+---
+created_at: 2026-02-24T13:39:13
+---
+
 ### Note 001: Decision logic should consume policy intent, not raw counts
 Pulling research/planning presence checks and draft-voyage classification into queue policy helpers keeps `next` and flow behavior aligned and reduces drift risk.
 

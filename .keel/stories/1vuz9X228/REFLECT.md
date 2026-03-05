@@ -1,3 +1,7 @@
+---
+created_at: 2026-02-24T18:54:34
+---
+
 # Reflection - Remove Duplicate Command Side Checks and Error Formatters
 
 ### L-01: Centralized transition formatting removes message drift

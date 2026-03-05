@@ -1,3 +1,7 @@
+---
+created_at: 2026-02-24T14:46:59
+---
+
 ### Note 001: Documentation should encode policy names and boundaries, not just numbers
 Using canonical policy constants (`HUMAN_NEXT_VERIFY_BLOCK_THRESHOLD`, `FLOW_VERIFY_BLOCK_THRESHOLD`) in architecture docs keeps behavior and narrative aligned through future threshold changes.
 

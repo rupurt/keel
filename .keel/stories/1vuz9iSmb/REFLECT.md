@@ -1,3 +1,7 @@
+---
+created_at: 2026-02-24T06:23:38
+---
+
 # Reflection - Purge Legacy Terminology from CLI and Documentation
 
 ### Note 001: Canonical vocabulary is strongest when enforced at parse boundaries

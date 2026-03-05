@@ -1,8 +1,7 @@
 ---
 source_type: Voyage
 source: epics/1vxGy5tco/voyages/1vxGzVpw5/KNOWLEDGE.md
-scope: null
-source_story_id: null
+created_at: 2026-03-03T11:50:46
 ---
 
 ### ZYCWs6ZWD: Report Pattern And Severity From One Shared Placeholder Extractor

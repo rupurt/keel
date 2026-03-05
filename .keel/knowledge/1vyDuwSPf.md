@@ -3,6 +3,7 @@ source_type: Story
 source: stories/1vwqCfgC4/REFLECT.md
 scope: 1vwq96cpt/1vwq9rycE
 source_story_id: 1vwqCfgC4
+created_at: 2026-03-02T09:48:09
 ---
 
 ### 1vyDuwSPf: Queue-policy facades prevent decision/rendering drift

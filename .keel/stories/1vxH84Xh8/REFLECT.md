@@ -1,3 +1,7 @@
+---
+created_at: 2026-03-03T10:41:12
+---
+
 # Reflection - Extend Adr Creation Inputs For Context Ownership
 
 ## Knowledge

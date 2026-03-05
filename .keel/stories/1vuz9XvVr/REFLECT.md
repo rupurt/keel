@@ -1,3 +1,7 @@
+---
+created_at: 2026-02-24T13:49:01
+---
+
 ### Note 001: Legality and gates should be separate outputs before classification
 Returning legality findings and gate findings as distinct fields makes enforcement decisions easier to reason about and keeps debugging focused when a transition fails.
 
