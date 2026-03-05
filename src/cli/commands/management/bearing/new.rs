@@ -6,6 +6,7 @@ use std::path::Path;
 use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 
+use crate::infrastructure::duplicate_ids::{self, DuplicateEntity};
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::story_id::generate_story_id;
 use crate::infrastructure::template_rendering;
@@ -19,6 +20,8 @@ pub fn run(name: &str) -> Result<()> {
 
 /// Create a new bearing
 fn new_bearing(board_dir: &Path, name: &str) -> Result<()> {
+    duplicate_ids::ensure_unique_ids(board_dir, DuplicateEntity::Bearing, "keel bearing new")?;
+
     // Enforce Title Case
     if !crate::infrastructure::utils::is_title_case(name) {
         return Err(anyhow!(

@@ -126,15 +126,6 @@ pub fn run(board_dir: &Path, id: Option<&str>, all: bool, json: bool) -> Result<
     result.map_err(|error| verify_error_with_recovery(id, error))
 }
 
-pub fn run_legacy(id: Option<&str>) -> Result<()> {
-    let target = id
-        .map(|story_id| format!("keel verify run {story_id}"))
-        .unwrap_or_else(|| "keel verify run --all".to_string());
-    anyhow::bail!(
-        "Legacy `keel verify` invocation is no longer supported.\nRecovery step:\n  {target}"
-    );
-}
-
 pub fn recommend(board_dir: &Path, json: bool) -> Result<()> {
     let payload = build_recommend_payload(board_dir)?;
 
@@ -412,14 +403,6 @@ mod tests {
         assert!(err.contains("Story not found: MISSING"));
         assert!(err.contains("Recovery step:"));
         assert!(err.contains("keel story list"));
-    }
-
-    #[test]
-    fn verify_root_fails_fast_with_run_guidance() {
-        let err = run_legacy(Some("S1")).unwrap_err().to_string();
-        assert!(err.contains("Legacy `keel verify` invocation is no longer supported."));
-        assert!(err.contains("Recovery step:"));
-        assert!(err.contains("keel verify run S1"));
     }
 
     #[test]

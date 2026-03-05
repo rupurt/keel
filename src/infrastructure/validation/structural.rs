@@ -1,8 +1,7 @@
 //! Centralized structural validation for stories, voyages, and epics.
 
-use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::LazyLock;
 
 use anyhow::Result;
@@ -107,7 +106,6 @@ pub fn check_date_consistency(path: &Path, check_id: CheckId) -> Vec<Problem> {
 /// Returns (problems, file_count).
 pub fn scan_story_files(board_dir: &Path) -> Result<(Vec<Problem>, usize)> {
     let mut problems = Vec::new();
-    let mut id_to_paths: HashMap<String, Vec<PathBuf>> = HashMap::new();
     let mut file_count = 0;
 
     let stories_dir = board_dir.join("stories");
@@ -126,45 +124,16 @@ pub fn scan_story_files(board_dir: &Path) -> Result<(Vec<Problem>, usize)> {
                     ));
                     if let Some(problem) = check_story_file(&readme_path) {
                         problems.push(problem);
-                    } else {
-                        // Extract ID for duplicate checking
-                        if let Some(id) = extract_story_id_from_file(&readme_path) {
-                            id_to_paths.entry(id).or_default().push(readme_path);
-                        }
                     }
                 }
             }
         }
     }
 
-    // Check for duplicate IDs
-    for (id, paths) in id_to_paths {
-        if paths.len() > 1 {
-            for path in &paths {
-                let other_paths: Vec<_> = paths.iter().filter(|p| *p != path).collect();
-                let other_bundles: Vec<_> = other_paths
-                    .iter()
-                    .filter_map(|p| {
-                        p.parent()
-                            .and_then(|p| p.file_name())
-                            .and_then(|n| n.to_str())
-                    })
-                    .collect();
-
-                problems.push(
-                    Problem::error(
-                        path.clone(),
-                        format!(
-                            "duplicate story ID '{}' (also in: {})",
-                            id,
-                            other_bundles.join(", ")
-                        ),
-                    )
-                    .with_check_id(CheckId::StoryDuplicateId),
-                );
-            }
-        }
-    }
+    problems.extend(crate::infrastructure::duplicate_ids::duplicate_id_problems(
+        board_dir,
+        crate::infrastructure::duplicate_ids::DuplicateEntity::Story,
+    ));
 
     Ok((problems, file_count))
 }
@@ -276,7 +245,6 @@ pub fn check_story_file(path: &Path) -> Option<Problem> {
 pub fn scan_voyage_files(board_dir: &Path) -> Result<(Vec<Problem>, usize)> {
     let mut problems = Vec::new();
     let mut voyage_count = 0;
-    let mut id_to_paths: HashMap<String, Vec<PathBuf>> = HashMap::new();
 
     let epics_dir = board_dir.join("epics");
     if !epics_dir.exists() {
@@ -311,9 +279,6 @@ pub fn scan_voyage_files(board_dir: &Path) -> Result<(Vec<Problem>, usize)> {
                     &readme_path,
                     CheckId::VoyageDateConsistency,
                 ));
-                if let Some(fm_id) = extract_voyage_id_from_file(&readme_path) {
-                    id_to_paths.entry(fm_id).or_default().push(readme_path);
-                }
             }
 
             // Check for required files and their content
@@ -345,30 +310,6 @@ pub fn scan_voyage_files(board_dir: &Path) -> Result<(Vec<Problem>, usize)> {
         }
     }
 
-    // Check for duplicate IDs across all epics
-    for (id, paths) in id_to_paths {
-        if paths.len() > 1 {
-            for path in &paths {
-                let other_paths: Vec<_> = paths.iter().filter(|p| *p != path).collect();
-                problems.push(
-                    Problem::error(
-                        path.clone(),
-                        format!(
-                            "duplicate voyage ID '{}' (also in: {})",
-                            id,
-                            other_paths
-                                .iter()
-                                .map(|p| p.display().to_string())
-                                .collect::<Vec<_>>()
-                                .join(", ")
-                        ),
-                    )
-                    .with_check_id(CheckId::Unknown),
-                );
-            }
-        }
-    }
-
     Ok((problems, voyage_count))
 }
 
@@ -385,7 +326,6 @@ pub fn extract_voyage_id_from_file(path: &Path) -> Option<String> {
 pub fn scan_epic_files(board_dir: &Path) -> Result<(Vec<Problem>, usize)> {
     let mut problems = Vec::new();
     let mut epic_count = 0;
-    let mut id_to_paths: HashMap<String, Vec<PathBuf>> = HashMap::new();
 
     let epics_dir = board_dir.join("epics");
     if !epics_dir.exists() {
@@ -407,11 +347,6 @@ pub fn scan_epic_files(board_dir: &Path) -> Result<(Vec<Problem>, usize)> {
             ));
             if let Some(problem) = check_epic_file(&readme_path) {
                 problems.push(problem);
-            } else if let Some(fm_id) = extract_epic_id_from_file(&readme_path) {
-                id_to_paths
-                    .entry(fm_id)
-                    .or_default()
-                    .push(readme_path.clone());
             }
             problems.extend(check_epic_readme_structure(&readme_path));
         } else {
@@ -429,30 +364,6 @@ pub fn scan_epic_files(board_dir: &Path) -> Result<(Vec<Problem>, usize)> {
                 Problem::warning(prd_path, "missing PRD.md (Product Requirements Document)")
                     .with_check_id(CheckId::EpicMissingPrd),
             );
-        }
-    }
-
-    // Check for duplicate IDs
-    for (id, paths) in id_to_paths {
-        if paths.len() > 1 {
-            for path in &paths {
-                let other_paths: Vec<_> = paths.iter().filter(|p| *p != path).collect();
-                problems.push(
-                    Problem::error(
-                        path.clone(),
-                        format!(
-                            "duplicate epic ID '{}' (also in: {})",
-                            id,
-                            other_paths
-                                .iter()
-                                .map(|p| p.display().to_string())
-                                .collect::<Vec<_>>()
-                                .join(", ")
-                        ),
-                    )
-                    .with_check_id(CheckId::Unknown),
-                );
-            }
         }
     }
 

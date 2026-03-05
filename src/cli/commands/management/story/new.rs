@@ -8,6 +8,7 @@ use chrono::Local;
 
 use crate::domain::model::{AdrStatus, Board, StoryState};
 use crate::domain::transitions::{TimestampUpdates, update_frontmatter};
+use crate::infrastructure::duplicate_ids::{self, DuplicateEntity};
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::story_id::generate_story_id;
 use crate::infrastructure::template_rendering;
@@ -121,6 +122,8 @@ fn new_story(
     epic: Option<&str>,
     voyage: Option<&str>,
 ) -> Result<()> {
+    duplicate_ids::ensure_unique_ids(board_dir, DuplicateEntity::Story, "keel story new")?;
+
     // Enforce Title Case
     if !crate::infrastructure::utils::is_title_case(title) {
         return Err(anyhow!(
@@ -364,6 +367,24 @@ status: in-progress
             }
         }
         assert!(found, "New story bundle should exist with correct content");
+    }
+
+    #[test]
+    fn new_story_fails_when_duplicate_story_ids_exist() {
+        let temp = TestBoardBuilder::new()
+            .story(TestStory::new("DUP1").title("Duplicate One"))
+            .build();
+        let board_dir = temp.path();
+
+        let existing = fs::read_to_string(board_dir.join("stories/DUP1/README.md")).unwrap();
+        fs::create_dir_all(board_dir.join("stories/DUP2")).unwrap();
+        fs::write(board_dir.join("stories/DUP2/README.md"), existing).unwrap();
+
+        let err = new_story(board_dir, "Blocked Story", "feat", None, None)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("duplicate story IDs"));
+        assert!(err.contains("keel doctor"));
     }
 
     #[test]

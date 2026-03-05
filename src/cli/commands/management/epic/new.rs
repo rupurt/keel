@@ -6,6 +6,7 @@ use std::path::Path;
 use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 
+use crate::infrastructure::duplicate_ids::{self, DuplicateEntity};
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::story_id::generate_story_id;
 use crate::infrastructure::template_rendering;
@@ -19,6 +20,8 @@ pub fn run(name: &str, goal: &str) -> Result<()> {
 
 /// Create a new epic
 fn new_epic(board_dir: &Path, name: &str, goal: &str) -> Result<()> {
+    duplicate_ids::ensure_unique_ids(board_dir, DuplicateEntity::Epic, "keel epic new")?;
+
     let board = load_board(board_dir)?;
     let now = Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
     let goal_text = goal.trim();

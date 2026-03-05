@@ -1,6 +1,7 @@
 //! Infrastructure services and adapters.
 
 pub mod config;
+pub mod duplicate_ids;
 pub mod frontmatter_mutation;
 pub mod fs_adapters;
 pub mod generate;

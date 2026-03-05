@@ -99,10 +99,7 @@ pub fn run() -> Result<()> {
                 let json = *recommend_m.get_one::<bool>("json").unwrap_or(&false);
                 super::commands::management::verify::recommend(&resolve_board_dir()?, json)
             }
-            _ => {
-                let legacy_id = m.get_one::<String>("id").map(String::as_str);
-                super::commands::management::verify::run_legacy(legacy_id)
-            }
+            _ => unreachable!("verify subcommand required"),
         },
         Some(("knowledge", m)) => handle_knowledge_command(m),
         Some(("generate", _)) => super::commands::setup::generate::run(&resolve_board_dir()?),

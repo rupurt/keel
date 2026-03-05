@@ -63,6 +63,7 @@ pub enum AdrAction {
 use crate::cli::table::Table;
 use crate::domain::model::{Adr, Board};
 use crate::infrastructure::config::find_board_dir;
+use crate::infrastructure::duplicate_ids::{self, DuplicateEntity};
 use crate::infrastructure::frontmatter_mutation::{Mutation, apply};
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::template_rendering;
@@ -135,6 +136,8 @@ fn new_adr(
     context: Option<&str>,
     applies_to: &[String],
 ) -> Result<()> {
+    duplicate_ids::ensure_unique_ids(board_dir, DuplicateEntity::Adr, "keel adr new")?;
+
     // Enforce Title Case
     if !crate::infrastructure::utils::is_title_case(title) {
         return Err(anyhow!(

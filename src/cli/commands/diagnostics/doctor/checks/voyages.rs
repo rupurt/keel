@@ -101,77 +101,10 @@ pub fn check_voyage_dates(board: &Board) -> Vec<Problem> {
 
 /// Check for duplicate voyage IDs across all epics
 pub fn check_voyage_duplicates(board_dir: &Path) -> Vec<Problem> {
-    use crate::domain::model::VoyageFrontmatter;
-    use crate::infrastructure::parser::parse_frontmatter;
-    use std::collections::HashMap;
-    use std::fs;
-    use std::path::PathBuf;
-
-    let mut problems = Vec::new();
-    let mut id_to_paths: HashMap<String, Vec<PathBuf>> = HashMap::new();
-
-    let epics_dir = board_dir.join("epics");
-    if !epics_dir.exists() {
-        return problems;
-    }
-
-    if let Ok(epic_entries) = fs::read_dir(epics_dir) {
-        for epic_entry in epic_entries.flatten() {
-            if !epic_entry.path().is_dir() {
-                continue;
-            }
-
-            let voyages_dir = epic_entry.path().join("voyages");
-            if !voyages_dir.exists() {
-                continue;
-            }
-
-            if let Ok(voyage_entries) = fs::read_dir(voyages_dir) {
-                for voyage_entry in voyage_entries.flatten() {
-                    let path = voyage_entry.path();
-                    if !path.is_dir() {
-                        continue;
-                    }
-
-                    let readme_path = path.join("README.md");
-                    if !readme_path.exists() {
-                        continue;
-                    }
-
-                    if let Ok(content) = fs::read_to_string(&readme_path)
-                        && let Ok((fm, _)) = parse_frontmatter::<VoyageFrontmatter>(&content)
-                    {
-                        id_to_paths.entry(fm.id).or_default().push(readme_path);
-                    }
-                }
-            }
-        }
-    }
-
-    for (id, paths) in id_to_paths {
-        if paths.len() > 1 {
-            for path in &paths {
-                let other_paths: Vec<_> = paths.iter().filter(|p| *p != path).collect();
-                problems.push(
-                    Problem::error(
-                        path.clone(),
-                        format!(
-                            "duplicate voyage ID '{}' (also in: {})",
-                            id,
-                            other_paths
-                                .iter()
-                                .map(|p| p.display().to_string())
-                                .collect::<Vec<_>>()
-                                .join(", ")
-                        ),
-                    )
-                    .with_check_id(CheckId::Unknown),
-                );
-            }
-        }
-    }
-
-    problems
+    crate::infrastructure::duplicate_ids::duplicate_id_problems(
+        board_dir,
+        crate::infrastructure::duplicate_ids::DuplicateEntity::Voyage,
+    )
 }
 
 /// Check voyage ID-directory consistency

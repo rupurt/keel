@@ -228,6 +228,15 @@ fn cli_parses_verify_detect_command() {
 }
 
 #[test]
+fn cli_rejects_verify_without_subcommand() {
+    let result = crate::build_cli().try_get_matches_from(["keel", "verify"]);
+    assert!(result.is_err());
+    let err = result.unwrap_err().to_string();
+    assert!(err.contains("verify"));
+    assert!(err.contains("COMMAND"));
+}
+
+#[test]
 fn cli_parses_status_command() {
     let cli = Cli::try_parse_from(["board", "status"]).unwrap();
     if let Commands::Diagnostics(DiagnosticsCommands::Status {}) = cli.command {

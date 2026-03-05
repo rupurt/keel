@@ -204,28 +204,6 @@ pub fn build_cli() -> Command {
             Command::new("verify")
                 .about("Verification operations")
                 .hide(true)
-                .arg(
-                    Arg::new("id")
-                        .help("Legacy syntax (unsupported): ID of story, voyage, or epic to verify")
-                        .value_name("ID")
-                        .index(1)
-                        .hide(true),
-                )
-                .arg(
-                    Arg::new("all")
-                        .long("all")
-                        .help("Legacy syntax (unsupported): Verify all stories on the board")
-                        .action(ArgAction::SetTrue)
-                        .hide(true),
-                )
-                .arg(
-                    Arg::new("json")
-                        .long("json")
-                        .help("Legacy syntax (unsupported): Output as JSON for scripting")
-                        .action(ArgAction::SetTrue)
-                        .hide(true),
-                )
-                .args_conflicts_with_subcommands(true)
                 .subcommand(
                     Command::new("run")
                         .about("Execute verification proofs")
@@ -267,7 +245,8 @@ pub fn build_cli() -> Command {
                                 .help("Output as JSON for scripting")
                                 .action(ArgAction::SetTrue),
                         ),
-                ),
+                )
+                .subcommand_required(true),
         )
         .subcommand(
             Command::new("generate")

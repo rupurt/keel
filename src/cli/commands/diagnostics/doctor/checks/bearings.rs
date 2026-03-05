@@ -1,6 +1,5 @@
-use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use anyhow::Result;
 
@@ -311,80 +310,12 @@ pub fn check_bearing_title_case(board: &Board) -> Vec<Problem> {
 }
 
 /// Check for duplicate bearing IDs
-/// Scans bearing directories to detect duplicate IDs before they're loaded into HashMap
+/// Scans bearing files for duplicate frontmatter IDs.
 pub fn check_bearing_duplicates(board_dir: &Path) -> Vec<Problem> {
-    let mut problems = Vec::new();
-    let mut id_to_paths: HashMap<String, Vec<PathBuf>> = HashMap::new();
-
-    let bearings_dir = board_dir.join("bearings");
-    if !bearings_dir.exists() {
-        return problems;
-    }
-
-    // Scan all bearing directories
-    if let Ok(entries) = fs::read_dir(&bearings_dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if !path.is_dir() {
-                continue;
-            }
-
-            let readme_path = path.join("README.md");
-            if !readme_path.exists() {
-                continue;
-            }
-
-            // Extract ID from frontmatter
-            if let Ok(content) = fs::read_to_string(&readme_path)
-                && let Some(id) = extract_bearing_id_from_content(&content)
-            {
-                id_to_paths.entry(id).or_default().push(readme_path);
-            }
-        }
-    }
-
-    // Report duplicates
-    for (id, paths) in id_to_paths {
-        if paths.len() > 1 {
-            let path_list: Vec<_> = paths.iter().map(|p| p.display().to_string()).collect();
-            problems.push(Problem {
-                severity: Severity::Error,
-                path: paths[0].clone(),
-                message: format!(
-                    "duplicate bearing ID '{}' found in: {}",
-                    id,
-                    path_list.join(", ")
-                ),
-                fix: None,
-                scope: None,
-                category: None,
-                check_id: CheckId::Unknown,
-            });
-        }
-    }
-
-    problems
-}
-
-/// Extract bearing ID from BRIEF.md content
-pub fn extract_bearing_id_from_content(content: &str) -> Option<String> {
-    // Simple YAML frontmatter parsing - look for "id:" line
-    let lines: Vec<&str> = content.lines().collect();
-    let mut in_frontmatter = false;
-
-    for line in lines {
-        if line == "---" {
-            if in_frontmatter {
-                break; // End of frontmatter
-            }
-            in_frontmatter = true;
-            continue;
-        }
-        if in_frontmatter && line.starts_with("id:") {
-            return Some(line.trim_start_matches("id:").trim().to_string());
-        }
-    }
-    None
+    crate::infrastructure::duplicate_ids::duplicate_id_problems(
+        board_dir,
+        crate::infrastructure::duplicate_ids::DuplicateEntity::Bearing,
+    )
 }
 
 /// Check bearing date fields

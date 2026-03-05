@@ -153,63 +153,10 @@ pub fn check_epic_id_consistency(board: &Board) -> Vec<Problem> {
 
 /// Check for duplicate epic IDs
 pub fn check_epic_duplicates(board_dir: &Path) -> Vec<Problem> {
-    use crate::domain::model::EpicFrontmatter;
-    use crate::infrastructure::parser::parse_frontmatter;
-    use std::collections::HashMap;
-    use std::fs;
-    use std::path::PathBuf;
-
-    let mut problems = Vec::new();
-    let mut id_to_paths: HashMap<String, Vec<PathBuf>> = HashMap::new();
-
-    let epics_dir = board_dir.join("epics");
-    if !epics_dir.exists() {
-        return problems;
-    }
-
-    if let Ok(entries) = fs::read_dir(epics_dir) {
-        for entry in entries.flatten() {
-            if !entry.path().is_dir() {
-                continue;
-            }
-
-            let readme_path = entry.path().join("README.md");
-            if !readme_path.exists() {
-                continue;
-            }
-
-            if let Ok(content) = fs::read_to_string(&readme_path)
-                && let Ok((fm, _)) = parse_frontmatter::<EpicFrontmatter>(&content)
-            {
-                id_to_paths.entry(fm.id).or_default().push(readme_path);
-            }
-        }
-    }
-
-    for (id, paths) in id_to_paths {
-        if paths.len() > 1 {
-            for path in &paths {
-                let other_paths: Vec<_> = paths.iter().filter(|p| *p != path).collect();
-                problems.push(
-                    Problem::error(
-                        path.clone(),
-                        format!(
-                            "duplicate epic ID '{}' (also in: {})",
-                            id,
-                            other_paths
-                                .iter()
-                                .map(|p| p.display().to_string())
-                                .collect::<Vec<_>>()
-                                .join(", ")
-                        ),
-                    )
-                    .with_check_id(CheckId::EpicDuplicateId),
-                );
-            }
-        }
-    }
-
-    problems
+    crate::infrastructure::duplicate_ids::duplicate_id_problems(
+        board_dir,
+        crate::infrastructure::duplicate_ids::DuplicateEntity::Epic,
+    )
 }
 
 /// Check that epics have a PRESS_RELEASE.md and placeholders are cleared

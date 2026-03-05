@@ -300,56 +300,10 @@ pub fn check_adr_id_consistency(board: &Board) -> Vec<Problem> {
 
 /// Check for duplicate ADR IDs
 pub fn check_adr_duplicates(board_dir: &Path) -> Vec<Problem> {
-    use crate::domain::model::AdrFrontmatter;
-    use crate::infrastructure::parser::parse_frontmatter;
-    use std::collections::HashMap;
-    use std::fs;
-    use std::path::PathBuf;
-
-    let mut problems = Vec::new();
-    let mut id_to_paths: HashMap<String, Vec<PathBuf>> = HashMap::new();
-
-    let adrs_dir = board_dir.join("adrs");
-    if !adrs_dir.exists() {
-        return problems;
-    }
-
-    if let Ok(entries) = fs::read_dir(adrs_dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.extension().is_some_and(|e| e == "md")
-                && let Ok(content) = fs::read_to_string(&path)
-                && let Ok((fm, _)) = parse_frontmatter::<AdrFrontmatter>(&content)
-            {
-                id_to_paths.entry(fm.id).or_default().push(path);
-            }
-        }
-    }
-
-    for (id, paths) in id_to_paths {
-        if paths.len() > 1 {
-            for path in &paths {
-                let other_paths: Vec<_> = paths.iter().filter(|p| *p != path).collect();
-                problems.push(
-                    Problem::error(
-                        path.clone(),
-                        format!(
-                            "duplicate ADR ID '{}' (also in: {})",
-                            id,
-                            other_paths
-                                .iter()
-                                .map(|p| p.display().to_string())
-                                .collect::<Vec<_>>()
-                                .join(", ")
-                        ),
-                    )
-                    .with_check_id(CheckId::Unknown),
-                );
-            }
-        }
-    }
-
-    problems
+    crate::infrastructure::duplicate_ids::duplicate_id_problems(
+        board_dir,
+        crate::infrastructure::duplicate_ids::DuplicateEntity::Adr,
+    )
 }
 
 #[cfg(test)]
