@@ -410,28 +410,68 @@ pub fn detect_project_signals(project_root: &Path) -> ProjectSignalReport {
     let mut report = ProjectSignalReport::default();
 
     let cargo_toml = project_root.join("Cargo.toml");
+    let cargo_toml_content = fs::read_to_string(&cargo_toml).unwrap_or_default();
+    let cargo_toml_lower = cargo_toml_content.to_ascii_lowercase();
+    let src_dir = project_root.join("src");
+    let src_lib = project_root.join("src/lib.rs");
     if cargo_toml.exists() {
-        bump_stack_confidence(&mut report, ProjectStack::Rust, 0.75);
+        bump_stack_confidence(&mut report, ProjectStack::Rust, 0.55);
         report.hints.insert("cargo".to_string());
         report.hints.insert("rust".to_string());
         report.detected_files.push("Cargo.toml".to_string());
     }
+    if src_dir.exists() && cargo_toml.exists() {
+        bump_stack_confidence(&mut report, ProjectStack::Rust, 0.20);
+    }
+    if src_lib.exists() && cargo_toml.exists() {
+        bump_stack_confidence(&mut report, ProjectStack::Rust, 0.10);
+        report.detected_files.push("src/lib.rs".to_string());
+    }
 
     let src_main = project_root.join("src/main.rs");
     let src_bin = project_root.join("src/bin");
+    let src_cli = project_root.join("src/cli");
+    let tests_dir = project_root.join("tests");
     let justfile = project_root.join("justfile");
-    if src_main.exists() || src_bin.exists() || justfile.exists() {
-        bump_stack_confidence(&mut report, ProjectStack::Cli, 0.55);
+    if src_main.exists() {
+        if cargo_toml.exists() {
+            bump_stack_confidence(&mut report, ProjectStack::Rust, 0.15);
+        }
+        bump_stack_confidence(&mut report, ProjectStack::Cli, 0.35);
         report.hints.insert("cli".to_string());
-        if src_main.exists() {
-            report.detected_files.push("src/main.rs".to_string());
+        report.detected_files.push("src/main.rs".to_string());
+    }
+    if src_bin.exists() {
+        if cargo_toml.exists() {
+            bump_stack_confidence(&mut report, ProjectStack::Rust, 0.15);
         }
-        if src_bin.exists() {
-            report.detected_files.push("src/bin".to_string());
-        }
-        if justfile.exists() {
-            report.detected_files.push("justfile".to_string());
-        }
+        bump_stack_confidence(&mut report, ProjectStack::Cli, 0.35);
+        report.hints.insert("cli".to_string());
+        report.detected_files.push("src/bin".to_string());
+    }
+    if src_cli.exists() {
+        bump_stack_confidence(&mut report, ProjectStack::Cli, 0.25);
+        report.hints.insert("cli".to_string());
+        report.detected_files.push("src/cli".to_string());
+    }
+    if tests_dir.exists() && cargo_toml.exists() {
+        bump_stack_confidence(&mut report, ProjectStack::Rust, 0.10);
+        report.detected_files.push("tests".to_string());
+    }
+    if justfile.exists() {
+        bump_stack_confidence(&mut report, ProjectStack::Cli, 0.10);
+        report.hints.insert("cli".to_string());
+        report.detected_files.push("justfile".to_string());
+    }
+    if cargo_toml_lower.contains("clap")
+        || cargo_toml_lower.contains("structopt")
+        || cargo_toml_lower.contains("argh")
+    {
+        bump_stack_confidence(&mut report, ProjectStack::Cli, 0.20);
+        report.hints.insert("cli".to_string());
+    }
+    if cargo_toml_lower.contains("clap") {
+        report.hints.insert("clap".to_string());
     }
 
     let package_json = project_root.join("package.json");
@@ -473,7 +513,7 @@ pub fn detect_project_signals(project_root: &Path) -> ProjectSignalReport {
         || flake_content.contains(" vhs")
         || flake_content.contains("\tvhs")
     {
-        bump_stack_confidence(&mut report, ProjectStack::Cli, 0.20);
+        bump_stack_confidence(&mut report, ProjectStack::Cli, 0.05);
         report.hints.insert("vhs".to_string());
         report.hints.insert("recording".to_string());
     }
@@ -481,7 +521,7 @@ pub fn detect_project_signals(project_root: &Path) -> ProjectSignalReport {
         || flake_content.contains(" ffmpeg")
         || flake_content.contains("\tffmpeg")
     {
-        bump_stack_confidence(&mut report, ProjectStack::Cli, 0.10);
+        bump_stack_confidence(&mut report, ProjectStack::Cli, 0.05);
         report.hints.insert("ffmpeg".to_string());
         report.hints.insert("video".to_string());
     }
@@ -1730,14 +1770,22 @@ default_command = ""
     #[test]
     fn technique_project_signal_detection() {
         let temp = TempDir::new().unwrap();
-        fs::create_dir_all(temp.path().join("src")).unwrap();
-        fs::write(temp.path().join("Cargo.toml"), "[package]\nname=\"demo\"\n").unwrap();
+        fs::create_dir_all(temp.path().join("src/cli")).unwrap();
+        fs::create_dir_all(temp.path().join("tests")).unwrap();
+        fs::write(
+            temp.path().join("Cargo.toml"),
+            "[package]\nname=\"demo\"\n\n[dependencies]\nclap = \"4\"\n",
+        )
+        .unwrap();
+        fs::write(temp.path().join("src/lib.rs"), "pub fn demo() {}").unwrap();
         fs::write(temp.path().join("src/main.rs"), "fn main() {}").unwrap();
+        fs::write(temp.path().join("tests/smoke.rs"), "#[test]\nfn smoke() {}").unwrap();
         fs::write(
             temp.path().join("package.json"),
             r#"{ "devDependencies": { "playwright": "^1.0.0" } }"#,
         )
         .unwrap();
+        fs::write(temp.path().join("justfile"), "test:\n  cargo test\n").unwrap();
         fs::write(
             temp.path().join("playwright.config.ts"),
             "export default {};",
@@ -1750,33 +1798,28 @@ default_command = ""
         .unwrap();
 
         let report = detect_project_signals(temp.path());
+        let rust_confidence = report
+            .stack_confidence
+            .get(&ProjectStack::Rust)
+            .copied()
+            .unwrap_or_default();
+        let browser_confidence = report
+            .stack_confidence
+            .get(&ProjectStack::Browser)
+            .copied()
+            .unwrap_or_default();
+        let cli_confidence = report
+            .stack_confidence
+            .get(&ProjectStack::Cli)
+            .copied()
+            .unwrap_or_default();
 
-        assert!(
-            report
-                .stack_confidence
-                .get(&ProjectStack::Rust)
-                .copied()
-                .unwrap_or_default()
-                > 0.0
-        );
-        assert!(
-            report
-                .stack_confidence
-                .get(&ProjectStack::Browser)
-                .copied()
-                .unwrap_or_default()
-                > 0.0
-        );
-        assert!(
-            report
-                .stack_confidence
-                .get(&ProjectStack::Cli)
-                .copied()
-                .unwrap_or_default()
-                > 0.0
-        );
+        assert!((rust_confidence - 1.0).abs() < 0.001);
+        assert!((browser_confidence - 0.9).abs() < 0.001);
+        assert!((cli_confidence - 1.0).abs() < 0.001);
 
         assert!(report.hints.contains("cargo"));
+        assert!(report.hints.contains("clap"));
         assert!(report.hints.contains("playwright"));
         assert!(report.hints.contains("vhs"));
         assert!(
@@ -1789,8 +1832,29 @@ default_command = ""
             report
                 .detected_files
                 .iter()
+                .any(|entry| entry == "src/lib.rs")
+        );
+        assert!(
+            report
+                .detected_files
+                .iter()
                 .any(|entry| entry == "playwright.config.ts")
         );
+    }
+
+    #[test]
+    fn technique_project_signal_detection_treats_justfile_as_a_weak_cli_signal() {
+        let temp = TempDir::new().unwrap();
+        fs::write(temp.path().join("justfile"), "test:\n  echo ok\n").unwrap();
+
+        let report = detect_project_signals(temp.path());
+        let cli_confidence = report
+            .stack_confidence
+            .get(&ProjectStack::Cli)
+            .copied()
+            .unwrap_or_default();
+
+        assert!((cli_confidence - 0.10).abs() < 0.001);
     }
 
     #[test]
