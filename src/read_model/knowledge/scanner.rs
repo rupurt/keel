@@ -824,6 +824,62 @@ fn merge_catalog_units(catalog: Vec<Knowledge>, discovered: Vec<Knowledge>) -> V
     units
 }
 
+fn knowledge_source_rank(source_type: KnowledgeSourceType) -> u8 {
+    match source_type {
+        KnowledgeSourceType::Story => 0,
+        KnowledgeSourceType::Adhoc => 1,
+        KnowledgeSourceType::Voyage => 2,
+    }
+}
+
+fn knowledge_origin_cmp(left: &Knowledge, right: &Knowledge) -> std::cmp::Ordering {
+    let left_observed = left.observed_at.map(|value| value.naive_utc());
+    let right_observed = right.observed_at.map(|value| value.naive_utc());
+    let left_id_timestamp = crate::infrastructure::story_id::extract_timestamp(&left.id);
+    let right_id_timestamp = crate::infrastructure::story_id::extract_timestamp(&right.id);
+
+    (
+        !left.linked_ids.is_empty(),
+        knowledge_source_rank(left.source_type),
+        left.created_at.is_none(),
+        left.created_at,
+        left_observed.is_none(),
+        left_observed,
+        left_id_timestamp.is_none(),
+        left_id_timestamp,
+        &left.id,
+    )
+        .cmp(&(
+            !right.linked_ids.is_empty(),
+            knowledge_source_rank(right.source_type),
+            right.created_at.is_none(),
+            right.created_at,
+            right_observed.is_none(),
+            right_observed,
+            right_id_timestamp.is_none(),
+            right_id_timestamp,
+            &right.id,
+        ))
+}
+
+fn prune_newer_near_duplicates(units: Vec<Knowledge>, threshold: f64) -> Vec<Knowledge> {
+    let mut ordered = units;
+    ordered.sort_by(knowledge_origin_cmp);
+
+    let mut kept = Vec::new();
+    for unit in ordered {
+        let is_duplicate = kept
+            .iter()
+            .any(|existing| similarity_score_between(&unit, existing) >= threshold);
+        if !is_duplicate {
+            kept.push(unit);
+        }
+    }
+
+    kept.sort_by(|a, b| a.id.cmp(&b.id));
+    kept
+}
+
 fn scan_all_knowledge_sources(board_dir: &Path) -> Result<Vec<Knowledge>> {
     let story = scan_story_knowledge(board_dir)?;
     let (voyage, adhoc) = rayon::join(
@@ -896,6 +952,7 @@ pub fn sync_knowledge_catalog(board_dir: &Path) -> Result<KnowledgeCatalog> {
         );
     }
 
+    all = prune_newer_near_duplicates(all, NEAR_DUPLICATE_KNOWLEDGE_THRESHOLD);
     normalize_similarity_fields(&mut all);
     write_knowledge_catalog_files(board_dir, &all)?;
     Ok(KnowledgeCatalog {
@@ -1006,7 +1063,7 @@ pub fn parse_applies_to(applies_to: &str) -> Vec<String> {
         .collect()
 }
 
-pub const NEAR_DUPLICATE_KNOWLEDGE_THRESHOLD: f64 = 0.95;
+pub const NEAR_DUPLICATE_KNOWLEDGE_THRESHOLD: f64 = 0.90;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct KnowledgeSimilarityConflict {
@@ -1786,6 +1843,174 @@ status: done
         assert!(content.contains("source_type: Story"));
         assert!(content.contains("source: stories/FEAT0002/REFLECT.md"));
         assert!(content.contains("### 1AbCdE234: Guard Duplicate Reflection Knowledge"));
+    }
+
+    #[test]
+    fn sync_knowledge_catalog_prunes_newer_near_duplicate_units() {
+        let temp = create_test_board();
+        let bundle_dir = temp.path().join("stories/STORY0001");
+        let voyage_dir = temp.path().join("epics/test-epic/voyages/01-test");
+        fs::create_dir_all(&bundle_dir).unwrap();
+        fs::create_dir_all(&voyage_dir).unwrap();
+
+        fs::write(
+            bundle_dir.join("README.md"),
+            "---\nid: STORY0001\ntitle: Test Story\nscope: test-epic/01-test\nstatus: done\n---\n",
+        )
+        .unwrap();
+        fs::write(
+            bundle_dir.join("REFLECT.md"),
+            r#"---
+created_at: 2026-03-04T10:00:00
+---
+
+# Reflection
+
+## Knowledge
+
+### 1AbCdE234: Prefer Canonical Reflection Knowledge
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | when voyage reports restate story knowledge |
+| **Insight** | Story-level reflection knowledge should remain the canonical source when later summaries only restate the same insight |
+| **Suggested Action** | Drop later duplicated knowledge entries and keep the earliest canonical source |
+| **Applied** | yes |
+"#,
+        )
+        .unwrap();
+
+        fs::write(
+            voyage_dir.join("KNOWLEDGE.md"),
+            r#"---
+created_at: 2026-03-05T10:00:00
+---
+
+# Knowledge - 01-test
+
+## Synthesis
+
+### 9ZyXwVu10: Prefer Canonical Reflection Knowledge
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | when voyage reports restate story knowledge |
+| **Insight** | Story-level reflection knowledge should remain the canonical source when later summaries only restate the same insight |
+| **Suggested Action** | Drop later duplicated knowledge entries and keep the earliest canonical source |
+| **Linked Knowledge IDs** | 1AbCdE234 |
+| **Applied** | yes |
+"#,
+        )
+        .unwrap();
+
+        let stale_duplicate = Knowledge {
+            id: "9ZyXwVu10".to_string(),
+            source: voyage_dir.join("KNOWLEDGE.md"),
+            source_type: KnowledgeSourceType::Voyage,
+            scope: Some("test-epic/01-test".to_string()),
+            source_story_id: None,
+            title: "Prefer Canonical Reflection Knowledge".to_string(),
+            category: "process".to_string(),
+            context: "when voyage reports restate story knowledge".to_string(),
+            insight: "Story-level reflection knowledge should remain the canonical source when later summaries only restate the same insight".to_string(),
+            suggested_action:
+                "Drop later duplicated knowledge entries and keep the earliest canonical source"
+                    .to_string(),
+            applies_to: String::new(),
+            applied: "yes".to_string(),
+            created_at: Some(
+                NaiveDateTime::parse_from_str("2026-03-05T10:00:00", "%Y-%m-%dT%H:%M:%S")
+                    .unwrap(),
+            ),
+            observed_at: None,
+            score: 0.5,
+            confidence: 0.8,
+            linked_ids: vec!["1AbCdE234".to_string()],
+            similar_to: None,
+            similarity_score: None,
+        };
+        fs::create_dir_all(knowledge_dir(temp.path())).unwrap();
+        fs::write(
+            knowledge_file_path(temp.path(), "9ZyXwVu10"),
+            render_knowledge_markdown(temp.path(), &stale_duplicate).unwrap(),
+        )
+        .unwrap();
+
+        let catalog = sync_knowledge_catalog(temp.path()).unwrap();
+        assert_eq!(catalog.units.len(), 1);
+        assert_eq!(catalog.units[0].id, "1AbCdE234");
+        assert!(catalog.units[0].similar_to.is_none());
+        assert!(knowledge_file_path(temp.path(), "1AbCdE234").exists());
+        assert!(!knowledge_file_path(temp.path(), "9ZyXwVu10").exists());
+    }
+
+    #[test]
+    fn sync_knowledge_catalog_prefers_story_source_over_linked_voyage_derivative() {
+        let temp = create_test_board();
+        let bundle_dir = temp.path().join("stories/STORY0002");
+        let voyage_dir = temp.path().join("epics/test-epic/voyages/01-test");
+        fs::create_dir_all(&bundle_dir).unwrap();
+        fs::create_dir_all(&voyage_dir).unwrap();
+
+        fs::write(
+            bundle_dir.join("README.md"),
+            "---\nid: STORY0002\ntitle: Test Story\nscope: test-epic/01-test\nstatus: done\n---\n",
+        )
+        .unwrap();
+        fs::write(
+            bundle_dir.join("REFLECT.md"),
+            r#"---
+created_at: 2026-03-03T10:41:12
+---
+
+# Reflection
+
+## Knowledge
+
+### 1AbCdE235: Keep CLI Parser And Templates Aligned
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | Adding a new CLI flag touches clap parsing, runtime mapping, and template persistence in one slice. |
+| **Insight** | Parser and persistence changes stay reliable when tests cover both option capture and saved artifact output together. |
+| **Suggested Action** | Add parser and persistence assertions before changing runtime behavior for new CLI flags. |
+| **Applied** | yes |
+"#,
+        )
+        .unwrap();
+
+        fs::write(
+            voyage_dir.join("KNOWLEDGE.md"),
+            r#"---
+created_at: 2026-03-03T08:10:40
+---
+
+# Knowledge - 01-test
+
+## Synthesis
+
+### 9ZyXwVu11: Keep CLI Parser And Templates Aligned
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | Adding a new CLI flag touches clap parsing, runtime mapping, and template persistence in one slice. |
+| **Insight** | Parser and persistence changes stay reliable when tests cover both option capture and saved artifact output together. |
+| **Suggested Action** | Add parser and persistence assertions before changing runtime behavior for new CLI flags. |
+| **Linked Knowledge IDs** | 1AbCdE235 |
+| **Applied** | yes |
+"#,
+        )
+        .unwrap();
+
+        let catalog = sync_knowledge_catalog(temp.path()).unwrap();
+        assert_eq!(catalog.units.len(), 1);
+        assert_eq!(catalog.units[0].id, "1AbCdE235");
+        assert_eq!(catalog.units[0].source_type, KnowledgeSourceType::Story);
+        assert!(!knowledge_file_path(temp.path(), "9ZyXwVu11").exists());
     }
 
     #[test]

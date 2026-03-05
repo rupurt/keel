@@ -8,6 +8,23 @@ created_at: 2026-03-02T10:42:29
 
 ## Story Knowledge
 
+## Story: Publish Migration Completion Checklist (1vwqCfeFP)
+
+### 1vyDuwiKv: Rollout Docs Need Explicit Gate Ownership
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | Finalizing migration voyages where multiple maintainers coordinate acceptance and release sequencing |
+| **Insight** | Checklist quality improves when each gate and rollout step is phrased as an explicit maintainer action with clear command references |
+| **Suggested Action** | Keep voyage-local migration checklists with completion criteria, gate commands, rollout order, and deferred-item tracking |
+| **Applies To** | `.keel/epics/*/voyages/*/MIGRATION_CHECKLIST.md`, voyage `README.md` document tables |
+| **Applied** | Added `MIGRATION_CHECKLIST.md` for `1vwq9wpT7` and linked it from voyage documents |
+
+
+
+---
+
 ## Story: Add Command Behavior Regression Suite (1vwqCffzr)
 
 ### 1vyDuw5Ob: Regression Parity Needs Cross-Command Coverage
@@ -20,23 +37,6 @@ created_at: 2026-03-02T10:42:29
 | **Suggested Action** | Add paired regression tests that validate both command-level decisions and dashboard summaries for each queue policy boundary |
 | **Applies To** | `src/next/*`, `src/flow/*`, `src/commands/story/*`, `src/command_regression_tests.rs` |
 | **Applied** | Added `command_regression_tests` cases for human-block and flow-block boundaries plus lifecycle start/submit/accept chain |
-
-
-
----
-
-## Story: Refactor Main Dispatch To Interface Adapters (1vwqCf53S)
-
-### 1vyDuwf3P: Build Typed Command Actions Before Dispatching
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Refactoring large CLI dispatch trees while preserving behavior and clap argument contracts |
-| **Insight** | Converting `ArgMatches` into typed action enums at the boundary and routing through module `run(action)` functions keeps `main` focused on parsing while pushing interface adaptation into command-group modules |
-| **Suggested Action** | Keep adding action enums and single entrypoint adapters per command group so architecture tests can enforce delegation contracts cleanly |
-| **Applies To** | src/main.rs; src/commands/*/mod.rs |
-| **Applied** | 1vwqCf53S |
 
 
 
@@ -59,9 +59,26 @@ created_at: 2026-03-02T10:42:29
 
 ---
 
-## Story: Publish Migration Completion Checklist (1vwqCfeFP)
+## Story: Refactor Main Dispatch To Interface Adapters (1vwqCf53S)
 
-### 1vyDuwiKv: Rollout Docs Need Explicit Gate Ownership
+### 1vyDuwf3P: Build Typed Command Actions Before Dispatching
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Refactoring large CLI dispatch trees while preserving behavior and clap argument contracts |
+| **Insight** | Converting `ArgMatches` into typed action enums at the boundary and routing through module `run(action)` functions keeps `main` focused on parsing while pushing interface adaptation into command-group modules |
+| **Suggested Action** | Keep adding action enums and single entrypoint adapters per command group so architecture tests can enforce delegation contracts cleanly |
+| **Applies To** | src/main.rs; src/commands/*/mod.rs |
+| **Applied** | 1vwqCf53S |
+
+
+
+---
+
+## Synthesis
+
+### xGmZTe7kR: Rollout Docs Need Explicit Gate Ownership
 
 | Field | Value |
 |-------|-------|
@@ -70,13 +87,10 @@ created_at: 2026-03-02T10:42:29
 | **Insight** | Checklist quality improves when each gate and rollout step is phrased as an explicit maintainer action with clear command references |
 | **Suggested Action** | Keep voyage-local migration checklists with completion criteria, gate commands, rollout order, and deferred-item tracking |
 | **Applies To** | `.keel/epics/*/voyages/*/MIGRATION_CHECKLIST.md`, voyage `README.md` document tables |
+| **Linked Knowledge IDs** | 1vyDuwiKv |
+| **Score** | 0.78 |
+| **Confidence** | 0.88 |
 | **Applied** | Added `MIGRATION_CHECKLIST.md` for `1vwq9wpT7` and linked it from voyage documents |
-
-
-
----
-
-## Synthesis
 
 ### gYNMP5JXn: Regression Parity Needs Cross-Command Coverage
 
@@ -92,20 +106,6 @@ created_at: 2026-03-02T10:42:29
 | **Confidence** | 0.89 |
 | **Applied** | Added `command_regression_tests` cases for human-block and flow-block boundaries plus lifecycle start/submit/accept chain |
 
-### xb3Zn8PjR: Build Typed Command Actions Before Dispatching
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Refactoring large CLI dispatch trees while preserving behavior and clap argument contracts |
-| **Insight** | Converting `ArgMatches` into typed action enums at the boundary and routing through module `run(action)` functions keeps `main` focused on parsing while pushing interface adaptation into command-group modules |
-| **Suggested Action** | Keep adding action enums and single entrypoint adapters per command group so architecture tests can enforce delegation contracts cleanly |
-| **Applies To** | src/main.rs; src/commands/*/mod.rs |
-| **Linked Knowledge IDs** | 1vyDuwf3P |
-| **Score** | 0.80 |
-| **Confidence** | 0.87 |
-| **Applied** | 1vwqCf53S |
-
 ### erV4YlxVN: Production-only import checks reduce false positives
 
 | Field | Value |
@@ -120,17 +120,17 @@ created_at: 2026-03-02T10:42:29
 | **Confidence** | 0.95 |
 | **Applied** | story `1vwqCfdUl` |
 
-### xGmZTe7kR: Rollout Docs Need Explicit Gate Ownership
+### xb3Zn8PjR: Build Typed Command Actions Before Dispatching
 
 | Field | Value |
 |-------|-------|
-| **Category** | process |
-| **Context** | Finalizing migration voyages where multiple maintainers coordinate acceptance and release sequencing |
-| **Insight** | Checklist quality improves when each gate and rollout step is phrased as an explicit maintainer action with clear command references |
-| **Suggested Action** | Keep voyage-local migration checklists with completion criteria, gate commands, rollout order, and deferred-item tracking |
-| **Applies To** | `.keel/epics/*/voyages/*/MIGRATION_CHECKLIST.md`, voyage `README.md` document tables |
-| **Linked Knowledge IDs** | 1vyDuwiKv |
-| **Score** | 0.78 |
-| **Confidence** | 0.88 |
-| **Applied** | Added `MIGRATION_CHECKLIST.md` for `1vwq9wpT7` and linked it from voyage documents |
+| **Category** | architecture |
+| **Context** | Refactoring large CLI dispatch trees while preserving behavior and clap argument contracts |
+| **Insight** | Converting `ArgMatches` into typed action enums at the boundary and routing through module `run(action)` functions keeps `main` focused on parsing while pushing interface adaptation into command-group modules |
+| **Suggested Action** | Keep adding action enums and single entrypoint adapters per command group so architecture tests can enforce delegation contracts cleanly |
+| **Applies To** | src/main.rs; src/commands/*/mod.rs |
+| **Linked Knowledge IDs** | 1vyDuwf3P |
+| **Score** | 0.80 |
+| **Confidence** | 0.87 |
+| **Applied** | 1vwqCf53S |
 

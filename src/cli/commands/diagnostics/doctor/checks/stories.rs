@@ -1222,7 +1222,7 @@ pub fn check_knowledge_manifest_integrity(board_dir: &Path) -> Vec<Problem> {
 
         if unit.source_type == crate::read_model::knowledge::KnowledgeSourceType::Voyage
             && let (Some(similar_to), Some(score)) = (&unit.similar_to, unit.similarity_score)
-            && score >= 0.95
+            && score >= crate::read_model::knowledge::NEAR_DUPLICATE_KNOWLEDGE_THRESHOLD
             && !unit.linked_ids.iter().any(|linked| linked == similar_to)
         {
             problems.push(
