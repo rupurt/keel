@@ -14,7 +14,7 @@ pub mod show;
 pub enum BearingAction {
     /// Create a new bearing
     New {
-        /// Bearing name (will be slugified for ID)
+        /// Bearing title
         name: String,
     },
     /// Add SURVEY.md to a bearing
@@ -220,7 +220,7 @@ pub fn run_list(status_filter: Option<&str>) -> Result<()> {
         return Ok(());
     }
 
-    let mut table = Table::new(&["ID", "STATUS", "SURVEY", "ASSESS", "EV"]);
+    let mut table = Table::new(&["ID", "TITLE", "STATUS", "SURVEY", "ASSESS", "EV"]);
     for (bearing, score) in bearings_with_scores {
         let survey = if bearing.has_survey { "✓" } else { "-" };
         let assessment = if bearing.has_assessment { "✓" } else { "-" };
@@ -230,6 +230,7 @@ pub fn run_list(status_filter: Option<&str>) -> Result<()> {
 
         table.row(&[
             bearing.id(),
+            &bearing.frontmatter.title,
             &bearing.frontmatter.status.to_string(),
             survey,
             assessment,
