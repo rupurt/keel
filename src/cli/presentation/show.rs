@@ -144,6 +144,67 @@ impl ShowSection {
         }
     }
 
+    pub fn push_labeled_bullets<I, S, P>(
+        &mut self,
+        label: impl Into<String>,
+        items: I,
+        empty_placeholder: Option<P>,
+    ) where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+        P: Into<String>,
+    {
+        let label = label.into();
+        let items: Vec<String> = items.into_iter().map(Into::into).collect();
+
+        if items.is_empty() {
+            if let Some(placeholder) = empty_placeholder {
+                self.push_lines([format!("  {label} {}", placeholder.into())]);
+            }
+            return;
+        }
+
+        self.push_lines([format!("  {label}")]);
+        self.push_lines(items.into_iter().map(|item| format!("    - {item}")));
+    }
+
+    pub fn push_labeled_bullets_limited<I, S, P>(
+        &mut self,
+        label: impl Into<String>,
+        items: I,
+        max_items: usize,
+        empty_placeholder: Option<P>,
+    ) where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+        P: Into<String>,
+    {
+        let label = label.into();
+        let items: Vec<String> = items.into_iter().map(Into::into).collect();
+
+        if items.is_empty() {
+            if let Some(placeholder) = empty_placeholder {
+                self.push_lines([format!("  {label} {}", placeholder.into())]);
+            }
+            return;
+        }
+
+        let max_items = max_items.max(1);
+        self.push_lines([format!("  {label}")]);
+        self.push_lines(
+            items
+                .iter()
+                .take(max_items)
+                .map(|item| format!("    - {item}")),
+        );
+        if items.len() > max_items {
+            self.push_lines([format!(
+                "    - ... {} more",
+                items.len().saturating_sub(max_items)
+            )]);
+        }
+    }
+
     fn render_into(&self, output: &mut Vec<String>) {
         output.push(self.title.bold().to_string());
         for block in &self.blocks {
@@ -293,5 +354,33 @@ mod tests {
 
         assert_eq!(lines.len(), 1);
         assert_eq!(lines[0], "Type:    feat");
+    }
+
+    #[test]
+    fn show_section_push_labeled_bullets_renders_placeholder() {
+        let mut section = ShowSection::new("Summary");
+        section.push_labeled_bullets(
+            "Goals:",
+            Vec::<String>::new(),
+            Some("(not authored yet)".to_string()),
+        );
+
+        let mut lines = Vec::new();
+        section.render_into(&mut lines);
+        assert!(lines[0].contains("Summary"));
+        assert_eq!(lines[1], "  Goals: (not authored yet)");
+    }
+
+    #[test]
+    fn show_section_push_labeled_bullets_limited_truncates() {
+        let mut section = ShowSection::new("Summary");
+        section.push_labeled_bullets_limited("Items:", vec!["A", "B", "C"], 2, None::<String>);
+
+        let mut lines = Vec::new();
+        section.render_into(&mut lines);
+        assert_eq!(lines[1], "  Items:");
+        assert_eq!(lines[2], "    - A");
+        assert_eq!(lines[3], "    - B");
+        assert_eq!(lines[4], "    - ... 1 more");
     }
 }

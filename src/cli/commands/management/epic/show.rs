@@ -114,64 +114,23 @@ fn render_planning_summary(report: &EpicShowProjection) -> ShowSection {
             .unwrap_or(PROBLEM_PLACEHOLDER)
     )]);
 
-    if report.doc.goals.is_empty() {
-        section.push_lines([format!("  Goals:   {}", GOALS_PLACEHOLDER.dimmed())]);
-    } else {
-        section.push_lines(["  Goals:".to_string()]);
-        section.push_lines(
-            report
-                .doc
-                .goals
-                .iter()
-                .map(|goal| format!("    - {}", goal)),
-        );
-    }
-
-    if report.doc.key_requirements.is_empty() {
-        section.push_lines([format!(
-            "  Key Requirements: {}",
-            REQUIREMENTS_PLACEHOLDER.dimmed()
-        )]);
-    } else {
-        section.push_lines(["  Key Requirements:".to_string()]);
-        section.push_lines(
-            report
-                .doc
-                .key_requirements
-                .iter()
-                .take(5)
-                .map(|req| format!("    - {}", req)),
-        );
-        if report.doc.key_requirements.len() > 5 {
-            section.push_lines([format!(
-                "    - ... {} more",
-                report.doc.key_requirements.len().saturating_sub(5)
-            )]);
-        }
-    }
-
-    if report.doc.verification_strategy.is_empty() {
-        section.push_lines([format!(
-            "  Verification Strategy: {}",
-            VERIFICATION_STRATEGY_PLACEHOLDER.dimmed()
-        )]);
-    } else {
-        section.push_lines(["  Verification Strategy:".to_string()]);
-        section.push_lines(
-            report
-                .doc
-                .verification_strategy
-                .iter()
-                .take(5)
-                .map(|item| format!("    - {}", item)),
-        );
-        if report.doc.verification_strategy.len() > 5 {
-            section.push_lines([format!(
-                "    - ... {} more",
-                report.doc.verification_strategy.len().saturating_sub(5)
-            )]);
-        }
-    }
+    section.push_labeled_bullets(
+        "Goals:",
+        report.doc.goals.iter().cloned(),
+        Some(format!("{}", GOALS_PLACEHOLDER.dimmed())),
+    );
+    section.push_labeled_bullets_limited(
+        "Key Requirements:",
+        report.doc.key_requirements.iter().cloned(),
+        5,
+        Some(format!("{}", REQUIREMENTS_PLACEHOLDER.dimmed())),
+    );
+    section.push_labeled_bullets_limited(
+        "Verification Strategy:",
+        report.doc.verification_strategy.iter().cloned(),
+        5,
+        Some(format!("{}", VERIFICATION_STRATEGY_PLACEHOLDER.dimmed())),
+    );
 
     section
 }
@@ -236,25 +195,12 @@ fn render_verification_readiness(report: &EpicShowProjection) -> ShowSection {
         text_count, media_count, other_count
     )]);
 
-    if report.verification.linked_artifacts.is_empty() {
-        section.push_lines([format!("  {}", ARTIFACT_PLACEHOLDER.dimmed())]);
-    } else {
-        section.push_lines(["  Linked artifacts:".to_string()]);
-        section.push_lines(
-            report
-                .verification
-                .linked_artifacts
-                .iter()
-                .take(6)
-                .map(|artifact| format!("    - {}", artifact)),
-        );
-        if report.verification.linked_artifacts.len() > 6 {
-            section.push_lines([format!(
-                "    - ... {} more",
-                report.verification.linked_artifacts.len().saturating_sub(6)
-            )]);
-        }
-    }
+    section.push_labeled_bullets_limited(
+        "Linked artifacts:",
+        report.verification.linked_artifacts.iter().cloned(),
+        6,
+        Some(format!("{}", ARTIFACT_PLACEHOLDER.dimmed())),
+    );
 
     if report.verification.missing_linked_proofs > 0 {
         section.push_lines([format!(

@@ -90,7 +90,7 @@ pub struct RequirementRow {
     pub description: String,
     pub kind: RequirementKind,
     pub linked_stories: Vec<StoryRef>,
-    pub completion: String,
+    pub completion: RequirementCompletion,
     pub verification: String,
 }
 
@@ -101,6 +101,10 @@ pub struct VoyageShowProjection {
     pub requirements: Vec<RequirementRow>,
     pub done_stories: usize,
     pub total_stories: usize,
+    pub done_functional_requirements: usize,
+    pub total_functional_requirements: usize,
+    pub done_non_functional_requirements: usize,
+    pub total_non_functional_requirements: usize,
     pub done_requirements: usize,
     pub total_requirements: usize,
 }
@@ -166,6 +170,20 @@ pub enum RequirementKind {
     #[default]
     Functional,
     NonFunctional,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RequirementCompletion {
+    Unmapped,
+    Queued,
+    InProgress,
+    Done,
+}
+
+impl RequirementCompletion {
+    pub fn is_done(self) -> bool {
+        self == Self::Done
+    }
 }
 
 pub fn build_epic_show_projection(
@@ -365,7 +383,7 @@ pub fn build_voyage_show_projection(
             .collect();
         linked_stories.sort_by(story_ref_ordering);
 
-        let completion = requirement_completion_label(&linked_stories);
+        let completion = requirement_completion_state(&linked_stories);
         let automated = story_evidence
             .iter()
             .filter_map(|story| story.automated_count_by_req.get(&requirement.id))
@@ -385,15 +403,38 @@ pub fn build_voyage_show_projection(
         });
     }
 
-    let done_requirements = rows.iter().filter(|row| row.completion == "done").count();
+    let functional_rows: Vec<&RequirementRow> = rows
+        .iter()
+        .filter(|row| row.kind == RequirementKind::Functional)
+        .collect();
+    let non_functional_rows: Vec<&RequirementRow> = rows
+        .iter()
+        .filter(|row| row.kind == RequirementKind::NonFunctional)
+        .collect();
+
+    let done_functional_requirements = functional_rows
+        .iter()
+        .filter(|row| row.completion.is_done())
+        .count();
+    let done_non_functional_requirements = non_functional_rows
+        .iter()
+        .filter(|row| row.completion.is_done())
+        .count();
+    let total_functional_requirements = functional_rows.len();
+    let total_non_functional_requirements = non_functional_rows.len();
 
     Ok(VoyageShowProjection {
         goal,
         scope,
         done_stories,
         total_stories,
-        done_requirements,
-        total_requirements: rows.len(),
+        done_functional_requirements,
+        total_functional_requirements,
+        done_non_functional_requirements,
+        total_non_functional_requirements,
+        // Canonical completion rollup tracks functional requirements only.
+        done_requirements: done_functional_requirements,
+        total_requirements: total_functional_requirements,
         requirements: rows,
     })
 }
@@ -934,17 +975,17 @@ fn story_ref_ordering(a: &StoryRef, b: &StoryRef) -> Ordering {
     }
 }
 
-fn requirement_completion_label(linked: &[StoryRef]) -> String {
+fn requirement_completion_state(linked: &[StoryRef]) -> RequirementCompletion {
     if linked.is_empty() {
-        "unmapped".to_string()
+        RequirementCompletion::Unmapped
     } else if linked.iter().all(|story| story.stage == StoryState::Done) {
-        "done".to_string()
+        RequirementCompletion::Done
     } else if linked.iter().any(|story| {
         story.stage == StoryState::InProgress || story.stage == StoryState::NeedsHumanVerification
     }) {
-        "in-progress".to_string()
+        RequirementCompletion::InProgress
     } else {
-        "queued".to_string()
+        RequirementCompletion::Queued
     }
 }
 
@@ -1395,6 +1436,10 @@ Planners cannot quickly inspect requirement readiness.
             requirements,
             done_stories,
             total_stories,
+            done_functional_requirements,
+            total_functional_requirements,
+            done_non_functional_requirements,
+            total_non_functional_requirements,
             done_requirements,
             total_requirements,
         } = voyage;
@@ -1404,6 +1449,10 @@ Planners cannot quickly inspect requirement readiness.
             requirements,
             done_stories,
             total_stories,
+            done_functional_requirements,
+            total_functional_requirements,
+            done_non_functional_requirements,
+            total_non_functional_requirements,
             done_requirements,
             total_requirements,
         );
