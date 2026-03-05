@@ -19,6 +19,10 @@ use crate::domain::state_machine::voyage::VoyageState;
 /// Regex for SRS requirement references like [SRS-01/AC-01]
 pub static AC_REQ_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\[(SRS-\d+)/AC-\d+\]").unwrap());
+static STRONG_EMPHASIS_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\*\*([^*]+)\*\*").expect("valid strong emphasis regex"));
+static EMPHASIS_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\*([^*]+)\*").expect("valid emphasis regex"));
 
 /// Color a stage label by its workflow meaning
 pub fn styled_stage(stage: &StoryState) -> String {
@@ -226,6 +230,19 @@ pub fn styled_evidence_entry(entry: &crate::read_model::evidence::EvidenceEntry)
     } else {
         format!("{}", line.cyan())
     }
+}
+
+/// Render markdown strong/emphasis markers with terminal emphasis styling.
+pub fn styled_inline_emphasis(value: &str) -> String {
+    let strong_to_italic = STRONG_EMPHASIS_RE
+        .replace_all(value, |captures: &regex::Captures<'_>| {
+            format!("{}", captures[1].to_string().italic())
+        });
+    EMPHASIS_RE
+        .replace_all(&strong_to_italic, |captures: &regex::Captures<'_>| {
+            format!("{}", captures[1].to_string().italic())
+        })
+        .into_owned()
 }
 
 /// Map common fenced code block language tags to syntect file extensions.
@@ -437,6 +454,15 @@ mod tests {
     fn styled_ac_passes_through_non_ac_lines() {
         let line = "Some regular text";
         assert_eq!(styled_ac(line), "Some regular text");
+    }
+
+    #[test]
+    fn styled_inline_emphasis_replaces_markers() {
+        let rendered = styled_inline_emphasis("**Content** and *focus*");
+        assert!(!rendered.contains("**Content**"));
+        assert!(!rendered.contains("*focus*"));
+        assert!(rendered.contains("Content"));
+        assert!(rendered.contains("focus"));
     }
 
     #[test]
