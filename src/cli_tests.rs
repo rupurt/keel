@@ -206,6 +206,17 @@ fn cli_parses_verify_command() {
 }
 
 #[test]
+fn cli_parses_verify_recommend_command() {
+    let matches = crate::build_cli()
+        .try_get_matches_from(["keel", "verify", "recommend", "--json"])
+        .unwrap();
+    assert_eq!(matches.subcommand_name(), Some("verify"));
+    let sub_m = matches.subcommand_matches("verify").unwrap();
+    let recommend_m = sub_m.subcommand_matches("recommend").unwrap();
+    assert!(*recommend_m.get_one::<bool>("json").unwrap());
+}
+
+#[test]
 fn cli_parses_status_command() {
     let cli = Cli::try_parse_from(["board", "status"]).unwrap();
     if let Commands::Diagnostics(DiagnosticsCommands::Status {}) = cli.command {

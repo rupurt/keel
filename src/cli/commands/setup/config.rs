@@ -11,7 +11,7 @@ use serde::Serialize;
 use crate::infrastructure::config::{self, Config};
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::verification::parser::parse_verify_annotations;
-use crate::read_model::verification_techniques::{self, TechniqueDefinition, TechniqueModality};
+use crate::read_model::verification_techniques::{self, TechniqueModality};
 
 #[derive(Subcommand, Debug)]
 pub enum ConfigAction {
@@ -154,70 +154,35 @@ fn build_verification_technique_projection(
     config: &Config,
     project_root: &Path,
 ) -> TechniqueStatusProjection {
-    let keel_toml_path = project_root.join("keel.toml");
-    let keel_toml_content = fs::read_to_string(&keel_toml_path).unwrap_or_default();
-    let parsed =
-        verification_techniques::parse_technique_overrides_from_keel_toml(&keel_toml_content);
-    let merged = verification_techniques::merge_technique_catalog_with_overrides(
-        verification_techniques::builtin_technique_catalog(),
-        &parsed.overrides,
-    );
-    let signals = verification_techniques::detect_project_signals(project_root);
     let used_techniques = collect_used_techniques(config, project_root);
-    let mut disabled: Vec<&TechniqueDefinition> = merged
-        .catalog
-        .iter()
-        .filter(|technique| !technique.enabled_by_default)
-        .collect();
-    disabled.sort_by(|left, right| left.id.cmp(&right.id));
+    let report =
+        verification_techniques::resolve_technique_status_report(project_root, &used_techniques);
 
-    let mut rows: Vec<TechniqueStatusRow> = merged
-        .catalog
+    let rows: Vec<TechniqueStatusRow> = report
+        .techniques
         .iter()
-        .map(|technique| {
-            let detected = technique_is_detected(technique, &signals, &used_techniques);
-            let disabled = !technique.enabled_by_default;
-            let active = detected && !disabled;
-            TechniqueStatusRow {
-                label: technique.id.clone(),
-                name: technique.label.clone(),
-                detected,
-                disabled,
-                active,
-                modality: modality_name(technique.modality).to_string(),
-                command: technique.default_command.clone(),
-            }
+        .map(|technique| TechniqueStatusRow {
+            label: technique.id.clone(),
+            name: technique.label.clone(),
+            detected: technique.detected,
+            disabled: technique.disabled,
+            active: technique.active,
+            modality: modality_name(technique.modality).to_string(),
+            command: technique.default_command.clone(),
         })
         .collect();
-    rows.sort_by(|left, right| left.label.cmp(&right.label));
 
     let summary = TechniqueStatusSummary {
         total: rows.len(),
         detected: rows.iter().filter(|row| row.detected).count(),
-        disabled: disabled.len(),
+        disabled: rows.iter().filter(|row| row.disabled).count(),
         active: rows.iter().filter(|row| row.active).count(),
     };
-
-    let mut diagnostics = Vec::new();
-    diagnostics.extend(
-        parsed
-            .diagnostics
-            .into_iter()
-            .map(|diagnostic| format!("{}: {}", diagnostic.path, diagnostic.message)),
-    );
-    diagnostics.extend(
-        merged
-            .diagnostics
-            .into_iter()
-            .map(|diagnostic| format!("{}: {}", diagnostic.path, diagnostic.message)),
-    );
-    diagnostics.sort();
-    diagnostics.dedup();
 
     TechniqueStatusProjection {
         summary,
         rows,
-        diagnostics,
+        diagnostics: report.diagnostics,
     }
 }
 
@@ -246,40 +211,6 @@ fn collect_used_techniques(config: &Config, project_root: &Path) -> BTreeSet<Str
     }
 
     used
-}
-
-fn technique_is_detected(
-    technique: &TechniqueDefinition,
-    signals: &verification_techniques::ProjectSignalReport,
-    used_techniques: &BTreeSet<String>,
-) -> bool {
-    if used_techniques.contains(&technique.id) {
-        return true;
-    }
-
-    if technique.applicable_stacks.iter().any(|stack| {
-        signals
-            .stack_confidence
-            .get(stack)
-            .copied()
-            .unwrap_or_default()
-            > 0.0
-    }) {
-        return true;
-    }
-
-    if technique
-        .signal_keywords
-        .iter()
-        .any(|keyword| signals.hints.contains(&keyword.to_ascii_lowercase()))
-    {
-        return true;
-    }
-
-    technique
-        .prerequisites
-        .iter()
-        .any(|requirement| signals.hints.contains(&requirement.to_ascii_lowercase()))
 }
 
 fn resolve_project_root(config: &Config) -> PathBuf {

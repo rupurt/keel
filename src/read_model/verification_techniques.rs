@@ -168,6 +168,23 @@ pub struct ShowRecommendationReport {
     pub diagnostics: Vec<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct TechniqueStatus {
+    pub id: String,
+    pub label: String,
+    pub modality: TechniqueModality,
+    pub default_command: String,
+    pub detected: bool,
+    pub disabled: bool,
+    pub active: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct TechniqueStatusReport {
+    pub techniques: Vec<TechniqueStatus>,
+    pub diagnostics: Vec<String>,
+}
+
 /// Built-in technique bank used as the canonical base catalog.
 ///
 /// The list is sorted by technique id to guarantee deterministic ordering across runs.
@@ -623,6 +640,61 @@ pub fn build_show_recommendation_report(
     }
 }
 
+/// Resolve deterministic per-technique status flags for config/recommend command surfaces.
+pub fn resolve_technique_status_report(
+    project_root: &Path,
+    used_techniques: &BTreeSet<String>,
+) -> TechniqueStatusReport {
+    let keel_toml = project_root.join("keel.toml");
+    let keel_toml_content = fs::read_to_string(&keel_toml).unwrap_or_default();
+
+    let parsed = parse_technique_overrides_from_keel_toml(&keel_toml_content);
+    let merged =
+        merge_technique_catalog_with_overrides(builtin_technique_catalog(), &parsed.overrides);
+    let signals = detect_project_signals(project_root);
+
+    let mut techniques: Vec<TechniqueStatus> = merged
+        .catalog
+        .iter()
+        .map(|technique| {
+            let detected = technique_is_detected(technique, &signals, used_techniques);
+            let disabled = !technique.enabled_by_default;
+            let active = detected && !disabled;
+            TechniqueStatus {
+                id: technique.id.clone(),
+                label: technique.label.clone(),
+                modality: technique.modality,
+                default_command: technique.default_command.clone(),
+                detected,
+                disabled,
+                active,
+            }
+        })
+        .collect();
+    techniques.sort_by(|left, right| left.id.cmp(&right.id));
+
+    let mut diagnostics = Vec::new();
+    diagnostics.extend(
+        parsed
+            .diagnostics
+            .into_iter()
+            .map(|diagnostic| format!("{}: {}", diagnostic.path, diagnostic.message)),
+    );
+    diagnostics.extend(
+        merged
+            .diagnostics
+            .into_iter()
+            .map(|diagnostic| format!("{}: {}", diagnostic.path, diagnostic.message)),
+    );
+    diagnostics.sort();
+    diagnostics.dedup();
+
+    TechniqueStatusReport {
+        techniques,
+        diagnostics,
+    }
+}
+
 /// Infer known technique ids from a verify command string.
 pub fn infer_used_technique_ids(command: &str) -> Vec<String> {
     let command = command.trim();
@@ -666,6 +738,40 @@ fn technique_used(technique_id: &str, used_techniques: &BTreeSet<String>) -> boo
         "browser-playwright-e2e" => used_techniques.contains("playwright"),
         _ => false,
     }
+}
+
+fn technique_is_detected(
+    technique: &TechniqueDefinition,
+    signals: &ProjectSignalReport,
+    used_techniques: &BTreeSet<String>,
+) -> bool {
+    if technique_used(&technique.id, used_techniques) {
+        return true;
+    }
+
+    if technique.applicable_stacks.iter().any(|stack| {
+        signals
+            .stack_confidence
+            .get(stack)
+            .copied()
+            .unwrap_or_default()
+            > 0.0
+    }) {
+        return true;
+    }
+
+    if technique
+        .signal_keywords
+        .iter()
+        .any(|keyword| signals.hints.contains(&keyword.to_ascii_lowercase()))
+    {
+        return true;
+    }
+
+    technique
+        .prerequisites
+        .iter()
+        .any(|requirement| signals.hints.contains(&requirement.to_ascii_lowercase()))
 }
 
 fn adoption_guidance_for(technique: &TechniqueDefinition) -> String {
@@ -1672,5 +1778,50 @@ default_command = ""
         assert_eq!(first, second);
         assert_eq!(first[0].id, "alpha");
         assert_eq!(first[1].id, "zeta");
+    }
+
+    #[test]
+    fn technique_status_report_filters_detected_and_active_flags() {
+        let temp = TempDir::new().unwrap();
+        fs::write(temp.path().join("Cargo.toml"), "[package]\nname=\"demo\"\n").unwrap();
+        fs::write(
+            temp.path().join("keel.toml"),
+            r#"[verification.techniques]
+disable = ["rust-unit-tests"]
+"#,
+        )
+        .unwrap();
+        let used = BTreeSet::new();
+
+        let report = resolve_technique_status_report(temp.path(), &used);
+
+        let rust_unit = report
+            .techniques
+            .iter()
+            .find(|status| status.id == "rust-unit-tests")
+            .unwrap();
+        assert!(rust_unit.detected);
+        assert!(rust_unit.disabled);
+        assert!(!rust_unit.active);
+
+        let browser = report
+            .techniques
+            .iter()
+            .find(|status| status.id == "browser-playwright-e2e")
+            .unwrap();
+        assert!(!browser.detected);
+        assert!(!browser.active);
+    }
+
+    #[test]
+    fn technique_status_report_deterministic() {
+        let temp = TempDir::new().unwrap();
+        fs::write(temp.path().join("Cargo.toml"), "[package]\nname=\"demo\"\n").unwrap();
+        let used = BTreeSet::new();
+
+        let first = resolve_technique_status_report(temp.path(), &used);
+        let second = resolve_technique_status_report(temp.path(), &used);
+
+        assert_eq!(first, second);
     }
 }

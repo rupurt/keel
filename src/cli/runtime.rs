@@ -84,17 +84,22 @@ pub fn run() -> Result<()> {
             let id = m.get_one::<String>("id").cloned();
             super::commands::management::story::audit::run(&resolve_board_dir()?, id.as_deref())
         }
-        Some(("verify", m)) => {
-            if let Some(("run", run_m)) = m.subcommand() {
+        Some(("verify", m)) => match m.subcommand() {
+            Some(("run", run_m)) => {
                 let id = run_m.get_one::<String>("id").map(|s| s.as_str());
                 let all = *run_m.get_one::<bool>("all").unwrap_or(&false);
                 let json = *run_m.get_one::<bool>("json").unwrap_or(&false);
                 super::commands::management::verify::run(&resolve_board_dir()?, id, all, json)
-            } else {
+            }
+            Some(("recommend", recommend_m)) => {
+                let json = *recommend_m.get_one::<bool>("json").unwrap_or(&false);
+                super::commands::management::verify::recommend(&resolve_board_dir()?, json)
+            }
+            _ => {
                 let legacy_id = m.get_one::<String>("id").map(String::as_str);
                 super::commands::management::verify::run_legacy(legacy_id)
             }
-        }
+        },
         Some(("knowledge", m)) => handle_knowledge_command(m),
         Some(("generate", _)) => super::commands::setup::generate::run(&resolve_board_dir()?),
         Some(("init", _)) => Ok(super::commands::setup::init::run()?),

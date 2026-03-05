@@ -247,6 +247,16 @@ pub fn build_cli() -> Command {
                                 .help("Output as JSON for scripting")
                                 .action(ArgAction::SetTrue),
                         ),
+                )
+                .subcommand(
+                    Command::new("recommend")
+                        .about("Show detected+active verification techniques")
+                        .arg(
+                            Arg::new("json")
+                                .long("json")
+                                .help("Output as JSON for scripting")
+                                .action(ArgAction::SetTrue),
+                        ),
                 ),
         )
         .subcommand(
