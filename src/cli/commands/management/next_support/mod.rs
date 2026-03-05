@@ -3,6 +3,7 @@
 pub mod algorithm;
 pub mod format;
 pub mod parallel_features;
+pub mod parallel_scoring;
 pub mod staleness;
 
 pub use algorithm::{

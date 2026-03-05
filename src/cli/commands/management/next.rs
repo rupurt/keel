@@ -329,10 +329,14 @@ fn run_parallel(
         chain.sort_by_key(|s| s.index());
     }
 
-    // Compute deterministic semantic feature vectors for pairwise conflict reasoning.
-    let _pairwise_feature_vectors =
+    // Compute deterministic semantic signals and conservative pairwise scores.
+    let pairwise_feature_vectors =
         crate::cli::commands::management::next_support::parallel_features::extract_parallel_feature_vectors(
             board, &ready,
+        );
+    let _pairwise_scores =
+        crate::cli::commands::management::next_support::parallel_scoring::score_parallel_pairwise_conflicts(
+            &pairwise_feature_vectors,
         );
 
     if json {

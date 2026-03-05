@@ -25,7 +25,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Semantic Conflict Feature Extraction](stories/1vxyMr3U2/README.md) | feat | [Parallel Safety For Next](epics/1vxyM0hvn/) / [Semantic Conflict Detection For Parallel Next](epics/1vxyM0hvn/voyages/1vxyMT6nz/) |
 | [Pairwise Blocker Rendering For Parallel Next](stories/1vxyMsbOj/README.md) | feat | [Parallel Safety For Next](epics/1vxyM0hvn/) / [Semantic Conflict Detection For Parallel Next](epics/1vxyM0hvn/voyages/1vxyMT6nz/) |
 | [Conservative Pairwise Conflict Scoring](stories/1vxyMsepz/README.md) | feat | [Parallel Safety For Next](epics/1vxyM0hvn/) / [Semantic Conflict Detection For Parallel Next](epics/1vxyM0hvn/voyages/1vxyMT6nz/) |
 | [Parallel Queue Selection With Confidence Threshold](stories/1vxyMsvug/README.md) | feat | [Parallel Safety For Next](epics/1vxyM0hvn/) / [Semantic Conflict Detection For Parallel Next](epics/1vxyM0hvn/voyages/1vxyMT6nz/) |
