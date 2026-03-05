@@ -200,6 +200,7 @@ pub enum CheckId {
     StoryMissingManifest,
     StoryManifestTampered,
     VoyageStatusDrift,
+    VoyageUnexpectedPressRelease,
     EpicStatusDrift,
     EpicMissingReadme,
     EpicMissingPrd,

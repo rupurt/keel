@@ -138,7 +138,7 @@ in the project being managed (not in this repository).
 |------|----------|
 | `.keel/adrs/` | Architecture decision records |
 | `.keel/epics/` | Epic-level planning artifacts (PRDs) |
-| `.keel/voyages/` | Voyage planning artifacts (SRS + SDD) |
+| `.keel/epics/<epic-id>/voyages/` | Voyage planning artifacts (SRS + SDD) |
 | `.keel/stories/` | Implementable work items |
 | `.keel/README.md` | Board state overview (auto-generated) |
 

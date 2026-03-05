@@ -99,6 +99,32 @@ pub fn check_voyage_dates(board: &Board) -> Vec<Problem> {
     problems
 }
 
+/// Voyage work products should not include a PRESS_RELEASE.md.
+/// Press releases are epic-level artifacts only.
+pub fn check_voyage_press_release_artifacts(board: &Board) -> Vec<Problem> {
+    let mut problems = Vec::new();
+
+    for voyage in board.voyages.values() {
+        let voyage_dir = voyage.path.parent().unwrap_or(&voyage.path);
+        let press_release_path = voyage_dir.join("PRESS_RELEASE.md");
+        if press_release_path.exists() {
+            problems.push(
+                Problem::error(
+                    press_release_path.clone(),
+                    "voyage contains PRESS_RELEASE.md; press releases are epic-only artifacts",
+                )
+                .with_check_id(CheckId::VoyageUnexpectedPressRelease)
+                .with_scope(voyage.scope_path())
+                .with_fix(Fix::RemoveFile {
+                    path: press_release_path,
+                }),
+            );
+        }
+    }
+
+    problems
+}
+
 /// Check for duplicate voyage IDs across all epics
 pub fn check_voyage_duplicates(board_dir: &Path) -> Vec<Problem> {
     crate::infrastructure::duplicate_ids::duplicate_id_problems(
@@ -211,6 +237,39 @@ mod tests {
 
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_voyage_status_drift(&board);
+        assert!(problems.is_empty());
+    }
+
+    #[test]
+    fn voyage_press_release_artifact_reports_error() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1"))
+            .build();
+
+        let press_release = temp.path().join("epics/e1/voyages/v1/PRESS_RELEASE.md");
+        std::fs::write(&press_release, "# Voyage press release").unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_voyage_press_release_artifacts(&board);
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].check_id, CheckId::VoyageUnexpectedPressRelease);
+        assert_eq!(problems[0].severity, Severity::Error);
+        assert!(matches!(
+            problems[0].fix,
+            Some(Fix::RemoveFile { ref path }) if path == &press_release
+        ));
+    }
+
+    #[test]
+    fn voyage_press_release_artifact_allows_voyage_without_press_release() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1"))
+            .build();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_voyage_press_release_artifacts(&board);
         assert!(problems.is_empty());
     }
 }

@@ -3,7 +3,6 @@
 //! This module owns orchestration for voyage and epic lifecycle transitions so
 //! CLI command handlers can remain thin interface adapters.
 
-use std::fmt::Write;
 use std::fs;
 use std::path::Path;
 
@@ -145,10 +144,6 @@ impl VoyageEpicLifecycleService {
             eprintln!("Warning: Failed to generate COMPLIANCE_REPORT.md: {}", e);
         }
 
-        if let Err(e) = generate_press_release(&refreshed_board, refreshed_voyage) {
-            eprintln!("Warning: Failed to generate PRESS_RELEASE.md: {}", e);
-        }
-
         if let Err(e) =
             crate::infrastructure::generate::knowledge_synthesis::synthesize_voyage_knowledge(
                 &refreshed_board,
@@ -161,130 +156,6 @@ impl VoyageEpicLifecycleService {
         println!("Completed voyage: {}", voyage.id());
 
         Ok(())
-    }
-}
-
-/// Generate a high-fidelity PRESS_RELEASE.md for the voyage.
-fn generate_press_release(
-    board: &crate::domain::model::Board,
-    voyage: &crate::domain::model::Voyage,
-) -> Result<()> {
-    let mut output = String::new();
-    writeln!(output, "# PRESS RELEASE: {}", voyage.title()).unwrap();
-    writeln!(output).unwrap();
-    writeln!(output, "## Overview").unwrap();
-    if let Some(goal) = voyage.frontmatter.goal.as_ref() {
-        writeln!(output, "> {}", goal).unwrap();
-    }
-    writeln!(output).unwrap();
-
-    let stories = board.stories_for_voyage(voyage);
-
-    // 1. Executive Summary (Synthesized from stories)
-    writeln!(output, "## Narrative Summary").unwrap();
-    for story in &stories {
-        let content = fs::read_to_string(&story.path)?;
-        if let Some(summary) = extract_story_summary(&content) {
-            writeln!(output, "### {}", story.title()).unwrap();
-            writeln!(output, "{}", summary).unwrap();
-            writeln!(output).unwrap();
-        }
-    }
-
-    // 2. Insights & Lessons (From REFLECT.md)
-    writeln!(output, "## Key Insights").unwrap();
-    for story in &stories {
-        let story_dir = story.path.parent().unwrap();
-        let reflect_path = story_dir.join("REFLECT.md");
-        if reflect_path.exists() {
-            let reflect_content = fs::read_to_string(reflect_path)?;
-            let insights = crate::read_model::knowledge::scanner::parse_knowledge_from_content(
-                &reflect_content,
-                &story_dir.join("REFLECT.md"),
-                crate::read_model::knowledge::KnowledgeSourceType::Story,
-            );
-            if !insights.is_empty() {
-                writeln!(output, "### Insights from {}", story.title()).unwrap();
-                render_story_insights(&mut output, &insights);
-                writeln!(output).unwrap();
-            }
-        }
-    }
-
-    // 3. Evidence & Proof (vhs recordings, LLM transcripts)
-    writeln!(output, "## Verification Proof").unwrap();
-    for story in &stories {
-        let story_dir = story.path.parent().unwrap();
-        let evidence_dir = story_dir.join("EVIDENCE");
-        if evidence_dir.exists() {
-            let entries = fs::read_dir(evidence_dir)?;
-            let mut story_evidence = Vec::new();
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_file() {
-                    let filename = path.file_name().unwrap().to_string_lossy().to_string();
-                    story_evidence.push(filename);
-                }
-            }
-
-            if !story_evidence.is_empty() {
-                writeln!(output, "### Proof for {}", story.title()).unwrap();
-                for filename in story_evidence {
-                    let rel_path =
-                        format!("../../../../stories/{}/EVIDENCE/{}", story.id(), filename);
-                    if filename.ends_with(".gif") {
-                        writeln!(output, "![{}]({})", filename, rel_path).unwrap();
-                    } else {
-                        writeln!(output, "- [{}]({})", filename, rel_path).unwrap();
-                    }
-                }
-                writeln!(output).unwrap();
-            }
-        }
-    }
-
-    let release_path = voyage.path.parent().unwrap().join("PRESS_RELEASE.md");
-    fs::write(release_path, output)?;
-
-    Ok(())
-}
-
-/// Extract summary section from story README.
-fn extract_story_summary(content: &str) -> Option<String> {
-    let mut in_summary = false;
-    let mut summary = String::new();
-
-    for line in content.lines() {
-        if line.starts_with("# Summary") || line.starts_with("## Summary") {
-            in_summary = true;
-            continue;
-        }
-        if in_summary {
-            if line.starts_with('#') {
-                break;
-            }
-            summary.push_str(line);
-            summary.push('\n');
-        }
-    }
-
-    let trimmed = summary.trim();
-    if trimmed.is_empty() {
-        None
-    } else {
-        Some(trimmed.to_string())
-    }
-}
-
-fn render_story_insights(
-    output: &mut String,
-    insights: &[crate::read_model::knowledge::Knowledge],
-) {
-    for insight in insights {
-        writeln!(output, "- **{}: {}**", insight.id, insight.title).unwrap();
-        writeln!(output, "  - Insight: {}", insight.insight).unwrap();
-        writeln!(output, "  - Suggested Action: {}", insight.suggested_action).unwrap();
-        writeln!(output).unwrap();
     }
 }
 

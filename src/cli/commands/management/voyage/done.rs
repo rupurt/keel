@@ -184,7 +184,7 @@ END FUNCTIONAL_REQUIREMENTS
     }
 
     #[test]
-    fn done_voyage_generates_press_release() {
+    fn done_voyage_does_not_generate_press_release() {
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("release-epic"))
             .voyage(TestVoyage::new("01-release", "release-epic").status("in-progress"))
@@ -197,36 +197,12 @@ END FUNCTIONAL_REQUIREMENTS
             )
             .build();
 
-        // Add reflection manually
-        let reflect_path = temp.path().join("stories/S1/REFLECT.md");
-        fs::write(
-            reflect_path,
-            "## Knowledge\n\n### L001: Insight 1\n\n| Field | Value |\n|-------|-------|\n| **Insight** | Keep story summary and evidence synchronized |\n| **Suggested Action** | Require synchronized updates in done flow |\n",
-        )
-        .unwrap();
-
-        // Add evidence manually
-        let evidence_dir = temp.path().join("stories/S1/EVIDENCE");
-        fs::create_dir_all(&evidence_dir).unwrap();
-        fs::write(evidence_dir.join("proof.txt"), "proof content").unwrap();
-
         run_with_dir(temp.path(), "01-release", None, None, None).unwrap();
 
         let release_path = temp
             .path()
             .join("epics/release-epic/voyages/01-release/PRESS_RELEASE.md");
-        assert!(release_path.exists());
-
-        let release_content = fs::read_to_string(release_path).unwrap();
-        assert!(release_content.contains("# PRESS RELEASE: 01-release Voyage"));
-        assert!(release_content.contains("## Narrative Summary"));
-        assert!(release_content.contains("### Story 1"));
-        assert!(release_content.contains("This is story 1 summary."));
-        assert!(release_content.contains("## Key Insights"));
-        assert!(release_content.contains("L001: Insight 1"));
-        assert!(release_content.contains("Suggested Action"));
-        assert!(release_content.contains("## Verification Proof"));
-        assert!(release_content.contains("proof.txt"));
+        assert!(!release_path.exists());
 
         let voyage_report_path = temp
             .path()

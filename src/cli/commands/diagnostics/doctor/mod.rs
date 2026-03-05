@@ -241,6 +241,15 @@ pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
         duration: Duration::from_millis(0),
     });
 
+    let voyage_artifact_problems = checks::voyages::check_voyage_press_release_artifacts(&board);
+    voyage_checks.push(CheckResult {
+        name: "Voyage artifact contract",
+        evaluations: board.voyages.len(),
+        passed: voyage_artifact_problems.is_empty(),
+        problems: voyage_artifact_problems,
+        duration: Duration::from_millis(0),
+    });
+
     let evidence_problems = checks::evidence::check_evidence_chains(&board);
     voyage_checks.push(CheckResult {
         name: "Evidence chains",
