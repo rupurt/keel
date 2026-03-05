@@ -6,6 +6,7 @@ use std::path::Path;
 use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 use clap::Subcommand;
+use owo_colors::OwoColorize;
 
 pub(crate) mod guidance;
 
@@ -58,6 +59,7 @@ pub enum BearingAction {
 
 pub mod new;
 
+use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::table::Table;
 use crate::domain::model::{Bearing, BearingStatus};
 use crate::infrastructure::config::{find_board_dir, load_config};
@@ -248,47 +250,51 @@ pub fn run_show(pattern: &str) -> Result<()> {
     let (config, _source) = load_config();
     let weights = config.current_weights();
     let bearing = board.require_bearing(pattern)?;
+    let width = crate::cli::presentation::terminal::get_terminal_width();
 
-    // Print details
-    println!("Bearing: {}", bearing.frontmatter.title);
-    println!("{}", "=".repeat(50));
-    println!("ID:      {}", bearing.id());
-    println!("Status:  {}", bearing.frontmatter.status);
+    let mut metadata = ShowKeyValues::new()
+        .with_min_label_width(9)
+        .row("Title:", format!("{}", bearing.frontmatter.title.bold()))
+        .row("ID:", bearing.id().to_string())
+        .row("Status:", bearing.frontmatter.status.to_string());
+
     if matches!(
         bearing.frontmatter.status,
         BearingStatus::Exploring | BearingStatus::Parked
     ) {
         let fog = classify_fog(&board_dir, bearing);
-        println!("Fog:     {}", fog.as_banner());
+        metadata.push_row("Fog:", fog.as_banner().to_string());
     }
-    if let Some(created_at) = bearing.frontmatter.created_at {
-        println!("Created: {}", created_at);
-    }
-    println!();
+    metadata.push_optional_row(
+        "Created:",
+        bearing.frontmatter.created_at.map(|d| d.to_string()),
+    );
 
-    // Documents
-    println!("Documents:");
-    println!("  README.md:     ✓ (frontmatter)");
-    println!("  BRIEF.md:      ✓ (research)");
-    println!(
+    let mut documents = ShowSection::new("Documents");
+    documents.push_lines(["  README.md:     ✓ (frontmatter)".to_string()]);
+    documents.push_lines(["  BRIEF.md:      ✓ (research)".to_string()]);
+    documents.push_lines([format!(
         "  SURVEY.md:     {}",
         if bearing.has_survey {
             "✓"
         } else {
             "not created"
         }
-    );
-    println!(
+    )]);
+    documents.push_lines([format!(
         "  ASSESSMENT.md: {}",
         if bearing.has_assessment {
             "✓"
         } else {
             "not created"
         }
-    );
-    println!();
+    )]);
 
-    // EV Score
+    let mut document = ShowDocument::new();
+    document.push_key_values(metadata);
+    document.push_rule(width);
+    document.push_section(documents);
+
     if bearing.has_assessment {
         let assessment_path = board_dir
             .join("bearings")
@@ -296,32 +302,39 @@ pub fn run_show(pattern: &str) -> Result<()> {
             .join("ASSESSMENT.md");
 
         if let Ok(factors) = load_assessment(&assessment_path) {
-            println!("EV Scoring (mode: {}):", config.mode());
-            println!("  Impact:     {}", format_factor(factors.impact));
-            println!("  Confidence: {}", format_factor(factors.confidence));
-            println!("  Effort:     {}", format_factor(factors.effort));
-            println!("  Risk:       {}", format_factor(factors.risk));
+            let mut scoring = ShowSection::new("EV Scoring");
+            let mut fields = ShowKeyValues::new().with_indent(2).with_min_label_width(11);
+            fields.push_row("Mode:", config.mode().to_string());
+            fields.push_row("Impact:", format_factor(factors.impact));
+            fields.push_row("Confidence:", format_factor(factors.confidence));
+            fields.push_row("Effort:", format_factor(factors.effort));
+            fields.push_row("Risk:", format_factor(factors.risk));
+            scoring.push_key_values(fields);
 
             if factors.is_complete() {
                 if let Ok(score) = calculate_score(&factors, &weights) {
-                    println!();
-                    println!("  EV Score: {:.2}", score.weighted_score);
+                    scoring.push_lines([format!("  EV Score: {:.2}", score.weighted_score)]);
                 }
             } else {
-                println!();
-                println!(
+                scoring.push_lines([format!(
                     "  Missing factors: {}",
                     factors.missing_factors().join(", ")
-                );
+                )]);
             }
+
+            document.push_spacer();
+            document.push_section(scoring);
         }
     }
 
-    // Decline reason if present
     if let Some(reason) = &bearing.frontmatter.decline_reason {
-        println!();
-        println!("Decline Reason: {}", reason);
+        let mut decline = ShowSection::new("Decline Reason");
+        decline.push_lines([reason.to_string()]);
+        document.push_spacer();
+        document.push_section(decline);
     }
+
+    document.print();
     print_human(informational_for_show().as_ref());
 
     Ok(())

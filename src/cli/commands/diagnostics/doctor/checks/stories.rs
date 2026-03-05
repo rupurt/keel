@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 use super::super::AC_REQ_RE;
 use super::super::types::*;
-use crate::domain::model::{Board, StoryState, VoyageState};
+use crate::domain::model::{Board, Story, StoryState, VoyageState};
 use crate::infrastructure::validation::parse_acceptance_criteria;
 use crate::infrastructure::validation::structural;
 
@@ -157,9 +157,75 @@ pub fn check_story_dates(board: &Board) -> Vec<Problem> {
             &story.path,
             CheckId::StoryDateConsistency,
         ));
+        problems.extend(story_temporal_invariant_problems(story));
     }
 
     problems
+}
+
+fn story_temporal_invariant_problems(story: &Story) -> Vec<Problem> {
+    let mut problems = Vec::new();
+    if let Some(problem) = missing_started_at_problem(story) {
+        problems.push(problem);
+    }
+    if let Some(problem) = submitted_before_completed_problem(story) {
+        problems.push(problem);
+    }
+    problems
+}
+
+fn missing_started_at_problem(story: &Story) -> Option<Problem> {
+    if !stage_requires_started_at(story.stage) || story.frontmatter.started_at.is_some() {
+        return None;
+    }
+
+    Some(
+        Problem::error(
+            story.path.clone(),
+            format!(
+                "story in '{}' state must define started_at timestamp",
+                story.stage
+            ),
+        )
+        .with_check_id(CheckId::StoryDateConsistency)
+        .with_scope(story.scope().unwrap_or_default()),
+    )
+}
+
+fn submitted_before_completed_problem(story: &Story) -> Option<Problem> {
+    let (Some(submitted_at), Some(completed_at)) = (
+        story.frontmatter.submitted_at,
+        story.frontmatter.completed_at,
+    ) else {
+        return None;
+    };
+
+    if submitted_at < completed_at {
+        return None;
+    }
+
+    Some(
+        Problem::error(
+            story.path.clone(),
+            format!(
+                "submitted_at ({}) must be earlier than completed_at ({})",
+                submitted_at.format("%Y-%m-%dT%H:%M:%S"),
+                completed_at.format("%Y-%m-%dT%H:%M:%S")
+            ),
+        )
+        .with_check_id(CheckId::StoryDateConsistency)
+        .with_scope(story.scope().unwrap_or_default()),
+    )
+}
+
+fn stage_requires_started_at(stage: StoryState) -> bool {
+    matches!(
+        stage,
+        StoryState::InProgress
+            | StoryState::NeedsHumanVerification
+            | StoryState::Done
+            | StoryState::Rejected
+    )
 }
 
 /// Check that story role fields have valid taxonomy syntax
@@ -1179,6 +1245,103 @@ mod tests {
     use super::*;
     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use std::fs;
+
+    #[test]
+    fn date_consistency_requires_started_at_for_active_and_terminal_states() {
+        let stages = [
+            StoryState::InProgress,
+            StoryState::NeedsHumanVerification,
+            StoryState::Done,
+            StoryState::Rejected,
+        ];
+
+        for stage in stages {
+            let temp = TestBoardBuilder::new()
+                .story(TestStory::new("S1").stage(stage))
+                .build();
+            let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+            let problems = check_story_dates(&board);
+
+            assert!(
+                problems.iter().any(|problem| {
+                    problem.check_id == CheckId::StoryDateConsistency
+                        && problem.message.contains("must define started_at timestamp")
+                }),
+                "expected missing started_at failure for stage {stage}"
+            );
+        }
+    }
+
+    #[test]
+    fn date_consistency_allows_missing_started_at_for_backlog_and_icebox() {
+        let stages = [StoryState::Backlog, StoryState::Icebox];
+
+        for stage in stages {
+            let temp = TestBoardBuilder::new()
+                .story(TestStory::new("S1").stage(stage))
+                .build();
+            let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+            let problems = check_story_dates(&board);
+
+            assert!(
+                !problems.iter().any(|problem| {
+                    problem.check_id == CheckId::StoryDateConsistency
+                        && problem.message.contains("must define started_at timestamp")
+                }),
+                "did not expect missing started_at failure for stage {stage}"
+            );
+        }
+    }
+
+    #[test]
+    fn date_consistency_fails_when_submitted_at_is_not_before_completed_at() {
+        let temp = TestBoardBuilder::new()
+            .story(TestStory::new("S1").stage(StoryState::Done))
+            .build();
+        let path = temp.path().join("stories/S1/README.md");
+        let content = fs::read_to_string(&path).unwrap();
+        let updated = content.replacen(
+            "status: done\n",
+            "status: done\nstarted_at: 2026-03-04T10:00:00\nsubmitted_at: 2026-03-04T10:30:00\ncompleted_at: 2026-03-04T10:30:00\n",
+            1,
+        );
+        fs::write(&path, updated).unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_story_dates(&board);
+
+        assert!(problems.iter().any(|problem| {
+            problem.check_id == CheckId::StoryDateConsistency
+                && problem
+                    .message
+                    .contains("must be earlier than completed_at")
+        }));
+    }
+
+    #[test]
+    fn date_consistency_allows_submitted_at_before_completed_at() {
+        let temp = TestBoardBuilder::new()
+            .story(TestStory::new("S1").stage(StoryState::Done))
+            .build();
+        let path = temp.path().join("stories/S1/README.md");
+        let content = fs::read_to_string(&path).unwrap();
+        let updated = content.replacen(
+            "status: done\n",
+            "status: done\nstarted_at: 2026-03-04T10:00:00\nsubmitted_at: 2026-03-04T10:30:00\ncompleted_at: 2026-03-04T10:30:01\n",
+            1,
+        );
+        fs::write(&path, updated).unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_story_dates(&board);
+
+        assert!(!problems.iter().any(|problem| {
+            problem.check_id == CheckId::StoryDateConsistency
+                && problem
+                    .message
+                    .contains("must be earlier than completed_at")
+        }));
+    }
 
     #[test]
     fn test_check_verification_annotations_detects_malformed() {

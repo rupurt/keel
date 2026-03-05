@@ -3,8 +3,10 @@
 use anyhow::Result;
 use owo_colors::OwoColorize;
 
+use crate::cli::presentation::duration::render_completed_with_length;
+use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::style;
-use crate::domain::model::{Board, Epic};
+use crate::domain::model::{Board, Epic, EpicState};
 use crate::infrastructure::loader::load_board;
 use crate::read_model::planning_show::{self, EpicShowProjection};
 
@@ -30,26 +32,43 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     let board = load_board(board_dir)?;
     let epic = board.require_epic(id)?;
     let report = build_epic_show_report(board_dir, &board, epic)?;
-
     let width = crate::cli::presentation::terminal::get_terminal_width();
-    println!("{}", style::heavy_rule(width, None));
-    println!(
-        "{}",
-        style::header(epic.id(), &epic.frontmatter.title, style::styled_epic_id)
-    );
-    println!("{}", style::heavy_rule(width, None));
-    println!();
+    let (started_at, completed_at) = derive_epic_timestamps(&board, epic);
 
-    println!("Status:   {}", style::styled_epic_stage(&epic.status()));
-    if let Some(desc) = &epic.frontmatter.description {
-        println!("Desc:     {}", desc);
+    let mut metadata = ShowKeyValues::new()
+        .with_min_label_width(9)
+        .row("Title:", format!("{}", epic.frontmatter.title.bold()))
+        .row("Status:", style::styled_epic_stage(&epic.status()));
+    metadata.push_optional_row(
+        "Created:",
+        epic.frontmatter
+            .created_at
+            .map(|created_at| format!("{}", created_at.dimmed())),
+    );
+    metadata.push_optional_row(
+        "Started:",
+        started_at.map(|started_at| format!("{}", started_at.dimmed())),
+    );
+    metadata.push_optional_row(
+        "Completed:",
+        completed_at.map(|completed_at| render_completed_with_length(started_at, completed_at)),
+    );
+    metadata.push_optional_row("Desc:", epic.frontmatter.description.clone());
+    metadata.push_row("Path:", format!("{}", epic.path.display().dimmed()));
+
+    let mut document = ShowDocument::new();
+    document.push_key_values(metadata);
+    document.push_rule(width);
+    document.push_section(render_planning_summary(&report));
+    document.push_spacer();
+    document.push_section(render_progress(&report));
+    document.push_spacer();
+    document.push_section(render_verification_readiness(&report));
+    if let Some(voyages) = render_voyages(&board, epic) {
+        document.push_spacer();
+        document.push_section(voyages);
     }
-    render_planning_summary(&report);
-    render_progress(&report);
-    render_verification_readiness(&report);
-    println!();
-    println!("Path: {}", epic.path.display().dimmed());
-    render_voyages(&board, epic);
+    document.print();
 
     Ok(())
 }
@@ -62,84 +81,123 @@ fn build_epic_show_report(
     planning_show::build_epic_show_projection(board_dir, board, epic)
 }
 
-fn render_planning_summary(report: &EpicShowProjection) {
-    println!();
-    println!("{}", "Planning Summary".bold());
-    println!(
+fn derive_epic_timestamps(
+    board: &Board,
+    epic: &Epic,
+) -> (Option<chrono::NaiveDateTime>, Option<chrono::NaiveDateTime>) {
+    let voyages = board.voyages_for_epic_id(epic.id());
+    let started_at = voyages
+        .iter()
+        .filter_map(|voyage| voyage.frontmatter.started_at)
+        .min();
+
+    let completed_at = if epic.status() == EpicState::Done {
+        voyages
+            .iter()
+            .filter_map(|voyage| voyage.frontmatter.completed_at)
+            .max()
+    } else {
+        None
+    };
+
+    (started_at, completed_at)
+}
+
+fn render_planning_summary(report: &EpicShowProjection) -> ShowSection {
+    let mut section = ShowSection::new("Planning Summary");
+    section.push_lines([format!(
         "  Problem: {}",
         report
             .doc
             .problem_statement
             .as_deref()
             .unwrap_or(PROBLEM_PLACEHOLDER)
-    );
+    )]);
 
     if report.doc.goals.is_empty() {
-        println!("  Goals:   {}", GOALS_PLACEHOLDER.dimmed());
+        section.push_lines([format!("  Goals:   {}", GOALS_PLACEHOLDER.dimmed())]);
     } else {
-        println!("  Goals:");
-        for goal in &report.doc.goals {
-            println!("    - {}", goal);
-        }
+        section.push_lines(["  Goals:".to_string()]);
+        section.push_lines(
+            report
+                .doc
+                .goals
+                .iter()
+                .map(|goal| format!("    - {}", goal)),
+        );
     }
 
     if report.doc.key_requirements.is_empty() {
-        println!("  Key Requirements: {}", REQUIREMENTS_PLACEHOLDER.dimmed());
+        section.push_lines([format!(
+            "  Key Requirements: {}",
+            REQUIREMENTS_PLACEHOLDER.dimmed()
+        )]);
     } else {
-        println!("  Key Requirements:");
-        for req in report.doc.key_requirements.iter().take(5) {
-            println!("    - {}", req);
-        }
+        section.push_lines(["  Key Requirements:".to_string()]);
+        section.push_lines(
+            report
+                .doc
+                .key_requirements
+                .iter()
+                .take(5)
+                .map(|req| format!("    - {}", req)),
+        );
         if report.doc.key_requirements.len() > 5 {
-            println!(
+            section.push_lines([format!(
                 "    - ... {} more",
                 report.doc.key_requirements.len().saturating_sub(5)
-            );
+            )]);
         }
     }
 
     if report.doc.verification_strategy.is_empty() {
-        println!(
+        section.push_lines([format!(
             "  Verification Strategy: {}",
             VERIFICATION_STRATEGY_PLACEHOLDER.dimmed()
-        );
+        )]);
     } else {
-        println!("  Verification Strategy:");
-        for item in report.doc.verification_strategy.iter().take(5) {
-            println!("    - {}", item);
-        }
+        section.push_lines(["  Verification Strategy:".to_string()]);
+        section.push_lines(
+            report
+                .doc
+                .verification_strategy
+                .iter()
+                .take(5)
+                .map(|item| format!("    - {}", item)),
+        );
         if report.doc.verification_strategy.len() > 5 {
-            println!(
+            section.push_lines([format!(
                 "    - ... {} more",
                 report.doc.verification_strategy.len().saturating_sub(5)
-            );
+            )]);
         }
     }
+
+    section
 }
 
-fn render_progress(report: &EpicShowProjection) {
-    println!();
-    println!("{}", "Progress".bold());
+fn render_progress(report: &EpicShowProjection) -> ShowSection {
+    let mut section = ShowSection::new("Progress");
     if report.total_voyages > 0 {
-        println!(
+        section.push_lines([format!(
             "  Voyages: {}/{} {}",
             report.done_voyages,
             report.total_voyages,
             style::progress_bar(report.done_voyages, report.total_voyages, 15, None)
-        );
+        )]);
     } else {
-        println!("  Voyages: 0/0");
+        section.push_lines(["  Voyages: 0/0".to_string()]);
     }
 
     if report.total_stories > 0 {
-        println!(
+        section.push_lines([format!(
             "  Stories: {}/{} {}",
             report.done_stories,
             report.total_stories,
             style::progress_bar(report.done_stories, report.total_stories, 15, None)
-        );
+        )]);
     } else {
-        println!("  Stories: 0/0");
+        section.push_lines(["  Stories: 0/0".to_string()]);
     }
 
     let eta = match report.eta.eta_weeks {
@@ -150,58 +208,65 @@ fn render_progress(report: &EpicShowProjection) {
         None if report.eta.remaining_stories == 0 => "complete".to_string(),
         None => ETA_PLACEHOLDER.to_string(),
     };
-    println!("  ETA:     {eta}");
+    section.push_lines([format!("  ETA:     {eta}")]);
+    section
 }
 
-fn render_verification_readiness(report: &EpicShowProjection) {
-    println!();
-    println!("{}", "Verification Readiness".bold());
+fn render_verification_readiness(report: &EpicShowProjection) -> ShowSection {
+    let mut section = ShowSection::new("Verification Readiness");
     let total_criteria =
         report.verification.automated_criteria + report.verification.manual_criteria;
     if total_criteria == 0 {
-        println!("  {}", VERIFICATION_PLACEHOLDER.dimmed());
+        section.push_lines([format!("  {}", VERIFICATION_PLACEHOLDER.dimmed())]);
     } else {
-        println!(
+        section.push_lines([format!(
             "  Criteria: automated {} | manual {}",
             report.verification.automated_criteria, report.verification.manual_criteria
-        );
-        println!(
+        )]);
+        section.push_lines([format!(
             "  Requirement coverage: automated {} | manual {}",
             report.verification.automated_requirements.len(),
             report.verification.manual_requirements.len()
-        );
+        )]);
     }
 
     let (text_count, media_count, other_count) = report.verification.artifact_counts();
-    println!(
+    section.push_lines([format!(
         "  Artifact inventory: text {} | media {} | other {}",
         text_count, media_count, other_count
-    );
+    )]);
 
     if report.verification.linked_artifacts.is_empty() {
-        println!("  {}", ARTIFACT_PLACEHOLDER.dimmed());
+        section.push_lines([format!("  {}", ARTIFACT_PLACEHOLDER.dimmed())]);
     } else {
-        println!("  Linked artifacts:");
-        for artifact in report.verification.linked_artifacts.iter().take(6) {
-            println!("    - {}", artifact);
-        }
+        section.push_lines(["  Linked artifacts:".to_string()]);
+        section.push_lines(
+            report
+                .verification
+                .linked_artifacts
+                .iter()
+                .take(6)
+                .map(|artifact| format!("    - {}", artifact)),
+        );
         if report.verification.linked_artifacts.len() > 6 {
-            println!(
+            section.push_lines([format!(
                 "    - ... {} more",
                 report.verification.linked_artifacts.len().saturating_sub(6)
-            );
+            )]);
         }
     }
 
     if report.verification.missing_linked_proofs > 0 {
-        println!(
+        section.push_lines([format!(
             "  Warning: {} linked proof file(s) are missing from EVIDENCE/",
             report.verification.missing_linked_proofs
-        );
+        )]);
     }
+
+    section
 }
 
-fn render_voyages(board: &Board, epic: &Epic) {
+fn render_voyages(board: &Board, epic: &Epic) -> Option<ShowSection> {
     let mut voyages = board.voyages_for_epic_id(epic.id());
     voyages.sort_by(|a, b| match (a.index(), b.index()) {
         (Some(ai), Some(bi)) if ai != bi => ai.cmp(&bi),
@@ -211,19 +276,20 @@ fn render_voyages(board: &Board, epic: &Epic) {
     });
 
     if voyages.is_empty() {
-        return;
+        return None;
     }
 
-    println!();
-    println!("Voyages:");
+    let mut section = ShowSection::new("Voyages");
     for voyage in voyages {
-        println!(
+        section.push_lines([format!(
             "  {} - {} ({})",
             style::styled_voyage_id(voyage.id()),
             voyage.frontmatter.title,
             style::styled_voyage_stage(&voyage.status())
-        );
+        )]);
     }
+
+    Some(section)
 }
 
 #[cfg(test)]
@@ -232,8 +298,24 @@ mod tests {
     use crate::domain::model::StoryState;
     use crate::infrastructure::loader::load_board;
     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
-    use chrono::{Duration, Local};
+    use chrono::{Duration, Local, NaiveDate};
     use std::fs;
+
+    #[test]
+    fn epic_duration_rendering_formats_elapsed_time() {
+        let started = NaiveDate::from_ymd_opt(2026, 3, 4)
+            .unwrap()
+            .and_hms_opt(9, 0, 0)
+            .unwrap();
+        let completed = NaiveDate::from_ymd_opt(2026, 3, 5)
+            .unwrap()
+            .and_hms_opt(11, 30, 0)
+            .unwrap();
+
+        let value = render_completed_with_length(Some(started), completed);
+
+        assert!(value.contains("1d 2h 30m"));
+    }
 
     #[test]
     fn test_show_epic() {

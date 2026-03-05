@@ -5,6 +5,8 @@ use std::path::Path;
 use anyhow::Result;
 use owo_colors::OwoColorize;
 
+use crate::cli::presentation::duration::render_completed_with_length;
+use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::style;
 use crate::infrastructure::loader::load_board;
 use crate::read_model::planning_show::{self, EvidenceReport};
@@ -32,125 +34,66 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     let projection = planning_show::build_story_show_projection(story)?;
 
     let width = crate::cli::presentation::terminal::get_terminal_width();
-    println!("{:<9} {}", "Title:", story.frontmatter.title.bold());
-
-    println!("Type:     {}", style::styled_type(&story.story_type()));
-    println!("Status:   {}", style::styled_stage(&story.stage));
-
-    if let Some(scope) = &story.frontmatter.scope {
-        let styled_scope = if scope.contains('/') {
-            let parts: Vec<_> = scope.split('/').collect();
-            if parts.len() >= 2 {
-                format!(
-                    "{}/{}",
-                    style::styled_epic_id(parts[0]),
-                    style::styled_voyage_id(parts[1])
-                )
-            } else {
-                style::styled_id(scope)
-            }
-        } else {
-            style::styled_epic_id(scope)
-        };
-        println!("Scope:    {}", styled_scope);
-    }
-
-    if let Some(created_at) = story.frontmatter.created_at {
-        println!("Created:  {}", created_at.dimmed());
-    }
-    if let Some(updated_at) = story.frontmatter.updated_at {
-        println!("Updated:  {}", updated_at.dimmed());
-    }
-
+    let mut metadata = ShowKeyValues::new().with_min_label_width(9);
+    metadata.push_row("Title:", format!("{}", story.frontmatter.title.bold()));
+    metadata.push_row("Type:", style::styled_type(&story.story_type()));
+    metadata.push_row("Status:", style::styled_stage(&story.stage));
+    metadata.push_optional_row(
+        "Scope:",
+        story.frontmatter.scope.as_deref().map(styled_story_scope),
+    );
+    metadata.push_optional_row(
+        "Created:",
+        story
+            .frontmatter
+            .created_at
+            .map(|created_at| format!("{}", created_at.dimmed())),
+    );
+    metadata.push_optional_row(
+        "Started:",
+        story
+            .frontmatter
+            .started_at
+            .map(|started_at| format!("{}", started_at.dimmed())),
+    );
+    metadata.push_optional_row(
+        "Updated:",
+        story
+            .frontmatter
+            .updated_at
+            .map(|updated_at| format!("{}", updated_at.dimmed())),
+    );
+    metadata.push_optional_row(
+        "Completed:",
+        story.frontmatter.completed_at.map(|completed_at| {
+            render_completed_with_length(story.frontmatter.started_at, completed_at)
+        }),
+    );
     if projection.total_criteria > 0 {
-        println!(
-            "Progress: {}",
+        metadata.push_row(
+            "Progress:",
             style::progress_bar(
                 projection.checked_criteria,
                 projection.total_criteria,
                 20,
-                None
-            )
+                None,
+            ),
         );
     }
+    metadata.push_row("Path:", format!("{}", story.path.display().dimmed()));
 
-    println!("{:<9} {}", "Path:", story.path.display().dimmed());
+    let mut document = ShowDocument::new();
+    document.push_key_values(metadata);
 
     if let Some(body_text) = &projection.body
         && !body_text.trim().is_empty()
     {
-        println!();
-        println!("{}", style::rule(width, None));
-
-        let mut code_block: Option<(String, String)> = None;
-        let mut just_rendered_heading = false;
-        for line in body_text.trim().lines() {
-            let trimmed = line.trim();
-
-            if trimmed.starts_with("```") {
-                if let Some((lang, code)) = code_block.take() {
-                    if let Some(highlighted) = style::highlight_code_block(&code, &lang) {
-                        print!("{}", highlighted);
-                    } else {
-                        for code_line in code.lines() {
-                            println!("{}", code_line.dimmed());
-                        }
-                    }
-                } else {
-                    let lang = trimmed.trim_start_matches('`').trim().to_string();
-                    code_block = Some((lang, String::new()));
-                }
-                continue;
-            }
-
-            if let Some((_, ref mut code)) = code_block {
-                code.push_str(line);
-                code.push('\n');
-                continue;
-            }
-
-            if just_rendered_heading && trimmed.is_empty() {
-                just_rendered_heading = false;
-                continue;
-            }
-
-            if trimmed.starts_with("- [x]")
-                || trimmed.starts_with("- [X]")
-                || trimmed.starts_with("- [ ]")
-            {
-                println!("{}", style::styled_ac(trimmed));
-                just_rendered_heading = false;
-            } else if let Some(heading) = parse_story_body_heading(trimmed) {
-                if heading.level == 1
-                    && heading
-                        .title
-                        .eq_ignore_ascii_case(story.frontmatter.title.trim())
-                {
-                    // Suppress duplicate title in body when it matches frontmatter title.
-                    just_rendered_heading = true;
-                    continue;
-                }
-
-                println!("{}", heading.title.bold());
-                just_rendered_heading = true;
-            } else {
-                println!("{}", line);
-                just_rendered_heading = false;
-            }
-        }
-
-        if let Some((lang, code)) = code_block {
-            if let Some(highlighted) = style::highlight_code_block(&code, &lang) {
-                print!("{}", highlighted);
-            } else {
-                for code_line in code.lines() {
-                    println!("{}", code_line.dimmed());
-                }
-            }
-        }
+        document.push_lines(story_body_lines(body_text, &story.frontmatter.title, width));
     }
 
-    render_evidence_report(story.id(), &projection.evidence);
+    document.push_spacer();
+    document.push_section(evidence_section(story.id(), &projection.evidence));
+    document.print();
 
     Ok(())
 }
@@ -160,9 +103,99 @@ fn build_evidence_report(story_path: &Path, content: &str) -> EvidenceReport {
     planning_show::build_story_evidence_projection(story_path, content)
 }
 
+fn styled_story_scope(scope: &str) -> String {
+    if scope.contains('/') {
+        let parts: Vec<_> = scope.split('/').collect();
+        if parts.len() >= 2 {
+            format!(
+                "{}/{}",
+                style::styled_epic_id(parts[0]),
+                style::styled_voyage_id(parts[1])
+            )
+        } else {
+            style::styled_id(scope)
+        }
+    } else {
+        style::styled_epic_id(scope)
+    }
+}
+
+fn story_body_lines(body_text: &str, story_title: &str, width: usize) -> Vec<String> {
+    let mut lines = vec![style::rule(width, None)];
+    let mut code_block: Option<(String, String)> = None;
+    let mut just_rendered_heading = false;
+
+    for line in body_text.trim().lines() {
+        let trimmed = line.trim();
+
+        if trimmed.starts_with("```") {
+            if code_block.is_some() {
+                flush_story_code_block(&mut lines, &mut code_block);
+            } else {
+                let lang = trimmed.trim_start_matches('`').trim().to_string();
+                code_block = Some((lang, String::new()));
+            }
+            continue;
+        }
+
+        if let Some((_, ref mut code)) = code_block {
+            code.push_str(line);
+            code.push('\n');
+            continue;
+        }
+
+        if just_rendered_heading && trimmed.is_empty() {
+            just_rendered_heading = false;
+            continue;
+        }
+
+        if trimmed.starts_with("- [x]")
+            || trimmed.starts_with("- [X]")
+            || trimmed.starts_with("- [ ]")
+        {
+            lines.push(style::styled_ac(trimmed));
+            just_rendered_heading = false;
+        } else if let Some(heading) = parse_story_body_heading(trimmed) {
+            if heading.level == 1 && heading.title.eq_ignore_ascii_case(story_title.trim()) {
+                // Suppress duplicate title in body when it matches frontmatter title.
+                just_rendered_heading = true;
+                continue;
+            }
+
+            lines.push(heading.title.bold().to_string());
+            just_rendered_heading = true;
+        } else {
+            lines.push(line.to_string());
+            just_rendered_heading = false;
+        }
+    }
+
+    flush_story_code_block(&mut lines, &mut code_block);
+    lines
+}
+
+fn flush_story_code_block(lines: &mut Vec<String>, code_block: &mut Option<(String, String)>) {
+    let Some((lang, code)) = code_block.take() else {
+        return;
+    };
+
+    if let Some(highlighted) = style::highlight_code_block(&code, &lang) {
+        lines.extend(highlighted.lines().map(ToString::to_string));
+    } else {
+        for code_line in code.lines() {
+            lines.push(code_line.dimmed().to_string());
+        }
+    }
+}
+
+fn evidence_section(story_id: &str, report: &EvidenceReport) -> ShowSection {
+    let mut section = ShowSection::new("Evidence");
+    section.push_lines(evidence_lines(story_id, report));
+    section
+}
+
 fn evidence_lines(story_id: &str, report: &EvidenceReport) -> Vec<String> {
     let mut lines = Vec::new();
-    lines.push(format!("{}", "Evidence".bold()));
 
     if report.items.is_empty() {
         lines.push(format!("  {}", NO_VERIFY_PLACEHOLDER.dimmed()));
@@ -239,13 +272,6 @@ fn evidence_lines(story_id: &str, report: &EvidenceReport) -> Vec<String> {
     }
 
     lines
-}
-
-fn render_evidence_report(story_id: &str, report: &EvidenceReport) {
-    println!();
-    for line in evidence_lines(story_id, report) {
-        println!("{}", line);
-    }
 }
 
 fn parse_story_body_heading(trimmed: &str) -> Option<StoryHeading<'_>> {

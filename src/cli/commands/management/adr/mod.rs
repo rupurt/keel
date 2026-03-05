@@ -5,6 +5,7 @@ use std::fs;
 use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 use clap::Subcommand;
+use owo_colors::OwoColorize;
 
 pub(crate) mod guidance;
 
@@ -60,6 +61,7 @@ pub enum AdrAction {
     },
 }
 
+use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::table::Table;
 use crate::domain::model::{Adr, Board};
 use crate::infrastructure::config::find_board_dir;
@@ -256,33 +258,50 @@ pub fn run_show(pattern: &str) -> Result<()> {
     let board = load_board(&board_dir)?;
     let adr = board.require_adr(pattern)?;
 
-    // Print details
-    println!("ADR: {}", adr.frontmatter.title);
-    println!("{}", "=".repeat(50));
-    println!("ID:      {}", adr.id());
-    println!("Status:  {}", adr.frontmatter.status);
-    if let Some(ctx) = &adr.frontmatter.context {
-        println!("Context: {}", ctx);
-    }
+    let mut metadata = ShowKeyValues::new()
+        .with_min_label_width(9)
+        .row("Title:", format!("{}", adr.frontmatter.title.bold()))
+        .row("ID:", adr.id().to_string())
+        .row("Status:", adr.frontmatter.status.to_string())
+        .row_optional("Context:", adr.frontmatter.context.clone());
     if !adr.frontmatter.applies_to.is_empty() {
-        println!("Applies: {}", adr.frontmatter.applies_to.join(", "));
+        metadata.push_row("Applies:", adr.frontmatter.applies_to.join(", "));
     }
-    if let Some(date) = adr.frontmatter.decided_at {
-        println!("Date:    {}", date.format("%Y-%m-%d"));
-    }
-    println!();
+    metadata.push_optional_row(
+        "Date:",
+        adr.frontmatter
+            .decided_at
+            .map(|date| date.format("%Y-%m-%d").to_string()),
+    );
 
-    // Supersedes/superseded-by
+    let mut document = ShowDocument::new();
+    document.push_key_values(metadata);
+
     if !adr.frontmatter.supersedes.is_empty() {
-        println!("Supersedes: {}", adr.frontmatter.supersedes.join(", "));
-    }
-    if let Some(by) = &adr.frontmatter.superseded_by {
-        println!("Superseded by: {}", by);
+        let mut relationships = ShowSection::new("Relationships");
+        relationships.push_lines([format!(
+            "  Supersedes: {}",
+            adr.frontmatter.supersedes.join(", ")
+        )]);
+        if let Some(by) = &adr.frontmatter.superseded_by {
+            relationships.push_lines([format!("  Superseded by: {}", by)]);
+        }
+        document.push_spacer();
+        document.push_section(relationships);
+    } else if let Some(by) = &adr.frontmatter.superseded_by {
+        let mut relationships = ShowSection::new("Relationships");
+        relationships.push_lines([format!("  Superseded by: {}", by)]);
+        document.push_spacer();
+        document.push_section(relationships);
     }
 
-    // Print file path
-    println!();
-    println!("File: {}", adr.path.display());
+    document.push_spacer();
+    document.push_key_values(
+        ShowKeyValues::new()
+            .with_min_label_width(9)
+            .row("File:", adr.path.display().to_string()),
+    );
+    document.print();
     guidance::print_human(guidance::informational_for_show().as_ref());
 
     Ok(())

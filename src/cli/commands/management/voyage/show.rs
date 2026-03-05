@@ -5,6 +5,8 @@ use std::path::Path;
 use anyhow::Result;
 use owo_colors::OwoColorize;
 
+use crate::cli::presentation::duration::render_completed_with_length;
+use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::style;
 use crate::domain::model::{Board, Voyage};
 use crate::infrastructure::loader::load_board;
@@ -25,30 +27,44 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     let board = load_board(board_dir)?;
     let voyage = board.require_voyage(id)?;
     let report = build_voyage_show_report(&board, voyage)?;
-
     let width = crate::cli::presentation::terminal::get_terminal_width();
 
-    println!("{}", style::heavy_rule(width, None));
-    println!(
-        "{}",
-        style::header(
-            voyage.id(),
-            &voyage.frontmatter.title,
-            style::styled_voyage_id
+    let metadata = ShowKeyValues::new()
+        .with_min_label_width(9)
+        .row("Title:", format!("{}", voyage.frontmatter.title.bold()))
+        .row("Epic:", style::styled_epic_id(&voyage.epic_id))
+        .row("Status:", style::styled_voyage_stage(&voyage.status()))
+        .row_optional(
+            "Created:",
+            voyage
+                .frontmatter
+                .created_at
+                .map(|created_at| format!("{}", created_at.dimmed())),
         )
-    );
-    println!("{}", style::heavy_rule(width, None));
-    println!();
+        .row_optional(
+            "Started:",
+            voyage
+                .frontmatter
+                .started_at
+                .map(|started_at| format!("{}", started_at.dimmed())),
+        )
+        .row_optional(
+            "Completed:",
+            voyage.frontmatter.completed_at.map(|completed_at| {
+                render_completed_with_length(voyage.frontmatter.started_at, completed_at)
+            }),
+        )
+        .row("Path:", format!("{}", voyage.path.display().dimmed()));
 
-    println!("Epic:     {}", style::styled_epic_id(&voyage.epic_id));
-    println!("Status:   {}", style::styled_voyage_stage(&voyage.status()));
-
-    render_goal_scope(&report);
-    render_progress(&report);
-    render_requirement_matrix(&report);
-
-    println!();
-    println!("Path: {}", voyage.path.display().dimmed());
+    let mut document = ShowDocument::new();
+    document.push_key_values(metadata);
+    document.push_rule(width);
+    document.push_section(goal_scope_section(&report));
+    document.push_spacer();
+    document.push_section(progress_section(&report));
+    document.push_spacer();
+    document.push_section(requirement_matrix_section(&report));
+    document.print();
 
     Ok(())
 }
@@ -57,49 +73,57 @@ fn build_voyage_show_report(board: &Board, voyage: &Voyage) -> Result<VoyageShow
     planning_show::build_voyage_show_projection(board, voyage)
 }
 
-fn render_goal_scope(report: &VoyageShowProjection) {
-    println!();
-    println!("{}", "Voyage Summary".bold());
-    println!(
+fn goal_scope_section(report: &VoyageShowProjection) -> ShowSection {
+    let mut section = ShowSection::new("Voyage Summary");
+    section.push_lines([format!(
         "  Goal: {}",
         report.goal.as_deref().unwrap_or(GOAL_PLACEHOLDER)
-    );
+    )]);
 
     if report.scope.in_scope.is_empty() {
-        println!("  In scope:  {}", SCOPE_PLACEHOLDER.dimmed());
+        section.push_lines([format!("  In scope:  {}", SCOPE_PLACEHOLDER.dimmed())]);
     } else {
-        println!("  In scope:");
-        for item in &report.scope.in_scope {
-            println!("    - {}", item);
-        }
+        section.push_lines(["  In scope:".to_string()]);
+        section.push_lines(
+            report
+                .scope
+                .in_scope
+                .iter()
+                .map(|item| format!("    - {}", item)),
+        );
     }
 
     if report.scope.out_of_scope.is_empty() {
-        println!("  Out of scope: {}", SCOPE_PLACEHOLDER.dimmed());
+        section.push_lines([format!("  Out of scope: {}", SCOPE_PLACEHOLDER.dimmed())]);
     } else {
-        println!("  Out of scope:");
-        for item in &report.scope.out_of_scope {
-            println!("    - {}", item);
-        }
+        section.push_lines(["  Out of scope:".to_string()]);
+        section.push_lines(
+            report
+                .scope
+                .out_of_scope
+                .iter()
+                .map(|item| format!("    - {}", item)),
+        );
     }
+
+    section
 }
 
-fn render_progress(report: &VoyageShowProjection) {
-    println!();
-    println!("{}", "Progress".bold());
+fn progress_section(report: &VoyageShowProjection) -> ShowSection {
+    let mut section = ShowSection::new("Progress");
     if report.total_stories > 0 {
-        println!(
+        section.push_lines([format!(
             "  Stories:      {}/{} {}",
             report.done_stories,
             report.total_stories,
             style::progress_bar(report.done_stories, report.total_stories, 15, None)
-        );
+        )]);
     } else {
-        println!("  Stories:      0/0");
+        section.push_lines(["  Stories:      0/0".to_string()]);
     }
 
     if report.total_requirements > 0 {
-        println!(
+        section.push_lines([format!(
             "  Requirements: {}/{} {}",
             report.done_requirements,
             report.total_requirements,
@@ -109,23 +133,26 @@ fn render_progress(report: &VoyageShowProjection) {
                 15,
                 None
             )
-        );
+        )]);
     } else {
-        println!("  Requirements: 0/0");
+        section.push_lines(["  Requirements: 0/0".to_string()]);
     }
+
+    section
 }
 
-fn render_requirement_matrix(report: &VoyageShowProjection) {
-    println!();
-    println!("{}", "Requirements Matrix".bold());
+fn requirement_matrix_section(report: &VoyageShowProjection) -> ShowSection {
+    let mut section = ShowSection::new("Requirements Matrix");
 
     if report.requirements.is_empty() {
-        println!("  {}", REQUIREMENTS_PLACEHOLDER.dimmed());
-        return;
+        section.push_lines([format!("  {}", REQUIREMENTS_PLACEHOLDER.dimmed())]);
+        return section;
     }
 
-    println!("  | Requirement | Completion | Verification | Linked Stories |");
-    println!("  |-------------|------------|--------------|----------------|");
+    section
+        .push_lines(["  | Requirement | Completion | Verification | Linked Stories |".to_string()]);
+    section
+        .push_lines(["  |-------------|------------|--------------|----------------|".to_string()]);
     for row in &report.requirements {
         let linked = if row.linked_stories.is_empty() {
             "none".to_string()
@@ -137,11 +164,13 @@ fn render_requirement_matrix(report: &VoyageShowProjection) {
                 .join(", ")
         };
 
-        println!(
+        section.push_lines([format!(
             "  | {}: {} | {} | {} | {} |",
             row.id, row.description, row.completion, row.verification, linked
-        );
+        )]);
     }
+
+    section
 }
 
 #[cfg(test)]
@@ -149,6 +178,23 @@ mod tests {
     use super::*;
     use crate::domain::model::StoryState;
     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use chrono::NaiveDate;
+
+    #[test]
+    fn voyage_duration_rendering_formats_elapsed_time() {
+        let started = NaiveDate::from_ymd_opt(2026, 3, 4)
+            .unwrap()
+            .and_hms_opt(9, 0, 0)
+            .unwrap();
+        let completed = NaiveDate::from_ymd_opt(2026, 3, 4)
+            .unwrap()
+            .and_hms_opt(10, 15, 0)
+            .unwrap();
+
+        let value = render_completed_with_length(Some(started), completed);
+
+        assert!(value.contains("1h 15m"));
+    }
 
     #[test]
     fn test_extract_body() {
