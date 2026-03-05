@@ -250,6 +250,33 @@ fn apply_created_at(units: &mut [Knowledge], created_at: Option<NaiveDateTime>) 
     }
 }
 
+fn parse_knowledge_with_metadata(
+    content: &str,
+    source: &Path,
+    source_type: KnowledgeSourceType,
+    created_at: Option<NaiveDateTime>,
+) -> Vec<Knowledge> {
+    let mut units = parse_knowledge_from_content(content, source, source_type);
+    apply_created_at(&mut units, created_at);
+    units
+}
+
+fn parse_reflection_inline_knowledge(
+    reflect_content: &str,
+    reflect_path: &Path,
+    scope: Option<String>,
+    source_story_id: Option<String>,
+) -> Vec<Knowledge> {
+    let mut inline = parse_knowledge_with_metadata(
+        reflect_content,
+        reflect_path,
+        KnowledgeSourceType::Story,
+        content_created_at(reflect_content),
+    );
+    apply_story_context(&mut inline, scope, source_story_id);
+    inline
+}
+
 fn render_knowledge_markdown(board_dir: &Path, knowledge: &Knowledge) -> Result<String> {
     let frontmatter = KnowledgeFileFrontmatter {
         source_type: knowledge.source_type,
@@ -607,14 +634,12 @@ fn apply_story_context(
     units: &mut [Knowledge],
     scope: Option<String>,
     source_story_id: Option<String>,
-    created_at: Option<NaiveDateTime>,
 ) {
     for knowledge in units {
         knowledge.scope = scope.clone().or_else(|| knowledge.scope.clone());
         knowledge.source_story_id = source_story_id
             .clone()
             .or_else(|| knowledge.source_story_id.clone());
-        knowledge.created_at = knowledge.created_at.or(created_at);
     }
 }
 
@@ -671,22 +696,16 @@ fn scan_story_knowledge(board_dir: &Path) -> Result<Vec<Knowledge>> {
         };
 
         let scope = extract_scope_from_frontmatter(&readme_content);
-        let created_at = content_created_at(&reflect_content);
         let source_story_id = bundle_path
             .file_name()
             .and_then(|name| name.to_str())
             .map(ToOwned::to_owned);
 
-        let mut inline = parse_knowledge_from_content(
+        let inline = parse_reflection_inline_knowledge(
             &reflect_content,
             &reflect_path,
-            KnowledgeSourceType::Story,
-        );
-        apply_story_context(
-            &mut inline,
             scope.clone(),
             source_story_id.clone(),
-            created_at,
         );
         all.extend(dedupe_by_id(inline));
     }
@@ -726,10 +745,12 @@ fn scan_voyage_knowledge(board_dir: &Path) -> Vec<Knowledge> {
             let Some(section_content) = section_content else {
                 return Vec::new();
             };
-            let mut units =
-                parse_knowledge_from_content(&section_content, path, KnowledgeSourceType::Voyage);
-            apply_created_at(&mut units, created_at);
-            units
+            parse_knowledge_with_metadata(
+                &section_content,
+                path,
+                KnowledgeSourceType::Voyage,
+                created_at,
+            )
         })
         .collect()
 }
@@ -1064,9 +1085,12 @@ pub fn detect_similarity_conflicts(
 pub fn load_reflection_knowledge(board_dir: &Path, reflect_path: &Path) -> Result<Vec<Knowledge>> {
     let content = fs::read_to_string(reflect_path)
         .with_context(|| format!("Failed to read {}", reflect_path.display()))?;
-    let mut inline =
-        parse_knowledge_from_content(&content, reflect_path, KnowledgeSourceType::Story);
-    apply_created_at(&mut inline, content_created_at(&content));
+    let inline = parse_knowledge_with_metadata(
+        &content,
+        reflect_path,
+        KnowledgeSourceType::Story,
+        content_created_at(&content),
+    );
     let linked = load_reflection_linked_knowledge(board_dir, reflect_path, &content)?;
     Ok(dedupe_by_id(inline.into_iter().chain(linked).collect()))
 }
@@ -1078,15 +1102,12 @@ pub fn parse_reflection_candidates(
 ) -> Result<Vec<Knowledge>> {
     let content = fs::read_to_string(reflect_path)
         .with_context(|| format!("Failed to read {}", reflect_path.display()))?;
-    let mut inline =
-        parse_knowledge_from_content(&content, reflect_path, KnowledgeSourceType::Story);
-    apply_story_context(
-        &mut inline,
+    Ok(parse_reflection_inline_knowledge(
+        &content,
+        reflect_path,
         scope.map(str::to_string),
         source_story_id.map(str::to_string),
-        content_created_at(&content),
-    );
-    Ok(inline)
+    ))
 }
 
 fn relative_path(from_dir: &Path, to_path: &Path) -> PathBuf {

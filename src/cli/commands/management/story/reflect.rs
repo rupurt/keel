@@ -53,9 +53,7 @@ fn run_impl(board_dir: &Path, id: &str) -> Result<()> {
             ("title", story.title()),
             (
                 "created_at",
-                &crate::infrastructure::artifact_frontmatter::format_datetime(
-                    Local::now().naive_local(),
-                ),
+                &Local::now().format("%Y-%m-%dT%H:%M:%S").to_string(),
             ),
             (
                 "knowledge_example_id",

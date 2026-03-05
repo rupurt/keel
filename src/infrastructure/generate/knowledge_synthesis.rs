@@ -30,11 +30,49 @@ fn voyage_knowledge_created_at(board: &Board, voyage: &Voyage) -> Option<NaiveDa
         .or(voyage.frontmatter.created_at)
 }
 
+fn render_frontmatter_datetime(value: NaiveDateTime) -> String {
+    value.format("%Y-%m-%dT%H:%M:%S").to_string()
+}
+
+fn push_knowledge_table(
+    output: &mut String,
+    id: &str,
+    title: &str,
+    knowledge: &crate::read_model::knowledge::Knowledge,
+    linked_knowledge_ids: Option<&str>,
+    include_metrics: bool,
+) {
+    output.push_str(&format!("### {id}: {title}\n\n"));
+    output.push_str("| Field | Value |\n");
+    output.push_str("|-------|-------|\n");
+    output.push_str(&format!("| **Category** | {} |\n", knowledge.category));
+    output.push_str(&format!("| **Context** | {} |\n", knowledge.context));
+    output.push_str(&format!("| **Insight** | {} |\n", knowledge.insight));
+    output.push_str(&format!(
+        "| **Suggested Action** | {} |\n",
+        knowledge.suggested_action
+    ));
+    output.push_str(&format!("| **Applies To** | {} |\n", knowledge.applies_to));
+    if let Some(linked_knowledge_ids) = linked_knowledge_ids {
+        output.push_str(&format!(
+            "| **Linked Knowledge IDs** | {} |\n",
+            linked_knowledge_ids
+        ));
+    }
+    if include_metrics {
+        output.push_str(&format!("| **Score** | {:.2} |\n", knowledge.score));
+        output.push_str(&format!(
+            "| **Confidence** | {:.2} |\n",
+            knowledge.confidence
+        ));
+    }
+    output.push_str(&format!("| **Applied** | {} |\n\n", knowledge.applied));
+}
+
 /// Synthesize reflections for a voyage into a KNOWLEDGE.md file
 pub fn synthesize_voyage_knowledge(board: &Board, voyage: &Voyage) -> Result<()> {
     let stories = board.stories_for_voyage(voyage);
-    let created_at = voyage_knowledge_created_at(board, voyage)
-        .map(crate::infrastructure::artifact_frontmatter::format_datetime);
+    let created_at = voyage_knowledge_created_at(board, voyage).map(render_frontmatter_datetime);
     let mut synthesis = format!(
         "{}# Knowledge - {}
 
@@ -75,18 +113,14 @@ pub fn synthesize_voyage_knowledge(board: &Board, voyage: &Voyage) -> Result<()>
                 story.id()
             ));
             for insight in insights {
-                synthesis.push_str(&format!("### {}: {}\n\n", insight.id, insight.title));
-                synthesis.push_str("| Field | Value |\n");
-                synthesis.push_str("|-------|-------|\n");
-                synthesis.push_str(&format!("| **Category** | {} |\n", insight.category));
-                synthesis.push_str(&format!("| **Context** | {} |\n", insight.context));
-                synthesis.push_str(&format!("| **Insight** | {} |\n", insight.insight));
-                synthesis.push_str(&format!(
-                    "| **Suggested Action** | {} |\n",
-                    insight.suggested_action
-                ));
-                synthesis.push_str(&format!("| **Applies To** | {} |\n", insight.applies_to));
-                synthesis.push_str(&format!("| **Applied** | {} |\n\n", insight.applied));
+                push_knowledge_table(
+                    &mut synthesis,
+                    &insight.id,
+                    &insight.title,
+                    &insight,
+                    None,
+                    false,
+                );
 
                 synthesized_units.push((story.id().to_string(), insight));
             }
@@ -105,21 +139,14 @@ pub fn synthesize_voyage_knowledge(board: &Board, voyage: &Voyage) -> Result<()>
         synthesis.push_str("## Synthesis\n\n");
         for (story_id, insight) in &synthesized_units {
             let synth_id = synthesized_knowledge_id(voyage.id(), story_id, &insight.id);
-            synthesis.push_str(&format!("### {}: {}\n\n", synth_id, insight.title));
-            synthesis.push_str("| Field | Value |\n");
-            synthesis.push_str("|-------|-------|\n");
-            synthesis.push_str(&format!("| **Category** | {} |\n", insight.category));
-            synthesis.push_str(&format!("| **Context** | {} |\n", insight.context));
-            synthesis.push_str(&format!("| **Insight** | {} |\n", insight.insight));
-            synthesis.push_str(&format!(
-                "| **Suggested Action** | {} |\n",
-                insight.suggested_action
-            ));
-            synthesis.push_str(&format!("| **Applies To** | {} |\n", insight.applies_to));
-            synthesis.push_str(&format!("| **Linked Knowledge IDs** | {} |\n", insight.id));
-            synthesis.push_str(&format!("| **Score** | {:.2} |\n", insight.score));
-            synthesis.push_str(&format!("| **Confidence** | {:.2} |\n", insight.confidence));
-            synthesis.push_str(&format!("| **Applied** | {} |\n\n", insight.applied));
+            push_knowledge_table(
+                &mut synthesis,
+                &synth_id,
+                &insight.title,
+                insight,
+                Some(&insight.id),
+                true,
+            );
         }
     }
 

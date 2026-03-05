@@ -128,7 +128,6 @@ impl StoryLifecycleService {
             Some("Link reused insights in REFLECT.md before submitting when appropriate."),
         )?;
 
-        ensure_story_reflect_created_at(story)?;
         guard_reflection_knowledge_uniqueness(board_dir, story)?;
 
         let content = fs::read_to_string(&story.path)?;
@@ -206,10 +205,14 @@ impl StoryLifecycleService {
 
         let reflect_path = reflect_path_for_story(story)?;
         if let Some(text) = reflect {
-            append_accept_reflection(&reflect_path, &story.frontmatter.title, text)?;
+            append_accept_reflection(
+                &reflect_path,
+                &story.frontmatter.title,
+                text,
+                reflection_created_at(story),
+            )?;
         }
 
-        ensure_story_reflect_created_at(story)?;
         guard_reflection_knowledge_uniqueness(board_dir, story)?;
         materialize_story_reflection_knowledge(board_dir, story)?;
 
@@ -328,21 +331,6 @@ fn set_started_at(path: &Path, datetime: &str) -> Result<()> {
     Ok(())
 }
 
-fn ensure_story_reflect_created_at(story: &Story) -> Result<()> {
-    let reflect_path = reflect_path_for_story(story)?;
-    if !reflect_path.exists() {
-        return Ok(());
-    }
-
-    let created_at = story
-        .frontmatter
-        .submitted_at
-        .unwrap_or_else(|| Local::now().naive_local());
-    let _ =
-        crate::infrastructure::artifact_frontmatter::ensure_created_at(&reflect_path, created_at)?;
-    Ok(())
-}
-
 fn reflect_path_for_story(story: &Story) -> Result<std::path::PathBuf> {
     story
         .path
@@ -351,7 +339,19 @@ fn reflect_path_for_story(story: &Story) -> Result<std::path::PathBuf> {
         .with_context(|| format!("Story {} has no bundle directory", story.id()))
 }
 
-fn append_accept_reflection(reflect_path: &Path, title: &str, text: &str) -> Result<()> {
+fn reflection_created_at(story: &Story) -> chrono::NaiveDateTime {
+    story
+        .frontmatter
+        .submitted_at
+        .unwrap_or_else(|| Local::now().naive_local())
+}
+
+fn append_accept_reflection(
+    reflect_path: &Path,
+    title: &str,
+    text: &str,
+    created_at: chrono::NaiveDateTime,
+) -> Result<()> {
     let mut file = fs::OpenOptions::new()
         .create(true)
         .append(true)
@@ -366,8 +366,14 @@ fn append_accept_reflection(reflect_path: &Path, title: &str, text: &str) -> Res
     if reflect_path.metadata()?.len() > 0 {
         write!(file, "\n---\n\n{}\n", text).with_context(|| "Failed to append reflection")?;
     } else {
-        write!(file, "# Reflection - {}\n\n{}\n", title, text)
-            .with_context(|| "Failed to write reflection")?;
+        write!(
+            file,
+            "---\ncreated_at: {}\n---\n\n# Reflection - {}\n\n## Knowledge\n\n## Observations\n\n{}\n",
+            created_at.format("%Y-%m-%dT%H:%M:%S"),
+            title,
+            text
+        )
+        .with_context(|| "Failed to write reflection")?;
     }
     Ok(())
 }

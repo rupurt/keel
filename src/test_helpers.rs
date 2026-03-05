@@ -566,7 +566,7 @@ Test harness epic problem statement.
             fs::write(
                 story_bundle_dir.join("REFLECT.md"),
                 format!(
-                    "# Reflection - {}\n\n## Knowledge\n\n## Observations\n\nNo reusable insight captured.\n",
+                    "---\ncreated_at: 2026-01-01T00:00:00\n---\n\n# Reflection - {}\n\n## Knowledge\n\n## Observations\n\nNo reusable insight captured.\n",
                     story.title
                 ),
             )

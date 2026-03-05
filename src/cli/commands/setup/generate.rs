@@ -10,9 +10,6 @@ use crate::infrastructure::loader::load_board;
 
 /// Run the generate command
 pub fn run(board_dir: &Path) -> Result<()> {
-    let backfill_stats = crate::application::started_at_backfill::backfill(board_dir)?;
-    let artifact_backfill_stats =
-        crate::application::artifact_created_at_backfill::backfill(board_dir)?;
     let board = load_board(board_dir)?;
 
     // 1. Generate board-level README.md
@@ -47,21 +44,6 @@ pub fn run(board_dir: &Path) -> Result<()> {
     // 5. Refresh canonical knowledge catalog files.
     crate::read_model::knowledge::sync_knowledge_catalog(board_dir)?;
 
-    if backfill_stats.stories_updated > 0 || backfill_stats.voyages_updated > 0 {
-        println!(
-            "Backfilled started_at timestamps (stories: {}, voyages: {})",
-            backfill_stats.stories_updated, backfill_stats.voyages_updated
-        );
-    }
-    if artifact_backfill_stats.story_reflect_updated > 0
-        || artifact_backfill_stats.voyage_knowledge_updated > 0
-    {
-        println!(
-            "Backfilled artifact created_at timestamps (story REFLECT: {}, voyage KNOWLEDGE: {})",
-            artifact_backfill_stats.story_reflect_updated,
-            artifact_backfill_stats.voyage_knowledge_updated
-        );
-    }
     println!("Board updated");
 
     Ok(())
