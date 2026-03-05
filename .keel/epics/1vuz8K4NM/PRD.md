@@ -106,12 +106,3 @@ Keel currently has coherence gaps across planning and execution workflows:
 - [ ] Freshly scaffolded epic/voyage artifacts pass doctor checks for timestamp and placeholder hygiene.
 <!-- END SUCCESS_CRITERIA -->
 
-## Voyages
-
-<!-- BEGIN VOYAGES -->
-| Voyage | Status | Description |
-|--------|--------|-------------|
-| [Policy Module and Queue Semantics](voyages/1vuz8VYmc/) | draft | Centralize queue policy and align next/flow behavior. |
-| [Unified Transition Enforcement](voyages/1vuz8dYT5/) | draft | Unify runtime and reporting transition enforcement paths. |
-| [Hard Schema Migration and Compatibility Cleanup](voyages/1vuz8jNo3/) | draft | Cut over to canonical schema and remove compatibility code. |
-<!-- END VOYAGES -->
