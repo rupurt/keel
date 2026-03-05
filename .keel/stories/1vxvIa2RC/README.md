@@ -2,12 +2,13 @@
 id: 1vxvIa2RC
 title: Remove Planning Show Recommendations And Update Planning Guidance
 type: feat
-status: needs-human-verification
+status: done
 created_at: 2026-03-04T15:06:36
-updated_at: 2026-03-04T16:27:11
+updated_at: 2026-03-04T17:54:13
 scope: 1vxqMtskC/1vxvFrNta
 started_at: 2026-03-04T16:17:30
 submitted_at: 2026-03-04T16:27:11
+completed_at: 2026-03-04T17:54:13
 ---
 
 # Remove Planning Show Recommendations And Update Planning Guidance
