@@ -25,6 +25,13 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
+| [Semantic Conflict Feature Extraction](stories/1vxyMr3U2/README.md) | feat | [Parallel Safety For Next](epics/1vxyM0hvn/) / [Semantic Conflict Detection For Parallel Next](epics/1vxyM0hvn/voyages/1vxyMT6nz/) |
+| [Pairwise Blocker Rendering For Parallel Next](stories/1vxyMsbOj/README.md) | feat | [Parallel Safety For Next](epics/1vxyM0hvn/) / [Semantic Conflict Detection For Parallel Next](epics/1vxyM0hvn/voyages/1vxyMT6nz/) |
+| [Conservative Pairwise Conflict Scoring](stories/1vxyMsepz/README.md) | feat | [Parallel Safety For Next](epics/1vxyM0hvn/) / [Semantic Conflict Detection For Parallel Next](epics/1vxyM0hvn/voyages/1vxyMT6nz/) |
+| [Parallel Queue Selection With Confidence Threshold](stories/1vxyMsvug/README.md) | feat | [Parallel Safety For Next](epics/1vxyM0hvn/) / [Semantic Conflict Detection For Parallel Next](epics/1vxyM0hvn/voyages/1vxyMT6nz/) |
+| [Story Blocked By Metadata Override](stories/1vxyMtAbK/README.md) | feat | [Parallel Safety For Next](epics/1vxyM0hvn/) / [Semantic Conflict Detection For Parallel Next](epics/1vxyM0hvn/voyages/1vxyMT6nz/) |
+| [Command And Projection Tests For Parallel Safety](stories/1vxyMtVpK/README.md) | feat | [Parallel Safety For Next](epics/1vxyM0hvn/) / [Semantic Conflict Detection For Parallel Next](epics/1vxyM0hvn/voyages/1vxyMT6nz/) |
+| [Doctor Check For Parallel Conflict Coherence](stories/1vxyMtaKP/README.md) | feat | [Parallel Safety For Next](epics/1vxyM0hvn/) / [Semantic Conflict Detection For Parallel Next](epics/1vxyM0hvn/voyages/1vxyMT6nz/) |
 
 <details>
 <summary><h2>Icebox</h2></summary>
@@ -41,6 +48,12 @@
 | [Semantic Search and Ranking in Keel](bearings/semantic-search-research/) | evaluating | ✓ | ✓ |
 
 ## Epics
+
+### [Parallel Safety For Next](epics/1vxyM0hvn/) (active) - 1 voyages, 0 done
+
+| Voyage | Status |
+|--------|--------|
+| [Semantic Conflict Detection For Parallel Next](epics/1vxyM0hvn/voyages/1vxyMT6nz/) | planned |
 
 <details>
 <summary><h2>Done</h2></summary>
