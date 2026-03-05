@@ -91,7 +91,11 @@ impl FogType {
 
 /// Run the new command - creates a new bearing
 pub fn run_new(name: &str) -> Result<()> {
-    new::run(name)
+    let bearing_id = new::run(name)
+        .map_err(|err| error_with_recovery(BearingLifecycleAction::New, name, err))?;
+    let guidance = guidance_for_action(BearingLifecycleAction::New, &bearing_id);
+    print_human(guidance.as_ref());
+    Ok(())
 }
 
 /// Run a bearing action through the bearing interface adapter.

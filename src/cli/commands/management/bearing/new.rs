@@ -13,13 +13,13 @@ use crate::infrastructure::template_rendering;
 use crate::infrastructure::templates;
 
 /// Create a new bearing
-pub fn run(name: &str) -> Result<()> {
+pub fn run(name: &str) -> Result<String> {
     let board_dir = crate::infrastructure::config::find_board_dir()?;
     new_bearing(&board_dir, name)
 }
 
 /// Create a new bearing
-fn new_bearing(board_dir: &Path, name: &str) -> Result<()> {
+fn new_bearing(board_dir: &Path, name: &str) -> Result<String> {
     duplicate_ids::ensure_unique_ids(board_dir, DuplicateEntity::Bearing, "keel bearing new")?;
 
     // Enforce Title Case
@@ -118,7 +118,7 @@ fn new_bearing(board_dir: &Path, name: &str) -> Result<()> {
     // Regenerate board
     crate::cli::commands::generate::run(board_dir)?;
 
-    Ok(())
+    Ok(bearing_id)
 }
 
 #[cfg(test)]
@@ -131,7 +131,7 @@ mod tests {
         let temp = TestBoardBuilder::new().build();
         let board_dir = temp.path();
 
-        new_bearing(board_dir, "My New Research").unwrap();
+        let _bearing_id = new_bearing(board_dir, "My New Research").unwrap();
 
         // Find the bearing directory (it's random now)
         let bearings_dir = board_dir.join("bearings");
@@ -159,7 +159,7 @@ mod tests {
         let board_dir = temp.path();
 
         // Names can now collide because IDs are random
-        new_bearing(board_dir, "Duplicate").unwrap();
+        let _ = new_bearing(board_dir, "Duplicate").unwrap();
         let res = new_bearing(board_dir, "Duplicate");
 
         assert!(res.is_ok());

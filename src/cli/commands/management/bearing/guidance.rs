@@ -9,6 +9,7 @@ use crate::cli::commands::management::guidance::{CanonicalGuidance, CommandGuida
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BearingLifecycleAction {
+    New,
     Survey,
     Assess,
     Park,
@@ -38,6 +39,10 @@ pub fn guidance_for_action(
     bearing_id: &str,
 ) -> Option<CanonicalGuidance> {
     let (command_type, command) = match action {
+        BearingLifecycleAction::New => (
+            ManagementCommand::BearingNew,
+            Some(format!("keel bearing survey {bearing_id}")),
+        ),
         BearingLifecycleAction::Survey => (
             ManagementCommand::BearingSurvey,
             Some(format!("keel bearing assess {bearing_id}")),
@@ -122,6 +127,7 @@ fn recovery_command_for_error(
 
 fn command_type_for_action(action: BearingLifecycleAction) -> ManagementCommand {
     match action {
+        BearingLifecycleAction::New => ManagementCommand::BearingNew,
         BearingLifecycleAction::Survey => ManagementCommand::BearingSurvey,
         BearingLifecycleAction::Assess => ManagementCommand::BearingAssess,
         BearingLifecycleAction::Park => ManagementCommand::BearingPark,
@@ -191,6 +197,18 @@ mod tests {
     }
 
     #[test]
+    fn new_success_guidance_maps_to_survey() {
+        let guidance = guidance_for_action(BearingLifecycleAction::New, "B0").unwrap();
+        let json = serde_json::to_value(guidance).unwrap();
+        assert_eq!(
+            json,
+            json!({
+                "next_step": { "command": "keel bearing survey B0" }
+            })
+        );
+    }
+
+    #[test]
     fn assess_success_guidance_maps_to_lay() {
         let guidance = guidance_for_action(BearingLifecycleAction::Assess, "B2").unwrap();
         let json = serde_json::to_value(guidance).unwrap();
@@ -246,7 +264,7 @@ mod tests {
     #[test]
     fn not_found_recovery_maps_to_bearing_list() {
         let guidance = recovery_for_error(
-            BearingLifecycleAction::Survey,
+            BearingLifecycleAction::New,
             "missing",
             "Bearing not found: missing",
         )

@@ -18,6 +18,7 @@ pub enum ManagementCommand {
     AdrReject,
     AdrDeprecate,
     AdrSupersede,
+    BearingNew,
     BearingList,
     BearingShow,
     BearingSurvey,
@@ -44,6 +45,7 @@ pub fn classify_command(command: ManagementCommand) -> CommandCapability {
         | ManagementCommand::AdrReject
         | ManagementCommand::AdrDeprecate
         | ManagementCommand::AdrSupersede
+        | ManagementCommand::BearingNew
         | ManagementCommand::BearingSurvey
         | ManagementCommand::BearingAssess
         | ManagementCommand::BearingPark
@@ -91,6 +93,10 @@ mod tests {
         );
         assert_eq!(
             classify_command(ManagementCommand::BearingSurvey),
+            CommandCapability::Actionable
+        );
+        assert_eq!(
+            classify_command(ManagementCommand::BearingNew),
             CommandCapability::Actionable
         );
         assert_eq!(
