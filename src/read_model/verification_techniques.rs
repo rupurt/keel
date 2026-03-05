@@ -269,6 +269,9 @@ pub fn builtin_technique_catalog() -> Vec<TechniqueDefinition> {
 /// - `disable = ["id"]`
 /// - `[[verification.techniques.customize]]`
 /// - `[[verification.techniques.custom]]`
+/// - `[verification.<technique-id>]`
+/// - `disabled = <bool>`
+/// - `command = "<string>"`
 ///
 /// Parsing is advisory-only: invalid entries emit diagnostics and are ignored.
 pub fn parse_technique_overrides_from_keel_toml(content: &str) -> TechniqueOverrideParseResult {
@@ -284,42 +287,51 @@ pub fn parse_technique_overrides_from_keel_toml(content: &str) -> TechniqueOverr
         }
     };
 
-    let Some(section) = value
-        .get("verification")
-        .and_then(toml::Value::as_table)
-        .and_then(|verification| verification.get("techniques"))
-        .and_then(toml::Value::as_table)
-    else {
+    let Some(verification) = value.get("verification").and_then(toml::Value::as_table) else {
         return result;
     };
 
-    validate_allowed_keys(
-        section,
-        &["enable", "disable", "customize", "custom"],
-        "verification.techniques",
-        &mut result.diagnostics,
-    );
+    if let Some(section) = verification
+        .get("techniques")
+        .and_then(toml::Value::as_table)
+    {
+        validate_allowed_keys(
+            section,
+            &["enable", "disable", "customize", "custom"],
+            "verification.techniques",
+            &mut result.diagnostics,
+        );
 
-    result.overrides.enable_ids = parse_string_set(
-        section.get("enable"),
-        "verification.techniques.enable",
-        &mut result.diagnostics,
-    );
-    result.overrides.disable_ids = parse_string_set(
-        section.get("disable"),
-        "verification.techniques.disable",
-        &mut result.diagnostics,
-    );
+        result.overrides.enable_ids = parse_string_set(
+            section.get("enable"),
+            "verification.techniques.enable",
+            &mut result.diagnostics,
+        );
+        result.overrides.disable_ids = parse_string_set(
+            section.get("disable"),
+            "verification.techniques.disable",
+            &mut result.diagnostics,
+        );
 
-    if let Some(value) = section.get("customize") {
-        result.overrides.customize = parse_customize_entries(value, &mut result.diagnostics);
-        result.overrides.customize.sort_by(|a, b| a.id.cmp(&b.id));
+        if let Some(value) = section.get("customize") {
+            result.overrides.customize = parse_customize_entries(value, &mut result.diagnostics);
+        }
+
+        if let Some(value) = section.get("custom") {
+            result.overrides.custom = parse_custom_entries(value, &mut result.diagnostics);
+        }
     }
 
-    if let Some(value) = section.get("custom") {
-        result.overrides.custom = parse_custom_entries(value, &mut result.diagnostics);
-        result.overrides.custom.sort_by(|a, b| a.id.cmp(&b.id));
-    }
+    result
+        .overrides
+        .customize
+        .extend(parse_per_technique_sections(
+            verification,
+            &mut result.diagnostics,
+        ));
+
+    result.overrides.customize.sort_by(|a, b| a.id.cmp(&b.id));
+    result.overrides.custom.sort_by(|a, b| a.id.cmp(&b.id));
 
     result
 }
@@ -787,6 +799,54 @@ fn adoption_guidance_for(technique: &TechniqueDefinition) -> String {
             technique.default_command
         ),
     }
+}
+
+fn parse_per_technique_sections(
+    verification: &toml::value::Table,
+    diagnostics: &mut Vec<TechniqueOverrideDiagnostic>,
+) -> Vec<TechniqueCustomization> {
+    let mut parsed = Vec::new();
+
+    for (section_name, section_value) in verification {
+        if section_name == "techniques" {
+            continue;
+        }
+
+        let path = format!("verification.{section_name}");
+        let Some(section) = section_value.as_table() else {
+            diagnostics.push(TechniqueOverrideDiagnostic {
+                path,
+                message: "expected table section".to_string(),
+            });
+            continue;
+        };
+
+        validate_allowed_keys(section, &["disabled", "command"], &path, diagnostics);
+
+        let disabled = parse_optional_bool(
+            section.get("disabled"),
+            &format!("{path}.disabled"),
+            diagnostics,
+        );
+        let command = parse_optional_string(
+            section.get("command"),
+            &format!("{path}.command"),
+            diagnostics,
+        );
+
+        if disabled.is_none() && command.is_none() {
+            continue;
+        }
+
+        parsed.push(TechniqueCustomization {
+            id: section_name.to_string(),
+            default_command: command,
+            enabled_by_default: disabled.map(|value| !value),
+            ..TechniqueCustomization::default()
+        });
+    }
+
+    parsed
 }
 
 fn apply_customization(target: &mut TechniqueDefinition, customization: &TechniqueCustomization) {
@@ -1515,6 +1575,58 @@ signal_keywords = ["shell", "lint"]
         );
         assert_eq!(parsed.overrides.custom.len(), 1);
         assert_eq!(parsed.overrides.custom[0].id, "shellcheck");
+    }
+
+    #[test]
+    fn technique_override_per_technique_sections_parse_and_merge() {
+        let content = r#"
+[verification.vhs]
+disabled = true
+command = "vhs demos/main.tape"
+
+[verification.browser-playwright-e2e]
+disabled = false
+command = "pnpm exec playwright test --project=chromium"
+"#;
+
+        let parsed = parse_technique_overrides_from_keel_toml(content);
+        assert!(parsed.diagnostics.is_empty());
+
+        let vhs_customization = parsed
+            .overrides
+            .customize
+            .iter()
+            .find(|customization| customization.id == "vhs")
+            .unwrap();
+        assert_eq!(vhs_customization.enabled_by_default, Some(false));
+        assert_eq!(
+            vhs_customization.default_command.as_deref(),
+            Some("vhs demos/main.tape")
+        );
+
+        let playwright_customization = parsed
+            .overrides
+            .customize
+            .iter()
+            .find(|customization| customization.id == "browser-playwright-e2e")
+            .unwrap();
+        assert_eq!(playwright_customization.enabled_by_default, Some(true));
+        assert_eq!(
+            playwright_customization.default_command.as_deref(),
+            Some("pnpm exec playwright test --project=chromium")
+        );
+
+        let merged =
+            merge_technique_catalog_with_overrides(builtin_technique_catalog(), &parsed.overrides);
+        assert!(merged.diagnostics.is_empty());
+
+        let vhs = merged
+            .catalog
+            .iter()
+            .find(|technique| technique.id == "vhs")
+            .unwrap();
+        assert!(!vhs.enabled_by_default);
+        assert_eq!(vhs.default_command, "vhs demos/main.tape");
     }
 
     #[test]

@@ -11,7 +11,7 @@ use serde::Serialize;
 use crate::infrastructure::config::{self, Config};
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::verification::parser::parse_verify_annotations;
-use crate::read_model::verification_techniques::{self, TechniqueModality};
+use crate::read_model::verification_techniques;
 
 #[derive(Subcommand, Debug)]
 pub enum ConfigAction {
@@ -46,42 +46,40 @@ pub fn run_show(json: bool) -> Result<()> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct TechniqueStatusProjection {
-    summary: TechniqueStatusSummary,
     rows: Vec<TechniqueStatusRow>,
     diagnostics: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-struct TechniqueStatusSummary {
-    total: usize,
-    detected: usize,
-    disabled: usize,
-    active: usize,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 struct TechniqueStatusRow {
     label: String,
-    name: String,
     detected: bool,
     disabled: bool,
     active: bool,
-    modality: String,
     command: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 struct ConfigShowVerificationPayload {
-    summary: TechniqueStatusSummary,
     techniques: Vec<TechniqueStatusRow>,
     diagnostics: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
+struct ConfigShowScoringPayload {
+    mode: String,
+    impact_weight: f64,
+    confidence_weight: f64,
+    effort_weight: f64,
+    risk_weight: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
 struct ConfigShowPayload {
     source: String,
     project_root: String,
     board_dir: String,
+    scoring: ConfigShowScoringPayload,
     verification: ConfigShowVerificationPayload,
 }
 
@@ -91,13 +89,20 @@ fn build_show_payload(
     project_root: &Path,
 ) -> ConfigShowPayload {
     let projection = build_verification_technique_projection(config, project_root);
+    let weights = config.current_weights();
 
     ConfigShowPayload {
         source: source.to_string(),
         project_root: project_root.display().to_string(),
         board_dir: config.board_dir().to_string(),
+        scoring: ConfigShowScoringPayload {
+            mode: config.mode().to_string(),
+            impact_weight: weights.impact_weight,
+            confidence_weight: weights.confidence_weight,
+            effort_weight: weights.effort_weight,
+            risk_weight: weights.risk_weight,
+        },
         verification: ConfigShowVerificationPayload {
-            summary: projection.summary,
             techniques: projection.rows,
             diagnostics: projection.diagnostics,
         },
@@ -111,31 +116,30 @@ fn render_show_payload(payload: &ConfigShowPayload) -> Vec<String> {
     lines.push(String::new());
     lines.push(format!("board_dir = \"{}\"", payload.board_dir));
     lines.push(String::new());
-    lines.push("[verification.techniques]".to_string());
-    lines.push(format!("total = {}", payload.verification.summary.total));
+    lines.push("[scoring]".to_string());
+    lines.push(format!("mode = \"{}\"", payload.scoring.mode));
+    lines.push(format!("impact_weight = {}", payload.scoring.impact_weight));
     lines.push(format!(
-        "detected = {}",
-        payload.verification.summary.detected
+        "confidence_weight = {}",
+        payload.scoring.confidence_weight
     ));
-    lines.push(format!(
-        "disabled = {}",
-        payload.verification.summary.disabled
-    ));
-    lines.push(format!("active = {}", payload.verification.summary.active));
+    lines.push(format!("effort_weight = {}", payload.scoring.effort_weight));
+    lines.push(format!("risk_weight = {}", payload.scoring.risk_weight));
     lines.push(String::new());
 
-    lines.push("# Technique status:".to_string());
+    lines.push(
+        "# Verification technique status (`disabled` and `command` are configurable):".to_string(),
+    );
     if payload.verification.techniques.is_empty() {
         lines.push("  (none)".to_string());
     } else {
         for technique in &payload.verification.techniques {
-            lines.push(format!("  - label = \"{}\"", technique.label));
-            lines.push(format!("    name = \"{}\"", technique.name));
-            lines.push(format!("    detected = {}", technique.detected));
-            lines.push(format!("    disabled = {}", technique.disabled));
-            lines.push(format!("    active = {}", technique.active));
-            lines.push(format!("    modality = \"{}\"", technique.modality));
-            lines.push(format!("    command = \"{}\"", technique.command));
+            lines.push(format!("[verification.{}]", technique.label));
+            lines.push(format!("detected = {}", technique.detected));
+            lines.push(format!("disabled = {}", technique.disabled));
+            lines.push(format!("active = {}", technique.active));
+            lines.push(format!("command = \"{}\"", technique.command));
+            lines.push(String::new());
         }
     }
 
@@ -163,24 +167,14 @@ fn build_verification_technique_projection(
         .iter()
         .map(|technique| TechniqueStatusRow {
             label: technique.id.clone(),
-            name: technique.label.clone(),
             detected: technique.detected,
             disabled: technique.disabled,
             active: technique.active,
-            modality: modality_name(technique.modality).to_string(),
             command: technique.default_command.clone(),
         })
         .collect();
 
-    let summary = TechniqueStatusSummary {
-        total: rows.len(),
-        detected: rows.iter().filter(|row| row.detected).count(),
-        disabled: rows.iter().filter(|row| row.disabled).count(),
-        active: rows.iter().filter(|row| row.active).count(),
-    };
-
     TechniqueStatusProjection {
-        summary,
         rows,
         diagnostics: report.diagnostics,
     }
@@ -222,14 +216,6 @@ fn resolve_project_root(config: &Config) -> PathBuf {
     }
 
     std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
-}
-
-fn modality_name(modality: TechniqueModality) -> &'static str {
-    match modality {
-        TechniqueModality::Command => "command",
-        TechniqueModality::Recording => "recording",
-        TechniqueModality::Judge => "judge",
-    }
 }
 
 /// Show or change scoring mode
@@ -345,14 +331,25 @@ disable = ["rust-coverage"]
         let lines = render_show_payload(&payload);
         let rendered = lines.join("\n");
 
-        assert!(rendered.contains("[verification.techniques]"));
-        assert!(!rendered.contains("[scoring]"));
-        assert!(!rendered.contains("impact_weight"));
-        assert!(rendered.contains("# Technique status:"));
-        assert!(rendered.contains("label = \"rust-unit-tests\""));
-        assert!(rendered.contains("label = \"vhs\""));
-        assert!(rendered.contains("label = \"rust-coverage\""));
+        assert!(rendered.contains("[scoring]"));
+        assert!(rendered.contains("mode = \"constrained\""));
+        assert!(rendered.contains("impact_weight = 1"));
+        assert!(rendered.contains("confidence_weight = 1.5"));
+        assert!(rendered.contains("effort_weight = 2"));
+        assert!(rendered.contains("risk_weight = 1.5"));
+        assert!(!rendered.contains("total = "));
+        assert!(!rendered.contains("[verification.techniques]"));
+        assert!(rendered.contains(
+            "# Verification technique status (`disabled` and `command` are configurable):"
+        ));
+        assert!(rendered.contains("[verification.rust-unit-tests]"));
+        assert!(rendered.contains("[verification.vhs]"));
+        assert!(rendered.contains("[verification.rust-coverage]"));
+        assert!(rendered.contains("command = \"cargo test\""));
         assert!(rendered.contains("disabled = true"));
+        assert!(!rendered.contains("label = \""));
+        assert!(!rendered.contains("name = \""));
+        assert!(!rendered.contains("modality = \""));
     }
 
     #[test]
@@ -424,7 +421,12 @@ enable = ["llm-judge"]
             json["source"],
             serde_json::Value::String(config::ConfigSource::Defaults.to_string())
         );
-        assert!(json["verification"]["summary"]["total"].as_u64().unwrap() >= 1);
+        assert_eq!(
+            json["scoring"]["mode"],
+            serde_json::Value::String("constrained".to_string())
+        );
+        assert!(json["scoring"]["impact_weight"].as_f64().unwrap() > 0.0);
+        assert!(json["verification"]["summary"].is_null());
         let techniques = json["verification"]["techniques"]
             .as_array()
             .unwrap()
@@ -435,5 +437,8 @@ enable = ["llm-judge"]
         assert!(first.get("detected").is_some());
         assert!(first.get("disabled").is_some());
         assert!(first.get("active").is_some());
+        assert!(first.get("command").is_some());
+        assert!(first.get("name").is_none());
+        assert!(first.get("modality").is_none());
     }
 }
