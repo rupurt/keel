@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-05T17:42:05.798771234-08:00
+mode: manual
+---
+Verified with cargo test -p keel epic_problem_scaffold_is_placeholder_clean and full just test coverage

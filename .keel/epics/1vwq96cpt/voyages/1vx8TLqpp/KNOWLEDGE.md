@@ -25,23 +25,6 @@ created_at: 2026-03-02T12:03:53
 
 ---
 
-## Story: Relocate Domain Core Modules Into Src Domain (1vx8V69uz)
-
-### 1vyDuwdhQ: Multi-Requirement Stories Can Create Queue Cycles
-
-| Field | Value |
-|-------|-------|
-| **Category** | process |
-| **Context** | Stories in the same voyage referenced overlapping SRS IDs, and queue dependency derivation blocked all stories from becoming ready. |
-| **Insight** | Implementation dependency derivation is SRS-order based; a story that references both early and later requirements can create circular dependencies across siblings. |
-| **Suggested Action** | Keep each implementation story mapped to a primary SRS requirement in sequence, and reserve aggregate contract cleanup requirements for the final story. |
-| **Applies To** | .keel/stories/*/README.md, src/traceability.rs |
-| **Applied** |  |
-
-
-
----
-
 ## Story: Relocate Cli Command Surface Into Src Cli (1vx8V5uUT)
 
 ### 1vyDuwLDX: Path-Wide Module Moves Need Import Rewrite First
@@ -53,6 +36,23 @@ created_at: 2026-03-02T12:03:53
 | **Insight** | Bulk file moves are low-risk only when import rewrites and architecture path fixtures are updated in the same slice; otherwise compile passes but contract tests drift. |
 | **Suggested Action** | For physical normalization stories, perform move + import rewrite + fixture path updates atomically before running full test and doctor checks. |
 | **Applies To** | src/main.rs, src/cli/**, src/architecture_contract_tests.rs |
+| **Applied** |  |
+
+
+
+---
+
+## Story: Relocate Domain Core Modules Into Src Domain (1vx8V69uz)
+
+### 1vyDuwdhQ: Multi-Requirement Stories Can Create Queue Cycles
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | Stories in the same voyage referenced overlapping SRS IDs, and queue dependency derivation blocked all stories from becoming ready. |
+| **Insight** | Implementation dependency derivation is SRS-order based; a story that references both early and later requirements can create circular dependencies across siblings. |
+| **Suggested Action** | Keep each implementation story mapped to a primary SRS requirement in sequence, and reserve aggregate contract cleanup requirements for the final story. |
+| **Applies To** | .keel/stories/*/README.md, src/traceability.rs |
 | **Applied** |  |
 
 
@@ -92,20 +92,6 @@ created_at: 2026-03-02T12:03:53
 | **Confidence** | 0.92 |
 | **Applied** | Added normalized-root and legacy-path assertions for all migrated root modules |
 
-### Caz63yNKt: Multi-Requirement Stories Can Create Queue Cycles
-
-| Field | Value |
-|-------|-------|
-| **Category** | process |
-| **Context** | Stories in the same voyage referenced overlapping SRS IDs, and queue dependency derivation blocked all stories from becoming ready. |
-| **Insight** | Implementation dependency derivation is SRS-order based; a story that references both early and later requirements can create circular dependencies across siblings. |
-| **Suggested Action** | Keep each implementation story mapped to a primary SRS requirement in sequence, and reserve aggregate contract cleanup requirements for the final story. |
-| **Applies To** | .keel/stories/*/README.md, src/traceability.rs |
-| **Linked Knowledge IDs** | 1vyDuwdhQ |
-| **Score** | 0.88 |
-| **Confidence** | 0.95 |
-| **Applied** |  |
-
 ### Q8pKzHiNH: Path-Wide Module Moves Need Import Rewrite First
 
 | Field | Value |
@@ -118,6 +104,20 @@ created_at: 2026-03-02T12:03:53
 | **Linked Knowledge IDs** | 1vyDuwLDX |
 | **Score** | 0.84 |
 | **Confidence** | 0.92 |
+| **Applied** |  |
+
+### Caz63yNKt: Multi-Requirement Stories Can Create Queue Cycles
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | Stories in the same voyage referenced overlapping SRS IDs, and queue dependency derivation blocked all stories from becoming ready. |
+| **Insight** | Implementation dependency derivation is SRS-order based; a story that references both early and later requirements can create circular dependencies across siblings. |
+| **Suggested Action** | Keep each implementation story mapped to a primary SRS requirement in sequence, and reserve aggregate contract cleanup requirements for the final story. |
+| **Applies To** | .keel/stories/*/README.md, src/traceability.rs |
+| **Linked Knowledge IDs** | 1vyDuwdhQ |
+| **Score** | 0.88 |
+| **Confidence** | 0.95 |
 | **Applied** |  |
 
 ### Pa8P1V8dA: Relocated Source Files May Break Compile-Time Template Paths

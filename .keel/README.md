@@ -25,7 +25,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Keep Fresh Epic Scaffolds Doctor Clean](stories/1vyGZet0Z/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Epic Problem Hydration](epics/1vyFgR2MA/voyages/1vyFlAgHB/) |
 | [Render Goal Coverage In Epic Planning](stories/1vyGZfiEk/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Goal-to-Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFmfjA9/) |
 | [Detect Scope Drift During Planning](stories/1vyGZflfJ/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Scope Lineage and Drift Detection](epics/1vyFgR2MA/voyages/1vyFn0OuN/) |
 | [Render Scope Lineage In Planning Surfaces](stories/1vyGZgiTK/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Scope Lineage and Drift Detection](epics/1vyFgR2MA/voyages/1vyFn0OuN/) |

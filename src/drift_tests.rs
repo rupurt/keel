@@ -783,6 +783,31 @@ mod token_bucket_contract {
     }
 
     #[test]
+    fn epic_templates_drop_legacy_goal_token_usage() {
+        for (label, template) in [
+            (
+                "epic README",
+                crate::infrastructure::templates::epic::README,
+            ),
+            ("epic PRD", crate::infrastructure::templates::epic::PRD),
+            (
+                "epic PRESS_RELEASE",
+                crate::infrastructure::templates::epic::PRESS_RELEASE,
+            ),
+        ] {
+            let tokens = extract_tokens(template);
+            assert!(
+                !tokens.contains("goal"),
+                "{label} must not retain the legacy goal token"
+            );
+            assert!(
+                tokens.contains("problem"),
+                "{label} must keep the canonical problem token after the cutover"
+            );
+        }
+    }
+
+    #[test]
     fn generated_marker_contract_remains_literal() {
         let marker_templates = [
             (

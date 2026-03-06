@@ -110,6 +110,7 @@ fn new_epic(board_dir: &Path, name: &str, problem: &str) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cli::commands::diagnostics::doctor;
     use crate::infrastructure::validation::{CheckId, structural};
     use crate::test_helpers::TestBoardBuilder;
     use regex::Regex;
@@ -300,5 +301,57 @@ mod tests {
 
         assert_eq!(normalize(&readme_a), normalize(&readme_b));
         assert_eq!(prd_a, prd_b);
+    }
+
+    #[test]
+    fn doctor_accepts_problem_only_epic_scaffold() {
+        let temp = TestBoardBuilder::new().build();
+        let board_dir = temp.path();
+
+        new_epic(
+            board_dir,
+            "My New Epic",
+            "Users cannot recover access after sign-in failures.",
+        )
+        .unwrap();
+
+        let report = doctor::validate(board_dir).unwrap();
+        let failures: Vec<_> = report
+            .epic_checks
+            .iter()
+            .filter(|check| !check.passed)
+            .map(|check| check.name)
+            .collect();
+
+        assert!(
+            failures.is_empty(),
+            "fresh problem-only epic scaffold must remain doctor-clean: {failures:?}"
+        );
+    }
+
+    #[test]
+    fn epic_problem_scaffold_is_placeholder_clean() {
+        let temp = TestBoardBuilder::new().build();
+        let board_dir = temp.path();
+        let problem = "Users cannot recover access after sign-in failures.";
+
+        new_epic(board_dir, "My New Epic", problem).unwrap();
+
+        let epic_dir = find_epic_dir(board_dir, "My New Epic");
+        let readme = fs::read_to_string(epic_dir.join("README.md")).unwrap();
+        let prd = fs::read_to_string(epic_dir.join("PRD.md")).unwrap();
+        let goals_section = extract_section(&prd, "## Goals & Objectives", "## Users");
+
+        for content in [&readme, &prd] {
+            assert!(
+                !content.contains("TODO:") && !content.contains("{{"),
+                "generated epic scaffold must be free of unresolved placeholders: {content}"
+            );
+        }
+
+        assert!(readme.contains(&format!("> {problem}")));
+        assert!(prd.contains(&format!("## Problem Statement\n\n{problem}")));
+        assert!(goals_section.contains("| ID | Goal | Success Metric | Target |"));
+        assert!(!goals_section.contains(problem));
     }
 }

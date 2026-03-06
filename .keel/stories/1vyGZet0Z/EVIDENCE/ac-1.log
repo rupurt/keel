@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-05T17:42:05.679486944-08:00
+mode: manual
+---
+Verified with cargo test -p keel doctor_accepts_problem_only_epic_scaffold

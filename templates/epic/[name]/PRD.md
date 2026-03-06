@@ -8,27 +8,25 @@
 
 ## Goals & Objectives
 
-<!-- Why this epic, why now? How does it align with product vision? -->
-
 | ID | Goal | Success Metric | Target |
 |----|------|----------------|--------|
+| GOAL-01 | Resolve the problem described above for the primary user. | A measurable outcome is defined for this problem | Target agreed during planning |
 
 ## Users
 
-<!-- Who benefits from this? Primary and secondary personas -->
-
 | Persona | Description | Primary Need |
 |---------|-------------|--------------|
+| Primary User | The person or team most affected by the problem above. | A clearer path to the outcome this epic should improve. |
 
 ## Scope
 
 ### In Scope
 
-<!-- What this epic delivers -->
+- The smallest end-to-end change needed to address the problem statement.
 
 ### Out of Scope
 
-<!-- What this epic explicitly does NOT deliver (prevents scope creep) -->
+- Follow-on improvements or adjacent work that is not required for the first outcome.
 
 ## Requirements
 
@@ -50,29 +48,24 @@
 
 ## Verification Strategy
 
-<!-- How requirements and outcomes will be proven throughout implementation -->
-
 | Area | Method | Evidence |
 |------|--------|----------|
+| Problem outcome | Tests, CLI proofs, or manual review chosen during planning | Story-level verification artifacts linked during execution |
 
 ## Assumptions
 
-<!-- What we're betting on; if proven wrong, may require re-planning -->
-
 | Assumption | Impact if Wrong | Validation |
 |------------|-----------------|------------|
+| The problem statement reflects a real user or operator need. | The epic may optimize the wrong outcome. | Revisit with planners during decomposition. |
 
 ## Open Questions & Risks
 
-<!-- Unknowns that need resolution; risks to track -->
-
 | Question/Risk | Owner | Status |
 |---------------|-------|--------|
+| Which metric best proves the problem above is resolved? | Epic owner | Open |
 
 ## Success Criteria
 
-<!-- How we know this epic is complete -->
-
 <!-- BEGIN SUCCESS_CRITERIA -->
-- [ ] Users can complete the primary workflow described in this PRD without manual intervention.
+- [ ] The team can state a measurable user outcome that resolves the problem above.
 <!-- END SUCCESS_CRITERIA -->

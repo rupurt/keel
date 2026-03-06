@@ -8,6 +8,23 @@ created_at: 2026-03-03T08:10:40
 
 ## Story Knowledge
 
+## Story: Align CLI Contracts For Creation Commands (1vxH83MOO)
+
+### 1vyDuwuNj: Keep CLI contract updates end-to-end
+
+| Field | Value |
+|-------|-------|
+| **Category** | code |
+| **Context** | When changing creation command flags and required inputs |
+| **Insight** | Command tree flags, runtime mappers, and user-facing suggestion strings drift unless updated in the same slice. |
+| **Suggested Action** | Pair every CLI contract edit with parser rejection tests for removed flags and updates to generated command hints. |
+| **Applies To** | src/cli/command_tree.rs, src/cli/runtime.rs, src/cli_tests.rs, src/cli/presentation/flow/next_up.rs |
+| **Applied** | yes |
+
+
+
+---
+
 ## Story: Canonicalize Template Tokens To Schema Names (1vxH83JcY)
 
 ### 1vyDuwE2r: Keep Token Names Equal To Frontmatter Keys
@@ -20,23 +37,6 @@ created_at: 2026-03-03T08:10:40
 | **Suggested Action** | For any new template token, require a matching model/frontmatter key name (or explicit documented exception) and add a regression guard against legacy aliases. |
 | **Applies To** | `templates/**`, `src/cli/commands/management/*/new.rs`, `src/infrastructure/templates.rs` |
 | **Applied** | yes |
-
-
-
----
-
-## Story: Extend Adr Creation Inputs For Context Ownership (1vxH84Xh8)
-
-### 1vyDuwxcg: Keep CLI parser, runtime mapping, and template tokens aligned
-
-| Field | Value |
-|-------|-------|
-| **Category** | process |
-| **Context** | Adding new `adr new` flags required updates across clap action enums, command tree wiring, runtime ArgMatches extraction, and template rendering inputs. |
-| **Insight** | Parser and persistence changes stay reliable when command tests cover both parse-time option capture and file-level frontmatter serialization in one change set. |
-| **Suggested Action** | For every new CLI flag, add tests for command parsing and persisted artifact output before changing runtime behavior. |
-| **Applies To** | src/cli/commands/management/adr/mod.rs, src/cli/runtime.rs, src/cli/command_tree.rs, templates/adrs/ADR.md |
-| **Applied** |  |
 
 
 
@@ -59,9 +59,26 @@ created_at: 2026-03-03T08:10:40
 
 ---
 
-## Story: Align CLI Contracts For Creation Commands (1vxH83MOO)
+## Story: Extend Adr Creation Inputs For Context Ownership (1vxH84Xh8)
 
-### 1vyDuwuNj: Keep CLI contract updates end-to-end
+### 1vyDuwxcg: Keep CLI parser, runtime mapping, and template tokens aligned
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | Adding new `adr new` flags required updates across clap action enums, command tree wiring, runtime ArgMatches extraction, and template rendering inputs. |
+| **Insight** | Parser and persistence changes stay reliable when command tests cover both parse-time option capture and file-level frontmatter serialization in one change set. |
+| **Suggested Action** | For every new CLI flag, add tests for command parsing and persisted artifact output before changing runtime behavior. |
+| **Applies To** | src/cli/commands/management/adr/mod.rs, src/cli/runtime.rs, src/cli/command_tree.rs, templates/adrs/ADR.md |
+| **Applied** |  |
+
+
+
+---
+
+## Synthesis
+
+### 60OXnfaXF: Keep CLI contract updates end-to-end
 
 | Field | Value |
 |-------|-------|
@@ -70,13 +87,10 @@ created_at: 2026-03-03T08:10:40
 | **Insight** | Command tree flags, runtime mappers, and user-facing suggestion strings drift unless updated in the same slice. |
 | **Suggested Action** | Pair every CLI contract edit with parser rejection tests for removed flags and updates to generated command hints. |
 | **Applies To** | src/cli/command_tree.rs, src/cli/runtime.rs, src/cli_tests.rs, src/cli/presentation/flow/next_up.rs |
+| **Linked Knowledge IDs** | 1vyDuwuNj |
+| **Score** | 0.82 |
+| **Confidence** | 0.90 |
 | **Applied** | yes |
-
-
-
----
-
-## Synthesis
 
 ### Gd2KnPbv1: Keep Token Names Equal To Frontmatter Keys
 
@@ -92,20 +106,6 @@ created_at: 2026-03-03T08:10:40
 | **Confidence** | 0.89 |
 | **Applied** | yes |
 
-### Mb1Dyko1K: Keep CLI parser, runtime mapping, and template tokens aligned
-
-| Field | Value |
-|-------|-------|
-| **Category** | process |
-| **Context** | Adding new `adr new` flags required updates across clap action enums, command tree wiring, runtime ArgMatches extraction, and template rendering inputs. |
-| **Insight** | Parser and persistence changes stay reliable when command tests cover both parse-time option capture and file-level frontmatter serialization in one change set. |
-| **Suggested Action** | For every new CLI flag, add tests for command parsing and persisted artifact output before changing runtime behavior. |
-| **Applies To** | src/cli/commands/management/adr/mod.rs, src/cli/runtime.rs, src/cli/command_tree.rs, templates/adrs/ADR.md |
-| **Linked Knowledge IDs** | 1vyDuwxcg |
-| **Score** | 0.82 |
-| **Confidence** | 0.91 |
-| **Applied** |  |
-
 ### NzFf9pQSl: Keep token inventories and CLI `new` surfaces coupled by drift tests
 
 | Field | Value |
@@ -120,17 +120,17 @@ created_at: 2026-03-03T08:10:40
 | **Confidence** | 0.92 |
 | **Applied** |  |
 
-### 60OXnfaXF: Keep CLI contract updates end-to-end
+### Mb1Dyko1K: Keep CLI parser, runtime mapping, and template tokens aligned
 
 | Field | Value |
 |-------|-------|
-| **Category** | code |
-| **Context** | When changing creation command flags and required inputs |
-| **Insight** | Command tree flags, runtime mappers, and user-facing suggestion strings drift unless updated in the same slice. |
-| **Suggested Action** | Pair every CLI contract edit with parser rejection tests for removed flags and updates to generated command hints. |
-| **Applies To** | src/cli/command_tree.rs, src/cli/runtime.rs, src/cli_tests.rs, src/cli/presentation/flow/next_up.rs |
-| **Linked Knowledge IDs** | 1vyDuwuNj |
+| **Category** | process |
+| **Context** | Adding new `adr new` flags required updates across clap action enums, command tree wiring, runtime ArgMatches extraction, and template rendering inputs. |
+| **Insight** | Parser and persistence changes stay reliable when command tests cover both parse-time option capture and file-level frontmatter serialization in one change set. |
+| **Suggested Action** | For every new CLI flag, add tests for command parsing and persisted artifact output before changing runtime behavior. |
+| **Applies To** | src/cli/commands/management/adr/mod.rs, src/cli/runtime.rs, src/cli/command_tree.rs, templates/adrs/ADR.md |
+| **Linked Knowledge IDs** | 1vyDuwxcg |
 | **Score** | 0.82 |
-| **Confidence** | 0.90 |
-| **Applied** | yes |
+| **Confidence** | 0.91 |
+| **Applied** |  |
 

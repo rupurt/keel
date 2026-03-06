@@ -25,11 +25,11 @@ started_at: 2026-03-05T17:21:11
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 2/3 stories complete
+**Progress:** 3/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Replace Epic Goal CLI With Problem Input](../../../../stories/1vyGZd1to/README.md) | feat | done |
 | [Hydrate Epic Problem Into Fresh Scaffolds](../../../../stories/1vyGZdgBX/README.md) | feat | done |
-| [Keep Fresh Epic Scaffolds Doctor Clean](../../../../stories/1vyGZet0Z/README.md) | feat | backlog |
+| [Keep Fresh Epic Scaffolds Doctor Clean](../../../../stories/1vyGZet0Z/README.md) | feat | done |
 <!-- END GENERATED -->
