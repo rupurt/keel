@@ -6,6 +6,8 @@ use anyhow::Result;
 use owo_colors::OwoColorize;
 
 use crate::cli::presentation::duration::render_completed_with_length;
+use crate::cli::presentation::planning_lineage;
+use crate::cli::presentation::progress::render_count_bar;
 use crate::cli::presentation::requirements::grouped_requirement_lines;
 use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::style;
@@ -85,12 +87,18 @@ fn goal_scope_section(report: &VoyageShowProjection) -> ShowSection {
     );
     section.push_labeled_bullets(
         "Scope Lineage:",
-        report.scope_lineage.iter().cloned(),
+        report
+            .scope_lineage
+            .iter()
+            .map(planning_lineage::format_scope_lineage_row),
         Some(format!("{}", SCOPE_LINEAGE_PLACEHOLDER.dimmed())),
     );
     section.push_labeled_bullets(
         "Scope Drift:",
-        report.scope_drift.iter().cloned(),
+        report
+            .scope_drift
+            .iter()
+            .map(planning_lineage::format_scope_drift_row),
         Some(format!("{}", SCOPE_DRIFT_PLACEHOLDER.dimmed())),
     );
 
@@ -100,38 +108,19 @@ fn goal_scope_section(report: &VoyageShowProjection) -> ShowSection {
 fn progress_section(report: &VoyageShowProjection) -> ShowSection {
     let mut section = ShowSection::new("Progress");
     let mut fields = ShowKeyValues::new().with_indent(2).with_min_label_width(13);
-    if report.total_stories > 0 {
-        fields.push_row(
-            "Stories:",
-            format!(
-                "{}/{} {}",
-                report.done_stories,
-                report.total_stories,
-                style::progress_bar(report.done_stories, report.total_stories, 15, None)
-            ),
-        );
-    } else {
-        fields.push_row("Stories:", "0/0");
-    }
-
-    if report.total_functional_requirements > 0 {
-        fields.push_row(
-            "Requirements:",
-            format!(
-                "{}/{} {} (functional)",
-                report.done_functional_requirements,
-                report.total_functional_requirements,
-                style::progress_bar(
-                    report.done_functional_requirements,
-                    report.total_functional_requirements,
-                    15,
-                    None
-                )
-            ),
-        );
-    } else {
-        fields.push_row("Requirements:", "0/0 (functional)");
-    }
+    fields.push_row(
+        "Stories:",
+        render_count_bar(report.done_stories, report.total_stories, 15, None),
+    );
+    fields.push_row(
+        "Requirements:",
+        render_count_bar(
+            report.done_functional_requirements,
+            report.total_functional_requirements,
+            15,
+            Some("(functional)"),
+        ),
+    );
 
     if report.total_non_functional_requirements > 0 {
         fields.push_row(
@@ -154,8 +143,12 @@ fn requirement_matrix_lines(report: &VoyageShowProjection) -> Vec<String> {
 mod tests {
     use super::*;
     use crate::domain::model::StoryState;
+    use crate::domain::state_machine::invariants::{
+        ScopeDisposition, ScopeLineageIssue, ScopeLineageIssueKind,
+    };
     use crate::read_model::planning_show::{
-        RequirementCompletion, RequirementKind, RequirementRow, StoryRef,
+        RequirementCompletion, RequirementKind, RequirementRow, ScopeDriftRow, ScopeLineageRow,
+        StoryRef,
     };
     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use chrono::NaiveDate;
@@ -490,10 +483,22 @@ Out of scope:
         let report = VoyageShowProjection {
             goal: Some("Render planning scope context.".to_string()),
             scope: Default::default(),
-            scope_lineage: vec![
-                "`SCOPE-01`: Render lineage output (voyage in-scope; epic in-scope)".to_string(),
-            ],
-            scope_drift: vec!["`SCOPE-02` marks an epic out-of-scope item as in scope".to_string()],
+            scope_lineage: vec![ScopeLineageRow {
+                scope_id: "SCOPE-01".to_string(),
+                voyage_description: "Render lineage output".to_string(),
+                voyage_disposition: ScopeDisposition::In,
+                epic_description: Some("Render lineage output".to_string()),
+                epic_disposition: Some(ScopeDisposition::In),
+            }],
+            scope_drift: vec![ScopeDriftRow {
+                voyage_id: None,
+                issue: ScopeLineageIssue {
+                    artifact_path: std::path::PathBuf::from("SRS.md"),
+                    scope_id: Some("SCOPE-02".to_string()),
+                    line: None,
+                    kind: ScopeLineageIssueKind::OutOfScopeContradiction,
+                },
+            }],
             requirements: Vec::new(),
             done_stories: 0,
             total_stories: 0,

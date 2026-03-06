@@ -4,6 +4,8 @@ use anyhow::Result;
 use owo_colors::OwoColorize;
 
 use crate::cli::presentation::duration::render_completed_with_length;
+use crate::cli::presentation::planning_lineage;
+use crate::cli::presentation::progress::render_count_bar;
 use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::style;
 use crate::domain::model::{Board, Epic};
@@ -105,12 +107,18 @@ fn render_planning_summary(report: &EpicShowProjection) -> ShowSection {
     );
     section.push_labeled_bullets(
         "Scope Coverage:",
-        report.scope_coverage.iter().cloned(),
+        report
+            .scope_coverage
+            .iter()
+            .map(planning_lineage::format_scope_coverage_row),
         Some(format!("{}", SCOPE_COVERAGE_PLACEHOLDER.dimmed())),
     );
     section.push_labeled_bullets(
         "Scope Drift:",
-        report.scope_drift.iter().cloned(),
+        report
+            .scope_drift
+            .iter()
+            .map(planning_lineage::format_scope_drift_row),
         Some(format!("{}", SCOPE_DRIFT_PLACEHOLDER.dimmed())),
     );
     section.push_labeled_bullets(
@@ -150,33 +158,14 @@ fn format_goal_coverage_row(row: &planning_show::EpicGoalCoverageRow) -> String 
 fn render_progress(report: &EpicShowProjection) -> ShowSection {
     let mut section = ShowSection::new("Progress");
     let mut fields = ShowKeyValues::new().with_indent(2).with_min_label_width(21);
-    if report.total_voyages > 0 {
-        fields.push_row(
-            "Voyages:",
-            format!(
-                "{}/{} {}",
-                report.done_voyages,
-                report.total_voyages,
-                style::progress_bar(report.done_voyages, report.total_voyages, 15, None)
-            ),
-        );
-    } else {
-        fields.push_row("Voyages:", "0/0");
-    }
-
-    if report.total_stories > 0 {
-        fields.push_row(
-            "Stories:",
-            format!(
-                "{}/{} {}",
-                report.done_stories,
-                report.total_stories,
-                style::progress_bar(report.done_stories, report.total_stories, 15, None)
-            ),
-        );
-    } else {
-        fields.push_row("Stories:", "0/0");
-    }
+    fields.push_row(
+        "Voyages:",
+        render_count_bar(report.done_voyages, report.total_voyages, 15, None),
+    );
+    fields.push_row(
+        "Stories:",
+        render_count_bar(report.done_stories, report.total_stories, 15, None),
+    );
 
     let eta = match report.eta.eta_weeks {
         Some(weeks) => format!(
@@ -360,6 +349,9 @@ fn render_voyages(board: &Board, epic: &Epic) -> Option<ShowSection> {
 mod tests {
     use super::*;
     use crate::domain::model::StoryState;
+    use crate::domain::state_machine::invariants::{
+        ScopeDisposition, ScopeLineageIssue, ScopeLineageIssueKind,
+    };
     use crate::infrastructure::loader::load_board;
     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use chrono::{Duration, Local, NaiveDate};
@@ -857,13 +849,25 @@ Teams cannot see whether goals are actually covered by PRD requirements.
         let report = EpicShowProjection {
             doc: planning_show::PlanningDocSummary::default(),
             goal_coverage: Vec::new(),
-            scope_coverage: vec![
-                "`SCOPE-01`: Render canonical scope coverage (epic in-scope; linked voyages: `v1` in-scope)"
-                    .to_string(),
-            ],
-            scope_drift: vec![
-                "`v1`: `SCOPE-02` references unknown epic scope ID".to_string(),
-            ],
+            scope_coverage: vec![planning_show::EpicScopeCoverageRow {
+                scope_id: "SCOPE-01".to_string(),
+                epic_description: "Render canonical scope coverage".to_string(),
+                epic_disposition: ScopeDisposition::In,
+                linked_voyages: vec![planning_show::EpicScopeCoverageVoyageLink {
+                    voyage_id: "v1".to_string(),
+                    description: "Render canonical scope coverage".to_string(),
+                    disposition: ScopeDisposition::In,
+                }],
+            }],
+            scope_drift: vec![planning_show::ScopeDriftRow {
+                voyage_id: Some("v1".to_string()),
+                issue: ScopeLineageIssue {
+                    artifact_path: std::path::PathBuf::from("SRS.md"),
+                    scope_id: Some("SCOPE-02".to_string()),
+                    line: None,
+                    kind: ScopeLineageIssueKind::UnknownScopeRef,
+                },
+            }],
             requirement_coverage: Vec::new(),
             total_voyages: 0,
             done_voyages: 0,
