@@ -202,4 +202,56 @@ mod tests {
         assert!(justfile.contains("pre-commit: quality test"));
         assert!(!ci_workflow.contains("e2e-vhs"));
     }
+
+    #[test]
+    fn checked_in_dogfood_scenarios_include_epic_flow() {
+        let repo_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let scenarios = list_scenarios(&repo_root).unwrap();
+
+        assert!(scenarios.contains(&"epic-flow".to_string()));
+        assert!(scenarios.contains(&"smoke-flow".to_string()));
+    }
+
+    #[test]
+    fn epic_flow_tape_covers_creation_and_decomposition() {
+        let repo_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let tape = fs::read_to_string(scenario_path(&repo_root, "epic-flow")).unwrap();
+
+        for snippet in [
+            "keel epic new",
+            "keel epic show $EPIC_ID",
+            "keel voyage new",
+            "keel story new",
+            "keel story link",
+            "keel voyage plan",
+            "keel voyage show $VOYAGE_ID",
+        ] {
+            assert!(
+                tape.contains(snippet),
+                "expected epic-flow tape to contain {snippet}"
+            );
+        }
+    }
+
+    #[test]
+    fn epic_flow_tape_surfaces_next_and_flow() {
+        let repo_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let tape = fs::read_to_string(scenario_path(&repo_root, "epic-flow")).unwrap();
+
+        assert!(tape.contains("keel next --agent"));
+        assert!(tape.contains("keel flow"));
+        assert!(tape.contains("SRS-03"));
+    }
+
+    #[test]
+    fn epic_flow_tape_avoids_fixed_entity_ids() {
+        let repo_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let tape = fs::read_to_string(scenario_path(&repo_root, "epic-flow")).unwrap();
+
+        assert!(tape.contains("latest_id .keel/epics"));
+        assert!(tape.contains("latest_id .keel/epics/$EPIC_ID/voyages"));
+        assert!(tape.contains("latest_id .keel/stories"));
+        assert!(tape.contains("sleep 1"));
+        assert!(!tape.contains("1vyWLl000"));
+    }
 }
