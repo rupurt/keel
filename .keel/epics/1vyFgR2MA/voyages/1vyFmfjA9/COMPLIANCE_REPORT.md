@@ -1,0 +1,11 @@
+# COMPLIANCE REPORT: Goal-to-Requirement Lineage
+
+## Requirement Traceability Matrix
+
+| Req ID | Status | Implemented By | Proof Artifacts |
+|--------|--------|----------------|-----------------|
+| SRS-01 | ✓ VERIFIED | [1vyGZeNMa](../../../../stories/1vyGZeNMa/README.md), [1vyGZeNMa](../../../../stories/1vyGZeNMa/README.md) | [ac-1.log](../../../../stories/1vyGZeNMa/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/1vyGZeNMa/EVIDENCE/ac-2.log)<br>[ac-1.log](../../../../stories/1vyGZeNMa/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/1vyGZeNMa/EVIDENCE/ac-2.log) |
+| SRS-02 | ✓ VERIFIED | [1vyGZeEI7](../../../../stories/1vyGZeEI7/README.md), [1vyGZeEI7](../../../../stories/1vyGZeEI7/README.md) | [ac-1.log](../../../../stories/1vyGZeEI7/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/1vyGZeEI7/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/1vyGZeEI7/EVIDENCE/ac-3.log)<br>[ac-4.log](../../../../stories/1vyGZeEI7/EVIDENCE/ac-4.log)<br>[ac-1.log](../../../../stories/1vyGZeEI7/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/1vyGZeEI7/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/1vyGZeEI7/EVIDENCE/ac-3.log)<br>[ac-4.log](../../../../stories/1vyGZeEI7/EVIDENCE/ac-4.log) |
+| SRS-03 | ✓ VERIFIED | [1vyGZeEI7](../../../../stories/1vyGZeEI7/README.md) | [ac-1.log](../../../../stories/1vyGZeEI7/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/1vyGZeEI7/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/1vyGZeEI7/EVIDENCE/ac-3.log)<br>[ac-4.log](../../../../stories/1vyGZeEI7/EVIDENCE/ac-4.log) |
+| SRS-04 | ✓ VERIFIED | [1vyGZfiEk](../../../../stories/1vyGZfiEk/README.md) | [ac-1.log](../../../../stories/1vyGZfiEk/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/1vyGZfiEk/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/1vyGZfiEk/EVIDENCE/ac-3.log) |
+| SRS-05 | ✓ VERIFIED | [1vyGZfiEk](../../../../stories/1vyGZfiEk/README.md), [1vyGZfiEk](../../../../stories/1vyGZfiEk/README.md) | [ac-1.log](../../../../stories/1vyGZfiEk/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/1vyGZfiEk/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/1vyGZfiEk/EVIDENCE/ac-3.log)<br>[ac-1.log](../../../../stories/1vyGZfiEk/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/1vyGZfiEk/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/1vyGZfiEk/EVIDENCE/ac-3.log) |
