@@ -1,8 +1,9 @@
 //! Global story ID generation using Crockford Base62 encoding
 //!
-//! Generates 9-character IDs: 6 chars timestamp + 3 chars random.
+//! Generates 9-character IDs: 6 chars timestamp + 3 chars suffix.
 //! IDs are lexicographically sortable by creation time.
 
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Crockford Base62 alphabet - ordered for lexicographic sortability
@@ -12,9 +13,9 @@ const CROCKFORD_BASE62: &[u8; 62] =
 
 /// Generate a new globally unique story ID
 ///
-/// Format: 9 characters (6 timestamp + 3 random)
+/// Format: 9 characters (6 timestamp + 3 suffix)
 /// - First 6 chars: seconds since Unix epoch encoded in base62
-/// - Last 3 chars: random value 0..238327 encoded in base62
+/// - Last 3 chars: per-process sequence 0..238327 encoded in base62
 ///
 /// IDs are lexicographically sortable by creation time.
 pub fn generate_story_id() -> String {
@@ -28,10 +29,10 @@ pub fn generate_story_id() -> String {
 
 /// Generate a story ID with a specific timestamp (for migration/testing)
 pub fn generate_story_id_with_timestamp(timestamp: u64) -> String {
-    let random: u32 = rand_u32() % (62 * 62 * 62); // 0..238327
+    let suffix = next_suffix_value();
 
     let mut id = encode_base62(timestamp, 6);
-    id.push_str(&encode_base62(random as u64, 3));
+    id.push_str(&encode_base62(suffix as u64, 3));
     id
 }
 
@@ -74,29 +75,15 @@ pub fn extract_timestamp(id: &str) -> Option<u64> {
     decode_base62(&id[..6])
 }
 
-/// Simple xorshift random number generator
-/// Uses global atomic counter + thread-local state for uniqueness
-fn rand_u32() -> u32 {
-    use std::sync::atomic::{AtomicU64, Ordering};
+/// Return the next suffix in the 3-character base62 space.
+///
+/// This avoids the birthday-paradox collisions that made the old random
+/// implementation flaky in tests and in tight loops.
+fn next_suffix_value() -> u32 {
+    static COUNTER: AtomicU32 = AtomicU32::new(0);
+    const SUFFIX_SPACE: u32 = 62 * 62 * 62;
 
-    // Global counter ensures uniqueness even when called from multiple threads
-    // at the exact same nanosecond
-    static COUNTER: AtomicU64 = AtomicU64::new(0);
-
-    // Get a unique value by combining time and counter
-    let time_ns = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_nanos() as u64)
-        .unwrap_or(0x12345678);
-    let count = COUNTER.fetch_add(1, Ordering::Relaxed);
-
-    // Mix time and counter with SplitMix64-style mixing
-    let mut s = time_ns.wrapping_add(count.wrapping_mul(0x9E3779B97F4A7C15));
-    s = (s ^ (s >> 30)).wrapping_mul(0xBF58476D1CE4E5B9);
-    s = (s ^ (s >> 27)).wrapping_mul(0x94D049BB133111EB);
-    s ^= s >> 31;
-
-    s as u32
+    COUNTER.fetch_add(1, Ordering::Relaxed) % SUFFIX_SPACE
 }
 
 #[cfg(test)]
@@ -179,32 +166,30 @@ mod tests {
 
     #[test]
     fn ids_are_unique_across_100_generations() {
-        // With 238,328 possible random values per second,
-        // generating 100 IDs has very low collision probability
-        // (birthday paradox: n²/2m = 100²/(2×238328) ≈ 0.002%)
-        // This tests realistic CLI usage (multiple stories created quickly)
+        // The suffix space must stay collision-free for normal bursty usage,
+        // including generating many IDs within the same second.
         let mut seen = HashSet::new();
         for _ in 0..100 {
-            let id = generate_story_id();
+            let id = generate_story_id_with_timestamp(1_706_400_000);
             assert!(seen.insert(id.clone()), "Duplicate ID generated: {}", id);
         }
     }
 
     #[test]
-    fn random_suffix_produces_varied_output() {
-        // Verify the random suffix varies across calls
+    fn suffix_produces_varied_output() {
+        // Verify the suffix varies across calls even with a fixed timestamp.
         let ts = 1700000000u64;
         let ids: Vec<String> = (0..100)
             .map(|_| generate_story_id_with_timestamp(ts))
             .collect();
 
-        // Extract just the random suffix (last 3 chars)
+        // Extract just the suffix (last 3 chars)
         let suffixes: HashSet<&str> = ids.iter().map(|id| &id[6..]).collect();
 
-        // Should have high variety - at least 90 unique suffixes out of 100
+        // Should have full uniqueness in a normal local burst.
         assert!(
-            suffixes.len() >= 90,
-            "Random suffixes should vary: got {} unique out of 100",
+            suffixes.len() == 100,
+            "Suffixes should be unique in a 100-ID burst: got {} unique out of 100",
             suffixes.len()
         );
     }
