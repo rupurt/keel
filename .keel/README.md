@@ -98,5 +98,5 @@
 
 | Voyage | Status |
 |--------|--------|
-| [Epic Topology Terminal View](epics/1vyWIF000/voyages/1vyWIM000/) | planned |
+| [Epic Topology Terminal View](epics/1vyWIF000/voyages/1vyWIM000/) | in-progress |
 
