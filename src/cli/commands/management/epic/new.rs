@@ -13,20 +13,22 @@ use crate::infrastructure::template_rendering;
 use crate::infrastructure::templates;
 
 /// Create a new epic
-pub fn run(name: &str, goal: &str) -> Result<()> {
+pub fn run(name: &str, problem: &str) -> Result<()> {
     let board_dir = crate::infrastructure::config::find_board_dir()?;
-    new_epic(&board_dir, name, goal)
+    new_epic(&board_dir, name, problem)
 }
 
 /// Create a new epic
-fn new_epic(board_dir: &Path, name: &str, goal: &str) -> Result<()> {
+fn new_epic(board_dir: &Path, name: &str, problem: &str) -> Result<()> {
     duplicate_ids::ensure_unique_ids(board_dir, DuplicateEntity::Epic, "keel epic new")?;
 
     let board = load_board(board_dir)?;
     let now = Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
-    let goal_text = goal.trim();
-    if goal_text.is_empty() {
-        return Err(anyhow!("goal is required (use --goal when creating epic)"));
+    let problem_text = problem.trim();
+    if problem_text.is_empty() {
+        return Err(anyhow!(
+            "problem is required (use --problem when creating epic)"
+        ));
     }
 
     // Enforce Title Case
@@ -64,7 +66,7 @@ fn new_epic(board_dir: &Path, name: &str, goal: &str) -> Result<()> {
             ("id", &epic_id),
             ("title", name),
             ("created_at", &now),
-            ("goal", goal_text),
+            ("goal", problem_text),
         ],
     );
 
@@ -83,7 +85,7 @@ fn new_epic(board_dir: &Path, name: &str, goal: &str) -> Result<()> {
     // Write PRD
     let prd_content = template_rendering::render(
         templates::epic::PRD,
-        &[("title", name), ("goal", goal_text)],
+        &[("title", name), ("goal", problem_text)],
     );
     let prd_path = epic_dir.join("PRD.md");
     fs::write(&prd_path, prd_content)
@@ -117,7 +119,7 @@ mod tests {
         let temp = TestBoardBuilder::new().build();
         let board_dir = temp.path();
 
-        new_epic(board_dir, "My New Epic", "A goal").unwrap();
+        new_epic(board_dir, "My New Epic", "A problem").unwrap();
 
         // Find the epic directory (it's random now)
         let epics_dir = board_dir.join("epics");
@@ -138,7 +140,7 @@ mod tests {
         let readme = fs::read_to_string(epic_dir.join("README.md")).unwrap();
         assert!(readme.contains("title: My New Epic"));
         assert!(!readme.contains("\nstatus:"));
-        assert!(readme.contains("> A goal"));
+        assert!(readme.contains("> A problem"));
         assert!(readme.contains("index: 1")); // First epic
         let created_at_re = Regex::new(r"created_at: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}").unwrap();
         assert!(
@@ -174,9 +176,37 @@ mod tests {
         let board_dir = temp.path();
 
         // Names can now collide because IDs are random
-        new_epic(board_dir, "Duplicate", "goal").unwrap();
-        let res = new_epic(board_dir, "Duplicate", "goal");
+        new_epic(board_dir, "Duplicate", "problem").unwrap();
+        let res = new_epic(board_dir, "Duplicate", "problem");
 
         assert!(res.is_ok());
+    }
+
+    #[test]
+    fn epic_new_problem_input_fails_fast_without_defaults() {
+        let temp = TestBoardBuilder::new().build();
+        let board_dir = temp.path();
+
+        let err = new_epic(board_dir, "My New Epic", "   ").unwrap_err();
+
+        assert!(
+            err.to_string()
+                .contains("problem is required (use --problem when creating epic)")
+        );
+
+        let created_epics = fs::read_dir(board_dir.join("epics"))
+            .unwrap()
+            .filter_map(Result::ok)
+            .filter(|entry| entry.path().join("README.md").exists())
+            .filter(|entry| {
+                fs::read_to_string(entry.path().join("README.md"))
+                    .unwrap()
+                    .contains("title: My New Epic")
+            })
+            .count();
+        assert_eq!(
+            created_epics, 0,
+            "should not scaffold a new epic on invalid input"
+        );
     }
 }

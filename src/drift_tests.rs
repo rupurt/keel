@@ -599,6 +599,7 @@ mod token_bucket_contract {
         "epic",
         "goal",
         "knowledge_example_id",
+        "problem",
         "title",
         "type",
     ];
@@ -736,7 +737,7 @@ mod token_bucket_contract {
     #[test]
     fn creation_command_new_surfaces_match_cli_owned_token_contract() {
         let expected_epic: BTreeSet<String> =
-            ["name", "goal"].into_iter().map(String::from).collect();
+            ["name", "problem"].into_iter().map(String::from).collect();
         let expected_voyage: BTreeSet<String> = ["name", "epic", "goal"]
             .into_iter()
             .map(String::from)

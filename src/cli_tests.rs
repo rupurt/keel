@@ -510,33 +510,36 @@ fn cli_parses_story_unlink() {
 }
 
 #[test]
-fn cli_parses_epic_new() {
+fn cli_parses_epic_new_with_required_problem() {
     let cli = Cli::try_parse_from([
         "board",
         "epic",
         "new",
         "auth-system",
-        "--goal",
-        "Improve login and session handling",
+        "--problem",
+        "Users cannot complete login and session recovery reliably",
     ])
     .unwrap();
     if let Commands::Management(ManagementCommands::Epic {
-        action: EpicAction::New { name, goal },
+        action: EpicAction::New { name, problem },
     }) = cli.command
     {
         assert_eq!(name, "auth-system");
-        assert_eq!(goal, "Improve login and session handling");
+        assert_eq!(
+            problem,
+            "Users cannot complete login and session recovery reliably"
+        );
     } else {
         panic!("Expected Epic New command");
     }
 }
 
 #[test]
-fn cli_parses_epic_new_requires_goal() {
+fn cli_parses_epic_new_requires_problem() {
     let result = Cli::try_parse_from(["board", "epic", "new", "auth-system"]);
     assert!(
         result.is_err(),
-        "Expected parse error when --goal is missing"
+        "Expected parse error when --problem is missing"
     );
 }
 
@@ -547,8 +550,8 @@ fn cli_rejects_epic_new_description_flag() {
         "epic",
         "new",
         "auth-system",
-        "--goal",
-        "Improve login and session handling",
+        "--problem",
+        "Users cannot complete login and session recovery reliably",
         "--description",
         "Authentication epic",
     ]);
@@ -567,8 +570,8 @@ fn cli_creation_commands_reject_system_owned_flags() {
                 "epic",
                 "new",
                 "Auth System",
-                "--goal",
-                "Improve login",
+                "--problem",
+                "Users cannot complete login reliably",
                 "--id",
                 "E-001",
             ],

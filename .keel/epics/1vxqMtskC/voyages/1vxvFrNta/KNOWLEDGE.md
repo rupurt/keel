@@ -8,23 +8,6 @@ created_at: 2026-03-04T16:27:11
 
 ## Story Knowledge
 
-## Story: Refactor Config Show Into Technique Flag Matrix (1vxvIZRXy)
-
-### 1vyDuwBfG: Prefer direct status flags over aggregated recommendation blocks
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Config introspection commands where automation depends on deterministic machine-readable state |
-| **Insight** | A per-technique flag matrix (`detected`, `disabled`, `active`) is a better contract boundary than mixed narrative sections because it cleanly separates inventory from recommendation logic. |
-| **Suggested Action** | Keep config/read commands focused on canonical state and move advisory ranking/commentary to dedicated recommend commands. |
-| **Applies To** | `src/cli/commands/setup/config.rs`, `src/read_model/verification_techniques.rs` |
-| **Applied** | yes |
-
-
-
----
-
 ## Story: Remove Planning Show Recommendations And Update Planning Guidance (1vxvIa2RC)
 
 ### 1vyDuwUUO: Keep recommendation sourcing decoupled from planning read surfaces
@@ -59,6 +42,23 @@ created_at: 2026-03-04T16:27:11
 
 ---
 
+## Story: Refactor Config Show Into Technique Flag Matrix (1vxvIZRXy)
+
+### 1vyDuwBfG: Prefer direct status flags over aggregated recommendation blocks
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Config introspection commands where automation depends on deterministic machine-readable state |
+| **Insight** | A per-technique flag matrix (`detected`, `disabled`, `active`) is a better contract boundary than mixed narrative sections because it cleanly separates inventory from recommendation logic. |
+| **Suggested Action** | Keep config/read commands focused on canonical state and move advisory ranking/commentary to dedicated recommend commands. |
+| **Applies To** | `src/cli/commands/setup/config.rs`, `src/read_model/verification_techniques.rs` |
+| **Applied** | yes |
+
+
+
+---
+
 ## Story: Implement Verify Recommend For Active Detected Techniques (1vxvIaM4w)
 
 ### 1vyDuwmNc: Centralize technique status before rendering
@@ -77,20 +77,6 @@ created_at: 2026-03-04T16:27:11
 ---
 
 ## Synthesis
-
-### gEqMvGXEE: Prefer direct status flags over aggregated recommendation blocks
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Config introspection commands where automation depends on deterministic machine-readable state |
-| **Insight** | A per-technique flag matrix (`detected`, `disabled`, `active`) is a better contract boundary than mixed narrative sections because it cleanly separates inventory from recommendation logic. |
-| **Suggested Action** | Keep config/read commands focused on canonical state and move advisory ranking/commentary to dedicated recommend commands. |
-| **Applies To** | `src/cli/commands/setup/config.rs`, `src/read_model/verification_techniques.rs` |
-| **Linked Knowledge IDs** | 1vyDuwBfG |
-| **Score** | 0.86 |
-| **Confidence** | 0.90 |
-| **Applied** | yes |
 
 ### ng7SivrJS: Keep recommendation sourcing decoupled from planning read surfaces
 
@@ -118,6 +104,20 @@ created_at: 2026-03-04T16:27:11
 | **Linked Knowledge IDs** | 1vyDuwu3r |
 | **Score** | 0.84 |
 | **Confidence** | 0.91 |
+| **Applied** | yes |
+
+### gEqMvGXEE: Prefer direct status flags over aggregated recommendation blocks
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Config introspection commands where automation depends on deterministic machine-readable state |
+| **Insight** | A per-technique flag matrix (`detected`, `disabled`, `active`) is a better contract boundary than mixed narrative sections because it cleanly separates inventory from recommendation logic. |
+| **Suggested Action** | Keep config/read commands focused on canonical state and move advisory ranking/commentary to dedicated recommend commands. |
+| **Applies To** | `src/cli/commands/setup/config.rs`, `src/read_model/verification_techniques.rs` |
+| **Linked Knowledge IDs** | 1vyDuwBfG |
+| **Score** | 0.86 |
+| **Confidence** | 0.90 |
 | **Applied** | yes |
 
 ### tDRpzXuPC: Centralize technique status before rendering

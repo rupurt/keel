@@ -25,7 +25,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Replace Epic Goal CLI With Problem Input](stories/1vyGZd1to/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Epic Problem Hydration](epics/1vyFgR2MA/voyages/1vyFlAgHB/) |
 | [Hydrate Epic Problem Into Fresh Scaffolds](stories/1vyGZdgBX/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Epic Problem Hydration](epics/1vyFgR2MA/voyages/1vyFlAgHB/) |
 | [Validate Goal Links In PRD Requirements](stories/1vyGZeEI7/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Goal-to-Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFmfjA9/) |
 | [Parse Canonical Goal Lineage](stories/1vyGZeNMa/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Goal-to-Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFmfjA9/) |
@@ -51,11 +50,11 @@
 
 ## Epics
 
-### [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) (active) - 4 voyages, 0 done
+### [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) (active) - 4 voyages, 1 done
 
 | Voyage | Status |
 |--------|--------|
-| [Canonical PRD Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFiQPoH/) | in-progress |
+| [Canonical PRD Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFiQPoH/) | done |
 | [Epic Problem Hydration](epics/1vyFgR2MA/voyages/1vyFlAgHB/) | planned |
 | [Goal-to-Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFmfjA9/) | planned |
 | [Scope Lineage and Drift Detection](epics/1vyFgR2MA/voyages/1vyFn0OuN/) | planned |

@@ -13,9 +13,9 @@ pub enum EpicAction {
     New {
         /// Epic name
         name: String,
-        /// Goal/value proposition for the epic
+        /// Problem statement for the epic
         #[arg(long, short, required = true)]
-        goal: String,
+        problem: String,
     },
     /// Show epic details
     Show {
@@ -33,7 +33,7 @@ pub enum EpicAction {
 /// Run an epic action through the epic interface adapter.
 pub fn run(action: EpicAction) -> Result<()> {
     match action {
-        EpicAction::New { name, goal } => new::run(&name, &goal),
+        EpicAction::New { name, problem } => new::run(&name, &problem),
         EpicAction::Show { id } => show::run(&id),
         EpicAction::List { status } => list::run(status.as_deref()),
     }

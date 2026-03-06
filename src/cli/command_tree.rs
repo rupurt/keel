@@ -412,10 +412,10 @@ pub fn build_cli() -> Command {
                         .about("Create a new epic")
                         .arg(Arg::new("name").required(true).value_name("NAME"))
                         .arg(
-                            Arg::new("goal")
-                                .long("goal")
-                                .short('g')
-                                .value_name("GOAL")
+                            Arg::new("problem")
+                                .long("problem")
+                                .short('p')
+                                .value_name("PROBLEM")
                                 .required(true),
                         ),
                 )

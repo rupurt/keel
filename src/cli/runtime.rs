@@ -127,7 +127,7 @@ fn handle_epic_command(matches: &ArgMatches) -> Result<()> {
     let action = match command {
         ("new", m) => super::commands::management::epic::EpicAction::New {
             name: m.get_one::<String>("name").expect("required").clone(),
-            goal: m.get_one::<String>("goal").expect("required").clone(),
+            problem: m.get_one::<String>("problem").expect("required").clone(),
         },
         ("show", m) => super::commands::management::epic::EpicAction::Show {
             id: m.get_one::<String>("id").expect("required").clone(),
