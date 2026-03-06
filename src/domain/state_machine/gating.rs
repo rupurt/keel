@@ -577,7 +577,10 @@ fn evaluate_voyage_start(_board: &Board, voyage: &Voyage, stories: &[&Story]) ->
 
     let mut invalid_stories = Vec::new();
     for story in stories {
-        if !matches!(story.stage, StoryState::Backlog | StoryState::Icebox) {
+        if !matches!(
+            story.stage,
+            StoryState::Backlog | StoryState::Icebox | StoryState::Done
+        ) {
             invalid_stories.push(format!("{} ({})", story.id(), story.stage));
         }
     }
@@ -588,7 +591,7 @@ fn evaluate_voyage_start(_board: &Board, voyage: &Voyage, stories: &[&Story]) ->
             path: voyage.path.clone(),
             scope: Some(voyage.scope_path()),
             message: format!(
-                "Voyage {} cannot start: {} story(ies) are not in allowed states (backlog/icebox)",
+                "Voyage {} cannot start: {} story(ies) are not in allowed states (backlog/icebox/done)",
                 voyage.id(),
                 invalid_stories.join(", ")
             ),
@@ -1270,6 +1273,33 @@ mod tests {
         assert_eq!(problems.len(), 1);
         assert!(has_message(&problems, "start but missing end"));
         assert_eq!(problems[0].severity, Severity::Warning);
+    }
+
+    #[test]
+    fn evaluate_voyage_start_allows_done_and_backlog_story_mix() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("test-epic"))
+            .voyage(TestVoyage::new("01-planned", "test-epic").status("planned"))
+            .story(
+                TestStory::new("DONE01")
+                    .scope("test-epic/01-planned")
+                    .stage(StoryState::Done),
+            )
+            .story(
+                TestStory::new("BACKLOG01")
+                    .scope("test-epic/01-planned")
+                    .stage(StoryState::Backlog),
+            )
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+        let voyage = board.require_voyage("01-planned").unwrap();
+
+        let problems = evaluate_voyage_transition(&board, voyage, VoyageTransition::Start, true);
+        assert!(
+            problems.is_empty(),
+            "start should allow done siblings: {problems:?}"
+        );
     }
 
     #[test]

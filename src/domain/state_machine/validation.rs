@@ -284,15 +284,19 @@ pub fn validate_voyage_story_coherence(
         VoyageState::Planned => {
             // Planned voyages shouldn't have active stories
             let progressed_count = story_states.iter().filter(|s| s.is_active()).count();
-
-            // Also count Done stories as "active" for this check (they advanced beyond planned)
-            let done_count = story_states.iter().filter(|s| s.is_terminal()).count();
-            let total_active = progressed_count + done_count;
-
-            if total_active > 0 {
+            if progressed_count > 0 {
                 violations.push(VoyageStoryViolation::ActiveStoryInPlannedVoyage {
                     voyage_id: voyage_id.to_string(),
-                    progressed_count: total_active,
+                    progressed_count,
+                });
+            }
+
+            let all_done = story_states.iter().all(|s| s.is_terminal());
+            if all_done {
+                violations.push(VoyageStoryViolation::AllStoriesDoneButVoyageNotDone {
+                    voyage_id: voyage_id.to_string(),
+                    story_count: story_states.len(),
+                    voyage_state,
                 });
             }
         }
@@ -374,14 +378,22 @@ mod tests {
     }
 
     #[test]
-    fn planned_voyage_with_done_stories_warns() {
+    fn planned_voyage_with_done_and_backlog_stories_is_ok() {
         let stories = vec![StoryState::Backlog, StoryState::Done];
+        let violations = validate_voyage_story_coherence("v1", VoyageState::Planned, &stories);
+
+        assert!(violations.is_empty());
+    }
+
+    #[test]
+    fn planned_voyage_with_all_done_stories_warns() {
+        let stories = vec![StoryState::Done, StoryState::Done];
         let violations = validate_voyage_story_coherence("v1", VoyageState::Planned, &stories);
 
         assert_eq!(violations.len(), 1);
         assert!(matches!(
             &violations[0],
-            VoyageStoryViolation::ActiveStoryInPlannedVoyage { .. }
+            VoyageStoryViolation::AllStoriesDoneButVoyageNotDone { .. }
         ));
     }
 

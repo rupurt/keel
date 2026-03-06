@@ -97,7 +97,17 @@ pub fn check_evidence_chains(board: &Board) -> Vec<Problem> {
                     TransitionIntent::Voyage(VoyageTransition::Complete),
                     EnforcementPolicy::REPORTING,
                 );
-                enforcement.gate_problems
+                enforcement
+                    .gate_problems
+                    .into_iter()
+                    .filter(|problem| {
+                        !problem.message.ends_with("has start but missing end")
+                            && !problem.message.ends_with("has no evidence chain")
+                            && !problem
+                                .message
+                                .contains("requirements have evidence chains")
+                    })
+                    .collect()
             }
             VoyageState::Done => evaluate_voyage_completion(
                 board,
@@ -179,7 +189,7 @@ mod tests {
     }
 
     #[test]
-    fn check_evidence_chains_matches_reporting_enforcement_for_in_progress_voyage() {
+    fn check_evidence_chains_suppresses_partial_chain_warnings_for_in_progress_voyage() {
         let srs = r#"# Test SRS
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
@@ -207,36 +217,48 @@ mod tests {
             .build();
 
         let board = load_board(temp.path()).unwrap();
-        let voyage = board.require_voyage("01-in-progress").unwrap();
-
-        let enforcement = enforce_transition(
-            &board,
-            TransitionEntity::Voyage(voyage),
-            TransitionIntent::Voyage(VoyageTransition::Complete),
-            EnforcementPolicy::REPORTING,
-        );
+        let doctor_problems = check_evidence_chains(&board);
         assert!(
-            enforcement.blocking_problems.is_empty(),
-            "reporting policy should keep findings non-blocking"
+            doctor_problems.is_empty(),
+            "in-progress voyages should not warn on expected partial chains: {doctor_problems:?}"
         );
+    }
 
+    #[test]
+    fn check_evidence_chains_keeps_invalid_end_without_start_for_in_progress_voyage() {
+        let srs = r#"# Test SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Verification |
+|----|-------------|--------------|
+| SRS-01 | Requirement 1 | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#;
+
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("test-epic"))
+            .voyage(
+                TestVoyage::new("01-in-progress", "test-epic")
+                    .status("in-progress")
+                    .srs_content(srs),
+            )
+            .story(
+                TestStory::new("S1")
+                    .scope("test-epic/01-in-progress")
+                    .stage(StoryState::InProgress)
+                    .body(
+                        "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Invalid chain <!-- verify: manual, SRS-01:end -->",
+                    ),
+            )
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
         let doctor_problems = check_evidence_chains(&board);
         assert!(
             doctor_problems
                 .iter()
-                .any(|problem| problem.severity == Severity::Warning),
-            "doctor should surface reporting-mode warnings"
+                .any(|problem| problem.message.contains("has end but missing start")),
+            "doctor should keep malformed chain warnings mid-flight"
         );
-
-        for gate_problem in enforcement.gate_problems {
-            let expected = normalize_evidence_summary_message(&gate_problem.message)
-                .unwrap_or_else(|| gate_problem.message.clone());
-            assert!(
-                doctor_problems
-                    .iter()
-                    .any(|problem| problem.message == expected),
-                "doctor finding missing expected gate message: {expected}"
-            );
-        }
     }
 }

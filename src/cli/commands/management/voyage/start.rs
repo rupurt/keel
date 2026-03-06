@@ -38,9 +38,9 @@ pub fn run_with_options(
 
 /// Check that all stories in the voyage are in valid states for starting.
 ///
-/// Voyage start requires all stories to be in Backlog or Icebox.
-/// Stories that are InProgress, NeedsHumanVerification, or Done indicate
-/// the voyage should already have been started.
+/// Voyage start allows stories that are still queued (`backlog`, `icebox`) and
+/// stories already completed before the voyage was formally started (`done`).
+/// Stories that are actively underway still block the transition.
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -311,7 +311,7 @@ mod tests {
     }
 
     #[test]
-    fn start_voyage_fails_with_done_story() {
+    fn start_voyage_succeeds_with_done_story() {
         use crate::domain::model::StoryState;
         use crate::test_helpers::TestStory;
 
@@ -327,12 +327,10 @@ mod tests {
 
         let result = run_with_dir(temp.path(), "01-test");
 
-        assert!(result.is_err(), "Should fail with done story");
-        let err = result.unwrap_err().to_string();
         assert!(
-            err.contains("done"),
-            "Error should mention done state: {}",
-            err
+            result.is_ok(),
+            "Should succeed with done story already completed before voyage start: {:?}",
+            result
         );
     }
 
@@ -395,15 +393,15 @@ mod tests {
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
 
-        // Should list the problematic stories
+        // Should list only the problematic active story
         assert!(
             err.contains("STORY02"),
             "Error should list STORY02: {}",
             err
         );
         assert!(
-            err.contains("STORY03"),
-            "Error should list STORY03: {}",
+            !err.contains("STORY03"),
+            "Error should not list STORY03 because done stories are allowed: {}",
             err
         );
         // Should not list the valid story

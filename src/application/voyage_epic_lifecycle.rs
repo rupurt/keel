@@ -304,4 +304,56 @@ mod tests {
             "forced start should bypass requirements coverage enforcement: {result:?}"
         );
     }
+
+    #[test]
+    fn start_voyage_allows_done_and_backlog_stories() {
+        let srs = r#"# Test SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-01 | First requirement | FR-01 | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#;
+
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("test-epic"))
+            .voyage(
+                TestVoyage::new("01-planned", "test-epic")
+                    .status("planned")
+                    .srs_content(srs),
+            )
+            .story(
+                TestStory::new("DONE01")
+                    .scope("test-epic/01-planned")
+                    .stage(crate::domain::model::StoryState::Done),
+            )
+            .story(
+                TestStory::new("BACKLOG01")
+                    .scope("test-epic/01-planned")
+                    .stage(crate::domain::model::StoryState::Backlog)
+                    .body("## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] First criteria <!-- verify: manual -->"),
+            )
+            .build();
+
+        write_prd(
+            &temp,
+            "test-epic",
+            r#"# PRD
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | First requirement | must | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        );
+
+        let result =
+            VoyageEpicLifecycleService::start_voyage(temp.path(), "01-planned", false, None);
+        assert!(
+            result.is_ok(),
+            "planned voyage with done siblings should start: {result:?}"
+        );
+    }
 }

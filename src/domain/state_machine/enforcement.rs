@@ -399,9 +399,9 @@ mod tests {
             .epic(TestEpic::new("test-epic"))
             .voyage(TestVoyage::new("01-planned", "test-epic").status("planned"))
             .story(
-                TestStory::new("DONE-STORY")
+                TestStory::new("ACTIVE-STORY")
                     .scope("test-epic/01-planned")
-                    .stage(StoryState::Done),
+                    .stage(StoryState::InProgress),
             )
             .build();
 
