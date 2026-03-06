@@ -49,7 +49,8 @@ use std::fs;
 
 static REQ_TABLE_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^\|\s*(SRS-\d+)\s*\|").unwrap());
-static AC_REQ_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\[(SRS-\d+)/AC-\d+\]").unwrap());
+static AC_REQ_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\[(SRS-[A-Z0-9-]+)/AC-\d+\]").unwrap());
 static REQ_REF_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\bSRS-[A-Z0-9-]+\b").unwrap());
 static SRS_REQUIREMENT_ID_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^SRS(?:-NFR)?-\d+$").unwrap());

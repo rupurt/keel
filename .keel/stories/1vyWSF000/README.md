@@ -17,4 +17,5 @@ Define the machine-readable artifact bundle that semantic judges will consume so
 
 ## Acceptance Criteria
 
-- [ ] [SRS-01/AC-01] [SRS-NFR-01/AC-01] The artifact bundle schema captures story metadata, acceptance-criterion text, and references to tape-driven evidence artifacts needed for judging, and it serializes deterministically for equivalent inputs. <!-- verify: cargo test -p keel artifact_judge_bundle_schema_captures_story_context, SRS-01:start:end, SRS-NFR-01:start:end -->
+- [ ] [SRS-01/AC-01] The artifact bundle schema captures story metadata, acceptance-criterion text, and references to tape-driven evidence artifacts needed for judging. <!-- verify: cargo test -p keel artifact_judge_bundle_schema_captures_story_context, SRS-01:start:end -->
+- [ ] [SRS-NFR-01/AC-01] The artifact bundle schema serializes deterministically for equivalent inputs. <!-- verify: cargo test -p keel artifact_judge_bundle_schema_captures_story_context, SRS-NFR-01:start:end -->

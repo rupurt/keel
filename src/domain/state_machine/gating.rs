@@ -245,7 +245,7 @@ fn evaluate_story_submit(_board: &Board, story: &Story) -> Vec<Problem> {
         });
     }
 
-    // 2. Check for verification annotations & SRS traceability
+    // 2. Check for verification annotations
     for criterion in ac_report.checked.iter().chain(ac_report.unchecked.iter()) {
         let has_verify = criterion.contains("verify:") && criterion.contains("<!--");
         if !has_verify {
@@ -260,19 +260,19 @@ fn evaluate_story_submit(_board: &Board, story: &Story) -> Vec<Problem> {
             });
             break;
         }
+    }
 
-        if !crate::cli::style::AC_REQ_RE.is_match(criterion) {
-            problems.push(Problem {
-                severity: Severity::Error,
-                path: story.path.clone(),
-                scope: story.scope().map(String::from),
-                message: "missing SRS refs".to_string(),
-                fix: None,
-                category: None,
-                check_id: CheckId::Unknown,
-            });
-            break;
-        }
+    // Keep submit aligned with doctor's canonical traceability gate.
+    if !crate::infrastructure::validation::missing_srs_references(&ac_report).is_empty() {
+        problems.push(Problem {
+            severity: Severity::Error,
+            path: story.path.clone(),
+            scope: story.scope().map(String::from),
+            message: "missing SRS refs".to_string(),
+            fix: None,
+            category: None,
+            check_id: CheckId::Unknown,
+        });
     }
 
     // 3. Check for evidence chain phase markers
@@ -1484,6 +1484,29 @@ mod tests {
         assert!(
             !has_message(&problems, "REFLECT has invalid knowledge unit"),
             "empty knowledge section should not be treated as invalid"
+        );
+    }
+
+    #[test]
+    fn evaluate_story_submit_accepts_standalone_nfr_traceability() {
+        let temp = TestBoardBuilder::new()
+            .story(TestStory::new("S-SUBMIT-NFR").title("Story 1").body(
+                "## Acceptance Criteria\n\n- [x] [SRS-NFR-01/AC-01] deterministic output <!-- verify: cargo test, SRS-NFR-01:start:end -->",
+            ))
+            .build();
+        fs::create_dir_all(temp.path().join("stories/S-SUBMIT-NFR/EVIDENCE")).unwrap();
+        fs::write(
+            temp.path().join("stories/S-SUBMIT-NFR/REFLECT.md"),
+            "# Reflection\n\n## Knowledge\n\n## Observations\n\nNo reusable insight captured.\n",
+        )
+        .unwrap();
+        let board = load_board(temp.path()).unwrap();
+        let story = board.require_story("S-SUBMIT-NFR").unwrap();
+
+        let problems = evaluate_story_transition(&board, story, StoryTransition::Submit, true);
+        assert!(
+            !has_message(&problems, "missing SRS refs"),
+            "standalone NFR acceptance criteria should satisfy submit traceability gates"
         );
     }
 

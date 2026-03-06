@@ -16,6 +16,7 @@ coverage
 
 # Keel
 keel.toml
+!testdata/dogfood/workspace/keel.toml
 
 .gemini/
 gha-creds-*.json

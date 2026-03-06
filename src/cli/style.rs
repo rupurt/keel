@@ -18,7 +18,7 @@ use crate::domain::state_machine::voyage::VoyageState;
 
 /// Regex for SRS requirement references like [SRS-01/AC-01]
 pub static AC_REQ_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\[(SRS-\d+)/AC-\d+\]").unwrap());
+    LazyLock::new(|| Regex::new(r"\[(SRS-[A-Z0-9-]+)/AC-\d+\]").unwrap());
 static STRONG_EMPHASIS_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\*\*([^*]+)\*\*").expect("valid strong emphasis regex"));
 static EMPHASIS_RE: LazyLock<Regex> =

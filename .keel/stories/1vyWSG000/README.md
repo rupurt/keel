@@ -17,4 +17,5 @@ Replace the current diff-only judge stub with an external contract that accepts 
 
 ## Acceptance Criteria
 
-- [ ] [SRS-03/AC-01] [SRS-NFR-02/AC-01] `llm-judge` is invoked through a provider-agnostic external contract that receives an artifact-bundle path instead of relying on `git diff` text alone, and it introduces no vendor-specific SDK or transport dependency into keel. <!-- verify: cargo test -p keel llm_judge_uses_artifact_bundle_contract, SRS-03:start:end, SRS-NFR-02:start:end -->
+- [ ] [SRS-03/AC-01] `llm-judge` is invoked through a provider-agnostic external contract that receives an artifact-bundle path instead of relying on `git diff` text alone. <!-- verify: cargo test -p keel llm_judge_uses_artifact_bundle_contract, SRS-03:start:end -->
+- [ ] [SRS-NFR-02/AC-01] The judge integration introduces no vendor-specific SDK or transport dependency into keel. <!-- verify: cargo test -p keel llm_judge_uses_artifact_bundle_contract, SRS-NFR-02:start:end -->

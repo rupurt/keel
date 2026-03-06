@@ -17,4 +17,5 @@ Author the bearing-phase VHS scenarios so keel can dogfood the research workflow
 
 ## Acceptance Criteria
 
-- [ ] [SRS-04/AC-01] [SRS-NFR-01/AC-02] A tape-driven bearing workflow covers `bearing new`, `bearing survey`, `bearing assess`, and `bearing lay` on the secondary workspace and remains repeatable on the same fixture state. <!-- verify: just e2e-vhs --scenario bearing-flow, SRS-04:start:end, SRS-NFR-01:end -->
+- [ ] [SRS-04/AC-01] A tape-driven bearing workflow covers `bearing new`, `bearing survey`, `bearing assess`, and `bearing lay` on the secondary workspace. <!-- verify: just e2e-vhs --scenario bearing-flow, SRS-04:start:end -->
+- [ ] [SRS-NFR-01/AC-02] The bearing workflow remains repeatable on the same fixture state. <!-- verify: just e2e-vhs --scenario bearing-flow, SRS-NFR-01:end -->

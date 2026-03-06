@@ -17,4 +17,5 @@ Build the canonical local entrypoint that resets the secondary workspace, runs n
 
 ## Acceptance Criteria
 
-- [ ] [SRS-02/AC-01] [SRS-NFR-03/AC-01] A local opt-in runner executes named dogfood scenarios from the secondary workspace, reports actionable failure context, and remains absent from default CI and pre-commit workflows. <!-- verify: cargo test -p keel dogfood_runner_executes_named_scenarios, SRS-02:start:end, SRS-NFR-03:start:end -->
+- [ ] [SRS-02/AC-01] A local opt-in runner executes named dogfood scenarios from the secondary workspace and reports actionable failure context. <!-- verify: cargo test -p keel dogfood_runner_executes_named_scenarios, SRS-02:start:end -->
+- [ ] [SRS-NFR-03/AC-01] The runner remains absent from default CI and pre-commit workflows. <!-- verify: cargo test -p keel dogfood_runner_executes_named_scenarios, SRS-NFR-03:start:end -->

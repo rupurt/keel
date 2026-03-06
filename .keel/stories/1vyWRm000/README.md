@@ -17,4 +17,5 @@ Persist semantic judge outputs as normal story evidence so `verify run` and `sto
 
 ## Acceptance Criteria
 
-- [ ] [SRS-04/AC-01] [SRS-NFR-03/AC-01] `keel verify run` and `keel story record --judge` persist judge transcripts/results as evidence, report failures against the evaluated acceptance criterion, and preserve failed artifact bundles and transcript/debug outputs for manual inspection. <!-- verify: cargo test -p keel judge_results_persist_as_story_evidence, SRS-04:start:end, SRS-NFR-03:start:end -->
+- [ ] [SRS-04/AC-01] `keel verify run` and `keel story record --judge` persist judge transcripts/results as evidence and report failures against the evaluated acceptance criterion. <!-- verify: cargo test -p keel judge_results_persist_as_story_evidence, SRS-04:start:end -->
+- [ ] [SRS-NFR-03/AC-01] Failed judge runs preserve the artifact bundle and transcript/debug outputs for manual inspection. <!-- verify: cargo test -p keel judge_results_persist_as_story_evidence, SRS-NFR-03:start:end -->

@@ -17,5 +17,6 @@ Author the epic-phase VHS scenarios so keel can dogfood epic creation, voyage/st
 
 ## Acceptance Criteria
 
-- [ ] [SRS-03/AC-01] [SRS-NFR-01/AC-01] A tape-driven epic workflow covers epic creation, voyage/story decomposition, and the core planning flow on the secondary workspace, and it remains repeatable on the same fixture state. <!-- verify: just e2e-vhs --scenario epic-flow, SRS-03:start, SRS-NFR-01:start -->
+- [ ] [SRS-03/AC-01] A tape-driven epic workflow covers epic creation, voyage/story decomposition, and the core planning flow on the secondary workspace. <!-- verify: just e2e-vhs --scenario epic-flow, SRS-03:start -->
 - [ ] [SRS-03/AC-02] The epic workflow surfaces `keel next` and `keel flow` at the steering points needed to guide implementation. <!-- verify: just e2e-vhs --scenario epic-flow, SRS-03:end -->
+- [ ] [SRS-NFR-01/AC-01] The epic workflow remains repeatable on the same fixture state. <!-- verify: just e2e-vhs --scenario epic-flow, SRS-NFR-01:start -->

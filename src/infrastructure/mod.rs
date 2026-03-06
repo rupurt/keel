@@ -1,7 +1,9 @@
 //! Infrastructure services and adapters.
 
 pub mod artifact_frontmatter;
+pub mod board_init;
 pub mod config;
+pub mod dogfood_workspace;
 pub mod duplicate_ids;
 pub mod frontmatter_mutation;
 pub mod fs_adapters;

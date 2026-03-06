@@ -7,7 +7,8 @@ use regex::Regex;
 use std::sync::LazyLock;
 pub use types::{CheckId, Fix, GapCategory, Problem, Severity};
 
-static AC_REQ_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\[(SRS-\d+)/AC-\d+\]").unwrap());
+static AC_REQ_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\[(SRS-[A-Z0-9-]+)/AC-\d+\]").unwrap());
 
 /// Result of acceptance criteria validation
 #[derive(Debug, Default)]
@@ -286,5 +287,13 @@ Just some content without acceptance criteria.
         let criteria = parse_acceptance_criteria(content);
         let missing = missing_srs_references(&criteria);
         assert_eq!(missing, vec!["Criterion without ref".to_string()]);
+    }
+
+    #[test]
+    fn missing_srs_references_accepts_nfr_refs() {
+        let content = "## Acceptance Criteria\n\n- [ ] [SRS-NFR-01/AC-01] Deterministic output";
+        let criteria = parse_acceptance_criteria(content);
+        let missing = missing_srs_references(&criteria);
+        assert!(missing.is_empty());
     }
 }
