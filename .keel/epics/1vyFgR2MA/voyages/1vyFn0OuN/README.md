@@ -2,11 +2,12 @@
 id: 1vyFn0OuN
 index: 4
 title: Scope Lineage and Drift Detection
-status: in-progress
+status: done
 epic: 1vyFgR2MA
 created_at: 2026-03-05T12:59:22
 updated_at: 2026-03-05T14:10:02
 started_at: 2026-03-05T17:00:15
+completed_at: 2026-03-05T18:31:09
 ---
 
 # Scope Lineage and Drift Detection

@@ -36,7 +36,7 @@ pub fn run(id: &str) -> Result<()> {
 pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     let board = load_board(board_dir)?;
     let epic = board.require_epic(id)?;
-    let report = build_epic_show_report(board_dir, &board, epic)?;
+    let report = build_epic_show_report(&board, epic)?;
     let width = crate::cli::presentation::terminal::get_terminal_width();
 
     let mut metadata = ShowKeyValues::new()
@@ -78,12 +78,8 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     Ok(())
 }
 
-fn build_epic_show_report(
-    board_dir: &Path,
-    board: &Board,
-    epic: &Epic,
-) -> Result<EpicShowProjection> {
-    planning_show::build_epic_show_projection(board_dir, board, epic)
+fn build_epic_show_report(board: &Board, epic: &Epic) -> Result<EpicShowProjection> {
+    planning_show::build_epic_show_projection(board, epic)
 }
 
 fn render_planning_summary(report: &EpicShowProjection) -> ShowSection {
@@ -116,11 +112,6 @@ fn render_planning_summary(report: &EpicShowProjection) -> ShowSection {
         "Scope Drift:",
         report.scope_drift.iter().cloned(),
         Some(format!("{}", SCOPE_DRIFT_PLACEHOLDER.dimmed())),
-    );
-    section.push_labeled_bullets(
-        "Key Requirements:",
-        report.doc.key_requirements.iter().cloned(),
-        Some(format!("{}", REQUIREMENTS_PLACEHOLDER.dimmed())),
     );
     section.push_labeled_bullets(
         "Verification Strategy:",
@@ -434,7 +425,7 @@ mod tests {
 
         let board = load_board(temp.path()).unwrap();
         let epic = board.require_epic("epic1").unwrap();
-        let report = build_epic_show_report(temp.path(), &board, epic).unwrap();
+        let report = build_epic_show_report(&board, epic).unwrap();
         let expected = NaiveDate::from_ymd_opt(2026, 3, 5)
             .unwrap()
             .and_hms_opt(12, 34, 56)
@@ -462,7 +453,7 @@ mod tests {
     }
 
     #[test]
-    fn epic_show_planning_summary_renders_problem_goals_and_requirements() {
+    fn epic_show_planning_summary_renders_problem_and_goals() {
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("epic1"))
             .voyage(TestVoyage::new("v1", "epic1"))
@@ -497,7 +488,7 @@ Teams cannot quickly understand planning intent and verification readiness.
 
         let board = load_board(temp.path()).unwrap();
         let epic = board.require_epic("epic1").unwrap();
-        let report = build_epic_show_report(temp.path(), &board, epic).unwrap();
+        let report = build_epic_show_report(&board, epic).unwrap();
 
         assert_eq!(
             report.doc.problem_statement.as_deref(),
@@ -509,13 +500,6 @@ Teams cannot quickly understand planning intent and verification readiness.
                 .goals
                 .iter()
                 .any(|goal| goal.contains("GOAL-01: Improve planning readability"))
-        );
-        assert!(
-            report
-                .doc
-                .key_requirements
-                .iter()
-                .any(|req| req.contains("FR-10: Render actionable planning summaries."))
         );
     }
 
@@ -588,7 +572,7 @@ More details.
 
         let board = load_board(temp.path()).unwrap();
         let epic = board.require_epic("epic1").unwrap();
-        let report = build_epic_show_report(temp.path(), &board, epic).unwrap();
+        let report = build_epic_show_report(&board, epic).unwrap();
 
         assert_eq!(report.eta.remaining_stories, 1);
         assert_eq!(report.eta.eta_weeks, None);
@@ -614,7 +598,7 @@ More details.
 
         let board = load_board(temp.path()).unwrap();
         let epic = board.require_epic("epic1").unwrap();
-        let report = build_epic_show_report(temp.path(), &board, epic).unwrap();
+        let report = build_epic_show_report(&board, epic).unwrap();
 
         assert_eq!(report.verification.automated_criteria, 1);
         assert_eq!(report.verification.manual_criteria, 1);
@@ -668,11 +652,10 @@ More details.
 
         let board = load_board(temp.path()).unwrap();
         let epic = board.require_epic("epic1").unwrap();
-        let report = build_epic_show_report(temp.path(), &board, epic).unwrap();
+        let report = build_epic_show_report(&board, epic).unwrap();
 
         assert!(report.doc.problem_statement.is_none());
         assert!(report.doc.goals.is_empty());
-        assert!(report.doc.key_requirements.is_empty());
         assert!(report.verification.linked_artifacts.is_empty());
 
         // Render placeholder paths explicitly to guarantee command output behavior.
@@ -716,6 +699,49 @@ More details.
         assert!(rendered.contains("  Problem:\n    Inline "));
         assert!(rendered.contains("problem"));
         assert!(!rendered.contains("  Problem: Inline "));
+    }
+
+    #[test]
+    fn render_planning_summary_omits_redundant_key_requirements_block() {
+        let report = EpicShowProjection {
+            doc: planning_show::PlanningDocSummary {
+                problem_statement: Some("Make epic show easier to scan.".to_string()),
+                goals: vec!["GOAL-01: Reduce duplication (review load -> lower)".to_string()],
+                verification_strategy: vec!["FR-01: cargo test".to_string()],
+            },
+            goal_coverage: Vec::new(),
+            scope_coverage: Vec::new(),
+            scope_drift: Vec::new(),
+            requirement_coverage: vec![planning_show::EpicRequirementCoverageRow {
+                id: "FR-01".to_string(),
+                description: "Keep requirement details in the dedicated coverage section."
+                    .to_string(),
+                kind: planning_show::RequirementKind::Functional,
+                linked_children: Vec::new(),
+            }],
+            total_voyages: 0,
+            done_voyages: 0,
+            total_stories: 0,
+            done_stories: 0,
+            started_at: None,
+            completed_at: None,
+            updated_at: None,
+            eta: planning_show::EtaSummary {
+                throughput_stories_per_week: 0.0,
+                remaining_stories: 0,
+                eta_weeks: None,
+            },
+            verification: planning_show::VerificationRollup::default(),
+        };
+
+        let section = render_planning_summary(&report);
+        let mut document = ShowDocument::new();
+        document.push_sections_spaced([section, render_requirement_coverage(&report)]);
+        let rendered = document.render();
+
+        assert!(!rendered.contains("Key Requirements:"));
+        assert!(rendered.contains("Requirement Coverage"));
+        assert!(rendered.contains("FR-01"));
     }
 
     #[test]
@@ -811,7 +837,7 @@ Teams cannot see whether goals are actually covered by PRD requirements.
 
         let board = load_board(temp.path()).unwrap();
         let epic = board.require_epic("epic1").unwrap();
-        let report = build_epic_show_report(temp.path(), &board, epic).unwrap();
+        let report = build_epic_show_report(&board, epic).unwrap();
 
         let section = render_planning_summary(&report);
         let mut document = ShowDocument::new();

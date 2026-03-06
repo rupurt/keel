@@ -19,7 +19,6 @@ use crate::infrastructure::verification::parser::{
 pub struct PlanningDocSummary {
     pub problem_statement: Option<String>,
     pub goals: Vec<String>,
-    pub key_requirements: Vec<String>,
     pub verification_strategy: Vec<String>,
 }
 
@@ -255,11 +254,7 @@ impl RequirementCompletion {
     }
 }
 
-pub fn build_epic_show_projection(
-    _board_dir: &Path,
-    board: &Board,
-    epic: &Epic,
-) -> Result<EpicShowProjection> {
+pub fn build_epic_show_projection(board: &Board, epic: &Epic) -> Result<EpicShowProjection> {
     let prd_path = epic.path.parent().unwrap().join("PRD.md");
     let prd_content = fs::read_to_string(&prd_path).unwrap_or_default();
     let doc = extract_planning_doc_summary(&prd_content);
@@ -768,11 +763,6 @@ pub fn extract_planning_doc_summary(content: &str) -> PlanningDocSummary {
     ));
     requirements.sort_by(|a, b| a.id.cmp(&b.id));
 
-    let key_requirements = requirements
-        .iter()
-        .map(|entry| format!("{}: {}", entry.id, entry.description))
-        .collect();
-
     let mut verification_strategy = extract_section(content, "## Verification Strategy")
         .map(|section| parse_verification_strategy(&section))
         .unwrap_or_default();
@@ -788,7 +778,6 @@ pub fn extract_planning_doc_summary(content: &str) -> PlanningDocSummary {
     PlanningDocSummary {
         problem_statement,
         goals,
-        key_requirements,
         verification_strategy,
     }
 }
@@ -1506,7 +1495,7 @@ Operators cannot quickly evaluate planning state.
         let voyage = board.require_voyage("v1").unwrap();
         let story = board.require_story("S1").unwrap();
 
-        let epic_projection = build_epic_show_projection(temp.path(), &board, epic).unwrap();
+        let epic_projection = build_epic_show_projection(&board, epic).unwrap();
         let voyage_projection = build_voyage_show_projection(&board, voyage).unwrap();
         let story_projection = build_story_show_projection(story).unwrap();
 
@@ -1516,10 +1505,9 @@ Operators cannot quickly evaluate planning state.
         );
         assert!(
             epic_projection
-                .doc
-                .key_requirements
+                .requirement_coverage
                 .iter()
-                .any(|row| row.contains("FR-01"))
+                .any(|row| row.id == "FR-01" && row.description == "Surface planning summaries.")
         );
 
         assert_eq!(
@@ -1576,13 +1564,6 @@ Planners cannot quickly inspect requirement readiness.
         assert_eq!(summary.goals.len(), 2);
         assert!(summary.goals[0].contains("GOAL-01"));
         assert!(summary.goals[1].contains("GOAL-02"));
-        assert_eq!(
-            summary.key_requirements,
-            vec![
-                "FR-01: Render planning summary.".to_string(),
-                "SRS-NFR-01: Deterministic ordering.".to_string(),
-            ]
-        );
         assert!(
             summary
                 .verification_strategy
@@ -1627,10 +1608,6 @@ Operators need reliable planning summaries.
 
         let summary = extract_planning_doc_summary(doc);
 
-        assert_eq!(
-            summary.key_requirements,
-            vec!["FR-01: Render canonical requirement summaries.".to_string()]
-        );
         assert!(
             summary
                 .verification_strategy
@@ -1790,18 +1767,10 @@ Operators need reliable planning summaries.
         let loaded_a = load_board(board_a.path()).unwrap();
         let loaded_b = load_board(board_b.path()).unwrap();
 
-        let epic_a = build_epic_show_projection(
-            board_a.path(),
-            &loaded_a,
-            loaded_a.require_epic("e1").unwrap(),
-        )
-        .unwrap();
-        let epic_b = build_epic_show_projection(
-            board_b.path(),
-            &loaded_b,
-            loaded_b.require_epic("e1").unwrap(),
-        )
-        .unwrap();
+        let epic_a =
+            build_epic_show_projection(&loaded_a, loaded_a.require_epic("e1").unwrap()).unwrap();
+        let epic_b =
+            build_epic_show_projection(&loaded_b, loaded_b.require_epic("e1").unwrap()).unwrap();
 
         let voyage_a =
             build_voyage_show_projection(&loaded_a, loaded_a.require_voyage("v1").unwrap())
@@ -1853,7 +1822,6 @@ Operators need reliable planning summaries.
         // Stable section ordering/contents from authored planning docs.
         assert_eq!(epic_a.doc.problem_statement, epic_b.doc.problem_statement);
         assert_eq!(epic_a.doc.goals, epic_b.doc.goals);
-        assert_eq!(epic_a.doc.key_requirements, epic_b.doc.key_requirements);
         assert_eq!(epic_a.goal_coverage, epic_b.goal_coverage);
     }
 
@@ -1881,9 +1849,7 @@ Operators need reliable planning summaries.
         .unwrap();
 
         let board = load_board(temp.path()).unwrap();
-        let epic =
-            build_epic_show_projection(temp.path(), &board, board.require_epic("e1").unwrap())
-                .unwrap();
+        let epic = build_epic_show_projection(&board, board.require_epic("e1").unwrap()).unwrap();
 
         let goal_ids: Vec<_> = epic
             .goal_coverage
@@ -1949,18 +1915,10 @@ Operators need reliable planning summaries.
 
         let loaded_a = load_board(board_a.path()).unwrap();
         let loaded_b = load_board(board_b.path()).unwrap();
-        let epic_a = build_epic_show_projection(
-            board_a.path(),
-            &loaded_a,
-            loaded_a.require_epic("e1").unwrap(),
-        )
-        .unwrap();
-        let epic_b = build_epic_show_projection(
-            board_b.path(),
-            &loaded_b,
-            loaded_b.require_epic("e1").unwrap(),
-        )
-        .unwrap();
+        let epic_a =
+            build_epic_show_projection(&loaded_a, loaded_a.require_epic("e1").unwrap()).unwrap();
+        let epic_b =
+            build_epic_show_projection(&loaded_b, loaded_b.require_epic("e1").unwrap()).unwrap();
 
         assert_eq!(epic_a.goal_coverage, epic_b.goal_coverage);
     }
@@ -2018,9 +1976,7 @@ Operators need reliable planning summaries.
         .unwrap();
 
         let board = load_board(temp.path()).unwrap();
-        let epic =
-            build_epic_show_projection(temp.path(), &board, board.require_epic("e1").unwrap())
-                .unwrap();
+        let epic = build_epic_show_projection(&board, board.require_epic("e1").unwrap()).unwrap();
 
         let coverage_ids: Vec<_> = epic
             .requirement_coverage
@@ -2124,18 +2080,10 @@ Operators need reliable planning summaries.
 
         let loaded_a = load_board(board_a.path()).unwrap();
         let loaded_b = load_board(board_b.path()).unwrap();
-        let epic_a = build_epic_show_projection(
-            board_a.path(),
-            &loaded_a,
-            loaded_a.require_epic("e1").unwrap(),
-        )
-        .unwrap();
-        let epic_b = build_epic_show_projection(
-            board_b.path(),
-            &loaded_b,
-            loaded_b.require_epic("e1").unwrap(),
-        )
-        .unwrap();
+        let epic_a =
+            build_epic_show_projection(&loaded_a, loaded_a.require_epic("e1").unwrap()).unwrap();
+        let epic_b =
+            build_epic_show_projection(&loaded_b, loaded_b.require_epic("e1").unwrap()).unwrap();
 
         assert_eq!(epic_a.requirement_coverage, epic_b.requirement_coverage);
         let coverage_ids: Vec<_> = epic_a
@@ -2188,9 +2136,7 @@ Out of scope:
         .unwrap();
 
         let board = load_board(temp.path()).unwrap();
-        let epic =
-            build_epic_show_projection(temp.path(), &board, board.require_epic("e1").unwrap())
-                .unwrap();
+        let epic = build_epic_show_projection(&board, board.require_epic("e1").unwrap()).unwrap();
         let voyage =
             build_voyage_show_projection(&board, board.require_voyage("v1").unwrap()).unwrap();
 
@@ -2281,9 +2227,7 @@ Out of scope:
         .unwrap();
 
         let board = load_board(temp.path()).unwrap();
-        let epic =
-            build_epic_show_projection(temp.path(), &board, board.require_epic("e1").unwrap())
-                .unwrap();
+        let epic = build_epic_show_projection(&board, board.require_epic("e1").unwrap()).unwrap();
         let voyage =
             build_voyage_show_projection(&board, board.require_voyage("v1").unwrap()).unwrap();
 
@@ -2348,9 +2292,7 @@ Out of scope:
         .unwrap();
 
         let board = load_board(temp.path()).unwrap();
-        let epic =
-            build_epic_show_projection(temp.path(), &board, board.require_epic("e1").unwrap())
-                .unwrap();
+        let epic = build_epic_show_projection(&board, board.require_epic("e1").unwrap()).unwrap();
         let voyage =
             build_voyage_show_projection(&board, board.require_voyage("v1").unwrap()).unwrap();
 
@@ -2393,9 +2335,7 @@ Out of scope:
             .build();
 
         let board = load_board(temp.path()).unwrap();
-        let epic =
-            build_epic_show_projection(temp.path(), &board, board.require_epic("e1").unwrap())
-                .unwrap();
+        let epic = build_epic_show_projection(&board, board.require_epic("e1").unwrap()).unwrap();
         let voyage =
             build_voyage_show_projection(&board, board.require_voyage("v1").unwrap()).unwrap();
         let story = build_story_show_projection(board.require_story("S1").unwrap()).unwrap();
@@ -2527,9 +2467,7 @@ Planning readers need concise summaries without recommendation noise.
         std::fs::write(temp.path().join("stories/S1/EVIDENCE/ac-1.log"), "proof").unwrap();
 
         let board = load_board(temp.path()).unwrap();
-        let epic =
-            build_epic_show_projection(temp.path(), &board, board.require_epic("e1").unwrap())
-                .unwrap();
+        let epic = build_epic_show_projection(&board, board.require_epic("e1").unwrap()).unwrap();
         let voyage =
             build_voyage_show_projection(&board, board.require_voyage("v1").unwrap()).unwrap();
         let story = build_story_show_projection(board.require_story("S1").unwrap()).unwrap();
