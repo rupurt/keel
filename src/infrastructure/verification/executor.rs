@@ -130,61 +130,104 @@ pub fn execute_llm_judge(
     )?;
 
     let project_root = board_dir.parent().unwrap_or(board_dir);
-    let mut child = match Command::new("llm-judge")
+    let execution = match Command::new("llm-judge")
         .arg(&bundle_path)
         .current_dir(project_root)
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
         .spawn()
     {
-        Ok(child) => child,
-        Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
-            return Ok(ExecuteResult {
-                exit_code: 1,
-                stdout: String::new(),
-                stderr: "llm-judge executable not found on PATH. Install or configure a provider-agnostic llm-judge wrapper.".to_string(),
-                error: Some("JudgeUnavailable".to_string()),
-            });
-        }
-        Err(err) => {
-            return Ok(ExecuteResult {
-                exit_code: 1,
-                stdout: String::new(),
-                stderr: format!("Failed to launch llm-judge: {err}"),
-                error: Some("JudgeLaunchFailed".to_string()),
-            });
-        }
-    };
-
-    let (exit_status, stdout, stderr) = match child.wait_timeout(Duration::from_secs(60))? {
-        Some(status) => {
-            let output = child.wait_with_output()?;
-            (
-                status,
-                String::from_utf8_lossy(&output.stdout).to_string(),
-                String::from_utf8_lossy(&output.stderr).to_string(),
-            )
-        }
-        None => {
-            child.kill()?;
-            (
-                std::process::ExitStatus::default(),
-                String::new(),
-                "llm-judge timed out".to_string(),
-            )
-        }
-    };
-
-    Ok(ExecuteResult {
-        exit_code: exit_status.code().unwrap_or(1),
-        stdout,
-        stderr: stderr.clone(),
-        error: if stderr == "llm-judge timed out" {
-            Some("Timeout".to_string())
-        } else {
-            None
+        Ok(mut child) => match child.wait_timeout(Duration::from_secs(60))? {
+            Some(status) => {
+                let output = child.wait_with_output()?;
+                ExecuteResult {
+                    exit_code: status.code().unwrap_or(1),
+                    stdout: String::from_utf8_lossy(&output.stdout).to_string(),
+                    stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+                    error: None,
+                }
+            }
+            None => {
+                child.kill()?;
+                ExecuteResult {
+                    exit_code: 1,
+                    stdout: String::new(),
+                    stderr: "llm-judge timed out".to_string(),
+                    error: Some("Timeout".to_string()),
+                }
+            }
         },
-    })
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => ExecuteResult {
+            exit_code: 1,
+            stdout: String::new(),
+            stderr: "llm-judge executable not found on PATH. Install or configure a provider-agnostic llm-judge wrapper.".to_string(),
+            error: Some("JudgeUnavailable".to_string()),
+        },
+        Err(err) => ExecuteResult {
+            exit_code: 1,
+            stdout: String::new(),
+            stderr: format!("Failed to launch llm-judge: {err}"),
+            error: Some("JudgeLaunchFailed".to_string()),
+        },
+    };
+
+    persist_judge_outputs(
+        &evidence_dir,
+        criterion,
+        &bundle_path,
+        &execution.stdout,
+        &execution.stderr,
+        execution.exit_code,
+    )?;
+
+    Ok(execution)
+}
+
+fn persist_judge_outputs(
+    evidence_dir: &Path,
+    criterion: &str,
+    bundle_path: &Path,
+    stdout: &str,
+    stderr: &str,
+    exit_code: i32,
+) -> Result<()> {
+    let slug = crate::infrastructure::utils::slugify(criterion);
+    let transcript_name = format!("llm-judge-{slug}.txt");
+    let transcript_path = evidence_dir.join(&transcript_name);
+    let bundle_rel = format!(
+        "EVIDENCE/{}",
+        bundle_path.file_name().unwrap().to_string_lossy()
+    );
+
+    let transcript_body = if stdout.trim().is_empty() {
+        format!(
+            "LLM judge produced no stdout transcript.\nCriterion: {criterion}\nBundle: {bundle_rel}\nExit code: {exit_code}\n"
+        )
+    } else {
+        stdout.to_string()
+    };
+    std::fs::write(&transcript_path, transcript_body)?;
+
+    let stderr_name = if stderr.trim().is_empty() {
+        None
+    } else {
+        let name = format!("llm-judge-{slug}.stderr.txt");
+        std::fs::write(evidence_dir.join(&name), stderr)?;
+        Some(format!("EVIDENCE/{name}"))
+    };
+
+    let result_path = evidence_dir.join(format!("llm-judge-{slug}.result.json"));
+    let result_json = serde_json::json!({
+        "criterion": criterion,
+        "passed": exit_code == 0,
+        "exit_code": exit_code,
+        "bundle_path": bundle_rel,
+        "transcript_path": format!("EVIDENCE/{transcript_name}"),
+        "stderr_path": stderr_name,
+    });
+    std::fs::write(result_path, serde_json::to_vec_pretty(&result_json)?)?;
+
+    Ok(())
 }
 
 pub fn verify_story(
@@ -365,8 +408,12 @@ pub fn verify_all(board_dir: &Path) -> Result<Vec<super::reporter::VerificationR
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cli::commands::management::story::record;
+    use crate::domain::model::Manifest;
+    use crate::test_helpers::{TestBoardBuilder, TestStory};
     use std::fs;
     use std::os::unix::fs::PermissionsExt;
+    use std::process::Command as ProcessCommand;
     use tempfile::tempdir;
 
     struct PathGuard(Option<String>);
@@ -394,12 +441,19 @@ mod tests {
         }
     }
 
-    fn install_mock_llm_judge(dir: &Path) -> std::path::PathBuf {
+    fn write_mock_llm_judge(dir: &Path, body: &str) {
         let script_path = dir.join("llm-judge");
+        fs::write(&script_path, body).unwrap();
+        let mut perms = fs::metadata(&script_path).unwrap().permissions();
+        perms.set_mode(0o755);
+        fs::set_permissions(&script_path, perms).unwrap();
+    }
+
+    fn install_contract_asserting_llm_judge(dir: &Path) -> std::path::PathBuf {
         let invocation_log = dir.join("judge-invocation.log");
-        fs::write(
-            &script_path,
-            format!(
+        write_mock_llm_judge(
+            dir,
+            &format!(
                 r#"#!/usr/bin/env bash
 set -euo pipefail
 bundle="$1"
@@ -411,12 +465,65 @@ printf 'PASS: %s\n' "$bundle"
 "#,
                 invocation_log.display()
             ),
-        )
-        .unwrap();
-        let mut perms = fs::metadata(&script_path).unwrap().permissions();
-        perms.set_mode(0o755);
-        fs::set_permissions(&script_path, perms).unwrap();
+        );
         invocation_log
+    }
+
+    fn install_failing_llm_judge(dir: &Path) {
+        write_mock_llm_judge(
+            dir,
+            r#"#!/usr/bin/env bash
+set -euo pipefail
+bundle="$1"
+test -f "$bundle"
+printf 'FAIL: %s\n' "$bundle"
+printf 'judge rejected artifact bundle\n' >&2
+exit 2
+"#,
+        );
+    }
+
+    fn init_git_repo(dir: &Path) {
+        assert!(
+            ProcessCommand::new("git")
+                .args(["init", "-q"])
+                .current_dir(dir)
+                .status()
+                .unwrap()
+                .success()
+        );
+        assert!(
+            ProcessCommand::new("git")
+                .args(["config", "user.email", "test@example.com"])
+                .current_dir(dir)
+                .status()
+                .unwrap()
+                .success()
+        );
+        assert!(
+            ProcessCommand::new("git")
+                .args(["config", "user.name", "Test User"])
+                .current_dir(dir)
+                .status()
+                .unwrap()
+                .success()
+        );
+        assert!(
+            ProcessCommand::new("git")
+                .args(["add", "."])
+                .current_dir(dir)
+                .status()
+                .unwrap()
+                .success()
+        );
+        assert!(
+            ProcessCommand::new("git")
+                .args(["commit", "-qm", "init"])
+                .current_dir(dir)
+                .status()
+                .unwrap()
+                .success()
+        );
     }
 
     #[test]
@@ -441,7 +548,7 @@ printf 'PASS: %s\n' "$bundle"
     #[test]
     fn llm_judge_uses_artifact_bundle_contract() {
         let dir = tempdir().unwrap();
-        let invocation_log = install_mock_llm_judge(dir.path());
+        let invocation_log = install_contract_asserting_llm_judge(dir.path());
         let _path_guard = PathGuard::prepend(dir.path());
         let stories_dir = dir.path().join("stories").join("S1");
         fs::create_dir_all(stories_dir.join("EVIDENCE")).unwrap();
@@ -480,7 +587,7 @@ updated_at: 2026-03-06T00:00:00
     fn verification_executor_materializes_judge_bundle() {
         let dir = tempdir().unwrap();
         let _path_guard = PathGuard::prepend(dir.path());
-        install_mock_llm_judge(dir.path());
+        install_contract_asserting_llm_judge(dir.path());
         let stories_dir = dir.path().join("stories").join("S1");
         fs::create_dir_all(stories_dir.join("EVIDENCE")).unwrap();
         let story_path = stories_dir.join("README.md");
@@ -514,6 +621,103 @@ updated_at: 2026-03-06T00:00:00
         assert_eq!(bundle.story.id, "S1");
         assert_eq!(bundle.criterion.text, "AC 1");
         assert_eq!(bundle.criterion.srs_requirement.as_deref(), Some("SRS-01"));
+    }
+
+    #[test]
+    fn judge_results_persist_as_story_evidence() {
+        let verify_dir = tempdir().unwrap();
+        let invocation_log = install_contract_asserting_llm_judge(verify_dir.path());
+        let _path_guard = PathGuard::prepend(verify_dir.path());
+        let stories_dir = verify_dir.path().join("stories").join("S1");
+        fs::create_dir_all(stories_dir.join("EVIDENCE")).unwrap();
+        let story_path = stories_dir.join("README.md");
+        fs::write(
+            &story_path,
+            r#"---
+id: S1
+title: Judge Story
+type: feat
+status: in-progress
+created_at: 2026-03-06T00:00:00
+updated_at: 2026-03-06T00:00:00
+---
+
+## Acceptance Criteria
+
+- [ ] [SRS-01/AC-01] AC 1 <!-- verify: llm-judge, SRS-01:start:end -->"#,
+        )
+        .unwrap();
+        fs::write(stories_dir.join("EVIDENCE/ac-1.log"), "proof").unwrap();
+        init_git_repo(verify_dir.path());
+
+        let report = verify_story(
+            verify_dir.path(),
+            "S1",
+            &fs::read_to_string(&story_path).unwrap(),
+        )
+        .unwrap();
+        assert!(report.results[0].passed);
+
+        let bundle_path = stories_dir.join("EVIDENCE/judge-bundle-ac-1.json");
+        let transcript_path = stories_dir.join("EVIDENCE/llm-judge-ac-1.txt");
+        let result_path = stories_dir.join("EVIDENCE/llm-judge-ac-1.result.json");
+        assert_eq!(
+            fs::read_to_string(invocation_log).unwrap(),
+            bundle_path.display().to_string()
+        );
+        assert!(transcript_path.exists());
+        assert!(result_path.exists());
+
+        let manifest: Manifest =
+            serde_yaml::from_str(&fs::read_to_string(stories_dir.join("manifest.yaml")).unwrap())
+                .unwrap();
+        assert!(
+            manifest
+                .evidence
+                .contains_key("EVIDENCE/judge-bundle-ac-1.json")
+        );
+        assert!(
+            manifest
+                .evidence
+                .contains_key("EVIDENCE/llm-judge-ac-1.txt")
+        );
+        assert!(
+            manifest
+                .evidence
+                .contains_key("EVIDENCE/llm-judge-ac-1.result.json")
+        );
+
+        drop(_path_guard);
+
+        let record_temp = TestBoardBuilder::new()
+            .story(
+                TestStory::new("S1").body(
+                    "## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] AC 1 <!-- verify: llm-judge, SRS-01:start:end -->",
+                ),
+            )
+            .build();
+        install_failing_llm_judge(record_temp.path());
+        let _path_guard = PathGuard::prepend(record_temp.path());
+        init_git_repo(record_temp.path());
+
+        let err = record::run(
+            record_temp.path(),
+            "S1".to_string(),
+            Some(1),
+            None,
+            None,
+            true,
+            vec![],
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(err.contains("LLM-Judge failed"));
+
+        let record_evidence = record_temp.path().join("stories/S1/EVIDENCE");
+        assert!(record_evidence.join("judge-bundle-ac-1.json").exists());
+        assert!(record_evidence.join("llm-judge-ac-1.txt").exists());
+        assert!(record_evidence.join("llm-judge-ac-1.stderr.txt").exists());
+        assert!(record_evidence.join("llm-judge-ac-1.result.json").exists());
     }
 
     #[test]
