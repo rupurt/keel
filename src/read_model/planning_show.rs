@@ -772,7 +772,7 @@ pub fn count_story_acceptance_criteria(body: &str) -> (usize, usize) {
 
 pub fn extract_planning_doc_summary(content: &str) -> PlanningDocSummary {
     let problem_statement = extract_section(content, "## Problem Statement")
-        .and_then(|section| first_authored_text(&section));
+        .and_then(|section| authored_section_text(&section));
 
     let goals = parse_prd_goal_entries(content)
         .into_iter()
@@ -1052,18 +1052,39 @@ pub fn extract_section(content: &str, heading: &str) -> Option<String> {
     }
 }
 
-pub fn first_authored_text(section: &str) -> Option<String> {
-    section
-        .lines()
-        .map(str::trim)
-        .find(|line| {
-            !line.is_empty()
-                && !line.starts_with("<!--")
-                && !line.starts_with('|')
-                && !line.starts_with('-')
-                && !is_scaffold_text(line)
-        })
-        .map(ToOwned::to_owned)
+pub fn authored_section_text(section: &str) -> Option<String> {
+    let mut authored = Vec::new();
+    let mut pending_blank_line = false;
+
+    for line in section.lines() {
+        let trimmed = line.trim();
+
+        if trimmed.starts_with("<!--") {
+            continue;
+        }
+
+        if trimmed.is_empty() {
+            pending_blank_line = !authored.is_empty();
+            continue;
+        }
+
+        if is_scaffold_text(trimmed) {
+            continue;
+        }
+
+        if pending_blank_line {
+            authored.push(String::new());
+            pending_blank_line = false;
+        }
+
+        authored.push(trimmed.to_string());
+    }
+
+    if authored.is_empty() {
+        None
+    } else {
+        Some(authored.join("\n"))
+    }
 }
 
 pub fn parse_goals(content: &str) -> Vec<String> {
@@ -1444,6 +1465,8 @@ Out of scope:
 ## Problem Statement
 Operators cannot quickly evaluate planning state.
 
+They also need the PRD summary to preserve authored narrative context.
+
 ## Goals & Objectives
 | ID | Goal | Success Metric | Target |
 |----|------|----------------|--------|
@@ -1474,7 +1497,9 @@ Operators cannot quickly evaluate planning state.
 
         assert_eq!(
             epic_projection.doc.problem_statement.as_deref(),
-            Some("Operators cannot quickly evaluate planning state.")
+            Some(
+                "Operators cannot quickly evaluate planning state.\n\nThey also need the PRD summary to preserve authored narrative context."
+            )
         );
         assert!(
             epic_projection
@@ -1501,6 +1526,8 @@ Operators cannot quickly evaluate planning state.
 ## Problem Statement
 <!-- What user problem does this solve? -->
 Planners cannot quickly inspect requirement readiness.
+
+Teams also need to see missing lineage before tactical work starts.
 
 ## Goals & Objectives
 <!-- TODO: Add goals -->
@@ -1532,7 +1559,9 @@ Planners cannot quickly inspect requirement readiness.
 
         assert_eq!(
             summary.problem_statement.as_deref(),
-            Some("Planners cannot quickly inspect requirement readiness.")
+            Some(
+                "Planners cannot quickly inspect requirement readiness.\n\nTeams also need to see missing lineage before tactical work starts."
+            )
         );
         assert_eq!(summary.goals.len(), 2);
         assert!(summary.goals[0].contains("GOAL-01"));

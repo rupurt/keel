@@ -22,6 +22,7 @@ const GOAL_COVERAGE_PLACEHOLDER: &str = "(no authored goal linkage found in PRD.
 const SCOPE_COVERAGE_PLACEHOLDER: &str = "(no authored scope lineage found in PRD.md)";
 const SCOPE_DRIFT_PLACEHOLDER: &str = "(no scope drift detected)";
 const REQUIREMENTS_PLACEHOLDER: &str = "(no authored requirements found in PRD.md)";
+const PROBLEM_MAX_PARAGRAPHS: usize = 1;
 const VERIFICATION_STRATEGY_PLACEHOLDER: &str =
     "(no authored verification strategy found in PRD.md)";
 const ETA_PLACEHOLDER: &str = "insufficient throughput data (4-week window)";
@@ -59,8 +60,10 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
             .completed_at
             .map(|completed_at| render_completed_with_length(report.started_at, completed_at)),
     );
+    let prd_path = epic.path.parent().unwrap_or(&epic.path).join("PRD.md");
     metadata.push_optional_row("Desc:", epic.frontmatter.description.clone());
     metadata.push_row("Path:", format!("{}", epic.path.display().dimmed()));
+    metadata.push_row("PRD:", format!("{}", prd_path.display().dimmed()));
 
     let mut document = ShowDocument::new();
     document.push_header(metadata, Some(width));
@@ -69,6 +72,7 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
         render_requirement_coverage(&report),
         render_press_release(epic),
         render_progress(&report),
+        render_verification_strategy(&report),
         render_verification_readiness(&report),
     ];
     if let Some(voyages) = render_voyages(&board, epic) {
@@ -86,13 +90,14 @@ fn build_epic_show_report(board: &Board, epic: &Epic) -> Result<EpicShowProjecti
 
 fn render_planning_summary(report: &EpicShowProjection) -> ShowSection {
     let mut section = ShowSection::new("Planning Summary");
-    section.push_labeled_text_block(
+    section.push_labeled_text_block_limited(
         "Problem:",
         report
             .doc
             .problem_statement
             .as_deref()
             .unwrap_or(PROBLEM_PLACEHOLDER),
+        PROBLEM_MAX_PARAGRAPHS,
     );
 
     section.push_labeled_bullets(
@@ -120,11 +125,6 @@ fn render_planning_summary(report: &EpicShowProjection) -> ShowSection {
             .iter()
             .map(planning_lineage::format_scope_drift_row),
         Some(format!("{}", SCOPE_DRIFT_PLACEHOLDER.dimmed())),
-    );
-    section.push_labeled_bullets(
-        "Verification Strategy:",
-        report.doc.verification_strategy.iter().cloned(),
-        Some(format!("{}", VERIFICATION_STRATEGY_PLACEHOLDER.dimmed())),
     );
 
     section
@@ -180,6 +180,16 @@ fn render_progress(report: &EpicShowProjection) -> ShowSection {
     section
 }
 
+fn render_verification_strategy(report: &EpicShowProjection) -> ShowSection {
+    let mut section = ShowSection::new("Verification Strategy");
+    section.push_labeled_bullets(
+        "Techniques:",
+        report.doc.verification_strategy.iter().cloned(),
+        Some(format!("{}", VERIFICATION_STRATEGY_PLACEHOLDER.dimmed())),
+    );
+    section
+}
+
 fn render_requirement_coverage(report: &EpicShowProjection) -> ShowSection {
     let mut section = ShowSection::new("Requirement Coverage");
 
@@ -190,17 +200,13 @@ fn render_requirement_coverage(report: &EpicShowProjection) -> ShowSection {
 
     for row in &report.requirement_coverage {
         let summary = if row.is_covered() {
-            format!(
-                "{} linked SRS row(s) across {} voyage(s)",
-                row.linked_child_count(),
-                row.linked_voyage_count()
-            )
+            String::new()
         } else {
-            "uncovered (0 linked SRS rows)".to_string()
+            " (uncovered)".to_string()
         };
 
         section.push_lines([format!(
-            "  {} - {} ({})",
+            "  {} - {}{}",
             style::styled_requirement_id(&row.id),
             style::styled_inline_markdown(&row.description),
             summary
@@ -219,7 +225,10 @@ fn render_requirement_coverage(report: &EpicShowProjection) -> ShowSection {
                 })
                 .collect::<Vec<_>>()
                 .join(", ");
-            section.push_lines([format!("    Linked children: {linked_children}")]);
+            section.push_lines([format!(
+                "    Linked children ({}): {linked_children}",
+                row.linked_child_count()
+            )]);
         }
     }
 
@@ -652,6 +661,7 @@ More details.
 
         // Render placeholder paths explicitly to guarantee command output behavior.
         render_planning_summary(&report);
+        render_verification_strategy(&report);
         render_verification_readiness(&report);
     }
 
@@ -694,6 +704,46 @@ More details.
     }
 
     #[test]
+    fn render_planning_summary_truncates_long_problem_with_ellipsis_line() {
+        let report = EpicShowProjection {
+            doc: planning_show::PlanningDocSummary {
+                problem_statement: Some(
+                    "Paragraph one.\nStill paragraph one.\n\nParagraph two.\n\nParagraph three."
+                        .to_string(),
+                ),
+                ..planning_show::PlanningDocSummary::default()
+            },
+            goal_coverage: Vec::new(),
+            scope_coverage: Vec::new(),
+            scope_drift: Vec::new(),
+            requirement_coverage: Vec::new(),
+            total_voyages: 0,
+            done_voyages: 0,
+            total_stories: 0,
+            done_stories: 0,
+            started_at: None,
+            completed_at: None,
+            updated_at: None,
+            eta: planning_show::EtaSummary {
+                throughput_stories_per_week: 0.0,
+                remaining_stories: 0,
+                eta_weeks: None,
+            },
+            verification: planning_show::VerificationRollup::default(),
+        };
+
+        let section = render_planning_summary(&report);
+        let mut document = ShowDocument::new();
+        document.push_sections_spaced([section]);
+        let rendered = document.render();
+
+        assert!(rendered.contains("    Paragraph one."));
+        assert!(rendered.contains("    Still paragraph one."));
+        assert!(rendered.contains("    ..."));
+        assert!(!rendered.contains("    Paragraph two."));
+    }
+
+    #[test]
     fn render_planning_summary_omits_redundant_key_requirements_block() {
         let report = EpicShowProjection {
             doc: planning_show::PlanningDocSummary {
@@ -732,8 +782,50 @@ More details.
         let rendered = document.render();
 
         assert!(!rendered.contains("Key Requirements:"));
+        assert!(!rendered.contains("Verification Strategy:"));
         assert!(rendered.contains("Requirement Coverage"));
         assert!(rendered.contains("FR-01"));
+    }
+
+    #[test]
+    fn verification_strategy_renders_as_own_section_before_readiness() {
+        let report = EpicShowProjection {
+            doc: planning_show::PlanningDocSummary {
+                verification_strategy: vec!["FR-01: cargo test -p keel epic_show".to_string()],
+                ..planning_show::PlanningDocSummary::default()
+            },
+            goal_coverage: Vec::new(),
+            scope_coverage: Vec::new(),
+            scope_drift: Vec::new(),
+            requirement_coverage: Vec::new(),
+            total_voyages: 0,
+            done_voyages: 0,
+            total_stories: 0,
+            done_stories: 0,
+            started_at: None,
+            completed_at: None,
+            updated_at: None,
+            eta: planning_show::EtaSummary {
+                throughput_stories_per_week: 0.0,
+                remaining_stories: 0,
+                eta_weeks: None,
+            },
+            verification: planning_show::VerificationRollup::default(),
+        };
+
+        let mut document = ShowDocument::new();
+        document.push_sections_spaced([
+            render_progress(&report),
+            render_verification_strategy(&report),
+            render_verification_readiness(&report),
+        ]);
+        let rendered = document.render();
+
+        let strategy_idx = rendered.find("Verification Strategy").unwrap();
+        let readiness_idx = rendered.find("Verification Readiness").unwrap();
+        assert!(strategy_idx < readiness_idx);
+        assert!(rendered.contains("Techniques:"));
+        assert!(rendered.contains("cargo test -p keel epic_show"));
     }
 
     #[test]
@@ -786,9 +878,9 @@ More details.
         document.push_sections_spaced([section]);
         let rendered = document.render();
 
-        assert!(rendered.contains("2 linked SRS row(s) across 2 voyage(s)"));
-        assert!(rendered.contains("Linked children:"));
-        assert!(rendered.contains("uncovered (0 linked SRS rows)"));
+        assert!(!rendered.contains("linked SRS row(s) across"));
+        assert!(rendered.contains("Linked children (2):"));
+        assert!(rendered.contains("Uncovered parent. (uncovered)"));
     }
 
     #[test]

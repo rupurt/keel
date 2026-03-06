@@ -247,19 +247,44 @@ impl ShowSection {
         let label = label.into();
         self.push_lines([format!("  {label}")]);
 
-        let value_lines: Vec<String> = value
-            .as_ref()
-            .lines()
-            .map(str::trim)
-            .filter(|line| !line.is_empty())
-            .map(|line| format!("    {}", style::styled_inline_markdown(line)))
-            .collect();
+        let value_lines = text_block_lines(value.as_ref());
 
         if value_lines.is_empty() {
             return;
         }
 
         self.push_lines(value_lines);
+    }
+
+    pub fn push_labeled_text_block_limited(
+        &mut self,
+        label: impl Into<String>,
+        value: impl AsRef<str>,
+        max_paragraphs: usize,
+    ) {
+        let label = label.into();
+        self.push_lines([format!("  {label}")]);
+
+        let value = value.as_ref();
+        let paragraphs = text_block_paragraphs(value);
+
+        if paragraphs.is_empty() {
+            return;
+        }
+
+        let max_paragraphs = max_paragraphs.max(1);
+        let mut rendered = Vec::new();
+        for (idx, paragraph) in paragraphs.iter().take(max_paragraphs).enumerate() {
+            if idx > 0 {
+                rendered.push(String::new());
+            }
+            rendered.extend(paragraph.iter().cloned());
+        }
+        if text_block_paragraph_count(value) > max_paragraphs {
+            rendered.push("    ...".to_string());
+        }
+
+        self.push_lines(rendered);
     }
 
     fn render_into(&self, output: &mut Vec<String>) {
@@ -370,6 +395,47 @@ impl ShowKeyValues {
     }
 }
 
+fn text_block_paragraph_count(value: &str) -> usize {
+    text_block_paragraphs(value).len()
+}
+
+fn text_block_paragraphs(value: &str) -> Vec<Vec<String>> {
+    let mut paragraphs = Vec::new();
+    let mut current = Vec::new();
+
+    for line in value.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            if !current.is_empty() {
+                paragraphs.push(current);
+                current = Vec::new();
+            }
+            continue;
+        }
+
+        current.push(format!("    {}", style::styled_inline_markdown(trimmed)));
+    }
+
+    if !current.is_empty() {
+        paragraphs.push(current);
+    }
+
+    paragraphs
+}
+
+fn text_block_lines(value: &str) -> Vec<String> {
+    let mut lines = Vec::new();
+
+    for (idx, paragraph) in text_block_paragraphs(value).into_iter().enumerate() {
+        if idx > 0 {
+            lines.push(String::new());
+        }
+        lines.extend(paragraph);
+    }
+
+    lines
+}
+
 #[derive(Debug, Clone)]
 struct ShowFieldRow {
     label: String,
@@ -468,6 +534,38 @@ mod tests {
 
         assert_eq!(lines[1], "  Problem:");
         assert_eq!(lines[2], "    Readable planning output");
+    }
+
+    #[test]
+    fn show_section_push_labeled_text_block_limited_adds_ellipsis_on_new_line() {
+        let mut section = ShowSection::new("Summary");
+        section.push_labeled_text_block_limited(
+            "Problem:",
+            "One.\nStill one.\n\nTwo.\n\nThree.",
+            1,
+        );
+
+        let mut lines = Vec::new();
+        section.render_into(&mut lines);
+
+        assert_eq!(lines[1], "  Problem:");
+        assert_eq!(lines[2], "    One.");
+        assert_eq!(lines[3], "    Still one.");
+        assert_eq!(lines[4], "    ...");
+    }
+
+    #[test]
+    fn show_section_push_labeled_text_block_preserves_paragraph_breaks() {
+        let mut section = ShowSection::new("Summary");
+        section.push_labeled_text_block("Problem:", "First paragraph.\n\nSecond paragraph.");
+
+        let mut lines = Vec::new();
+        section.render_into(&mut lines);
+
+        assert_eq!(lines[1], "  Problem:");
+        assert_eq!(lines[2], "    First paragraph.");
+        assert_eq!(lines[3], "");
+        assert_eq!(lines[4], "    Second paragraph.");
     }
 
     #[test]
