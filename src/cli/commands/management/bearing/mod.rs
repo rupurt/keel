@@ -472,9 +472,9 @@ fn create_prd_from_bearing(board_dir: &Path, bearing: &Bearing) -> Result<String
     }
 
     prd.push_str("## Goals & Objectives\n\n");
-    prd.push_str("| Goal | Success Metric | Target |\n");
-    prd.push_str("|------|----------------|--------|\n");
-    prd.push_str("| Validate bearing recommendation in delivery flow | Adoption signal | Initial rollout complete |\n\n");
+    prd.push_str("| ID | Goal | Success Metric | Target |\n");
+    prd.push_str("|----|------|----------------|--------|\n");
+    prd.push_str("| GOAL-01 | Validate bearing recommendation in delivery flow | Adoption signal | Initial rollout complete |\n\n");
 
     prd.push_str("## Users\n\n");
     prd.push_str("| Persona | Description | Primary Need |\n");

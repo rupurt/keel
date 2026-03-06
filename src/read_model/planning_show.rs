@@ -22,6 +22,14 @@ pub struct PlanningDocSummary {
     pub verification_strategy: Vec<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GoalEntry {
+    pub id: String,
+    pub goal: String,
+    pub success_metric: String,
+    pub target: String,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct EtaSummary {
     pub throughput_stories_per_week: f64,
@@ -689,9 +697,10 @@ pub fn extract_planning_doc_summary(content: &str) -> PlanningDocSummary {
     let problem_statement = extract_section(content, "## Problem Statement")
         .and_then(|section| first_authored_text(&section));
 
-    let goals = extract_section(content, "## Goals & Objectives")
-        .map(|section| parse_goals(&section))
-        .unwrap_or_default();
+    let goals = parse_prd_goal_entries(content)
+        .into_iter()
+        .map(|entry| format_goal_entry(&entry))
+        .collect();
 
     let mut requirements = parse_requirement_entries(
         content,
@@ -841,37 +850,17 @@ pub fn first_authored_text(section: &str) -> Option<String> {
         .map(ToOwned::to_owned)
 }
 
+pub fn parse_prd_goal_entries(content: &str) -> Vec<GoalEntry> {
+    extract_section(content, "## Goals & Objectives")
+        .map(|section| parse_goal_entries(&section))
+        .unwrap_or_default()
+}
+
 pub fn parse_goals(section: &str) -> Vec<String> {
-    let mut goals = Vec::new();
-
-    for line in section.lines() {
-        let trimmed = line.trim();
-
-        if trimmed.starts_with('|') {
-            let cols: Vec<&str> = trimmed
-                .split('|')
-                .map(str::trim)
-                .filter(|col| !col.is_empty())
-                .collect();
-            if cols.len() >= 3
-                && !cols[0].eq_ignore_ascii_case("Goal")
-                && !cols[0].starts_with("---")
-                && !is_scaffold_text(cols[0])
-            {
-                goals.push(format!("{} ({} -> {})", cols[0], cols[1], cols[2]));
-            }
-            continue;
-        }
-
-        if let Some(item) = trimmed.strip_prefix("- ")
-            && !item.is_empty()
-            && !is_scaffold_text(item)
-        {
-            goals.push(item.to_string());
-        }
-    }
-
-    goals
+    parse_goal_entries(section)
+        .into_iter()
+        .map(|entry| format_goal_entry(&entry))
+        .collect()
 }
 
 fn parse_verification_strategy(section: &str) -> Vec<String> {
@@ -884,16 +873,12 @@ fn parse_verification_strategy(section: &str) -> Vec<String> {
         }
 
         if trimmed.starts_with('|') {
-            let cols: Vec<&str> = trimmed
-                .split('|')
-                .map(str::trim)
-                .filter(|col| !col.is_empty())
-                .collect();
+            let cols = split_markdown_table_row(trimmed);
             if cols.len() >= 2
                 && !cols[0].eq_ignore_ascii_case("Requirement")
                 && !cols[0].starts_with("---")
-                && !is_scaffold_text(cols[0])
-                && !is_scaffold_text(cols[1])
+                && !is_scaffold_text(&cols[0])
+                && !is_scaffold_text(&cols[1])
             {
                 strategy.push(format!("{}: {}", cols[0], cols[1]));
             }
@@ -913,6 +898,115 @@ fn parse_verification_strategy(section: &str) -> Vec<String> {
     }
 
     strategy
+}
+
+fn format_goal_entry(entry: &GoalEntry) -> String {
+    format!(
+        "{}: {} ({} -> {})",
+        entry.id, entry.goal, entry.success_metric, entry.target
+    )
+}
+
+fn parse_goal_entries(section: &str) -> Vec<GoalEntry> {
+    let mut entries = Vec::new();
+    let mut indexes: Option<(usize, usize, usize, usize)> = None;
+
+    for line in section.lines() {
+        let trimmed = line.trim();
+        if !trimmed.starts_with('|') {
+            continue;
+        }
+
+        let cols = split_markdown_table_row(trimmed);
+        if cols.is_empty() || is_markdown_separator_row(&cols) {
+            continue;
+        }
+
+        if let Some(header_indexes) = parse_goal_header_indexes(&cols) {
+            indexes = Some(header_indexes);
+            continue;
+        }
+
+        let Some((id_idx, goal_idx, success_metric_idx, target_idx)) = indexes else {
+            continue;
+        };
+
+        let Some(id) = cols.get(id_idx) else {
+            continue;
+        };
+        let Some(goal) = cols.get(goal_idx) else {
+            continue;
+        };
+        let Some(success_metric) = cols.get(success_metric_idx) else {
+            continue;
+        };
+        let Some(target) = cols.get(target_idx) else {
+            continue;
+        };
+
+        if !is_canonical_goal_id(id)
+            || goal.is_empty()
+            || success_metric.is_empty()
+            || target.is_empty()
+            || is_scaffold_text(id)
+            || is_scaffold_text(goal)
+            || is_scaffold_text(success_metric)
+            || is_scaffold_text(target)
+        {
+            continue;
+        }
+
+        entries.push(GoalEntry {
+            id: id.to_string(),
+            goal: goal.to_string(),
+            success_metric: success_metric.to_string(),
+            target: target.to_string(),
+        });
+    }
+
+    entries.sort_by(|a, b| {
+        a.id.cmp(&b.id)
+            .then_with(|| a.goal.cmp(&b.goal))
+            .then_with(|| a.success_metric.cmp(&b.success_metric))
+            .then_with(|| a.target.cmp(&b.target))
+    });
+    entries
+}
+
+fn parse_goal_header_indexes(cols: &[String]) -> Option<(usize, usize, usize, usize)> {
+    Some((
+        cols.iter().position(|col| col.eq_ignore_ascii_case("ID"))?,
+        cols.iter()
+            .position(|col| col.eq_ignore_ascii_case("Goal"))?,
+        cols.iter()
+            .position(|col| col.eq_ignore_ascii_case("Success Metric"))?,
+        cols.iter()
+            .position(|col| col.eq_ignore_ascii_case("Target"))?,
+    ))
+}
+
+fn split_markdown_table_row(line: &str) -> Vec<String> {
+    let trimmed = line.trim();
+    let trimmed = trimmed.strip_prefix('|').unwrap_or(trimmed);
+    let trimmed = trimmed.strip_suffix('|').unwrap_or(trimmed);
+
+    trimmed
+        .split('|')
+        .map(|col| col.trim().to_string())
+        .collect()
+}
+
+fn is_markdown_separator_row(cols: &[String]) -> bool {
+    cols.iter()
+        .all(|col| !col.is_empty() && is_markdown_separator_cell(col))
+}
+
+fn is_markdown_separator_cell(cell: &str) -> bool {
+    cell.chars().all(|ch| ch == '-' || ch == ':' || ch == ' ')
+}
+
+fn is_canonical_goal_id(id: &str) -> bool {
+    id.starts_with("GOAL-") && id.len() > "GOAL-".len()
 }
 
 fn parse_requirement_entries(
@@ -943,17 +1037,13 @@ fn parse_requirement_entries(
             continue;
         }
 
-        let cols: Vec<&str> = trimmed
-            .split('|')
-            .map(str::trim)
-            .filter(|col| !col.is_empty())
-            .collect();
+        let cols = split_markdown_table_row(trimmed);
         if cols.len() < 2 {
             continue;
         }
 
-        let id = cols[0];
-        let requirement = cols[1];
+        let id = cols[0].as_str();
+        let requirement = cols[1].as_str();
 
         if id.eq_ignore_ascii_case("ID") {
             verification_column_index = cols
@@ -1226,9 +1316,9 @@ Out of scope:
 Operators cannot quickly evaluate planning state.
 
 ## Goals & Objectives
-| Goal | Success Metric | Target |
-|------|----------------|--------|
-| Improve readability | acceptance speed | 2x |
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | Improve readability | acceptance speed | 2x |
 
 ## Verification Strategy
 - Use automated command proofs.
@@ -1286,9 +1376,10 @@ Planners cannot quickly inspect requirement readiness.
 
 ## Goals & Objectives
 <!-- TODO: Add goals -->
-| Goal | Success Metric | Target |
-|------|----------------|--------|
-| Improve signal quality | operator confidence | 90% |
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-02 | Improve signal quality | operator confidence | 90% |
+| GOAL-01 | Reduce planning ambiguity | epic review success | 95% |
 
 ## Verification Strategy
 <!-- TODO: Add strategy -->
@@ -1315,8 +1406,9 @@ Planners cannot quickly inspect requirement readiness.
             summary.problem_statement.as_deref(),
             Some("Planners cannot quickly inspect requirement readiness.")
         );
-        assert_eq!(summary.goals.len(), 1);
-        assert!(summary.goals[0].contains("Improve signal quality"));
+        assert_eq!(summary.goals.len(), 2);
+        assert!(summary.goals[0].contains("GOAL-01"));
+        assert!(summary.goals[1].contains("GOAL-02"));
         assert_eq!(
             summary.key_requirements,
             vec![
@@ -1352,7 +1444,9 @@ Planners cannot quickly inspect requirement readiness.
 Operators need reliable planning summaries.
 
 ## Goals & Objectives
-- Improve planning readability.
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | Improve planning readability. | review speed | 2x |
 
 ## Verification Strategy
 - Validate with command-level and doctor checks.
@@ -1382,6 +1476,59 @@ Operators need reliable planning summaries.
                 .iter()
                 .any(|entry| entry.contains("FR-01: must"))
         );
+    }
+
+    #[test]
+    fn goal_lineage_parser_reads_canonical_goal_rows() {
+        let prd = r#"# PRD
+
+## Goals & Objectives
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-02 | Reduce planning ambiguity | approval confidence | 90% |
+| GOAL-01 | Improve strategic traceability | linked requirements | 100% |
+"#;
+
+        assert_eq!(
+            parse_prd_goal_entries(prd),
+            vec![
+                GoalEntry {
+                    id: "GOAL-01".to_string(),
+                    goal: "Improve strategic traceability".to_string(),
+                    success_metric: "linked requirements".to_string(),
+                    target: "100%".to_string(),
+                },
+                GoalEntry {
+                    id: "GOAL-02".to_string(),
+                    goal: "Reduce planning ambiguity".to_string(),
+                    success_metric: "approval confidence".to_string(),
+                    target: "90%".to_string(),
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn goal_lineage_parser_is_deterministic() {
+        let prd_a = r#"# PRD
+
+## Goals & Objectives
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-02 | Reduce planning ambiguity | approval confidence | 90% |
+| GOAL-01 | Improve strategic traceability | linked requirements | 100% |
+"#;
+
+        let prd_b = r#"# PRD
+
+## Goals & Objectives
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | Improve strategic traceability | linked requirements | 100% |
+| GOAL-02 | Reduce planning ambiguity | approval confidence | 90% |
+"#;
+
+        assert_eq!(parse_prd_goal_entries(prd_a), parse_prd_goal_entries(prd_b));
     }
 
     #[test]
@@ -1444,12 +1591,12 @@ Operators need reliable planning summaries.
 
         std::fs::write(
             board_a.path().join("epics/e1/PRD.md"),
-            "# PRD\n\n## Problem Statement\nA\n\n## Goals & Objectives\n- G1\n",
+            "# PRD\n\n## Problem Statement\nA\n\n## Goals & Objectives\n| ID | Goal | Success Metric | Target |\n|----|------|----------------|--------|\n| GOAL-01 | G1 | metric | target |\n",
         )
         .unwrap();
         std::fs::write(
             board_b.path().join("epics/e1/PRD.md"),
-            "# PRD\n\n## Problem Statement\nA\n\n## Goals & Objectives\n- G1\n",
+            "# PRD\n\n## Problem Statement\nA\n\n## Goals & Objectives\n| ID | Goal | Success Metric | Target |\n|----|------|----------------|--------|\n| GOAL-01 | G1 | metric | target |\n",
         )
         .unwrap();
 

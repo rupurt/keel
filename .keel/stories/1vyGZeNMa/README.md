@@ -2,10 +2,12 @@
 id: 1vyGZeNMa
 title: Parse Canonical Goal Lineage
 type: feat
-status: backlog
+status: done
 created_at: 2026-03-05T13:49:38
-updated_at: 2026-03-05T14:10:01
+updated_at: 2026-03-05T16:44:47
 scope: 1vyFgR2MA/1vyFmfjA9
+started_at: 2026-03-05T16:25:41
+completed_at: 2026-03-05T16:44:47
 ---
 
 # Parse Canonical Goal Lineage
@@ -16,5 +18,5 @@ Introduce the canonical goal-lineage parser so PRD goals become machine-readable
 
 ## Acceptance Criteria
 
-- [ ] [SRS-01/AC-01] PRD `Goals & Objectives` entries use canonical `GOAL-*` identifiers in a parseable table form. <!-- verify: cargo test -p keel goal_lineage_parser_reads_canonical_goal_rows, SRS-01:start -->
-- [ ] [SRS-01/AC-02] [SRS-NFR-01/AC-01] Equivalent PRD goal fixtures produce deterministic parsed output. <!-- verify: cargo test -p keel goal_lineage_parser_is_deterministic, SRS-NFR-01:start:end -->
+- [x] [SRS-01/AC-01] PRD `Goals & Objectives` entries use canonical `GOAL-*` identifiers in a parseable table form. <!-- verify: cargo test -p keel goal_lineage_parser_reads_canonical_goal_rows, SRS-01:start, proof: ac-1.log-->
+- [x] [SRS-01/AC-02] [SRS-NFR-01/AC-01] Equivalent PRD goal fixtures produce deterministic parsed output. <!-- verify: cargo test -p keel goal_lineage_parser_is_deterministic, SRS-NFR-01:start:end, SRS-01:end, proof: ac-2.log-->

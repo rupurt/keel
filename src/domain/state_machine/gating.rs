@@ -1308,8 +1308,8 @@ mod tests {
 ## Problem Statement
 
 ## Goals & Objectives
-| Goal | Success Metric | Target |
-|------|----------------|--------|
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Priority | Rationale |
 |----|-------------|----------|-----------|

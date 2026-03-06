@@ -10,8 +10,8 @@
 
 <!-- Why this epic, why now? How does it align with product vision? -->
 
-| Goal | Success Metric | Target |
-|------|----------------|--------|
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
 
 ## Users
 

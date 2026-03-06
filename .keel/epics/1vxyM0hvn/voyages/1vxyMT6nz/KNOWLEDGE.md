@@ -25,17 +25,17 @@ created_at: 2026-03-04T19:11:59
 
 ---
 
-## Story: Conservative Pairwise Conflict Scoring (1vxyMsepz)
+## Story: Story Blocked By Metadata Override (1vxyMtAbK)
 
-### 1vyDuwXCw: Unknown Context Should Force Risk Floor
+### 1vyDuwlIj: Frontmatter Field Additions Need Builder + Literal Sweep
 
 | Field | Value |
 |-------|-------|
-| **Category** | architecture |
-| **Context** | Pairwise scoring for partial architectural metadata in `next --parallel` |
-| **Insight** | Unresolved semantic context is easiest to keep safe when scoring applies an explicit risk floor and confidence ceiling instead of only additive penalties |
-| **Suggested Action** | Keep conservative fallback thresholds as first-class scoring invariants and assert them directly in tests |
-| **Applies To** | `src/cli/commands/management/next_support/parallel_*.rs` |
+| **Category** | code |
+| **Context** | Adding a new key to `StoryFrontmatter` that is constructed in many tests and read models |
+| **Insight** | `#[serde(default)]` handles runtime parsing, but compile-time struct literals and test builders still require explicit wiring or defaults to avoid breakage and hidden drift in fixture generation. |
+| **Suggested Action** | When adding frontmatter fields, immediately update `TestStory`, `StoryFactory`, and all explicit `StoryFrontmatter { ... }` literals in one slice before running broader checks. |
+| **Applies To** | `src/domain/model/story.rs`, `src/test_helpers.rs`, read-model fixture tests |
 | **Applied** | yes |
 
 
@@ -53,6 +53,40 @@ created_at: 2026-03-04T19:11:59
 | **Insight** | Stable candidate sorting is not enough; projection containers must also preserve ordering or serialized output can still drift across runs. |
 | **Suggested Action** | Use ordered maps (`BTreeMap`) for projection payloads and shared projection helpers for all render paths. |
 | **Applies To** | `src/cli/commands/management/next.rs` and other CLI JSON projection builders |
+| **Applied** | yes |
+
+
+
+---
+
+## Story: Conservative Pairwise Conflict Scoring (1vxyMsepz)
+
+### 1vyDuwXCw: Unknown Context Should Force Risk Floor
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Pairwise scoring for partial architectural metadata in `next --parallel` |
+| **Insight** | Unresolved semantic context is easiest to keep safe when scoring applies an explicit risk floor and confidence ceiling instead of only additive penalties |
+| **Suggested Action** | Keep conservative fallback thresholds as first-class scoring invariants and assert them directly in tests |
+| **Applies To** | `src/cli/commands/management/next_support/parallel_*.rs` |
+| **Applied** | yes |
+
+
+
+---
+
+## Story: Parallel Queue Selection With Confidence Threshold (1vxyMsvug)
+
+### 1vyDuwBZS: Greedy Threshold Gate Gives Deterministic Safe Subset
+
+| Field | Value |
+|-------|-------|
+| **Category** | code |
+| **Context** | Selecting parallel-ready stories from pairwise confidence scores |
+| **Insight** | Sorting candidates by canonical work-item comparator before threshold filtering yields deterministic, reproducible safe subsets |
+| **Suggested Action** | Keep canonical ID ordering and missing-pair fallback confidence (`0.0`) as hard invariants in gate logic |
+| **Applies To** | `src/cli/commands/management/next_support/parallel_threshold.rs` |
 | **Applied** | yes |
 
 
@@ -93,40 +127,6 @@ created_at: 2026-03-04T19:11:59
 
 ---
 
-## Story: Parallel Queue Selection With Confidence Threshold (1vxyMsvug)
-
-### 1vyDuwBZS: Greedy Threshold Gate Gives Deterministic Safe Subset
-
-| Field | Value |
-|-------|-------|
-| **Category** | code |
-| **Context** | Selecting parallel-ready stories from pairwise confidence scores |
-| **Insight** | Sorting candidates by canonical work-item comparator before threshold filtering yields deterministic, reproducible safe subsets |
-| **Suggested Action** | Keep canonical ID ordering and missing-pair fallback confidence (`0.0`) as hard invariants in gate logic |
-| **Applies To** | `src/cli/commands/management/next_support/parallel_threshold.rs` |
-| **Applied** | yes |
-
-
-
----
-
-## Story: Story Blocked By Metadata Override (1vxyMtAbK)
-
-### 1vyDuwlIj: Frontmatter Field Additions Need Builder + Literal Sweep
-
-| Field | Value |
-|-------|-------|
-| **Category** | code |
-| **Context** | Adding a new key to `StoryFrontmatter` that is constructed in many tests and read models |
-| **Insight** | `#[serde(default)]` handles runtime parsing, but compile-time struct literals and test builders still require explicit wiring or defaults to avoid breakage and hidden drift in fixture generation. |
-| **Suggested Action** | When adding frontmatter fields, immediately update `TestStory`, `StoryFactory`, and all explicit `StoryFrontmatter { ... }` literals in one slice before running broader checks. |
-| **Applies To** | `src/domain/model/story.rs`, `src/test_helpers.rs`, read-model fixture tests |
-| **Applied** | yes |
-
-
-
----
-
 ## Synthesis
 
 ### d57774eI9: Coherence Checks Need Canonical Pair Normalization
@@ -143,17 +143,17 @@ created_at: 2026-03-04T19:11:59
 | **Confidence** | 0.95 |
 | **Applied** | yes |
 
-### vjKuUwTsz: Unknown Context Should Force Risk Floor
+### sTJiMO70u: Frontmatter Field Additions Need Builder + Literal Sweep
 
 | Field | Value |
 |-------|-------|
-| **Category** | architecture |
-| **Context** | Pairwise scoring for partial architectural metadata in `next --parallel` |
-| **Insight** | Unresolved semantic context is easiest to keep safe when scoring applies an explicit risk floor and confidence ceiling instead of only additive penalties |
-| **Suggested Action** | Keep conservative fallback thresholds as first-class scoring invariants and assert them directly in tests |
-| **Applies To** | `src/cli/commands/management/next_support/parallel_*.rs` |
-| **Linked Knowledge IDs** | 1vyDuwXCw |
-| **Score** | 0.84 |
+| **Category** | code |
+| **Context** | Adding a new key to `StoryFrontmatter` that is constructed in many tests and read models |
+| **Insight** | `#[serde(default)]` handles runtime parsing, but compile-time struct literals and test builders still require explicit wiring or defaults to avoid breakage and hidden drift in fixture generation. |
+| **Suggested Action** | When adding frontmatter fields, immediately update `TestStory`, `StoryFactory`, and all explicit `StoryFrontmatter { ... }` literals in one slice before running broader checks. |
+| **Applies To** | `src/domain/model/story.rs`, `src/test_helpers.rs`, read-model fixture tests |
+| **Linked Knowledge IDs** | 1vyDuwlIj |
+| **Score** | 0.81 |
 | **Confidence** | 0.92 |
 | **Applied** | yes |
 
@@ -169,6 +169,34 @@ created_at: 2026-03-04T19:11:59
 | **Linked Knowledge IDs** | 1vyDuwMlz |
 | **Score** | 0.88 |
 | **Confidence** | 0.94 |
+| **Applied** | yes |
+
+### vjKuUwTsz: Unknown Context Should Force Risk Floor
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Pairwise scoring for partial architectural metadata in `next --parallel` |
+| **Insight** | Unresolved semantic context is easiest to keep safe when scoring applies an explicit risk floor and confidence ceiling instead of only additive penalties |
+| **Suggested Action** | Keep conservative fallback thresholds as first-class scoring invariants and assert them directly in tests |
+| **Applies To** | `src/cli/commands/management/next_support/parallel_*.rs` |
+| **Linked Knowledge IDs** | 1vyDuwXCw |
+| **Score** | 0.84 |
+| **Confidence** | 0.92 |
+| **Applied** | yes |
+
+### iUlHLNkUg: Greedy Threshold Gate Gives Deterministic Safe Subset
+
+| Field | Value |
+|-------|-------|
+| **Category** | code |
+| **Context** | Selecting parallel-ready stories from pairwise confidence scores |
+| **Insight** | Sorting candidates by canonical work-item comparator before threshold filtering yields deterministic, reproducible safe subsets |
+| **Suggested Action** | Keep canonical ID ordering and missing-pair fallback confidence (`0.0`) as hard invariants in gate logic |
+| **Applies To** | `src/cli/commands/management/next_support/parallel_threshold.rs` |
+| **Linked Knowledge IDs** | 1vyDuwBZS |
+| **Score** | 0.82 |
+| **Confidence** | 0.91 |
 | **Applied** | yes |
 
 ### 0LMiWqrFa: Work Item Comparator Is Not Lexical
@@ -196,34 +224,6 @@ created_at: 2026-03-04T19:11:59
 | **Applies To** | `src/cli/commands/management/next.rs`, `src/cli/commands/management/next_support/parallel_threshold.rs` |
 | **Linked Knowledge IDs** | 1vyDuwzyf |
 | **Score** | 0.83 |
-| **Confidence** | 0.92 |
-| **Applied** | yes |
-
-### iUlHLNkUg: Greedy Threshold Gate Gives Deterministic Safe Subset
-
-| Field | Value |
-|-------|-------|
-| **Category** | code |
-| **Context** | Selecting parallel-ready stories from pairwise confidence scores |
-| **Insight** | Sorting candidates by canonical work-item comparator before threshold filtering yields deterministic, reproducible safe subsets |
-| **Suggested Action** | Keep canonical ID ordering and missing-pair fallback confidence (`0.0`) as hard invariants in gate logic |
-| **Applies To** | `src/cli/commands/management/next_support/parallel_threshold.rs` |
-| **Linked Knowledge IDs** | 1vyDuwBZS |
-| **Score** | 0.82 |
-| **Confidence** | 0.91 |
-| **Applied** | yes |
-
-### sTJiMO70u: Frontmatter Field Additions Need Builder + Literal Sweep
-
-| Field | Value |
-|-------|-------|
-| **Category** | code |
-| **Context** | Adding a new key to `StoryFrontmatter` that is constructed in many tests and read models |
-| **Insight** | `#[serde(default)]` handles runtime parsing, but compile-time struct literals and test builders still require explicit wiring or defaults to avoid breakage and hidden drift in fixture generation. |
-| **Suggested Action** | When adding frontmatter fields, immediately update `TestStory`, `StoryFactory`, and all explicit `StoryFrontmatter { ... }` literals in one slice before running broader checks. |
-| **Applies To** | `src/domain/model/story.rs`, `src/test_helpers.rs`, read-model fixture tests |
-| **Linked Knowledge IDs** | 1vyDuwlIj |
-| **Score** | 0.81 |
 | **Confidence** | 0.92 |
 | **Applied** | yes |
 

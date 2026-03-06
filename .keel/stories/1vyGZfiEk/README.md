@@ -16,6 +16,6 @@ Render goal-to-requirement lineage in epic planning views so reviewers can inspe
 
 ## Acceptance Criteria
 
-- [ ] [SRS-04/AC-01] Epic planning read surfaces summarize goal-to-requirement lineage directly from the PRD with enough detail to review objective coverage. <!-- verify: cargo test -p keel epic_show_renders_goal_lineage_summary, SRS-04:start -->
+- [ ] [SRS-04/AC-01] Epic planning read surfaces summarize goal-to-requirement lineage directly from the PRD with enough detail to review objective coverage. <!-- verify: cargo test -p keel epic_show_renders_goal_lineage_summary, SRS-04:start:end -->
 - [ ] [SRS-05/AC-01] Goal-lineage rendering preserves one-to-many goal fanout to requirements without unstable ordering. <!-- verify: cargo test -p keel epic_goal_lineage_preserves_one_to_many_fanout, SRS-05:start:end -->
 - [ ] [SRS-05/AC-02] Goal-coverage rendering preserves stable ordering and fanout counts for equivalent PRDs. <!-- verify: cargo test -p keel epic_goal_lineage_projection_is_deterministic, SRS-05:end -->

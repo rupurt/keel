@@ -455,9 +455,9 @@ impl TestBoardBuilder {
 Test harness epic problem statement.
 
 ## Goals & Objectives
-| Goal | Success Metric | Target |
-|------|----------------|--------|
-| Ship test harness behavior | Passing validation checks | 100% |
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | Ship test harness behavior | Passing validation checks | 100% |
 
 ## Users
 | Persona | Description | Primary Need |

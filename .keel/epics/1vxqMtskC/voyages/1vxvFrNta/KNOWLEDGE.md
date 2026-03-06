@@ -42,23 +42,6 @@ created_at: 2026-03-04T16:27:11
 
 ---
 
-## Story: Hard Cutover Verify Command To Subcommands (1vxvIaPe8)
-
-### 1vyDuwu3r: Parse legacy forms but block execution paths
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | CLI hard cutovers where old invocations should fail fast with recovery guidance |
-| **Insight** | Keeping hidden legacy root args allows deterministic migration errors without relying on generic clap parse failures, while still forcing execution through the new subcommand path. |
-| **Suggested Action** | For future command cutovers, preserve temporary parse compatibility only for guidance and route all execution through explicit new subcommands. |
-| **Applies To** | `src/cli/command_tree.rs`, `src/cli/runtime.rs`, `src/cli/commands/management/verify.rs` |
-| **Applied** | yes |
-
-
-
----
-
 ## Story: Refactor Config Show Into Technique Flag Matrix (1vxvIZRXy)
 
 ### 1vyDuwBfG: Prefer direct status flags over aggregated recommendation blocks
@@ -70,6 +53,23 @@ created_at: 2026-03-04T16:27:11
 | **Insight** | A per-technique flag matrix (`detected`, `disabled`, `active`) is a better contract boundary than mixed narrative sections because it cleanly separates inventory from recommendation logic. |
 | **Suggested Action** | Keep config/read commands focused on canonical state and move advisory ranking/commentary to dedicated recommend commands. |
 | **Applies To** | `src/cli/commands/setup/config.rs`, `src/read_model/verification_techniques.rs` |
+| **Applied** | yes |
+
+
+
+---
+
+## Story: Hard Cutover Verify Command To Subcommands (1vxvIaPe8)
+
+### 1vyDuwu3r: Parse legacy forms but block execution paths
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | CLI hard cutovers where old invocations should fail fast with recovery guidance |
+| **Insight** | Keeping hidden legacy root args allows deterministic migration errors without relying on generic clap parse failures, while still forcing execution through the new subcommand path. |
+| **Suggested Action** | For future command cutovers, preserve temporary parse compatibility only for guidance and route all execution through explicit new subcommands. |
+| **Applies To** | `src/cli/command_tree.rs`, `src/cli/runtime.rs`, `src/cli/commands/management/verify.rs` |
 | **Applied** | yes |
 
 
@@ -106,20 +106,6 @@ created_at: 2026-03-04T16:27:11
 | **Confidence** | 0.89 |
 | **Applied** | yes |
 
-### 9c2bFuX0o: Parse legacy forms but block execution paths
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | CLI hard cutovers where old invocations should fail fast with recovery guidance |
-| **Insight** | Keeping hidden legacy root args allows deterministic migration errors without relying on generic clap parse failures, while still forcing execution through the new subcommand path. |
-| **Suggested Action** | For future command cutovers, preserve temporary parse compatibility only for guidance and route all execution through explicit new subcommands. |
-| **Applies To** | `src/cli/command_tree.rs`, `src/cli/runtime.rs`, `src/cli/commands/management/verify.rs` |
-| **Linked Knowledge IDs** | 1vyDuwu3r |
-| **Score** | 0.84 |
-| **Confidence** | 0.91 |
-| **Applied** | yes |
-
 ### gEqMvGXEE: Prefer direct status flags over aggregated recommendation blocks
 
 | Field | Value |
@@ -132,5 +118,19 @@ created_at: 2026-03-04T16:27:11
 | **Linked Knowledge IDs** | 1vyDuwBfG |
 | **Score** | 0.86 |
 | **Confidence** | 0.90 |
+| **Applied** | yes |
+
+### 9c2bFuX0o: Parse legacy forms but block execution paths
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | CLI hard cutovers where old invocations should fail fast with recovery guidance |
+| **Insight** | Keeping hidden legacy root args allows deterministic migration errors without relying on generic clap parse failures, while still forcing execution through the new subcommand path. |
+| **Suggested Action** | For future command cutovers, preserve temporary parse compatibility only for guidance and route all execution through explicit new subcommands. |
+| **Applies To** | `src/cli/command_tree.rs`, `src/cli/runtime.rs`, `src/cli/commands/management/verify.rs` |
+| **Linked Knowledge IDs** | 1vyDuwu3r |
+| **Score** | 0.84 |
+| **Confidence** | 0.91 |
 | **Applied** | yes |
 

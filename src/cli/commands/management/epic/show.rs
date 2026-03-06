@@ -436,9 +436,9 @@ Teams cannot quickly understand planning intent and verification readiness.
 
 ## Goals & Objectives
 
-| Goal | Success Metric | Target |
-|------|----------------|--------|
-| Improve planning readability | epic show usefulness | 95% |
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | Improve planning readability | epic show usefulness | 95% |
 
 ## Requirements
 
@@ -465,7 +465,7 @@ Teams cannot quickly understand planning intent and verification readiness.
                 .doc
                 .goals
                 .iter()
-                .any(|goal| goal.contains("Improve planning readability"))
+                .any(|goal| goal.contains("GOAL-01: Improve planning readability"))
         );
         assert!(
             report

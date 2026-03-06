@@ -211,6 +211,14 @@ mod tests {
     }
 
     #[test]
+    fn epic_prd_goal_table_uses_canonical_goal_id_column() {
+        assert!(
+            epic::PRD.contains("| ID | Goal | Success Metric | Target |"),
+            "Epic PRD should scaffold canonical GOAL-* table columns"
+        );
+    }
+
+    #[test]
     fn epic_prd_has_verification_strategy_section() {
         assert!(
             epic::PRD.contains("## Verification Strategy"),

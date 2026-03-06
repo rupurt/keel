@@ -265,7 +265,7 @@ mod tests {
         let prd = fs::read_to_string(epic_dir.join("PRD.md")).unwrap();
         let goals_section = extract_section(&prd, "## Goals & Objectives", "## Users");
 
-        assert!(goals_section.contains("| Goal | Success Metric | Target |"));
+        assert!(goals_section.contains("| ID | Goal | Success Metric | Target |"));
         assert!(!goals_section.contains("Users cannot recover access after sign-in failures."));
     }
 

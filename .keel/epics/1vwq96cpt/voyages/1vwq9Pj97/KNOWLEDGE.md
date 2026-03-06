@@ -8,6 +8,23 @@ created_at: 2026-03-02T07:36:50
 
 ## Story Knowledge
 
+## Story: Enforce Architecture Contract Tests (1vwqCeg0n)
+
+### 1vyDuw41L: Source-Scanning Contracts Catch Layer Drift Early
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Enforcing adapter and read-model boundaries in a mixed legacy/refactor codebase where imports can regress silently. |
+| **Insight** | Lightweight file-content contract tests are effective guardrails for forbidden dependency edges and can be validated in normal unit-test flow. |
+| **Suggested Action** | Add/adjust architecture contract tests whenever a boundary or layering rule is introduced so regressions fail fast in CI. |
+| **Applies To** | src/architecture_contract_tests.rs, src/main.rs, src/next/algorithm.rs, src/commands/diagnostics/*, src/read_model/* |
+| **Applied** | Added enforceable boundary tests and wired them into test compilation via main test module declarations. |
+
+
+
+---
+
 ## Story: Define Layer Dependency Matrix (1vwqCd6wg)
 
 ### 1vyDuw12T: Matrix Contracts Need Both Narrative and Table Forms
@@ -42,9 +59,9 @@ created_at: 2026-03-02T07:36:50
 
 ---
 
-## Story: Enforce Architecture Contract Tests (1vwqCeg0n)
+## Synthesis
 
-### 1vyDuw41L: Source-Scanning Contracts Catch Layer Drift Early
+### mzqFfdlrU: Source-Scanning Contracts Catch Layer Drift Early
 
 | Field | Value |
 |-------|-------|
@@ -53,13 +70,10 @@ created_at: 2026-03-02T07:36:50
 | **Insight** | Lightweight file-content contract tests are effective guardrails for forbidden dependency edges and can be validated in normal unit-test flow. |
 | **Suggested Action** | Add/adjust architecture contract tests whenever a boundary or layering rule is introduced so regressions fail fast in CI. |
 | **Applies To** | src/architecture_contract_tests.rs, src/main.rs, src/next/algorithm.rs, src/commands/diagnostics/*, src/read_model/* |
+| **Linked Knowledge IDs** | 1vyDuw41L |
+| **Score** | 0.80 |
+| **Confidence** | 0.90 |
 | **Applied** | Added enforceable boundary tests and wired them into test compilation via main test module declarations. |
-
-
-
----
-
-## Synthesis
 
 ### 1jCvlheVL: Matrix Contracts Need Both Narrative and Table Forms
 
@@ -88,18 +102,4 @@ created_at: 2026-03-02T07:36:50
 | **Score** | 0.86 |
 | **Confidence** | 0.90 |
 | **Applied** | yes |
-
-### mzqFfdlrU: Source-Scanning Contracts Catch Layer Drift Early
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Enforcing adapter and read-model boundaries in a mixed legacy/refactor codebase where imports can regress silently. |
-| **Insight** | Lightweight file-content contract tests are effective guardrails for forbidden dependency edges and can be validated in normal unit-test flow. |
-| **Suggested Action** | Add/adjust architecture contract tests whenever a boundary or layering rule is introduced so regressions fail fast in CI. |
-| **Applies To** | src/architecture_contract_tests.rs, src/main.rs, src/next/algorithm.rs, src/commands/diagnostics/*, src/read_model/* |
-| **Linked Knowledge IDs** | 1vyDuw41L |
-| **Score** | 0.80 |
-| **Confidence** | 0.90 |
-| **Applied** | Added enforceable boundary tests and wired them into test compilation via main test module declarations. |
 

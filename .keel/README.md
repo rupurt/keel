@@ -26,7 +26,6 @@
 | Story | Type | Scope |
 |-------|------|-------|
 | [Validate Goal Links In PRD Requirements](stories/1vyGZeEI7/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Goal-to-Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFmfjA9/) |
-| [Parse Canonical Goal Lineage](stories/1vyGZeNMa/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Goal-to-Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFmfjA9/) |
 | [Keep Fresh Epic Scaffolds Doctor Clean](stories/1vyGZet0Z/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Epic Problem Hydration](epics/1vyFgR2MA/voyages/1vyFlAgHB/) |
 | [Render Goal Coverage In Epic Planning](stories/1vyGZfiEk/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Goal-to-Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFmfjA9/) |
 | [Parse Canonical Scope Lineage](stories/1vyGZfkjV/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Scope Lineage and Drift Detection](epics/1vyFgR2MA/voyages/1vyFn0OuN/) |

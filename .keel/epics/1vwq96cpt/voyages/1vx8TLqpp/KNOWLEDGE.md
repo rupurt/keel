@@ -8,18 +8,18 @@ created_at: 2026-03-02T12:03:53
 
 ## Story Knowledge
 
-## Story: Relocate Infrastructure Services Into Src Infrastructure (1vx8V5VeE)
+## Story: Remove Legacy Roots And Enforce Normalized Contracts (1vx8UtmC9)
 
-### 1vyDuwGDS: Relocated Source Files May Break Compile-Time Template Paths
+### 1vyDuw8wW: Enforce Root Layout With Contracts
 
 | Field | Value |
 |-------|-------|
-| **Category** | code |
-| **Context** | Moving `templates.rs` under `src/infrastructure` changed relative path depth for `include_str!` macro calls. |
-| **Insight** | Compile-time embedded asset paths are location-sensitive; module moves must include immediate path rebasing for `include_str!` constants. |
-| **Suggested Action** | After moving infrastructure modules, run a targeted compile/test immediately and patch relative asset paths before broader refactors. |
-| **Applies To** | src/infrastructure/templates.rs |
-| **Applied** |  |
+| **Category** | architecture |
+| **Context** | Large module migrations where old root files can remain importable after moves |
+| **Insight** | Physical moves alone are not stable; contract tests must also assert forbidden `main.rs` module declarations and removed root file paths |
+| **Suggested Action** | Pair every structural move with architecture contracts that check both declaration edges and on-disk paths |
+| **Applies To** | src/main.rs, src/architecture_contract_tests.rs, src/**/mod.rs |
+| **Applied** | Added normalized-root and legacy-path assertions for all migrated root modules |
 
 
 
@@ -42,18 +42,18 @@ created_at: 2026-03-02T12:03:53
 
 ---
 
-## Story: Remove Legacy Roots And Enforce Normalized Contracts (1vx8UtmC9)
+## Story: Relocate Infrastructure Services Into Src Infrastructure (1vx8V5VeE)
 
-### 1vyDuw8wW: Enforce Root Layout With Contracts
+### 1vyDuwGDS: Relocated Source Files May Break Compile-Time Template Paths
 
 | Field | Value |
 |-------|-------|
-| **Category** | architecture |
-| **Context** | Large module migrations where old root files can remain importable after moves |
-| **Insight** | Physical moves alone are not stable; contract tests must also assert forbidden `main.rs` module declarations and removed root file paths |
-| **Suggested Action** | Pair every structural move with architecture contracts that check both declaration edges and on-disk paths |
-| **Applies To** | src/main.rs, src/architecture_contract_tests.rs, src/**/mod.rs |
-| **Applied** | Added normalized-root and legacy-path assertions for all migrated root modules |
+| **Category** | code |
+| **Context** | Moving `templates.rs` under `src/infrastructure` changed relative path depth for `include_str!` macro calls. |
+| **Insight** | Compile-time embedded asset paths are location-sensitive; module moves must include immediate path rebasing for `include_str!` constants. |
+| **Suggested Action** | After moving infrastructure modules, run a targeted compile/test immediately and patch relative asset paths before broader refactors. |
+| **Applies To** | src/infrastructure/templates.rs |
+| **Applied** |  |
 
 
 
@@ -78,19 +78,19 @@ created_at: 2026-03-02T12:03:53
 
 ## Synthesis
 
-### Pa8P1V8dA: Relocated Source Files May Break Compile-Time Template Paths
+### 3kBfhLmlY: Enforce Root Layout With Contracts
 
 | Field | Value |
 |-------|-------|
-| **Category** | code |
-| **Context** | Moving `templates.rs` under `src/infrastructure` changed relative path depth for `include_str!` macro calls. |
-| **Insight** | Compile-time embedded asset paths are location-sensitive; module moves must include immediate path rebasing for `include_str!` constants. |
-| **Suggested Action** | After moving infrastructure modules, run a targeted compile/test immediately and patch relative asset paths before broader refactors. |
-| **Applies To** | src/infrastructure/templates.rs |
-| **Linked Knowledge IDs** | 1vyDuwGDS |
-| **Score** | 0.86 |
-| **Confidence** | 0.96 |
-| **Applied** |  |
+| **Category** | architecture |
+| **Context** | Large module migrations where old root files can remain importable after moves |
+| **Insight** | Physical moves alone are not stable; contract tests must also assert forbidden `main.rs` module declarations and removed root file paths |
+| **Suggested Action** | Pair every structural move with architecture contracts that check both declaration edges and on-disk paths |
+| **Applies To** | src/main.rs, src/architecture_contract_tests.rs, src/**/mod.rs |
+| **Linked Knowledge IDs** | 1vyDuw8wW |
+| **Score** | 0.89 |
+| **Confidence** | 0.92 |
+| **Applied** | Added normalized-root and legacy-path assertions for all migrated root modules |
 
 ### Q8pKzHiNH: Path-Wide Module Moves Need Import Rewrite First
 
@@ -106,19 +106,19 @@ created_at: 2026-03-02T12:03:53
 | **Confidence** | 0.92 |
 | **Applied** |  |
 
-### 3kBfhLmlY: Enforce Root Layout With Contracts
+### Pa8P1V8dA: Relocated Source Files May Break Compile-Time Template Paths
 
 | Field | Value |
 |-------|-------|
-| **Category** | architecture |
-| **Context** | Large module migrations where old root files can remain importable after moves |
-| **Insight** | Physical moves alone are not stable; contract tests must also assert forbidden `main.rs` module declarations and removed root file paths |
-| **Suggested Action** | Pair every structural move with architecture contracts that check both declaration edges and on-disk paths |
-| **Applies To** | src/main.rs, src/architecture_contract_tests.rs, src/**/mod.rs |
-| **Linked Knowledge IDs** | 1vyDuw8wW |
-| **Score** | 0.89 |
-| **Confidence** | 0.92 |
-| **Applied** | Added normalized-root and legacy-path assertions for all migrated root modules |
+| **Category** | code |
+| **Context** | Moving `templates.rs` under `src/infrastructure` changed relative path depth for `include_str!` macro calls. |
+| **Insight** | Compile-time embedded asset paths are location-sensitive; module moves must include immediate path rebasing for `include_str!` constants. |
+| **Suggested Action** | After moving infrastructure modules, run a targeted compile/test immediately and patch relative asset paths before broader refactors. |
+| **Applies To** | src/infrastructure/templates.rs |
+| **Linked Knowledge IDs** | 1vyDuwGDS |
+| **Score** | 0.86 |
+| **Confidence** | 0.96 |
+| **Applied** |  |
 
 ### Caz63yNKt: Multi-Requirement Stories Can Create Queue Cycles
 

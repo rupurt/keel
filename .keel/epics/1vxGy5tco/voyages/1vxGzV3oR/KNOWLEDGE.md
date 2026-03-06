@@ -25,23 +25,6 @@ created_at: 2026-03-03T08:10:40
 
 ---
 
-## Story: Codify Token Bucket Contract Tests (1vxH84K5a)
-
-### 1vyDuwGh9: Keep token inventories and CLI `new` surfaces coupled by drift tests
-
-| Field | Value |
-|-------|-------|
-| **Category** | testing |
-| **Context** | Token ownership policy spans templates and command interfaces; either side can drift silently without explicit coupling tests. |
-| **Insight** | A two-layer contract works best: template bucket tests catch unknown/out-of-bucket tokens while drift tests lock exact `new` command argument sets for ownership boundaries. |
-| **Suggested Action** | When adding new tokenized fields, update bucket inventories and expected `new` arg sets in the same change to keep policy deterministic. |
-| **Applies To** | src/infrastructure/templates.rs, src/drift_tests.rs, src/cli/command_tree.rs |
-| **Applied** |  |
-
-
-
----
-
 ## Story: Align CLI Contracts For Creation Commands (1vxH83MOO)
 
 ### 1vyDuwuNj: Keep CLI contract updates end-to-end
@@ -76,6 +59,23 @@ created_at: 2026-03-03T08:10:40
 
 ---
 
+## Story: Codify Token Bucket Contract Tests (1vxH84K5a)
+
+### 1vyDuwGh9: Keep token inventories and CLI `new` surfaces coupled by drift tests
+
+| Field | Value |
+|-------|-------|
+| **Category** | testing |
+| **Context** | Token ownership policy spans templates and command interfaces; either side can drift silently without explicit coupling tests. |
+| **Insight** | A two-layer contract works best: template bucket tests catch unknown/out-of-bucket tokens while drift tests lock exact `new` command argument sets for ownership boundaries. |
+| **Suggested Action** | When adding new tokenized fields, update bucket inventories and expected `new` arg sets in the same change to keep policy deterministic. |
+| **Applies To** | src/infrastructure/templates.rs, src/drift_tests.rs, src/cli/command_tree.rs |
+| **Applied** |  |
+
+
+
+---
+
 ## Synthesis
 
 ### Mb1Dyko1K: Keep CLI parser, runtime mapping, and template tokens aligned
@@ -90,20 +90,6 @@ created_at: 2026-03-03T08:10:40
 | **Linked Knowledge IDs** | 1vyDuwxcg |
 | **Score** | 0.82 |
 | **Confidence** | 0.91 |
-| **Applied** |  |
-
-### NzFf9pQSl: Keep token inventories and CLI `new` surfaces coupled by drift tests
-
-| Field | Value |
-|-------|-------|
-| **Category** | testing |
-| **Context** | Token ownership policy spans templates and command interfaces; either side can drift silently without explicit coupling tests. |
-| **Insight** | A two-layer contract works best: template bucket tests catch unknown/out-of-bucket tokens while drift tests lock exact `new` command argument sets for ownership boundaries. |
-| **Suggested Action** | When adding new tokenized fields, update bucket inventories and expected `new` arg sets in the same change to keep policy deterministic. |
-| **Applies To** | src/infrastructure/templates.rs, src/drift_tests.rs, src/cli/command_tree.rs |
-| **Linked Knowledge IDs** | 1vyDuwGh9 |
-| **Score** | 0.83 |
-| **Confidence** | 0.92 |
 | **Applied** |  |
 
 ### 60OXnfaXF: Keep CLI contract updates end-to-end
@@ -133,4 +119,18 @@ created_at: 2026-03-03T08:10:40
 | **Score** | 0.82 |
 | **Confidence** | 0.89 |
 | **Applied** | yes |
+
+### NzFf9pQSl: Keep token inventories and CLI `new` surfaces coupled by drift tests
+
+| Field | Value |
+|-------|-------|
+| **Category** | testing |
+| **Context** | Token ownership policy spans templates and command interfaces; either side can drift silently without explicit coupling tests. |
+| **Insight** | A two-layer contract works best: template bucket tests catch unknown/out-of-bucket tokens while drift tests lock exact `new` command argument sets for ownership boundaries. |
+| **Suggested Action** | When adding new tokenized fields, update bucket inventories and expected `new` arg sets in the same change to keep policy deterministic. |
+| **Applies To** | src/infrastructure/templates.rs, src/drift_tests.rs, src/cli/command_tree.rs |
+| **Linked Knowledge IDs** | 1vyDuwGh9 |
+| **Score** | 0.83 |
+| **Confidence** | 0.92 |
+| **Applied** |  |
 

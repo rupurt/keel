@@ -1133,8 +1133,8 @@ mod tests {
 ## Problem Statement
 
 ## Goals & Objectives
-| Goal | Success Metric | Target |
-|------|----------------|--------|
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
 
 ## Users
 | Persona | Description | Primary Need |
@@ -1202,9 +1202,9 @@ mod tests {
 Operators cannot reliably inspect deployment readiness across surfaces.
 
 ## Goals & Objectives
-| Goal | Success Metric | Target |
-|------|----------------|--------|
-| Reduce decision latency | Median review time | < 5 minutes |
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | Reduce decision latency | Median review time | < 5 minutes |
 
 ## Users
 | Persona | Description | Primary Need |

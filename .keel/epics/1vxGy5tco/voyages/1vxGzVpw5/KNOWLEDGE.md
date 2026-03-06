@@ -25,23 +25,6 @@ created_at: 2026-03-03T11:50:46
 
 ---
 
-## Story: Escalate Unresolved Scaffold Checks To Doctor Errors (1vxH84k3U)
-
-### 1vyDuwBAC: Report Pattern And Severity From One Shared Placeholder Extractor
-
-| Field | Value |
-|-------|-------|
-| **Category** | code |
-| **Context** | Multiple doctor checks were independently detecting TODO/tokens and emitting inconsistent warning messages. |
-| **Insight** | A shared unresolved-pattern extractor enables deterministic detection and allows every check to emit the same actionable `pattern: ...` output while enforcing error severity. |
-| **Suggested Action** | Route all new scaffold/default-text checks through the shared extractor and assert severity/message structure in unit tests. |
-| **Applies To** | `src/infrastructure/validation/structural.rs`, `src/cli/commands/diagnostics/doctor/checks/*.rs` |
-| **Applied** | yes |
-
-
-
----
-
 ## Story: Enforce Terminal Story Coherency In Doctor (1vxH84nTQ)
 
 ### 1vyDuwdbL: Stage-gate scaffold checks to avoid noisy early warnings
@@ -53,6 +36,23 @@ created_at: 2026-03-03T11:50:46
 | **Insight** | Stage filtering is critical: terminal-only checks avoid penalizing in-progress drafting while still hard-failing review-complete states. |
 | **Suggested Action** | Reuse a shared unresolved-pattern detector and explicitly gate by story stage (`needs-human-verification`, `done`) for terminal coherency rules. |
 | **Applies To** | src/cli/commands/diagnostics/doctor/checks/stories.rs, src/infrastructure/validation/structural.rs |
+| **Applied** | yes |
+
+
+
+---
+
+## Story: Escalate Unresolved Scaffold Checks To Doctor Errors (1vxH84k3U)
+
+### 1vyDuwBAC: Report Pattern And Severity From One Shared Placeholder Extractor
+
+| Field | Value |
+|-------|-------|
+| **Category** | code |
+| **Context** | Multiple doctor checks were independently detecting TODO/tokens and emitting inconsistent warning messages. |
+| **Insight** | A shared unresolved-pattern extractor enables deterministic detection and allows every check to emit the same actionable `pattern: ...` output while enforcing error severity. |
+| **Suggested Action** | Route all new scaffold/default-text checks through the shared extractor and assert severity/message structure in unit tests. |
+| **Applies To** | `src/infrastructure/validation/structural.rs`, `src/cli/commands/diagnostics/doctor/checks/*.rs` |
 | **Applied** | yes |
 
 
@@ -92,20 +92,6 @@ created_at: 2026-03-03T11:50:46
 | **Confidence** | 0.91 |
 | **Applied** | yes |
 
-### ZYCWs6ZWD: Report Pattern And Severity From One Shared Placeholder Extractor
-
-| Field | Value |
-|-------|-------|
-| **Category** | code |
-| **Context** | Multiple doctor checks were independently detecting TODO/tokens and emitting inconsistent warning messages. |
-| **Insight** | A shared unresolved-pattern extractor enables deterministic detection and allows every check to emit the same actionable `pattern: ...` output while enforcing error severity. |
-| **Suggested Action** | Route all new scaffold/default-text checks through the shared extractor and assert severity/message structure in unit tests. |
-| **Applies To** | `src/infrastructure/validation/structural.rs`, `src/cli/commands/diagnostics/doctor/checks/*.rs` |
-| **Linked Knowledge IDs** | 1vyDuwBAC |
-| **Score** | 0.84 |
-| **Confidence** | 0.91 |
-| **Applied** | yes |
-
 ### uvyKHWaQn: Stage-gate scaffold checks to avoid noisy early warnings
 
 | Field | Value |
@@ -117,6 +103,20 @@ created_at: 2026-03-03T11:50:46
 | **Applies To** | src/cli/commands/diagnostics/doctor/checks/stories.rs, src/infrastructure/validation/structural.rs |
 | **Linked Knowledge IDs** | 1vyDuwdbL |
 | **Score** | 0.85 |
+| **Confidence** | 0.91 |
+| **Applied** | yes |
+
+### ZYCWs6ZWD: Report Pattern And Severity From One Shared Placeholder Extractor
+
+| Field | Value |
+|-------|-------|
+| **Category** | code |
+| **Context** | Multiple doctor checks were independently detecting TODO/tokens and emitting inconsistent warning messages. |
+| **Insight** | A shared unresolved-pattern extractor enables deterministic detection and allows every check to emit the same actionable `pattern: ...` output while enforcing error severity. |
+| **Suggested Action** | Route all new scaffold/default-text checks through the shared extractor and assert severity/message structure in unit tests. |
+| **Applies To** | `src/infrastructure/validation/structural.rs`, `src/cli/commands/diagnostics/doctor/checks/*.rs` |
+| **Linked Knowledge IDs** | 1vyDuwBAC |
+| **Score** | 0.84 |
 | **Confidence** | 0.91 |
 | **Applied** | yes |
 
