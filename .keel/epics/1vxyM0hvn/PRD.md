@@ -1,6 +1,5 @@
 # Parallel Safety For Next - Product Requirements
 
-> Recommend parallel work with minimum merge-conflict risk using semantic code-structure analysis and pairwise blocker explanations.
 
 ## Problem Statement
 
@@ -8,11 +7,11 @@
 
 ## Goals & Objectives
 
-| Goal | Success Metric | Target |
-|------|----------------|--------|
-| Increase parallel recommendation safety | Parallel suggestions avoid high-conflict pairs under representative fixtures | 0 high-confidence conflicting pairs returned |
-| Make blocker reasoning explicit | Each excluded pair includes a clear blocker explanation | 100% of blocked pairs rendered with rationale |
-| Keep scoring conservative | Only high-confidence low-conflict sets are emitted | No speculative low-confidence recommendations |
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | Increase parallel recommendation safety | Parallel suggestions avoid high-conflict pairs under representative fixtures | 0 high-confidence conflicting pairs returned |
+| GOAL-02 | Make blocker reasoning explicit | Each excluded pair includes a clear blocker explanation | 100% of blocked pairs rendered with rationale |
+| GOAL-03 | Keep scoring conservative | Only high-confidence low-conflict sets are emitted | No speculative low-confidence recommendations |
 
 ## Users
 
@@ -26,39 +25,39 @@
 
 ### In Scope
 
-- Extract semantic conflict features from code-structure and story metadata signals.
-- Compute conservative pairwise conflict scores and confidence thresholds.
-- Render blocker and compatibility rationale for selected and excluded story pairs.
-- Add doctor/read-model coherence checks that keep conflict metadata and recommendations aligned.
+- [SCOPE-01] Extract semantic conflict features from code-structure and story metadata signals.
+- [SCOPE-02] Compute conservative pairwise conflict scores and confidence thresholds.
+- [SCOPE-03] Render blocker and compatibility rationale for selected and excluded story pairs.
+- [SCOPE-04] Add doctor/read-model coherence checks that keep conflict metadata and recommendations aligned.
 
 ### Out of Scope
 
-- Replacing existing dependency graph semantics outside parallel recommendation paths.
-- Probabilistic optimization based on runtime telemetry not available in-board.
-- Auto-merging or branch orchestration tooling.
+- [SCOPE-05] Replacing existing dependency graph semantics outside parallel recommendation paths.
+- [SCOPE-06] Probabilistic optimization based on runtime telemetry not available in-board.
+- [SCOPE-07] Auto-merging or branch orchestration tooling.
 
 ## Requirements
 
 ### Functional Requirements
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Priority | Rationale |
-|----|-------------|----------|-----------|
-| FR-01 | `next --parallel` must score pairwise story compatibility using semantic conflict features, not only explicit blockers. | must | Reduces hidden collision risk in concurrent execution. |
-| FR-02 | Recommendation selection must apply a conservative confidence threshold before returning parallel sets. | must | Prevents risky low-signal suggestions. |
-| FR-03 | Output must include pairwise blocker explanations for excluded candidate pairs. | must | Makes recommendations auditable and actionable. |
-| FR-04 | Story-level metadata must support explicit blocked-by overrides that feed conflict analysis. | should | Preserves human governance on special-case conflicts. |
-| FR-05 | Doctor and projection checks must validate coherence between conflict metadata and parallel recommendation output. | should | Prevents silent drift between data and decisions. |
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| FR-01 | `next --parallel` must score pairwise story compatibility using semantic conflict features, not only explicit blockers. | GOAL-01 GOAL-02 GOAL-03 | must | Reduces hidden collision risk in concurrent execution. |
+| FR-02 | Recommendation selection must apply a conservative confidence threshold before returning parallel sets. | GOAL-01 GOAL-02 GOAL-03 | must | Prevents risky low-signal suggestions. |
+| FR-03 | Output must include pairwise blocker explanations for excluded candidate pairs. | GOAL-01 GOAL-02 GOAL-03 | must | Makes recommendations auditable and actionable. |
+| FR-04 | Story-level metadata must support explicit blocked-by overrides that feed conflict analysis. | GOAL-01 GOAL-02 GOAL-03 | should | Preserves human governance on special-case conflicts. |
+| FR-05 | Doctor and projection checks must validate coherence between conflict metadata and parallel recommendation output. | GOAL-01 GOAL-02 GOAL-03 | should | Prevents silent drift between data and decisions. |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ### Non-Functional Requirements
 
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Priority | Rationale |
-|----|-------------|----------|-----------|
-| NFR-01 | Conflict scoring must be deterministic for identical board inputs. | must | Ensures reproducible queue guidance. |
-| NFR-02 | Pairwise analysis must remain performant for typical active-queue sizes. | must | Prevents recommendation latency regressions. |
-| NFR-03 | Rendering must stay concise while still exposing blocker rationale for decision review. | should | Balances usability and diagnostic depth. |
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| NFR-01 | Conflict scoring must be deterministic for identical board inputs. | GOAL-01 GOAL-02 GOAL-03 | must | Ensures reproducible queue guidance. |
+| NFR-02 | Pairwise analysis must remain performant for typical active-queue sizes. | GOAL-01 GOAL-02 GOAL-03 | must | Prevents recommendation latency regressions. |
+| NFR-03 | Rendering must stay concise while still exposing blocker rationale for decision review. | GOAL-01 GOAL-02 GOAL-03 | should | Balances usability and diagnostic depth. |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
 
 ## Verification Strategy

@@ -7,16 +7,16 @@
 ## Scope
 
 In scope:
-- Introduce canonical `GOAL-*` identifiers in PRD Goals & Objectives rows.
-- Link PRD FR/NFR requirement rows to one or more goal IDs.
-- Detect orphaned goals, invalid goal refs, and requirements with missing goal linkage.
-- Surface goal-to-requirement lineage in epic planning diagnostics and read views.
+- [SCOPE-05] Introduce canonical `GOAL-*` identifiers in PRD Goals & Objectives rows.
+- [SCOPE-05] Link PRD FR/NFR requirement rows to one or more goal IDs.
+- [SCOPE-05] Detect orphaned goals, invalid goal refs, and requirements with missing goal linkage.
+- [SCOPE-05] Surface goal-to-requirement lineage in epic planning diagnostics and read views.
 
 Out of scope:
-- CLI hydration of problem/goal seed content during `epic new`.
-- PRD-to-SRS FR/NFR lineage blocking.
-- Scope linkage and scope-drift rules.
-- Story-level lineage beyond PRD requirements.
+- [SCOPE-04] CLI hydration of problem/goal seed content during `epic new`.
+- [SCOPE-02] PRD-to-SRS FR/NFR lineage blocking.
+- [SCOPE-06] Scope linkage and scope-drift rules.
+- [SCOPE-07] Story-level lineage beyond PRD requirements.
 
 ## Assumptions & Dependencies
 

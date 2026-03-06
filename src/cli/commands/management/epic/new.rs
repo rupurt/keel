@@ -244,9 +244,12 @@ mod tests {
         let prd = fs::read_to_string(epic_dir.join("PRD.md")).unwrap();
 
         assert!(readme.contains("> Users cannot recover access after sign-in failures."));
-        assert!(prd.contains("> Users cannot recover access after sign-in failures."));
         assert!(prd.contains(
             "## Problem Statement\n\nUsers cannot recover access after sign-in failures."
+        ));
+        assert!(!prd.contains("> Users cannot recover access after sign-in failures."));
+        assert!(prd.contains(
+            "- [SCOPE-01] The smallest end-to-end change needed to address the problem statement."
         ));
     }
 

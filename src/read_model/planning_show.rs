@@ -10,7 +10,6 @@ use chrono::{Datelike, Duration, Local, NaiveDate, NaiveDateTime};
 
 use crate::domain::model::{Board, Epic, EpicState, Story, StoryState, Voyage};
 use crate::domain::state_machine::invariants;
-pub use crate::domain::state_machine::invariants::{GoalEntry, parse_prd_goal_entries};
 use crate::infrastructure::verification::parser::{
     Comparison, parse_ac_references, parse_verify_annotations,
 };
@@ -64,8 +63,6 @@ impl VerificationRollup {
 #[derive(Debug, Clone, PartialEq)]
 pub struct EpicShowProjection {
     pub doc: PlanningDocSummary,
-    pub goal_coverage: Vec<EpicGoalCoverageRow>,
-    pub scope_coverage: Vec<EpicScopeCoverageRow>,
     pub scope_drift: Vec<ScopeDriftRow>,
     pub requirement_coverage: Vec<EpicRequirementCoverageRow>,
     pub total_voyages: usize,
@@ -80,46 +77,12 @@ pub struct EpicShowProjection {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct EpicGoalCoverageRow {
-    pub id: String,
-    pub goal: String,
-    pub success_metric: String,
-    pub target: String,
-    pub linked_requirements: Vec<String>,
-}
-
-impl EpicGoalCoverageRow {
-    pub fn linked_requirement_count(&self) -> usize {
-        self.linked_requirements.len()
-    }
-
-    pub fn is_covered(&self) -> bool {
-        !self.linked_requirements.is_empty()
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ScopeLineageRow {
     pub scope_id: String,
     pub voyage_description: String,
     pub voyage_disposition: invariants::ScopeDisposition,
     pub epic_description: Option<String>,
     pub epic_disposition: Option<invariants::ScopeDisposition>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct EpicScopeCoverageVoyageLink {
-    pub voyage_id: String,
-    pub description: String,
-    pub disposition: invariants::ScopeDisposition,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct EpicScopeCoverageRow {
-    pub scope_id: String,
-    pub epic_description: String,
-    pub epic_disposition: invariants::ScopeDisposition,
-    pub linked_voyages: Vec<EpicScopeCoverageVoyageLink>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -151,21 +114,13 @@ pub struct EpicRequirementCoverageChild {
 pub struct EpicRequirementCoverageRow {
     pub id: String,
     pub description: String,
-    pub kind: RequirementKind,
+    pub linked_goals: Vec<String>,
     pub linked_children: Vec<EpicRequirementCoverageChild>,
 }
 
 impl EpicRequirementCoverageRow {
     pub fn linked_child_count(&self) -> usize {
         self.linked_children.len()
-    }
-
-    pub fn linked_voyage_count(&self) -> usize {
-        self.linked_children
-            .iter()
-            .map(|child| child.voyage_id.as_str())
-            .collect::<BTreeSet<_>>()
-            .len()
     }
 
     pub fn is_covered(&self) -> bool {
@@ -248,13 +203,6 @@ struct StoryEvidence {
     manual_count_by_req: BTreeMap<String, usize>,
 }
 
-#[derive(Debug, Clone)]
-struct VoyageScopeLinkRef {
-    voyage_id: String,
-    voyage_index: Option<u32>,
-    link: invariants::SrsScopeLink,
-}
-
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 struct RequirementEntry {
     id: String,
@@ -288,45 +236,27 @@ pub fn build_epic_show_projection(board: &Board, epic: &Epic) -> Result<EpicShow
     let prd_path = epic.path.parent().unwrap().join("PRD.md");
     let prd_content = fs::read_to_string(&prd_path).unwrap_or_default();
     let doc = extract_planning_doc_summary(&prd_content);
-    let goal_entries = parse_prd_goal_entries(&prd_content);
-    let prd_lineage = invariants::parse_prd_requirement_lineage(epic.id(), &prd_path);
-    let goal_coverage = goal_entries
-        .into_iter()
-        .map(|entry| {
-            let linked_requirements = prd_lineage
-                .ordered_entries()
-                .into_iter()
-                .filter(|requirement| requirement.goal_refs.contains(&entry.id))
-                .map(|requirement| requirement.id.clone())
-                .collect();
-
-            EpicGoalCoverageRow {
-                id: entry.id,
-                goal: entry.goal,
-                success_metric: entry.success_metric,
-                target: entry.target,
-                linked_requirements,
-            }
-        })
-        .collect();
-    let (scope_coverage, scope_drift) = build_epic_scope_projection(board, epic);
+    let scope_drift = build_epic_scope_drift(board, epic);
     let requirement_coverage = invariants::build_epic_prd_requirement_coverage(epic, board)
         .into_iter()
-        .map(|row| EpicRequirementCoverageRow {
-            id: row.parent.id,
-            description: row.parent.description,
-            kind: match row.parent.kind {
-                invariants::PrdRequirementKind::Functional => RequirementKind::Functional,
-                invariants::PrdRequirementKind::NonFunctional => RequirementKind::NonFunctional,
-            },
-            linked_children: row
-                .linked_children
-                .into_iter()
-                .map(|child| EpicRequirementCoverageChild {
-                    voyage_id: child.voyage_id,
-                    requirement_id: child.requirement_id,
-                })
-                .collect(),
+        .map(|row| {
+            let mut linked_goals = row.parent.goal_refs;
+            linked_goals.sort();
+            linked_goals.dedup();
+
+            EpicRequirementCoverageRow {
+                id: row.parent.id,
+                description: row.parent.description,
+                linked_goals,
+                linked_children: row
+                    .linked_children
+                    .into_iter()
+                    .map(|child| EpicRequirementCoverageChild {
+                        voyage_id: child.voyage_id,
+                        requirement_id: child.requirement_id,
+                    })
+                    .collect(),
+            }
         })
         .collect();
 
@@ -462,8 +392,6 @@ pub fn build_epic_show_projection(board: &Board, epic: &Epic) -> Result<EpicShow
 
     Ok(EpicShowProjection {
         doc,
-        goal_coverage,
-        scope_coverage,
         scope_drift,
         requirement_coverage,
         total_voyages: voyages.len(),
@@ -774,7 +702,7 @@ pub fn extract_planning_doc_summary(content: &str) -> PlanningDocSummary {
     let problem_statement = extract_section(content, "## Problem Statement")
         .and_then(|section| authored_section_text(&section));
 
-    let goals = parse_prd_goal_entries(content)
+    let goals = invariants::parse_prd_goal_entries(content)
         .into_iter()
         .map(|entry| format_goal_entry(&entry))
         .collect();
@@ -912,13 +840,15 @@ fn build_voyage_scope_projection(
     (scope_lineage, scope_drift)
 }
 
-fn build_epic_scope_projection(
-    board: &Board,
-    epic: &Epic,
-) -> (Vec<EpicScopeCoverageRow>, Vec<ScopeDriftRow>) {
+fn build_epic_scope_drift(board: &Board, epic: &Epic) -> Vec<ScopeDriftRow> {
     let prd_path = epic.path.parent().unwrap().join("PRD.md");
     let prd_content = fs::read_to_string(&prd_path).unwrap_or_default();
-    let prd_scope_entries = invariants::parse_prd_scope_entries(&prd_content);
+    let mut uncovered_in_scope: BTreeSet<String> =
+        invariants::parse_prd_scope_entries(&prd_content)
+            .into_iter()
+            .filter(|entry| entry.disposition == invariants::ScopeDisposition::In)
+            .map(|entry| entry.id)
+            .collect();
 
     let mut voyages = board.voyages_for_epic_id(epic.id());
     voyages.sort_by(|left, right| {
@@ -930,21 +860,15 @@ fn build_epic_scope_projection(
         )
     });
 
-    let mut links_by_scope: BTreeMap<String, Vec<VoyageScopeLinkRef>> = BTreeMap::new();
     let mut scope_drift = Vec::new();
 
     for voyage in voyages {
         let srs_path = voyage.path.parent().unwrap().join("SRS.md");
         let srs_content = fs::read_to_string(&srs_path).unwrap_or_default();
         for link in invariants::parse_srs_scope_links(&srs_content) {
-            links_by_scope
-                .entry(link.parent_id.clone())
-                .or_default()
-                .push(VoyageScopeLinkRef {
-                    voyage_id: voyage.id().to_string(),
-                    voyage_index: voyage.index(),
-                    link,
-                });
+            if link.disposition == invariants::ScopeDisposition::In {
+                uncovered_in_scope.remove(&link.parent_id);
+            }
         }
         scope_drift.extend(
             invariants::evaluate_voyage_scope_lineage(voyage, board)
@@ -956,45 +880,20 @@ fn build_epic_scope_projection(
         );
     }
 
-    for links in links_by_scope.values_mut() {
-        links.sort_by(|left, right| {
-            crate::infrastructure::utils::cmp_optional_index_then_id(
-                left.voyage_index,
-                &left.voyage_id,
-                right.voyage_index,
-                &right.voyage_id,
-            )
-            .then_with(|| left.link.disposition.cmp(&right.link.disposition))
-            .then_with(|| left.link.description.cmp(&right.link.description))
+    for scope_id in uncovered_in_scope {
+        scope_drift.push(ScopeDriftRow {
+            voyage_id: None,
+            issue: invariants::ScopeLineageIssue {
+                artifact_path: prd_path.clone(),
+                scope_id: Some(scope_id),
+                line: None,
+                kind: invariants::ScopeLineageIssueKind::MissingScopeMapping,
+            },
         });
     }
-
-    let scope_coverage = prd_scope_entries
-        .into_iter()
-        .map(|entry| {
-            let scope_id = entry.id;
-            let linked_voyages = links_by_scope
-                .get(&scope_id)
-                .into_iter()
-                .flat_map(|links| links.iter())
-                .map(|reference| EpicScopeCoverageVoyageLink {
-                    voyage_id: reference.voyage_id.clone(),
-                    description: reference.link.description.clone(),
-                    disposition: reference.link.disposition,
-                })
-                .collect();
-
-            EpicScopeCoverageRow {
-                scope_id,
-                epic_description: entry.description,
-                epic_disposition: entry.disposition,
-                linked_voyages,
-            }
-        })
-        .collect();
     sort_scope_drift_rows(&mut scope_drift);
 
-    (scope_coverage, scope_drift)
+    scope_drift
 }
 
 fn sort_scope_drift_rows(rows: &mut [ScopeDriftRow]) {
@@ -1088,7 +987,7 @@ pub fn authored_section_text(section: &str) -> Option<String> {
 }
 
 pub fn parse_goals(content: &str) -> Vec<String> {
-    parse_prd_goal_entries(content)
+    invariants::parse_prd_goal_entries(content)
         .into_iter()
         .map(|entry| format_goal_entry(&entry))
         .collect()
@@ -1131,7 +1030,7 @@ fn parse_verification_strategy(section: &str) -> Vec<String> {
     strategy
 }
 
-fn format_goal_entry(entry: &GoalEntry) -> String {
+fn format_goal_entry(entry: &invariants::GoalEntry) -> String {
     format!(
         "{}: {} ({} -> {})",
         entry.id, entry.goal, entry.success_metric, entry.target
@@ -1636,15 +1535,15 @@ Operators need reliable planning summaries.
 "#;
 
         assert_eq!(
-            parse_prd_goal_entries(prd),
+            invariants::parse_prd_goal_entries(prd),
             vec![
-                GoalEntry {
+                invariants::GoalEntry {
                     id: "GOAL-01".to_string(),
                     goal: "Improve strategic traceability".to_string(),
                     success_metric: "linked requirements".to_string(),
                     target: "100%".to_string(),
                 },
-                GoalEntry {
+                invariants::GoalEntry {
                     id: "GOAL-02".to_string(),
                     goal: "Reduce planning ambiguity".to_string(),
                     success_metric: "approval confidence".to_string(),
@@ -1674,7 +1573,10 @@ Operators need reliable planning summaries.
 | GOAL-02 | Reduce planning ambiguity | approval confidence | 90% |
 "#;
 
-        assert_eq!(parse_prd_goal_entries(prd_a), parse_prd_goal_entries(prd_b));
+        assert_eq!(
+            invariants::parse_prd_goal_entries(prd_a),
+            invariants::parse_prd_goal_entries(prd_b)
+        );
     }
 
     #[test]
@@ -1824,11 +1726,10 @@ Operators need reliable planning summaries.
         // Stable section ordering/contents from authored planning docs.
         assert_eq!(epic_a.doc.problem_statement, epic_b.doc.problem_statement);
         assert_eq!(epic_a.doc.goals, epic_b.doc.goals);
-        assert_eq!(epic_a.goal_coverage, epic_b.goal_coverage);
     }
 
     #[test]
-    fn epic_goal_lineage_preserves_one_to_many_fanout() {
+    fn epic_requirement_goal_lineage_preserves_one_to_many_fanout() {
         let temp = TestBoardBuilder::new().epic(TestEpic::new("e1")).build();
         std::fs::write(
             temp.path().join("epics/e1/PRD.md"),
@@ -1853,32 +1754,23 @@ Operators need reliable planning summaries.
         let board = load_board(temp.path()).unwrap();
         let epic = build_epic_show_projection(&board, board.require_epic("e1").unwrap()).unwrap();
 
-        let goal_ids: Vec<_> = epic
-            .goal_coverage
+        let fr01 = epic
+            .requirement_coverage
             .iter()
-            .map(|row| row.id.clone())
-            .collect();
-        assert_eq!(goal_ids, vec!["GOAL-01", "GOAL-02"]);
-
-        let goal_01 = epic
-            .goal_coverage
-            .iter()
-            .find(|row| row.id == "GOAL-01")
+            .find(|row| row.id == "FR-01")
             .unwrap();
-        assert_eq!(goal_01.linked_requirements, vec!["FR-01", "FR-02"]);
-        assert_eq!(goal_01.linked_requirement_count(), 2);
+        assert_eq!(fr01.linked_goals, vec!["GOAL-01", "GOAL-02"]);
 
-        let goal_02 = epic
-            .goal_coverage
+        let fr02 = epic
+            .requirement_coverage
             .iter()
-            .find(|row| row.id == "GOAL-02")
+            .find(|row| row.id == "FR-02")
             .unwrap();
-        assert_eq!(goal_02.linked_requirements, vec!["FR-01"]);
-        assert_eq!(goal_02.linked_requirement_count(), 1);
+        assert_eq!(fr02.linked_goals, vec!["GOAL-01"]);
     }
 
     #[test]
-    fn epic_goal_lineage_projection_is_deterministic() {
+    fn epic_requirement_goal_lineage_projection_is_deterministic() {
         let board_a = TestBoardBuilder::new().epic(TestEpic::new("e1")).build();
         let board_b = TestBoardBuilder::new().epic(TestEpic::new("e1")).build();
 
@@ -1922,7 +1814,8 @@ Operators need reliable planning summaries.
         let epic_b =
             build_epic_show_projection(&loaded_b, loaded_b.require_epic("e1").unwrap()).unwrap();
 
-        assert_eq!(epic_a.goal_coverage, epic_b.goal_coverage);
+        assert_eq!(epic_a.doc.goals, epic_b.doc.goals);
+        assert_eq!(epic_a.requirement_coverage, epic_b.requirement_coverage);
     }
 
     #[test]
@@ -1962,16 +1855,16 @@ Operators need reliable planning summaries.
             r#"# PRD
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Priority | Rationale |
-|----|-------------|----------|-----------|
-| FR-01 | Shared parent. | must | fanout |
-| FR-02 | Uncovered parent. | should | uncovered |
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| FR-01 | Shared parent. | GOAL-02 GOAL-01 | must | fanout |
+| FR-02 | Uncovered parent. | GOAL-01 | should | uncovered |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Priority | Rationale |
-|----|-------------|----------|-----------|
-| NFR-01 | Quality parent. | must | coverage |
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| NFR-01 | Quality parent. | GOAL-03 | must | coverage |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
 "#,
         )
@@ -1992,8 +1885,8 @@ Operators need reliable planning summaries.
             .iter()
             .find(|row| row.id == "FR-01")
             .unwrap();
+        assert_eq!(fr01.linked_goals, vec!["GOAL-01", "GOAL-02"]);
         assert_eq!(fr01.linked_child_count(), 2);
-        assert_eq!(fr01.linked_voyage_count(), 2);
         let fr01_children: Vec<_> = fr01
             .linked_children
             .iter()
@@ -2006,6 +1899,7 @@ Operators need reliable planning summaries.
             .iter()
             .find(|row| row.id == "FR-02")
             .unwrap();
+        assert_eq!(fr02.linked_goals, vec!["GOAL-01"]);
         assert!(!fr02.is_covered());
         assert_eq!(fr02.linked_child_count(), 0);
 
@@ -2014,6 +1908,7 @@ Operators need reliable planning summaries.
             .iter()
             .find(|row| row.id == "NFR-01")
             .unwrap();
+        assert_eq!(nfr01.linked_goals, vec!["GOAL-03"]);
         assert_eq!(nfr01.linked_child_count(), 1);
         assert_eq!(nfr01.linked_children[0].voyage_id, "v2");
         assert_eq!(nfr01.linked_children[0].requirement_id, "SRS-NFR-01");
@@ -2155,17 +2050,6 @@ Out of scope:
         assert_eq!(contradiction.voyage_disposition, ScopeDisposition::In);
         assert_eq!(contradiction.epic_disposition, Some(ScopeDisposition::Out));
 
-        let missing = voyage
-            .scope_drift
-            .iter()
-            .find(|row| row.issue.scope_id.as_deref() == Some("SCOPE-01"))
-            .unwrap();
-        assert_eq!(
-            missing.issue.kind,
-            ScopeLineageIssueKind::MissingScopeMapping
-        );
-        assert_eq!(missing.voyage_id, None);
-
         let unknown = voyage
             .scope_drift
             .iter()
@@ -2173,36 +2057,16 @@ Out of scope:
             .unwrap();
         assert_eq!(unknown.issue.kind, ScopeLineageIssueKind::UnknownScopeRef);
 
-        let epic_scope_one = epic
-            .scope_coverage
+        let epic_missing = epic
+            .scope_drift
             .iter()
-            .find(|row| row.scope_id == "SCOPE-01")
+            .find(|row| {
+                row.issue.scope_id.as_deref() == Some("SCOPE-01") && row.voyage_id.is_none()
+            })
             .unwrap();
-        assert_eq!(epic_scope_one.epic_disposition, ScopeDisposition::In);
-        assert!(epic_scope_one.linked_voyages.is_empty());
-
-        let epic_scope_two = epic
-            .scope_coverage
-            .iter()
-            .find(|row| row.scope_id == "SCOPE-02")
-            .unwrap();
-        assert_eq!(epic_scope_two.linked_voyages.len(), 1);
-        assert_eq!(epic_scope_two.linked_voyages[0].voyage_id, "v1");
         assert_eq!(
-            epic_scope_two.linked_voyages[0].disposition,
-            ScopeDisposition::Out
-        );
-
-        let epic_scope_three = epic
-            .scope_coverage
-            .iter()
-            .find(|row| row.scope_id == "SCOPE-03")
-            .unwrap();
-        assert_eq!(epic_scope_three.linked_voyages.len(), 1);
-        assert_eq!(epic_scope_three.linked_voyages[0].voyage_id, "v1");
-        assert_eq!(
-            epic_scope_three.linked_voyages[0].disposition,
-            ScopeDisposition::In
+            epic_missing.issue.kind,
+            ScopeLineageIssueKind::MissingScopeMapping
         );
 
         let epic_unknown = epic
@@ -2290,6 +2154,18 @@ Out of scope:
             epic_contradiction.issue.kind,
             ScopeLineageIssueKind::OutOfScopeContradiction
         );
+
+        let epic_missing = epic
+            .scope_drift
+            .iter()
+            .find(|row| {
+                row.issue.scope_id.as_deref() == Some("SCOPE-02") && row.voyage_id.is_none()
+            })
+            .unwrap();
+        assert_eq!(
+            epic_missing.issue.kind,
+            ScopeLineageIssueKind::MissingScopeMapping
+        );
     }
 
     #[test]
@@ -2325,7 +2201,7 @@ Out of scope:
         )
         .unwrap();
 
-        let (epic, voyage) = load_scope_reports(&temp);
+        let (_epic, voyage) = load_scope_reports(&temp);
 
         assert_eq!(
             voyage.scope.in_scope,
@@ -2354,26 +2230,6 @@ Out of scope:
             out_of_scope_lineage.voyage_description,
             "Leave contradiction repair for a later slice."
         );
-
-        let in_scope_coverage = epic
-            .scope_coverage
-            .iter()
-            .find(|row| row.scope_id == "SCOPE-01")
-            .unwrap();
-        assert_eq!(
-            in_scope_coverage.epic_description,
-            "Render scope lineage inside the voyage summary."
-        );
-
-        let out_of_scope_coverage = epic
-            .scope_coverage
-            .iter()
-            .find(|row| row.scope_id == "SCOPE-02")
-            .unwrap();
-        assert_eq!(
-            out_of_scope_coverage.epic_description,
-            "Leave contradiction repair for a later slice."
-        );
     }
 
     #[test]
@@ -2396,8 +2252,6 @@ Out of scope:
 
         let EpicShowProjection {
             doc,
-            goal_coverage,
-            scope_coverage,
             scope_drift,
             requirement_coverage,
             total_voyages,
@@ -2412,8 +2266,6 @@ Out of scope:
         } = epic;
         let _ = (
             doc,
-            goal_coverage,
-            scope_coverage,
             scope_drift,
             requirement_coverage,
             total_voyages,

@@ -23,8 +23,12 @@ static STRONG_EMPHASIS_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\*\*([^*]+)\*\*").expect("valid strong emphasis regex"));
 static EMPHASIS_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\*([^*]+)\*").expect("valid emphasis regex"));
+static GOAL_ID_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\b(GOAL-\d+)\b").expect("valid goal id regex"));
 const GITHUB_INLINE_CODE_FG: (u8, u8, u8) = (230, 237, 243);
 const GITHUB_INLINE_CODE_BG: (u8, u8, u8) = (48, 54, 61);
+const GOAL_HIGHLIGHT_FG: (u8, u8, u8) = (255, 244, 214);
+const GOAL_HIGHLIGHT_BG: (u8, u8, u8) = (112, 80, 0);
 
 /// Color a stage label by its workflow meaning
 pub fn styled_stage(stage: &StoryState) -> String {
@@ -254,7 +258,7 @@ pub fn styled_inline_markdown(value: &str) -> String {
 
     while let Some(start_offset) = value[cursor..].find('`') {
         let start = cursor + start_offset;
-        rendered.push_str(&styled_inline_emphasis(&value[cursor..start]));
+        rendered.push_str(&styled_inline_text(&value[cursor..start]));
 
         let tick_count = value[start..]
             .chars()
@@ -274,8 +278,12 @@ pub fn styled_inline_markdown(value: &str) -> String {
         }
     }
 
-    rendered.push_str(&styled_inline_emphasis(&value[cursor..]));
+    rendered.push_str(&styled_inline_text(&value[cursor..]));
     rendered
+}
+
+fn styled_inline_text(value: &str) -> String {
+    styled_goal_refs(&styled_inline_emphasis(value))
 }
 
 fn styled_inline_code(value: &str) -> String {
@@ -295,6 +303,36 @@ fn styled_inline_code(value: &str) -> String {
                 )
         )
     )
+}
+
+/// Color a goal ID with a distinct highlight so strategic lineage stands out in read surfaces.
+pub fn styled_goal_id(id: &str) -> String {
+    format!(
+        "{}",
+        id.style(
+            Style::new()
+                .bold()
+                .truecolor(
+                    GOAL_HIGHLIGHT_FG.0,
+                    GOAL_HIGHLIGHT_FG.1,
+                    GOAL_HIGHLIGHT_FG.2
+                )
+                .on_truecolor(
+                    GOAL_HIGHLIGHT_BG.0,
+                    GOAL_HIGHLIGHT_BG.1,
+                    GOAL_HIGHLIGHT_BG.2
+                )
+        )
+    )
+}
+
+/// Highlight canonical goal IDs inside already-rendered inline text.
+pub fn styled_goal_refs(value: &str) -> String {
+    GOAL_ID_RE
+        .replace_all(value, |captures: &regex::Captures<'_>| {
+            styled_goal_id(&captures[1])
+        })
+        .into_owned()
 }
 
 /// Map common fenced code block language tags to syntect file extensions.
@@ -523,6 +561,22 @@ mod tests {
         assert!(!rendered.contains("`cargo test`"));
         assert!(rendered.contains("cargo test"));
         assert!(rendered.contains("\x1b[38;2;"));
+        assert!(rendered.contains(";48;2;"));
+    }
+
+    #[test]
+    fn styled_goal_id_uses_highlight_colors() {
+        let rendered = styled_goal_id("GOAL-01");
+        assert!(rendered.contains("GOAL-01"));
+        assert!(rendered.contains("\x1b[38;2;"));
+        assert!(rendered.contains(";48;2;"));
+    }
+
+    #[test]
+    fn styled_inline_markdown_highlights_goal_ids() {
+        let rendered = styled_inline_markdown("Link GOAL-01 to GOAL-02.");
+        assert!(rendered.contains("GOAL-01"));
+        assert!(rendered.contains("GOAL-02"));
         assert!(rendered.contains(";48;2;"));
     }
 

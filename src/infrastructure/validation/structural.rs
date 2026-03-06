@@ -12,6 +12,10 @@ use crate::infrastructure::validation::types::{CheckId, Fix, Problem, Severity};
 
 static TEMPLATE_TOKEN_RE: LazyLock<regex::Regex> =
     LazyLock::new(|| regex::Regex::new(r"\{\{([^}]+)\}\}").unwrap());
+static GOAL_ID_RE: LazyLock<regex::Regex> =
+    LazyLock::new(|| regex::Regex::new(r"^GOAL-\d+$").unwrap());
+static SCOPE_BULLET_RE: LazyLock<regex::Regex> =
+    LazyLock::new(|| regex::Regex::new(r"^- \[(SCOPE-\d+)\] (.+)$").unwrap());
 static LEGACY_SCAFFOLD_MARKERS: &[&str] = &["Define acceptance criteria for this slice"];
 static EPIC_PRD_DEFAULT_ROW_MARKERS: &[&str] = &[
     "Deliver the primary user workflow for this epic end-to-end.",
@@ -704,12 +708,12 @@ pub fn check_epic_prd_authored_content(path: &Path) -> Vec<Problem> {
 
     let has_goals = extract_markdown_section(&content, "## Goals & Objectives")
         .as_deref()
-        .is_some_and(section_has_authored_table_or_bullets);
+        .is_some_and(section_has_canonical_goal_rows);
     if !has_goals {
         problems.push(
             Problem::error(
                 path.to_path_buf(),
-                "PRD section 'Goals & Objectives' must include at least one authored goal",
+                "PRD section 'Goals & Objectives' must include at least one canonical GOAL-* row",
             )
             .with_check_id(CheckId::EpicPrdAuthoredContent),
         );
@@ -729,13 +733,15 @@ pub fn check_epic_prd_authored_content(path: &Path) -> Vec<Problem> {
     }
 
     let scope = extract_markdown_section(&content, "## Scope");
-    let (in_scope_count, out_scope_count) =
-        scope.as_deref().map(parse_scope_bullets).unwrap_or((0, 0));
+    let (in_scope_count, out_scope_count) = scope
+        .as_deref()
+        .map(parse_canonical_scope_bullets)
+        .unwrap_or((0, 0));
     if in_scope_count == 0 {
         problems.push(
             Problem::error(
                 path.to_path_buf(),
-                "PRD section 'Scope' must include at least one 'In Scope' bullet",
+                "PRD section 'Scope' must include at least one canonical 'In Scope' [SCOPE-*] bullet",
             )
             .with_check_id(CheckId::EpicPrdAuthoredContent),
         );
@@ -744,7 +750,7 @@ pub fn check_epic_prd_authored_content(path: &Path) -> Vec<Problem> {
         problems.push(
             Problem::error(
                 path.to_path_buf(),
-                "PRD section 'Scope' must include at least one 'Out of Scope' bullet",
+                "PRD section 'Scope' must include at least one canonical 'Out of Scope' [SCOPE-*] bullet",
             )
             .with_check_id(CheckId::EpicPrdAuthoredContent),
         );
@@ -884,10 +890,6 @@ fn section_has_authored_paragraph(section: &str) -> bool {
     })
 }
 
-fn section_has_authored_table_or_bullets(section: &str) -> bool {
-    section_has_authored_table_row(section) || section_has_authored_bullets(section)
-}
-
 fn section_has_authored_text_or_list_or_table(section: &str) -> bool {
     section_has_authored_paragraph(section)
         || section_has_authored_bullets(section)
@@ -943,7 +945,58 @@ fn section_has_authored_checkbox(section: &str) -> bool {
     })
 }
 
-fn parse_scope_bullets(scope_section: &str) -> (usize, usize) {
+fn section_has_canonical_goal_rows(section: &str) -> bool {
+    let mut has_canonical_header = false;
+
+    for line in section.lines() {
+        let trimmed = line.trim();
+        if !trimmed.starts_with('|') {
+            continue;
+        }
+
+        let cells: Vec<_> = trimmed
+            .trim_matches('|')
+            .split('|')
+            .map(|cell| cell.trim())
+            .collect();
+        if cells.is_empty() || is_table_separator_row(&cells) {
+            continue;
+        }
+
+        if cells.iter().any(|cell| cell.eq_ignore_ascii_case("ID"))
+            && cells.iter().any(|cell| cell.eq_ignore_ascii_case("Goal"))
+            && cells
+                .iter()
+                .any(|cell| cell.eq_ignore_ascii_case("Success Metric"))
+            && cells.iter().any(|cell| cell.eq_ignore_ascii_case("Target"))
+        {
+            has_canonical_header = true;
+            continue;
+        }
+
+        if !has_canonical_header || cells.len() < 4 {
+            continue;
+        }
+
+        let id = cells[0];
+        let goal = cells[1];
+        let success_metric = cells[2];
+        let target = cells[3];
+
+        if GOAL_ID_RE.is_match(id)
+            && !goal.is_empty()
+            && !success_metric.is_empty()
+            && !target.is_empty()
+            && !is_default_prd_scaffold_row(goal)
+        {
+            return true;
+        }
+    }
+
+    false
+}
+
+fn parse_canonical_scope_bullets(scope_section: &str) -> (usize, usize) {
     enum Mode {
         None,
         InScope,
@@ -965,11 +1018,14 @@ fn parse_scope_bullets(scope_section: &str) -> (usize, usize) {
             continue;
         }
 
-        let Some(item) = trimmed.strip_prefix("- ") else {
+        let Some(captures) = SCOPE_BULLET_RE.captures(trimmed) else {
             continue;
         };
-        let item = item.trim();
-        if item.is_empty() || is_default_prd_scaffold_row(item) {
+        let description = captures
+            .get(2)
+            .map(|value| value.as_str().trim())
+            .unwrap_or("");
+        if description.is_empty() || is_default_prd_scaffold_row(description) {
             continue;
         }
 
@@ -1213,10 +1269,10 @@ Operators cannot reliably inspect deployment readiness across surfaces.
 
 ## Scope
 ### In Scope
-- Unified readiness reporting across core flows.
+- [SCOPE-01] Unified readiness reporting across core flows.
 
 ### Out of Scope
-- Replacing external observability providers.
+- [SCOPE-02] Replacing external observability providers.
 
 ## Requirements
 ### Functional Requirements
@@ -1256,6 +1312,89 @@ Operators cannot reliably inspect deployment readiness across surfaces.
 
         let problems = check_epic_prd_authored_content(&path);
         assert!(problems.is_empty(), "{problems:?}");
+    }
+
+    #[test]
+    fn test_check_epic_prd_authored_content_rejects_legacy_goal_and_scope_shapes() {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("PRD.md");
+        fs::write(
+            &path,
+            r#"# PRD
+
+## Problem Statement
+Operators need deterministic planning artifacts.
+
+## Goals & Objectives
+| Goal | Success Metric | Target |
+|------|----------------|--------|
+| Reduce ambiguity | review time | 5 minutes |
+
+## Users
+| Persona | Description | Primary Need |
+|---------|-------------|--------------|
+| Delivery Lead | Owns release quality | Fast confidence checks |
+
+## Scope
+### In Scope
+- Unified readiness reporting across core flows.
+
+### Out of Scope
+- Replacing external observability providers.
+
+## Requirements
+### Functional Requirements
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | Render canonical planning surfaces. | must | validation |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+
+### Non-Functional Requirements
+<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| NFR-01 | Keep output deterministic. | must | validation |
+<!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+
+## Verification Strategy
+- Run doctor and tests.
+
+## Assumptions
+| Assumption | Impact if Wrong | Validation |
+|------------|-----------------|------------|
+| Teams can adopt the new contract. | Rollout slows. | Review command output. |
+
+## Open Questions & Risks
+| Question/Risk | Owner | Status |
+|---------------|-------|--------|
+| How strict should authoring be? | Maintainer | Open |
+
+## Success Criteria
+<!-- BEGIN SUCCESS_CRITERIA -->
+- [ ] Canonical planning surfaces exist.
+<!-- END SUCCESS_CRITERIA -->
+"#,
+        )
+        .unwrap();
+
+        let problems = check_epic_prd_authored_content(&path);
+
+        assert!(problems.iter().any(|problem| {
+            problem
+                .message
+                .contains("Goals & Objectives' must include at least one canonical GOAL-* row")
+        }));
+        assert!(problems.iter().any(|problem| {
+            problem
+                .message
+                .contains("canonical 'In Scope' [SCOPE-*] bullet")
+        }));
+        assert!(problems.iter().any(|problem| {
+            problem
+                .message
+                .contains("canonical 'Out of Scope' [SCOPE-*] bullet")
+        }));
     }
 
     #[test]

@@ -1,6 +1,5 @@
 # Template Contract Hard Cutover - Product Requirements
 
-> Standardize template tokens to canonical schema names, align CLI options to user-owned fields only, and enforce unresolved scaffold text as hard doctor/transition failures for planning coherence.
 
 ## Problem Statement
 
@@ -11,12 +10,12 @@ Token naming drifts (`date` vs `datetime`), CLI exposure does not consistently r
 
 Establish one canonical planning contract that is explicit, enforceable, and non-legacy.
 
-| Goal | Success Metric | Target |
-|------|----------------|--------|
-| Canonical template vocabulary | Non-canonical tokens removed from embedded templates | 100% of active templates |
-| CLI ownership clarity | Creation commands expose only user-owned fields as flags | 100% of `new` command surfaces |
-| Coherency enforcement | Unresolved scaffold/default text fails doctor and lifecycle gates | 0 false negatives for covered docs |
-| Hard cutover | No compatibility aliases for replaced token/validation paths | 0 legacy fallback paths in new behavior |
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | Canonical template vocabulary | Non-canonical tokens removed from embedded templates | 100% of active templates |
+| GOAL-02 | CLI ownership clarity | Creation commands expose only user-owned fields as flags | 100% of `new` command surfaces |
+| GOAL-03 | Coherency enforcement | Unresolved scaffold/default text fails doctor and lifecycle gates | 0 false negatives for covered docs |
+| GOAL-04 | Hard cutover | No compatibility aliases for replaced token/validation paths | 0 legacy fallback paths in new behavior |
 
 ## Users
 
@@ -33,41 +32,41 @@ Primary users are human planners and implementation agents relying on determinis
 
 ### In Scope
 
-- Canonical token normalization in planning templates and creation renderers.
-- CLI contract alignment for all creation commands in this epic's scope.
-- Hard doctor and transition enforcement for unresolved scaffold/default text.
-- Regression tests proving hard-cutover behavior.
+- [SCOPE-01] Canonical token normalization in planning templates and creation renderers.
+- [SCOPE-02] CLI contract alignment for all creation commands in this epic's scope.
+- [SCOPE-03] Hard doctor and transition enforcement for unresolved scaffold/default text.
+- [SCOPE-04] Regression tests proving hard-cutover behavior.
 
 ### Out of Scope
 
-- Smart command suggestion output improvements across all commands.
-- Validation of generated report artifacts (`VOYAGE_REPORT.md`, `COMPLIANCE_REPORT.md`, `KNOWLEDGE.md`).
-- Legacy board artifact migration/remediation pass.
+- [SCOPE-05] Smart command suggestion output improvements across all commands.
+- [SCOPE-06] Validation of generated report artifacts (`VOYAGE_REPORT.md`, `COMPLIANCE_REPORT.md`, `KNOWLEDGE.md`).
+- [SCOPE-07] Legacy board artifact migration/remediation pass.
 
 ## Requirements
 
 ### Functional Requirements
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Priority | Rationale |
-|----|-------------|----------|-----------|
-| FR-01 | All active planning templates must use canonical schema-mirrored token names and remove deprecated token aliases. | must | Eliminates ambiguous template vocabulary and drift. |
-| FR-02 | Creation command CLI options must expose only user-owned inputs and must not expose system-owned fields. | must | Preserves clear ownership boundaries between operator intent and system state. |
-| FR-03 | `adr new` must support optional `--context` and repeatable `--applies-to` flags and persist them in frontmatter. | should | Aligns ADR scaffolding inputs with governance model fields. |
-| FR-04 | `voyage new` must require `--goal` at CLI parse time. | must | Prevents invalid scaffolding attempts from reaching runtime. |
-| FR-05 | `keel doctor` must report unresolved scaffold/default text as errors for covered planning/coherency docs. | must | Enforces review quality before work progresses. |
-| FR-06 | Story submit/accept transition gates must block unresolved scaffold/default text in story and reflection artifacts. | must | Stops incoherent artifacts from reaching terminal stages. |
-| FR-07 | Story/reflection completeness checks must be stage-aware and only enforced for `needs-human-verification` and `done`. | must | Matches lifecycle intent while avoiding premature failures. |
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| FR-01 | All active planning templates must use canonical schema-mirrored token names and remove deprecated token aliases. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Eliminates ambiguous template vocabulary and drift. |
+| FR-02 | Creation command CLI options must expose only user-owned inputs and must not expose system-owned fields. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Preserves clear ownership boundaries between operator intent and system state. |
+| FR-03 | `adr new` must support optional `--context` and repeatable `--applies-to` flags and persist them in frontmatter. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | should | Aligns ADR scaffolding inputs with governance model fields. |
+| FR-04 | `voyage new` must require `--goal` at CLI parse time. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Prevents invalid scaffolding attempts from reaching runtime. |
+| FR-05 | `keel doctor` must report unresolved scaffold/default text as errors for covered planning/coherency docs. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Enforces review quality before work progresses. |
+| FR-06 | Story submit/accept transition gates must block unresolved scaffold/default text in story and reflection artifacts. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Stops incoherent artifacts from reaching terminal stages. |
+| FR-07 | Story/reflection completeness checks must be stage-aware and only enforced for `needs-human-verification` and `done`. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Matches lifecycle intent while avoiding premature failures. |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ### Non-Functional Requirements
 
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Priority | Rationale |
-|----|-------------|----------|-----------|
-| NFR-01 | The implementation must use hard cutover semantics with no legacy compatibility fallbacks in new behavior. | must | Keeps contracts simple and enforceable. |
-| NFR-02 | Validation and gate behavior must be covered by deterministic tests with stable assertions. | must | Prevents regressions and validation drift. |
-| NFR-03 | New checks must provide actionable error messages that include the failing artifact context. | should | Reduces turnaround time when fixing coherency failures. |
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| NFR-01 | The implementation must use hard cutover semantics with no legacy compatibility fallbacks in new behavior. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Keeps contracts simple and enforceable. |
+| NFR-02 | Validation and gate behavior must be covered by deterministic tests with stable assertions. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Prevents regressions and validation drift. |
+| NFR-03 | New checks must provide actionable error messages that include the failing artifact context. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | should | Reduces turnaround time when fixing coherency failures. |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
 
 ## Verification Strategy

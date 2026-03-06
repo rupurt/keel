@@ -659,31 +659,27 @@ pub fn evaluate_voyage_scope_lineage(voyage: &Voyage, board: &Board) -> Vec<Scop
 
     let prd_scope_entries = parse_prd_scope_entries(&prd_content);
     let srs_scope_links = parse_srs_scope_links(&srs_content);
-    let mut issues = Vec::new();
-
-    let scope_contract_enabled = !prd_scope_entries.is_empty() || !srs_scope_links.is_empty();
-    if scope_contract_enabled {
-        issues.extend(find_legacy_untagged_scope_lines(
-            &prd_content,
-            &prd_path,
-            ScopeSectionStyle::Prd,
-        ));
-        issues.extend(find_legacy_untagged_scope_lines(
-            &srs_content,
-            &srs_path,
-            ScopeSectionStyle::Srs,
-        ));
+    let scope_contract_enabled = !srs_scope_links.is_empty();
+    if !scope_contract_enabled {
+        return Vec::new();
     }
+
+    let mut issues = Vec::new();
+    issues.extend(find_legacy_untagged_scope_lines(
+        &prd_content,
+        &prd_path,
+        ScopeSectionStyle::Prd,
+    ));
+    issues.extend(find_legacy_untagged_scope_lines(
+        &srs_content,
+        &srs_path,
+        ScopeSectionStyle::Srs,
+    ));
 
     let known_scope: BTreeMap<_, _> = prd_scope_entries
         .iter()
         .map(|entry| (entry.id.clone(), entry.disposition))
         .collect();
-    let linked_scope_ids: HashSet<_> = srs_scope_links
-        .iter()
-        .map(|link| link.parent_id.as_str())
-        .collect();
-
     for link in &srs_scope_links {
         let Some(parent_disposition) = known_scope.get(&link.parent_id) else {
             issues.push(ScopeLineageIssue {
@@ -702,19 +698,6 @@ pub fn evaluate_voyage_scope_lineage(voyage: &Voyage, board: &Board) -> Vec<Scop
                 scope_id: Some(link.parent_id.clone()),
                 line: None,
                 kind: ScopeLineageIssueKind::OutOfScopeContradiction,
-            });
-        }
-    }
-
-    for entry in &prd_scope_entries {
-        if entry.disposition == ScopeDisposition::In
-            && !linked_scope_ids.contains(entry.id.as_str())
-        {
-            issues.push(ScopeLineageIssue {
-                artifact_path: srs_path.clone(),
-                scope_id: Some(entry.id.clone()),
-                line: None,
-                kind: ScopeLineageIssueKind::MissingScopeMapping,
             });
         }
     }

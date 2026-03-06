@@ -1,6 +1,5 @@
 # Flow Coherence Refactor - Product Requirements
 
-> Unify queue policy, transition enforcement, and canonical schema with hard migration.
 
 ## Problem Statement
 
@@ -13,13 +12,13 @@ Keel currently has coherence gaps across planning and execution workflows:
 
 ## Goals & Objectives
 
-| Goal | Success Metric | Target |
-|------|----------------|--------|
-| One queue-policy source of truth | Zero duplicated queue-threshold literals in decision paths | 100% migrated |
-| Coherent human/agent next behavior | Human mode never emits implementation work | 100% test pass |
-| Unified transition enforcement | Runtime and doctor checks share gate-rule origin | Parity tests passing |
-| Hard schema cutover | Legacy state/field tokens rejected post-migration | 100% canonical parsing |
-| Doctor-clean scaffolding defaults | Fresh epic/voyage creation produces no datetime/TODO warnings | 100% on new artifacts |
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | One queue-policy source of truth | Zero duplicated queue-threshold literals in decision paths | 100% migrated |
+| GOAL-02 | Coherent human/agent next behavior | Human mode never emits implementation work | 100% test pass |
+| GOAL-03 | Unified transition enforcement | Runtime and doctor checks share gate-rule origin | Parity tests passing |
+| GOAL-04 | Hard schema cutover | Legacy state/field tokens rejected post-migration | 100% canonical parsing |
+| GOAL-05 | Doctor-clean scaffolding defaults | Fresh epic/voyage creation produces no datetime/TODO warnings | 100% on new artifacts |
 
 ## Users
 
@@ -33,45 +32,45 @@ Keel currently has coherence gaps across planning and execution workflows:
 
 ### In Scope
 
-- Queue policy module and shared thresholds for `next` and `flow`.
-- Unified transition enforcement for story/voyage runtime commands and doctor reporting.
-- Hard migration path to canonical schema and removal of compatibility aliases.
-- Canonical terminology and field-name normalization (`completed_at`, state labels).
-- Done-state gating for voyage reporting artifacts.
-- Scaffold defaults that are doctor-clean on creation.
+- [SCOPE-01] Queue policy module and shared thresholds for `next` and `flow`.
+- [SCOPE-02] Unified transition enforcement for story/voyage runtime commands and doctor reporting.
+- [SCOPE-03] Hard migration path to canonical schema and removal of compatibility aliases.
+- [SCOPE-04] Canonical terminology and field-name normalization (`completed_at`, state labels).
+- [SCOPE-05] Done-state gating for voyage reporting artifacts.
+- [SCOPE-06] Scaffold defaults that are doctor-clean on creation.
 
 ### Out of Scope
 
-- New product surfaces unrelated to planning/execution coherence.
-- Backward compatibility for legacy board states after hard migration ships.
-- Changes to bearing/ADR workflows not required by these coherence goals.
+- [SCOPE-07] New product surfaces unrelated to planning/execution coherence.
+- [SCOPE-08] Backward compatibility for legacy board states after hard migration ships.
+- [SCOPE-09] Changes to bearing/ADR workflows not required by these coherence goals.
 
 ## Requirements
 
 ### Functional Requirements
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Priority | Rationale |
-|----|-------------|----------|-----------|
-| FR-01 | Implement a shared queue policy module consumed by `next` and `flow`. | must | Prevent threshold drift and contradictory queue decisions. |
-| FR-02 | Enforce human mode boundary so `keel next` (human mode) cannot return implementation work. | must | Preserve queue intent and operator expectations. |
-| FR-03 | Preserve auto-start behavior where `keel story start` starts planned parent voyages. | must | Maintain expected planning-to-execution flow. |
-| FR-04 | Route story/voyage transition checks through one enforcement path shared by runtime and doctor policies. | must | Remove duplicated logic and normalize outcomes. |
-| FR-05 | Ship hard migration and remove legacy schema compatibility paths post-cutover. | must | Reduce maintenance load and conceptual drift. |
-| FR-06 | Normalize epic completion field usage to `completed_at` across command/model/doctor paths. | must | Keep state and data contracts consistent. |
-| FR-07 | Generate voyage report/compliance artifacts only when voyage state is `done`. | should | Align artifact lifecycle with transition semantics. |
-| FR-08 | Ensure newly scaffolded epic/voyage docs use datetime timestamps and non-placeholder baseline content. | should | Prevent immediate doctor warnings on new artifacts. |
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| FR-01 | Implement a shared queue policy module consumed by `next` and `flow`. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 GOAL-05 | must | Prevent threshold drift and contradictory queue decisions. |
+| FR-02 | Enforce human mode boundary so `keel next` (human mode) cannot return implementation work. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 GOAL-05 | must | Preserve queue intent and operator expectations. |
+| FR-03 | Preserve auto-start behavior where `keel story start` starts planned parent voyages. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 GOAL-05 | must | Maintain expected planning-to-execution flow. |
+| FR-04 | Route story/voyage transition checks through one enforcement path shared by runtime and doctor policies. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 GOAL-05 | must | Remove duplicated logic and normalize outcomes. |
+| FR-05 | Ship hard migration and remove legacy schema compatibility paths post-cutover. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 GOAL-05 | must | Reduce maintenance load and conceptual drift. |
+| FR-06 | Normalize epic completion field usage to `completed_at` across command/model/doctor paths. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 GOAL-05 | must | Keep state and data contracts consistent. |
+| FR-07 | Generate voyage report/compliance artifacts only when voyage state is `done`. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 GOAL-05 | should | Align artifact lifecycle with transition semantics. |
+| FR-08 | Ensure newly scaffolded epic/voyage docs use datetime timestamps and non-placeholder baseline content. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 GOAL-05 | should | Prevent immediate doctor warnings on new artifacts. |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ### Non-Functional Requirements
 
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Priority | Rationale |
-|----|-------------|----------|-----------|
-| NFR-01 | Migration behavior must be deterministic and idempotent. | must | Safe re-runs and predictable recovery. |
-| NFR-02 | Validation and transition code paths should expose one clear entry point per entity/transition. | must | Improve maintainability and reviewability. |
-| NFR-03 | Regression coverage must lock parity between strict runtime blocking and reporting visibility. | must | Prevent silent policy divergence. |
-| NFR-04 | Documentation and CLI text must use canonical terminology only. | should | Reduce onboarding and operational confusion. |
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| NFR-01 | Migration behavior must be deterministic and idempotent. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 GOAL-05 | must | Safe re-runs and predictable recovery. |
+| NFR-02 | Validation and transition code paths should expose one clear entry point per entity/transition. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 GOAL-05 | must | Improve maintainability and reviewability. |
+| NFR-03 | Regression coverage must lock parity between strict runtime blocking and reporting visibility. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 GOAL-05 | must | Prevent silent policy divergence. |
+| NFR-04 | Documentation and CLI text must use canonical terminology only. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 GOAL-05 | should | Reduce onboarding and operational confusion. |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
 
 ## Verification Strategy

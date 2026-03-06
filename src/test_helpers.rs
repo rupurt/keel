@@ -466,10 +466,10 @@ Test harness epic problem statement.
 
 ## Scope
 ### In Scope
-- Provide valid baseline planning artifacts for tests.
+- [SCOPE-01] Provide valid baseline planning artifacts for tests.
 
 ### Out of Scope
-- Product-level behavior design.
+- [SCOPE-02] Product-level behavior design.
 
 ## Requirements
 ### Functional Requirements

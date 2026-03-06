@@ -1,6 +1,5 @@
 # validation-unification - Product Requirements
 
-> Make doctor checks the single source of truth for all domain invariants and transition gates.
 
 ## Problem Statement
 
@@ -13,11 +12,11 @@ Validation logic is currently fragmented across `src/invariants.rs`, `src/state_
 
 Unify the validation architecture to ensure that every domain rule is defined exactly once and enforced everywhere.
 
-| Goal | Success Metric | Target |
-|------|----------------|--------|
-| DRY Validation | Zero duplicated logic between doctor and gates | 0 duplications |
-| Unified Reporting | Single `Problem` type used throughout the system | 1 type |
-| Robust Gating | All transitions guarded by the same checks reported by doctor | 100% coverage |
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | DRY Validation | Zero duplicated logic between doctor and gates | 0 duplications |
+| GOAL-02 | Unified Reporting | Single `Problem` type used throughout the system | 1 type |
+| GOAL-03 | Robust Gating | All transitions guarded by the same checks reported by doctor | 100% coverage |
 
 ## Users
 
@@ -30,38 +29,38 @@ Unify the validation architecture to ensure that every domain rule is defined ex
 
 ### In Scope
 
-- Unification of `GateProblem` and `Problem` types.
-- Centralization of all checks into the `doctor/checks` modules.
-- Refactoring `gating.rs` to delegate to these shared check modules.
-- Updating `story submit`, `voyage start`, and other gated commands to use unified checks.
-- Ensuring `doctor` automatically runs all registered domain checks.
+- [SCOPE-01] Unification of `GateProblem` and `Problem` types.
+- [SCOPE-02] Centralization of all checks into the `doctor/checks` modules.
+- [SCOPE-03] Refactoring `gating.rs` to delegate to these shared check modules.
+- [SCOPE-04] Updating `story submit`, `voyage start`, and other gated commands to use unified checks.
+- [SCOPE-05] Ensuring `doctor` automatically runs all registered domain checks.
 
 ### Out of Scope
 
-- Implementing new domain rules (focus is on refactoring existing ones).
-- Performance optimization of checks (unless regressions occur).
+- [SCOPE-06] Implementing new domain rules (focus is on refactoring existing ones).
+- [SCOPE-07] Performance optimization of checks (unless regressions occur).
 
 ## Requirements
 
 ### Functional Requirements
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Priority | Rationale |
-|----|-------------|----------|-----------|
-| FR-01 | Unified Problem Type | must | Ensure consistent reporting across all tools |
-| FR-02 | Shared Check Modules | must | Eliminate logic duplication and drift |
-| FR-03 | Command Gate Integration | must | Ensure gates and doctor use the same logic |
-| FR-04 | Auto-fix Support | should | Maintain current fixing capabilities in unified system |
-| FR-05 | Evidence Chain Unification | should | Consolidate SRS/Evidence checks from submit.rs into doctor |
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| FR-01 | Unified Problem Type | GOAL-01 GOAL-02 GOAL-03 | must | Ensure consistent reporting across all tools |
+| FR-02 | Shared Check Modules | GOAL-01 GOAL-02 GOAL-03 | must | Eliminate logic duplication and drift |
+| FR-03 | Command Gate Integration | GOAL-01 GOAL-02 GOAL-03 | must | Ensure gates and doctor use the same logic |
+| FR-04 | Auto-fix Support | GOAL-01 GOAL-02 GOAL-03 | should | Maintain current fixing capabilities in unified system |
+| FR-05 | Evidence Chain Unification | GOAL-01 GOAL-02 GOAL-03 | should | Consolidate SRS/Evidence checks from submit.rs into doctor |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ### Non-Functional Requirements
 
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Priority | Rationale |
-|----|-------------|----------|-----------|
-| NFR-01 | Pure Domain Logic | must | Domain checks should be testable without complex IO mocks |
-| NFR-02 | Error Actionability | must | All unified problems must provide clear paths to resolution |
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| NFR-01 | Pure Domain Logic | GOAL-01 GOAL-02 GOAL-03 | must | Domain checks should be testable without complex IO mocks |
+| NFR-02 | Error Actionability | GOAL-01 GOAL-02 GOAL-03 | must | All unified problems must provide clear paths to resolution |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
 
 ## Verification Strategy

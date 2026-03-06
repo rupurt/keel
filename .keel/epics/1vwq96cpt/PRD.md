@@ -1,6 +1,5 @@
 # Domain Driven Design Restructure - Product Requirements
 
-> Restructure keel into explicit DDD bounded contexts and layered architecture so subsystems can evolve independently and in parallel with verifiable contracts.
 
 ## Problem Statement
 
@@ -8,12 +7,12 @@ The current codebase models strong domain concepts, but implementation is still 
 
 ## Goals & Objectives
 
-| Goal | Success Metric | Target |
-|------|----------------|--------|
-| Establish explicit domain boundaries | Bounded context map and ownership committed | 100% of core modules mapped |
-| Enforce layered architecture | Layering contract tests in CI | Zero forbidden imports in main tree |
-| Enable parallel subsystem execution | Context-scoped workstreams with clear seams | 5 parallel-safe context tracks |
-| Reduce duplicate projection logic | Canonical read model services adopted | Single source for flow/status/capacity |
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | Establish explicit domain boundaries | Bounded context map and ownership committed | 100% of core modules mapped |
+| GOAL-02 | Enforce layered architecture | Layering contract tests in CI | Zero forbidden imports in main tree |
+| GOAL-03 | Enable parallel subsystem execution | Context-scoped workstreams with clear seams | 5 parallel-safe context tracks |
+| GOAL-04 | Reduce duplicate projection logic | Canonical read model services adopted | Single source for flow/status/capacity |
 
 ## Users
 
@@ -27,43 +26,43 @@ The current codebase models strong domain concepts, but implementation is still 
 
 ### In Scope
 
-- Bounded context definitions and ownership
-- Layered module structure: domain, application, infrastructure, read-model, interface
-- Migration of orchestration from command handlers to application services
-- Consolidation of duplicated projections and policies
-- Verification suites that guard architectural contracts
+- [SCOPE-01] Bounded context definitions and ownership
+- [SCOPE-02] Layered module structure: domain, application, infrastructure, read-model, interface
+- [SCOPE-03] Migration of orchestration from command handlers to application services
+- [SCOPE-04] Consolidation of duplicated projections and policies
+- [SCOPE-05] Verification suites that guard architectural contracts
 
 ### Out of Scope
 
-- Net-new product features unrelated to architecture migration
-- Runtime behavior changes beyond what is required for boundary enforcement
-- Replacing markdown board storage model
+- [SCOPE-06] Net-new product features unrelated to architecture migration
+- [SCOPE-07] Runtime behavior changes beyond what is required for boundary enforcement
+- [SCOPE-08] Replacing markdown board storage model
 
 ## Requirements
 
 ### Functional Requirements
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Priority | Rationale |
-|----|-------------|----------|-----------|
-| FR-01 | Define bounded contexts and ownership rules for governance, work-management, research, verification, read-models, and interfaces. | must | Parallel safety depends on clear ownership boundaries. |
-| FR-02 | Introduce explicit layered architecture contracts and enforce them with automated tests. | must | Prevents regression into cross-layer coupling. |
-| FR-03 | Move command orchestration into application services and process managers with domain events. | must | Centralizes business workflows and cross-aggregate coordination. |
-| FR-04 | Extract shared infrastructure services for persistence, frontmatter mutation, and template rendering. | must | Removes duplicated mutation logic and command-level filesystem coupling. |
-| FR-05 | Consolidate flow, status, next, and capacity projections behind canonical read-model services. | must | Eliminates divergent operational views and duplication. |
-| FR-06 | Refactor CLI handlers into thin adapters that invoke application use cases only. | should | Keeps interface layer stable and testable. |
-| FR-07 | Deliver migration and regression coverage that verifies both behavior and architectural contracts. | must | Protects correctness during phased refactor. |
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| FR-01 | Define bounded contexts and ownership rules for governance, work-management, research, verification, read-models, and interfaces. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Parallel safety depends on clear ownership boundaries. |
+| FR-02 | Introduce explicit layered architecture contracts and enforce them with automated tests. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Prevents regression into cross-layer coupling. |
+| FR-03 | Move command orchestration into application services and process managers with domain events. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Centralizes business workflows and cross-aggregate coordination. |
+| FR-04 | Extract shared infrastructure services for persistence, frontmatter mutation, and template rendering. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Removes duplicated mutation logic and command-level filesystem coupling. |
+| FR-05 | Consolidate flow, status, next, and capacity projections behind canonical read-model services. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Eliminates divergent operational views and duplication. |
+| FR-06 | Refactor CLI handlers into thin adapters that invoke application use cases only. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | should | Keeps interface layer stable and testable. |
+| FR-07 | Deliver migration and regression coverage that verifies both behavior and architectural contracts. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Protects correctness during phased refactor. |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ### Non-Functional Requirements
 
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Priority | Rationale |
-|----|-------------|----------|-----------|
-| NFR-01 | Architectural contract checks must run in CI and fail builds on layer violations. | must | Architectural drift must be caught early. |
-| NFR-02 | Refactor must preserve existing command semantics unless explicitly documented and approved. | must | Reduces rollout risk. |
-| NFR-03 | New module seams must support independent testing per bounded context. | should | Enables safe parallel development throughput. |
-| NFR-04 | Traceability from story AC to SRS and PRD requirements must remain intact across migration. | must | Preserves governance and acceptance model integrity. |
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| NFR-01 | Architectural contract checks must run in CI and fail builds on layer violations. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Architectural drift must be caught early. |
+| NFR-02 | Refactor must preserve existing command semantics unless explicitly documented and approved. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Reduces rollout risk. |
+| NFR-03 | New module seams must support independent testing per bounded context. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | should | Enables safe parallel development throughput. |
+| NFR-04 | Traceability from story AC to SRS and PRD requirements must remain intact across migration. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Preserves governance and acceptance model integrity. |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
 
 ## Verification Strategy

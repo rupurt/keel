@@ -18,8 +18,6 @@ use std::path::Path;
 
 const PROBLEM_PLACEHOLDER: &str = "(not authored in PRD.md yet)";
 const GOALS_PLACEHOLDER: &str = "(not authored in PRD.md yet)";
-const GOAL_COVERAGE_PLACEHOLDER: &str = "(no authored goal linkage found in PRD.md)";
-const SCOPE_COVERAGE_PLACEHOLDER: &str = "(no authored scope lineage found in PRD.md)";
 const SCOPE_DRIFT_PLACEHOLDER: &str = "(no scope drift detected)";
 const REQUIREMENTS_PLACEHOLDER: &str = "(no authored requirements found in PRD.md)";
 const PROBLEM_MAX_PARAGRAPHS: usize = 1;
@@ -67,14 +65,14 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
 
     let mut document = ShowDocument::new();
     document.push_header(metadata, Some(width));
-    let mut sections = vec![
-        render_planning_summary(&report),
+    let mut sections = render_planning_sections(&report);
+    sections.extend([
         render_requirement_coverage(&report),
         render_press_release(epic),
         render_progress(&report),
         render_verification_strategy(&report),
         render_verification_readiness(&report),
-    ];
+    ]);
     if let Some(voyages) = render_voyages(&board, epic) {
         sections.push(voyages);
     }
@@ -88,10 +86,17 @@ fn build_epic_show_report(board: &Board, epic: &Epic) -> Result<EpicShowProjecti
     planning_show::build_epic_show_projection(board, epic)
 }
 
-fn render_planning_summary(report: &EpicShowProjection) -> ShowSection {
-    let mut section = ShowSection::new("Planning Summary");
-    section.push_labeled_text_block_limited(
-        "Problem:",
+fn render_planning_sections(report: &EpicShowProjection) -> Vec<ShowSection> {
+    vec![
+        render_problem_section(report),
+        render_goals_section(report),
+        render_scope_drift_section(report),
+    ]
+}
+
+fn render_problem_section(report: &EpicShowProjection) -> ShowSection {
+    let mut section = ShowSection::new("Problem");
+    section.push_text_block_limited(
         report
             .doc
             .problem_statement
@@ -99,60 +104,32 @@ fn render_planning_summary(report: &EpicShowProjection) -> ShowSection {
             .unwrap_or(PROBLEM_PLACEHOLDER),
         PROBLEM_MAX_PARAGRAPHS,
     );
+    section
+}
 
-    section.push_labeled_bullets(
-        "Goals:",
-        report.doc.goals.iter().cloned(),
+fn render_goals_section(report: &EpicShowProjection) -> ShowSection {
+    let mut section = ShowSection::new("Goals");
+    section.push_bullets(
+        report
+            .doc
+            .goals
+            .iter()
+            .map(|goal| style::styled_inline_markdown(goal)),
         Some(format!("{}", GOALS_PLACEHOLDER.dimmed())),
     );
-    section.push_labeled_bullets(
-        "Goal Coverage:",
-        report.goal_coverage.iter().map(format_goal_coverage_row),
-        Some(format!("{}", GOAL_COVERAGE_PLACEHOLDER.dimmed())),
-    );
-    section.push_labeled_bullets(
-        "Scope Coverage:",
-        report
-            .scope_coverage
-            .iter()
-            .map(planning_lineage::format_scope_coverage_row),
-        Some(format!("{}", SCOPE_COVERAGE_PLACEHOLDER.dimmed())),
-    );
-    section.push_labeled_bullets(
-        "Scope Drift:",
+    section
+}
+
+fn render_scope_drift_section(report: &EpicShowProjection) -> ShowSection {
+    let mut section = ShowSection::new("Scope Drift");
+    section.push_bullets(
         report
             .scope_drift
             .iter()
             .map(planning_lineage::format_scope_drift_row),
         Some(format!("{}", SCOPE_DRIFT_PLACEHOLDER.dimmed())),
     );
-
     section
-}
-
-fn format_goal_coverage_row(row: &planning_show::EpicGoalCoverageRow) -> String {
-    let goal = style::styled_inline_markdown(&row.goal);
-    if row.is_covered() {
-        let linked_requirements = row
-            .linked_requirements
-            .iter()
-            .map(|requirement_id| style::styled_requirement_id(requirement_id))
-            .collect::<Vec<_>>()
-            .join(", ");
-        format!(
-            "{}: {} ({} linked PRD requirement(s): {})",
-            row.id.bold(),
-            goal,
-            row.linked_requirement_count(),
-            linked_requirements
-        )
-    } else {
-        format!(
-            "{}: {} (uncovered: 0 linked PRD requirement(s))",
-            row.id.bold(),
-            goal
-        )
-    }
 }
 
 fn render_progress(report: &EpicShowProjection) -> ShowSection {
@@ -212,27 +189,41 @@ fn render_requirement_coverage(report: &EpicShowProjection) -> ShowSection {
             summary
         )]);
 
-        if !row.linked_children.is_empty() {
-            let linked_children = row
-                .linked_children
+        push_requirement_linkage(
+            &mut section,
+            "Linked goals",
+            row.linked_goals.len(),
+            row.linked_goals
                 .iter()
-                .map(|child| {
-                    format!(
-                        "{}/{}",
-                        style::styled_voyage_id(&child.voyage_id),
-                        style::styled_requirement_id(&child.requirement_id)
-                    )
-                })
-                .collect::<Vec<_>>()
-                .join(", ");
-            section.push_lines([format!(
-                "    Linked children ({}): {linked_children}",
-                row.linked_child_count()
-            )]);
-        }
+                .map(|goal| style::styled_goal_id(goal)),
+        );
+        push_requirement_linkage(
+            &mut section,
+            "Linked children",
+            row.linked_child_count(),
+            row.linked_children.iter().map(|child| {
+                format!(
+                    "{}/{}",
+                    style::styled_voyage_id(&child.voyage_id),
+                    style::styled_requirement_id(&child.requirement_id)
+                )
+            }),
+        );
     }
 
     section
+}
+
+fn push_requirement_linkage<I>(section: &mut ShowSection, label: &str, count: usize, values: I)
+where
+    I: IntoIterator<Item = String>,
+{
+    let values: Vec<String> = values.into_iter().collect();
+    if values.is_empty() {
+        return;
+    }
+
+    section.push_lines([format!("    {label} ({count}): {}", values.join(", "))]);
 }
 
 fn render_press_release(epic: &Epic) -> ShowSection {
@@ -358,9 +349,7 @@ fn render_voyages(board: &Board, epic: &Epic) -> Option<ShowSection> {
 mod tests {
     use super::*;
     use crate::domain::model::StoryState;
-    use crate::domain::state_machine::invariants::{
-        ScopeDisposition, ScopeLineageIssue, ScopeLineageIssueKind,
-    };
+    use crate::domain::state_machine::invariants::{ScopeLineageIssue, ScopeLineageIssueKind};
     use crate::infrastructure::loader::load_board;
     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use chrono::{Duration, Local, NaiveDate};
@@ -660,13 +649,13 @@ More details.
         assert!(report.verification.linked_artifacts.is_empty());
 
         // Render placeholder paths explicitly to guarantee command output behavior.
-        render_planning_summary(&report);
+        render_planning_sections(&report);
         render_verification_strategy(&report);
         render_verification_readiness(&report);
     }
 
     #[test]
-    fn render_planning_summary_places_problem_value_on_its_own_line() {
+    fn render_problem_section_places_value_on_its_own_line() {
         let report = EpicShowProjection {
             doc: planning_show::PlanningDocSummary {
                 problem_statement: Some(
@@ -674,8 +663,6 @@ More details.
                 ),
                 ..planning_show::PlanningDocSummary::default()
             },
-            goal_coverage: Vec::new(),
-            scope_coverage: Vec::new(),
             scope_drift: Vec::new(),
             requirement_coverage: Vec::new(),
             total_voyages: 0,
@@ -693,18 +680,19 @@ More details.
             verification: planning_show::VerificationRollup::default(),
         };
 
-        let section = render_planning_summary(&report);
+        let section = render_problem_section(&report);
         let mut document = ShowDocument::new();
         document.push_sections_spaced([section]);
         let rendered = document.render();
 
-        assert!(rendered.contains("  Problem:\n    Inline "));
+        assert!(rendered.contains("Problem"));
+        assert!(rendered.contains("    Inline "));
         assert!(rendered.contains("problem"));
-        assert!(!rendered.contains("  Problem: Inline "));
+        assert!(!rendered.contains("Planning Summary"));
     }
 
     #[test]
-    fn render_planning_summary_truncates_long_problem_with_ellipsis_line() {
+    fn render_problem_section_truncates_long_problem_with_ellipsis_line() {
         let report = EpicShowProjection {
             doc: planning_show::PlanningDocSummary {
                 problem_statement: Some(
@@ -713,8 +701,6 @@ More details.
                 ),
                 ..planning_show::PlanningDocSummary::default()
             },
-            goal_coverage: Vec::new(),
-            scope_coverage: Vec::new(),
             scope_drift: Vec::new(),
             requirement_coverage: Vec::new(),
             total_voyages: 0,
@@ -732,7 +718,7 @@ More details.
             verification: planning_show::VerificationRollup::default(),
         };
 
-        let section = render_planning_summary(&report);
+        let section = render_problem_section(&report);
         let mut document = ShowDocument::new();
         document.push_sections_spaced([section]);
         let rendered = document.render();
@@ -744,21 +730,19 @@ More details.
     }
 
     #[test]
-    fn render_planning_summary_omits_redundant_key_requirements_block() {
+    fn planning_sections_render_as_top_level_headings() {
         let report = EpicShowProjection {
             doc: planning_show::PlanningDocSummary {
                 problem_statement: Some("Make epic show easier to scan.".to_string()),
                 goals: vec!["GOAL-01: Reduce duplication (review load -> lower)".to_string()],
                 verification_strategy: vec!["FR-01: cargo test".to_string()],
             },
-            goal_coverage: Vec::new(),
-            scope_coverage: Vec::new(),
             scope_drift: Vec::new(),
             requirement_coverage: vec![planning_show::EpicRequirementCoverageRow {
                 id: "FR-01".to_string(),
                 description: "Keep requirement details in the dedicated coverage section."
                     .to_string(),
-                kind: planning_show::RequirementKind::Functional,
+                linked_goals: vec!["GOAL-01".to_string()],
                 linked_children: Vec::new(),
             }],
             total_voyages: 0,
@@ -776,11 +760,16 @@ More details.
             verification: planning_show::VerificationRollup::default(),
         };
 
-        let section = render_planning_summary(&report);
         let mut document = ShowDocument::new();
-        document.push_sections_spaced([section, render_requirement_coverage(&report)]);
+        let mut sections = render_planning_sections(&report);
+        sections.push(render_requirement_coverage(&report));
+        document.push_sections_spaced(sections);
         let rendered = document.render();
 
+        assert!(rendered.contains("Problem"));
+        assert!(rendered.contains("Goals"));
+        assert!(rendered.contains("Scope Drift"));
+        assert!(!rendered.contains("Planning Summary"));
         assert!(!rendered.contains("Key Requirements:"));
         assert!(!rendered.contains("Verification Strategy:"));
         assert!(rendered.contains("Requirement Coverage"));
@@ -794,8 +783,6 @@ More details.
                 verification_strategy: vec!["FR-01: cargo test -p keel epic_show".to_string()],
                 ..planning_show::PlanningDocSummary::default()
             },
-            goal_coverage: Vec::new(),
-            scope_coverage: Vec::new(),
             scope_drift: Vec::new(),
             requirement_coverage: Vec::new(),
             total_voyages: 0,
@@ -832,14 +819,12 @@ More details.
     fn requirement_coverage_section_renders_counts_and_uncovered_rows() {
         let report = EpicShowProjection {
             doc: planning_show::PlanningDocSummary::default(),
-            goal_coverage: Vec::new(),
-            scope_coverage: Vec::new(),
             scope_drift: Vec::new(),
             requirement_coverage: vec![
                 planning_show::EpicRequirementCoverageRow {
                     id: "FR-01".to_string(),
                     description: "Shared parent.".to_string(),
-                    kind: planning_show::RequirementKind::Functional,
+                    linked_goals: vec!["GOAL-01".to_string(), "GOAL-02".to_string()],
                     linked_children: vec![
                         planning_show::EpicRequirementCoverageChild {
                             voyage_id: "v1".to_string(),
@@ -854,7 +839,7 @@ More details.
                 planning_show::EpicRequirementCoverageRow {
                     id: "FR-02".to_string(),
                     description: "Uncovered parent.".to_string(),
-                    kind: planning_show::RequirementKind::Functional,
+                    linked_goals: vec!["GOAL-01".to_string()],
                     linked_children: Vec::new(),
                 },
             ],
@@ -879,12 +864,16 @@ More details.
         let rendered = document.render();
 
         assert!(!rendered.contains("linked SRS row(s) across"));
+        assert!(rendered.contains("Linked goals (2):"));
+        assert!(rendered.contains("Linked goals (1):"));
+        assert!(rendered.contains("GOAL-01"));
+        assert!(rendered.contains("GOAL-02"));
         assert!(rendered.contains("Linked children (2):"));
         assert!(rendered.contains("Uncovered parent. (uncovered)"));
     }
 
     #[test]
-    fn epic_show_renders_goal_lineage_summary() {
+    fn epic_show_keeps_goals_and_moves_goal_linkage_into_requirement_coverage() {
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("epic1"))
             .voyage(TestVoyage::new("v1", "epic1"))
@@ -923,34 +912,27 @@ Teams cannot see whether goals are actually covered by PRD requirements.
         let epic = board.require_epic("epic1").unwrap();
         let report = build_epic_show_report(&board, epic).unwrap();
 
-        let section = render_planning_summary(&report);
+        let requirements = render_requirement_coverage(&report);
         let mut document = ShowDocument::new();
-        document.push_sections_spaced([section]);
+        let mut sections = render_planning_sections(&report);
+        sections.push(requirements);
+        document.push_sections_spaced(sections);
         let rendered = document.render();
 
-        assert!(rendered.contains("Goal Coverage:"));
+        assert!(rendered.contains("Goals"));
+        assert!(!rendered.contains("Goal Coverage:"));
         assert!(rendered.contains("GOAL-01"));
         assert!(rendered.contains("GOAL-02"));
-        assert!(rendered.contains("2 linked PRD requirement(s):"));
+        assert!(rendered.contains("Linked goals (2):"));
+        assert!(rendered.contains("Linked goals (1):"));
         assert!(rendered.contains("FR-01"));
         assert!(rendered.contains("FR-02"));
     }
 
     #[test]
-    fn epic_show_renders_scope_coverage_and_drift_sections() {
+    fn epic_show_renders_only_scope_drift_section() {
         let report = EpicShowProjection {
             doc: planning_show::PlanningDocSummary::default(),
-            goal_coverage: Vec::new(),
-            scope_coverage: vec![planning_show::EpicScopeCoverageRow {
-                scope_id: "SCOPE-01".to_string(),
-                epic_description: "Render canonical scope coverage".to_string(),
-                epic_disposition: ScopeDisposition::In,
-                linked_voyages: vec![planning_show::EpicScopeCoverageVoyageLink {
-                    voyage_id: "v1".to_string(),
-                    description: "Render canonical scope coverage".to_string(),
-                    disposition: ScopeDisposition::In,
-                }],
-            }],
             scope_drift: vec![planning_show::ScopeDriftRow {
                 voyage_id: Some("v1".to_string()),
                 issue: ScopeLineageIssue {
@@ -976,14 +958,13 @@ Teams cannot see whether goals are actually covered by PRD requirements.
             verification: planning_show::VerificationRollup::default(),
         };
 
-        let section = render_planning_summary(&report);
+        let section = render_scope_drift_section(&report);
         let mut document = ShowDocument::new();
         document.push_sections_spaced([section]);
         let rendered = document.render();
 
-        assert!(rendered.contains("Scope Coverage:"));
-        assert!(rendered.contains("SCOPE-01"));
-        assert!(rendered.contains("Scope Drift:"));
+        assert!(!rendered.contains("Scope Coverage:"));
+        assert!(rendered.contains("Scope Drift"));
         assert!(rendered.contains("SCOPE-02"));
     }
 }

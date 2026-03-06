@@ -200,6 +200,34 @@ impl ShowSection {
         );
     }
 
+    pub fn push_bullets<I, S, P>(&mut self, items: I, empty_placeholder: Option<P>)
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+        P: AsRef<str>,
+    {
+        let items: Vec<String> = items
+            .into_iter()
+            .map(|item| item.as_ref().to_string())
+            .collect();
+
+        if items.is_empty() {
+            if let Some(placeholder) = empty_placeholder {
+                self.push_lines([format!(
+                    "  {}",
+                    style::styled_inline_markdown(placeholder.as_ref())
+                )]);
+            }
+            return;
+        }
+
+        self.push_lines(
+            items
+                .into_iter()
+                .map(|item| format!("  - {}", style::styled_inline_markdown(&item))),
+        );
+    }
+
     pub fn push_labeled_bullets_limited<I, S, P>(
         &mut self,
         label: impl Into<String>,
@@ -266,22 +294,29 @@ impl ShowSection {
         self.push_lines([format!("  {label}")]);
 
         let value = value.as_ref();
-        let paragraphs = text_block_paragraphs(value);
+        let rendered = limited_text_block_lines(value, max_paragraphs);
 
-        if paragraphs.is_empty() {
+        if rendered.is_empty() {
             return;
         }
 
-        let max_paragraphs = max_paragraphs.max(1);
-        let mut rendered = Vec::new();
-        for (idx, paragraph) in paragraphs.iter().take(max_paragraphs).enumerate() {
-            if idx > 0 {
-                rendered.push(String::new());
-            }
-            rendered.extend(paragraph.iter().cloned());
+        self.push_lines(rendered);
+    }
+
+    pub fn push_text_block(&mut self, value: impl AsRef<str>) {
+        let value_lines = text_block_lines(value.as_ref());
+
+        if value_lines.is_empty() {
+            return;
         }
-        if text_block_paragraph_count(value) > max_paragraphs {
-            rendered.push("    ...".to_string());
+
+        self.push_lines(value_lines);
+    }
+
+    pub fn push_text_block_limited(&mut self, value: impl AsRef<str>, max_paragraphs: usize) {
+        let rendered = limited_text_block_lines(value.as_ref(), max_paragraphs);
+        if rendered.is_empty() {
+            return;
         }
 
         self.push_lines(rendered);
@@ -395,10 +430,6 @@ impl ShowKeyValues {
     }
 }
 
-fn text_block_paragraph_count(value: &str) -> usize {
-    text_block_paragraphs(value).len()
-}
-
 fn text_block_paragraphs(value: &str) -> Vec<Vec<String>> {
     let mut paragraphs = Vec::new();
     let mut current = Vec::new();
@@ -424,15 +455,39 @@ fn text_block_paragraphs(value: &str) -> Vec<Vec<String>> {
 }
 
 fn text_block_lines(value: &str) -> Vec<String> {
-    let mut lines = Vec::new();
+    render_text_block_paragraphs(&text_block_paragraphs(value), None)
+}
 
-    for (idx, paragraph) in text_block_paragraphs(value).into_iter().enumerate() {
+fn limited_text_block_lines(value: &str, max_paragraphs: usize) -> Vec<String> {
+    let paragraphs = text_block_paragraphs(value);
+    render_text_block_paragraphs(&paragraphs, Some(max_paragraphs.max(1)))
+}
+
+fn render_text_block_paragraphs(
+    paragraphs: &[Vec<String>],
+    max_paragraphs: Option<usize>,
+) -> Vec<String> {
+    let Some(limit) = max_paragraphs else {
+        return paragraphs
+            .iter()
+            .enumerate()
+            .flat_map(|(idx, paragraph)| {
+                let spacer = (idx > 0).then(String::new);
+                spacer.into_iter().chain(paragraph.iter().cloned())
+            })
+            .collect();
+    };
+
+    let mut lines = Vec::new();
+    for (idx, paragraph) in paragraphs.iter().take(limit).enumerate() {
         if idx > 0 {
             lines.push(String::new());
         }
-        lines.extend(paragraph);
+        lines.extend(paragraph.iter().cloned());
     }
-
+    if paragraphs.len() > limit {
+        lines.push("    ...".to_string());
+    }
     lines
 }
 
@@ -512,6 +567,17 @@ mod tests {
     }
 
     #[test]
+    fn show_section_push_bullets_renders_placeholder() {
+        let mut section = ShowSection::new("Summary");
+        section.push_bullets(Vec::<String>::new(), Some("(not authored yet)".to_string()));
+
+        let mut lines = Vec::new();
+        section.render_into(&mut lines);
+        assert!(lines[0].contains("Summary"));
+        assert_eq!(lines[1], "  (not authored yet)");
+    }
+
+    #[test]
     fn show_section_push_labeled_bullets_limited_truncates() {
         let mut section = ShowSection::new("Summary");
         section.push_labeled_bullets_limited("Items:", vec!["A", "B", "C"], 2, None::<String>);
@@ -537,6 +603,18 @@ mod tests {
     }
 
     #[test]
+    fn show_section_push_text_block_places_value_under_title() {
+        let mut section = ShowSection::new("Problem");
+        section.push_text_block("Readable planning output");
+
+        let mut lines = Vec::new();
+        section.render_into(&mut lines);
+
+        assert!(lines[0].contains("Problem"));
+        assert_eq!(lines[1], "    Readable planning output");
+    }
+
+    #[test]
     fn show_section_push_labeled_text_block_limited_adds_ellipsis_on_new_line() {
         let mut section = ShowSection::new("Summary");
         section.push_labeled_text_block_limited(
@@ -552,6 +630,20 @@ mod tests {
         assert_eq!(lines[2], "    One.");
         assert_eq!(lines[3], "    Still one.");
         assert_eq!(lines[4], "    ...");
+    }
+
+    #[test]
+    fn show_section_push_text_block_limited_adds_ellipsis_on_new_line() {
+        let mut section = ShowSection::new("Problem");
+        section.push_text_block_limited("One.\nStill one.\n\nTwo.\n\nThree.", 1);
+
+        let mut lines = Vec::new();
+        section.render_into(&mut lines);
+
+        assert!(lines[0].contains("Problem"));
+        assert_eq!(lines[1], "    One.");
+        assert_eq!(lines[2], "    Still one.");
+        assert_eq!(lines[3], "    ...");
     }
 
     #[test]

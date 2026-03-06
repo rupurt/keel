@@ -7,18 +7,18 @@
 ## Scope
 
 In scope:
-- Add explicit CLI support for authored epic problem input during `epic new`.
-- Replace CLI-owned goal hydration with a problem-only strategic input contract for `epic new`.
-- Hydrate authored problem content into fresh epic scaffold surfaces that currently depend on CLI strategic input.
-- Keep the `Goals & Objectives` section authored directly in `PRD.md` instead of hydrating it from CLI input.
-- Keep fresh epic scaffolds doctor-clean after the new authored inputs are applied.
-- Extend template-token contracts to support the new problem-only strategic-input hydration path.
+- [SCOPE-04] Add explicit CLI support for authored epic problem input during `epic new`.
+- [SCOPE-04] Replace CLI-owned goal hydration with a problem-only strategic input contract for `epic new`.
+- [SCOPE-04] Hydrate authored problem content into fresh epic scaffold surfaces that currently depend on CLI strategic input.
+- [SCOPE-04] Keep the `Goals & Objectives` section authored directly in `PRD.md` instead of hydrating it from CLI input.
+- [SCOPE-04] Keep fresh epic scaffolds doctor-clean after the new authored inputs are applied.
+- [SCOPE-04] Extend template-token contracts to support the new problem-only strategic-input hydration path.
 
 Out of scope:
-- Canonical `GOAL-*` IDs and goal-to-requirement linkage validation.
-- Scope linkage and scope-drift detection.
-- PRD-to-SRS FR/NFR lineage enforcement.
-- Historical migration of already-authored epic PRDs.
+- [SCOPE-05] Canonical `GOAL-*` IDs and goal-to-requirement linkage validation.
+- [SCOPE-06] Scope linkage and scope-drift detection.
+- [SCOPE-02] PRD-to-SRS FR/NFR lineage enforcement.
+- [SCOPE-10] Historical migration of already-authored epic PRDs.
 
 ## Assumptions & Dependencies
 

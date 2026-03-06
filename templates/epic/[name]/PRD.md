@@ -1,7 +1,5 @@
 # {{title}} - Product Requirements
 
-> {{problem}}
-
 ## Problem Statement
 
 {{problem}}
@@ -22,11 +20,11 @@
 
 ### In Scope
 
-- The smallest end-to-end change needed to address the problem statement.
+- [SCOPE-01] The smallest end-to-end change needed to address the problem statement.
 
 ### Out of Scope
 
-- Follow-on improvements or adjacent work that is not required for the first outcome.
+- [SCOPE-02] Follow-on improvements or adjacent work that is not required for the first outcome.
 
 ## Requirements
 

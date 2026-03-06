@@ -395,11 +395,6 @@ Out of scope:
         assert!(!scope_check.passed);
         assert!(scope_check.problems.iter().any(|problem| {
             problem.check_id == CheckId::VoyageScopeLineageCoherence
-                && problem.message.contains("SCOPE-01")
-                && problem.message.contains("missing a voyage scope mapping")
-        }));
-        assert!(scope_check.problems.iter().any(|problem| {
-            problem.check_id == CheckId::VoyageScopeLineageCoherence
                 && problem.message.contains("SCOPE-99")
                 && problem.message.contains("unknown parent scope ID")
         }));
@@ -451,11 +446,6 @@ Out of scope:
         let problems = check_scope_lineage_coherence(&board);
         let srs_path = temp.path().join("epics/e1/voyages/v1/SRS.md");
 
-        assert!(problems.iter().any(|problem| {
-            problem.path == srs_path
-                && problem.message.contains("SCOPE-01")
-                && problem.message.contains("missing a voyage scope mapping")
-        }));
         assert!(problems.iter().any(|problem| {
             problem.path == srs_path
                 && problem.message.contains("SCOPE-99")
@@ -524,6 +514,44 @@ Out of scope:
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_voyage_status_drift(&board);
         assert!(problems.is_empty());
+    }
+
+    #[test]
+    fn scope_lineage_skips_voyages_without_canonical_scope_links() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").status("planned").srs_content(
+                r#"# SRS
+
+## Scope
+
+In scope:
+- Describe the planned slice in prose only.
+
+Out of scope:
+- Leave follow-on hardening for later.
+"#,
+            ))
+            .build();
+        std::fs::write(
+            temp.path().join("epics/e1/PRD.md"),
+            r#"# PRD
+
+## Scope
+
+### In Scope
+- [SCOPE-01] Ship the planned slice.
+
+### Out of Scope
+- [SCOPE-02] Follow-on hardening.
+"#,
+        )
+        .unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_scope_lineage_coherence(&board);
+
+        assert!(problems.is_empty(), "{problems:#?}");
     }
 
     #[test]

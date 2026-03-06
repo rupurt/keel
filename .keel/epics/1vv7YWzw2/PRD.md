@@ -1,6 +1,5 @@
 # System Coherence and Intelligent Flow - Product Requirements
 
-> Unify enforcement automate knowledge synthesis and enhance visibility of governance and dependencies
 
 ## Problem Statement
 
@@ -8,12 +7,12 @@ Keel's execution model accumulated policy and validation behavior across multipl
 
 ## Goals & Objectives
 
-| Goal | Success Metric | Target |
-|------|----------------|--------|
-| Unify transition enforcement | Runtime transition behavior and doctor diagnostics use the same enforcement origin | 100% of story/voyage lifecycle paths |
-| Synthesize implementation knowledge | Voyage-level knowledge artifacts are generated from story reflections at completion time | 100% of completed voyages |
-| Improve governance and dependency visibility | Flow/next surfaces include actionable blocker and dependency context | No hidden blockers in active work queues |
-| Harden canonical schema usage | Legacy compatibility paths are removed from enforcement and validation | Zero legacy schema fallbacks in scope |
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | Unify transition enforcement | Runtime transition behavior and doctor diagnostics use the same enforcement origin | 100% of story/voyage lifecycle paths |
+| GOAL-02 | Synthesize implementation knowledge | Voyage-level knowledge artifacts are generated from story reflections at completion time | 100% of completed voyages |
+| GOAL-03 | Improve governance and dependency visibility | Flow/next surfaces include actionable blocker and dependency context | No hidden blockers in active work queues |
+| GOAL-04 | Harden canonical schema usage | Legacy compatibility paths are removed from enforcement and validation | Zero legacy schema fallbacks in scope |
 
 ## Users
 
@@ -27,39 +26,39 @@ Keel's execution model accumulated policy and validation behavior across multipl
 
 ### In Scope
 
-- Route lifecycle checks through unified enforcement wiring for story and voyage paths.
-- Generate voyage knowledge artifacts from authored story reflections during completion.
-- Add richer dependency and governance visibility for flow and blocking diagnostics.
-- Remove remaining schema compatibility behavior in covered enforcement/doctor paths.
+- [SCOPE-01] Route lifecycle checks through unified enforcement wiring for story and voyage paths.
+- [SCOPE-02] Generate voyage knowledge artifacts from authored story reflections during completion.
+- [SCOPE-03] Add richer dependency and governance visibility for flow and blocking diagnostics.
+- [SCOPE-04] Remove remaining schema compatibility behavior in covered enforcement/doctor paths.
 
 ### Out of Scope
 
-- Net-new planning workflows outside existing epic/voyage/story lifecycle boundaries.
-- Changes to external integrations or third-party reporting destinations.
-- UI redesign work beyond terminal/markdown command rendering already in scope.
+- [SCOPE-05] Net-new planning workflows outside existing epic/voyage/story lifecycle boundaries.
+- [SCOPE-06] Changes to external integrations or third-party reporting destinations.
+- [SCOPE-07] UI redesign work beyond terminal/markdown command rendering already in scope.
 
 ## Requirements
 
 ### Functional Requirements
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Priority | Rationale |
-|----|-------------|----------|-----------|
-| FR-01 | Story and voyage lifecycle commands must delegate transition checks to the shared enforcement service. | must | Prevents command-specific policy drift and contradictory outcomes. |
-| FR-02 | Voyage completion must synthesize reflection knowledge into canonical voyage artifacts. | must | Preserves institutional learning as a first-class output. |
-| FR-03 | Flow and related diagnostics must surface dependency and governance blockers with actionable context. | must | Reduces hidden blockers and queue ambiguity. |
-| FR-04 | Schema hardening must remove legacy compatibility paths in covered doctor and transition checks. | must | Enforces a single canonical contract. |
-| FR-05 | Updated architecture documentation must describe enforcement and knowledge flow after refactor. | should | Keeps contributor guidance aligned with implementation. |
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| FR-01 | Story and voyage lifecycle commands must delegate transition checks to the shared enforcement service. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Prevents command-specific policy drift and contradictory outcomes. |
+| FR-02 | Voyage completion must synthesize reflection knowledge into canonical voyage artifacts. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Preserves institutional learning as a first-class output. |
+| FR-03 | Flow and related diagnostics must surface dependency and governance blockers with actionable context. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Reduces hidden blockers and queue ambiguity. |
+| FR-04 | Schema hardening must remove legacy compatibility paths in covered doctor and transition checks. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Enforces a single canonical contract. |
+| FR-05 | Updated architecture documentation must describe enforcement and knowledge flow after refactor. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | should | Keeps contributor guidance aligned with implementation. |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ### Non-Functional Requirements
 
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Priority | Rationale |
-|----|-------------|----------|-----------|
-| NFR-01 | Enforcement behavior must be deterministic across doctor and runtime transitions for equivalent inputs. | must | Prevents policy ambiguity and acceptance churn. |
-| NFR-02 | Knowledge synthesis paths must remain auditable with clear source attribution from reflections. | must | Ensures generated artifacts are trustworthy. |
-| NFR-03 | Regression tests must guard dependency-visibility output and blocker semantics. | should | Prevents silent degradation of operational visibility. |
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| NFR-01 | Enforcement behavior must be deterministic across doctor and runtime transitions for equivalent inputs. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Prevents policy ambiguity and acceptance churn. |
+| NFR-02 | Knowledge synthesis paths must remain auditable with clear source attribution from reflections. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Ensures generated artifacts are trustworthy. |
+| NFR-03 | Regression tests must guard dependency-visibility output and blocker semantics. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | should | Prevents silent degradation of operational visibility. |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
 
 ## Verification Strategy

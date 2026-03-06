@@ -1,6 +1,5 @@
 # Automated Verification Techniques Bank - Product Requirements
 
-> Enable a reusable bank of automated verification techniques that keel can configure via keel.toml and infer via project autodetection.
 
 ## Problem Statement
 
@@ -8,12 +7,12 @@ Verification planning was fragmented across static assumptions and command-speci
 
 ## Goals & Objectives
 
-| Goal | Success Metric | Target |
-|------|----------------|--------|
-| Establish a reusable technique catalog | Verification technique inventory is defined once and reused across config/verify surfaces | 100% of supported built-in techniques modeled in catalog |
-| Support project-aware planning | Detection and recommendation commands reflect project signals deterministically | Stable recommendations for the same workspace signals |
-| Enable explicit operator control | `keel.toml` overrides allow enabling/disabling techniques without code changes | Config overrides honored across all surfaced commands |
-| Complete command-surface cutover | Verification technique surfaces move to canonical config/verify commands | Legacy/duplicated surfaces removed in scope |
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | Establish a reusable technique catalog | Verification technique inventory is defined once and reused across config/verify surfaces | 100% of supported built-in techniques modeled in catalog |
+| GOAL-02 | Support project-aware planning | Detection and recommendation commands reflect project signals deterministically | Stable recommendations for the same workspace signals |
+| GOAL-03 | Enable explicit operator control | `keel.toml` overrides allow enabling/disabling techniques without code changes | Config overrides honored across all surfaced commands |
+| GOAL-04 | Complete command-surface cutover | Verification technique surfaces move to canonical config/verify commands | Legacy/duplicated surfaces removed in scope |
 
 ## Users
 
@@ -27,40 +26,40 @@ Verification planning was fragmented across static assumptions and command-speci
 
 ### In Scope
 
-- Define a canonical verification-technique catalog model and metadata schema.
-- Implement project-signal autodetection and recommendation logic tied to active techniques.
-- Add `keel.toml` overrides for technique enable/disable behavior.
-- Cut over verification technique command surfaces to config/verify commands with machine-readable output.
+- [SCOPE-01] Define a canonical verification-technique catalog model and metadata schema.
+- [SCOPE-02] Implement project-signal autodetection and recommendation logic tied to active techniques.
+- [SCOPE-03] Add `keel.toml` overrides for technique enable/disable behavior.
+- [SCOPE-04] Cut over verification technique command surfaces to config/verify commands with machine-readable output.
 
 ### Out of Scope
 
-- Building external SaaS integrations for verification execution orchestration.
-- Supporting backward-compatible legacy verify command contracts during cutover.
-- Introducing manual evidence workflows unrelated to automated technique selection.
+- [SCOPE-05] Building external SaaS integrations for verification execution orchestration.
+- [SCOPE-06] Supporting backward-compatible legacy verify command contracts during cutover.
+- [SCOPE-07] Introducing manual evidence workflows unrelated to automated technique selection.
 
 ## Requirements
 
 ### Functional Requirements
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Priority | Rationale |
-|----|-------------|----------|-----------|
-| FR-01 | The system must provide a canonical catalog of verification techniques with metadata required for detection and recommendation. | must | Creates a single source of truth for verification planning. |
-| FR-02 | `keel.toml` must allow explicit per-technique enable/disable overrides. | must | Gives operators deterministic control over active techniques. |
-| FR-03 | `keel verify detect` must analyze project signals and report detected technique eligibility. | must | Grounds recommendations in workspace reality. |
-| FR-04 | `keel verify recommend` must return only techniques that are both detected and active. | must | Keeps recommendations actionable and accurate. |
-| FR-05 | `keel config show` must expose a complete technique matrix including detected, disabled, and active status. | should | Improves planning transparency and troubleshooting. |
-| FR-06 | Legacy verify command surfaces replaced by canonical subcommands in scope must be removed in the same slice. | must | Enforces hard-cutover policy and avoids dual contracts. |
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| FR-01 | The system must provide a canonical catalog of verification techniques with metadata required for detection and recommendation. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Creates a single source of truth for verification planning. |
+| FR-02 | `keel.toml` must allow explicit per-technique enable/disable overrides. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Gives operators deterministic control over active techniques. |
+| FR-03 | `keel verify detect` must analyze project signals and report detected technique eligibility. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Grounds recommendations in workspace reality. |
+| FR-04 | `keel verify recommend` must return only techniques that are both detected and active. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Keeps recommendations actionable and accurate. |
+| FR-05 | `keel config show` must expose a complete technique matrix including detected, disabled, and active status. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | should | Improves planning transparency and troubleshooting. |
+| FR-06 | Legacy verify command surfaces replaced by canonical subcommands in scope must be removed in the same slice. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Enforces hard-cutover policy and avoids dual contracts. |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ### Non-Functional Requirements
 
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Priority | Rationale |
-|----|-------------|----------|-----------|
-| NFR-01 | Detection and recommendation must be deterministic for the same project inputs and config. | must | Prevents planning churn and flaky automation behavior. |
-| NFR-02 | Command output contracts must be machine-readable and stable across patch releases. | must | Enables robust harness integration. |
-| NFR-03 | Technique catalog evolution must remain backward-safe within the new canonical schema. | should | Reduces migration overhead for future additions. |
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| NFR-01 | Detection and recommendation must be deterministic for the same project inputs and config. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Prevents planning churn and flaky automation behavior. |
+| NFR-02 | Command output contracts must be machine-readable and stable across patch releases. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Enables robust harness integration. |
+| NFR-03 | Technique catalog evolution must remain backward-safe within the new canonical schema. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | should | Reduces migration overhead for future additions. |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
 
 ## Verification Strategy

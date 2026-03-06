@@ -56,7 +56,12 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
             render_completed_with_length(voyage.frontmatter.started_at, completed_at)
         }),
     );
+    let voyage_dir = voyage.path.parent().unwrap_or(&voyage.path);
+    let srs_path = voyage_dir.join("SRS.md");
+    let sdd_path = voyage_dir.join("SDD.md");
     metadata.push_row("Path:", format!("{}", voyage.path.display().dimmed()));
+    metadata.push_row("SRS:", format!("{}", srs_path.display().dimmed()));
+    metadata.push_row("SDD:", format!("{}", sdd_path.display().dimmed()));
 
     let mut document = ShowDocument::new();
     document.push_header(metadata, Some(width));

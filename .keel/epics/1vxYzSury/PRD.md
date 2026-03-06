@@ -1,6 +1,5 @@
 # Deterministic Command Guidance - Product Requirements
 
-> Make management command output deterministic and harness-actionable with one canonical next or recovery step.
 
 ## Problem Statement
 
@@ -8,12 +7,12 @@ Management commands have historically mixed informational output with inconsiste
 
 ## Goals & Objectives
 
-| Goal | Success Metric | Target |
-|------|----------------|--------|
-| Establish one guidance contract | Actionable commands emit one canonical next or recovery step in text and JSON | 100% of actionable management commands in scope |
-| Keep informational commands non-prescriptive | Informational commands omit next/recovery directives by design | 0 informational command contract violations |
-| Reduce command-classification drift | Command capability map and drift tests cover actionable vs informational behavior | 100% drift-test pass rate |
-| Improve planning visibility | Show surfaces expose authored planning context and evidence status coherently | Epic/voyage/story show commands aligned to contract |
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | Establish one guidance contract | Actionable commands emit one canonical next or recovery step in text and JSON | 100% of actionable management commands in scope |
+| GOAL-02 | Keep informational commands non-prescriptive | Informational commands omit next/recovery directives by design | 0 informational command contract violations |
+| GOAL-03 | Reduce command-classification drift | Command capability map and drift tests cover actionable vs informational behavior | 100% drift-test pass rate |
+| GOAL-04 | Improve planning visibility | Show surfaces expose authored planning context and evidence status coherently | Epic/voyage/story show commands aligned to contract |
 
 ## Users
 
@@ -27,41 +26,41 @@ Management commands have historically mixed informational output with inconsiste
 
 ### In Scope
 
-- Define and enforce a shared guidance output contract with canonical next/recovery fields.
-- Apply deterministic guidance rules to story, voyage, governance, decision, and verification command groups in scope.
-- Preserve non-prescriptive behavior for informational commands.
-- Add command classification and drift tests to prevent contract regression.
-- Improve planning read surfaces so authored context and evidence status are visible and actionable.
+- [SCOPE-01] Define and enforce a shared guidance output contract with canonical next/recovery fields.
+- [SCOPE-02] Apply deterministic guidance rules to story, voyage, governance, decision, and verification command groups in scope.
+- [SCOPE-03] Preserve non-prescriptive behavior for informational commands.
+- [SCOPE-04] Add command classification and drift tests to prevent contract regression.
+- [SCOPE-05] Improve planning read surfaces so authored context and evidence status are visible and actionable.
 
 ### Out of Scope
 
-- Replacing command semantics beyond guidance and rendering contract requirements.
-- Expanding scope to external API protocols not currently served by CLI surfaces.
-- Introducing backward-compatible alternate guidance formats during this hard-cutover phase.
+- [SCOPE-06] Replacing command semantics beyond guidance and rendering contract requirements.
+- [SCOPE-07] Expanding scope to external API protocols not currently served by CLI surfaces.
+- [SCOPE-08] Introducing backward-compatible alternate guidance formats during this hard-cutover phase.
 
 ## Requirements
 
 ### Functional Requirements
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Priority | Rationale |
-|----|-------------|----------|-----------|
-| FR-01 | Actionable management commands in scope must emit exactly one canonical next or recovery instruction. | must | Enables deterministic operator and harness behavior. |
-| FR-02 | JSON output for actionable commands must include parity fields for canonical guidance. | must | Keeps machine consumers aligned with terminal output behavior. |
-| FR-03 | Informational commands must remain non-prescriptive and omit canonical action directives. | must | Prevents misleading or noisy guidance on read-only surfaces. |
-| FR-04 | Shared renderer utilities must be used across command groups to prevent formatting drift. | must | Maintains one rendering contract and reduces duplication. |
-| FR-05 | Planning show commands must expose authored context, requirement/evidence status, and lifecycle metadata coherently. | should | Improves decision quality and acceptance flow. |
-| FR-06 | Story creation must default to icebox state for planning-first intake. | should | Preserves queue discipline and avoids accidental execution starts. |
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| FR-01 | Actionable management commands in scope must emit exactly one canonical next or recovery instruction. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Enables deterministic operator and harness behavior. |
+| FR-02 | JSON output for actionable commands must include parity fields for canonical guidance. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Keeps machine consumers aligned with terminal output behavior. |
+| FR-03 | Informational commands must remain non-prescriptive and omit canonical action directives. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Prevents misleading or noisy guidance on read-only surfaces. |
+| FR-04 | Shared renderer utilities must be used across command groups to prevent formatting drift. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Maintains one rendering contract and reduces duplication. |
+| FR-05 | Planning show commands must expose authored context, requirement/evidence status, and lifecycle metadata coherently. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | should | Improves decision quality and acceptance flow. |
+| FR-06 | Story creation must default to icebox state for planning-first intake. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | should | Preserves queue discipline and avoids accidental execution starts. |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ### Non-Functional Requirements
 
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Priority | Rationale |
-|----|-------------|----------|-----------|
-| NFR-01 | Guidance contract behavior must be deterministic and stable across releases. | must | Harness reliability depends on contract stability. |
-| NFR-02 | Command classification tests must detect drift before merge. | must | Prevents regression of actionable vs informational semantics. |
-| NFR-03 | Rendered output must remain readable in narrow terminal widths without losing key guidance fields. | should | Ensures practical usability in real operator environments. |
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| NFR-01 | Guidance contract behavior must be deterministic and stable across releases. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Harness reliability depends on contract stability. |
+| NFR-02 | Command classification tests must detect drift before merge. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | must | Prevents regression of actionable vs informational semantics. |
+| NFR-03 | Rendered output must remain readable in narrow terminal widths without losing key guidance fields. | GOAL-01 GOAL-02 GOAL-03 GOAL-04 | should | Ensures practical usability in real operator environments. |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
 
 ## Verification Strategy
