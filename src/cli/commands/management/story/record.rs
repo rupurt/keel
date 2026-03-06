@@ -110,15 +110,6 @@ fn run_impl(
             bail!("LLM-Judge failed: {}", res.stderr);
         }
         println!("✅ LLM-Judge passed!");
-        // The execute_llm_judge already writes the transcript file,
-        // but the record command expects to write the proof file itself.
-        // Actually, execute_llm_judge returns ExecuteResult.
-        // Let's re-read the transcript or just use the result.
-        // Looking at execute_llm_judge implementation, it writes to a file.
-        // I'll change execute_llm_judge to NOT write the file if I want record to handle it,
-        // or just have record read it back.
-        // Alternatively, record can just use the transcript logic.
-
         let mut combined = format!(
             "---\nrecorded_at: {}\nmode: llm-judge\n---\n",
             chrono::Local::now().to_rfc3339()

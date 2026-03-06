@@ -129,36 +129,61 @@ pub fn execute_llm_judge(
         board_dir, story_id, criterion,
     )?;
 
-    // 1. Get the diff (changes in the current branch/HEAD)
     let project_root = board_dir.parent().unwrap_or(board_dir);
-    let diff = Command::new("git")
-        .arg("diff")
-        .arg("HEAD")
+    let mut child = match Command::new("llm-judge")
+        .arg(&bundle_path)
         .current_dir(project_root)
-        .output()?;
-    let diff_str = String::from_utf8_lossy(&diff.stdout);
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+    {
+        Ok(child) => child,
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
+            return Ok(ExecuteResult {
+                exit_code: 1,
+                stdout: String::new(),
+                stderr: "llm-judge executable not found on PATH. Install or configure a provider-agnostic llm-judge wrapper.".to_string(),
+                error: Some("JudgeUnavailable".to_string()),
+            });
+        }
+        Err(err) => {
+            return Ok(ExecuteResult {
+                exit_code: 1,
+                stdout: String::new(),
+                stderr: format!("Failed to launch llm-judge: {err}"),
+                error: Some("JudgeLaunchFailed".to_string()),
+            });
+        }
+    };
 
-    // 2. Mock the LLM judge by packaging the diff and AC into a transcript
-    let transcript = format!(
-        "LLM Judge Transcript\nStory: {}\nCriterion: {}\nBundle: {}\n\nDiff:\n{}\n\nResult: PASS\nSignature: <KEEL-JUDGE-SIG>",
-        story_id,
-        criterion,
-        bundle_path.display(),
-        diff_str
-    );
-
-    let transcript_filename = format!(
-        "llm-judge-{}.txt",
-        crate::infrastructure::utils::slugify(criterion)
-    );
-    let transcript_path = evidence_dir.join(transcript_filename);
-    std::fs::write(&transcript_path, transcript)?;
+    let (exit_status, stdout, stderr) = match child.wait_timeout(Duration::from_secs(60))? {
+        Some(status) => {
+            let output = child.wait_with_output()?;
+            (
+                status,
+                String::from_utf8_lossy(&output.stdout).to_string(),
+                String::from_utf8_lossy(&output.stderr).to_string(),
+            )
+        }
+        None => {
+            child.kill()?;
+            (
+                std::process::ExitStatus::default(),
+                String::new(),
+                "llm-judge timed out".to_string(),
+            )
+        }
+    };
 
     Ok(ExecuteResult {
-        exit_code: 0,
-        stdout: "LLM judge passed".to_string(),
-        stderr: String::new(),
-        error: None,
+        exit_code: exit_status.code().unwrap_or(1),
+        stdout,
+        stderr: stderr.clone(),
+        error: if stderr == "llm-judge timed out" {
+            Some("Timeout".to_string())
+        } else {
+            None
+        },
     })
 }
 
@@ -341,7 +366,58 @@ pub fn verify_all(board_dir: &Path) -> Result<Vec<super::reporter::VerificationR
 mod tests {
     use super::*;
     use std::fs;
+    use std::os::unix::fs::PermissionsExt;
     use tempfile::tempdir;
+
+    struct PathGuard(Option<String>);
+
+    impl PathGuard {
+        fn prepend(dir: &Path) -> Self {
+            let original = std::env::var("PATH").ok();
+            let mut entries = vec![dir.display().to_string()];
+            if let Some(existing) = &original {
+                entries.push(existing.clone());
+            }
+            unsafe {
+                std::env::set_var("PATH", entries.join(":"));
+            }
+            Self(original)
+        }
+    }
+
+    impl Drop for PathGuard {
+        fn drop(&mut self) {
+            match self.0.take() {
+                Some(path) => unsafe { std::env::set_var("PATH", path) },
+                None => unsafe { std::env::remove_var("PATH") },
+            }
+        }
+    }
+
+    fn install_mock_llm_judge(dir: &Path) -> std::path::PathBuf {
+        let script_path = dir.join("llm-judge");
+        let invocation_log = dir.join("judge-invocation.log");
+        fs::write(
+            &script_path,
+            format!(
+                r#"#!/usr/bin/env bash
+set -euo pipefail
+bundle="$1"
+test -f "$bundle"
+grep -q '"id": "S1"' "$bundle"
+grep -q '"text": "AC 1"' "$bundle"
+printf '%s' "$bundle" > "{}"
+printf 'PASS: %s\n' "$bundle"
+"#,
+                invocation_log.display()
+            ),
+        )
+        .unwrap();
+        let mut perms = fs::metadata(&script_path).unwrap().permissions();
+        perms.set_mode(0o755);
+        fs::set_permissions(&script_path, perms).unwrap();
+        invocation_log
+    }
 
     #[test]
     fn test_verify_story_executes_grep_proof() {
@@ -363,10 +439,12 @@ mod tests {
     }
 
     #[test]
-    fn test_verify_story_executes_llm_judge() {
+    fn llm_judge_uses_artifact_bundle_contract() {
         let dir = tempdir().unwrap();
+        let invocation_log = install_mock_llm_judge(dir.path());
+        let _path_guard = PathGuard::prepend(dir.path());
         let stories_dir = dir.path().join("stories").join("S1");
-        fs::create_dir_all(&stories_dir).unwrap();
+        fs::create_dir_all(stories_dir.join("EVIDENCE")).unwrap();
         let story_path = stories_dir.join("README.md");
         fs::write(
             &story_path,
@@ -381,26 +459,28 @@ updated_at: 2026-03-06T00:00:00
 
 ## Acceptance Criteria
 
-- [ ] AC 1 <!-- verify: llm-judge, SRS-01:start -->"#,
+- [ ] [SRS-01/AC-01] AC 1 <!-- verify: llm-judge, SRS-01:start:end -->"#,
         )
         .unwrap();
+        fs::write(stories_dir.join("EVIDENCE/ac-1.log"), "proof").unwrap();
 
         let report =
             verify_story(dir.path(), "S1", &fs::read_to_string(&story_path).unwrap()).unwrap();
         assert_eq!(report.results.len(), 1);
         assert!(report.results[0].passed);
         assert_eq!(report.results[0].actual, "llm-judge passed");
-
-        // Verify transcript was created
-        let evidence_dir = stories_dir.join("EVIDENCE");
-        assert!(evidence_dir.exists());
-        let transcript_path = evidence_dir.join("llm-judge-ac-1.txt");
-        assert!(transcript_path.exists());
+        let bundle_path = stories_dir.join("EVIDENCE/judge-bundle-ac-1.json");
+        assert_eq!(
+            fs::read_to_string(invocation_log).unwrap(),
+            bundle_path.display().to_string()
+        );
     }
 
     #[test]
     fn verification_executor_materializes_judge_bundle() {
         let dir = tempdir().unwrap();
+        let _path_guard = PathGuard::prepend(dir.path());
+        install_mock_llm_judge(dir.path());
         let stories_dir = dir.path().join("stories").join("S1");
         fs::create_dir_all(stories_dir.join("EVIDENCE")).unwrap();
         let story_path = stories_dir.join("README.md");
