@@ -294,8 +294,8 @@ pub fn build_cli() -> Command {
                         .about("Impact/Drift analysis"),
                 )
                 .subcommand(
-                    Command::new("migrate")
-                        .about("Migrate knowledge IDs to canonical global IDs"),
+                    Command::new("prune")
+                        .about("Prune duplicate knowledge and refresh canonical files"),
                 )
                 .subcommand_required(true),
         )

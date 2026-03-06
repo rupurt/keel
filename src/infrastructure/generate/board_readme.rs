@@ -4,7 +4,8 @@ use std::fmt::Write;
 use std::fs;
 use std::path::Path;
 
-use crate::domain::model::{BearingStatus, Board, EpicState, Story, StoryState, VoyageState};
+use crate::domain::model::{BearingStatus, Board};
+use crate::infrastructure::utils::cmp_optional_index_then_id;
 
 /// Generate and save the board-level README.md
 pub fn generate(board_dir: &Path, board: &Board) -> anyhow::Result<()> {
@@ -29,135 +30,13 @@ pub fn generate_board_readme(board: &Board) -> String {
     .unwrap();
     writeln!(output).unwrap();
 
-    // Rejected section (collapsed - these need rework)
-    let rejected: Vec<_> = stories_by_status(board, StoryState::Rejected);
-    write_story_section(&mut output, board, "Rejected", &rejected, true);
-
-    // Ready for Acceptance section
-    let ready_for_acceptance: Vec<_> = stories_by_status(board, StoryState::NeedsHumanVerification);
-    write_story_section(
-        &mut output,
-        board,
-        "Ready for Acceptance",
-        &ready_for_acceptance,
-        false,
-    );
-
-    // In Progress section
-    let in_progress: Vec<_> = stories_by_status(board, StoryState::InProgress);
-    write_story_section(&mut output, board, "In Progress", &in_progress, false);
-
-    // Backlog section
-    let backlog: Vec<_> = stories_by_status(board, StoryState::Backlog);
-    write_story_section(&mut output, board, "Backlog", &backlog, false);
-
-    // Icebox section (collapsed)
-    let icebox: Vec<_> = stories_by_status(board, StoryState::Icebox);
-    write_story_section(&mut output, board, "Icebox", &icebox, true);
-
     // Bearings section (research phase)
     write_bearings_section(&mut output, board);
 
     // Epics section
     write_epics_section(&mut output, board);
 
-    // Done section (collapsed)
-    write_done_section(&mut output, board);
-
     output
-}
-
-fn stories_by_status(board: &Board, status: StoryState) -> Vec<&Story> {
-    let mut stories: Vec<_> = board
-        .stories
-        .values()
-        .filter(|s| s.frontmatter.status == status)
-        .collect();
-    stories.sort_by(|a, b| match (a.frontmatter.index, b.frontmatter.index) {
-        (Some(ai), Some(bi)) if ai != bi => ai.cmp(&bi),
-        (Some(_), None) => std::cmp::Ordering::Less,
-        (None, Some(_)) => std::cmp::Ordering::Greater,
-        _ => a.id().cmp(b.id()),
-    });
-    stories
-}
-
-fn format_scope_links(board: &Board, scope: Option<&str>) -> String {
-    let Some(s) = scope else {
-        return "-".to_string();
-    };
-
-    if s.contains('/') {
-        let parts: Vec<_> = s.split('/').collect();
-        let epic_id = parts[0];
-        let voyage_id = parts[1];
-
-        let epic_link = if let Some(epic) = board.epics.get(epic_id) {
-            format!("[{}](epics/{}/)", epic.title(), epic_id)
-        } else {
-            epic_id.to_string()
-        };
-
-        let voyage_link = if let Some(voyage) = board.voyages.get(voyage_id) {
-            format!(
-                "[{}](epics/{}/voyages/{}/)",
-                voyage.title(),
-                epic_id,
-                voyage_id
-            )
-        } else {
-            voyage_id.to_string()
-        };
-
-        format!("{} / {}", epic_link, voyage_link)
-    } else if let Some(epic) = board.epics.get(s) {
-        format!("[{}](epics/{}/)", epic.title(), s)
-    } else {
-        s.to_string()
-    }
-}
-
-fn write_story_section(
-    output: &mut String,
-    board: &Board,
-    title: &str,
-    stories: &[&Story],
-    collapsed: bool,
-) {
-    if collapsed {
-        writeln!(output, "<details>").unwrap();
-        writeln!(output, "<summary><h2>{}</h2></summary>", title).unwrap();
-        writeln!(output).unwrap();
-    } else {
-        writeln!(output, "## {}", title).unwrap();
-        writeln!(output).unwrap();
-    }
-
-    writeln!(output, "| Story | Type | Scope |").unwrap();
-    writeln!(output, "|-------|------|-------|").unwrap();
-
-    for story in stories {
-        // Stories are now in story bundle directories: stories/[ID]/README.md
-        let relative_path = format!("stories/{}/README.md", story.id());
-        let link = format!("[{}]({})", story.title(), relative_path);
-        let scope_links = format_scope_links(board, story.frontmatter.scope.as_deref());
-
-        writeln!(
-            output,
-            "| {} | {} | {} |",
-            link,
-            story.story_type(),
-            scope_links
-        )
-        .unwrap();
-    }
-
-    if collapsed {
-        writeln!(output).unwrap();
-        writeln!(output, "</details>").unwrap();
-    }
-
-    writeln!(output).unwrap();
 }
 
 fn write_bearings_section(output: &mut String, board: &Board) {
@@ -185,12 +64,11 @@ fn write_bearings_section(output: &mut String, board: &Board) {
         writeln!(output, "|---------|--------|--------|------------|").unwrap();
 
         let mut sorted = active;
-        sorted.sort_by(|a, b| match (a.frontmatter.index, b.frontmatter.index) {
-            (Some(ai), Some(bi)) if ai != bi => ai.cmp(&bi),
-            (Some(_), None) => std::cmp::Ordering::Less,
-            (None, Some(_)) => std::cmp::Ordering::Greater,
-            _ => a.id().cmp(b.id()),
-        });
+        sort_indexed(
+            &mut sorted,
+            |bearing| bearing.frontmatter.index,
+            |bearing| bearing.id(),
+        );
 
         for bearing in sorted {
             let survey = if bearing.has_survey { "✓" } else { "-" };
@@ -253,33 +131,17 @@ fn write_epics_section(output: &mut String, board: &Board) {
 
     // Sort epics by index
     let mut epics: Vec<_> = board.epics.values().collect();
-    epics.sort_by(|a, b| match (a.frontmatter.index, b.frontmatter.index) {
-        (Some(ai), Some(bi)) if ai != bi => ai.cmp(&bi),
-        (Some(_), None) => std::cmp::Ordering::Less,
-        (None, Some(_)) => std::cmp::Ordering::Greater,
-        _ => a.id().cmp(b.id()),
-    });
+    sort_indexed(&mut epics, |epic| epic.frontmatter.index, |epic| epic.id());
 
     for epic in epics {
-        // Skip done epics (they go in Done section)
-        if epic.status() == EpicState::Done {
-            continue;
-        }
-
         let voyages = board.voyages_for_epic(epic);
-        let done_count = voyages
-            .iter()
-            .filter(|v| v.status() == VoyageState::Done)
-            .count();
 
         writeln!(
             output,
-            "### [{}](epics/{}/) ({}) - {} voyages, {} done",
+            "### [{}](epics/{}/) ({})",
             epic.title(),
             epic.id(),
-            epic.status(),
-            voyages.len(),
-            done_count
+            epic.status()
         )
         .unwrap();
         writeln!(output).unwrap();
@@ -289,12 +151,11 @@ fn write_epics_section(output: &mut String, board: &Board) {
             writeln!(output, "|--------|--------|").unwrap();
 
             let mut sorted_voyages = voyages;
-            sorted_voyages.sort_by(|a, b| match (a.frontmatter.index, b.frontmatter.index) {
-                (Some(ai), Some(bi)) if ai != bi => ai.cmp(&bi),
-                (Some(_), None) => std::cmp::Ordering::Less,
-                (None, Some(_)) => std::cmp::Ordering::Greater,
-                _ => a.id().cmp(b.id()),
-            });
+            sort_indexed(
+                &mut sorted_voyages,
+                |voyage| voyage.frontmatter.index,
+                |voyage| voyage.id(),
+            );
 
             for v in sorted_voyages {
                 writeln!(
@@ -312,37 +173,14 @@ fn write_epics_section(output: &mut String, board: &Board) {
     }
 }
 
-fn write_done_section(output: &mut String, board: &Board) {
-    // Done epics
-    let done_epics: Vec<_> = board
-        .epics
-        .values()
-        .filter(|e| e.status() == EpicState::Done)
-        .collect();
-
-    if done_epics.is_empty() {
-        return;
-    }
-
-    writeln!(output, "<details>").unwrap();
-    writeln!(output, "<summary><h2>Done</h2></summary>").unwrap();
-    writeln!(output).unwrap();
-
-    // Done epics first
-    if !done_epics.is_empty() {
-        writeln!(output, "### Completed Epics").unwrap();
-        writeln!(output).unwrap();
-
-        let mut sorted_epics = done_epics;
-        sorted_epics.sort_by(|a, b| a.id().cmp(b.id()));
-
-        for epic in sorted_epics {
-            writeln!(output, "- [{}](epics/{}/)", epic.title(), epic.id()).unwrap();
-        }
-    }
-
-    writeln!(output).unwrap();
-    writeln!(output, "</details>").unwrap();
+fn sort_indexed<T, FIndex, FId>(items: &mut Vec<&T>, index_of: FIndex, id_of: FId)
+where
+    FIndex: Fn(&T) -> Option<u32>,
+    FId: for<'a> Fn(&'a T) -> &'a str,
+{
+    items.sort_by(|left, right| {
+        cmp_optional_index_then_id(index_of(left), id_of(left), index_of(right), id_of(right))
+    });
 }
 
 #[cfg(test)]
@@ -362,35 +200,23 @@ mod tests {
     }
 
     #[test]
-    fn generate_board_readme_includes_in_progress() {
+    fn generate_board_readme_omits_story_status_sections() {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("0001")
                     .title("Active Story")
-                    .stage(StoryState::InProgress),
+                    .stage(crate::domain::model::StoryState::InProgress),
             )
             .build();
         let board = load_board(temp.path()).unwrap();
         let readme = generate_board_readme(&board);
 
-        assert!(readme.contains("## In Progress"));
-        assert!(readme.contains("0001"));
-    }
-
-    #[test]
-    fn generate_board_readme_includes_backlog() {
-        let temp = TestBoardBuilder::new()
-            .story(
-                TestStory::new("0002")
-                    .title("Pending Bug")
-                    .stage(StoryState::Backlog),
-            )
-            .build();
-        let board = load_board(temp.path()).unwrap();
-        let readme = generate_board_readme(&board);
-
-        assert!(readme.contains("## Backlog"));
-        assert!(readme.contains("0002"));
+        assert!(!readme.contains("## Rejected"));
+        assert!(!readme.contains("## Ready for Acceptance"));
+        assert!(!readme.contains("## In Progress"));
+        assert!(!readme.contains("## Backlog"));
+        assert!(!readme.contains("## Icebox"));
+        assert!(!readme.contains("0001"));
     }
 
     #[test]
@@ -408,57 +234,22 @@ mod tests {
     }
 
     #[test]
-    fn generate_board_readme_includes_ready_for_acceptance() {
+    fn generate_board_readme_keeps_done_epics_in_epics_section() {
         let temp = TestBoardBuilder::new()
-            .story(
-                TestStory::new("0003")
-                    .title("Awaiting Review")
-                    .stage(StoryState::NeedsHumanVerification),
+            .epic(TestEpic::new("done-epic").title("Done Epic"))
+            .voyage(
+                TestVoyage::new("01-finished", "done-epic")
+                    .title("Finished Voyage")
+                    .status("done"),
             )
             .build();
         let board = load_board(temp.path()).unwrap();
         let readme = generate_board_readme(&board);
 
-        assert!(readme.contains("## Ready for Acceptance"));
-        assert!(readme.contains("0003"));
-    }
-
-    #[test]
-    fn generate_board_readme_includes_rejected() {
-        let temp = TestBoardBuilder::new()
-            .story(
-                TestStory::new("0004")
-                    .title("Needs Rework")
-                    .stage(StoryState::Rejected),
-            )
-            .build();
-        let board = load_board(temp.path()).unwrap();
-        let readme = generate_board_readme(&board);
-
-        // Rejected is collapsed
-        assert!(readme.contains("<summary><h2>Rejected</h2></summary>"));
-        assert!(readme.contains("0004"));
-    }
-
-    #[test]
-    fn generate_board_readme_links_to_story_bundles() {
-        let temp = TestBoardBuilder::new()
-            .story(
-                TestStory::new("0003")
-                    .title("Test Story")
-                    .stage(StoryState::InProgress),
-            )
-            .build();
-
-        let board = load_board(temp.path()).unwrap();
-        let readme = generate_board_readme(&board);
-
-        // Story should appear in In Progress section
-        assert!(readme.contains("## In Progress"));
-        assert!(readme.contains("0003"));
-
-        // The link should go to story bundle README
-        assert!(readme.contains("stories/0003/README.md"));
+        assert!(readme.contains("## Epics"));
+        assert!(readme.contains("[Done Epic](epics/done-epic/) (done)"));
+        assert!(readme.contains("[Finished Voyage](epics/done-epic/voyages/01-finished/)"));
+        assert!(!readme.contains("<summary><h2>Done</h2></summary>"));
     }
 
     #[test]

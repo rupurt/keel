@@ -190,6 +190,22 @@ fn cli_rejects_removed_migrate_command() {
 }
 
 #[test]
+fn cli_parses_knowledge_prune_command() {
+    let matches = crate::build_cli()
+        .try_get_matches_from(["keel", "knowledge", "prune"])
+        .unwrap();
+    assert_eq!(matches.subcommand_name(), Some("knowledge"));
+    let knowledge = matches.subcommand_matches("knowledge").unwrap();
+    assert_eq!(knowledge.subcommand_name(), Some("prune"));
+}
+
+#[test]
+fn cli_rejects_removed_knowledge_migrate_command() {
+    let result = crate::build_cli().try_get_matches_from(["keel", "knowledge", "migrate"]);
+    assert!(result.is_err());
+}
+
+#[test]
 fn cli_parses_verify_command() {
     let matches = crate::build_cli()
         .try_get_matches_from(["keel", "verify", "run", "S1", "--all", "--json"])

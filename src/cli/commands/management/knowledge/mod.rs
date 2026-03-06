@@ -4,7 +4,7 @@ pub mod explore;
 pub mod graph;
 pub mod impact;
 pub mod list;
-pub mod migrate;
+pub mod prune;
 pub mod show;
 
 use anyhow::Result;
@@ -36,8 +36,8 @@ pub enum KnowledgeAction {
     Graph,
     /// Impact/Drift analysis: identify where knowledge is missing or successfully applied
     Impact,
-    /// One-time migration to canonical global knowledge IDs and manifest
-    Migrate,
+    /// Prune duplicate knowledge and refresh canonical knowledge files
+    Prune,
 }
 
 pub fn run(board_dir: &Path, action: KnowledgeAction) -> Result<()> {
@@ -58,6 +58,6 @@ pub fn run(board_dir: &Path, action: KnowledgeAction) -> Result<()> {
         KnowledgeAction::Explore => explore::run(board_dir),
         KnowledgeAction::Graph => graph::run(board_dir),
         KnowledgeAction::Impact => impact::run(board_dir),
-        KnowledgeAction::Migrate => migrate::run(board_dir),
+        KnowledgeAction::Prune => prune::run(board_dir),
     }
 }

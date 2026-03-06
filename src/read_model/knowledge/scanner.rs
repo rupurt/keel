@@ -19,8 +19,6 @@ static KNOWLEDGE_FIELD_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\|\s*\*\*(\w+(?:\s+\w+)*)\*\*\s*\|\s*([^|]*)\|").unwrap());
 static KNOWLEDGE_HEADER_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?m)^###\s+([A-Za-z0-9]{9}|L\d+|ML\d+):\s*(.*)$").unwrap());
-static KNOWLEDGE_HEADER_LINE_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^(\s*###\s+)([A-Za-z0-9]{9}|L\d+|ML\d+)(:\s*.*)$").unwrap());
 static KNOWLEDGE_LINK_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r#"(?m)^\s*[-*]\s+\[([A-Za-z0-9]{9})\]\(([^)]+)\)"#).unwrap());
 static SCOPE_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?m)^scope:\s*(.+)$").unwrap());
@@ -67,14 +65,6 @@ struct KnowledgeArtifactFrontmatter {
         deserialize_with = "crate::domain::model::deserialize_strict_datetime"
     )]
     created_at: Option<NaiveDateTime>,
-}
-
-/// One-time migration result for canonicalizing knowledge IDs.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct KnowledgeMigrationReport {
-    pub files_updated: usize,
-    pub ids_regenerated: usize,
-    pub knowledge_entries: usize,
 }
 
 /// Sort mode for `knowledge list`.
@@ -924,8 +914,7 @@ fn write_knowledge_catalog_files(board_dir: &Path, units: &[Knowledge]) -> Resul
     Ok(())
 }
 
-/// Scan all knowledge sources, enforce canonical IDs, and persist the catalog files.
-pub fn sync_knowledge_catalog(board_dir: &Path) -> Result<KnowledgeCatalog> {
+fn project_knowledge_units(board_dir: &Path) -> Result<Vec<Knowledge>> {
     let mut all = scan_all_knowledge_sources(board_dir)?;
     normalize_units(&mut all);
 
@@ -954,16 +943,30 @@ pub fn sync_knowledge_catalog(board_dir: &Path) -> Result<KnowledgeCatalog> {
 
     all = prune_newer_near_duplicates(all, NEAR_DUPLICATE_KNOWLEDGE_THRESHOLD);
     normalize_similarity_fields(&mut all);
-    write_knowledge_catalog_files(board_dir, &all)?;
+    Ok(all)
+}
+
+/// Build the canonical knowledge catalog view without mutating `.keel/knowledge`.
+pub fn project_knowledge_catalog(board_dir: &Path) -> Result<KnowledgeCatalog> {
     Ok(KnowledgeCatalog {
         generated_at: Utc::now(),
-        units: all,
+        units: project_knowledge_units(board_dir)?,
+    })
+}
+
+/// Prune duplicate knowledge and persist the canonical catalog files to `.keel/knowledge`.
+pub fn prune_knowledge_catalog(board_dir: &Path) -> Result<KnowledgeCatalog> {
+    let units = project_knowledge_units(board_dir)?;
+    write_knowledge_catalog_files(board_dir, &units)?;
+    Ok(KnowledgeCatalog {
+        generated_at: Utc::now(),
+        units,
     })
 }
 
 /// Scan all knowledge sources and return all knowledge units.
 pub fn scan_all_knowledge(board_dir: &Path) -> Result<Vec<Knowledge>> {
-    Ok(sync_knowledge_catalog(board_dir)?.units)
+    project_knowledge_units(board_dir)
 }
 
 /// Filter knowledge to only unapplied units.
@@ -1279,119 +1282,6 @@ pub fn materialize_reflection_knowledge(
         .with_context(|| format!("Failed to update {}", reflect_path.display()))?;
 
     Ok(inline)
-}
-
-fn collect_knowledge_markdown_files(board_dir: &Path) -> Vec<PathBuf> {
-    let mut files = Vec::new();
-
-    let stories_dir = board_dir.join("stories");
-    if stories_dir.exists() {
-        for entry in WalkDir::new(&stories_dir)
-            .into_iter()
-            .filter_map(|entry| entry.ok())
-        {
-            if entry.file_name() == "REFLECT.md" {
-                files.push(entry.path().to_path_buf());
-            }
-        }
-    }
-
-    let epics_dir = board_dir.join("epics");
-    if epics_dir.exists() {
-        for entry in WalkDir::new(&epics_dir)
-            .into_iter()
-            .filter_map(|entry| entry.ok())
-        {
-            if entry.file_name() == "KNOWLEDGE.md" {
-                files.push(entry.path().to_path_buf());
-            }
-        }
-    }
-
-    if let Some(project_root) = board_dir.parent() {
-        let adhoc_dir = project_root.join("knowledge");
-        if adhoc_dir.exists() {
-            for entry in WalkDir::new(&adhoc_dir)
-                .into_iter()
-                .filter_map(|entry| entry.ok())
-            {
-                if entry.path().extension().is_some_and(|ext| ext == "md") {
-                    files.push(entry.path().to_path_buf());
-                }
-            }
-        }
-    }
-
-    files.sort();
-    files
-}
-
-fn rewrite_knowledge_headers_with_generated_ids(
-    content: &str,
-    used_ids: &mut HashSet<String>,
-) -> (String, usize) {
-    let mut rewritten = String::new();
-    let mut regenerated = 0;
-    let mut in_comment = false;
-
-    for line in content.lines() {
-        let mut current = line.to_string();
-        let trimmed = line.trim_start();
-        if trimmed.starts_with("<!--") {
-            in_comment = true;
-        }
-
-        if !in_comment && let Some(caps) = KNOWLEDGE_HEADER_LINE_RE.captures(line) {
-            let prefix = caps.get(1).map(|m| m.as_str()).unwrap_or("### ");
-            let suffix = caps.get(3).map(|m| m.as_str()).unwrap_or(":");
-            let mut generated = crate::infrastructure::story_id::generate_story_id();
-            while used_ids.contains(&generated) {
-                generated = crate::infrastructure::story_id::generate_story_id();
-            }
-            used_ids.insert(generated.clone());
-            current = format!("{prefix}{generated}{suffix}");
-            regenerated += 1;
-        }
-
-        rewritten.push_str(&current);
-        rewritten.push('\n');
-
-        if trimmed.ends_with("-->") {
-            in_comment = false;
-        }
-    }
-
-    if !content.ends_with('\n') {
-        rewritten.pop();
-    }
-
-    (rewritten, regenerated)
-}
-
-/// One-time hard migration to regenerate canonical knowledge IDs and refresh catalog files.
-pub fn migrate_legacy_knowledge_ids(board_dir: &Path) -> Result<KnowledgeMigrationReport> {
-    let files = collect_knowledge_markdown_files(board_dir);
-    let mut used_ids = HashSet::new();
-    let mut files_updated = 0usize;
-    let mut ids_regenerated = 0usize;
-
-    for path in files {
-        let original = std::fs::read_to_string(&path)?;
-        let (rewritten, regenerated) =
-            rewrite_knowledge_headers_with_generated_ids(&original, &mut used_ids);
-        if regenerated > 0 {
-            std::fs::write(&path, rewritten)?;
-            files_updated += 1;
-            ids_regenerated += regenerated;
-        }
-    }
-
-    let catalog = sync_knowledge_catalog(board_dir)?;
-    Ok(KnowledgeMigrationReport {
-        files_updated,
-        ids_regenerated,
-        knowledge_entries: catalog.units.len(),
-    })
 }
 
 #[cfg(test)]
@@ -1807,7 +1697,7 @@ status: done
     }
 
     #[test]
-    fn sync_knowledge_catalog_writes_individual_knowledge_files() {
+    fn prune_knowledge_catalog_writes_individual_knowledge_files() {
         let temp = create_test_board();
         let bundle_dir = temp.path().join("stories/FEAT0002");
         fs::create_dir_all(&bundle_dir).unwrap();
@@ -1835,7 +1725,7 @@ status: done
         )
         .unwrap();
 
-        let catalog = sync_knowledge_catalog(temp.path()).unwrap();
+        let catalog = prune_knowledge_catalog(temp.path()).unwrap();
         assert_eq!(catalog.units.len(), 1);
 
         let knowledge_path = knowledge_file_path(temp.path(), "1AbCdE234");
@@ -1846,7 +1736,41 @@ status: done
     }
 
     #[test]
-    fn sync_knowledge_catalog_prunes_newer_near_duplicate_units() {
+    fn project_knowledge_catalog_is_read_only() {
+        let temp = create_test_board();
+        let bundle_dir = temp.path().join("stories/STORY0000");
+        fs::create_dir_all(&bundle_dir).unwrap();
+
+        fs::write(
+            bundle_dir.join("README.md"),
+            "---\nid: STORY0000\ntitle: Test Story\nscope: test-epic/01-test\nstatus: done\n---\n",
+        )
+        .unwrap();
+        fs::write(
+            bundle_dir.join("REFLECT.md"),
+            r#"# Reflection
+
+## Knowledge
+
+### 1AbCdE230: Projection Is Read Only
+
+| Field | Value |
+|-------|-------|
+| **Category** | process |
+| **Context** | when loading knowledge for display |
+| **Insight** | Knowledge projections should not rewrite the catalog as a side effect |
+| **Suggested Action** | Keep reads read-only and leave pruning to an explicit command |
+"#,
+        )
+        .unwrap();
+
+        let catalog = project_knowledge_catalog(temp.path()).unwrap();
+        assert_eq!(catalog.units.len(), 1);
+        assert!(!knowledge_file_path(temp.path(), "1AbCdE230").exists());
+    }
+
+    #[test]
+    fn prune_knowledge_catalog_prunes_newer_near_duplicate_units() {
         let temp = create_test_board();
         let bundle_dir = temp.path().join("stories/STORY0001");
         let voyage_dir = temp.path().join("epics/test-epic/voyages/01-test");
@@ -1938,7 +1862,7 @@ created_at: 2026-03-05T10:00:00
         )
         .unwrap();
 
-        let catalog = sync_knowledge_catalog(temp.path()).unwrap();
+        let catalog = prune_knowledge_catalog(temp.path()).unwrap();
         assert_eq!(catalog.units.len(), 1);
         assert_eq!(catalog.units[0].id, "1AbCdE234");
         assert!(catalog.units[0].similar_to.is_none());
@@ -1947,7 +1871,7 @@ created_at: 2026-03-05T10:00:00
     }
 
     #[test]
-    fn sync_knowledge_catalog_prefers_story_source_over_linked_voyage_derivative() {
+    fn prune_knowledge_catalog_prefers_story_source_over_linked_voyage_derivative() {
         let temp = create_test_board();
         let bundle_dir = temp.path().join("stories/STORY0002");
         let voyage_dir = temp.path().join("epics/test-epic/voyages/01-test");
@@ -2006,7 +1930,7 @@ created_at: 2026-03-03T08:10:40
         )
         .unwrap();
 
-        let catalog = sync_knowledge_catalog(temp.path()).unwrap();
+        let catalog = prune_knowledge_catalog(temp.path()).unwrap();
         assert_eq!(catalog.units.len(), 1);
         assert_eq!(catalog.units[0].id, "1AbCdE235");
         assert_eq!(catalog.units[0].source_type, KnowledgeSourceType::Story);

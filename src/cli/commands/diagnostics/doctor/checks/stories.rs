@@ -1146,7 +1146,7 @@ pub fn check_knowledge_manifest_integrity(board_dir: &Path) -> Vec<Problem> {
     let mut problems = Vec::new();
     let knowledge_dir = board_dir.join("knowledge");
 
-    let catalog = match crate::read_model::knowledge::sync_knowledge_catalog(board_dir) {
+    let catalog = match crate::read_model::knowledge::project_knowledge_catalog(board_dir) {
         Ok(catalog) => catalog,
         Err(error) => {
             problems.push(

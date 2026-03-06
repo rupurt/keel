@@ -25,9 +25,6 @@ pub fn run(board_dir: &Path) -> Result<()> {
         crate::infrastructure::generate::voyage_readme::generate(board_dir, &board, voyage)?;
 
         if voyage.status() == VoyageState::Done {
-            crate::infrastructure::generate::knowledge_synthesis::synthesize_voyage_knowledge(
-                &board, voyage,
-            )?;
             crate::infrastructure::generate::voyage_report::generate(board_dir, &board, voyage)?;
             crate::infrastructure::generate::compliance_report::generate(
                 board_dir, &board, voyage,
@@ -40,9 +37,6 @@ pub fn run(board_dir: &Path) -> Result<()> {
     // 4. Regenerate persistent weekly throughput history for diagnostics graphs.
     let history = crate::read_model::throughput_history::project_default(&board);
     crate::infrastructure::throughput_history_store::save_if_changed(board_dir, &history)?;
-
-    // 5. Refresh canonical knowledge catalog files.
-    crate::read_model::knowledge::sync_knowledge_catalog(board_dir)?;
 
     println!("Board updated");
 
@@ -97,7 +91,9 @@ mod tests {
 
         let readme = fs::read_to_string(temp.path().join("README.md")).unwrap();
         assert!(readme.contains("# Planning Board"));
-        assert!(readme.contains("FEAT0001"));
+        assert!(readme.contains("## Epics"));
+        assert!(readme.contains("01-first"));
+        assert!(!readme.contains("FEAT0001"));
     }
 
     #[test]
@@ -198,5 +194,21 @@ mod tests {
         let readme = fs::read_to_string(readme_path).unwrap();
         assert!(readme.contains("VOYAGE_REPORT.md"));
         assert!(readme.contains("COMPLIANCE_REPORT.md"));
+    }
+
+    #[test]
+    fn generate_does_not_synthesize_voyage_knowledge() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("test-epic"))
+            .voyage(TestVoyage::new("01-done", "test-epic").status("done"))
+            .build();
+
+        let voyage_dir = temp.path().join("epics/test-epic/voyages/01-done");
+        let knowledge_path = voyage_dir.join("KNOWLEDGE.md");
+        assert!(!knowledge_path.exists());
+
+        run(temp.path()).unwrap();
+
+        assert!(!knowledge_path.exists());
     }
 }

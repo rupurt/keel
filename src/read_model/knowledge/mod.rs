@@ -17,10 +17,10 @@ pub use navigator::{
     seed_blockers,
 };
 pub use scanner::{
-    KnowledgeCatalog, KnowledgeMigrationReport, KnowledgeSimilarityConflict, KnowledgeSort,
+    KnowledgeCatalog, KnowledgeSimilarityConflict, KnowledgeSort,
     NEAR_DUPLICATE_KNOWLEDGE_THRESHOLD, RankedKnowledge, detect_similarity_conflicts,
     filter_by_category, filter_unapplied, is_canonical_knowledge_id, knowledge_file_path,
-    load_reflection_knowledge, materialize_reflection_knowledge, migrate_legacy_knowledge_ids,
-    parse_applies_to, parse_reflection_candidates, rank_relevant_knowledge, scan_all_knowledge,
-    sync_knowledge_catalog,
+    load_reflection_knowledge, materialize_reflection_knowledge, parse_applies_to,
+    parse_reflection_candidates, project_knowledge_catalog, prune_knowledge_catalog,
+    rank_relevant_knowledge, scan_all_knowledge,
 };

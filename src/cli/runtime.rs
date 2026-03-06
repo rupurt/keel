@@ -329,7 +329,7 @@ fn handle_knowledge_command(matches: &ArgMatches) -> Result<()> {
     let command = matches
         .subcommand()
         .ok_or_else(|| anyhow::anyhow!("Missing knowledge subcommand"))?;
-    match command {
+    let action = match command {
         ("list", m) => {
             let category = m.get_one::<String>("category").cloned();
             let pending = *m.get_one::<bool>("pending").unwrap_or(&false);
@@ -337,40 +337,23 @@ fn handle_knowledge_command(matches: &ArgMatches) -> Result<()> {
                 .get_one::<String>("sort")
                 .cloned()
                 .unwrap_or_else(|| "id".to_string());
-            super::commands::management::knowledge::run(
-                &resolve_board_dir()?,
-                super::commands::management::knowledge::KnowledgeAction::List {
-                    category,
-                    pending,
-                    sort,
-                },
-            )
+            super::commands::management::knowledge::KnowledgeAction::List {
+                category,
+                pending,
+                sort,
+            }
         }
-        ("show", m) => {
-            let id = m.get_one::<String>("id").expect("required");
-            super::commands::management::knowledge::run(
-                &resolve_board_dir()?,
-                super::commands::management::knowledge::KnowledgeAction::Show { id: id.clone() },
-            )
-        }
-        ("explore", _) => super::commands::management::knowledge::run(
-            &resolve_board_dir()?,
-            super::commands::management::knowledge::KnowledgeAction::Explore,
-        ),
-        ("graph", _) => super::commands::management::knowledge::run(
-            &resolve_board_dir()?,
-            super::commands::management::knowledge::KnowledgeAction::Graph,
-        ),
-        ("impact", _) => super::commands::management::knowledge::run(
-            &resolve_board_dir()?,
-            super::commands::management::knowledge::KnowledgeAction::Impact,
-        ),
-        ("migrate", _) => super::commands::management::knowledge::run(
-            &resolve_board_dir()?,
-            super::commands::management::knowledge::KnowledgeAction::Migrate,
-        ),
-        (name, _) => Err(anyhow::anyhow!("Unsupported knowledge subcommand: {name}")),
-    }
+        ("show", m) => super::commands::management::knowledge::KnowledgeAction::Show {
+            id: m.get_one::<String>("id").expect("required").clone(),
+        },
+        ("explore", _) => super::commands::management::knowledge::KnowledgeAction::Explore,
+        ("graph", _) => super::commands::management::knowledge::KnowledgeAction::Graph,
+        ("impact", _) => super::commands::management::knowledge::KnowledgeAction::Impact,
+        ("prune", _) => super::commands::management::knowledge::KnowledgeAction::Prune,
+        (name, _) => return Err(anyhow::anyhow!("Unsupported knowledge subcommand: {name}")),
+    };
+
+    super::commands::management::knowledge::run(&resolve_board_dir()?, action)
 }
 
 fn handle_config_command(matches: &ArgMatches) -> Result<()> {
