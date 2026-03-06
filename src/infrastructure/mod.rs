@@ -3,6 +3,7 @@
 pub mod artifact_frontmatter;
 pub mod board_init;
 pub mod config;
+pub mod dogfood_runner;
 pub mod dogfood_workspace;
 pub mod duplicate_ids;
 pub mod frontmatter_mutation;
@@ -18,3 +19,4 @@ pub mod throughput_history_store;
 pub mod utils;
 pub mod validation;
 pub mod verification;
+pub mod vhs;

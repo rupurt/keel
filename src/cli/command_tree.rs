@@ -9,6 +9,7 @@ Setup
   init        Initialize a new keel board in the current directory
   config      Configuration commands
   generate    Regenerate all README files
+  dogfood     Local dogfood runner utilities
 
 Management
   next        Pull from human queue (default) or agent queue (--agent)
@@ -276,6 +277,25 @@ pub fn build_cli() -> Command {
             Command::new("init")
                 .about("Initialize a new keel board in the current directory")
                 .hide(true),
+        )
+        .subcommand(
+            Command::new("dogfood")
+                .about("Local dogfood runner utilities")
+                .hide(true)
+                .subcommand(
+                    Command::new("run")
+                        .about("Reset the secondary workspace and run a named VHS scenario")
+                        .arg(
+                            Arg::new("scenario")
+                                .long("scenario")
+                                .short('s')
+                                .help("Scenario name (from testdata/dogfood/scenarios/<name>.tape)")
+                                .required(true)
+                                .num_args(1),
+                        ),
+                )
+                .subcommand(Command::new("reset").about("Reset the secondary dogfood workspace"))
+                .subcommand_required(true),
         )
         .subcommand(
             Command::new("knowledge")

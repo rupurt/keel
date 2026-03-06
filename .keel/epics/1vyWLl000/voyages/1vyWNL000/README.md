@@ -25,11 +25,11 @@ started_at: 2026-03-06T07:14:45
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/5 stories complete
+**Progress:** 2/5 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Build Tape Runner And Reset Harness](../../../../stories/1vyWRj000/README.md) | feat | backlog |
+| [Build Tape Runner And Reset Harness](../../../../stories/1vyWRj000/README.md) | feat | done |
 | [Author Bearing Workflow Dogfood Tapes](../../../../stories/1vyWRk000/README.md) | feat | backlog |
 | [Create Secondary Dogfood Workspace](../../../../stories/1vyWSB000/README.md) | feat | done |
 | [Author Epic Workflow Dogfood Tapes](../../../../stories/1vyWSC000/README.md) | feat | backlog |

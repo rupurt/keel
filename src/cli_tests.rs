@@ -184,6 +184,21 @@ fn cli_parses_generate_command() {
 }
 
 #[test]
+fn cli_parses_dogfood_run_command() {
+    let matches = crate::build_cli()
+        .try_get_matches_from(["keel", "dogfood", "run", "--scenario", "smoke-flow"])
+        .unwrap();
+    assert_eq!(matches.subcommand_name(), Some("dogfood"));
+    let dogfood = matches.subcommand_matches("dogfood").unwrap();
+    let run = dogfood.subcommand_matches("run").unwrap();
+    assert_eq!(
+        run.get_one::<String>("scenario")
+            .map(|value| value.as_str()),
+        Some("smoke-flow")
+    );
+}
+
+#[test]
 fn cli_rejects_removed_migrate_command() {
     let result = crate::build_cli().try_get_matches_from(["keel", "migrate"]);
     assert!(result.is_err());

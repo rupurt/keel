@@ -110,19 +110,8 @@ fn execute_vhs(_board_dir: &Path, story_dir: &Path, cmd: &str) -> Result<Execute
         std::fs::create_dir_all(&evidence_dir)?;
     }
 
-    // Run vhs from the story directory so relative paths in the tape work
-    if std::env::var("KEEL_MOCK_VHS").is_ok() {
-        let output_gif = evidence_dir.join("record-cli.gif");
-        std::fs::write(output_gif, "dummy gif content")?;
-        return Ok(ExecuteResult {
-            exit_code: 0,
-            stdout: "vhs mocked successfully".to_string(),
-            stderr: String::new(),
-            error: None,
-        });
-    }
-
-    execute(cmd, story_dir, Duration::from_secs(60))
+    let output_gif = evidence_dir.join("record-cli.gif");
+    crate::infrastructure::vhs::run_tape(story_dir, &tape_path, std::slice::from_ref(&output_gif))
 }
 
 pub fn execute_llm_judge(

@@ -42,6 +42,10 @@ coverage args="":
 keel *args:
   cargo run {{args}}
 
+# Run the local opt-in dogfood VHS runner
+e2e-vhs *args:
+  cargo run dogfood run {{args}}
+
 # Run quality checks and tests
 pre-commit: quality test
   @echo "✓ All pre-commit checks passed"

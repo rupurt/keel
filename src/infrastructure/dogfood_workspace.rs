@@ -10,6 +10,9 @@ use crate::infrastructure::loader::load_board;
 use crate::infrastructure::throughput_history_store;
 
 pub const DOGFOOD_WORKSPACE_ROOT: &str = "testdata/dogfood/workspace";
+const BOARD_PLACEHOLDER_DIRS: [&str; 4] = ["adrs", "bearings", "epics", "stories"];
+const GITKEEP_NAME: &str = ".gitkeep";
+const GITKEEP_CONTENT: &str = "\n";
 
 pub fn workspace_root(repo_root: &Path) -> PathBuf {
     repo_root.join(DOGFOOD_WORKSPACE_ROOT)
@@ -25,6 +28,7 @@ pub fn ensure_workspace(repo_root: &Path) -> Result<()> {
         .with_context(|| format!("Failed to create dogfood workspace {}", root.display()))?;
 
     crate::infrastructure::board_init::init_board(&root, &Config::default())?;
+    restore_board_placeholders(repo_root)?;
     regenerate_workspace_artifacts(repo_root)
 }
 
@@ -59,6 +63,27 @@ fn regenerate_workspace_artifacts(repo_root: &Path) -> Result<()> {
     board_readme::generate(&board_dir, &board)?;
     let history = crate::read_model::throughput_history::project_default(&board);
     throughput_history_store::save_if_changed(&board_dir, &history)?;
+    Ok(())
+}
+
+fn restore_board_placeholders(repo_root: &Path) -> Result<()> {
+    let board_dir = board_dir(repo_root);
+    for dir in BOARD_PLACEHOLDER_DIRS {
+        let placeholder_dir = board_dir.join(dir);
+        fs::create_dir_all(&placeholder_dir).with_context(|| {
+            format!(
+                "Failed to create dogfood board placeholder directory {}",
+                placeholder_dir.display()
+            )
+        })?;
+        let placeholder = placeholder_dir.join(GITKEEP_NAME);
+        fs::write(&placeholder, GITKEEP_CONTENT).with_context(|| {
+            format!(
+                "Failed to restore dogfood board placeholder {}",
+                placeholder.display()
+            )
+        })?;
+    }
     Ok(())
 }
 
@@ -124,6 +149,29 @@ mod tests {
             board_dir(repo_root).join("README.md").is_file(),
             "reset should restore dogfood board artifacts"
         );
+    }
+
+    #[test]
+    fn dogfood_workspace_reset_restores_checked_in_placeholders() {
+        let temp = tempdir().unwrap();
+        ensure_workspace(temp.path()).unwrap();
+
+        for dir in BOARD_PLACEHOLDER_DIRS {
+            let placeholder = board_dir(temp.path()).join(dir).join(GITKEEP_NAME);
+            fs::remove_file(&placeholder).unwrap();
+            assert!(!placeholder.exists());
+        }
+
+        reset_workspace(temp.path()).unwrap();
+
+        for dir in BOARD_PLACEHOLDER_DIRS {
+            let placeholder = board_dir(temp.path()).join(dir).join(GITKEEP_NAME);
+            assert!(
+                placeholder.is_file(),
+                "expected placeholder to be restored at {}",
+                placeholder.display()
+            );
+        }
     }
 
     #[test]
