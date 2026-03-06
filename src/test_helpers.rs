@@ -474,16 +474,16 @@ Test harness epic problem statement.
 ## Requirements
 ### Functional Requirements
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Priority | Rationale |
-|----|-------------|----------|-----------|
-| FR-01 | Keep default fixture docs structurally valid. | must | Prevents unrelated test failures. |
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| FR-01 | Keep default fixture docs structurally valid. | GOAL-01 | must | Prevents unrelated test failures. |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ### Non-Functional Requirements
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Priority | Rationale |
-|----|-------------|----------|-----------|
-| NFR-01 | Keep fixtures deterministic. | must | Stabilizes test outputs. |
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| NFR-01 | Keep fixtures deterministic. | GOAL-01 | must | Stabilizes test outputs. |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
 
 ## Verification Strategy

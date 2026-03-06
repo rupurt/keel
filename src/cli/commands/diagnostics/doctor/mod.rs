@@ -342,6 +342,15 @@ pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
         duration: Duration::from_millis(0),
     });
 
+    let epic_goal_lineage_problems = checks::epics::check_epic_goal_lineage_coherence(&board);
+    epic_checks.push(CheckResult {
+        name: "Goal lineage coherence",
+        evaluations: board.epics.len(),
+        passed: epic_goal_lineage_problems.is_empty(),
+        problems: epic_goal_lineage_problems,
+        duration: Duration::from_millis(0),
+    });
+
     let epic_pr_problems = checks::epics::check_epic_press_release(&board);
     epic_checks.push(CheckResult {
         name: "Press release coherence (optional)",

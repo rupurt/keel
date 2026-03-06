@@ -8,23 +8,6 @@ created_at: 2026-03-04T11:56:17
 
 ## Story Knowledge
 
-## Story: Implement Voyage Show Requirement Progress (1vxppkB6M)
-
-### 1vyDuwuY1: Voyage Requirement Views Need Both AC And Verify Mapping
-
-| Field | Value |
-|-------|-------|
-| **Category** | code |
-| **Context** | Building requirement-level voyage progress from story artifacts |
-| **Insight** | Requirement linkage should combine AC references and verify requirement IDs; relying on one source undercounts coverage/verification state. |
-| **Suggested Action** | Build requirement matrices from both marker channels, then deterministically sort rows and linked stories. |
-| **Applies To** | `src/cli/commands/management/voyage/show.rs`, planning-read projections |
-| **Applied** | yes |
-
-
-
----
-
 ## Story: Define Planning Show Output Contracts (1vxppk4Oj)
 
 ### 1vyDuwrAD: Centralized show projections reduce drift
@@ -36,6 +19,23 @@ created_at: 2026-03-04T11:56:17
 | **Insight** | A shared read-model projection layer stabilizes data contracts, keeps ordering deterministic, and lets renderers remain thin. |
 | **Suggested Action** | Add new planning/read surfaces by extending `read_model::planning_show` first, then adapt renderer output only. |
 | **Applies To** | `src/read_model/planning_show.rs`, `src/cli/commands/management/*/show.rs` |
+| **Applied** | yes |
+
+
+
+---
+
+## Story: Implement Voyage Show Requirement Progress (1vxppkB6M)
+
+### 1vyDuwuY1: Voyage Requirement Views Need Both AC And Verify Mapping
+
+| Field | Value |
+|-------|-------|
+| **Category** | code |
+| **Context** | Building requirement-level voyage progress from story artifacts |
+| **Insight** | Requirement linkage should combine AC references and verify requirement IDs; relying on one source undercounts coverage/verification state. |
+| **Suggested Action** | Build requirement matrices from both marker channels, then deterministically sort rows and linked stories. |
+| **Applies To** | `src/cli/commands/management/voyage/show.rs`, planning-read projections |
 | **Applied** | yes |
 
 
@@ -78,20 +78,6 @@ created_at: 2026-03-04T11:56:17
 
 ## Synthesis
 
-### F2f7FWwpy: Voyage Requirement Views Need Both AC And Verify Mapping
-
-| Field | Value |
-|-------|-------|
-| **Category** | code |
-| **Context** | Building requirement-level voyage progress from story artifacts |
-| **Insight** | Requirement linkage should combine AC references and verify requirement IDs; relying on one source undercounts coverage/verification state. |
-| **Suggested Action** | Build requirement matrices from both marker channels, then deterministically sort rows and linked stories. |
-| **Applies To** | `src/cli/commands/management/voyage/show.rs`, planning-read projections |
-| **Linked Knowledge IDs** | 1vyDuwuY1 |
-| **Score** | 0.82 |
-| **Confidence** | 0.90 |
-| **Applied** | yes |
-
 ### PpRjlSIuB: Centralized show projections reduce drift
 
 | Field | Value |
@@ -104,6 +90,20 @@ created_at: 2026-03-04T11:56:17
 | **Linked Knowledge IDs** | 1vyDuwrAD |
 | **Score** | 0.84 |
 | **Confidence** | 0.89 |
+| **Applied** | yes |
+
+### F2f7FWwpy: Voyage Requirement Views Need Both AC And Verify Mapping
+
+| Field | Value |
+|-------|-------|
+| **Category** | code |
+| **Context** | Building requirement-level voyage progress from story artifacts |
+| **Insight** | Requirement linkage should combine AC references and verify requirement IDs; relying on one source undercounts coverage/verification state. |
+| **Suggested Action** | Build requirement matrices from both marker channels, then deterministically sort rows and linked stories. |
+| **Applies To** | `src/cli/commands/management/voyage/show.rs`, planning-read projections |
+| **Linked Knowledge IDs** | 1vyDuwuY1 |
+| **Score** | 0.82 |
+| **Confidence** | 0.90 |
 | **Applied** | yes |
 
 ### 1ejHEDO4x: Planning Show Parsing Needs Scaffold Filters

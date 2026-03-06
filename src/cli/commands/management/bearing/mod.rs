@@ -491,16 +491,16 @@ fn create_prd_from_bearing(board_dir: &Path, bearing: &Bearing) -> Result<String
     prd.push_str("## Requirements\n\n");
     prd.push_str("### Functional Requirements\n\n");
     prd.push_str("<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->\n");
-    prd.push_str("| ID | Requirement | Priority | Rationale |\n");
-    prd.push_str("|----|-------------|----------|-----------|\n");
-    prd.push_str("| FR-01 | Implement the core user workflow identified in bearing research. | must | Converts research recommendation into executable product capability. |\n");
+    prd.push_str("| ID | Requirement | Goals | Priority | Rationale |\n");
+    prd.push_str("|----|-------------|-------|----------|-----------|\n");
+    prd.push_str("| FR-01 | Implement the core user workflow identified in bearing research. | GOAL-01 | must | Converts research recommendation into executable product capability. |\n");
     prd.push_str("<!-- END FUNCTIONAL_REQUIREMENTS -->\n\n");
 
     prd.push_str("### Non-Functional Requirements\n\n");
     prd.push_str("<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->\n");
-    prd.push_str("| ID | Requirement | Priority | Rationale |\n");
-    prd.push_str("|----|-------------|----------|-----------|\n");
-    prd.push_str("| NFR-01 | Ensure deterministic behavior and operational visibility for the delivered workflow. | must | Keeps delivery safe and auditable during rollout. |\n");
+    prd.push_str("| ID | Requirement | Goals | Priority | Rationale |\n");
+    prd.push_str("|----|-------------|-------|----------|-----------|\n");
+    prd.push_str("| NFR-01 | Ensure deterministic behavior and operational visibility for the delivered workflow. | GOAL-01 | must | Keeps delivery safe and auditable during rollout. |\n");
     prd.push_str("<!-- END NON_FUNCTIONAL_REQUIREMENTS -->\n\n");
 
     prd.push_str("## Verification Strategy\n\n");

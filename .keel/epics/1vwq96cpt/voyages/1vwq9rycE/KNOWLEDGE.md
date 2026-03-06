@@ -8,40 +8,6 @@ created_at: 2026-03-02T10:34:57
 
 ## Story Knowledge
 
-## Story: Build Canonical Flow Status Projection (1vwqCfS0F)
-
-### 1vyDuwXBN: Keep Operational Metrics In A Single Read Model
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Consolidating repeated queue/flow/status metrics used across diagnostics and next-decision logic |
-| **Insight** | A canonical projection DTO that embeds both flow metrics and status metrics removes drift and lets adapters format output without recalculating business metrics |
-| **Suggested Action** | Add read-model projection services first, then migrate every consumer to the projection API before deleting local metric structs |
-| **Applies To** | src/read_model/flow_status.rs; src/commands/diagnostics/{flow,status}.rs; src/next/algorithm.rs |
-| **Applied** | 1vwqCfS0F |
-
-
-
----
-
-## Story: Remove Duplicate Projection Implementations (1vwqCfma0)
-
-### 1vyDuwCgL: Interface Adapters Should Delegate Instead Of Recompute
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | When both flow rendering and diagnostics commands need the same projection outputs |
-| **Insight** | Duplicated adapter-level projection/load/render paths drift quickly and should be collapsed behind a single interface that consumes canonical read-model DTOs |
-| **Suggested Action** | Keep one shared capacity interface and enforce delegation from command modules through architecture contracts |
-| **Applies To** | `src/commands/diagnostics/capacity.rs`, `src/flow/capacity.rs`, `src/architecture_contract_tests.rs` |
-| **Applied** | Delegated diagnostics capacity command to `flow::capacity` and added explicit contract test for shared interface usage |
-
-
-
----
-
 ## Story: Unify Queue Policy Consumption (1vwqCfgC4)
 
 ### 1vyDuwSPf: Queue-policy facades prevent decision/rendering drift
@@ -76,9 +42,9 @@ created_at: 2026-03-02T10:34:57
 
 ---
 
-## Synthesis
+## Story: Build Canonical Flow Status Projection (1vwqCfS0F)
 
-### IxTCT6ayY: Keep Operational Metrics In A Single Read Model
+### 1vyDuwXBN: Keep Operational Metrics In A Single Read Model
 
 | Field | Value |
 |-------|-------|
@@ -87,12 +53,15 @@ created_at: 2026-03-02T10:34:57
 | **Insight** | A canonical projection DTO that embeds both flow metrics and status metrics removes drift and lets adapters format output without recalculating business metrics |
 | **Suggested Action** | Add read-model projection services first, then migrate every consumer to the projection API before deleting local metric structs |
 | **Applies To** | src/read_model/flow_status.rs; src/commands/diagnostics/{flow,status}.rs; src/next/algorithm.rs |
-| **Linked Knowledge IDs** | 1vyDuwXBN |
-| **Score** | 0.84 |
-| **Confidence** | 0.89 |
 | **Applied** | 1vwqCfS0F |
 
-### KwQM6oOZE: Interface Adapters Should Delegate Instead Of Recompute
+
+
+---
+
+## Story: Remove Duplicate Projection Implementations (1vwqCfma0)
+
+### 1vyDuwCgL: Interface Adapters Should Delegate Instead Of Recompute
 
 | Field | Value |
 |-------|-------|
@@ -101,10 +70,13 @@ created_at: 2026-03-02T10:34:57
 | **Insight** | Duplicated adapter-level projection/load/render paths drift quickly and should be collapsed behind a single interface that consumes canonical read-model DTOs |
 | **Suggested Action** | Keep one shared capacity interface and enforce delegation from command modules through architecture contracts |
 | **Applies To** | `src/commands/diagnostics/capacity.rs`, `src/flow/capacity.rs`, `src/architecture_contract_tests.rs` |
-| **Linked Knowledge IDs** | 1vyDuwCgL |
-| **Score** | 0.83 |
-| **Confidence** | 0.90 |
 | **Applied** | Delegated diagnostics capacity command to `flow::capacity` and added explicit contract test for shared interface usage |
+
+
+
+---
+
+## Synthesis
 
 ### qUF0j5GEl: Queue-policy facades prevent decision/rendering drift
 
@@ -133,4 +105,32 @@ created_at: 2026-03-02T10:34:57
 | **Score** | 0.89 |
 | **Confidence** | 0.96 |
 | **Applied** | story `1vwqCfHz7` |
+
+### IxTCT6ayY: Keep Operational Metrics In A Single Read Model
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Consolidating repeated queue/flow/status metrics used across diagnostics and next-decision logic |
+| **Insight** | A canonical projection DTO that embeds both flow metrics and status metrics removes drift and lets adapters format output without recalculating business metrics |
+| **Suggested Action** | Add read-model projection services first, then migrate every consumer to the projection API before deleting local metric structs |
+| **Applies To** | src/read_model/flow_status.rs; src/commands/diagnostics/{flow,status}.rs; src/next/algorithm.rs |
+| **Linked Knowledge IDs** | 1vyDuwXBN |
+| **Score** | 0.84 |
+| **Confidence** | 0.89 |
+| **Applied** | 1vwqCfS0F |
+
+### KwQM6oOZE: Interface Adapters Should Delegate Instead Of Recompute
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | When both flow rendering and diagnostics commands need the same projection outputs |
+| **Insight** | Duplicated adapter-level projection/load/render paths drift quickly and should be collapsed behind a single interface that consumes canonical read-model DTOs |
+| **Suggested Action** | Keep one shared capacity interface and enforce delegation from command modules through architecture contracts |
+| **Applies To** | `src/commands/diagnostics/capacity.rs`, `src/flow/capacity.rs`, `src/architecture_contract_tests.rs` |
+| **Linked Knowledge IDs** | 1vyDuwCgL |
+| **Score** | 0.83 |
+| **Confidence** | 0.90 |
+| **Applied** | Delegated diagnostics capacity command to `flow::capacity` and added explicit contract test for shared interface usage |
 

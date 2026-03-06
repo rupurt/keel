@@ -8,17 +8,17 @@ created_at: 2026-03-04T13:06:23
 
 ## Story Knowledge
 
-## Story: Surface Technique Recommendations In Planning Shows (1vxqNFHpk)
+## Story: Define Verification Technique Catalog Model (1vxqNFaR9)
 
-### 1vyDuwLvf: Centralized recommendation projection keeps show commands coherent
+### 1vyDuwZW6: Catalog Entries Should Be Declarative And Sorted By ID
 
 | Field | Value |
 |-------|-------|
 | **Category** | architecture |
-| **Context** | Multiple read commands need consistent recommendation output while using different local data sources. |
-| **Insight** | A shared recommendation report model plus per-command input extraction avoids drift between epic/voyage/story rendering. |
-| **Suggested Action** | Add new recommendation behavior in `verification_techniques` first, then wire each show command through the same renderer helper. |
-| **Applies To** | `src/read_model/verification_techniques.rs`, `src/cli/commands/management/*/show.rs` |
+| **Context** | Defining a technique bank that will be extended by config/autodetection stories |
+| **Insight** | A stable schema plus ID-sorted built-ins gives deterministic output and a predictable merge base for later override/ranking stages. |
+| **Suggested Action** | Keep all built-ins in one constructor and enforce sort-by-ID before returning catalog vectors. |
+| **Applies To** | `src/read_model/verification_techniques.rs`, upcoming config merge/recommendation modules |
 | **Applied** | yes |
 
 
@@ -42,6 +42,23 @@ created_at: 2026-03-04T13:06:23
 
 ---
 
+## Story: Surface Technique Recommendations In Planning Shows (1vxqNFHpk)
+
+### 1vyDuwLvf: Centralized recommendation projection keeps show commands coherent
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Multiple read commands need consistent recommendation output while using different local data sources. |
+| **Insight** | A shared recommendation report model plus per-command input extraction avoids drift between epic/voyage/story rendering. |
+| **Suggested Action** | Add new recommendation behavior in `verification_techniques` first, then wire each show command through the same renderer helper. |
+| **Applies To** | `src/read_model/verification_techniques.rs`, `src/cli/commands/management/*/show.rs` |
+| **Applied** | yes |
+
+
+
+---
+
 ## Story: Implement Project Autodetection And Recommendation Engine (1vxqNFNdN)
 
 ### 1vyDuwiA5: Deterministic ranking requires total-order tie breaks
@@ -59,9 +76,9 @@ created_at: 2026-03-04T13:06:23
 
 ---
 
-## Story: Define Verification Technique Catalog Model (1vxqNFaR9)
+## Synthesis
 
-### 1vyDuwZW6: Catalog Entries Should Be Declarative And Sorted By ID
+### 0MWoLPhDL: Catalog Entries Should Be Declarative And Sorted By ID
 
 | Field | Value |
 |-------|-------|
@@ -70,26 +87,9 @@ created_at: 2026-03-04T13:06:23
 | **Insight** | A stable schema plus ID-sorted built-ins gives deterministic output and a predictable merge base for later override/ranking stages. |
 | **Suggested Action** | Keep all built-ins in one constructor and enforce sort-by-ID before returning catalog vectors. |
 | **Applies To** | `src/read_model/verification_techniques.rs`, upcoming config merge/recommendation modules |
-| **Applied** | yes |
-
-
-
----
-
-## Synthesis
-
-### TQa285xzn: Centralized recommendation projection keeps show commands coherent
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Multiple read commands need consistent recommendation output while using different local data sources. |
-| **Insight** | A shared recommendation report model plus per-command input extraction avoids drift between epic/voyage/story rendering. |
-| **Suggested Action** | Add new recommendation behavior in `verification_techniques` first, then wire each show command through the same renderer helper. |
-| **Applies To** | `src/read_model/verification_techniques.rs`, `src/cli/commands/management/*/show.rs` |
-| **Linked Knowledge IDs** | 1vyDuwLvf |
-| **Score** | 0.85 |
-| **Confidence** | 0.93 |
+| **Linked Knowledge IDs** | 1vyDuwZW6 |
+| **Score** | 0.81 |
+| **Confidence** | 0.91 |
 | **Applied** | yes |
 
 ### 9A5dbiPTG: Advisory parser keeps keel.toml resilient
@@ -106,6 +106,20 @@ created_at: 2026-03-04T13:06:23
 | **Confidence** | 0.88 |
 | **Applied** | yes |
 
+### TQa285xzn: Centralized recommendation projection keeps show commands coherent
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Multiple read commands need consistent recommendation output while using different local data sources. |
+| **Insight** | A shared recommendation report model plus per-command input extraction avoids drift between epic/voyage/story rendering. |
+| **Suggested Action** | Add new recommendation behavior in `verification_techniques` first, then wire each show command through the same renderer helper. |
+| **Applies To** | `src/read_model/verification_techniques.rs`, `src/cli/commands/management/*/show.rs` |
+| **Linked Knowledge IDs** | 1vyDuwLvf |
+| **Score** | 0.85 |
+| **Confidence** | 0.93 |
+| **Applied** | yes |
+
 ### Cn18kLEPl: Deterministic ranking requires total-order tie breaks
 
 | Field | Value |
@@ -118,19 +132,5 @@ created_at: 2026-03-04T13:06:23
 | **Linked Knowledge IDs** | 1vyDuwiA5 |
 | **Score** | 0.80 |
 | **Confidence** | 0.90 |
-| **Applied** | yes |
-
-### 0MWoLPhDL: Catalog Entries Should Be Declarative And Sorted By ID
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Defining a technique bank that will be extended by config/autodetection stories |
-| **Insight** | A stable schema plus ID-sorted built-ins gives deterministic output and a predictable merge base for later override/ranking stages. |
-| **Suggested Action** | Keep all built-ins in one constructor and enforce sort-by-ID before returning catalog vectors. |
-| **Applies To** | `src/read_model/verification_techniques.rs`, upcoming config merge/recommendation modules |
-| **Linked Knowledge IDs** | 1vyDuwZW6 |
-| **Score** | 0.81 |
-| **Confidence** | 0.91 |
 | **Applied** | yes |
 

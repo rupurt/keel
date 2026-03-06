@@ -8,6 +8,23 @@ created_at: 2026-03-02T10:42:29
 
 ## Story Knowledge
 
+## Story: Refactor Main Dispatch To Interface Adapters (1vwqCf53S)
+
+### 1vyDuwf3P: Build Typed Command Actions Before Dispatching
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Refactoring large CLI dispatch trees while preserving behavior and clap argument contracts |
+| **Insight** | Converting `ArgMatches` into typed action enums at the boundary and routing through module `run(action)` functions keeps `main` focused on parsing while pushing interface adaptation into command-group modules |
+| **Suggested Action** | Keep adding action enums and single entrypoint adapters per command group so architecture tests can enforce delegation contracts cleanly |
+| **Applies To** | src/main.rs; src/commands/*/mod.rs |
+| **Applied** | 1vwqCf53S |
+
+
+
+---
+
 ## Story: Add Command Behavior Regression Suite (1vwqCffzr)
 
 ### 1vyDuw5Ob: Regression Parity Needs Cross-Command Coverage
@@ -59,9 +76,9 @@ created_at: 2026-03-02T10:42:29
 
 ---
 
-## Story: Refactor Main Dispatch To Interface Adapters (1vwqCf53S)
+## Synthesis
 
-### 1vyDuwf3P: Build Typed Command Actions Before Dispatching
+### xb3Zn8PjR: Build Typed Command Actions Before Dispatching
 
 | Field | Value |
 |-------|-------|
@@ -70,13 +87,10 @@ created_at: 2026-03-02T10:42:29
 | **Insight** | Converting `ArgMatches` into typed action enums at the boundary and routing through module `run(action)` functions keeps `main` focused on parsing while pushing interface adaptation into command-group modules |
 | **Suggested Action** | Keep adding action enums and single entrypoint adapters per command group so architecture tests can enforce delegation contracts cleanly |
 | **Applies To** | src/main.rs; src/commands/*/mod.rs |
+| **Linked Knowledge IDs** | 1vyDuwf3P |
+| **Score** | 0.80 |
+| **Confidence** | 0.87 |
 | **Applied** | 1vwqCf53S |
-
-
-
----
-
-## Synthesis
 
 ### gYNMP5JXn: Regression Parity Needs Cross-Command Coverage
 
@@ -119,18 +133,4 @@ created_at: 2026-03-02T10:42:29
 | **Score** | 0.87 |
 | **Confidence** | 0.95 |
 | **Applied** | story `1vwqCfdUl` |
-
-### xb3Zn8PjR: Build Typed Command Actions Before Dispatching
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Refactoring large CLI dispatch trees while preserving behavior and clap argument contracts |
-| **Insight** | Converting `ArgMatches` into typed action enums at the boundary and routing through module `run(action)` functions keeps `main` focused on parsing while pushing interface adaptation into command-group modules |
-| **Suggested Action** | Keep adding action enums and single entrypoint adapters per command group so architecture tests can enforce delegation contracts cleanly |
-| **Applies To** | src/main.rs; src/commands/*/mod.rs |
-| **Linked Knowledge IDs** | 1vyDuwf3P |
-| **Score** | 0.80 |
-| **Confidence** | 0.87 |
-| **Applied** | 1vwqCf53S |
 

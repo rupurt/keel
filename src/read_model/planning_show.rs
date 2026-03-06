@@ -10,6 +10,7 @@ use chrono::{Datelike, Duration, Local, NaiveDate, NaiveDateTime};
 
 use crate::domain::model::{Board, Epic, EpicState, Story, StoryState, Voyage};
 use crate::domain::state_machine::invariants;
+pub use crate::domain::state_machine::invariants::{GoalEntry, parse_prd_goal_entries};
 use crate::infrastructure::verification::parser::{
     Comparison, parse_ac_references, parse_verify_annotations,
 };
@@ -20,14 +21,6 @@ pub struct PlanningDocSummary {
     pub goals: Vec<String>,
     pub key_requirements: Vec<String>,
     pub verification_strategy: Vec<String>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct GoalEntry {
-    pub id: String,
-    pub goal: String,
-    pub success_metric: String,
-    pub target: String,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -850,14 +843,8 @@ pub fn first_authored_text(section: &str) -> Option<String> {
         .map(ToOwned::to_owned)
 }
 
-pub fn parse_prd_goal_entries(content: &str) -> Vec<GoalEntry> {
-    extract_section(content, "## Goals & Objectives")
-        .map(|section| parse_goal_entries(&section))
-        .unwrap_or_default()
-}
-
-pub fn parse_goals(section: &str) -> Vec<String> {
-    parse_goal_entries(section)
+pub fn parse_goals(content: &str) -> Vec<String> {
+    parse_prd_goal_entries(content)
         .into_iter()
         .map(|entry| format_goal_entry(&entry))
         .collect()
@@ -907,84 +894,6 @@ fn format_goal_entry(entry: &GoalEntry) -> String {
     )
 }
 
-fn parse_goal_entries(section: &str) -> Vec<GoalEntry> {
-    let mut entries = Vec::new();
-    let mut indexes: Option<(usize, usize, usize, usize)> = None;
-
-    for line in section.lines() {
-        let trimmed = line.trim();
-        if !trimmed.starts_with('|') {
-            continue;
-        }
-
-        let cols = split_markdown_table_row(trimmed);
-        if cols.is_empty() || is_markdown_separator_row(&cols) {
-            continue;
-        }
-
-        if let Some(header_indexes) = parse_goal_header_indexes(&cols) {
-            indexes = Some(header_indexes);
-            continue;
-        }
-
-        let Some((id_idx, goal_idx, success_metric_idx, target_idx)) = indexes else {
-            continue;
-        };
-
-        let Some(id) = cols.get(id_idx) else {
-            continue;
-        };
-        let Some(goal) = cols.get(goal_idx) else {
-            continue;
-        };
-        let Some(success_metric) = cols.get(success_metric_idx) else {
-            continue;
-        };
-        let Some(target) = cols.get(target_idx) else {
-            continue;
-        };
-
-        if !is_canonical_goal_id(id)
-            || goal.is_empty()
-            || success_metric.is_empty()
-            || target.is_empty()
-            || is_scaffold_text(id)
-            || is_scaffold_text(goal)
-            || is_scaffold_text(success_metric)
-            || is_scaffold_text(target)
-        {
-            continue;
-        }
-
-        entries.push(GoalEntry {
-            id: id.to_string(),
-            goal: goal.to_string(),
-            success_metric: success_metric.to_string(),
-            target: target.to_string(),
-        });
-    }
-
-    entries.sort_by(|a, b| {
-        a.id.cmp(&b.id)
-            .then_with(|| a.goal.cmp(&b.goal))
-            .then_with(|| a.success_metric.cmp(&b.success_metric))
-            .then_with(|| a.target.cmp(&b.target))
-    });
-    entries
-}
-
-fn parse_goal_header_indexes(cols: &[String]) -> Option<(usize, usize, usize, usize)> {
-    Some((
-        cols.iter().position(|col| col.eq_ignore_ascii_case("ID"))?,
-        cols.iter()
-            .position(|col| col.eq_ignore_ascii_case("Goal"))?,
-        cols.iter()
-            .position(|col| col.eq_ignore_ascii_case("Success Metric"))?,
-        cols.iter()
-            .position(|col| col.eq_ignore_ascii_case("Target"))?,
-    ))
-}
-
 fn split_markdown_table_row(line: &str) -> Vec<String> {
     let trimmed = line.trim();
     let trimmed = trimmed.strip_prefix('|').unwrap_or(trimmed);
@@ -994,19 +903,6 @@ fn split_markdown_table_row(line: &str) -> Vec<String> {
         .split('|')
         .map(|col| col.trim().to_string())
         .collect()
-}
-
-fn is_markdown_separator_row(cols: &[String]) -> bool {
-    cols.iter()
-        .all(|col| !col.is_empty() && is_markdown_separator_cell(col))
-}
-
-fn is_markdown_separator_cell(cell: &str) -> bool {
-    cell.chars().all(|ch| ch == '-' || ch == ':' || ch == ' ')
-}
-
-fn is_canonical_goal_id(id: &str) -> bool {
-    id.starts_with("GOAL-") && id.len() > "GOAL-".len()
 }
 
 fn parse_requirement_entries(

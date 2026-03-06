@@ -56,6 +56,7 @@ static SRS_REQUIREMENT_ID_RE: LazyLock<Regex> =
 static PRD_FUNCTIONAL_REQ_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^FR-\d+$").unwrap());
 static PRD_NON_FUNCTIONAL_REQ_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^NFR-\d+$").unwrap());
+static GOAL_ID_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^GOAL-\d+$").unwrap());
 static SOURCE_TOKEN_SPLIT_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[\s,;/]+").unwrap());
 
 // Re-export coherence validation functions for a unified API
@@ -183,6 +184,7 @@ pub struct PrdRequirementEntry {
     pub kind: PrdRequirementKind,
     pub priority: Option<String>,
     pub rationale: Option<String>,
+    pub goal_refs: Vec<String>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -199,6 +201,14 @@ impl PrdRequirementLineage {
     pub fn ordered_entries(&self) -> Vec<&PrdRequirementEntry> {
         self.parent_requirements.values().collect()
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GoalEntry {
+    pub id: String,
+    pub goal: String,
+    pub success_metric: String,
+    pub target: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -261,6 +271,52 @@ impl PrdLineageIssue {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PrdGoalLineageIssueKind {
+    MissingGoalLinks,
+    NonCanonicalGoalRef,
+    UnknownGoalRef,
+    OrphanGoal,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PrdGoalLineageIssue {
+    pub prd_path: PathBuf,
+    pub requirement_id: Option<String>,
+    pub goal_id: Option<String>,
+    pub raw_value: Option<String>,
+    pub kind: PrdGoalLineageIssueKind,
+}
+
+impl PrdGoalLineageIssue {
+    pub fn message(&self) -> String {
+        match self.kind {
+            PrdGoalLineageIssueKind::MissingGoalLinks => format!(
+                "{} in {} is missing Goals (expected one or more canonical GOAL-* identifiers)",
+                self.requirement_id.as_deref().unwrap_or("<unknown>"),
+                self.prd_path.display()
+            ),
+            PrdGoalLineageIssueKind::NonCanonicalGoalRef => format!(
+                "{} in {} uses non-canonical goal ref '{}' in Goals (expected GOAL-*)",
+                self.requirement_id.as_deref().unwrap_or("<unknown>"),
+                self.prd_path.display(),
+                self.raw_value.as_deref().unwrap_or("<empty>")
+            ),
+            PrdGoalLineageIssueKind::UnknownGoalRef => format!(
+                "{} in {} references unknown goal '{}' in Goals (expected a GOAL-* defined in ## Goals & Objectives)",
+                self.requirement_id.as_deref().unwrap_or("<unknown>"),
+                self.prd_path.display(),
+                self.goal_id.as_deref().unwrap_or("<empty>")
+            ),
+            PrdGoalLineageIssueKind::OrphanGoal => format!(
+                "{} in {} has no linked PRD requirements",
+                self.goal_id.as_deref().unwrap_or("<unknown>"),
+                self.prd_path.display()
+            ),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PrdCoverageChild {
     pub voyage_id: String,
@@ -279,6 +335,72 @@ impl PrdCoverageRow {
     pub fn is_covered(&self) -> bool {
         !self.linked_children.is_empty()
     }
+}
+
+pub fn parse_prd_goal_entries(prd_content: &str) -> Vec<GoalEntry> {
+    let Some(section) = extract_markdown_section(prd_content, "## Goals & Objectives") else {
+        return Vec::new();
+    };
+
+    let mut entries = Vec::new();
+    let mut indexes: Option<(usize, usize, usize, usize)> = None;
+
+    for line in section.lines() {
+        let trimmed = line.trim();
+        if !trimmed.starts_with('|') {
+            continue;
+        }
+
+        let cols = markdown_row_columns(trimmed);
+        if cols.is_empty() || is_table_separator_row(&cols) {
+            continue;
+        }
+
+        if let Some(header_indexes) = parse_goal_header_indexes(&cols) {
+            indexes = Some(header_indexes);
+            continue;
+        }
+
+        let Some((id_idx, goal_idx, success_metric_idx, target_idx)) = indexes else {
+            continue;
+        };
+
+        let Some(id) = cols.get(id_idx).map(|value| value.trim()) else {
+            continue;
+        };
+        let Some(goal) = cols.get(goal_idx).map(|value| value.trim()) else {
+            continue;
+        };
+        let Some(success_metric) = cols.get(success_metric_idx).map(|value| value.trim()) else {
+            continue;
+        };
+        let Some(target) = cols.get(target_idx).map(|value| value.trim()) else {
+            continue;
+        };
+
+        if !GOAL_ID_RE.is_match(id)
+            || goal.is_empty()
+            || success_metric.is_empty()
+            || target.is_empty()
+        {
+            continue;
+        }
+
+        entries.push(GoalEntry {
+            id: id.to_string(),
+            goal: goal.to_string(),
+            success_metric: success_metric.to_string(),
+            target: target.to_string(),
+        });
+    }
+
+    entries.sort_by(|a, b| {
+        a.id.cmp(&b.id)
+            .then_with(|| a.goal.cmp(&b.goal))
+            .then_with(|| a.success_metric.cmp(&b.success_metric))
+            .then_with(|| a.target.cmp(&b.target))
+    });
+    entries
 }
 
 pub fn parse_prd_requirement_lineage(epic_id: &str, prd_path: &Path) -> PrdRequirementLineage {
@@ -368,6 +490,88 @@ pub fn prd_srs_lineage_problems(voyage: &Voyage, board: &Board, check_id: CheckI
         .map(|issue| {
             Problem::error(issue.srs_path.clone(), issue.message())
                 .with_scope(voyage.scope_path())
+                .with_check_id(check_id)
+        })
+        .collect()
+}
+
+pub fn evaluate_epic_goal_lineage(epic: &Epic) -> Vec<PrdGoalLineageIssue> {
+    let prd_path = epic.path.parent().unwrap_or(&epic.path).join("PRD.md");
+    let prd_content = match fs::read_to_string(&prd_path) {
+        Ok(content) => content,
+        Err(_) => return Vec::new(),
+    };
+
+    let goal_entries = parse_prd_goal_entries(&prd_content);
+    if goal_entries.is_empty() {
+        return Vec::new();
+    }
+
+    let parent_lineage = parse_prd_requirement_lineage(epic.id(), &prd_path);
+    let known_goals: HashSet<String> = goal_entries.iter().map(|entry| entry.id.clone()).collect();
+    let mut linked_goals = HashSet::new();
+    let mut issues = Vec::new();
+
+    for requirement in parent_lineage.ordered_entries() {
+        if requirement.goal_refs.is_empty() {
+            issues.push(PrdGoalLineageIssue {
+                prd_path: prd_path.clone(),
+                requirement_id: Some(requirement.id.clone()),
+                goal_id: None,
+                raw_value: None,
+                kind: PrdGoalLineageIssueKind::MissingGoalLinks,
+            });
+            continue;
+        }
+
+        for goal_ref in &requirement.goal_refs {
+            if !GOAL_ID_RE.is_match(goal_ref) {
+                issues.push(PrdGoalLineageIssue {
+                    prd_path: prd_path.clone(),
+                    requirement_id: Some(requirement.id.clone()),
+                    goal_id: None,
+                    raw_value: Some(goal_ref.clone()),
+                    kind: PrdGoalLineageIssueKind::NonCanonicalGoalRef,
+                });
+                continue;
+            }
+
+            if !known_goals.contains(goal_ref) {
+                issues.push(PrdGoalLineageIssue {
+                    prd_path: prd_path.clone(),
+                    requirement_id: Some(requirement.id.clone()),
+                    goal_id: Some(goal_ref.clone()),
+                    raw_value: None,
+                    kind: PrdGoalLineageIssueKind::UnknownGoalRef,
+                });
+                continue;
+            }
+
+            linked_goals.insert(goal_ref.clone());
+        }
+    }
+
+    for goal in goal_entries {
+        if !linked_goals.contains(&goal.id) {
+            issues.push(PrdGoalLineageIssue {
+                prd_path: prd_path.clone(),
+                requirement_id: None,
+                goal_id: Some(goal.id),
+                raw_value: None,
+                kind: PrdGoalLineageIssueKind::OrphanGoal,
+            });
+        }
+    }
+
+    issues
+}
+
+pub fn epic_goal_lineage_problems(epic: &Epic, check_id: CheckId) -> Vec<Problem> {
+    evaluate_epic_goal_lineage(epic)
+        .into_iter()
+        .map(|issue| {
+            Problem::error(issue.prd_path.clone(), issue.message())
+                .with_scope(epic.id())
                 .with_check_id(check_id)
         })
         .collect()
@@ -493,12 +697,14 @@ fn parse_prd_requirement_block(
     parent_requirements: &mut BTreeMap<String, PrdRequirementEntry>,
 ) {
     let mut in_block = false;
+    let mut goals_column_index: Option<usize> = None;
     let mut priority_column_index: Option<usize> = None;
     let mut rationale_column_index: Option<usize> = None;
 
     for line in content.lines() {
         if line.contains(start_marker) {
             in_block = true;
+            goals_column_index = None;
             priority_column_index = None;
             rationale_column_index = None;
             continue;
@@ -522,6 +728,9 @@ fn parse_prd_requirement_block(
 
         let id = cols[0];
         if id.eq_ignore_ascii_case("ID") {
+            goals_column_index = cols
+                .iter()
+                .position(|col| col.eq_ignore_ascii_case("Goals"));
             priority_column_index = cols
                 .iter()
                 .position(|col| col.eq_ignore_ascii_case("Priority"));
@@ -541,6 +750,10 @@ fn parse_prd_requirement_block(
             .map(|value| value.trim())
             .filter(|value| !value.is_empty())
             .map(ToOwned::to_owned);
+        let goal_refs = goals_column_index
+            .and_then(|idx| cols.get(idx))
+            .map(|value| goal_ref_tokens(value))
+            .unwrap_or_default();
         let rationale = rationale_column_index
             .and_then(|idx| cols.get(idx))
             .map(|value| value.trim())
@@ -556,6 +769,7 @@ fn parse_prd_requirement_block(
                 kind,
                 priority,
                 rationale,
+                goal_refs,
             });
     }
 }
@@ -628,6 +842,62 @@ fn markdown_row_columns(row: &str) -> Vec<&str> {
         .split('|')
         .map(str::trim)
         .collect()
+}
+
+fn is_table_separator_row(cells: &[&str]) -> bool {
+    cells
+        .iter()
+        .all(|cell| !cell.is_empty() && is_table_separator_cell(cell))
+}
+
+fn is_table_separator_cell(cell: &str) -> bool {
+    cell.chars().all(|ch| ch == '-' || ch == ':' || ch == ' ')
+}
+
+fn goal_ref_tokens(raw: &str) -> Vec<String> {
+    SOURCE_TOKEN_SPLIT_RE
+        .split(raw.trim())
+        .filter(|token| !token.is_empty())
+        .map(ToOwned::to_owned)
+        .collect()
+}
+
+fn extract_markdown_section(content: &str, heading: &str) -> Option<String> {
+    let mut in_section = false;
+    let mut result = String::new();
+    let heading_level = heading.chars().take_while(|ch| *ch == '#').count();
+
+    for line in content.lines() {
+        if line.trim() == heading {
+            in_section = true;
+            continue;
+        }
+
+        if in_section {
+            if line.starts_with('#') {
+                let level = line.chars().take_while(|ch| *ch == '#').count();
+                if level <= heading_level {
+                    break;
+                }
+            }
+            result.push_str(line);
+            result.push('\n');
+        }
+    }
+
+    (!result.trim().is_empty()).then_some(result)
+}
+
+fn parse_goal_header_indexes(cols: &[&str]) -> Option<(usize, usize, usize, usize)> {
+    Some((
+        cols.iter().position(|col| col.eq_ignore_ascii_case("ID"))?,
+        cols.iter()
+            .position(|col| col.eq_ignore_ascii_case("Goal"))?,
+        cols.iter()
+            .position(|col| col.eq_ignore_ascii_case("Success Metric"))?,
+        cols.iter()
+            .position(|col| col.eq_ignore_ascii_case("Target"))?,
+    ))
 }
 
 /// Return SRS requirements for a voyage that are not covered by any story
@@ -1276,6 +1546,92 @@ mod tests {
             .map(|child| child.requirement_id.as_str())
             .collect();
         assert_eq!(child_ids, vec!["SRS-04"]);
+    }
+
+    #[test]
+    fn prd_requirements_require_valid_goal_links() {
+        let temp = crate::test_helpers::TestBoardBuilder::new()
+            .epic(crate::test_helpers::TestEpic::new("epic-1"))
+            .build();
+        let prd_path = temp.path().join("epics/epic-1/PRD.md");
+        fs::write(
+            &prd_path,
+            r#"# PRD
+
+## Goals & Objectives
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | Improve strategic traceability | linked requirements | 100% |
+| GOAL-02 | Tighten validation clarity | actionable failures | 100% |
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| FR-01 | Validate strategic linkage. | GOAL-01 GOAL-02 | must | lineage |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+
+<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| NFR-01 | Keep validation deterministic. | GOAL-02 | must | stability |
+<!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let lineage = parse_prd_requirement_lineage("epic-1", &prd_path);
+        assert_eq!(
+            lineage.get("FR-01").unwrap().goal_refs,
+            vec!["GOAL-01".to_string(), "GOAL-02".to_string()]
+        );
+        assert_eq!(
+            lineage.get("NFR-01").unwrap().goal_refs,
+            vec!["GOAL-02".to_string()]
+        );
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let epic = board.require_epic("epic-1").unwrap();
+        assert!(evaluate_epic_goal_lineage(epic).is_empty());
+    }
+
+    #[test]
+    fn goal_lineage_rejects_legacy_tokens() {
+        let temp = crate::test_helpers::TestBoardBuilder::new()
+            .epic(crate::test_helpers::TestEpic::new("epic-1"))
+            .build();
+        let prd_path = temp.path().join("epics/epic-1/PRD.md");
+        fs::write(
+            &prd_path,
+            r#"# PRD
+
+## Goals & Objectives
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | Improve strategic traceability | linked requirements | 100% |
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| FR-01 | Reject legacy tokens. | OBJ-01 | must | hard cutover |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let epic = board.require_epic("epic-1").unwrap();
+        let issues = evaluate_epic_goal_lineage(epic);
+
+        assert_eq!(issues.len(), 2);
+        assert!(issues.iter().any(|issue| {
+            issue.kind == PrdGoalLineageIssueKind::NonCanonicalGoalRef
+                && issue.requirement_id.as_deref() == Some("FR-01")
+                && issue.raw_value.as_deref() == Some("OBJ-01")
+        }));
+        assert!(issues.iter().any(|issue| {
+            issue.kind == PrdGoalLineageIssueKind::OrphanGoal
+                && issue.goal_id.as_deref() == Some("GOAL-01")
+        }));
     }
 
     #[test]

@@ -113,6 +113,20 @@ pub fn check_epic_done_gates(board: &Board) -> Vec<Problem> {
     problems
 }
 
+/// Check goal-to-requirement lineage inside epic PRDs.
+pub fn check_epic_goal_lineage_coherence(board: &Board) -> Vec<Problem> {
+    let mut problems = Vec::new();
+
+    for epic in board.epics.values() {
+        problems.extend(invariants::epic_goal_lineage_problems(
+            epic,
+            CheckId::EpicGoalLineageCoherence,
+        ));
+    }
+
+    problems
+}
+
 /// Check epic ID-directory consistency
 pub fn check_epic_id_consistency(board: &Board) -> Vec<Problem> {
     let mut problems = Vec::new();
@@ -251,5 +265,112 @@ mod tests {
         assert_eq!(problems.len(), 1);
         assert_eq!(problems[0].severity, Severity::Error);
         assert_eq!(problems[0].check_id, CheckId::EpicStatusDrift);
+    }
+
+    #[test]
+    fn goal_lineage_errors_are_actionable() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("epic-1"))
+            .build();
+        let prd_path = temp.path().join("epics/epic-1/PRD.md");
+        fs::write(
+            &prd_path,
+            r#"# PRD
+
+## Goals & Objectives
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | Keep planning coherent | linked requirements | 100% |
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| FR-01 | Use a valid goal link. | GOAL-99 | must | validation |
+| FR-02 | Demonstrate missing links. |  | should | validation |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_epic_goal_lineage_coherence(&board);
+
+        assert!(
+            problems.iter().any(|problem| {
+                problem.path == prd_path
+                    && problem.message.contains("FR-01")
+                    && problem.message.contains("GOAL-99")
+                    && problem.message.contains("unknown goal")
+            }),
+            "expected unknown-goal problem with requirement id, goal id, and PRD path: {problems:#?}"
+        );
+        assert!(
+            problems.iter().any(|problem| {
+                problem.path == prd_path
+                    && problem.message.contains("FR-02")
+                    && problem.message.contains("missing Goals")
+            }),
+            "expected missing-goals problem with requirement id and PRD path: {problems:#?}"
+        );
+    }
+
+    #[test]
+    fn doctor_reports_goal_lineage_gaps() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("epic-1"))
+            .build();
+        let prd_path = temp.path().join("epics/epic-1/PRD.md");
+        fs::write(
+            &prd_path,
+            r#"# PRD
+
+## Goals & Objectives
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | Keep planning coherent | linked requirements | 100% |
+| GOAL-02 | Remove hidden drift | actionable diagnostics | 100% |
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| FR-01 | Reference an unknown goal. | GOAL-99 | must | validation |
+| FR-02 | Omit goal links. |  | should | validation |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let report = crate::cli::commands::diagnostics::doctor::validate(temp.path()).unwrap();
+        let goal_check = report
+            .epic_checks
+            .iter()
+            .find(|check| check.name == "Goal lineage coherence")
+            .expect("goal lineage check should be present");
+
+        assert!(!goal_check.passed);
+        assert!(goal_check.problems.iter().any(|problem| {
+            problem.check_id == CheckId::EpicGoalLineageCoherence
+                && problem.path == prd_path
+                && problem.message.contains("GOAL-99")
+                && problem.message.contains("FR-01")
+        }));
+        assert!(goal_check.problems.iter().any(|problem| {
+            problem.check_id == CheckId::EpicGoalLineageCoherence
+                && problem.path == prd_path
+                && problem.message.contains("FR-02")
+                && problem.message.contains("missing Goals")
+        }));
+        assert!(goal_check.problems.iter().any(|problem| {
+            problem.check_id == CheckId::EpicGoalLineageCoherence
+                && problem.path == prd_path
+                && problem.message.contains("GOAL-01")
+                && problem.message.contains("no linked PRD requirements")
+        }));
+        assert!(goal_check.problems.iter().any(|problem| {
+            problem.check_id == CheckId::EpicGoalLineageCoherence
+                && problem.path == prd_path
+                && problem.message.contains("GOAL-02")
+                && problem.message.contains("no linked PRD requirements")
+        }));
     }
 }
