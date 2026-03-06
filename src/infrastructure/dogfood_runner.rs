@@ -208,6 +208,7 @@ mod tests {
         let repo_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let scenarios = list_scenarios(&repo_root).unwrap();
 
+        assert!(scenarios.contains(&"bearing-flow".to_string()));
         assert!(scenarios.contains(&"epic-flow".to_string()));
         assert!(scenarios.contains(&"smoke-flow".to_string()));
     }
@@ -251,6 +252,34 @@ mod tests {
         assert!(tape.contains("latest_id .keel/epics"));
         assert!(tape.contains("latest_id .keel/epics/$EPIC_ID/voyages"));
         assert!(tape.contains("latest_id .keel/stories"));
+        assert!(tape.contains("sleep 1"));
+        assert!(!tape.contains("1vyWLl000"));
+    }
+
+    #[test]
+    fn bearing_flow_tape_covers_research_lifecycle() {
+        let repo_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let tape = fs::read_to_string(scenario_path(&repo_root, "bearing-flow")).unwrap();
+
+        for snippet in [
+            "keel bearing new",
+            "keel bearing survey $BEARING_ID",
+            "keel bearing assess $BEARING_ID",
+            "keel bearing lay $BEARING_ID",
+        ] {
+            assert!(
+                tape.contains(snippet),
+                "expected bearing-flow tape to contain {snippet}"
+            );
+        }
+    }
+
+    #[test]
+    fn bearing_flow_tape_avoids_fixed_entity_ids() {
+        let repo_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let tape = fs::read_to_string(scenario_path(&repo_root, "bearing-flow")).unwrap();
+
+        assert!(tape.contains("latest_id .keel/bearings"));
         assert!(tape.contains("sleep 1"));
         assert!(!tape.contains("1vyWLl000"));
     }
