@@ -19,14 +19,14 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
    - `just keel story record <ID> --ac <NUM> --msg "Description of the proof"`
    - For manual proofs, use the `--msg` flag or editor integration.
 6. **Reflect**: Mandatory observational capture. Run `just keel story reflect <ID>` and document what was learned or discovered during implementation.
-7. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this story before submission. Do not batch multiple stories into one commit.
-8. **Submit**: Move to the human queue for review with `just keel story submit <ID>`. This triggers automated verification and generates the verification manifest.
+7. **Submit**: Move to the human queue for review with `just keel story submit <ID>`. This triggers automated verification and generates the verification manifest. Resolve any failures and rerun `submit` until the story reaches its post-submit state.
+8. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this story after `submit`, not before. Include the resulting `.keel` changes from submission in the same commit (for example story status updates, manifests, synthesized knowledge, and board projections). Do not batch multiple stories into one commit.
 
 ## Planning Workflow (Architect)
 
 1. **Identify Gaps**: Use `just keel flow` or `just keel status` to find Epics needing tactical decomposition.
 2. **Scaffold Planning Unit**:
-   - For new strategic work, create an Epic: `just keel epic new "<Title>" --goal "<Outcome>"`
+   - For new strategic work, create an Epic: `just keel epic new "<Title>" --problem "<Problem>"`
    - For tactical decomposition, create a Voyage: `just keel voyage new "<Title>" --epic <epic-id> --goal "<The specific outcome>"`
 3. **Author Epic PRD Immediately After Creation**: Before decomposing into voyages/stories, fill out `epics/<epic-id>/PRD.md` with authored content for every required section:
    - `## Problem Statement`
@@ -62,8 +62,8 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
      - Verification strategy summary (how requirements will be proven)
      - Key risks/assumptions
      - Canonical next step command
-11. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this planning unit before sealing. Do not batch unrelated planning units into one commit.
-12. **Seal Planning**: Promote the voyage from `draft` to `planned` with `just keel voyage plan <id>`. This validates requirement coverage and thaws stories into the agent backlog.
+11. **Seal Planning**: Promote the voyage from `draft` to `planned` with `just keel voyage plan <id>`. This validates requirement coverage and thaws stories into the agent backlog.
+12. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this planning unit after sealing so the resulting `.keel` state is captured in the same commit. Do not batch unrelated planning units into one commit.
 
 ## Research Workflow (Explorer)
 
@@ -84,8 +84,8 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
 5. **Seal Survey**: Transition to the surveying phase with `just keel bearing survey <id>`.
 6. **Assess Impact**: Perform impact analysis and document recommendations (Proceed, Park, or Decline) in `ASSESSMENT.md`.
 7. **Seal Assessment**: Transition to the assessing phase with `just keel bearing assess <id>`.
-8. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this bearing research package before graduation.
-9. **Graduate**: If research is conclusive, graduate the bearing to a strategic Epic with `just keel bearing lay <id>`.
+8. **Graduate**: If research is conclusive, graduate the bearing to a strategic Epic with `just keel bearing lay <id>`.
+9. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this bearing research package after the final lifecycle transition you take for it (for example `survey`, `assess`, or `lay`) so generated `.keel` artifacts are included.
 
 ## Global Hygiene Checklist
 
@@ -94,7 +94,8 @@ Apply these checks to **every change** before finalizing work:
 1. **Doctor Check**: `just keel doctor` must pass with zero warnings or errors.
 2. **Quality Check**: `just quality` must be clean (formatting and linting).
 3. **Verification**: `just test` must pass 100%.
-4. **Atomic Commits**: Commit once per logical unit of work. Use [Conventional Commits](https://www.conventionalcommits.org/):
+4. **Lifecycle Before Commit**: Run board-mutating lifecycle commands before the atomic commit when they generate or rewrite `.keel` artifacts (for example `story submit`, `voyage plan`, `voyage done`, `bearing assess`, `bearing lay`). After the transition, inspect `git status` and include the resulting `.keel` churn in the same commit.
+5. **Atomic Commits**: Commit once per logical unit of work. Use [Conventional Commits](https://www.conventionalcommits.org/):
    - `feat:` (new feature)
    - `fix:` (bug fix)
    - `docs:` (documentation)
@@ -178,7 +179,7 @@ Run `just keel --help` for the full command tree. The core commands you should r
 | Category | Commands |
 |----------|----------|
 | Discovery | `just keel bearing new <name>` `just keel bearing survey <id>` `just keel bearing assess <id>` `just keel bearing list` |
-| Planning | `just keel epic new <name> --goal <goal>` `just keel voyage new <name> --epic <epic-id> --goal <goal>` |
+| Planning | `just keel epic new <name> --problem <problem>` `just keel voyage new <name> --epic <epic-id> --goal <goal>` |
 | Execution | `just keel story new <title> --epic <epic-id> --voyage <voyage-id>` |
 | Board Ops | `just keel next --agent` `just keel next` `just keel status` `just keel flow` `just keel doctor` `just keel generate` `just keel config show` |
 | Lifecycle | Story/voyage/epic transitions in the table below |
