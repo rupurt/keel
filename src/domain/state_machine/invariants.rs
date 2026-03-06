@@ -338,6 +338,49 @@ impl PrdGoalLineageIssue {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ScopeLineageIssueKind {
+    MissingScopeMapping,
+    UnknownScopeRef,
+    OutOfScopeContradiction,
+    LegacyUntaggedScopePath,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ScopeLineageIssue {
+    pub artifact_path: PathBuf,
+    pub scope_id: Option<String>,
+    pub line: Option<String>,
+    pub kind: ScopeLineageIssueKind,
+}
+
+impl ScopeLineageIssue {
+    pub fn message(&self) -> String {
+        match self.kind {
+            ScopeLineageIssueKind::MissingScopeMapping => format!(
+                "{} in {} is missing a voyage scope mapping (expected every PRD in-scope item to appear in SRS scope)",
+                self.scope_id.as_deref().unwrap_or("<unknown>"),
+                self.artifact_path.display()
+            ),
+            ScopeLineageIssueKind::UnknownScopeRef => format!(
+                "{} in {} references unknown parent scope ID",
+                self.scope_id.as_deref().unwrap_or("<unknown>"),
+                self.artifact_path.display()
+            ),
+            ScopeLineageIssueKind::OutOfScopeContradiction => format!(
+                "{} in {} contradicts the PRD by marking an out-of-scope item as in scope",
+                self.scope_id.as_deref().unwrap_or("<unknown>"),
+                self.artifact_path.display()
+            ),
+            ScopeLineageIssueKind::LegacyUntaggedScopePath => format!(
+                "{} in {} uses a legacy untagged scope bullet (expected canonical [SCOPE-*] linkage)",
+                self.line.as_deref().unwrap_or("<unknown>"),
+                self.artifact_path.display()
+            ),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PrdCoverageChild {
     pub voyage_id: String,
@@ -593,6 +636,108 @@ pub fn prd_srs_lineage_problems(voyage: &Voyage, board: &Board, check_id: CheckI
         .into_iter()
         .map(|issue| {
             Problem::error(issue.srs_path.clone(), issue.message())
+                .with_scope(voyage.scope_path())
+                .with_check_id(check_id)
+        })
+        .collect()
+}
+
+pub fn evaluate_voyage_scope_lineage(voyage: &Voyage, board: &Board) -> Vec<ScopeLineageIssue> {
+    let srs_path = voyage.path.parent().unwrap().join("SRS.md");
+    let srs_content = match fs::read_to_string(&srs_path) {
+        Ok(content) => content,
+        Err(_) => return Vec::new(),
+    };
+    let Some(epic) = board.epics.get(&voyage.epic_id) else {
+        return Vec::new();
+    };
+    let prd_path = epic.path.parent().unwrap().join("PRD.md");
+    let prd_content = match fs::read_to_string(&prd_path) {
+        Ok(content) => content,
+        Err(_) => return Vec::new(),
+    };
+
+    let prd_scope_entries = parse_prd_scope_entries(&prd_content);
+    let srs_scope_links = parse_srs_scope_links(&srs_content);
+    let mut issues = Vec::new();
+
+    let scope_contract_enabled = !prd_scope_entries.is_empty() || !srs_scope_links.is_empty();
+    if scope_contract_enabled {
+        issues.extend(find_legacy_untagged_scope_lines(
+            &prd_content,
+            &prd_path,
+            ScopeSectionStyle::Prd,
+        ));
+        issues.extend(find_legacy_untagged_scope_lines(
+            &srs_content,
+            &srs_path,
+            ScopeSectionStyle::Srs,
+        ));
+    }
+
+    let known_scope: BTreeMap<_, _> = prd_scope_entries
+        .iter()
+        .map(|entry| (entry.id.clone(), entry.disposition))
+        .collect();
+    let linked_scope_ids: HashSet<_> = srs_scope_links
+        .iter()
+        .map(|link| link.parent_id.as_str())
+        .collect();
+
+    for link in &srs_scope_links {
+        let Some(parent_disposition) = known_scope.get(&link.parent_id) else {
+            issues.push(ScopeLineageIssue {
+                artifact_path: srs_path.clone(),
+                scope_id: Some(link.parent_id.clone()),
+                line: None,
+                kind: ScopeLineageIssueKind::UnknownScopeRef,
+            });
+            continue;
+        };
+
+        if link.disposition == ScopeDisposition::In && *parent_disposition == ScopeDisposition::Out
+        {
+            issues.push(ScopeLineageIssue {
+                artifact_path: srs_path.clone(),
+                scope_id: Some(link.parent_id.clone()),
+                line: None,
+                kind: ScopeLineageIssueKind::OutOfScopeContradiction,
+            });
+        }
+    }
+
+    for entry in &prd_scope_entries {
+        if entry.disposition == ScopeDisposition::In
+            && !linked_scope_ids.contains(entry.id.as_str())
+        {
+            issues.push(ScopeLineageIssue {
+                artifact_path: srs_path.clone(),
+                scope_id: Some(entry.id.clone()),
+                line: None,
+                kind: ScopeLineageIssueKind::MissingScopeMapping,
+            });
+        }
+    }
+
+    issues.sort_by(|a, b| {
+        a.artifact_path
+            .cmp(&b.artifact_path)
+            .then_with(|| a.scope_id.cmp(&b.scope_id))
+            .then_with(|| a.line.cmp(&b.line))
+            .then_with(|| format!("{:?}", a.kind).cmp(&format!("{:?}", b.kind)))
+    });
+    issues
+}
+
+pub fn voyage_scope_lineage_problems(
+    voyage: &Voyage,
+    board: &Board,
+    check_id: CheckId,
+) -> Vec<Problem> {
+    evaluate_voyage_scope_lineage(voyage, board)
+        .into_iter()
+        .map(|issue| {
+            Problem::error(issue.artifact_path.clone(), issue.message())
                 .with_scope(voyage.scope_path())
                 .with_check_id(check_id)
         })
@@ -964,6 +1109,63 @@ fn goal_ref_tokens(raw: &str) -> Vec<String> {
         .filter(|token| !token.is_empty())
         .map(ToOwned::to_owned)
         .collect()
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ScopeSectionStyle {
+    Prd,
+    Srs,
+}
+
+fn find_legacy_untagged_scope_lines(
+    content: &str,
+    artifact_path: &Path,
+    style: ScopeSectionStyle,
+) -> Vec<ScopeLineageIssue> {
+    let Some(section) = extract_markdown_section(content, "## Scope") else {
+        return Vec::new();
+    };
+
+    let mut issues = Vec::new();
+    let mut in_scope_context = false;
+
+    for line in section.lines() {
+        let trimmed = line.trim();
+        match style {
+            ScopeSectionStyle::Prd => {
+                if trimmed.eq_ignore_ascii_case("### In Scope")
+                    || trimmed.eq_ignore_ascii_case("### Out of Scope")
+                {
+                    in_scope_context = true;
+                    continue;
+                }
+            }
+            ScopeSectionStyle::Srs => {
+                if trimmed.eq_ignore_ascii_case("In scope:")
+                    || trimmed.eq_ignore_ascii_case("Out of scope:")
+                {
+                    in_scope_context = true;
+                    continue;
+                }
+            }
+        }
+
+        if !in_scope_context
+            || !trimmed.starts_with("- ")
+            || parse_canonical_scope_bullet(trimmed).is_some()
+        {
+            continue;
+        }
+
+        issues.push(ScopeLineageIssue {
+            artifact_path: artifact_path.to_path_buf(),
+            scope_id: None,
+            line: Some(trimmed.to_string()),
+            kind: ScopeLineageIssueKind::LegacyUntaggedScopePath,
+        });
+    }
+
+    issues
 }
 
 fn parse_canonical_scope_bullet(line: &str) -> Option<(String, String)> {

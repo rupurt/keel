@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-05T17:54:01.114701507-08:00
+mode: manual
+---
+Verified with cargo test -p keel scope_lineage_rejects_legacy_untagged_paths and full just test coverage

@@ -260,6 +260,15 @@ pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
         duration: Duration::from_millis(0),
     });
 
+    let voyage_scope_lineage_problems = checks::voyages::check_scope_lineage_coherence(&board);
+    voyage_checks.push(CheckResult {
+        name: "Scope lineage coherence",
+        evaluations: board.voyages.len(),
+        passed: voyage_scope_lineage_problems.is_empty(),
+        problems: voyage_scope_lineage_problems,
+        duration: Duration::from_millis(0),
+    });
+
     let voyage_artifact_problems = checks::voyages::check_voyage_press_release_artifacts(&board);
     voyage_checks.push(CheckResult {
         name: "Voyage artifact contract",

@@ -78,6 +78,25 @@ pub fn check_prd_lineage_coherence(board: &Board) -> Vec<Problem> {
     problems
 }
 
+pub fn check_scope_lineage_coherence(board: &Board) -> Vec<Problem> {
+    let mut voyages: Vec<_> = board.voyages.values().collect();
+    voyages.sort_by(|a, b| a.index().cmp(&b.index()).then_with(|| a.id().cmp(b.id())));
+
+    let mut problems = Vec::new();
+    for voyage in voyages {
+        if voyage.status() == VoyageState::Done {
+            continue;
+        }
+        problems.extend(invariants::voyage_scope_lineage_problems(
+            voyage,
+            board,
+            CheckId::VoyageScopeLineageCoherence,
+        ));
+    }
+
+    problems
+}
+
 /// Check voyage title case
 pub fn check_voyage_title_case(board: &Board) -> Vec<Problem> {
     let mut problems = Vec::new();
@@ -330,6 +349,164 @@ mod tests {
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
         assert!(check_prd_lineage_coherence(&board).is_empty());
+    }
+
+    #[test]
+    fn doctor_reports_scope_drift_and_contradictions() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").status("planned").srs_content(
+                r#"# SRS
+
+## Scope
+
+In scope:
+- [SCOPE-03] Illegally pull an out-of-scope item into this voyage.
+- [SCOPE-99] Reference a missing parent scope item.
+
+Out of scope:
+- [SCOPE-02] Defer a valid in-scope item for a later voyage.
+"#,
+            ))
+            .build();
+        std::fs::write(
+            temp.path().join("epics/e1/PRD.md"),
+            r#"# PRD
+
+## Scope
+
+### In Scope
+- [SCOPE-01] Parse canonical scope IDs.
+- [SCOPE-02] Render scope drift findings.
+
+### Out of Scope
+- [SCOPE-03] Story-level runtime enforcement.
+"#,
+        )
+        .unwrap();
+
+        let report = crate::cli::commands::diagnostics::doctor::validate(temp.path()).unwrap();
+        let scope_check = report
+            .voyage_checks
+            .iter()
+            .find(|check| check.name == "Scope lineage coherence")
+            .expect("scope lineage check should be present");
+
+        assert!(!scope_check.passed);
+        assert!(scope_check.problems.iter().any(|problem| {
+            problem.check_id == CheckId::VoyageScopeLineageCoherence
+                && problem.message.contains("SCOPE-01")
+                && problem.message.contains("missing a voyage scope mapping")
+        }));
+        assert!(scope_check.problems.iter().any(|problem| {
+            problem.check_id == CheckId::VoyageScopeLineageCoherence
+                && problem.message.contains("SCOPE-99")
+                && problem.message.contains("unknown parent scope ID")
+        }));
+        assert!(scope_check.problems.iter().any(|problem| {
+            problem.check_id == CheckId::VoyageScopeLineageCoherence
+                && problem.message.contains("SCOPE-03")
+                && problem
+                    .message
+                    .contains("contradicts the PRD by marking an out-of-scope item as in scope")
+        }));
+    }
+
+    #[test]
+    fn scope_drift_errors_are_actionable() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").status("planned").srs_content(
+                r#"# SRS
+
+## Scope
+
+In scope:
+- [SCOPE-03] Pull a forbidden item into scope.
+- [SCOPE-99] Reference a missing parent.
+
+Out of scope:
+- [SCOPE-02] Defer a valid in-scope item.
+"#,
+            ))
+            .build();
+        let prd_path = temp.path().join("epics/e1/PRD.md");
+        std::fs::write(
+            &prd_path,
+            r#"# PRD
+
+## Scope
+
+### In Scope
+- [SCOPE-01] Parse canonical scope IDs.
+- [SCOPE-02] Render scope drift findings.
+
+### Out of Scope
+- [SCOPE-03] Story-level runtime enforcement.
+"#,
+        )
+        .unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_scope_lineage_coherence(&board);
+        let srs_path = temp.path().join("epics/e1/voyages/v1/SRS.md");
+
+        assert!(problems.iter().any(|problem| {
+            problem.path == srs_path
+                && problem.message.contains("SCOPE-01")
+                && problem.message.contains("missing a voyage scope mapping")
+        }));
+        assert!(problems.iter().any(|problem| {
+            problem.path == srs_path
+                && problem.message.contains("SCOPE-99")
+                && problem.message.contains("unknown parent scope ID")
+        }));
+        assert!(problems.iter().any(|problem| {
+            problem.path == srs_path
+                && problem.message.contains("SCOPE-03")
+                && problem.message.contains("out-of-scope item as in scope")
+        }));
+    }
+
+    #[test]
+    fn scope_lineage_rejects_legacy_untagged_paths() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").status("planned").srs_content(
+                r#"# SRS
+
+## Scope
+
+In scope:
+- Parse canonical scope IDs without a parent tag.
+
+Out of scope:
+- [SCOPE-02] Leave a valid item out of this slice.
+"#,
+            ))
+            .build();
+        std::fs::write(
+            temp.path().join("epics/e1/PRD.md"),
+            r#"# PRD
+
+## Scope
+
+### In Scope
+- Parse canonical scope IDs without a parent tag.
+- [SCOPE-02] Render scope drift findings.
+"#,
+        )
+        .unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_scope_lineage_coherence(&board);
+
+        assert!(problems.iter().any(|problem| {
+            problem.check_id == CheckId::VoyageScopeLineageCoherence
+                && problem
+                    .message
+                    .contains("uses a legacy untagged scope bullet")
+        }));
     }
 
     #[test]

@@ -8,6 +8,23 @@ created_at: 2026-03-04T16:27:11
 
 ## Story Knowledge
 
+## Story: Remove Planning Show Recommendations And Update Planning Guidance (1vxvIa2RC)
+
+### 1vyDuwUUO: Keep recommendation sourcing decoupled from planning read surfaces
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Planning read commands and verification-technique discovery can drift when both surfaces try to rank/recommend techniques. |
+| **Insight** | Moving recommendation concerns to dedicated commands (`config show` inventory + `verify recommend`) keeps planning show outputs focused on planning state and avoids mixed concerns. |
+| **Suggested Action** | Keep epic/voyage/story show projections limited to planning progress/evidence summaries; centralize recommendation logic in verification/config read models. |
+| **Applies To** | `src/read_model/planning_show.rs`, `src/cli/commands/management/verify.rs`, `AGENTS.md` |
+| **Applied** | yes |
+
+
+
+---
+
 ## Story: Hard Cutover Verify Command To Subcommands (1vxvIaPe8)
 
 ### 1vyDuwu3r: Parse legacy forms but block execution paths
@@ -42,23 +59,6 @@ created_at: 2026-03-04T16:27:11
 
 ---
 
-## Story: Remove Planning Show Recommendations And Update Planning Guidance (1vxvIa2RC)
-
-### 1vyDuwUUO: Keep recommendation sourcing decoupled from planning read surfaces
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Planning read commands and verification-technique discovery can drift when both surfaces try to rank/recommend techniques. |
-| **Insight** | Moving recommendation concerns to dedicated commands (`config show` inventory + `verify recommend`) keeps planning show outputs focused on planning state and avoids mixed concerns. |
-| **Suggested Action** | Keep epic/voyage/story show projections limited to planning progress/evidence summaries; centralize recommendation logic in verification/config read models. |
-| **Applies To** | `src/read_model/planning_show.rs`, `src/cli/commands/management/verify.rs`, `AGENTS.md` |
-| **Applied** | yes |
-
-
-
----
-
 ## Story: Implement Verify Recommend For Active Detected Techniques (1vxvIaM4w)
 
 ### 1vyDuwmNc: Centralize technique status before rendering
@@ -77,6 +77,20 @@ created_at: 2026-03-04T16:27:11
 ---
 
 ## Synthesis
+
+### ng7SivrJS: Keep recommendation sourcing decoupled from planning read surfaces
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Planning read commands and verification-technique discovery can drift when both surfaces try to rank/recommend techniques. |
+| **Insight** | Moving recommendation concerns to dedicated commands (`config show` inventory + `verify recommend`) keeps planning show outputs focused on planning state and avoids mixed concerns. |
+| **Suggested Action** | Keep epic/voyage/story show projections limited to planning progress/evidence summaries; centralize recommendation logic in verification/config read models. |
+| **Applies To** | `src/read_model/planning_show.rs`, `src/cli/commands/management/verify.rs`, `AGENTS.md` |
+| **Linked Knowledge IDs** | 1vyDuwUUO |
+| **Score** | 0.79 |
+| **Confidence** | 0.89 |
+| **Applied** | yes |
 
 ### 9c2bFuX0o: Parse legacy forms but block execution paths
 
@@ -104,20 +118,6 @@ created_at: 2026-03-04T16:27:11
 | **Linked Knowledge IDs** | 1vyDuwBfG |
 | **Score** | 0.86 |
 | **Confidence** | 0.90 |
-| **Applied** | yes |
-
-### ng7SivrJS: Keep recommendation sourcing decoupled from planning read surfaces
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Planning read commands and verification-technique discovery can drift when both surfaces try to rank/recommend techniques. |
-| **Insight** | Moving recommendation concerns to dedicated commands (`config show` inventory + `verify recommend`) keeps planning show outputs focused on planning state and avoids mixed concerns. |
-| **Suggested Action** | Keep epic/voyage/story show projections limited to planning progress/evidence summaries; centralize recommendation logic in verification/config read models. |
-| **Applies To** | `src/read_model/planning_show.rs`, `src/cli/commands/management/verify.rs`, `AGENTS.md` |
-| **Linked Knowledge IDs** | 1vyDuwUUO |
-| **Score** | 0.79 |
-| **Confidence** | 0.89 |
 | **Applied** | yes |
 
 ### tDRpzXuPC: Centralize technique status before rendering

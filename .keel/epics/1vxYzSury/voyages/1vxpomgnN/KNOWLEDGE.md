@@ -8,23 +8,6 @@ created_at: 2026-03-04T11:56:17
 
 ## Story Knowledge
 
-## Story: Render Concrete Evidence In Story Show (1vxppkEH9)
-
-### 1vyDuwUSB: Evidence UX Needs Structured Inventory Layers
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Rendering acceptance evidence directly in `story show` |
-| **Insight** | A clear split between linked proofs, supplementary artifacts, and media playback hints makes acceptance decisions possible without opening files manually. |
-| **Suggested Action** | Keep evidence rendering model-driven and test each layer (metadata, excerpts, missing warnings, placeholders) independently. |
-| **Applies To** | `src/cli/commands/management/story/show.rs`, future evidence/report renderers |
-| **Applied** | yes |
-
-
-
----
-
 ## Story: Define Planning Show Output Contracts (1vxppk4Oj)
 
 ### 1vyDuwrAD: Centralized show projections reduce drift
@@ -59,6 +42,23 @@ created_at: 2026-03-04T11:56:17
 
 ---
 
+## Story: Render Concrete Evidence In Story Show (1vxppkEH9)
+
+### 1vyDuwUSB: Evidence UX Needs Structured Inventory Layers
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Rendering acceptance evidence directly in `story show` |
+| **Insight** | A clear split between linked proofs, supplementary artifacts, and media playback hints makes acceptance decisions possible without opening files manually. |
+| **Suggested Action** | Keep evidence rendering model-driven and test each layer (metadata, excerpts, missing warnings, placeholders) independently. |
+| **Applies To** | `src/cli/commands/management/story/show.rs`, future evidence/report renderers |
+| **Applied** | yes |
+
+
+
+---
+
 ## Story: Implement Epic Show Planning Summary (1vxppkN0w)
 
 ### 1vyDuwuBj: Planning Show Parsing Needs Scaffold Filters
@@ -77,20 +77,6 @@ created_at: 2026-03-04T11:56:17
 ---
 
 ## Synthesis
-
-### qjOtw5RNt: Evidence UX Needs Structured Inventory Layers
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Rendering acceptance evidence directly in `story show` |
-| **Insight** | A clear split between linked proofs, supplementary artifacts, and media playback hints makes acceptance decisions possible without opening files manually. |
-| **Suggested Action** | Keep evidence rendering model-driven and test each layer (metadata, excerpts, missing warnings, placeholders) independently. |
-| **Applies To** | `src/cli/commands/management/story/show.rs`, future evidence/report renderers |
-| **Linked Knowledge IDs** | 1vyDuwUSB |
-| **Score** | 0.84 |
-| **Confidence** | 0.90 |
-| **Applied** | yes |
 
 ### PpRjlSIuB: Centralized show projections reduce drift
 
@@ -117,6 +103,20 @@ created_at: 2026-03-04T11:56:17
 | **Applies To** | `src/cli/commands/management/voyage/show.rs`, planning-read projections |
 | **Linked Knowledge IDs** | 1vyDuwuY1 |
 | **Score** | 0.82 |
+| **Confidence** | 0.90 |
+| **Applied** | yes |
+
+### qjOtw5RNt: Evidence UX Needs Structured Inventory Layers
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Rendering acceptance evidence directly in `story show` |
+| **Insight** | A clear split between linked proofs, supplementary artifacts, and media playback hints makes acceptance decisions possible without opening files manually. |
+| **Suggested Action** | Keep evidence rendering model-driven and test each layer (metadata, excerpts, missing warnings, placeholders) independently. |
+| **Applies To** | `src/cli/commands/management/story/show.rs`, future evidence/report renderers |
+| **Linked Knowledge IDs** | 1vyDuwUSB |
+| **Score** | 0.84 |
 | **Confidence** | 0.90 |
 | **Applied** | yes |
 

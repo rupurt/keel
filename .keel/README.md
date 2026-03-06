@@ -25,7 +25,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Detect Scope Drift During Planning](stories/1vyGZflfJ/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Scope Lineage and Drift Detection](epics/1vyFgR2MA/voyages/1vyFn0OuN/) |
 | [Render Scope Lineage In Planning Surfaces](stories/1vyGZgiTK/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Scope Lineage and Drift Detection](epics/1vyFgR2MA/voyages/1vyFn0OuN/) |
 
 <details>
@@ -44,13 +43,13 @@
 
 ## Epics
 
-### [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) (active) - 4 voyages, 2 done
+### [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) (active) - 4 voyages, 3 done
 
 | Voyage | Status |
 |--------|--------|
 | [Canonical PRD Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFiQPoH/) | done |
 | [Epic Problem Hydration](epics/1vyFgR2MA/voyages/1vyFlAgHB/) | done |
-| [Goal-to-Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFmfjA9/) | in-progress |
+| [Goal-to-Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFmfjA9/) | done |
 | [Scope Lineage and Drift Detection](epics/1vyFgR2MA/voyages/1vyFn0OuN/) | in-progress |
 
 <details>

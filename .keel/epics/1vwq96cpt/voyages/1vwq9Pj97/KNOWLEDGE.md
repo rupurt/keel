@@ -25,23 +25,6 @@ created_at: 2026-03-02T07:36:50
 
 ---
 
-## Story: Define Layer Dependency Matrix (1vwqCd6wg)
-
-### 1vyDuw12T: Matrix Contracts Need Both Narrative and Table Forms
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Defining a dependency contract that engineers can read quickly and tests can consume with minimal interpretation |
-| **Insight** | A single layer table is not enough for review; adding a compact `From \\ To` matrix reduces ambiguity about allowed and forbidden dependencies. |
-| **Suggested Action** | Keep layer contracts in two forms: descriptive per-layer rules plus a normalized matrix that can be translated directly into architecture tests. |
-| **Applies To** | ARCHITECTURE.md, upcoming architecture contract tests |
-| **Applied** | yes |
-
-
-
----
-
 ## Story: Enforce Architecture Contract Tests (1vwqCeg0n)
 
 ### 1vyDuw41L: Source-Scanning Contracts Catch Layer Drift Early
@@ -54,6 +37,23 @@ created_at: 2026-03-02T07:36:50
 | **Suggested Action** | Add/adjust architecture contract tests whenever a boundary or layering rule is introduced so regressions fail fast in CI. |
 | **Applies To** | src/architecture_contract_tests.rs, src/main.rs, src/next/algorithm.rs, src/commands/diagnostics/*, src/read_model/* |
 | **Applied** | Added enforceable boundary tests and wired them into test compilation via main test module declarations. |
+
+
+
+---
+
+## Story: Define Layer Dependency Matrix (1vwqCd6wg)
+
+### 1vyDuw12T: Matrix Contracts Need Both Narrative and Table Forms
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Defining a dependency contract that engineers can read quickly and tests can consume with minimal interpretation |
+| **Insight** | A single layer table is not enough for review; adding a compact `From \\ To` matrix reduces ambiguity about allowed and forbidden dependencies. |
+| **Suggested Action** | Keep layer contracts in two forms: descriptive per-layer rules plus a normalized matrix that can be translated directly into architecture tests. |
+| **Applies To** | ARCHITECTURE.md, upcoming architecture contract tests |
+| **Applied** | yes |
 
 
 
@@ -75,20 +75,6 @@ created_at: 2026-03-02T07:36:50
 | **Confidence** | 0.90 |
 | **Applied** | yes |
 
-### 1jCvlheVL: Matrix Contracts Need Both Narrative and Table Forms
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Defining a dependency contract that engineers can read quickly and tests can consume with minimal interpretation |
-| **Insight** | A single layer table is not enough for review; adding a compact `From \\ To` matrix reduces ambiguity about allowed and forbidden dependencies. |
-| **Suggested Action** | Keep layer contracts in two forms: descriptive per-layer rules plus a normalized matrix that can be translated directly into architecture tests. |
-| **Applies To** | ARCHITECTURE.md, upcoming architecture contract tests |
-| **Linked Knowledge IDs** | 1vyDuw12T |
-| **Score** | 0.84 |
-| **Confidence** | 0.89 |
-| **Applied** | yes |
-
 ### mzqFfdlrU: Source-Scanning Contracts Catch Layer Drift Early
 
 | Field | Value |
@@ -102,4 +88,18 @@ created_at: 2026-03-02T07:36:50
 | **Score** | 0.80 |
 | **Confidence** | 0.90 |
 | **Applied** | Added enforceable boundary tests and wired them into test compilation via main test module declarations. |
+
+### 1jCvlheVL: Matrix Contracts Need Both Narrative and Table Forms
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Defining a dependency contract that engineers can read quickly and tests can consume with minimal interpretation |
+| **Insight** | A single layer table is not enough for review; adding a compact `From \\ To` matrix reduces ambiguity about allowed and forbidden dependencies. |
+| **Suggested Action** | Keep layer contracts in two forms: descriptive per-layer rules plus a normalized matrix that can be translated directly into architecture tests. |
+| **Applies To** | ARCHITECTURE.md, upcoming architecture contract tests |
+| **Linked Knowledge IDs** | 1vyDuw12T |
+| **Score** | 0.84 |
+| **Confidence** | 0.89 |
+| **Applied** | yes |
 

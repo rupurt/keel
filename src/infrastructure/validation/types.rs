@@ -202,6 +202,7 @@ pub enum CheckId {
     StoryManifestTampered,
     VoyageStatusDrift,
     VoyagePrdLineageCoherence,
+    VoyageScopeLineageCoherence,
     EpicGoalLineageCoherence,
     VoyageUnexpectedPressRelease,
     EpicStatusDrift,

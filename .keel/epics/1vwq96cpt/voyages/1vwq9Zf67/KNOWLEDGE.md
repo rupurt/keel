@@ -42,23 +42,6 @@ created_at: 2026-03-02T09:33:26
 
 ---
 
-## Story: Implement Voyage And Epic Lifecycle Use Cases (1vwqCejs5)
-
-### 1vyDuwgcV: Keep Lifecycle Command Handlers As Thin Adapters
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Refactoring voyage and epic lifecycle commands to align with application-service orchestration boundaries |
-| **Insight** | Moving orchestration into a dedicated application service lets command modules stay stable adapters while preserving behavior through existing command tests |
-| **Suggested Action** | Add use-case methods first, then delegate command `run` entrypoints to those methods and update cross-command callsites to service APIs |
-| **Applies To** | src/application/*.rs; src/commands/voyage/*.rs; src/commands/epic/*.rs |
-| **Applied** | 1vwqCejs5 |
-
-
-
----
-
 ## Story: Implement Story Lifecycle Use Cases (1vwqCe5T0)
 
 ### 1vyDuwDTq: Thin Command Adapters Preserve Behavior During Refactors
@@ -71,6 +54,23 @@ created_at: 2026-03-02T09:33:26
 | **Suggested Action** | For future migrations, extract service logic first, then convert command files to wrappers and keep legacy helper behavior behind `#[cfg(test)]` shims only where needed. |
 | **Applies To** | src/application/story_lifecycle.rs, src/commands/story/{start,submit,accept,reject,ice,thaw}.rs |
 | **Applied** | yes |
+
+
+
+---
+
+## Story: Implement Voyage And Epic Lifecycle Use Cases (1vwqCejs5)
+
+### 1vyDuwgcV: Keep Lifecycle Command Handlers As Thin Adapters
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Refactoring voyage and epic lifecycle commands to align with application-service orchestration boundaries |
+| **Insight** | Moving orchestration into a dedicated application service lets command modules stay stable adapters while preserving behavior through existing command tests |
+| **Suggested Action** | Add use-case methods first, then delegate command `run` entrypoints to those methods and update cross-command callsites to service APIs |
+| **Applies To** | src/application/*.rs; src/commands/voyage/*.rs; src/commands/epic/*.rs |
+| **Applied** | 1vwqCejs5 |
 
 
 
@@ -106,20 +106,6 @@ created_at: 2026-03-02T09:33:26
 | **Confidence** | 0.92 |
 | **Applied** | Introduced DomainEvent + DomainProcessManager and rewired lifecycle services to emit events. |
 
-### r1jV4LrNV: Keep Lifecycle Command Handlers As Thin Adapters
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Refactoring voyage and epic lifecycle commands to align with application-service orchestration boundaries |
-| **Insight** | Moving orchestration into a dedicated application service lets command modules stay stable adapters while preserving behavior through existing command tests |
-| **Suggested Action** | Add use-case methods first, then delegate command `run` entrypoints to those methods and update cross-command callsites to service APIs |
-| **Applies To** | src/application/*.rs; src/commands/voyage/*.rs; src/commands/epic/*.rs |
-| **Linked Knowledge IDs** | 1vyDuwgcV |
-| **Score** | 0.82 |
-| **Confidence** | 0.88 |
-| **Applied** | 1vwqCejs5 |
-
 ### SrUkwz3sZ: Thin Command Adapters Preserve Behavior During Refactors
 
 | Field | Value |
@@ -133,4 +119,18 @@ created_at: 2026-03-02T09:33:26
 | **Score** | 0.90 |
 | **Confidence** | 0.91 |
 | **Applied** | yes |
+
+### r1jV4LrNV: Keep Lifecycle Command Handlers As Thin Adapters
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Refactoring voyage and epic lifecycle commands to align with application-service orchestration boundaries |
+| **Insight** | Moving orchestration into a dedicated application service lets command modules stay stable adapters while preserving behavior through existing command tests |
+| **Suggested Action** | Add use-case methods first, then delegate command `run` entrypoints to those methods and update cross-command callsites to service APIs |
+| **Applies To** | src/application/*.rs; src/commands/voyage/*.rs; src/commands/epic/*.rs |
+| **Linked Knowledge IDs** | 1vyDuwgcV |
+| **Score** | 0.82 |
+| **Confidence** | 0.88 |
+| **Applied** | 1vwqCejs5 |
 

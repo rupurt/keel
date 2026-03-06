@@ -8,23 +8,6 @@ created_at: 2026-03-05T17:47:09
 
 ## Story Knowledge
 
-## Story: Keep Fresh Epic Scaffolds Doctor Clean (1vyGZet0Z)
-
-### 1vyKD7naI: Keep scaffold templates compliant with day-zero doctor contracts
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Changing epic creation inputs made freshly generated PRDs fail doctor even though the validator logic was correct. |
-| **Insight** | If newly scaffolded planning artifacts are expected to be immediately doctor-clean, the fix belongs in the template seed content rather than in weaker validation rules. |
-| **Suggested Action** | When creation inputs or placeholder semantics change, regenerate a fresh artifact in tests and run doctor against it before changing any diagnostic gates. |
-| **Applies To** | `templates/epic/[name]/PRD.md`, `src/cli/commands/management/epic/new.rs`, doctor scaffold checks |
-| **Applied** | yes |
-
-
-
----
-
 ## Story: Replace Epic Goal CLI With Problem Input (1vyGZd1to)
 
 ### 1vyIq5M2c: Verify Annotation Chains Only Materialize One Requirement Token
@@ -42,9 +25,9 @@ created_at: 2026-03-05T17:47:09
 
 ---
 
-## Synthesis
+## Story: Keep Fresh Epic Scaffolds Doctor Clean (1vyGZet0Z)
 
-### uF16vu0Pp: Keep scaffold templates compliant with day-zero doctor contracts
+### 1vyKD7naI: Keep scaffold templates compliant with day-zero doctor contracts
 
 | Field | Value |
 |-------|-------|
@@ -53,10 +36,13 @@ created_at: 2026-03-05T17:47:09
 | **Insight** | If newly scaffolded planning artifacts are expected to be immediately doctor-clean, the fix belongs in the template seed content rather than in weaker validation rules. |
 | **Suggested Action** | When creation inputs or placeholder semantics change, regenerate a fresh artifact in tests and run doctor against it before changing any diagnostic gates. |
 | **Applies To** | `templates/epic/[name]/PRD.md`, `src/cli/commands/management/epic/new.rs`, doctor scaffold checks |
-| **Linked Knowledge IDs** | 1vyKD7naI |
-| **Score** | 0.87 |
-| **Confidence** | 0.95 |
 | **Applied** | yes |
+
+
+
+---
+
+## Synthesis
 
 ### fjNA0XzGw: Verify Annotation Chains Only Materialize One Requirement Token
 
@@ -70,5 +56,19 @@ created_at: 2026-03-05T17:47:09
 | **Linked Knowledge IDs** | 1vyIq5M2c |
 | **Score** | 0.75 |
 | **Confidence** | 0.90 |
+| **Applied** | yes |
+
+### uF16vu0Pp: Keep scaffold templates compliant with day-zero doctor contracts
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Changing epic creation inputs made freshly generated PRDs fail doctor even though the validator logic was correct. |
+| **Insight** | If newly scaffolded planning artifacts are expected to be immediately doctor-clean, the fix belongs in the template seed content rather than in weaker validation rules. |
+| **Suggested Action** | When creation inputs or placeholder semantics change, regenerate a fresh artifact in tests and run doctor against it before changing any diagnostic gates. |
+| **Applies To** | `templates/epic/[name]/PRD.md`, `src/cli/commands/management/epic/new.rs`, doctor scaffold checks |
+| **Linked Knowledge IDs** | 1vyKD7naI |
+| **Score** | 0.87 |
+| **Confidence** | 0.95 |
 | **Applied** | yes |
 

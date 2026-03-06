@@ -25,11 +25,11 @@ started_at: 2026-03-05T17:00:15
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/3 stories complete
+**Progress:** 2/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Parse Canonical Scope Lineage](../../../../stories/1vyGZfkjV/README.md) | feat | done |
-| [Detect Scope Drift During Planning](../../../../stories/1vyGZflfJ/README.md) | feat | backlog |
+| [Detect Scope Drift During Planning](../../../../stories/1vyGZflfJ/README.md) | feat | done |
 | [Render Scope Lineage In Planning Surfaces](../../../../stories/1vyGZgiTK/README.md) | feat | backlog |
 <!-- END GENERATED -->

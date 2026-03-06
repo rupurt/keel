@@ -25,6 +25,23 @@ created_at: 2026-03-03T11:50:46
 
 ---
 
+## Story: Enforce Terminal Story Coherency In Doctor (1vxH84nTQ)
+
+### 1vyDuwdbL: Stage-gate scaffold checks to avoid noisy early warnings
+
+| Field | Value |
+|-------|-------|
+| **Category** | code |
+| **Context** | Adding scaffold/default text diagnostics to doctor checks |
+| **Insight** | Stage filtering is critical: terminal-only checks avoid penalizing in-progress drafting while still hard-failing review-complete states. |
+| **Suggested Action** | Reuse a shared unresolved-pattern detector and explicitly gate by story stage (`needs-human-verification`, `done`) for terminal coherency rules. |
+| **Applies To** | src/cli/commands/diagnostics/doctor/checks/stories.rs, src/infrastructure/validation/structural.rs |
+| **Applied** | yes |
+
+
+
+---
+
 ## Story: Gate Story Submit And Accept On Coherent Artifacts (1vxH84M8t)
 
 ### 1vyDuwoFf: Reuse the structural placeholder detector in runtime gates
@@ -59,23 +76,6 @@ created_at: 2026-03-03T11:50:46
 
 ---
 
-## Story: Enforce Terminal Story Coherency In Doctor (1vxH84nTQ)
-
-### 1vyDuwdbL: Stage-gate scaffold checks to avoid noisy early warnings
-
-| Field | Value |
-|-------|-------|
-| **Category** | code |
-| **Context** | Adding scaffold/default text diagnostics to doctor checks |
-| **Insight** | Stage filtering is critical: terminal-only checks avoid penalizing in-progress drafting while still hard-failing review-complete states. |
-| **Suggested Action** | Reuse a shared unresolved-pattern detector and explicitly gate by story stage (`needs-human-verification`, `done`) for terminal coherency rules. |
-| **Applies To** | src/cli/commands/diagnostics/doctor/checks/stories.rs, src/infrastructure/validation/structural.rs |
-| **Applied** | yes |
-
-
-
----
-
 ## Synthesis
 
 ### WrS2i2HgF: Assert check identity and severity for hard-cutover gates
@@ -89,6 +89,20 @@ created_at: 2026-03-03T11:50:46
 | **Applies To** | `src/cli/commands/diagnostics/doctor/mod.rs`, `src/domain/state_machine/gating.rs` |
 | **Linked Knowledge IDs** | 1vyDuwFj5 |
 | **Score** | 0.84 |
+| **Confidence** | 0.91 |
+| **Applied** | yes |
+
+### uvyKHWaQn: Stage-gate scaffold checks to avoid noisy early warnings
+
+| Field | Value |
+|-------|-------|
+| **Category** | code |
+| **Context** | Adding scaffold/default text diagnostics to doctor checks |
+| **Insight** | Stage filtering is critical: terminal-only checks avoid penalizing in-progress drafting while still hard-failing review-complete states. |
+| **Suggested Action** | Reuse a shared unresolved-pattern detector and explicitly gate by story stage (`needs-human-verification`, `done`) for terminal coherency rules. |
+| **Applies To** | src/cli/commands/diagnostics/doctor/checks/stories.rs, src/infrastructure/validation/structural.rs |
+| **Linked Knowledge IDs** | 1vyDuwdbL |
+| **Score** | 0.85 |
 | **Confidence** | 0.91 |
 | **Applied** | yes |
 
@@ -117,20 +131,6 @@ created_at: 2026-03-03T11:50:46
 | **Applies To** | `src/infrastructure/validation/structural.rs`, `src/cli/commands/diagnostics/doctor/checks/*.rs` |
 | **Linked Knowledge IDs** | 1vyDuwBAC |
 | **Score** | 0.84 |
-| **Confidence** | 0.91 |
-| **Applied** | yes |
-
-### uvyKHWaQn: Stage-gate scaffold checks to avoid noisy early warnings
-
-| Field | Value |
-|-------|-------|
-| **Category** | code |
-| **Context** | Adding scaffold/default text diagnostics to doctor checks |
-| **Insight** | Stage filtering is critical: terminal-only checks avoid penalizing in-progress drafting while still hard-failing review-complete states. |
-| **Suggested Action** | Reuse a shared unresolved-pattern detector and explicitly gate by story stage (`needs-human-verification`, `done`) for terminal coherency rules. |
-| **Applies To** | src/cli/commands/diagnostics/doctor/checks/stories.rs, src/infrastructure/validation/structural.rs |
-| **Linked Knowledge IDs** | 1vyDuwdbL |
-| **Score** | 0.85 |
 | **Confidence** | 0.91 |
 | **Applied** | yes |
 
