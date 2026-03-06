@@ -12,7 +12,10 @@ pub mod reporter;
 mod tests;
 
 pub use executor::{verify_all, verify_story};
-pub use judge_bundle::{JudgeBundle, JudgeBundleCriterion, JudgeBundleEvidence, JudgeBundleStory};
+pub use judge_bundle::{
+    JudgeBundle, JudgeBundleCriterion, JudgeBundleEvidence, JudgeBundleStory,
+    materialize_judge_bundle,
+};
 pub use parser::{
     AcReference, Comparison, RequirementPhase, RequirementRef, VerifyAnnotation,
     parse_ac_references, parse_verify_annotations,

@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 
 use crate::domain::model::Story;
 use crate::infrastructure::loader::load_board;
-use crate::infrastructure::utils::hash_file;
+use crate::infrastructure::utils::{hash_file, slugify};
 
 use super::parser::{RequirementPhase, parse_verify_annotations};
 
@@ -95,6 +95,20 @@ pub fn build_judge_bundle(
         },
         evidence,
     })
+}
+
+pub fn materialize_judge_bundle(
+    board_dir: &Path,
+    story_id: &str,
+    criterion: &str,
+) -> Result<PathBuf> {
+    let bundle = build_judge_bundle(board_dir, story_id, criterion)?;
+    let evidence_dir = board_dir.join("stories").join(story_id).join("EVIDENCE");
+    fs::create_dir_all(&evidence_dir)?;
+
+    let bundle_path = evidence_dir.join(format!("judge-bundle-{}.json", slugify(criterion)));
+    fs::write(&bundle_path, serde_json::to_vec_pretty(&bundle)?)?;
+    Ok(bundle_path)
 }
 
 fn build_story_context(board_dir: &Path, story: &Story) -> JudgeBundleStory {
@@ -303,5 +317,42 @@ updated_at: 2026-03-06T00:00:00
             serde_json::to_string(&left).unwrap(),
             serde_json::to_string(&right).unwrap()
         );
+    }
+
+    #[test]
+    fn materialize_judge_bundle_writes_stable_bundle_json() {
+        let temp = tempdir().unwrap();
+        init_board(temp.path(), &Config::default()).unwrap();
+
+        let story_dir = temp.path().join(".keel/stories/S1");
+        fs::create_dir_all(story_dir.join("EVIDENCE")).unwrap();
+        fs::write(
+            story_dir.join("README.md"),
+            r#"---
+id: S1
+title: Judge Story
+type: feat
+status: in-progress
+created_at: 2026-03-06T00:00:00
+updated_at: 2026-03-06T00:00:00
+---
+
+# Judge Story
+
+## Acceptance Criteria
+
+- [ ] [SRS-01/AC-01] Judge the dogfood artifacts. <!-- verify: llm-judge, SRS-01:start:end -->
+"#,
+        )
+        .unwrap();
+
+        let board_dir = temp.path().join(".keel");
+        let left =
+            materialize_judge_bundle(&board_dir, "S1", "Judge the dogfood artifacts.").unwrap();
+        let right =
+            materialize_judge_bundle(&board_dir, "S1", "Judge the dogfood artifacts.").unwrap();
+
+        assert_eq!(left, right);
+        assert!(left.exists());
     }
 }

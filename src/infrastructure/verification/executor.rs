@@ -125,6 +125,10 @@ pub fn execute_llm_judge(
         std::fs::create_dir_all(&evidence_dir)?;
     }
 
+    let bundle_path = crate::infrastructure::verification::judge_bundle::materialize_judge_bundle(
+        board_dir, story_id, criterion,
+    )?;
+
     // 1. Get the diff (changes in the current branch/HEAD)
     let project_root = board_dir.parent().unwrap_or(board_dir);
     let diff = Command::new("git")
@@ -136,8 +140,11 @@ pub fn execute_llm_judge(
 
     // 2. Mock the LLM judge by packaging the diff and AC into a transcript
     let transcript = format!(
-        "LLM Judge Transcript\nStory: {}\nCriterion: {}\n\nDiff:\n{}\n\nResult: PASS\nSignature: <KEEL-JUDGE-SIG>",
-        story_id, criterion, diff_str
+        "LLM Judge Transcript\nStory: {}\nCriterion: {}\nBundle: {}\n\nDiff:\n{}\n\nResult: PASS\nSignature: <KEEL-JUDGE-SIG>",
+        story_id,
+        criterion,
+        bundle_path.display(),
+        diff_str
     );
 
     let transcript_filename = format!(
@@ -363,7 +370,18 @@ mod tests {
         let story_path = stories_dir.join("README.md");
         fs::write(
             &story_path,
-            "## Acceptance Criteria\n\n- [ ] AC 1 <!-- verify: llm-judge, SRS-01:start -->",
+            r#"---
+id: S1
+title: Judge Story
+type: feat
+status: in-progress
+created_at: 2026-03-06T00:00:00
+updated_at: 2026-03-06T00:00:00
+---
+
+## Acceptance Criteria
+
+- [ ] AC 1 <!-- verify: llm-judge, SRS-01:start -->"#,
         )
         .unwrap();
 
@@ -378,6 +396,44 @@ mod tests {
         assert!(evidence_dir.exists());
         let transcript_path = evidence_dir.join("llm-judge-ac-1.txt");
         assert!(transcript_path.exists());
+    }
+
+    #[test]
+    fn verification_executor_materializes_judge_bundle() {
+        let dir = tempdir().unwrap();
+        let stories_dir = dir.path().join("stories").join("S1");
+        fs::create_dir_all(stories_dir.join("EVIDENCE")).unwrap();
+        let story_path = stories_dir.join("README.md");
+        fs::write(
+            &story_path,
+            r#"---
+id: S1
+title: Judge Story
+type: feat
+status: in-progress
+created_at: 2026-03-06T00:00:00
+updated_at: 2026-03-06T00:00:00
+---
+
+## Acceptance Criteria
+
+- [ ] [SRS-01/AC-01] AC 1 <!-- verify: llm-judge, SRS-01:start:end -->"#,
+        )
+        .unwrap();
+        fs::write(stories_dir.join("EVIDENCE/ac-1.log"), "proof").unwrap();
+
+        let report =
+            verify_story(dir.path(), "S1", &fs::read_to_string(&story_path).unwrap()).unwrap();
+        assert!(report.results[0].passed);
+
+        let bundle_path = stories_dir.join("EVIDENCE/judge-bundle-ac-1.json");
+        assert!(bundle_path.exists());
+
+        let bundle: crate::infrastructure::verification::JudgeBundle =
+            serde_json::from_str(&fs::read_to_string(&bundle_path).unwrap()).unwrap();
+        assert_eq!(bundle.story.id, "S1");
+        assert_eq!(bundle.criterion.text, "AC 1");
+        assert_eq!(bundle.criterion.srs_requirement.as_deref(), Some("SRS-01"));
     }
 
     #[test]

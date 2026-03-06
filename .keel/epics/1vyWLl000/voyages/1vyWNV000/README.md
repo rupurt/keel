@@ -25,11 +25,11 @@ started_at: 2026-03-06T08:47:29
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/4 stories complete
+**Progress:** 2/4 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Build Artifact Bundle Materialization](../../../../stories/1vyWRl000/README.md) | feat | backlog |
+| [Build Artifact Bundle Materialization](../../../../stories/1vyWRl000/README.md) | feat | done |
 | [Persist Judge Outputs In Verification Evidence](../../../../stories/1vyWRm000/README.md) | feat | backlog |
 | [Define Artifact Judge Bundle Contract](../../../../stories/1vyWSF000/README.md) | feat | done |
 | [Wire Provider Agnostic Llm Judge Execution](../../../../stories/1vyWSG000/README.md) | feat | backlog |
