@@ -64,28 +64,18 @@ impl LayoutHints {
 }
 
 /// Render an epic topology projection for terminal output.
-pub fn render_topology(
-    projection: &EpicTopologyProjection,
-    include_done: bool,
-    width: usize,
-) -> String {
+pub fn render_topology(projection: &EpicTopologyProjection, width: usize) -> String {
     let story_count = projection
         .voyages
         .iter()
         .map(|voyage| voyage.stories.len())
         .sum::<usize>();
-    let visibility = if include_done {
-        "all entities (including done)"
-    } else {
-        "focused (planned + in-progress)"
-    };
 
     let metadata = ShowKeyValues::new()
         .with_min_label_width(11)
         .row("Title:", format!("{}", projection.epic.title.bold()))
         .row("Epic:", style::styled_epic_id(&projection.epic.id))
         .row("Status:", style::styled_epic_stage(&projection.epic.status))
-        .row("Visibility:", visibility)
         .row("Voyages:", projection.voyages.len().to_string())
         .row("Stories:", story_count.to_string());
 

@@ -36,9 +36,8 @@ fn build_topology_output_with_width(
     let epic = board.require_epic(epic_id)?;
     let options = TopologyBuildOptions { include_done };
     let projection = build_epic_topology_projection(&board, epic, options)?;
-    let effective_include_done = options.includes_done_for(epic);
 
-    Ok(render_topology(&projection, effective_include_done, width))
+    Ok(render_topology(&projection, width))
 }
 
 #[cfg(test)]
@@ -589,7 +588,6 @@ Out of scope:
         assert!(output.contains("Topology"));
         assert!(output.contains("Voyage One"));
         assert!(output.contains("Story One"));
-        assert!(output.contains("focused (planned + in-progress)"));
     }
 
     #[test]
@@ -616,7 +614,6 @@ Out of scope:
         assert!(output.contains("Done Voyage"));
         assert!(output.contains("Done Story"));
         assert!(output.contains("Archived Story"));
-        assert!(output.contains("all entities (including done)"));
     }
 
     #[test]
@@ -628,7 +625,6 @@ Out of scope:
         assert!(output.contains("Completed Epic"));
         assert!(output.contains("Done Voyage"));
         assert!(output.contains("Done Story"));
-        assert!(output.contains("all entities (including done)"));
         assert!(!output.contains("(no voyages or stories visible for this epic)"));
     }
 
