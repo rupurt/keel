@@ -27,7 +27,6 @@
 |-------|------|-------|
 | [Keep Fresh Epic Scaffolds Doctor Clean](stories/1vyGZet0Z/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Epic Problem Hydration](epics/1vyFgR2MA/voyages/1vyFlAgHB/) |
 | [Render Goal Coverage In Epic Planning](stories/1vyGZfiEk/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Goal-to-Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFmfjA9/) |
-| [Parse Canonical Scope Lineage](stories/1vyGZfkjV/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Scope Lineage and Drift Detection](epics/1vyFgR2MA/voyages/1vyFn0OuN/) |
 | [Detect Scope Drift During Planning](stories/1vyGZflfJ/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Scope Lineage and Drift Detection](epics/1vyFgR2MA/voyages/1vyFn0OuN/) |
 | [Render Scope Lineage In Planning Surfaces](stories/1vyGZgiTK/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Scope Lineage and Drift Detection](epics/1vyFgR2MA/voyages/1vyFn0OuN/) |
 
@@ -52,9 +51,9 @@
 | Voyage | Status |
 |--------|--------|
 | [Canonical PRD Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFiQPoH/) | done |
-| [Epic Problem Hydration](epics/1vyFgR2MA/voyages/1vyFlAgHB/) | planned |
-| [Goal-to-Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFmfjA9/) | planned |
-| [Scope Lineage and Drift Detection](epics/1vyFgR2MA/voyages/1vyFn0OuN/) | planned |
+| [Epic Problem Hydration](epics/1vyFgR2MA/voyages/1vyFlAgHB/) | in-progress |
+| [Goal-to-Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFmfjA9/) | in-progress |
+| [Scope Lineage and Drift Detection](epics/1vyFgR2MA/voyages/1vyFn0OuN/) | in-progress |
 
 <details>
 <summary><h2>Done</h2></summary>

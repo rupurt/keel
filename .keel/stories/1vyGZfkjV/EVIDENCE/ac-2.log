@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-05T17:29:19.071242605-08:00
+mode: manual
+---
+Verified with cargo test -p keel srs_scope_requires_parent_prd_scope_ids

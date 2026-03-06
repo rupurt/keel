@@ -2,10 +2,11 @@
 id: 1vyFmfjA9
 index: 3
 title: Goal-to-Requirement Lineage
-status: planned
+status: in-progress
 epic: 1vyFgR2MA
 created_at: 2026-03-05T12:59:01
 updated_at: 2026-03-05T14:10:01
+started_at: 2026-03-05T17:21:11
 ---
 
 # Goal-to-Requirement Lineage

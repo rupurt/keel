@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-05T17:29:19.084565097-08:00
+mode: manual
+---
+Verified with cargo test -p keel scope_lineage_parser_is_deterministic and full just test coverage

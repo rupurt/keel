@@ -57,6 +57,7 @@ static PRD_FUNCTIONAL_REQ_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^F
 static PRD_NON_FUNCTIONAL_REQ_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^NFR-\d+$").unwrap());
 static GOAL_ID_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^GOAL-\d+$").unwrap());
+static SCOPE_ID_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^SCOPE-\d+$").unwrap());
 static SOURCE_TOKEN_SPLIT_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[\s,;/]+").unwrap());
 
 // Re-export coherence validation functions for a unified API
@@ -209,6 +210,26 @@ pub struct GoalEntry {
     pub goal: String,
     pub success_metric: String,
     pub target: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum ScopeDisposition {
+    In,
+    Out,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PrdScopeEntry {
+    pub id: String,
+    pub description: String,
+    pub disposition: ScopeDisposition,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SrsScopeLink {
+    pub parent_id: String,
+    pub description: String,
+    pub disposition: ScopeDisposition,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -401,6 +422,89 @@ pub fn parse_prd_goal_entries(prd_content: &str) -> Vec<GoalEntry> {
             .then_with(|| a.target.cmp(&b.target))
     });
     entries
+}
+
+pub fn parse_prd_scope_entries(prd_content: &str) -> Vec<PrdScopeEntry> {
+    let Some(section) = extract_markdown_section(prd_content, "## Scope") else {
+        return Vec::new();
+    };
+
+    let mut entries = Vec::new();
+    let mut disposition = None;
+
+    for line in section.lines() {
+        let trimmed = line.trim();
+        if trimmed.eq_ignore_ascii_case("### In Scope") {
+            disposition = Some(ScopeDisposition::In);
+            continue;
+        }
+        if trimmed.eq_ignore_ascii_case("### Out of Scope") {
+            disposition = Some(ScopeDisposition::Out);
+            continue;
+        }
+
+        let Some((id, description)) = parse_canonical_scope_bullet(trimmed) else {
+            continue;
+        };
+        let Some(disposition) = disposition else {
+            continue;
+        };
+
+        entries.push(PrdScopeEntry {
+            id,
+            description,
+            disposition,
+        });
+    }
+
+    entries.sort_by(|a, b| {
+        a.id.cmp(&b.id)
+            .then_with(|| a.disposition.cmp(&b.disposition))
+            .then_with(|| a.description.cmp(&b.description))
+    });
+    entries
+}
+
+pub fn parse_srs_scope_links(srs_content: &str) -> Vec<SrsScopeLink> {
+    let Some(section) = extract_markdown_section(srs_content, "## Scope") else {
+        return Vec::new();
+    };
+
+    let mut links = Vec::new();
+    let mut disposition = None;
+
+    for line in section.lines() {
+        let trimmed = line.trim();
+        if trimmed.eq_ignore_ascii_case("In scope:") {
+            disposition = Some(ScopeDisposition::In);
+            continue;
+        }
+        if trimmed.eq_ignore_ascii_case("Out of scope:") {
+            disposition = Some(ScopeDisposition::Out);
+            continue;
+        }
+
+        let Some((parent_id, description)) = parse_canonical_scope_bullet(trimmed) else {
+            continue;
+        };
+        let Some(disposition) = disposition else {
+            continue;
+        };
+
+        links.push(SrsScopeLink {
+            parent_id,
+            description,
+            disposition,
+        });
+    }
+
+    links.sort_by(|a, b| {
+        a.parent_id
+            .cmp(&b.parent_id)
+            .then_with(|| a.disposition.cmp(&b.disposition))
+            .then_with(|| a.description.cmp(&b.description))
+    });
+    links
 }
 
 pub fn parse_prd_requirement_lineage(epic_id: &str, prd_path: &Path) -> PrdRequirementLineage {
@@ -860,6 +964,22 @@ fn goal_ref_tokens(raw: &str) -> Vec<String> {
         .filter(|token| !token.is_empty())
         .map(ToOwned::to_owned)
         .collect()
+}
+
+fn parse_canonical_scope_bullet(line: &str) -> Option<(String, String)> {
+    let bullet = line.strip_prefix("- [")?;
+    let (raw_id, description) = bullet.split_once(']')?;
+    let scope_id = raw_id.trim();
+    if !SCOPE_ID_RE.is_match(scope_id) {
+        return None;
+    }
+
+    let description = description.trim();
+    if description.is_empty() {
+        return None;
+    }
+
+    Some((scope_id.to_string(), description.to_string()))
 }
 
 fn extract_markdown_section(content: &str, heading: &str) -> Option<String> {
@@ -1632,6 +1752,131 @@ mod tests {
             issue.kind == PrdGoalLineageIssueKind::OrphanGoal
                 && issue.goal_id.as_deref() == Some("GOAL-01")
         }));
+    }
+
+    #[test]
+    fn prd_scope_parser_reads_canonical_scope_ids() {
+        let prd = r#"# PRD
+
+## Scope
+
+### In Scope
+- [SCOPE-02] Keep voyage scope readable while making lineage machine-checkable.
+- Untagged prose should not count as canonical scope.
+
+### Out of Scope
+- [OUT-01] Legacy aliases are not allowed.
+- [SCOPE-01] Story-level runtime scope enforcement.
+"#;
+
+        assert_eq!(
+            parse_prd_scope_entries(prd),
+            vec![
+                PrdScopeEntry {
+                    id: "SCOPE-01".to_string(),
+                    description: "Story-level runtime scope enforcement.".to_string(),
+                    disposition: ScopeDisposition::Out,
+                },
+                PrdScopeEntry {
+                    id: "SCOPE-02".to_string(),
+                    description:
+                        "Keep voyage scope readable while making lineage machine-checkable."
+                            .to_string(),
+                    disposition: ScopeDisposition::In,
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn srs_scope_requires_parent_prd_scope_ids() {
+        let srs = r#"# SRS
+
+## Scope
+
+In scope:
+- [SCOPE-02] Parse only the approved planning scope for this voyage.
+- This untagged scope line should be ignored.
+
+Out of scope:
+- [SCOPE-03] Runtime story enforcement remains outside this slice.
+- [IN-01] Legacy aliases should not parse.
+"#;
+
+        assert_eq!(
+            parse_srs_scope_links(srs),
+            vec![
+                SrsScopeLink {
+                    parent_id: "SCOPE-02".to_string(),
+                    description: "Parse only the approved planning scope for this voyage."
+                        .to_string(),
+                    disposition: ScopeDisposition::In,
+                },
+                SrsScopeLink {
+                    parent_id: "SCOPE-03".to_string(),
+                    description: "Runtime story enforcement remains outside this slice."
+                        .to_string(),
+                    disposition: ScopeDisposition::Out,
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn scope_lineage_parser_is_deterministic() {
+        let prd_a = r#"# PRD
+
+## Scope
+
+### In Scope
+- [SCOPE-02] Detect contradictions in voyage scope.
+- [SCOPE-01] Parse canonical scope IDs.
+
+### Out of Scope
+- [SCOPE-03] Story runtime enforcement.
+"#;
+
+        let prd_b = r#"# PRD
+
+## Scope
+
+### Out of Scope
+- [SCOPE-03] Story runtime enforcement.
+
+### In Scope
+- [SCOPE-01] Parse canonical scope IDs.
+- [SCOPE-02] Detect contradictions in voyage scope.
+"#;
+
+        let srs_a = r#"# SRS
+
+## Scope
+
+In scope:
+- [SCOPE-02] Detect contradictions in voyage scope.
+- [SCOPE-01] Parse canonical scope IDs.
+
+Out of scope:
+- [SCOPE-03] Story runtime enforcement.
+"#;
+
+        let srs_b = r#"# SRS
+
+## Scope
+
+Out of scope:
+- [SCOPE-03] Story runtime enforcement.
+
+In scope:
+- [SCOPE-01] Parse canonical scope IDs.
+- [SCOPE-02] Detect contradictions in voyage scope.
+"#;
+
+        assert_eq!(
+            parse_prd_scope_entries(prd_a),
+            parse_prd_scope_entries(prd_b)
+        );
+        assert_eq!(parse_srs_scope_links(srs_a), parse_srs_scope_links(srs_b));
     }
 
     #[test]

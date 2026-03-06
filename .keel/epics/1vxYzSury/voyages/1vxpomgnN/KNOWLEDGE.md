@@ -42,23 +42,6 @@ created_at: 2026-03-04T11:56:17
 
 ---
 
-## Story: Implement Epic Show Planning Summary (1vxppkN0w)
-
-### 1vyDuwuBj: Planning Show Parsing Needs Scaffold Filters
-
-| Field | Value |
-|-------|-------|
-| **Category** | code |
-| **Context** | Extracting PRD summaries from partially authored templates |
-| **Insight** | Requirement parsing must explicitly ignore scaffold rows like `TODO`/template defaults or placeholder mode appears complete when it is not. |
-| **Suggested Action** | Keep placeholder filters and add fixture tests that assert empty summaries on scaffold-only PRDs. |
-| **Applies To** | `src/cli/commands/management/epic/show.rs`, planning projection parsers |
-| **Applied** | yes |
-
-
-
----
-
 ## Story: Render Concrete Evidence In Story Show (1vxppkEH9)
 
 ### 1vyDuwUSB: Evidence UX Needs Structured Inventory Layers
@@ -70,6 +53,23 @@ created_at: 2026-03-04T11:56:17
 | **Insight** | A clear split between linked proofs, supplementary artifacts, and media playback hints makes acceptance decisions possible without opening files manually. |
 | **Suggested Action** | Keep evidence rendering model-driven and test each layer (metadata, excerpts, missing warnings, placeholders) independently. |
 | **Applies To** | `src/cli/commands/management/story/show.rs`, future evidence/report renderers |
+| **Applied** | yes |
+
+
+
+---
+
+## Story: Implement Epic Show Planning Summary (1vxppkN0w)
+
+### 1vyDuwuBj: Planning Show Parsing Needs Scaffold Filters
+
+| Field | Value |
+|-------|-------|
+| **Category** | code |
+| **Context** | Extracting PRD summaries from partially authored templates |
+| **Insight** | Requirement parsing must explicitly ignore scaffold rows like `TODO`/template defaults or placeholder mode appears complete when it is not. |
+| **Suggested Action** | Keep placeholder filters and add fixture tests that assert empty summaries on scaffold-only PRDs. |
+| **Applies To** | `src/cli/commands/management/epic/show.rs`, planning projection parsers |
 | **Applied** | yes |
 
 
@@ -106,20 +106,6 @@ created_at: 2026-03-04T11:56:17
 | **Confidence** | 0.90 |
 | **Applied** | yes |
 
-### 1ejHEDO4x: Planning Show Parsing Needs Scaffold Filters
-
-| Field | Value |
-|-------|-------|
-| **Category** | code |
-| **Context** | Extracting PRD summaries from partially authored templates |
-| **Insight** | Requirement parsing must explicitly ignore scaffold rows like `TODO`/template defaults or placeholder mode appears complete when it is not. |
-| **Suggested Action** | Keep placeholder filters and add fixture tests that assert empty summaries on scaffold-only PRDs. |
-| **Applies To** | `src/cli/commands/management/epic/show.rs`, planning projection parsers |
-| **Linked Knowledge IDs** | 1vyDuwuBj |
-| **Score** | 0.83 |
-| **Confidence** | 0.92 |
-| **Applied** | yes |
-
 ### qjOtw5RNt: Evidence UX Needs Structured Inventory Layers
 
 | Field | Value |
@@ -132,5 +118,19 @@ created_at: 2026-03-04T11:56:17
 | **Linked Knowledge IDs** | 1vyDuwUSB |
 | **Score** | 0.84 |
 | **Confidence** | 0.90 |
+| **Applied** | yes |
+
+### 1ejHEDO4x: Planning Show Parsing Needs Scaffold Filters
+
+| Field | Value |
+|-------|-------|
+| **Category** | code |
+| **Context** | Extracting PRD summaries from partially authored templates |
+| **Insight** | Requirement parsing must explicitly ignore scaffold rows like `TODO`/template defaults or placeholder mode appears complete when it is not. |
+| **Suggested Action** | Keep placeholder filters and add fixture tests that assert empty summaries on scaffold-only PRDs. |
+| **Applies To** | `src/cli/commands/management/epic/show.rs`, planning projection parsers |
+| **Linked Knowledge IDs** | 1vyDuwuBj |
+| **Score** | 0.83 |
+| **Confidence** | 0.92 |
 | **Applied** | yes |
 

@@ -8,23 +8,6 @@ created_at: 2026-03-02T12:03:53
 
 ## Story Knowledge
 
-## Story: Relocate Infrastructure Services Into Src Infrastructure (1vx8V5VeE)
-
-### 1vyDuwGDS: Relocated Source Files May Break Compile-Time Template Paths
-
-| Field | Value |
-|-------|-------|
-| **Category** | code |
-| **Context** | Moving `templates.rs` under `src/infrastructure` changed relative path depth for `include_str!` macro calls. |
-| **Insight** | Compile-time embedded asset paths are location-sensitive; module moves must include immediate path rebasing for `include_str!` constants. |
-| **Suggested Action** | After moving infrastructure modules, run a targeted compile/test immediately and patch relative asset paths before broader refactors. |
-| **Applies To** | src/infrastructure/templates.rs |
-| **Applied** |  |
-
-
-
----
-
 ## Story: Remove Legacy Roots And Enforce Normalized Contracts (1vx8UtmC9)
 
 ### 1vyDuw8wW: Enforce Root Layout With Contracts
@@ -76,9 +59,9 @@ created_at: 2026-03-02T12:03:53
 
 ---
 
-## Synthesis
+## Story: Relocate Infrastructure Services Into Src Infrastructure (1vx8V5VeE)
 
-### Pa8P1V8dA: Relocated Source Files May Break Compile-Time Template Paths
+### 1vyDuwGDS: Relocated Source Files May Break Compile-Time Template Paths
 
 | Field | Value |
 |-------|-------|
@@ -87,10 +70,13 @@ created_at: 2026-03-02T12:03:53
 | **Insight** | Compile-time embedded asset paths are location-sensitive; module moves must include immediate path rebasing for `include_str!` constants. |
 | **Suggested Action** | After moving infrastructure modules, run a targeted compile/test immediately and patch relative asset paths before broader refactors. |
 | **Applies To** | src/infrastructure/templates.rs |
-| **Linked Knowledge IDs** | 1vyDuwGDS |
-| **Score** | 0.86 |
-| **Confidence** | 0.96 |
 | **Applied** |  |
+
+
+
+---
+
+## Synthesis
 
 ### 3kBfhLmlY: Enforce Root Layout With Contracts
 
@@ -132,5 +118,19 @@ created_at: 2026-03-02T12:03:53
 | **Linked Knowledge IDs** | 1vyDuwLDX |
 | **Score** | 0.84 |
 | **Confidence** | 0.92 |
+| **Applied** |  |
+
+### Pa8P1V8dA: Relocated Source Files May Break Compile-Time Template Paths
+
+| Field | Value |
+|-------|-------|
+| **Category** | code |
+| **Context** | Moving `templates.rs` under `src/infrastructure` changed relative path depth for `include_str!` macro calls. |
+| **Insight** | Compile-time embedded asset paths are location-sensitive; module moves must include immediate path rebasing for `include_str!` constants. |
+| **Suggested Action** | After moving infrastructure modules, run a targeted compile/test immediately and patch relative asset paths before broader refactors. |
+| **Applies To** | src/infrastructure/templates.rs |
+| **Linked Knowledge IDs** | 1vyDuwGDS |
+| **Score** | 0.86 |
+| **Confidence** | 0.96 |
 | **Applied** |  |
 
