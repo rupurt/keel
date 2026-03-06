@@ -2,11 +2,12 @@
 id: 1vyWNL000
 index: 1
 title: Tape-Driven Dogfood Workflow Suite
-status: in-progress
+status: done
 epic: 1vyWLl000
 created_at: 2026-03-06T06:41:59
 updated_at: 2026-03-06T06:50:33
 started_at: 2026-03-06T07:14:45
+completed_at: 2026-03-06T08:46:32
 ---
 
 # Tape-Driven Dogfood Workflow Suite
@@ -25,7 +26,7 @@ started_at: 2026-03-06T07:14:45
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 4/5 stories complete
+**Progress:** 5/5 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
@@ -33,5 +34,5 @@ started_at: 2026-03-06T07:14:45
 | [Author Bearing Workflow Dogfood Tapes](../../../../stories/1vyWRk000/README.md) | feat | done |
 | [Create Secondary Dogfood Workspace](../../../../stories/1vyWSB000/README.md) | feat | done |
 | [Author Epic Workflow Dogfood Tapes](../../../../stories/1vyWSC000/README.md) | feat | done |
-| [Link Tape Evidence Into Verification Manifests](../../../../stories/1vyWSD000/README.md) | feat | backlog |
+| [Link Tape Evidence Into Verification Manifests](../../../../stories/1vyWSD000/README.md) | feat | done |
 <!-- END GENERATED -->

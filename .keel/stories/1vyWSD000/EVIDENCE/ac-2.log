@@ -1,0 +1,77 @@
+---
+recorded_at: 2026-03-06T08:45:10.790775076-08:00
+command: just keel doctor
+---
+[4m[1mBoard Health Report[0m[0m
+
+[36m[1mStories[0m[39m:
+  [32m✓[39m ID uniqueness (131 checks)
+  [32m✓[39m ID consistency (131 checks)
+  [32m✓[39m Title convention (131 checks)
+  [32m✓[39m Acceptance criteria completion (131 checks)
+  [32m✓[39m Verification annotations (131 checks)
+  [32m✓[39m SRS traceability (131 checks)
+  [32m✓[39m Implementation dependency cycles (131 checks)
+  [32m✓[39m Parallel conflict coherence (131 checks)
+  [32m✓[39m Scoped evidence coverage (131 checks)
+  [32m✓[39m Story frontmatter drift (131 checks)
+  [32m✓[39m Reflection coherence (131 checks)
+  [32m✓[39m Active story coherence (131 checks)
+  [32m✓[39m Terminal artifact coherence (131 checks)
+  [32m✓[39m Knowledge catalog integrity (131 checks)
+  [32m✓[39m Verification manifest integrity (131 checks)
+  [32m✓[39m Story date consistency (131 checks)
+
+[36m[1mVoyages[0m[39m:
+  [32m✓[39m Voyage structure (35 checks)
+  [32m✓[39m ID uniqueness (35 checks)
+  [32m✓[39m ID consistency (35 checks)
+  [32m✓[39m Title convention (35 checks)
+  [32m✓[39m Voyage status drift (35 checks)
+  [32m✓[39m PRD lineage coherence (35 checks)
+  [32m✓[39m Scope lineage coherence (35 checks)
+  [32m✓[39m Voyage artifact contract (35 checks)
+  [32m✓[39m Evidence chains (35 checks)
+  [32m✓[39m Voyage date consistency (35 checks)
+
+[36m[1mEpics[0m[39m:
+  [32m✓[39m Epic structure (11 checks)
+  [32m✓[39m ID uniqueness (11 checks)
+  [32m✓[39m ID consistency (11 checks)
+  [32m✓[39m Title convention (11 checks)
+  [32m✓[39m Epic status drift (11 checks)
+  [32m✓[39m Epic completion gates (11 checks)
+  [32m✓[39m Goal lineage coherence (11 checks)
+  [32m✓[39m Press release coherence (optional) (11 checks)
+  [32m✓[39m Epic date consistency (11 checks)
+
+[36m[1mBearings[0m[39m:
+  [32m✓[39m Bearing structure (1 checks)
+  [32m✓[39m ID consistency (1 checks)
+  [32m✓[39m ID format (1 checks)
+  [32m✓[39m ID uniqueness (1 checks)
+  [32m✓[39m Title convention (1 checks)
+  [32m✓[39m Bearing coherence (1 checks)
+  [32m✓[39m Bearing content completion (1 checks)
+  [32m✓[39m Bearing-Epic coherence (1 checks)
+  [32m✓[39m Bearing date consistency (1 checks)
+  [32m✓[39m Bearing recommendation (1 checks)
+
+[36m[1mADRs[0m[39m:
+  [32m✓[39m ADR structure (0 checks)
+  [32m✓[39m ID uniqueness (0 checks)
+  [32m✓[39m ID consistency (0 checks)
+  [32m✓[39m Title convention (0 checks)
+  [32m✓[39m Proposed ADR usage (0 checks)
+  [32m✓[39m ADR content completion (0 checks)
+  [32m✓[39m ADR date consistency (0 checks)
+
+
+--- stderr ---
+cargo run doctor
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.27s
+     Running `/home/alex/.cache/cargo-target/keel/debug/keel doctor`

@@ -6,7 +6,7 @@
 
 ## Overview
 
-This voyage introduces a secondary, checked-in dogfood workspace that keel can drive like a real project board. A single local runner resets that workspace, executes authored VHS tapes for representative epic and bearing flows, and persists rendered evidence under dogfood stories so the proof chain stays inside keel's normal verification model.
+This voyage introduces a secondary, checked-in dogfood workspace that keel can drive like a real project board. A single local runner resets that workspace, executes authored VHS tapes for representative epic and bearing flows, and persists rendered evidence under a separate dogfood artifact board so the proof chain stays inside keel's normal verification model without mutating the primary `.keel` board.
 
 Phase 1 stays deterministic by pairing rendered tape output with companion text artifacts. The rendered tape proves the real CLI experience exists; the companion transcript/log keeps machine validation stable enough to trust locally.
 
@@ -41,17 +41,22 @@ Out of scope:
 
 ## Architecture
 
-1. Secondary workspace fixture rooted under repository testdata/examples with its own `.keel` board.
-2. Dogfood runner that resets the workspace and executes named VHS scenarios.
-3. Tape assets grouped by workflow (`epic-flow`, `bearing-flow`) and bound to dogfood stories.
-4. Evidence sink that writes rendered artifacts and transcripts into story `EVIDENCE/`.
-5. Manifest path that hashes those artifacts so keel can judge or audit them later.
+1. Secondary workspace fixture rooted under `testdata/dogfood/workspace` with its own `.keel` board for executable flows.
+2. Separate dogfood artifact board rooted under `testdata/dogfood/board/.keel` for persisted story evidence.
+3. Dogfood runner that resets the workspace and executes named VHS scenarios.
+4. Tape assets grouped by workflow (`epic-flow`, `bearing-flow`) and bound to artifact-board stories.
+5. Evidence sink that writes rendered artifacts and transcripts into story `EVIDENCE/`.
+6. Manifest path that hashes those artifacts so keel can judge or audit them later.
 
 ## Components
 
 - Secondary Workspace:
   - Contains a real `.keel` board plus any minimal project files required by the scenarios.
-  - Owns dogfood stories whose acceptance criteria reference VHS and companion artifacts.
+  - Owns only the executable planning/execution state used by the tapes.
+
+- Dogfood Artifact Board:
+  - Stores story annotations that reference the canonical tape sources.
+  - Owns persisted `EVIDENCE/` artifacts and generated manifests for each scenario.
 
 - Dogfood Runner:
   - Provides the single opt-in entrypoint for phase 1.
@@ -77,8 +82,8 @@ Expected interfaces:
 1. Reset the secondary workspace to its canonical fixture state.
 2. Run the selected VHS tape from inside that workspace.
 3. Capture rendered output plus companion transcript/log artifacts.
-4. Write artifacts into the target dogfood story `EVIDENCE/`.
-5. Regenerate or validate the story manifest so artifact hashes are recorded.
+4. Write artifacts into the owning story on the dogfood artifact board under `EVIDENCE/`.
+5. Regenerate the owning story manifest so artifact hashes are recorded.
 6. Report scenario pass/fail with enough context to rerun or inspect manually.
 
 ## Error Handling

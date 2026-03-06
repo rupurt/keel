@@ -7,6 +7,8 @@ use std::time::Duration;
 use crate::infrastructure::verification::executor::ExecuteResult;
 use wait_timeout::ChildExt;
 
+const VHS_TIMEOUT: Duration = Duration::from_secs(120);
+
 pub fn run_tape(
     working_dir: &Path,
     tape_path: &Path,
@@ -50,7 +52,7 @@ pub fn run_tape(
         .stderr(std::process::Stdio::piped())
         .spawn()?;
 
-    let output = match child.wait_timeout(Duration::from_secs(30))? {
+    let output = match child.wait_timeout(VHS_TIMEOUT)? {
         Some(_) => child.wait_with_output()?,
         None => {
             child.kill()?;
