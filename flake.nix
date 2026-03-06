@@ -35,6 +35,7 @@
             rust
             pkgs.just
             pkgs.cargo-nextest
+            pkgs.cargo-llvm-cov
             # CLI recording and video processing
             pkgs.vhs
             pkgs.ffmpeg
@@ -49,12 +50,6 @@
             # Shared target directory across all worktrees for faster builds
             # WARNING: cargo clean will affect ALL worktrees
             export CARGO_TARGET_DIR="$HOME/.cache/cargo-target/keel"
-
-            # Auto-install cargo-llvm-cov if missing (consistent across all platforms)
-            if ! command -v cargo-llvm-cov &> /dev/null; then
-              echo "Installing cargo-llvm-cov..."
-              cargo install cargo-llvm-cov --quiet
-            fi
           '' + pkgs.lib.optionalString isDarwin ''
             # Fix TMPDIR for sccache on macOS (Nix 2.24+ issue)
             # Nix sets TMPDIR to a nix-shell-specific dir that gets cleaned up

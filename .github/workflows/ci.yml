@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Quality And Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: DeterminateSystems/determinate-nix-action@v3
+
+      - uses: DeterminateSystems/flakehub-cache-action@main
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cache/cargo-target/keel
+          key: ${{ runner.os }}-${{ github.job }}-cargo-${{ hashFiles('Cargo.lock', 'flake.lock', 'flake.nix', 'nix/keel.nix', '.github/workflows/ci.yml') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-${{ github.job }}-cargo-${{ hashFiles('Cargo.lock', 'flake.lock', 'flake.nix', 'nix/keel.nix', '.github/workflows/ci.yml') }}-
+            ${{ runner.os }}-${{ github.job }}-cargo-
+
+      - name: Run quality
+        run: nix develop --command just quality
+
+      - name: Run tests
+        run: nix develop --command just test
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: DeterminateSystems/determinate-nix-action@v3
+
+      - uses: DeterminateSystems/flakehub-cache-action@main
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cache/cargo-target/keel
+          key: ${{ runner.os }}-${{ github.job }}-cargo-${{ hashFiles('Cargo.lock', 'flake.lock', 'flake.nix', 'nix/keel.nix', '.github/workflows/ci.yml') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-${{ github.job }}-cargo-${{ hashFiles('Cargo.lock', 'flake.lock', 'flake.nix', 'nix/keel.nix', '.github/workflows/ci.yml') }}-
+            ${{ runner.os }}-${{ github.job }}-cargo-
+
+      - name: Generate coverage
+        run: nix develop --command just coverage
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          if-no-files-found: error
+
+  nix-build:
+    name: Nix Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: DeterminateSystems/determinate-nix-action@v3
+
+      - uses: DeterminateSystems/flakehub-cache-action@main
+
+      - name: Build keel derivation
+        run: nix build .#keel -L

@@ -1,6 +1,7 @@
 # Keel
 
 [![Keel Board](https://img.shields.io/badge/Keel-Board-blue)](.keel/README.md)
+[![CI](https://github.com/rupurt/keel/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/rupurt/keel/actions/workflows/ci.yml)
 
 Agentic SDLC management — minimize drift through planning, execution, and verification.
 
