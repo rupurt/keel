@@ -8,23 +8,6 @@ created_at: 2026-03-04T11:56:17
 
 ## Story Knowledge
 
-## Story: Implement Voyage Show Requirement Progress (1vxppkB6M)
-
-### 1vyDuwuY1: Voyage Requirement Views Need Both AC And Verify Mapping
-
-| Field | Value |
-|-------|-------|
-| **Category** | code |
-| **Context** | Building requirement-level voyage progress from story artifacts |
-| **Insight** | Requirement linkage should combine AC references and verify requirement IDs; relying on one source undercounts coverage/verification state. |
-| **Suggested Action** | Build requirement matrices from both marker channels, then deterministically sort rows and linked stories. |
-| **Applies To** | `src/cli/commands/management/voyage/show.rs`, planning-read projections |
-| **Applied** | yes |
-
-
-
----
-
 ## Story: Render Concrete Evidence In Story Show (1vxppkEH9)
 
 ### 1vyDuwUSB: Evidence UX Needs Structured Inventory Layers
@@ -59,6 +42,23 @@ created_at: 2026-03-04T11:56:17
 
 ---
 
+## Story: Implement Voyage Show Requirement Progress (1vxppkB6M)
+
+### 1vyDuwuY1: Voyage Requirement Views Need Both AC And Verify Mapping
+
+| Field | Value |
+|-------|-------|
+| **Category** | code |
+| **Context** | Building requirement-level voyage progress from story artifacts |
+| **Insight** | Requirement linkage should combine AC references and verify requirement IDs; relying on one source undercounts coverage/verification state. |
+| **Suggested Action** | Build requirement matrices from both marker channels, then deterministically sort rows and linked stories. |
+| **Applies To** | `src/cli/commands/management/voyage/show.rs`, planning-read projections |
+| **Applied** | yes |
+
+
+
+---
+
 ## Story: Implement Epic Show Planning Summary (1vxppkN0w)
 
 ### 1vyDuwuBj: Planning Show Parsing Needs Scaffold Filters
@@ -77,20 +77,6 @@ created_at: 2026-03-04T11:56:17
 ---
 
 ## Synthesis
-
-### F2f7FWwpy: Voyage Requirement Views Need Both AC And Verify Mapping
-
-| Field | Value |
-|-------|-------|
-| **Category** | code |
-| **Context** | Building requirement-level voyage progress from story artifacts |
-| **Insight** | Requirement linkage should combine AC references and verify requirement IDs; relying on one source undercounts coverage/verification state. |
-| **Suggested Action** | Build requirement matrices from both marker channels, then deterministically sort rows and linked stories. |
-| **Applies To** | `src/cli/commands/management/voyage/show.rs`, planning-read projections |
-| **Linked Knowledge IDs** | 1vyDuwuY1 |
-| **Score** | 0.82 |
-| **Confidence** | 0.90 |
-| **Applied** | yes |
 
 ### qjOtw5RNt: Evidence UX Needs Structured Inventory Layers
 
@@ -118,6 +104,20 @@ created_at: 2026-03-04T11:56:17
 | **Linked Knowledge IDs** | 1vyDuwrAD |
 | **Score** | 0.84 |
 | **Confidence** | 0.89 |
+| **Applied** | yes |
+
+### F2f7FWwpy: Voyage Requirement Views Need Both AC And Verify Mapping
+
+| Field | Value |
+|-------|-------|
+| **Category** | code |
+| **Context** | Building requirement-level voyage progress from story artifacts |
+| **Insight** | Requirement linkage should combine AC references and verify requirement IDs; relying on one source undercounts coverage/verification state. |
+| **Suggested Action** | Build requirement matrices from both marker channels, then deterministically sort rows and linked stories. |
+| **Applies To** | `src/cli/commands/management/voyage/show.rs`, planning-read projections |
+| **Linked Knowledge IDs** | 1vyDuwuY1 |
+| **Score** | 0.82 |
+| **Confidence** | 0.90 |
 | **Applied** | yes |
 
 ### 1ejHEDO4x: Planning Show Parsing Needs Scaffold Filters

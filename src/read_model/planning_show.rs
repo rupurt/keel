@@ -65,6 +65,7 @@ impl VerificationRollup {
 #[derive(Debug, Clone, PartialEq)]
 pub struct EpicShowProjection {
     pub doc: PlanningDocSummary,
+    pub goal_coverage: Vec<EpicGoalCoverageRow>,
     pub requirement_coverage: Vec<EpicRequirementCoverageRow>,
     pub total_voyages: usize,
     pub done_voyages: usize,
@@ -75,6 +76,25 @@ pub struct EpicShowProjection {
     pub updated_at: Option<NaiveDateTime>,
     pub eta: EtaSummary,
     pub verification: VerificationRollup,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EpicGoalCoverageRow {
+    pub id: String,
+    pub goal: String,
+    pub success_metric: String,
+    pub target: String,
+    pub linked_requirements: Vec<String>,
+}
+
+impl EpicGoalCoverageRow {
+    pub fn linked_requirement_count(&self) -> usize {
+        self.linked_requirements.len()
+    }
+
+    pub fn is_covered(&self) -> bool {
+        !self.linked_requirements.is_empty()
+    }
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -232,6 +252,27 @@ pub fn build_epic_show_projection(
     let prd_path = epic.path.parent().unwrap().join("PRD.md");
     let prd_content = fs::read_to_string(&prd_path).unwrap_or_default();
     let doc = extract_planning_doc_summary(&prd_content);
+    let goal_entries = parse_prd_goal_entries(&prd_content);
+    let prd_lineage = invariants::parse_prd_requirement_lineage(epic.id(), &prd_path);
+    let goal_coverage = goal_entries
+        .into_iter()
+        .map(|entry| {
+            let linked_requirements = prd_lineage
+                .ordered_entries()
+                .into_iter()
+                .filter(|requirement| requirement.goal_refs.contains(&entry.id))
+                .map(|requirement| requirement.id.clone())
+                .collect();
+
+            EpicGoalCoverageRow {
+                id: entry.id,
+                goal: entry.goal,
+                success_metric: entry.success_metric,
+                target: entry.target,
+                linked_requirements,
+            }
+        })
+        .collect();
     let requirement_coverage = invariants::build_epic_prd_requirement_coverage(epic, board)
         .into_iter()
         .map(|row| EpicRequirementCoverageRow {
@@ -384,6 +425,7 @@ pub fn build_epic_show_projection(
 
     Ok(EpicShowProjection {
         doc,
+        goal_coverage,
         requirement_coverage,
         total_voyages: voyages.len(),
         done_voyages,
@@ -1583,6 +1625,115 @@ Operators need reliable planning summaries.
         assert_eq!(epic_a.doc.problem_statement, epic_b.doc.problem_statement);
         assert_eq!(epic_a.doc.goals, epic_b.doc.goals);
         assert_eq!(epic_a.doc.key_requirements, epic_b.doc.key_requirements);
+        assert_eq!(epic_a.goal_coverage, epic_b.goal_coverage);
+    }
+
+    #[test]
+    fn epic_goal_lineage_preserves_one_to_many_fanout() {
+        let temp = TestBoardBuilder::new().epic(TestEpic::new("e1")).build();
+        std::fs::write(
+            temp.path().join("epics/e1/PRD.md"),
+            r#"# PRD
+
+## Goals & Objectives
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-02 | Reduce manual review | reviewer minutes | -50% |
+| GOAL-01 | Improve strategic traceability | linked requirements | 100% |
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| FR-02 | Expose uncovered goals. | GOAL-01 | should | reviewability |
+| FR-01 | Render coverage. | GOAL-02 GOAL-01 | must | visibility |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let epic =
+            build_epic_show_projection(temp.path(), &board, board.require_epic("e1").unwrap())
+                .unwrap();
+
+        let goal_ids: Vec<_> = epic
+            .goal_coverage
+            .iter()
+            .map(|row| row.id.clone())
+            .collect();
+        assert_eq!(goal_ids, vec!["GOAL-01", "GOAL-02"]);
+
+        let goal_01 = epic
+            .goal_coverage
+            .iter()
+            .find(|row| row.id == "GOAL-01")
+            .unwrap();
+        assert_eq!(goal_01.linked_requirements, vec!["FR-01", "FR-02"]);
+        assert_eq!(goal_01.linked_requirement_count(), 2);
+
+        let goal_02 = epic
+            .goal_coverage
+            .iter()
+            .find(|row| row.id == "GOAL-02")
+            .unwrap();
+        assert_eq!(goal_02.linked_requirements, vec!["FR-01"]);
+        assert_eq!(goal_02.linked_requirement_count(), 1);
+    }
+
+    #[test]
+    fn epic_goal_lineage_projection_is_deterministic() {
+        let board_a = TestBoardBuilder::new().epic(TestEpic::new("e1")).build();
+        let board_b = TestBoardBuilder::new().epic(TestEpic::new("e1")).build();
+
+        let prd_a = r#"# PRD
+
+## Goals & Objectives
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-02 | Reduce manual review | reviewer minutes | -50% |
+| GOAL-01 | Improve strategic traceability | linked requirements | 100% |
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| FR-02 | Expose uncovered goals. | GOAL-01 | should | reviewability |
+| FR-01 | Render coverage. | GOAL-02 GOAL-01 | must | visibility |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#;
+        let prd_b = r#"# PRD
+
+## Goals & Objectives
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | Improve strategic traceability | linked requirements | 100% |
+| GOAL-02 | Reduce manual review | reviewer minutes | -50% |
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| FR-01 | Render coverage. | GOAL-01 GOAL-02 | must | visibility |
+| FR-02 | Expose uncovered goals. | GOAL-01 | should | reviewability |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#;
+        std::fs::write(board_a.path().join("epics/e1/PRD.md"), prd_a).unwrap();
+        std::fs::write(board_b.path().join("epics/e1/PRD.md"), prd_b).unwrap();
+
+        let loaded_a = load_board(board_a.path()).unwrap();
+        let loaded_b = load_board(board_b.path()).unwrap();
+        let epic_a = build_epic_show_projection(
+            board_a.path(),
+            &loaded_a,
+            loaded_a.require_epic("e1").unwrap(),
+        )
+        .unwrap();
+        let epic_b = build_epic_show_projection(
+            board_b.path(),
+            &loaded_b,
+            loaded_b.require_epic("e1").unwrap(),
+        )
+        .unwrap();
+
+        assert_eq!(epic_a.goal_coverage, epic_b.goal_coverage);
     }
 
     #[test]
@@ -1794,6 +1945,7 @@ Operators need reliable planning summaries.
 
         let EpicShowProjection {
             doc,
+            goal_coverage,
             requirement_coverage,
             total_voyages,
             done_voyages,
@@ -1807,6 +1959,7 @@ Operators need reliable planning summaries.
         } = epic;
         let _ = (
             doc,
+            goal_coverage,
             requirement_coverage,
             total_voyages,
             done_voyages,

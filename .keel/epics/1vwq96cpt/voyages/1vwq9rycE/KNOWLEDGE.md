@@ -8,23 +8,6 @@ created_at: 2026-03-02T10:34:57
 
 ## Story Knowledge
 
-## Story: Remove Duplicate Projection Implementations (1vwqCfma0)
-
-### 1vyDuwCgL: Interface Adapters Should Delegate Instead Of Recompute
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | When both flow rendering and diagnostics commands need the same projection outputs |
-| **Insight** | Duplicated adapter-level projection/load/render paths drift quickly and should be collapsed behind a single interface that consumes canonical read-model DTOs |
-| **Suggested Action** | Keep one shared capacity interface and enforce delegation from command modules through architecture contracts |
-| **Applies To** | `src/commands/diagnostics/capacity.rs`, `src/flow/capacity.rs`, `src/architecture_contract_tests.rs` |
-| **Applied** | Delegated diagnostics capacity command to `flow::capacity` and added explicit contract test for shared interface usage |
-
-
-
----
-
 ## Story: Build Canonical Capacity Projection (1vwqCfHz7)
 
 ### 1vyDuwl5B: Canonical read models remove adapter drift
@@ -37,6 +20,23 @@ created_at: 2026-03-02T10:34:57
 | **Suggested Action** | Keep one projection type in `read_model` and make interface modules thin adapters over that projection. |
 | **Applies To** | `src/read_model/capacity.rs`, `src/flow/capacity.rs`, `src/commands/diagnostics/capacity.rs`, `src/flow/display.rs` |
 | **Applied** | story `1vwqCfHz7` |
+
+
+
+---
+
+## Story: Remove Duplicate Projection Implementations (1vwqCfma0)
+
+### 1vyDuwCgL: Interface Adapters Should Delegate Instead Of Recompute
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | When both flow rendering and diagnostics commands need the same projection outputs |
+| **Insight** | Duplicated adapter-level projection/load/render paths drift quickly and should be collapsed behind a single interface that consumes canonical read-model DTOs |
+| **Suggested Action** | Keep one shared capacity interface and enforce delegation from command modules through architecture contracts |
+| **Applies To** | `src/commands/diagnostics/capacity.rs`, `src/flow/capacity.rs`, `src/architecture_contract_tests.rs` |
+| **Applied** | Delegated diagnostics capacity command to `flow::capacity` and added explicit contract test for shared interface usage |
 
 
 
@@ -78,20 +78,6 @@ created_at: 2026-03-02T10:34:57
 
 ## Synthesis
 
-### KwQM6oOZE: Interface Adapters Should Delegate Instead Of Recompute
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | When both flow rendering and diagnostics commands need the same projection outputs |
-| **Insight** | Duplicated adapter-level projection/load/render paths drift quickly and should be collapsed behind a single interface that consumes canonical read-model DTOs |
-| **Suggested Action** | Keep one shared capacity interface and enforce delegation from command modules through architecture contracts |
-| **Applies To** | `src/commands/diagnostics/capacity.rs`, `src/flow/capacity.rs`, `src/architecture_contract_tests.rs` |
-| **Linked Knowledge IDs** | 1vyDuwCgL |
-| **Score** | 0.83 |
-| **Confidence** | 0.90 |
-| **Applied** | Delegated diagnostics capacity command to `flow::capacity` and added explicit contract test for shared interface usage |
-
 ### ZXRUhJpNe: Canonical read models remove adapter drift
 
 | Field | Value |
@@ -105,6 +91,20 @@ created_at: 2026-03-02T10:34:57
 | **Score** | 0.89 |
 | **Confidence** | 0.96 |
 | **Applied** | story `1vwqCfHz7` |
+
+### KwQM6oOZE: Interface Adapters Should Delegate Instead Of Recompute
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | When both flow rendering and diagnostics commands need the same projection outputs |
+| **Insight** | Duplicated adapter-level projection/load/render paths drift quickly and should be collapsed behind a single interface that consumes canonical read-model DTOs |
+| **Suggested Action** | Keep one shared capacity interface and enforce delegation from command modules through architecture contracts |
+| **Applies To** | `src/commands/diagnostics/capacity.rs`, `src/flow/capacity.rs`, `src/architecture_contract_tests.rs` |
+| **Linked Knowledge IDs** | 1vyDuwCgL |
+| **Score** | 0.83 |
+| **Confidence** | 0.90 |
+| **Applied** | Delegated diagnostics capacity command to `flow::capacity` and added explicit contract test for shared interface usage |
 
 ### qUF0j5GEl: Queue-policy facades prevent decision/rendering drift
 

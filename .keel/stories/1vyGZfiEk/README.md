@@ -2,10 +2,12 @@
 id: 1vyGZfiEk
 title: Render Goal Coverage In Epic Planning
 type: feat
-status: backlog
+status: done
 created_at: 2026-03-05T13:49:39
-updated_at: 2026-03-05T14:10:01
+updated_at: 2026-03-05T17:48:34
 scope: 1vyFgR2MA/1vyFmfjA9
+started_at: 2026-03-05T17:43:50
+completed_at: 2026-03-05T17:48:34
 ---
 
 # Render Goal Coverage In Epic Planning
@@ -16,6 +18,6 @@ Render goal-to-requirement lineage in epic planning views so reviewers can inspe
 
 ## Acceptance Criteria
 
-- [ ] [SRS-04/AC-01] Epic planning read surfaces summarize goal-to-requirement lineage directly from the PRD with enough detail to review objective coverage. <!-- verify: cargo test -p keel epic_show_renders_goal_lineage_summary, SRS-04:start:end -->
-- [ ] [SRS-05/AC-01] Goal-lineage rendering preserves one-to-many goal fanout to requirements without unstable ordering. <!-- verify: cargo test -p keel epic_goal_lineage_preserves_one_to_many_fanout, SRS-05:start:end -->
-- [ ] [SRS-05/AC-02] Goal-coverage rendering preserves stable ordering and fanout counts for equivalent PRDs. <!-- verify: cargo test -p keel epic_goal_lineage_projection_is_deterministic, SRS-05:end -->
+- [x] [SRS-04/AC-01] Epic planning read surfaces summarize goal-to-requirement lineage directly from the PRD with enough detail to review objective coverage. <!-- verify: cargo test -p keel epic_show_renders_goal_lineage_summary, SRS-04:start:end, proof: ac-1.log-->
+- [x] [SRS-05/AC-01] Goal-lineage rendering preserves one-to-many goal fanout to requirements without unstable ordering. <!-- verify: cargo test -p keel epic_goal_lineage_preserves_one_to_many_fanout, SRS-05:start:end, proof: ac-2.log-->
+- [x] [SRS-05/AC-02] Goal-coverage rendering preserves stable ordering and fanout counts for equivalent PRDs. <!-- verify: cargo test -p keel epic_goal_lineage_projection_is_deterministic, SRS-05:end, proof: ac-3.log-->

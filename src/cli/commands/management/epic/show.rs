@@ -16,6 +16,7 @@ use std::path::Path;
 
 const PROBLEM_PLACEHOLDER: &str = "(not authored in PRD.md yet)";
 const GOALS_PLACEHOLDER: &str = "(not authored in PRD.md yet)";
+const GOAL_COVERAGE_PLACEHOLDER: &str = "(no authored goal linkage found in PRD.md)";
 const REQUIREMENTS_PLACEHOLDER: &str = "(no authored requirements found in PRD.md)";
 const VERIFICATION_STRATEGY_PLACEHOLDER: &str =
     "(no authored verification strategy found in PRD.md)";
@@ -100,6 +101,11 @@ fn render_planning_summary(report: &EpicShowProjection) -> ShowSection {
         Some(format!("{}", GOALS_PLACEHOLDER.dimmed())),
     );
     section.push_labeled_bullets(
+        "Goal Coverage:",
+        report.goal_coverage.iter().map(format_goal_coverage_row),
+        Some(format!("{}", GOAL_COVERAGE_PLACEHOLDER.dimmed())),
+    );
+    section.push_labeled_bullets(
         "Key Requirements:",
         report.doc.key_requirements.iter().cloned(),
         Some(format!("{}", REQUIREMENTS_PLACEHOLDER.dimmed())),
@@ -111,6 +117,31 @@ fn render_planning_summary(report: &EpicShowProjection) -> ShowSection {
     );
 
     section
+}
+
+fn format_goal_coverage_row(row: &planning_show::EpicGoalCoverageRow) -> String {
+    let goal = style::styled_inline_markdown(&row.goal);
+    if row.is_covered() {
+        let linked_requirements = row
+            .linked_requirements
+            .iter()
+            .map(|requirement_id| style::styled_requirement_id(requirement_id))
+            .collect::<Vec<_>>()
+            .join(", ");
+        format!(
+            "{}: {} ({} linked PRD requirement(s): {})",
+            row.id.bold(),
+            goal,
+            row.linked_requirement_count(),
+            linked_requirements
+        )
+    } else {
+        format!(
+            "{}: {} (uncovered: 0 linked PRD requirement(s))",
+            row.id.bold(),
+            goal
+        )
+    }
 }
 
 fn render_progress(report: &EpicShowProjection) -> ShowSection {
@@ -646,6 +677,7 @@ More details.
                 ),
                 ..planning_show::PlanningDocSummary::default()
             },
+            goal_coverage: Vec::new(),
             requirement_coverage: Vec::new(),
             total_voyages: 0,
             done_voyages: 0,
@@ -676,6 +708,7 @@ More details.
     fn requirement_coverage_section_renders_counts_and_uncovered_rows() {
         let report = EpicShowProjection {
             doc: planning_show::PlanningDocSummary::default(),
+            goal_coverage: Vec::new(),
             requirement_coverage: vec![
                 planning_show::EpicRequirementCoverageRow {
                     id: "FR-01".to_string(),
@@ -722,5 +755,58 @@ More details.
         assert!(rendered.contains("2 linked SRS row(s) across 2 voyage(s)"));
         assert!(rendered.contains("Linked children:"));
         assert!(rendered.contains("uncovered (0 linked SRS rows)"));
+    }
+
+    #[test]
+    fn epic_show_renders_goal_lineage_summary() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("epic1"))
+            .voyage(TestVoyage::new("v1", "epic1"))
+            .build();
+
+        let prd_path = temp.path().join("epics/epic1/PRD.md");
+        fs::write(
+            &prd_path,
+            r#"# Epic 1 PRD
+
+## Problem Statement
+
+Teams cannot see whether goals are actually covered by PRD requirements.
+
+## Goals & Objectives
+
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-02 | Reduce review ambiguity | review time | -50% |
+| GOAL-01 | Improve traceability | linked requirements | 100% |
+
+## Requirements
+
+### Functional Requirements
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| FR-02 | Surface uncovered goals. | GOAL-01 | should | Review coverage gaps |
+| FR-01 | Render objective coverage. | GOAL-02 GOAL-01 | must | Planning clarity |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let epic = board.require_epic("epic1").unwrap();
+        let report = build_epic_show_report(temp.path(), &board, epic).unwrap();
+
+        let section = render_planning_summary(&report);
+        let mut document = ShowDocument::new();
+        document.push_sections_spaced([section]);
+        let rendered = document.render();
+
+        assert!(rendered.contains("Goal Coverage:"));
+        assert!(rendered.contains("GOAL-01"));
+        assert!(rendered.contains("GOAL-02"));
+        assert!(rendered.contains("2 linked PRD requirement(s):"));
+        assert!(rendered.contains("FR-01"));
+        assert!(rendered.contains("FR-02"));
     }
 }

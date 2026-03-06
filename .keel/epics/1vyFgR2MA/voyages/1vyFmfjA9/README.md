@@ -25,11 +25,11 @@ started_at: 2026-03-05T17:21:11
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 2/3 stories complete
+**Progress:** 3/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Validate Goal Links In PRD Requirements](../../../../stories/1vyGZeEI7/README.md) | feat | done |
 | [Parse Canonical Goal Lineage](../../../../stories/1vyGZeNMa/README.md) | feat | done |
-| [Render Goal Coverage In Epic Planning](../../../../stories/1vyGZfiEk/README.md) | feat | backlog |
+| [Render Goal Coverage In Epic Planning](../../../../stories/1vyGZfiEk/README.md) | feat | done |
 <!-- END GENERATED -->

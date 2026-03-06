@@ -8,23 +8,6 @@ created_at: 2026-03-02T12:03:53
 
 ## Story Knowledge
 
-## Story: Remove Legacy Roots And Enforce Normalized Contracts (1vx8UtmC9)
-
-### 1vyDuw8wW: Enforce Root Layout With Contracts
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Large module migrations where old root files can remain importable after moves |
-| **Insight** | Physical moves alone are not stable; contract tests must also assert forbidden `main.rs` module declarations and removed root file paths |
-| **Suggested Action** | Pair every structural move with architecture contracts that check both declaration edges and on-disk paths |
-| **Applies To** | src/main.rs, src/architecture_contract_tests.rs, src/**/mod.rs |
-| **Applied** | Added normalized-root and legacy-path assertions for all migrated root modules |
-
-
-
----
-
 ## Story: Relocate Cli Command Surface Into Src Cli (1vx8V5uUT)
 
 ### 1vyDuwLDX: Path-Wide Module Moves Need Import Rewrite First
@@ -59,6 +42,23 @@ created_at: 2026-03-02T12:03:53
 
 ---
 
+## Story: Remove Legacy Roots And Enforce Normalized Contracts (1vx8UtmC9)
+
+### 1vyDuw8wW: Enforce Root Layout With Contracts
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Large module migrations where old root files can remain importable after moves |
+| **Insight** | Physical moves alone are not stable; contract tests must also assert forbidden `main.rs` module declarations and removed root file paths |
+| **Suggested Action** | Pair every structural move with architecture contracts that check both declaration edges and on-disk paths |
+| **Applies To** | src/main.rs, src/architecture_contract_tests.rs, src/**/mod.rs |
+| **Applied** | Added normalized-root and legacy-path assertions for all migrated root modules |
+
+
+
+---
+
 ## Story: Relocate Infrastructure Services Into Src Infrastructure (1vx8V5VeE)
 
 ### 1vyDuwGDS: Relocated Source Files May Break Compile-Time Template Paths
@@ -77,20 +77,6 @@ created_at: 2026-03-02T12:03:53
 ---
 
 ## Synthesis
-
-### 3kBfhLmlY: Enforce Root Layout With Contracts
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Large module migrations where old root files can remain importable after moves |
-| **Insight** | Physical moves alone are not stable; contract tests must also assert forbidden `main.rs` module declarations and removed root file paths |
-| **Suggested Action** | Pair every structural move with architecture contracts that check both declaration edges and on-disk paths |
-| **Applies To** | src/main.rs, src/architecture_contract_tests.rs, src/**/mod.rs |
-| **Linked Knowledge IDs** | 1vyDuw8wW |
-| **Score** | 0.89 |
-| **Confidence** | 0.92 |
-| **Applied** | Added normalized-root and legacy-path assertions for all migrated root modules |
 
 ### Q8pKzHiNH: Path-Wide Module Moves Need Import Rewrite First
 
@@ -119,6 +105,20 @@ created_at: 2026-03-02T12:03:53
 | **Score** | 0.88 |
 | **Confidence** | 0.95 |
 | **Applied** |  |
+
+### 3kBfhLmlY: Enforce Root Layout With Contracts
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Large module migrations where old root files can remain importable after moves |
+| **Insight** | Physical moves alone are not stable; contract tests must also assert forbidden `main.rs` module declarations and removed root file paths |
+| **Suggested Action** | Pair every structural move with architecture contracts that check both declaration edges and on-disk paths |
+| **Applies To** | src/main.rs, src/architecture_contract_tests.rs, src/**/mod.rs |
+| **Linked Knowledge IDs** | 1vyDuw8wW |
+| **Score** | 0.89 |
+| **Confidence** | 0.92 |
+| **Applied** | Added normalized-root and legacy-path assertions for all migrated root modules |
 
 ### Pa8P1V8dA: Relocated Source Files May Break Compile-Time Template Paths
 
