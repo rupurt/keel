@@ -25,7 +25,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Render Scope Lineage In Planning Surfaces](stories/1vyGZgiTK/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Scope Lineage and Drift Detection](epics/1vyFgR2MA/voyages/1vyFn0OuN/) |
 
 <details>
 <summary><h2>Icebox</h2></summary>

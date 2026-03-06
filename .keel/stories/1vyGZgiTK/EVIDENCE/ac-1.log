@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-05T18:04:04.703947886-08:00
+mode: manual
+---
+Verified with cargo test -p keel planning_show_renders_scope_lineage_and_drift plus real command checks via just keel voyage show 1vyFn0OuN and just keel epic show 1vyFgR2MA.

@@ -8,23 +8,6 @@ created_at: 2026-03-03T11:50:46
 
 ## Story Knowledge
 
-## Story: Add Hard Cutover Regression Coverage (1vxH84jzB)
-
-### 1vyDuwFj5: Assert check identity and severity for hard-cutover gates
-
-| Field | Value |
-|-------|-------|
-| **Category** | testing |
-| **Context** | Updating terminal artifact coherence enforcement for doctor and story transitions |
-| **Insight** | Message-only assertions can pass even if a hard error silently downgrades to a warning; check-id plus severity assertions prevent this regression class |
-| **Suggested Action** | For each enforcement rule, add at least one integration test that asserts both `check_id` and `severity` |
-| **Applies To** | `src/cli/commands/diagnostics/doctor/mod.rs`, `src/domain/state_machine/gating.rs` |
-| **Applied** | yes |
-
-
-
----
-
 ## Story: Enforce Terminal Story Coherency In Doctor (1vxH84nTQ)
 
 ### 1vyDuwdbL: Stage-gate scaffold checks to avoid noisy early warnings
@@ -76,9 +59,9 @@ created_at: 2026-03-03T11:50:46
 
 ---
 
-## Synthesis
+## Story: Add Hard Cutover Regression Coverage (1vxH84jzB)
 
-### WrS2i2HgF: Assert check identity and severity for hard-cutover gates
+### 1vyDuwFj5: Assert check identity and severity for hard-cutover gates
 
 | Field | Value |
 |-------|-------|
@@ -87,10 +70,13 @@ created_at: 2026-03-03T11:50:46
 | **Insight** | Message-only assertions can pass even if a hard error silently downgrades to a warning; check-id plus severity assertions prevent this regression class |
 | **Suggested Action** | For each enforcement rule, add at least one integration test that asserts both `check_id` and `severity` |
 | **Applies To** | `src/cli/commands/diagnostics/doctor/mod.rs`, `src/domain/state_machine/gating.rs` |
-| **Linked Knowledge IDs** | 1vyDuwFj5 |
-| **Score** | 0.84 |
-| **Confidence** | 0.91 |
 | **Applied** | yes |
+
+
+
+---
+
+## Synthesis
 
 ### uvyKHWaQn: Stage-gate scaffold checks to avoid noisy early warnings
 
@@ -130,6 +116,20 @@ created_at: 2026-03-03T11:50:46
 | **Suggested Action** | Route all new scaffold/default-text checks through the shared extractor and assert severity/message structure in unit tests. |
 | **Applies To** | `src/infrastructure/validation/structural.rs`, `src/cli/commands/diagnostics/doctor/checks/*.rs` |
 | **Linked Knowledge IDs** | 1vyDuwBAC |
+| **Score** | 0.84 |
+| **Confidence** | 0.91 |
+| **Applied** | yes |
+
+### WrS2i2HgF: Assert check identity and severity for hard-cutover gates
+
+| Field | Value |
+|-------|-------|
+| **Category** | testing |
+| **Context** | Updating terminal artifact coherence enforcement for doctor and story transitions |
+| **Insight** | Message-only assertions can pass even if a hard error silently downgrades to a warning; check-id plus severity assertions prevent this regression class |
+| **Suggested Action** | For each enforcement rule, add at least one integration test that asserts both `check_id` and `severity` |
+| **Applies To** | `src/cli/commands/diagnostics/doctor/mod.rs`, `src/domain/state_machine/gating.rs` |
+| **Linked Knowledge IDs** | 1vyDuwFj5 |
 | **Score** | 0.84 |
 | **Confidence** | 0.91 |
 | **Applied** | yes |

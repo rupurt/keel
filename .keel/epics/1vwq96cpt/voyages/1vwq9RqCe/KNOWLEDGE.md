@@ -25,23 +25,6 @@ created_at: 2026-03-02T10:07:49
 
 ---
 
-## Story: Extract Template Rendering Service (1vwqCeX9I)
-
-### 1vyDuwrqB: Shared template rendering reduces cross-command coupling
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Multiple creation paths (story, epic, voyage, bearing, ADR, transitions) performing placeholder substitution |
-| **Insight** | Keeping placeholder substitution in command-local helpers increases coupling and makes cross-command refactors noisier than necessary. |
-| **Suggested Action** | Route all template substitution through `infrastructure::template_rendering::render` and enforce usage with architecture contract tests. |
-| **Applies To** | `src/infrastructure/template_rendering.rs`, `src/commands/*/new.rs`, `src/commands/story/reflect.rs`, `src/transitions/bearing_engine.rs` |
-| **Applied** | story `1vwqCeX9I` |
-
-
-
----
-
 ## Story: Implement Filesystem Adapter Layer (1vwqCeXD8)
 
 ### 1vyDuwPS4: Frontmatter-rewrite adapters preserve markdown parity with low migration risk
@@ -76,6 +59,23 @@ created_at: 2026-03-02T10:07:49
 
 ---
 
+## Story: Extract Template Rendering Service (1vwqCeX9I)
+
+### 1vyDuwrqB: Shared template rendering reduces cross-command coupling
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Multiple creation paths (story, epic, voyage, bearing, ADR, transitions) performing placeholder substitution |
+| **Insight** | Keeping placeholder substitution in command-local helpers increases coupling and makes cross-command refactors noisier than necessary. |
+| **Suggested Action** | Route all template substitution through `infrastructure::template_rendering::render` and enforce usage with architecture contract tests. |
+| **Applies To** | `src/infrastructure/template_rendering.rs`, `src/commands/*/new.rs`, `src/commands/story/reflect.rs`, `src/transitions/bearing_engine.rs` |
+| **Applied** | story `1vwqCeX9I` |
+
+
+
+---
+
 ## Synthesis
 
 ### YerUoeCw5: Declarative Frontmatter Patches Reduce Drift Across Commands
@@ -91,20 +91,6 @@ created_at: 2026-03-02T10:07:49
 | **Score** | 0.82 |
 | **Confidence** | 0.90 |
 | **Applied** | Migrated status/timestamp/scope mutations to infrastructure::frontmatter_mutation::apply. |
-
-### rbij9ueSM: Shared template rendering reduces cross-command coupling
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Multiple creation paths (story, epic, voyage, bearing, ADR, transitions) performing placeholder substitution |
-| **Insight** | Keeping placeholder substitution in command-local helpers increases coupling and makes cross-command refactors noisier than necessary. |
-| **Suggested Action** | Route all template substitution through `infrastructure::template_rendering::render` and enforce usage with architecture contract tests. |
-| **Applies To** | `src/infrastructure/template_rendering.rs`, `src/commands/*/new.rs`, `src/commands/story/reflect.rs`, `src/transitions/bearing_engine.rs` |
-| **Linked Knowledge IDs** | 1vyDuwrqB |
-| **Score** | 0.88 |
-| **Confidence** | 0.96 |
-| **Applied** | story `1vwqCeX9I` |
 
 ### hpVUqQ88C: Frontmatter-rewrite adapters preserve markdown parity with low migration risk
 
@@ -133,4 +119,18 @@ created_at: 2026-03-02T10:07:49
 | **Score** | 0.82 |
 | **Confidence** | 0.88 |
 | **Applied** | yes |
+
+### rbij9ueSM: Shared template rendering reduces cross-command coupling
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Multiple creation paths (story, epic, voyage, bearing, ADR, transitions) performing placeholder substitution |
+| **Insight** | Keeping placeholder substitution in command-local helpers increases coupling and makes cross-command refactors noisier than necessary. |
+| **Suggested Action** | Route all template substitution through `infrastructure::template_rendering::render` and enforce usage with architecture contract tests. |
+| **Applies To** | `src/infrastructure/template_rendering.rs`, `src/commands/*/new.rs`, `src/commands/story/reflect.rs`, `src/transitions/bearing_engine.rs` |
+| **Linked Knowledge IDs** | 1vyDuwrqB |
+| **Score** | 0.88 |
+| **Confidence** | 0.96 |
+| **Applied** | story `1vwqCeX9I` |
 

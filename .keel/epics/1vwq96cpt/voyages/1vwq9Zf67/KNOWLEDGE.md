@@ -8,40 +8,6 @@ created_at: 2026-03-02T09:33:26
 
 ## Story Knowledge
 
-## Story: Rewire Command Handlers To Use Cases (1vwqCfPpe)
-
-### 1vyDuwnad: Enforce policy invariants in application services, not command handlers
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Story and voyage lifecycle commands need consistent enforcement of manual-verification acceptance and requirements-coverage gating. |
-| **Insight** | Putting enforcement in application services centralizes lifecycle invariants and avoids drift across multiple command entrypoints. |
-| **Suggested Action** | Keep command handlers thin and add service-level tests for every lifecycle policy; use architecture contract tests to block direct transition orchestration from handlers. |
-| **Applies To** | `src/application/story_lifecycle.rs`, `src/application/voyage_epic_lifecycle.rs`, `src/commands/{story,voyage,epic}/*.rs`, `src/architecture_contract_tests.rs` |
-| **Applied** | story `1vwqCfPpe` |
-
-
-
----
-
-## Story: Introduce Domain Events And Process Managers (1vwqCeVSm)
-
-### 1vyDuwiVQ: Event-First Cross-Aggregate Orchestration Preserves Boundaries
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Story start/accept and voyage completion previously embedded cross-aggregate calls inside lifecycle services. |
-| **Insight** | Emitting explicit domain events and routing follow-on actions through a process manager keeps use cases focused while preserving existing behavior. |
-| **Suggested Action** | Keep cross-aggregate progression in process managers and add event/action tests whenever new lifecycle automation is introduced. |
-| **Applies To** | src/application/story_lifecycle.rs, src/application/voyage_epic_lifecycle.rs, src/application/process_manager.rs |
-| **Applied** | Introduced DomainEvent + DomainProcessManager and rewired lifecycle services to emit events. |
-
-
-
----
-
 ## Story: Implement Story Lifecycle Use Cases (1vwqCe5T0)
 
 ### 1vyDuwDTq: Thin Command Adapters Preserve Behavior During Refactors
@@ -76,23 +42,9 @@ created_at: 2026-03-02T09:33:26
 
 ---
 
-## Synthesis
+## Story: Introduce Domain Events And Process Managers (1vwqCeVSm)
 
-### LaLCqrPQZ: Enforce policy invariants in application services, not command handlers
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Story and voyage lifecycle commands need consistent enforcement of manual-verification acceptance and requirements-coverage gating. |
-| **Insight** | Putting enforcement in application services centralizes lifecycle invariants and avoids drift across multiple command entrypoints. |
-| **Suggested Action** | Keep command handlers thin and add service-level tests for every lifecycle policy; use architecture contract tests to block direct transition orchestration from handlers. |
-| **Applies To** | `src/application/story_lifecycle.rs`, `src/application/voyage_epic_lifecycle.rs`, `src/commands/{story,voyage,epic}/*.rs`, `src/architecture_contract_tests.rs` |
-| **Linked Knowledge IDs** | 1vyDuwnad |
-| **Score** | 0.90 |
-| **Confidence** | 0.96 |
-| **Applied** | story `1vwqCfPpe` |
-
-### t2UGk6lpx: Event-First Cross-Aggregate Orchestration Preserves Boundaries
+### 1vyDuwiVQ: Event-First Cross-Aggregate Orchestration Preserves Boundaries
 
 | Field | Value |
 |-------|-------|
@@ -101,10 +53,30 @@ created_at: 2026-03-02T09:33:26
 | **Insight** | Emitting explicit domain events and routing follow-on actions through a process manager keeps use cases focused while preserving existing behavior. |
 | **Suggested Action** | Keep cross-aggregate progression in process managers and add event/action tests whenever new lifecycle automation is introduced. |
 | **Applies To** | src/application/story_lifecycle.rs, src/application/voyage_epic_lifecycle.rs, src/application/process_manager.rs |
-| **Linked Knowledge IDs** | 1vyDuwiVQ |
-| **Score** | 0.84 |
-| **Confidence** | 0.92 |
 | **Applied** | Introduced DomainEvent + DomainProcessManager and rewired lifecycle services to emit events. |
+
+
+
+---
+
+## Story: Rewire Command Handlers To Use Cases (1vwqCfPpe)
+
+### 1vyDuwnad: Enforce policy invariants in application services, not command handlers
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Story and voyage lifecycle commands need consistent enforcement of manual-verification acceptance and requirements-coverage gating. |
+| **Insight** | Putting enforcement in application services centralizes lifecycle invariants and avoids drift across multiple command entrypoints. |
+| **Suggested Action** | Keep command handlers thin and add service-level tests for every lifecycle policy; use architecture contract tests to block direct transition orchestration from handlers. |
+| **Applies To** | `src/application/story_lifecycle.rs`, `src/application/voyage_epic_lifecycle.rs`, `src/commands/{story,voyage,epic}/*.rs`, `src/architecture_contract_tests.rs` |
+| **Applied** | story `1vwqCfPpe` |
+
+
+
+---
+
+## Synthesis
 
 ### SrUkwz3sZ: Thin Command Adapters Preserve Behavior During Refactors
 
@@ -133,4 +105,32 @@ created_at: 2026-03-02T09:33:26
 | **Score** | 0.82 |
 | **Confidence** | 0.88 |
 | **Applied** | 1vwqCejs5 |
+
+### t2UGk6lpx: Event-First Cross-Aggregate Orchestration Preserves Boundaries
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Story start/accept and voyage completion previously embedded cross-aggregate calls inside lifecycle services. |
+| **Insight** | Emitting explicit domain events and routing follow-on actions through a process manager keeps use cases focused while preserving existing behavior. |
+| **Suggested Action** | Keep cross-aggregate progression in process managers and add event/action tests whenever new lifecycle automation is introduced. |
+| **Applies To** | src/application/story_lifecycle.rs, src/application/voyage_epic_lifecycle.rs, src/application/process_manager.rs |
+| **Linked Knowledge IDs** | 1vyDuwiVQ |
+| **Score** | 0.84 |
+| **Confidence** | 0.92 |
+| **Applied** | Introduced DomainEvent + DomainProcessManager and rewired lifecycle services to emit events. |
+
+### LaLCqrPQZ: Enforce policy invariants in application services, not command handlers
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Story and voyage lifecycle commands need consistent enforcement of manual-verification acceptance and requirements-coverage gating. |
+| **Insight** | Putting enforcement in application services centralizes lifecycle invariants and avoids drift across multiple command entrypoints. |
+| **Suggested Action** | Keep command handlers thin and add service-level tests for every lifecycle policy; use architecture contract tests to block direct transition orchestration from handlers. |
+| **Applies To** | `src/application/story_lifecycle.rs`, `src/application/voyage_epic_lifecycle.rs`, `src/commands/{story,voyage,epic}/*.rs`, `src/architecture_contract_tests.rs` |
+| **Linked Knowledge IDs** | 1vyDuwnad |
+| **Score** | 0.90 |
+| **Confidence** | 0.96 |
+| **Applied** | story `1vwqCfPpe` |
 

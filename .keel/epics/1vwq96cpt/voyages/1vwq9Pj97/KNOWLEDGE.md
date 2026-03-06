@@ -8,23 +8,6 @@ created_at: 2026-03-02T07:36:50
 
 ## Story Knowledge
 
-## Story: Map Bounded Context Ownership (1vwqCdXMs)
-
-### 1vyDuwbHB: Context Maps Need Enforceable Ownership
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Defining DDD boundaries for migration planning before code extraction starts |
-| **Insight** | A useful context map must include both owned module paths and forbidden coupling rules, not just conceptual labels. |
-| **Suggested Action** | For each new context, document ownership, allowed seams, and forbidden dependencies in one table before implementation stories begin. |
-| **Applies To** | ARCHITECTURE.md, src/commands/**, src/model/**, src/state_machine/**, src/flow/** |
-| **Applied** | yes |
-
-
-
----
-
 ## Story: Enforce Architecture Contract Tests (1vwqCeg0n)
 
 ### 1vyDuw41L: Source-Scanning Contracts Catch Layer Drift Early
@@ -59,9 +42,9 @@ created_at: 2026-03-02T07:36:50
 
 ---
 
-## Synthesis
+## Story: Map Bounded Context Ownership (1vwqCdXMs)
 
-### Xl3pnhZXo: Context Maps Need Enforceable Ownership
+### 1vyDuwbHB: Context Maps Need Enforceable Ownership
 
 | Field | Value |
 |-------|-------|
@@ -70,10 +53,13 @@ created_at: 2026-03-02T07:36:50
 | **Insight** | A useful context map must include both owned module paths and forbidden coupling rules, not just conceptual labels. |
 | **Suggested Action** | For each new context, document ownership, allowed seams, and forbidden dependencies in one table before implementation stories begin. |
 | **Applies To** | ARCHITECTURE.md, src/commands/**, src/model/**, src/state_machine/**, src/flow/** |
-| **Linked Knowledge IDs** | 1vyDuwbHB |
-| **Score** | 0.86 |
-| **Confidence** | 0.90 |
 | **Applied** | yes |
+
+
+
+---
+
+## Synthesis
 
 ### mzqFfdlrU: Source-Scanning Contracts Catch Layer Drift Early
 
@@ -101,5 +87,19 @@ created_at: 2026-03-02T07:36:50
 | **Linked Knowledge IDs** | 1vyDuw12T |
 | **Score** | 0.84 |
 | **Confidence** | 0.89 |
+| **Applied** | yes |
+
+### Xl3pnhZXo: Context Maps Need Enforceable Ownership
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Defining DDD boundaries for migration planning before code extraction starts |
+| **Insight** | A useful context map must include both owned module paths and forbidden coupling rules, not just conceptual labels. |
+| **Suggested Action** | For each new context, document ownership, allowed seams, and forbidden dependencies in one table before implementation stories begin. |
+| **Applies To** | ARCHITECTURE.md, src/commands/**, src/model/**, src/state_machine/**, src/flow/** |
+| **Linked Knowledge IDs** | 1vyDuwbHB |
+| **Score** | 0.86 |
+| **Confidence** | 0.90 |
 | **Applied** | yes |
 

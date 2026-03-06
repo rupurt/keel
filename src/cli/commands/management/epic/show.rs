@@ -17,6 +17,8 @@ use std::path::Path;
 const PROBLEM_PLACEHOLDER: &str = "(not authored in PRD.md yet)";
 const GOALS_PLACEHOLDER: &str = "(not authored in PRD.md yet)";
 const GOAL_COVERAGE_PLACEHOLDER: &str = "(no authored goal linkage found in PRD.md)";
+const SCOPE_COVERAGE_PLACEHOLDER: &str = "(no authored scope lineage found in PRD.md)";
+const SCOPE_DRIFT_PLACEHOLDER: &str = "(no scope drift detected)";
 const REQUIREMENTS_PLACEHOLDER: &str = "(no authored requirements found in PRD.md)";
 const VERIFICATION_STRATEGY_PLACEHOLDER: &str =
     "(no authored verification strategy found in PRD.md)";
@@ -104,6 +106,16 @@ fn render_planning_summary(report: &EpicShowProjection) -> ShowSection {
         "Goal Coverage:",
         report.goal_coverage.iter().map(format_goal_coverage_row),
         Some(format!("{}", GOAL_COVERAGE_PLACEHOLDER.dimmed())),
+    );
+    section.push_labeled_bullets(
+        "Scope Coverage:",
+        report.scope_coverage.iter().cloned(),
+        Some(format!("{}", SCOPE_COVERAGE_PLACEHOLDER.dimmed())),
+    );
+    section.push_labeled_bullets(
+        "Scope Drift:",
+        report.scope_drift.iter().cloned(),
+        Some(format!("{}", SCOPE_DRIFT_PLACEHOLDER.dimmed())),
     );
     section.push_labeled_bullets(
         "Key Requirements:",
@@ -678,6 +690,8 @@ More details.
                 ..planning_show::PlanningDocSummary::default()
             },
             goal_coverage: Vec::new(),
+            scope_coverage: Vec::new(),
+            scope_drift: Vec::new(),
             requirement_coverage: Vec::new(),
             total_voyages: 0,
             done_voyages: 0,
@@ -709,6 +723,8 @@ More details.
         let report = EpicShowProjection {
             doc: planning_show::PlanningDocSummary::default(),
             goal_coverage: Vec::new(),
+            scope_coverage: Vec::new(),
+            scope_drift: Vec::new(),
             requirement_coverage: vec![
                 planning_show::EpicRequirementCoverageRow {
                     id: "FR-01".to_string(),
@@ -808,5 +824,44 @@ Teams cannot see whether goals are actually covered by PRD requirements.
         assert!(rendered.contains("2 linked PRD requirement(s):"));
         assert!(rendered.contains("FR-01"));
         assert!(rendered.contains("FR-02"));
+    }
+
+    #[test]
+    fn epic_show_renders_scope_coverage_and_drift_sections() {
+        let report = EpicShowProjection {
+            doc: planning_show::PlanningDocSummary::default(),
+            goal_coverage: Vec::new(),
+            scope_coverage: vec![
+                "`SCOPE-01`: Render canonical scope coverage (epic in-scope; linked voyages: `v1` in-scope)"
+                    .to_string(),
+            ],
+            scope_drift: vec![
+                "`v1`: `SCOPE-02` references unknown epic scope ID".to_string(),
+            ],
+            requirement_coverage: Vec::new(),
+            total_voyages: 0,
+            done_voyages: 0,
+            total_stories: 0,
+            done_stories: 0,
+            started_at: None,
+            completed_at: None,
+            updated_at: None,
+            eta: planning_show::EtaSummary {
+                throughput_stories_per_week: 0.0,
+                remaining_stories: 0,
+                eta_weeks: None,
+            },
+            verification: planning_show::VerificationRollup::default(),
+        };
+
+        let section = render_planning_summary(&report);
+        let mut document = ShowDocument::new();
+        document.push_sections_spaced([section]);
+        let rendered = document.render();
+
+        assert!(rendered.contains("Scope Coverage:"));
+        assert!(rendered.contains("SCOPE-01"));
+        assert!(rendered.contains("Scope Drift:"));
+        assert!(rendered.contains("SCOPE-02"));
     }
 }

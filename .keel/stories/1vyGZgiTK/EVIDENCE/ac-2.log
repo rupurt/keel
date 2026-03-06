@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-05T18:04:04.726868945-08:00
+mode: manual
+---
+Verified with cargo test -p keel planning_show_scope_drift_output_is_reviewable and render smoke tests for voyage/epic scope sections.

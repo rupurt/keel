@@ -66,6 +66,8 @@ impl VerificationRollup {
 pub struct EpicShowProjection {
     pub doc: PlanningDocSummary,
     pub goal_coverage: Vec<EpicGoalCoverageRow>,
+    pub scope_coverage: Vec<String>,
+    pub scope_drift: Vec<String>,
     pub requirement_coverage: Vec<EpicRequirementCoverageRow>,
     pub total_voyages: usize,
     pub done_voyages: usize,
@@ -156,6 +158,8 @@ pub struct RequirementRow {
 pub struct VoyageShowProjection {
     pub goal: Option<String>,
     pub scope: ScopeSummary,
+    pub scope_lineage: Vec<String>,
+    pub scope_drift: Vec<String>,
     pub requirements: Vec<RequirementRow>,
     pub done_stories: usize,
     pub total_stories: usize,
@@ -213,6 +217,13 @@ struct StoryEvidence {
     references: Vec<String>,
     automated_count_by_req: BTreeMap<String, usize>,
     manual_count_by_req: BTreeMap<String, usize>,
+}
+
+#[derive(Debug, Clone)]
+struct VoyageScopeLinkRef {
+    voyage_id: String,
+    voyage_index: Option<u32>,
+    link: invariants::SrsScopeLink,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -273,6 +284,7 @@ pub fn build_epic_show_projection(
             }
         })
         .collect();
+    let (scope_coverage, scope_drift) = build_epic_scope_projection(board, epic);
     let requirement_coverage = invariants::build_epic_prd_requirement_coverage(epic, board)
         .into_iter()
         .map(|row| EpicRequirementCoverageRow {
@@ -426,6 +438,8 @@ pub fn build_epic_show_projection(
     Ok(EpicShowProjection {
         doc,
         goal_coverage,
+        scope_coverage,
+        scope_drift,
         requirement_coverage,
         total_voyages: voyages.len(),
         done_voyages,
@@ -459,6 +473,7 @@ pub fn build_voyage_show_projection(
         .or_else(|| extract_goal_from_srs(&srs));
 
     let scope = parse_scope_summary(&srs);
+    let (scope_lineage, scope_drift) = build_voyage_scope_projection(board, voyage, &srs);
     let mut requirements = parse_srs_requirement_rows(&srs);
     requirements.sort_by(|a, b| a.id.cmp(&b.id));
 
@@ -572,6 +587,8 @@ pub fn build_voyage_show_projection(
     Ok(VoyageShowProjection {
         goal,
         scope,
+        scope_lineage,
+        scope_drift,
         done_stories,
         total_stories,
         done_functional_requirements,
@@ -824,6 +841,218 @@ pub fn parse_scope_summary(srs: &str) -> ScopeSummary {
     }
 
     summary
+}
+
+fn build_voyage_scope_projection(
+    board: &Board,
+    voyage: &Voyage,
+    srs_content: &str,
+) -> (Vec<String>, Vec<String>) {
+    let Some(epic) = board.epics.get(&voyage.epic_id) else {
+        return (Vec::new(), Vec::new());
+    };
+    let prd_path = epic.path.parent().unwrap().join("PRD.md");
+    let prd_content = fs::read_to_string(&prd_path).unwrap_or_default();
+
+    let parent_scope: BTreeMap<String, invariants::PrdScopeEntry> =
+        invariants::parse_prd_scope_entries(&prd_content)
+            .into_iter()
+            .map(|entry| (entry.id.clone(), entry))
+            .collect();
+
+    let mut scope_lineage = invariants::parse_srs_scope_links(srs_content)
+        .into_iter()
+        .map(|link| format_voyage_scope_lineage_row(&link, parent_scope.get(&link.parent_id)))
+        .collect::<Vec<_>>();
+    scope_lineage.sort();
+
+    let scope_drift = invariants::evaluate_voyage_scope_lineage(voyage, board)
+        .into_iter()
+        .map(|issue| format_scope_drift_issue(None, &issue))
+        .collect();
+
+    (scope_lineage, scope_drift)
+}
+
+fn build_epic_scope_projection(board: &Board, epic: &Epic) -> (Vec<String>, Vec<String>) {
+    let prd_path = epic.path.parent().unwrap().join("PRD.md");
+    let prd_content = fs::read_to_string(&prd_path).unwrap_or_default();
+    let prd_scope_entries = invariants::parse_prd_scope_entries(&prd_content);
+
+    let mut voyages = board.voyages_for_epic_id(epic.id());
+    voyages.sort_by(|left, right| {
+        crate::infrastructure::utils::cmp_optional_index_then_id(
+            left.index(),
+            left.id(),
+            right.index(),
+            right.id(),
+        )
+    });
+
+    let mut links_by_scope: BTreeMap<String, Vec<VoyageScopeLinkRef>> = BTreeMap::new();
+    let mut scope_drift = Vec::new();
+
+    for voyage in voyages {
+        let srs_path = voyage.path.parent().unwrap().join("SRS.md");
+        let srs_content = fs::read_to_string(&srs_path).unwrap_or_default();
+        for link in invariants::parse_srs_scope_links(&srs_content) {
+            links_by_scope
+                .entry(link.parent_id.clone())
+                .or_default()
+                .push(VoyageScopeLinkRef {
+                    voyage_id: voyage.id().to_string(),
+                    voyage_index: voyage.index(),
+                    link,
+                });
+        }
+        scope_drift.extend(
+            invariants::evaluate_voyage_scope_lineage(voyage, board)
+                .into_iter()
+                .map(|issue| format_scope_drift_issue(Some(voyage.id()), &issue)),
+        );
+    }
+
+    for links in links_by_scope.values_mut() {
+        links.sort_by(|left, right| {
+            crate::infrastructure::utils::cmp_optional_index_then_id(
+                left.voyage_index,
+                &left.voyage_id,
+                right.voyage_index,
+                &right.voyage_id,
+            )
+            .then_with(|| left.link.disposition.cmp(&right.link.disposition))
+            .then_with(|| left.link.description.cmp(&right.link.description))
+        });
+    }
+
+    let scope_coverage = prd_scope_entries
+        .into_iter()
+        .map(|entry| {
+            format_epic_scope_coverage_row(
+                &entry,
+                links_by_scope
+                    .get(&entry.id)
+                    .map(Vec::as_slice)
+                    .unwrap_or(&[]),
+            )
+        })
+        .collect();
+
+    (scope_coverage, scope_drift)
+}
+
+fn format_voyage_scope_lineage_row(
+    link: &invariants::SrsScopeLink,
+    parent: Option<&invariants::PrdScopeEntry>,
+) -> String {
+    let voyage_disposition = scope_disposition_label(link.disposition);
+    match parent {
+        Some(parent) => {
+            let parent_disposition = scope_disposition_label(parent.disposition);
+            let parent_detail = if same_scope_description(&link.description, &parent.description) {
+                String::new()
+            } else {
+                format!(": {}", parent.description)
+            };
+            format!(
+                "`{}`: {} (voyage {}; epic {}{})",
+                link.parent_id,
+                link.description,
+                voyage_disposition,
+                parent_disposition,
+                parent_detail
+            )
+        }
+        None => format!(
+            "`{}`: {} (voyage {}; epic unknown)",
+            link.parent_id, link.description, voyage_disposition
+        ),
+    }
+}
+
+fn format_epic_scope_coverage_row(
+    entry: &invariants::PrdScopeEntry,
+    linked_voyages: &[VoyageScopeLinkRef],
+) -> String {
+    let epic_disposition = scope_disposition_label(entry.disposition);
+    if linked_voyages.is_empty() {
+        let coverage = if entry.disposition == invariants::ScopeDisposition::In {
+            "not yet linked by any voyage"
+        } else {
+            "no voyage links"
+        };
+        return format!(
+            "`{}`: {} (epic {}; {})",
+            entry.id, entry.description, epic_disposition, coverage
+        );
+    }
+
+    let linked_voyages = linked_voyages
+        .iter()
+        .map(|reference| {
+            let voyage_disposition = scope_disposition_label(reference.link.disposition);
+            if same_scope_description(&reference.link.description, &entry.description) {
+                format!("`{}` {}", reference.voyage_id, voyage_disposition)
+            } else {
+                format!(
+                    "`{}` {}: {}",
+                    reference.voyage_id, voyage_disposition, reference.link.description
+                )
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    format!(
+        "`{}`: {} (epic {}; linked voyages: {})",
+        entry.id, entry.description, epic_disposition, linked_voyages
+    )
+}
+
+fn format_scope_drift_issue(
+    voyage_id: Option<&str>,
+    issue: &invariants::ScopeLineageIssue,
+) -> String {
+    let prefix = voyage_id
+        .map(|voyage_id| format!("`{voyage_id}`: "))
+        .unwrap_or_default();
+    match issue.kind {
+        invariants::ScopeLineageIssueKind::MissingScopeMapping => format!(
+            "{}`{}` missing voyage scope mapping for an epic in-scope item",
+            prefix,
+            issue.scope_id.as_deref().unwrap_or("<unknown>")
+        ),
+        invariants::ScopeLineageIssueKind::UnknownScopeRef => format!(
+            "{}`{}` references unknown epic scope ID",
+            prefix,
+            issue.scope_id.as_deref().unwrap_or("<unknown>")
+        ),
+        invariants::ScopeLineageIssueKind::OutOfScopeContradiction => format!(
+            "{}`{}` marks an epic out-of-scope item as in scope",
+            prefix,
+            issue.scope_id.as_deref().unwrap_or("<unknown>")
+        ),
+        invariants::ScopeLineageIssueKind::LegacyUntaggedScopePath => format!(
+            "{}legacy scope bullet: {}",
+            prefix,
+            issue.line.as_deref().unwrap_or("<unknown>")
+        ),
+    }
+}
+
+fn scope_disposition_label(disposition: invariants::ScopeDisposition) -> &'static str {
+    match disposition {
+        invariants::ScopeDisposition::In => "in-scope",
+        invariants::ScopeDisposition::Out => "out-of-scope",
+    }
+}
+
+fn same_scope_description(left: &str, right: &str) -> bool {
+    normalize_scope_description(left) == normalize_scope_description(right)
+}
+
+fn normalize_scope_description(value: &str) -> String {
+    value.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
 fn parse_srs_requirement_rows(srs: &str) -> Vec<RequirementEntry> {
@@ -1924,6 +2153,234 @@ Operators need reliable planning summaries.
     }
 
     #[test]
+    fn planning_show_renders_scope_lineage_and_drift() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").index(1).srs_content(
+                r#"# SRS
+> Surface scope lineage for review.
+
+## Scope
+In scope:
+- [SCOPE-03] Pull a forbidden item into this voyage.
+- [SCOPE-99] Reference a missing parent scope item.
+
+Out of scope:
+- [SCOPE-02] Defer a valid in-scope item for a later slice.
+"#,
+            ))
+            .build();
+
+        std::fs::write(
+            temp.path().join("epics/e1/PRD.md"),
+            r#"# PRD
+
+## Scope
+
+### In Scope
+- [SCOPE-01] Parse canonical scope IDs.
+- [SCOPE-02] Render scope drift findings.
+
+### Out of Scope
+- [SCOPE-03] Story-level runtime enforcement.
+"#,
+        )
+        .unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let epic =
+            build_epic_show_projection(temp.path(), &board, board.require_epic("e1").unwrap())
+                .unwrap();
+        let voyage =
+            build_voyage_show_projection(&board, board.require_voyage("v1").unwrap()).unwrap();
+
+        assert!(
+            voyage
+                .scope_lineage
+                .iter()
+                .any(|row| row.contains("`SCOPE-02`") && row.contains("voyage out-of-scope"))
+        );
+        assert!(
+            voyage
+                .scope_lineage
+                .iter()
+                .any(|row| row.contains("`SCOPE-03`") && row.contains("epic out-of-scope"))
+        );
+        assert!(
+            voyage
+                .scope_drift
+                .iter()
+                .any(|row| row.contains("`SCOPE-01`")
+                    && row.contains("missing voyage scope mapping"))
+        );
+        assert!(
+            voyage
+                .scope_drift
+                .iter()
+                .any(|row| row.contains("`SCOPE-99`") && row.contains("unknown epic scope ID"))
+        );
+        assert!(
+            voyage
+                .scope_drift
+                .iter()
+                .any(|row| row.contains("`SCOPE-03`")
+                    && row.contains("out-of-scope item as in scope"))
+        );
+
+        assert!(epic.scope_coverage.iter().any(|row| {
+            row.contains("`SCOPE-01`") && row.contains("not yet linked by any voyage")
+        }));
+        assert!(
+            epic.scope_coverage
+                .iter()
+                .any(|row| row.contains("`SCOPE-02`") && row.contains("`v1` out-of-scope"))
+        );
+        assert!(
+            epic.scope_coverage
+                .iter()
+                .any(|row| row.contains("`SCOPE-03`") && row.contains("`v1` in-scope"))
+        );
+        assert!(
+            epic.scope_drift
+                .iter()
+                .any(|row| row.contains("`v1`") && row.contains("`SCOPE-99`"))
+        );
+    }
+
+    #[test]
+    fn planning_show_scope_drift_output_is_reviewable() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").index(1).srs_content(
+                r#"# SRS
+> Review scope drift without opening multiple planning docs.
+
+## Scope
+In scope:
+- [SCOPE-03] Pull runtime enforcement into this voyage.
+
+Out of scope:
+- [SCOPE-02] Defer drift rendering until later.
+"#,
+            ))
+            .build();
+
+        std::fs::write(
+            temp.path().join("epics/e1/PRD.md"),
+            r#"# PRD
+
+## Scope
+
+### In Scope
+- [SCOPE-02] Render scope drift findings.
+
+### Out of Scope
+- [SCOPE-03] Story-level runtime enforcement.
+"#,
+        )
+        .unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let epic =
+            build_epic_show_projection(temp.path(), &board, board.require_epic("e1").unwrap())
+                .unwrap();
+        let voyage =
+            build_voyage_show_projection(&board, board.require_voyage("v1").unwrap()).unwrap();
+
+        let deferred = voyage
+            .scope_lineage
+            .iter()
+            .find(|row| row.contains("`SCOPE-02`"))
+            .unwrap();
+        assert!(deferred.contains("Defer drift rendering until later."));
+        assert!(deferred.contains("voyage out-of-scope"));
+        assert!(deferred.contains("epic in-scope: Render scope drift findings."));
+
+        let contradiction = voyage
+            .scope_lineage
+            .iter()
+            .find(|row| row.contains("`SCOPE-03`"))
+            .unwrap();
+        assert!(contradiction.contains("Pull runtime enforcement into this voyage."));
+        assert!(contradiction.contains("voyage in-scope"));
+        assert!(contradiction.contains("epic out-of-scope: Story-level runtime enforcement."));
+
+        let epic_contradiction = epic
+            .scope_drift
+            .iter()
+            .find(|row| row.contains("`SCOPE-03`"))
+            .unwrap();
+        assert!(epic_contradiction.starts_with("`v1`:"));
+        assert!(epic_contradiction.contains("marks an epic out-of-scope item as in scope"));
+    }
+
+    #[test]
+    fn planning_show_preserves_scope_text_with_ids() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").srs_content(
+                r#"# SRS
+> Preserve authored scope prose.
+
+## Scope
+In scope:
+- [SCOPE-01] Render scope lineage inside the voyage summary.
+
+Out of scope:
+- [SCOPE-02] Leave contradiction repair for a later slice.
+"#,
+            ))
+            .build();
+
+        std::fs::write(
+            temp.path().join("epics/e1/PRD.md"),
+            r#"# PRD
+
+## Scope
+
+### In Scope
+- [SCOPE-01] Render scope lineage inside the voyage summary.
+
+### Out of Scope
+- [SCOPE-02] Leave contradiction repair for a later slice.
+"#,
+        )
+        .unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let epic =
+            build_epic_show_projection(temp.path(), &board, board.require_epic("e1").unwrap())
+                .unwrap();
+        let voyage =
+            build_voyage_show_projection(&board, board.require_voyage("v1").unwrap()).unwrap();
+
+        assert_eq!(
+            voyage.scope.in_scope,
+            vec!["[SCOPE-01] Render scope lineage inside the voyage summary.".to_string()]
+        );
+        assert_eq!(
+            voyage.scope.out_of_scope,
+            vec!["[SCOPE-02] Leave contradiction repair for a later slice.".to_string()]
+        );
+        assert!(voyage.scope_lineage.iter().any(|row| {
+            row.contains("`SCOPE-01`")
+                && row.contains("Render scope lineage inside the voyage summary.")
+        }));
+        assert!(voyage.scope_lineage.iter().any(|row| {
+            row.contains("`SCOPE-02`")
+                && row.contains("Leave contradiction repair for a later slice.")
+        }));
+        assert!(epic.scope_coverage.iter().any(|row| {
+            row.contains("`SCOPE-01`")
+                && row.contains("Render scope lineage inside the voyage summary.")
+        }));
+        assert!(epic.scope_coverage.iter().any(|row| {
+            row.contains("`SCOPE-02`")
+                && row.contains("Leave contradiction repair for a later slice.")
+        }));
+    }
+
+    #[test]
     fn planning_show_omits_verification_recommendations() {
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("e1"))
@@ -1946,6 +2403,8 @@ Operators need reliable planning summaries.
         let EpicShowProjection {
             doc,
             goal_coverage,
+            scope_coverage,
+            scope_drift,
             requirement_coverage,
             total_voyages,
             done_voyages,
@@ -1960,6 +2419,8 @@ Operators need reliable planning summaries.
         let _ = (
             doc,
             goal_coverage,
+            scope_coverage,
+            scope_drift,
             requirement_coverage,
             total_voyages,
             done_voyages,
@@ -1975,6 +2436,8 @@ Operators need reliable planning summaries.
         let VoyageShowProjection {
             goal,
             scope,
+            scope_lineage,
+            scope_drift,
             requirements,
             done_stories,
             total_stories,
@@ -1988,6 +2451,8 @@ Operators need reliable planning summaries.
         let _ = (
             goal,
             scope,
+            scope_lineage,
+            scope_drift,
             requirements,
             done_stories,
             total_stories,

@@ -8,6 +8,23 @@ created_at: 2026-03-05T16:44:19
 
 ## Story Knowledge
 
+## Story: Gate Voyage Planning On PRD Lineage (1vyGZEO8S)
+
+### 1vyH1gD7p: Preserve Empty Markdown Table Cells In Planning Parsers
+
+| Field | Value |
+|-------|-------|
+| **Category** | code |
+| **Context** | Parsing authored PRD/SRS markdown tables where an empty cell is semantically meaningful |
+| **Insight** | Splitting markdown table rows and then filtering empty columns hides missing required values like SRS `Source`, so contract validation must preserve column positions and only trim boundary pipes and whitespace |
+| **Suggested Action** | Use a shared row splitter that preserves interior empty cells before resolving header-based column indexes |
+| **Applies To** | `src/domain/state_machine/*.rs`, planning document table parsers |
+| **Applied** |  |
+
+
+
+---
+
 ## Story: Render Epic Requirement Coverage (1vyGZEZNc)
 
 ### 1vyH1gD7p: Preserve Empty Markdown Table Cells In Planning Parsers
@@ -36,9 +53,9 @@ created_at: 2026-03-05T16:44:19
 
 ---
 
-## Story: Gate Voyage Planning On PRD Lineage (1vyGZEO8S)
+## Synthesis
 
-### 1vyH1gD7p: Preserve Empty Markdown Table Cells In Planning Parsers
+### XulqhuzCa: Preserve Empty Markdown Table Cells In Planning Parsers
 
 | Field | Value |
 |-------|-------|
@@ -47,13 +64,10 @@ created_at: 2026-03-05T16:44:19
 | **Insight** | Splitting markdown table rows and then filtering empty columns hides missing required values like SRS `Source`, so contract validation must preserve column positions and only trim boundary pipes and whitespace |
 | **Suggested Action** | Use a shared row splitter that preserves interior empty cells before resolving header-based column indexes |
 | **Applies To** | `src/domain/state_machine/*.rs`, planning document table parsers |
+| **Linked Knowledge IDs** | 1vyH1gD7p |
+| **Score** | 0.84 |
+| **Confidence** | 0.93 |
 | **Applied** |  |
-
-
-
----
-
-## Synthesis
 
 ### 3M8tCLJGF: Preserve Empty Markdown Table Cells In Planning Parsers
 
@@ -82,18 +96,4 @@ created_at: 2026-03-05T16:44:19
 | **Score** | 0.88 |
 | **Confidence** | 0.95 |
 | **Applied** | yes |
-
-### XulqhuzCa: Preserve Empty Markdown Table Cells In Planning Parsers
-
-| Field | Value |
-|-------|-------|
-| **Category** | code |
-| **Context** | Parsing authored PRD/SRS markdown tables where an empty cell is semantically meaningful |
-| **Insight** | Splitting markdown table rows and then filtering empty columns hides missing required values like SRS `Source`, so contract validation must preserve column positions and only trim boundary pipes and whitespace |
-| **Suggested Action** | Use a shared row splitter that preserves interior empty cells before resolving header-based column indexes |
-| **Applies To** | `src/domain/state_machine/*.rs`, planning document table parsers |
-| **Linked Knowledge IDs** | 1vyH1gD7p |
-| **Score** | 0.84 |
-| **Confidence** | 0.93 |
-| **Applied** |  |
 

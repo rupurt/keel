@@ -15,6 +15,8 @@ use crate::read_model::planning_show::{self, VoyageShowProjection};
 
 const GOAL_PLACEHOLDER: &str = "(goal not authored yet)";
 const SCOPE_PLACEHOLDER: &str = "(scope not authored in SRS.md yet)";
+const SCOPE_LINEAGE_PLACEHOLDER: &str = "(no canonical scope links authored in SRS.md)";
+const SCOPE_DRIFT_PLACEHOLDER: &str = "(no scope drift detected)";
 const REQUIREMENTS_PLACEHOLDER: &str = "(no requirements found in SRS.md)";
 
 /// Show voyage details
@@ -80,6 +82,16 @@ fn goal_scope_section(report: &VoyageShowProjection) -> ShowSection {
         "Out of scope:",
         report.scope.out_of_scope.iter().cloned(),
         Some(format!("{}", SCOPE_PLACEHOLDER.dimmed())),
+    );
+    section.push_labeled_bullets(
+        "Scope Lineage:",
+        report.scope_lineage.iter().cloned(),
+        Some(format!("{}", SCOPE_LINEAGE_PLACEHOLDER.dimmed())),
+    );
+    section.push_labeled_bullets(
+        "Scope Drift:",
+        report.scope_drift.iter().cloned(),
+        Some(format!("{}", SCOPE_DRIFT_PLACEHOLDER.dimmed())),
     );
 
     section
@@ -375,6 +387,8 @@ Out of scope:
         let report = VoyageShowProjection {
             goal: None,
             scope: Default::default(),
+            scope_lineage: Vec::new(),
+            scope_drift: Vec::new(),
             requirements: vec![
                 RequirementRow {
                     id: "SRS-NFR-01".to_string(),
@@ -424,6 +438,8 @@ Out of scope:
         let report = VoyageShowProjection {
             goal: None,
             scope: Default::default(),
+            scope_lineage: Vec::new(),
+            scope_drift: Vec::new(),
             requirements: vec![
                 RequirementRow {
                     id: "SRS-01".to_string(),
@@ -467,5 +483,36 @@ Out of scope:
 
         assert!(rendered.contains("Requirements: 1/2"));
         assert!(rendered.contains("NFRs:         0/1"));
+    }
+
+    #[test]
+    fn voyage_show_renders_scope_lineage_and_drift_sections() {
+        let report = VoyageShowProjection {
+            goal: Some("Render planning scope context.".to_string()),
+            scope: Default::default(),
+            scope_lineage: vec![
+                "`SCOPE-01`: Render lineage output (voyage in-scope; epic in-scope)".to_string(),
+            ],
+            scope_drift: vec!["`SCOPE-02` marks an epic out-of-scope item as in scope".to_string()],
+            requirements: Vec::new(),
+            done_stories: 0,
+            total_stories: 0,
+            done_functional_requirements: 0,
+            total_functional_requirements: 0,
+            done_non_functional_requirements: 0,
+            total_non_functional_requirements: 0,
+            done_requirements: 0,
+            total_requirements: 0,
+        };
+
+        let section = goal_scope_section(&report);
+        let mut document = ShowDocument::new();
+        document.push_section(section);
+        let rendered = document.render();
+
+        assert!(rendered.contains("Scope Lineage:"));
+        assert!(rendered.contains("SCOPE-01"));
+        assert!(rendered.contains("Scope Drift:"));
+        assert!(rendered.contains("SCOPE-02"));
     }
 }
