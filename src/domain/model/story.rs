@@ -1,5 +1,6 @@
 //! Story data structure
 
+use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
 use chrono::NaiveDateTime;
@@ -57,18 +58,14 @@ pub struct Story {
     pub frontmatter: StoryFrontmatter,
     /// Path to the story file
     pub path: PathBuf,
-    /// Canonical lifecycle status for the story
-    pub status: StoryState,
 }
 
 impl Story {
     /// Construct a story from parsed frontmatter and its README path.
     pub fn new(frontmatter: StoryFrontmatter, path: impl Into<PathBuf>) -> Self {
-        let status = frontmatter.status;
         Self {
             frontmatter,
             path: path.into(),
-            status,
         }
     }
 
@@ -85,6 +82,11 @@ impl Story {
     /// Get the story type
     pub fn story_type(&self) -> StoryType {
         self.frontmatter.story_type
+    }
+
+    /// Get the canonical lifecycle status for the story.
+    pub fn status(&self) -> StoryState {
+        self.frontmatter.status
     }
 
     /// Get the index number (for ordering within scope)
@@ -141,12 +143,19 @@ impl Story {
     /// Update the canonical story status in memory.
     pub fn set_status(&mut self, status: StoryState) {
         self.frontmatter.status = status;
-        self.status = status;
     }
 
     /// Check if story matches a pattern (fuzzy match)
     pub fn matches(&self, pattern: &str) -> bool {
         super::fuzzy_match(&self.frontmatter.id, &self.frontmatter.title, pattern)
+    }
+}
+
+impl Deref for Story {
+    type Target = StoryFrontmatter;
+
+    fn deref(&self) -> &Self::Target {
+        &self.frontmatter
     }
 }
 
