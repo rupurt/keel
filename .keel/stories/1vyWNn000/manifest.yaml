@@ -1,0 +1,9 @@
+id: 1vyWNn000
+git_sha: 78c6ae93f9295258ad14cb234369d5282cd8d043
+evidence:
+  EVIDENCE/ac-1.log: db191836cebe899641d48e580cda1cce232ad53c9729b78f13ed4c1ff4a87edd
+  EVIDENCE/ac-2.log: aa59eacc7e7f34df4b27c87419be5c38169a28e29666b1bf75d04e61ecc5e1b1
+  EVIDENCE/ac-3.log: 994d8f82b70790282dce708e9a4fd9484774c3e3c027cddf56e9c8ebf94c8e0a
+  EVIDENCE/ac-4.log: 00903c5d95f145daf1e0334920a245abb1ee9828b14ef09c21a3db2c4e3d7dcc
+  ? EVIDENCE/llm-judge-horizon-commentary-surfaces-tech-or-process-debt-heuristics-from-scoped-knowledge-signals-and-labels-recommendations-as-advisory.txt
+  : 8fc9dae7f5972c98c49295465435987d49845ef05112266488c9a814901238e1

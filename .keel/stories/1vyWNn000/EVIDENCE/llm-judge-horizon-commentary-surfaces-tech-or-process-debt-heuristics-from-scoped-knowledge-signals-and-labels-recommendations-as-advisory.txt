@@ -1,0 +1,1009 @@
+LLM Judge Transcript
+Story: 1vyWNn000
+Criterion: Horizon commentary surfaces tech or process debt heuristics from scoped knowledge signals and labels recommendations as advisory.
+
+Diff:
+.keel/stories/1vyWNn000/README.md --- 1/2 --- Text
+ 2 id: 1vyWNn000                         2 id: 1vyWNn000
+ 3 title: Surface Topology Knowledge An  3 title: Surface Topology Knowledge An
+ . d Horizon Warnings                    . d Horizon Warnings
+ 4 type: feat                            4 type: feat
+ 5 status: backlog                       5 status: in-progress
+ 6 created_at: 2026-03-06T06:42:27       6 created_at: 2026-03-06T06:42:27
+ 7 updated_at: 2026-03-06T06:44:10       7 updated_at: 2026-03-06T08:01:52
+ 8 scope: 1vyWIF000/1vyWIM000            8 scope: 1vyWIF000/1vyWIM000
+ .                                       9 started_at: 2026-03-06T08:01:52
+ 9 ---                                  10 ---
+10                                      11 
+11 # Surface Topology Knowledge And Hor 12 # Surface Topology Knowledge And Hor
+.. izon Warnings                        .. izon Warnings
+
+.keel/stories/1vyWNn000/README.md --- 2/2 --- Text
+16                                      17 
+17 ## Acceptance Criteria               18 ## Acceptance Criteria
+18                                      19 
+19 - [ ] [SRS-04/AC-01] The topology vi 20 - [x] [SRS-04/AC-01] The topology vi
+.. ew surfaces scoped recent insights a .. ew surfaces scoped recent insights a
+.. nd pending unapplied knowledge as an .. nd pending unapplied knowledge as an
+.. notations relevant to the epic flow. .. notations relevant to the epic flow.
+..  <!-- verify: cargo test --lib topol ..  <!-- verify: cargo test --lib topol
+.. ogy_annotations_surface_scoped_knowl .. ogy_annotations_surface_scoped_knowl
+.. edge, SRS-04:start:end, proof: ac-1. .. edge, SRS-04:start:end, proof: ac-1.
+.. log -->                              .. log -->
+20 - [ ] [SRS-05/AC-01] Horizon comment 21 - [x] [SRS-05/AC-01] Horizon comment
+.. ary surfaces verification debt and t .. ary surfaces verification debt and t
+.. hroughput or ETA risk using determin .. hroughput or ETA risk using determin
+.. istic board signals. <!-- verify: ca .. istic board signals. <!-- verify: ca
+.. rgo test --lib topology_horizon_surf .. rgo test --lib topology_horizon_surf
+.. aces_verification_and_eta_risk, SRS- .. aces_verification_and_eta_risk, SRS-
+.. 05:start, proof: ac-2.log -->        .. 05:start, proof: ac-2.log -->
+21 - [ ] [SRS-05/AC-02] Horizon comment 22 - [x] [SRS-05/AC-02] Horizon comment
+.. ary surfaces tech or process debt he .. ary surfaces tech or process debt he
+.. uristics from scoped knowledge signa .. uristics from scoped knowledge signa
+.. ls and labels recommendations as adv .. ls and labels recommendations as adv
+.. isory. <!-- verify: llm-judge, SRS-0 .. isory. <!-- verify: llm-judge, SRS-0
+.. 5:continues:end, proof: ac-3.log --> .. 5:continues:end, proof: ac-3.log -->
+22 - [ ] [SRS-05/AC-03] [SRS-NFR-03/AC- 23 - [x] [SRS-05/AC-03] [SRS-NFR-03/AC-
+.. 02] Knowledge and horizon derivation .. 02] Knowledge and horizon derivation
+..  reuse existing scanner and navigato ..  reuse existing scanner and navigato
+.. r helpers rather than duplicate pars .. r helpers rather than duplicate pars
+.. ing paths. <!-- verify: cargo test - .. ing paths. <!-- verify: cargo test -
+.. -lib topology_horizon_reuses_knowled .. -lib topology_horizon_reuses_knowled
+.. ge_helpers, SRS-NFR-03:end, SRS-05:c .. ge_helpers, SRS-NFR-03:end, SRS-05:c
+.. ontinues, proof: ac-4.log -->        .. ontinues, proof: ac-4.log -->
+
+src/cli/commands/management/topology.rs --- 1/5 --- Rust
+ 44  44 mod tests {
+ 45  45     use super::*;
+ 46  46     use crate::domain::model::StoryState;
+ ..  47     use crate::infrastructure::loader::load_board;
+ 47  48     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+ ..  49     use chrono::{Duration, Utc};
+ 48  50     use std::fs;
+ 49  51     use std::path::Path;
+ 50  52 
+
+src/cli/commands/management/topology.rs --- 2/5 --- Rust
+185 187 <!-- END FUNCTIONAL_REQUIREMENTS -->
+186 188 "#;
+... 189 
+... 190     const KNOWLEDGE_PRD: &str = r#"# PRD
+... 191 
+... 192 ## Problem Statement
+... 193 
+... 194 Need topology knowledge and horizon review.
+... 195 
+... 196 ## Goals & Objectives
+... 197 
+... 198 | ID | Goal | Success Metric | Target |
+... 199 |----|------|----------------|--------|
+... 200 | GOAL-01 | Surface execution learning and approaching risk. | Knowledge and horizon shown. | 1 command |
+... 201 
+... 202 ## Users
+... 203 
+... 204 | Persona | Description | Primary Need |
+... 205 |---------|-------------|--------------|
+... 206 | Operator | Reviews epic flow. | See knowledge and risk in one place. |
+... 207 
+... 208 ## Scope
+... 209 
+... 210 ### In Scope
+... 211 
+... 212 - [SCOPE-01] Render topology flow.
+... 213 - [SCOPE-02] Surface scoped knowledge and horizon commentary.
+... 214 
+... 215 ### Out of Scope
+... 216 
+... 217 - [SCOPE-03] Whole-board aggregation.
+... 218 
+... 219 ## Requirements
+... 220 
+... 221 ### Functional Requirements
+... 222 
+... 223 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+... 224 | ID | Requirement | Goals | Priority | Rationale |
+... 225 |----|-------------|-------|----------|-----------|
+... 226 | FR-01 | Render knowledge-aware topology output. | GOAL-01 | must | Operators need execution learning. |
+... 227 | FR-02 | Render horizon commentary from board signals. | GOAL-01 | must | Operators need early warnings. |
+... 228 <!-- END FUNCTIONAL_REQUIREMENTS -->
+... 229 
+... 230 ### Non-Functional Requirements
+... 231 
+... 232 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+... 233 | ID | Requirement | Goals | Priority | Rationale |
+... 234 |----|-------------|-------|----------|-----------|
+... 235 | NFR-01 | Reuse canonical read models. | GOAL-01 | must | Keep commentary deterministic. |
+... 236 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+... 237 "#;
+... 238 
+... 239     const KNOWLEDGE_SRS: &str = r#"# SRS
+... 240 
+... 241 ## Scope
+... 242 In scope:
+... 243 - [SCOPE-01] Render topology flow.
+... 244 - [SCOPE-02] Surface scoped knowledge and horizon commentary.
+... 245 
+... 246 Out of scope:
+... 247 - [SCOPE-03] Whole-board aggregation.
+... 248 
+... 249 ## Requirements
+... 250 
+... 251 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+... 252 | ID | Requirement | Scope | Source | Verification |
+... 253 |----|-------------|-------|--------|--------------|
+... 254 | SRS-01 | Visible story with proof debt. | SCOPE-01 | FR-01 | automated |
+... 255 | SRS-02 | Visible story without verification coverage. | SCOPE-01 | FR-01 | automated |
+... 256 <!-- END FUNCTIONAL_REQUIREMENTS -->
+... 257 "#;
+187 258 
+188 259     fn write_epic_prd(board_root: &Path, epic_id: &str, content: &str) {
+189 260         fs::write(
+
+src/cli/commands/management/topology.rs --- 3/5 --- Rust
+193 264         .unwrap();
+194 265     }
+... 266 
+... 267     fn write_story_reflect(board_root: &Path, story_id: &str, content: &str) {
+... 268         fs::write(
+... 269             board_root.join("stories").join(story_id).join("REFLECT.md"),
+... 270             content,
+... 271         )
+... 272         .unwrap();
+... 273     }
+... 274 
+... 275     struct ReflectKnowledgeSpec<'a> {
+... 276         title: &'a str,
+... 277         knowledge_id: &'a str,
+... 278         category: &'a str,
+... 279         insight: &'a str,
+... 280         suggested_action: &'a str,
+... 281         applied: &'a str,
+... 282         observed_at: chrono::DateTime<Utc>,
+... 283         score: f64,
+... 284         confidence: f64,
+... 285     }
+... 286 
+... 287     fn reflect_with_knowledge(spec: ReflectKnowledgeSpec<'_>) -> String {
+... 288         format!(
+... 289             "---\ncreated_at: {}\n---\n\n# Reflection - {}\n\n## Knowledge\n\n### {}: {}\n| Field | Value |\n|-------|-------|\n| **Category** | {} |\n| **Context** | topology horizon |\n| **Insight** | {} |\n| **Suggested Action** | {} |\n| **Applies To** | src/cli/presentation/topology.rs |\n| **Linked Knowledge IDs** | |\n| **Observed At** | {} |\n| **Score** | {:.2} |\n| **Confidence** | {:.2} |\n| **Applied** | {} |\n\n## Observations\n\nScoped topology should surface this signal.\n",
+... 290             spec.observed_at.format("%Y-%m-%dT%H:%M:%S"),
+... 291             spec.title,
+... 292             spec.knowledge_id,
+... 293             spec.title,
+... 294             spec.category,
+... 295             spec.insight,
+... 296             spec.suggested_action,
+... 297             spec.observed_at.to_rfc3339(),
+... 298             spec.score,
+... 299             spec.confidence,
+... 300             spec.applied,
+... 301         )
+... 302     }
+195 303 
+196 304     fn topology_fixture() -> tempfile::TempDir {
+197 305         let temp = TestBoardBuilder::new()
+
+src/cli/commands/management/topology.rs --- 4/5 --- Rust
+287 395         temp
+288 396     }
+... 397 
+... 398     fn knowledge_horizon_fixture() -> tempfile::TempDir {
+... 399         let temp = TestBoardBuilder::new()
+... 400             .epic(TestEpic::new("e1").title("Epic One With Knowledge"))
+... 401             .epic(TestEpic::new("e2").title("Other Epic"))
+... 402             .voyage(
+... 403                 TestVoyage::new("v1", "e1")
+... 404                     .title("Voyage One With Horizon Signals")
+... 405                     .status("in-progress")
+... 406                     .index(1)
+... 407                     .srs_content(KNOWLEDGE_SRS),
+... 408             )
+... 409             .voyage(
+... 410                 TestVoyage::new("v2", "e2")
+... 411                     .title("Other Voyage")
+... 412                     .status("planned")
+... 413                     .index(1)
+... 414                     .srs_content(KNOWLEDGE_SRS),
+... 415             )
+... 416             .story(
+... 417                 TestStory::new("S1")
+... 418                     .title("Story Missing Proof")
+... 419                     .scope("e1/v1")
+... 420                     .index(1)
+... 421                     .status(StoryState::Backlog)
+... 422                     .body(
+... 423                         "## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] missing proof <!-- verify: cargo test --lib missing_proof_story, SRS-01:start:end, proof: missing.log -->",
+... 424                     ),
+... 425             )
+... 426             .story(
+... 427                 TestStory::new("S2")
+... 428                     .title("Story Missing Verification Coverage")
+... 429                     .scope("e1/v1")
+... 430                     .index(2)
+... 431                     .status(StoryState::Backlog)
+... 432                     .body("## Acceptance Criteria\n\n- [ ] [SRS-02/AC-01] missing verify annotation"),
+... 433             )
+... 434             .story(
+... 435                 TestStory::new("K1")
+... 436                     .title("Applied Verification Insight")
+... 437                     .scope("e1/v1")
+... 438                     .index(3)
+... 439                     .status(StoryState::Done)
+... 440                     .body("## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] shipped"),
+... 441             )
+... 442             .story(
+... 443                 TestStory::new("K2")
+... 444                     .title("Pending Process Insight One")
+... 445                     .scope("e1/v1")
+... 446                     .index(4)
+... 447                     .status(StoryState::Done)
+... 448                     .body("## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] shipped"),
+... 449             )
+... 450             .story(
+... 451                 TestStory::new("K3")
+... 452                     .title("Pending Process Insight Two")
+... 453                     .scope("e1/v1")
+... 454                     .index(5)
+... 455                     .status(StoryState::Done)
+... 456                     .body("## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] shipped"),
+... 457             )
+... 458             .story(
+... 459                 TestStory::new("K4")
+... 460                     .title("Pending Process Insight Three")
+... 461                     .scope("e1/v1")
+... 462                     .index(6)
+... 463                     .status(StoryState::Done)
+... 464                     .body("## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] shipped"),
+... 465             )
+... 466             .story(
+... 467                 TestStory::new("X1")
+... 468                     .title("Unrelated Epic Insight")
+... 469                     .scope("e2/v2")
+... 470                     .index(1)
+... 471                     .status(StoryState::Done)
+... 472                     .body("## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] shipped"),
+... 473             )
+... 474             .build();
+... 475         write_epic_prd(temp.path(), "e1", KNOWLEDGE_PRD);
+... 476         write_epic_prd(temp.path(), "e2", KNOWLEDGE_PRD);
+... 477 
+... 478         let now = Utc::now();
+... 479         write_story_reflect(
+... 480             temp.path(),
+... 481             "K1",
+... 482             &reflect_with_knowledge(ReflectKnowledgeSpec {
+... 483                 title: "Applied Verification Insight",
+... 484                 knowledge_id: "1AbCdE240",
+... 485                 category: "testing",
+... 486                 insight: "Recent applied insights should stay visible in topology.",
+... 487                 suggested_action: "Keep showing completed verification lessons near active work.",
+... 488                 applied: "Applied in topology renderer",
+... 489                 observed_at: now - Duration::days(1),
+... 490                 score: 0.62,
+... 491                 confidence: 0.85,
+... 492             }),
+... 493         );
+... 494         write_story_reflect(
+... 495             temp.path(),
+... 496             "K2",
+... 497             &reflect_with_knowledge(ReflectKnowledgeSpec {
+... 498                 title: "Pending Process Insight One",
+... 499                 knowledge_id: "1AbCdE241",
+... 500                 category: "process",
+... 501                 insight: "Pending process insights should warn operators about review debt.",
+... 502                 suggested_action: "Review the pending checklist before starting the next story.",
+... 503                 applied: "",
+... 504                 observed_at: now - Duration::days(6),
+... 505                 score: 0.50,
+... 506                 confidence: 0.82,
+... 507             }),
+... 508         );
+... 509         write_story_reflect(
+... 510             temp.path(),
+... 511             "K3",
+... 512             &reflect_with_knowledge(ReflectKnowledgeSpec {
+... 513                 title: "Pending Process Insight Two",
+... 514                 knowledge_id: "1AbCdE242",
+... 515                 category: "process",
+... 516                 insight: "Recurring process lessons should escalate into horizon commentary.",
+... 517                 suggested_action: "Group related process insights into one advisory recommendation.",
+... 518                 applied: "",
+... 519                 observed_at: now - Duration::days(3),
+... 520                 score: 0.74,
+... 521                 confidence: 0.87,
+... 522             }),
+... 523         );
+... 524         write_story_reflect(
+... 525             temp.path(),
+... 526             "K4",
+... 527             &reflect_with_knowledge(ReflectKnowledgeSpec {
+... 528                 title: "Pending Process Insight Three",
+... 529                 knowledge_id: "1AbCdE243",
+... 530                 category: "process",
+... 531                 insight: "A rising process pattern should point to accumulating process debt.",
+... 532                 suggested_action: "Codify the recurring process issue in an ADR or bearing.",
+... 533                 applied: "",
+... 534                 observed_at: now - Duration::days(1),
+... 535                 score: 0.96,
+... 536                 confidence: 0.93,
+... 537             }),
+... 538         );
+... 539         write_story_reflect(
+... 540             temp.path(),
+... 541             "X1",
+... 542             &reflect_with_knowledge(ReflectKnowledgeSpec {
+... 543                 title: "Unrelated Epic Insight",
+... 544                 knowledge_id: "1AbCdE299",
+... 545                 category: "code",
+... 546                 insight: "Other-epic knowledge should not leak into scoped topology output.",
+... 547                 suggested_action: "Ignore this while reviewing epic e1.",
+... 548                 applied: "",
+... 549                 observed_at: now - Duration::days(1),
+... 550                 score: 0.80,
+... 551                 confidence: 0.90,
+... 552             }),
+... 553         );
+... 554 
+... 555         temp
+... 556     }
+289 557 
+290 558     #[test]
+291 559     fn topology_command_invokes_epic_projection() {
+
+src/cli/commands/management/topology.rs --- 5/5 --- Rust
+367 635         assert!(!output.contains("missing voyage scope mapping"));
+368 636     }
+... 637 
+... 638     #[test]
+... 639     fn topology_annotations_surface_scoped_knowledge() {
+... 640         let temp = knowledge_horizon_fixture();
+... 641 
+... 642         let output = build_topology_output_with_width(temp.path(), "e1", false, 140).unwrap();
+... 643 
+... 644         assert!(output.contains("Knowledge"));
+... 645         assert!(output.contains("recent insight"));
+... 646         assert!(output.contains("Applied Verification Insight"));
+... 647         assert!(output.contains("pending knowledge"));
+... 648         assert!(output.contains("1AbCdE241"));
+... 649         assert!(output.contains("Pending Process Insight Three"));
+... 650         assert!(!output.contains("Unrelated Epic Insight"));
+... 651     }
+... 652 
+... 653     #[test]
+... 654     fn topology_horizon_surfaces_verification_and_eta_risk() {
+... 655         let temp = knowledge_horizon_fixture();
+... 656 
+... 657         let output = build_topology_output_with_width(temp.path(), "e1", false, 140).unwrap();
+... 658 
+... 659         assert!(output.contains("Horizon"));
+... 660         assert!(output.contains("verification debt"));
+... 661         assert!(output.contains("ETA risk"));
+... 662         assert!(output.contains("missing linked proof"));
+... 663         assert!(output.contains("no recent throughput"));
+... 664         assert!(output.contains("advisory:"));
+... 665         assert!(output.contains("process debt"));
+... 666     }
+... 667 
+... 668     #[test]
+... 669     fn topology_horizon_reuses_knowledge_helpers() {
+... 670         let temp = knowledge_horizon_fixture();
+... 671         let board = load_board(temp.path()).unwrap();
+... 672         let epic = board.require_epic("e1").unwrap();
+... 673 
+... 674         let projection =
+... 675             build_epic_topology_projection(&board, epic, TopologyBuildOptions::default()).unwrap();
+... 676         let all_knowledge = crate::read_model::knowledge::scan_all_knowledge(temp.path()).unwrap();
+... 677         let expected_pending = crate::read_model::knowledge::rank_relevant_knowledge(
+... 678             all_knowledge.clone(),
+... 679             Some("e1"),
+... 680             None,
+... 681             3,
+... 682         );
+... 683         let expected_pending_ids: Vec<_> = expected_pending
+... 684             .iter()
+... 685             .map(|ranked| ranked.knowledge.id.clone())
+... 686             .collect();
+... 687         let projected_pending_ids: Vec<_> = projection
+... 688             .pending_knowledge
+... 689             .iter()
+... 690             .map(|annotation| annotation.id.clone())
+... 691             .collect();
+... 692         assert_eq!(projected_pending_ids, expected_pending_ids);
+... 693 
+... 694         let relevant_signals: Vec<_> = all_knowledge
+... 695             .iter()
+... 696             .filter(|unit| {
+... 697                 unit.scope
+... 698                     .as_deref()
+... 699                     .is_some_and(|scope| scope == "e1" || scope.starts_with("e1/"))
+... 700             })
+... 701             .filter_map(|unit| unit.to_signal())
+... 702             .collect();
+... 703         let patterns = crate::read_model::knowledge::detect_rising_patterns(
+... 704             &relevant_signals,
+... 705             Utc::now(),
+... 706             &crate::read_model::knowledge::DetectionConfig::default(),
+... 707         );
+... 708 
+... 709         assert!(
+... 710             patterns.iter().any(|pattern| projection
+... 711                 .horizon
+... 712                 .iter()
+... 713                 .any(|entry| { entry.signal == format!("pattern:{}", pattern.pattern_id()) })),
+... 714             "expected projection horizon to retain navigator pattern ids"
+... 715         );
+... 716     }
+369 717 }
+
+src/cli/presentation/topology.rs --- 1/6 --- Rust
+  7   7 use crate::cli::style;
+  8   8 use crate::read_model::planning_show::ScopeDriftRow;
+  9   9 use crate::read_model::topology::{
+  .  10     EpicTopologyEpic, EpicTopologyProjection, HorizonCommentary, HorizonCommentaryKind,
+  .  11     KnowledgeAnnotationKind, StoryTopologyNode, TopologyKnowledgeAnnotation,
+  .  12 };
+ 10  13 
+ 11  14 const EMPTY_TOPOLOGY_PLACEHOLDER: &str = "(no voyages or stories visible for this epic)";
+ 12  15 const EMPTY_STORIES_PLACEHOLDER: &str = "(no stories visible)";
+ ..  16 const EMPTY_KNOWLEDGE_PLACEHOLDER: &str = "(no scoped knowledge surfaced)";
+ ..  17 const EMPTY_HORIZON_PLACEHOLDER: &str = "(no approaching risks detected)";
+ 13  18 
+ 14  19 #[derive(Debug, Clone, Copy)]
+ 15  20 struct LayoutHints {
+ 16  21     epic_title_limit: usize,
+ 17  22     voyage_title_limit: usize,
+ 18  23     story_title_limit: usize,
+ ..  24     knowledge_title_limit: usize,
+ ..  25     horizon_message_limit: usize,
+ 19  26     requirement_limit: usize,
+ 20  27     hotspot_limit: usize,
+ 21  28 }
+
+src/cli/presentation/topology.rs --- 2/6 --- Rust
+ 27  34                 epic_title_limit: 28,
+ 28  35                 voyage_title_limit: 24,
+ 29  36                 story_title_limit: 22,
+ ..  37                 knowledge_title_limit: 20,
+ ..  38                 horizon_message_limit: 46,
+ 30  39                 requirement_limit: 2,
+ 31  40                 hotspot_limit: 1,
+ 32  41             }
+
+src/cli/presentation/topology.rs --- 3/6 --- Rust
+ 35  44                 epic_title_limit: 40,
+ 36  45                 voyage_title_limit: 30,
+ 37  46                 story_title_limit: 28,
+ ..  47                 knowledge_title_limit: 28,
+ ..  48                 horizon_message_limit: 70,
+ 38  49                 requirement_limit: 3,
+ 39  50                 hotspot_limit: 2,
+ 40  51             }
+
+src/cli/presentation/topology.rs --- 4/6 --- Rust
+ 43  54                 epic_title_limit: 56,
+ 44  55                 voyage_title_limit: 42,
+ 45  56                 story_title_limit: 36,
+ ..  57                 knowledge_title_limit: 40,
+ ..  58                 horizon_message_limit: 96,
+ 46  59                 requirement_limit: 4,
+ 47  60                 hotspot_limit: 4,
+ 48  61             }
+
+src/cli/presentation/topology.rs --- 5/6 --- Rust
+ 77         .row("Stories:", story_coun  90         .row("Stories:", story_coun
+ .. t.to_string());                      .. t.to_string());
+ 78                                      91 
+ 79     let mut topology = ShowSection:  92     let mut topology = ShowSection:
+ .. :new("Topology");                    .. :new("Topology");
+ ..                                      93     let layout = LayoutHints::for_w
+ ..                                      .. idth(width);
+ 80     topology.push_lines(render_topo  94     topology.push_lines(render_topo
+ .. logy_lines(                          .. logy_lines(projection, layout));
+ 81         projection,                  95 
+ 82         LayoutHints::for_width(widt  96     let mut knowledge = ShowSection
+ .. h),                                  .. ::new("Knowledge");
+ 83     ));                              97     knowledge.push_lines(render_kno
+ ..                                      .. wledge_lines(projection, layout));
+ ..                                      98 
+ ..                                      99     let mut horizon = ShowSection::
+ ..                                      .. new("Horizon");
+ ..                                     100     horizon.push_lines(render_horiz
+ ..                                     ... on_lines(projection, layout));
+ 84                                     101 
+ 85     let mut document = ShowDocument 102     let mut document = ShowDocument
+ .. ::new();                            ... ::new();
+ 86     document.push_header(metadata,  103     document.push_header(metadata, 
+ .. Some(width));                       ... Some(width));
+ 87     document.push_section(topology) 104     document.push_section(topology)
+ .. ;                                   ... ;
+ ..                                     105     document.push_section(knowledge
+ ..                                     ... );
+ ..                                     106     document.push_section(horizon);
+ 88     document.render()               107     document.render()
+ 89 }                                   108 }
+ 90                                     109 
+
+src/cli/presentation/topology.rs --- 6/6 --- Rust
+172 191     rendered
+173 192 }
+... 193 
+... 194 fn render_knowledge_lines(projection: &EpicTopologyProjection, layout: LayoutHints) -> Vec<String> {
+... 195     let mut lines = Vec::new();
+... 196 
+... 197     for annotation in &projection.recent_insights {
+... 198         lines.push(render_knowledge_line(annotation, layout));
+... 199     }
+... 200     for annotation in &projection.pending_knowledge {
+... 201         lines.push(render_knowledge_line(annotation, layout));
+... 202     }
+... 203 
+... 204     if lines.is_empty() {
+... 205         vec![format!("  {}", EMPTY_KNOWLEDGE_PLACEHOLDER.dimmed())]
+... 206     } else {
+... 207         lines
+... 208     }
+... 209 }
+... 210 
+... 211 fn render_knowledge_line(annotation: &TopologyKnowledgeAnnotation, layout: LayoutHints) -> String {
+... 212     let label = match annotation.kind {
+... 213         KnowledgeAnnotationKind::RecentInsight => "recent insight",
+... 214         KnowledgeAnnotationKind::PendingKnowledge => "pending knowledge",
+... 215     };
+... 216 
+... 217     let mut fragments = vec![
+... 218         format!("{label}:"),
+... 219         format!("[{}]", annotation.id.cyan()),
+... 220         style::styled_inline_markdown(&truncate_text(
+... 221             &annotation.title,
+... 222             layout.knowledge_title_limit,
+... 223         )),
+... 224         format!("({})", annotation.category),
+... 225     ];
+... 226     if annotation.scope.is_some() {
+... 227         fragments.push(format!(
+... 228             "[{}]",
+... 229             style::styled_scope(annotation.scope.as_deref())
+... 230         ));
+... 231     }
+... 232 
+... 233     format!("  - {}", fragments.join(" "))
+... 234 }
+... 235 
+... 236 fn render_horizon_lines(projection: &EpicTopologyProjection, layout: LayoutHints) -> Vec<String> {
+... 237     if projection.horizon.is_empty() {
+... 238         return vec![format!("  {}", EMPTY_HORIZON_PLACEHOLDER.dimmed())];
+... 239     }
+... 240 
+... 241     projection
+... 242         .horizon
+... 243         .iter()
+... 244         .map(|entry| render_horizon_line(entry, layout))
+... 245         .collect()
+... 246 }
+... 247 
+... 248 fn render_horizon_line(entry: &HorizonCommentary, layout: LayoutHints) -> String {
+... 249     let prefix = match entry.kind {
+... 250         HorizonCommentaryKind::Risk => "risk",
+... 251         HorizonCommentaryKind::Advisory => "advisory",
+... 252     };
+... 253 
+... 254     format!(
+... 255         "  - {prefix}: {}",
+... 256         truncate_text(&entry.message, layout.horizon_message_limit)
+... 257     )
+... 258 }
+174 259 
+175 260 fn epic_hotspots(epic: &EpicTopologyEpic) -> Vec<String> {
+176 261     let mut hotspots: Vec<String> = epic
+
+src/read_model/topology.rs --- 1/5 --- Rust
+  1   1 //! Canonical epic-topology projection for terminal planning and execution views.
+  2   2 
+  3   3 use anyhow::Result;
+  .   4 use chrono::Utc;
+  4   5 
+  5   6 use crate::domain::model::{Board, Epic, EpicState, StoryState, VoyageState};
+  6   7 use crate::infrastructure::utils::cmp_optional_index_then_id;
+  .   8 use crate::read_model::capacity;
+  .   9 use crate::read_model::knowledge::{self, DetectionConfig, RankedKnowledge};
+  7  10 use crate::read_model::planning_show::{
+  8  11     self, EpicShowProjection, StoryShowProjection, VoyageShowProjection,
+  9  12 };
+ 10  13 use crate::read_model::traceability;
+ ..  14 
+ ..  15 const RECENT_INSIGHT_LIMIT: usize = 2;
+ ..  16 const PENDING_KNOWLEDGE_LIMIT: usize = 3;
+ 11  17 
+ 12  18 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+ 13  19 pub struct TopologyBuildOptions {
+
+src/read_model/topology.rs --- 2/5 --- Rust
+ 18  24 pub struct EpicTopologyProjection {
+ 19  25     pub epic: EpicTopologyEpic,
+ 20  26     pub voyages: Vec<VoyageTopologyNode>,
+ ..  27     pub recent_insights: Vec<TopologyKnowledgeAnnotation>,
+ ..  28     pub pending_knowledge: Vec<TopologyKnowledgeAnnotation>,
+ ..  29     pub horizon: Vec<HorizonCommentary>,
+ 21  30 }
+ 22  31 
+ 23  32 #[derive(Debug, Clone, PartialEq)]
+
+src/read_model/topology.rs --- 3/5 --- Rust
+ 51  60     pub unmet_dependencies: Vec<String>,
+ 52  61 }
+ ..  62 
+ ..  63 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+ ..  64 pub enum KnowledgeAnnotationKind {
+ ..  65     RecentInsight,
+ ..  66     PendingKnowledge,
+ ..  67 }
+ ..  68 
+ ..  69 #[derive(Debug, Clone, PartialEq, Eq)]
+ ..  70 pub struct TopologyKnowledgeAnnotation {
+ ..  71     pub kind: KnowledgeAnnotationKind,
+ ..  72     pub id: String,
+ ..  73     pub title: String,
+ ..  74     pub category: String,
+ ..  75     pub scope: Option<String>,
+ ..  76 }
+ ..  77 
+ ..  78 impl TopologyKnowledgeAnnotation {
+ ..  79     fn from_ranked(kind: KnowledgeAnnotationKind, ranked: &RankedKnowledge) -> Self {
+ ..  80         Self {
+ ..  81             kind,
+ ..  82             id: ranked.knowledge.id.clone(),
+ ..  83             title: ranked.knowledge.title.clone(),
+ ..  84             category: ranked.knowledge.category.clone(),
+ ..  85             scope: ranked.knowledge.scope.clone(),
+ ..  86         }
+ ..  87     }
+ ..  88 
+ ..  89     fn from_knowledge(kind: KnowledgeAnnotationKind, knowledge: &knowledge::Knowledge) -> Self {
+ ..  90         Self {
+ ..  91             kind,
+ ..  92             id: knowledge.id.clone(),
+ ..  93             title: knowledge.title.clone(),
+ ..  94             category: knowledge.category.clone(),
+ ..  95             scope: knowledge.scope.clone(),
+ ..  96         }
+ ..  97     }
+ ..  98 }
+ ..  99 
+ .. 100 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+ .. 101 pub enum HorizonCommentaryKind {
+ .. 102     Risk,
+ .. 103     Advisory,
+ .. 104 }
+ .. 105 
+ .. 106 #[derive(Debug, Clone, PartialEq, Eq)]
+ .. 107 pub struct HorizonCommentary {
+ .. 108     pub kind: HorizonCommentaryKind,
+ .. 109     pub signal: String,
+ .. 110     pub message: String,
+ .. 111 }
+ .. 112 
+ .. 113 impl HorizonCommentary {
+ .. 114     fn risk(signal: impl Into<String>, message: impl Into<String>) -> Self {
+ .. 115         Self {
+ .. 116             kind: HorizonCommentaryKind::Risk,
+ .. 117             signal: signal.into(),
+ .. 118             message: message.into(),
+ .. 119         }
+ .. 120     }
+ .. 121 
+ .. 122     fn advisory(signal: impl Into<String>, message: impl Into<String>) -> Self {
+ .. 123         Self {
+ .. 124             kind: HorizonCommentaryKind::Advisory,
+ .. 125             signal: signal.into(),
+ .. 126             message: message.into(),
+ .. 127         }
+ .. 128     }
+ .. 129 }
+ 53 130 
+ 54 131 pub fn build_epic_topology_projection(
+ 55 132     board: &Board,
+
+src/read_model/topology.rs --- 4/5 --- Rust
+120 197         })
+121 198         .collect::<Result<Vec<_>>>()?;
+... 199 
+... 200     let all_knowledge = knowledge::scan_all_knowledge(&board.root)?;
+... 201     let recent_insights = build_recent_insights(&all_knowledge, epic.id(), RECENT_INSIGHT_LIMIT);
+... 202     let pending_ranked = knowledge::rank_relevant_knowledge(
+... 203         all_knowledge.clone(),
+... 204         Some(epic.id()),
+... 205         None,
+... 206         PENDING_KNOWLEDGE_LIMIT,
+... 207     );
+... 208     let pending_knowledge = pending_ranked
+... 209         .iter()
+... 210         .map(|ranked| {
+... 211             TopologyKnowledgeAnnotation::from_ranked(
+... 212                 KnowledgeAnnotationKind::PendingKnowledge,
+... 213                 ranked,
+... 214             )
+... 215         })
+... 216         .collect();
+... 217     let horizon = build_horizon_commentary(
+... 218         board,
+... 219         epic,
+... 220         &epic_show,
+... 221         &voyages,
+... 222         &all_knowledge,
+... 223         &pending_ranked,
+... 224     );
+122 225 
+123 226     Ok(EpicTopologyProjection {
+124 227         epic: EpicTopologyEpic {
+
+src/read_model/topology.rs --- 5/5 --- Rust
+129 232             show: epic_show,
+130 233         },
+131 234         voyages,
+... 235         recent_insights,
+... 236         pending_knowledge,
+... 237         horizon,
+132 238     })
+133 239 }
+... 240 
+... 241 fn build_recent_insights(
+... 242     all_knowledge: &[knowledge::Knowledge],
+... 243     epic_id: &str,
+... 244     limit: usize,
+... 245 ) -> Vec<TopologyKnowledgeAnnotation> {
+... 246     let mut recent: Vec<_> = all_knowledge
+... 247         .iter()
+... 248         .filter(|unit| knowledge_matches_epic(unit, epic_id))
+... 249         .filter(|unit| unit.is_applied())
+... 250         .cloned()
+... 251         .collect();
+... 252 
+... 253     if recent.is_empty() {
+... 254         recent = all_knowledge
+... 255             .iter()
+... 256             .filter(|unit| knowledge_matches_epic(unit, epic_id))
+... 257             .cloned()
+... 258             .collect();
+... 259     }
+... 260 
+... 261     recent.sort_by(compare_recent_knowledge);
+... 262     recent.truncate(limit);
+... 263     recent
+... 264         .iter()
+... 265         .map(|knowledge| {
+... 266             TopologyKnowledgeAnnotation::from_knowledge(
+... 267                 KnowledgeAnnotationKind::RecentInsight,
+... 268                 knowledge,
+... 269             )
+... 270         })
+... 271         .collect()
+... 272 }
+... 273 
+... 274 fn build_horizon_commentary(
+... 275     board: &Board,
+... 276     epic: &Epic,
+... 277     epic_show: &EpicShowProjection,
+... 278     voyages: &[VoyageTopologyNode],
+... 279     all_knowledge: &[knowledge::Knowledge],
+... 280     pending_ranked: &[RankedKnowledge],
+... 281 ) -> Vec<HorizonCommentary> {
+... 282     let mut horizon = Vec::new();
+... 283 
+... 284     let stories: Vec<_> = voyages
+... 285         .iter()
+... 286         .flat_map(|voyage| voyage.stories.iter())
+... 287         .collect();
+... 288     let stories_without_verification = stories
+... 289         .iter()
+... 290         .filter(|story| story.show.evidence.items.is_empty())
+... 291         .count();
+... 292 
+... 293     if epic_show.verification.missing_linked_proofs > 0 || stories_without_verification > 0 {
+... 294         let mut parts = Vec::new();
+... 295         if epic_show.verification.missing_linked_proofs > 0 {
+... 296             let count = epic_show.verification.missing_linked_proofs;
+... 297             let suffix = if count == 1 { "" } else { "s" };
+... 298             parts.push(format!("{count} missing linked proof{suffix}"));
+... 299         }
+... 300         if stories_without_verification > 0 {
+... 301             let suffix = if stories_without_verification == 1 {
+... 302                 "y"
+... 303             } else {
+... 304                 "ies"
+... 305             };
+... 306             parts.push(format!(
+... 307                 "{} stor{} without verification coverage",
+... 308                 stories_without_verification, suffix
+... 309             ));
+... 310         }
+... 311 
+... 312         horizon.push(HorizonCommentary::risk(
+... 313             "verification-debt",
+... 314             format!("verification debt: {}", parts.join("; ")),
+... 315         ));
+... 316         horizon.push(HorizonCommentary::advisory(
+... 317             "verification-debt",
+... 318             "record the missing proof artifacts and close uncovered verification before more stories depend on this flow",
+... 319         ));
+... 320     }
+... 321 
+... 322     let epic_capacity = capacity::project(board)
+... 323         .epics
+... 324         .into_iter()
+... 325         .find(|report| report.id == epic.id());
+... 326     let blocked = epic_capacity
+... 327         .as_ref()
+... 328         .map(|report| report.capacity.blocked)
+... 329         .unwrap_or(0);
+... 330     let ready = epic_capacity
+... 331         .as_ref()
+... 332         .map(|report| report.capacity.ready)
+... 333         .unwrap_or(0);
+... 334 
+... 335     if epic_show.eta.remaining_stories > 0 {
+... 336         if epic_show.eta.throughput_stories_per_week <= 0.0 {
+... 337             let mut message = format!(
+... 338                 "ETA risk: {} remaining stor{} but no recent throughput signal; ETA is currently unknown",
+... 339                 epic_show.eta.remaining_stories,
+... 340                 if epic_show.eta.remaining_stories == 1 {
+... 341                     "y"
+... 342                 } else {
+... 343                     "ies"
+... 344                 }
+... 345             );
+... 346             if blocked > 0 {
+... 347                 message.push_str(&format!(
+... 348                     "; {blocked} blocked stor{}",
+... 349                     if blocked == 1 { "y" } else { "ies" }
+... 350                 ));
+... 351             }
+... 352             horizon.push(HorizonCommentary::risk("eta-risk", message));
+... 353             horizon.push(HorizonCommentary::advisory(
+... 354                 "eta-risk",
+... 355                 "finish or unblock one story to re-establish a trustworthy throughput signal",
+... 356             ));
+... 357         } else if let Some(eta_weeks) = epic_show.eta.eta_weeks
+... 358             && (eta_weeks >= 2.0 || blocked > 0)
+... 359         {
+... 360             let mut message = format!(
+... 361                 "ETA risk: {:.1} weeks for {} remaining stor{} at {:.1} stories/week",
+... 362                 eta_weeks,
+... 363                 epic_show.eta.remaining_stories,
+... 364                 if epic_show.eta.remaining_stories == 1 {
+... 365                     "y"
+... 366                 } else {
+... 367                     "ies"
+... 368                 },
+... 369                 epic_show.eta.throughput_stories_per_week
+... 370             );
+... 371             if blocked > 0 {
+... 372                 message.push_str(&format!(
+... 373                     "; {blocked} blocked stor{}",
+... 374                     if blocked == 1 { "y" } else { "ies" }
+... 375                 ));
+... 376             }
+... 377             if ready == 0 {
+... 378                 message.push_str("; ready queue is empty");
+... 379             }
+... 380             horizon.push(HorizonCommentary::risk("eta-risk", message));
+... 381             horizon.push(HorizonCommentary::advisory(
+... 382                 "eta-risk",
+... 383                 "reduce blockage on the visible chain before adding more work to this epic",
+... 384             ));
+... 385         }
+... 386     }
+... 387 
+... 388     let relevant_knowledge: Vec<_> = all_knowledge
+... 389         .iter()
+... 390         .filter(|unit| knowledge_matches_epic(unit, epic.id()))
+... 391         .cloned()
+... 392         .collect();
+... 393     let signals: Vec<_> = relevant_knowledge
+... 394         .iter()
+... 395         .filter_map(|unit| unit.to_signal())
+... 396         .collect();
+... 397     let patterns =
+... 398         knowledge::detect_rising_patterns(&signals, Utc::now(), &DetectionConfig::default());
+... 399     let mut emitted_focus_pattern = false;
+... 400     for pattern in patterns {
+... 401         let Some(focus_area) = pattern.focus_area() else {
+... 402             continue;
+... 403         };
+... 404         if !matches!(focus_area, "architecture" | "code" | "process") {
+... 405             continue;
+... 406         }
+... 407 
+... 408         emitted_focus_pattern = true;
+... 409         horizon.push(HorizonCommentary::risk(
+... 410             format!("pattern:{}", pattern.pattern_id()),
+... 411             format!(
+... 412                 "{focus_area} debt signal: rising {focus_area} pattern (+{:.0}% across {} refs)",
+... 413                 pattern.trend_delta() * 100.0,
+... 414                 pattern.evidence_ids().len()
+... 415             ),
+... 416         ));
+... 417         horizon.push(HorizonCommentary::advisory(
+... 418             format!("pattern:{}", pattern.pattern_id()),
+... 419             format!("codify the recurring {focus_area} pattern in an ADR or bearing"),
+... 420         ));
+... 421     }
+... 422 
+... 423     if !emitted_focus_pattern {
+... 424         let pending_debt_ids: Vec<_> = pending_ranked
+... 425             .iter()
+... 426             .filter(|ranked| {
+... 427                 matches!(
+... 428                     ranked.knowledge.category.as_str(),
+... 429                     "architecture" | "code" | "process"
+... 430                 )
+... 431             })
+... 432             .map(|ranked| ranked.knowledge.id.clone())
+... 433             .collect();
+... 434         if !pending_debt_ids.is_empty() {
+... 435             horizon.push(HorizonCommentary::risk(
+... 436                 "pending-tech-process-knowledge",
+... 437                 format!(
+... 438                     "process debt signal: pending scoped knowledge {} is still unapplied",
+... 439                     pending_debt_ids.join(", ")
+... 440                 ),
+... 441             ));
+... 442         }
+... 443     }
+... 444 
+... 445     let pending_ids: Vec<_> = pending_ranked
+... 446         .iter()
+... 447         .map(|ranked| ranked.knowledge.id.clone())
+... 448         .collect();
+... 449     if !pending_ids.is_empty() {
+... 450         horizon.push(HorizonCommentary::advisory(
+... 451             "pending-knowledge",
+... 452             format!(
+... 453                 "review pending knowledge {} before continuing the epic flow",
+... 454                 pending_ids.join(", ")
+... 455             ),
+... 456         ));
+... 457     }
+... 458 
+... 459     horizon
+... 460 }
+... 461 
+... 462 fn knowledge_matches_epic(unit: &knowledge::Knowledge, epic_id: &str) -> bool {
+... 463     unit.scope
+... 464         .as_deref()
+... 465         .is_some_and(|scope| scope == epic_id || scope.starts_with(&format!("{epic_id}/")))
+... 466 }
+... 467 
+... 468 fn compare_recent_knowledge(
+... 469     left: &knowledge::Knowledge,
+... 470     right: &knowledge::Knowledge,
+... 471 ) -> std::cmp::Ordering {
+... 472     let left_observed = left
+... 473         .observed_at
+... 474         .map(|value| value.timestamp())
+... 475         .unwrap_or(i64::MIN);
+... 476     let right_observed = right
+... 477         .observed_at
+... 478         .map(|value| value.timestamp())
+... 479         .unwrap_or(i64::MIN);
+... 480     let left_created = left
+... 481         .created_at
+... 482         .map(|value| value.and_utc().timestamp())
+... 483         .unwrap_or(i64::MIN);
+... 484     let right_created = right
+... 485         .created_at
+... 486         .map(|value| value.and_utc().timestamp())
+... 487         .unwrap_or(i64::MIN);
+... 488 
+... 489     right_observed
+... 490         .cmp(&left_observed)
+... 491         .then_with(|| right_created.cmp(&left_created))
+... 492         .then_with(|| left.id.cmp(&right.id))
+... 493 }
+134 494 
+135 495 #[cfg(test)]
+136 496 mod tests {
+
+
+
+Result: PASS
+Signature: <KEEL-JUDGE-SIG>

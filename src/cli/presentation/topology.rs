@@ -6,16 +6,23 @@ use crate::cli::presentation::planning_lineage;
 use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::style;
 use crate::read_model::planning_show::ScopeDriftRow;
-use crate::read_model::topology::{EpicTopologyEpic, EpicTopologyProjection, StoryTopologyNode};
+use crate::read_model::topology::{
+    EpicTopologyEpic, EpicTopologyProjection, HorizonCommentary, HorizonCommentaryKind,
+    KnowledgeAnnotationKind, StoryTopologyNode, TopologyKnowledgeAnnotation,
+};
 
 const EMPTY_TOPOLOGY_PLACEHOLDER: &str = "(no voyages or stories visible for this epic)";
 const EMPTY_STORIES_PLACEHOLDER: &str = "(no stories visible)";
+const EMPTY_KNOWLEDGE_PLACEHOLDER: &str = "(no scoped knowledge surfaced)";
+const EMPTY_HORIZON_PLACEHOLDER: &str = "(no approaching risks detected)";
 
 #[derive(Debug, Clone, Copy)]
 struct LayoutHints {
     epic_title_limit: usize,
     voyage_title_limit: usize,
     story_title_limit: usize,
+    knowledge_title_limit: usize,
+    horizon_message_limit: usize,
     requirement_limit: usize,
     hotspot_limit: usize,
 }
@@ -27,6 +34,8 @@ impl LayoutHints {
                 epic_title_limit: 28,
                 voyage_title_limit: 24,
                 story_title_limit: 22,
+                knowledge_title_limit: 20,
+                horizon_message_limit: 46,
                 requirement_limit: 2,
                 hotspot_limit: 1,
             }
@@ -35,6 +44,8 @@ impl LayoutHints {
                 epic_title_limit: 40,
                 voyage_title_limit: 30,
                 story_title_limit: 28,
+                knowledge_title_limit: 28,
+                horizon_message_limit: 70,
                 requirement_limit: 3,
                 hotspot_limit: 2,
             }
@@ -43,6 +54,8 @@ impl LayoutHints {
                 epic_title_limit: 56,
                 voyage_title_limit: 42,
                 story_title_limit: 36,
+                knowledge_title_limit: 40,
+                horizon_message_limit: 96,
                 requirement_limit: 4,
                 hotspot_limit: 4,
             }
@@ -77,14 +90,20 @@ pub fn render_topology(
         .row("Stories:", story_count.to_string());
 
     let mut topology = ShowSection::new("Topology");
-    topology.push_lines(render_topology_lines(
-        projection,
-        LayoutHints::for_width(width),
-    ));
+    let layout = LayoutHints::for_width(width);
+    topology.push_lines(render_topology_lines(projection, layout));
+
+    let mut knowledge = ShowSection::new("Knowledge");
+    knowledge.push_lines(render_knowledge_lines(projection, layout));
+
+    let mut horizon = ShowSection::new("Horizon");
+    horizon.push_lines(render_horizon_lines(projection, layout));
 
     let mut document = ShowDocument::new();
     document.push_header(metadata, Some(width));
     document.push_section(topology);
+    document.push_section(knowledge);
+    document.push_section(horizon);
     document.render()
 }
 
@@ -170,6 +189,72 @@ fn render_story_line(story: &StoryTopologyNode, layout: LayoutHints) -> String {
     let mut rendered = fragments.join(" ");
     rendered.push_str(&render_annotation_suffix(&story_hotspots));
     rendered
+}
+
+fn render_knowledge_lines(projection: &EpicTopologyProjection, layout: LayoutHints) -> Vec<String> {
+    let mut lines = Vec::new();
+
+    for annotation in &projection.recent_insights {
+        lines.push(render_knowledge_line(annotation, layout));
+    }
+    for annotation in &projection.pending_knowledge {
+        lines.push(render_knowledge_line(annotation, layout));
+    }
+
+    if lines.is_empty() {
+        vec![format!("  {}", EMPTY_KNOWLEDGE_PLACEHOLDER.dimmed())]
+    } else {
+        lines
+    }
+}
+
+fn render_knowledge_line(annotation: &TopologyKnowledgeAnnotation, layout: LayoutHints) -> String {
+    let label = match annotation.kind {
+        KnowledgeAnnotationKind::RecentInsight => "recent insight",
+        KnowledgeAnnotationKind::PendingKnowledge => "pending knowledge",
+    };
+
+    let mut fragments = vec![
+        format!("{label}:"),
+        format!("[{}]", annotation.id.cyan()),
+        style::styled_inline_markdown(&truncate_text(
+            &annotation.title,
+            layout.knowledge_title_limit,
+        )),
+        format!("({})", annotation.category),
+    ];
+    if annotation.scope.is_some() {
+        fragments.push(format!(
+            "[{}]",
+            style::styled_scope(annotation.scope.as_deref())
+        ));
+    }
+
+    format!("  - {}", fragments.join(" "))
+}
+
+fn render_horizon_lines(projection: &EpicTopologyProjection, layout: LayoutHints) -> Vec<String> {
+    if projection.horizon.is_empty() {
+        return vec![format!("  {}", EMPTY_HORIZON_PLACEHOLDER.dimmed())];
+    }
+
+    projection
+        .horizon
+        .iter()
+        .map(|entry| render_horizon_line(entry, layout))
+        .collect()
+}
+
+fn render_horizon_line(entry: &HorizonCommentary, layout: LayoutHints) -> String {
+    let prefix = match entry.kind {
+        HorizonCommentaryKind::Risk => "risk",
+        HorizonCommentaryKind::Advisory => "advisory",
+    };
+
+    format!(
+        "  - {prefix}: {}",
+        truncate_text(&entry.message, layout.horizon_message_limit)
+    )
 }
 
 fn epic_hotspots(epic: &EpicTopologyEpic) -> Vec<String> {

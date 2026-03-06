@@ -1,13 +1,19 @@
 //! Canonical epic-topology projection for terminal planning and execution views.
 
 use anyhow::Result;
+use chrono::Utc;
 
 use crate::domain::model::{Board, Epic, EpicState, StoryState, VoyageState};
 use crate::infrastructure::utils::cmp_optional_index_then_id;
+use crate::read_model::capacity;
+use crate::read_model::knowledge::{self, DetectionConfig, RankedKnowledge};
 use crate::read_model::planning_show::{
     self, EpicShowProjection, StoryShowProjection, VoyageShowProjection,
 };
 use crate::read_model::traceability;
+
+const RECENT_INSIGHT_LIMIT: usize = 2;
+const PENDING_KNOWLEDGE_LIMIT: usize = 3;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct TopologyBuildOptions {
@@ -18,6 +24,9 @@ pub struct TopologyBuildOptions {
 pub struct EpicTopologyProjection {
     pub epic: EpicTopologyEpic,
     pub voyages: Vec<VoyageTopologyNode>,
+    pub recent_insights: Vec<TopologyKnowledgeAnnotation>,
+    pub pending_knowledge: Vec<TopologyKnowledgeAnnotation>,
+    pub horizon: Vec<HorizonCommentary>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -49,6 +58,74 @@ pub struct StoryTopologyNode {
     pub requirement_refs: Vec<String>,
     pub dependencies: Vec<String>,
     pub unmet_dependencies: Vec<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum KnowledgeAnnotationKind {
+    RecentInsight,
+    PendingKnowledge,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TopologyKnowledgeAnnotation {
+    pub kind: KnowledgeAnnotationKind,
+    pub id: String,
+    pub title: String,
+    pub category: String,
+    pub scope: Option<String>,
+}
+
+impl TopologyKnowledgeAnnotation {
+    fn from_ranked(kind: KnowledgeAnnotationKind, ranked: &RankedKnowledge) -> Self {
+        Self {
+            kind,
+            id: ranked.knowledge.id.clone(),
+            title: ranked.knowledge.title.clone(),
+            category: ranked.knowledge.category.clone(),
+            scope: ranked.knowledge.scope.clone(),
+        }
+    }
+
+    fn from_knowledge(kind: KnowledgeAnnotationKind, knowledge: &knowledge::Knowledge) -> Self {
+        Self {
+            kind,
+            id: knowledge.id.clone(),
+            title: knowledge.title.clone(),
+            category: knowledge.category.clone(),
+            scope: knowledge.scope.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HorizonCommentaryKind {
+    Risk,
+    Advisory,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HorizonCommentary {
+    pub kind: HorizonCommentaryKind,
+    pub signal: String,
+    pub message: String,
+}
+
+impl HorizonCommentary {
+    fn risk(signal: impl Into<String>, message: impl Into<String>) -> Self {
+        Self {
+            kind: HorizonCommentaryKind::Risk,
+            signal: signal.into(),
+            message: message.into(),
+        }
+    }
+
+    fn advisory(signal: impl Into<String>, message: impl Into<String>) -> Self {
+        Self {
+            kind: HorizonCommentaryKind::Advisory,
+            signal: signal.into(),
+            message: message.into(),
+        }
+    }
 }
 
 pub fn build_epic_topology_projection(
@@ -120,6 +197,32 @@ pub fn build_epic_topology_projection(
         })
         .collect::<Result<Vec<_>>>()?;
 
+    let all_knowledge = knowledge::scan_all_knowledge(&board.root)?;
+    let recent_insights = build_recent_insights(&all_knowledge, epic.id(), RECENT_INSIGHT_LIMIT);
+    let pending_ranked = knowledge::rank_relevant_knowledge(
+        all_knowledge.clone(),
+        Some(epic.id()),
+        None,
+        PENDING_KNOWLEDGE_LIMIT,
+    );
+    let pending_knowledge = pending_ranked
+        .iter()
+        .map(|ranked| {
+            TopologyKnowledgeAnnotation::from_ranked(
+                KnowledgeAnnotationKind::PendingKnowledge,
+                ranked,
+            )
+        })
+        .collect();
+    let horizon = build_horizon_commentary(
+        board,
+        epic,
+        &epic_show,
+        &voyages,
+        &all_knowledge,
+        &pending_ranked,
+    );
+
     Ok(EpicTopologyProjection {
         epic: EpicTopologyEpic {
             id: epic.id().to_string(),
@@ -129,7 +232,264 @@ pub fn build_epic_topology_projection(
             show: epic_show,
         },
         voyages,
+        recent_insights,
+        pending_knowledge,
+        horizon,
     })
+}
+
+fn build_recent_insights(
+    all_knowledge: &[knowledge::Knowledge],
+    epic_id: &str,
+    limit: usize,
+) -> Vec<TopologyKnowledgeAnnotation> {
+    let mut recent: Vec<_> = all_knowledge
+        .iter()
+        .filter(|unit| knowledge_matches_epic(unit, epic_id))
+        .filter(|unit| unit.is_applied())
+        .cloned()
+        .collect();
+
+    if recent.is_empty() {
+        recent = all_knowledge
+            .iter()
+            .filter(|unit| knowledge_matches_epic(unit, epic_id))
+            .cloned()
+            .collect();
+    }
+
+    recent.sort_by(compare_recent_knowledge);
+    recent.truncate(limit);
+    recent
+        .iter()
+        .map(|knowledge| {
+            TopologyKnowledgeAnnotation::from_knowledge(
+                KnowledgeAnnotationKind::RecentInsight,
+                knowledge,
+            )
+        })
+        .collect()
+}
+
+fn build_horizon_commentary(
+    board: &Board,
+    epic: &Epic,
+    epic_show: &EpicShowProjection,
+    voyages: &[VoyageTopologyNode],
+    all_knowledge: &[knowledge::Knowledge],
+    pending_ranked: &[RankedKnowledge],
+) -> Vec<HorizonCommentary> {
+    let mut horizon = Vec::new();
+
+    let stories: Vec<_> = voyages
+        .iter()
+        .flat_map(|voyage| voyage.stories.iter())
+        .collect();
+    let stories_without_verification = stories
+        .iter()
+        .filter(|story| story.show.evidence.items.is_empty())
+        .count();
+
+    if epic_show.verification.missing_linked_proofs > 0 || stories_without_verification > 0 {
+        let mut parts = Vec::new();
+        if epic_show.verification.missing_linked_proofs > 0 {
+            let count = epic_show.verification.missing_linked_proofs;
+            let suffix = if count == 1 { "" } else { "s" };
+            parts.push(format!("{count} missing linked proof{suffix}"));
+        }
+        if stories_without_verification > 0 {
+            let suffix = if stories_without_verification == 1 {
+                "y"
+            } else {
+                "ies"
+            };
+            parts.push(format!(
+                "{} stor{} without verification coverage",
+                stories_without_verification, suffix
+            ));
+        }
+
+        horizon.push(HorizonCommentary::risk(
+            "verification-debt",
+            format!("verification debt: {}", parts.join("; ")),
+        ));
+        horizon.push(HorizonCommentary::advisory(
+            "verification-debt",
+            "record the missing proof artifacts and close uncovered verification before more stories depend on this flow",
+        ));
+    }
+
+    let epic_capacity = capacity::project(board)
+        .epics
+        .into_iter()
+        .find(|report| report.id == epic.id());
+    let blocked = epic_capacity
+        .as_ref()
+        .map(|report| report.capacity.blocked)
+        .unwrap_or(0);
+    let ready = epic_capacity
+        .as_ref()
+        .map(|report| report.capacity.ready)
+        .unwrap_or(0);
+
+    if epic_show.eta.remaining_stories > 0 {
+        if epic_show.eta.throughput_stories_per_week <= 0.0 {
+            let mut message = format!(
+                "ETA risk: {} remaining stor{} but no recent throughput signal; ETA is currently unknown",
+                epic_show.eta.remaining_stories,
+                if epic_show.eta.remaining_stories == 1 {
+                    "y"
+                } else {
+                    "ies"
+                }
+            );
+            if blocked > 0 {
+                message.push_str(&format!(
+                    "; {blocked} blocked stor{}",
+                    if blocked == 1 { "y" } else { "ies" }
+                ));
+            }
+            horizon.push(HorizonCommentary::risk("eta-risk", message));
+            horizon.push(HorizonCommentary::advisory(
+                "eta-risk",
+                "finish or unblock one story to re-establish a trustworthy throughput signal",
+            ));
+        } else if let Some(eta_weeks) = epic_show.eta.eta_weeks
+            && (eta_weeks >= 2.0 || blocked > 0)
+        {
+            let mut message = format!(
+                "ETA risk: {:.1} weeks for {} remaining stor{} at {:.1} stories/week",
+                eta_weeks,
+                epic_show.eta.remaining_stories,
+                if epic_show.eta.remaining_stories == 1 {
+                    "y"
+                } else {
+                    "ies"
+                },
+                epic_show.eta.throughput_stories_per_week
+            );
+            if blocked > 0 {
+                message.push_str(&format!(
+                    "; {blocked} blocked stor{}",
+                    if blocked == 1 { "y" } else { "ies" }
+                ));
+            }
+            if ready == 0 {
+                message.push_str("; ready queue is empty");
+            }
+            horizon.push(HorizonCommentary::risk("eta-risk", message));
+            horizon.push(HorizonCommentary::advisory(
+                "eta-risk",
+                "reduce blockage on the visible chain before adding more work to this epic",
+            ));
+        }
+    }
+
+    let relevant_knowledge: Vec<_> = all_knowledge
+        .iter()
+        .filter(|unit| knowledge_matches_epic(unit, epic.id()))
+        .cloned()
+        .collect();
+    let signals: Vec<_> = relevant_knowledge
+        .iter()
+        .filter_map(|unit| unit.to_signal())
+        .collect();
+    let patterns =
+        knowledge::detect_rising_patterns(&signals, Utc::now(), &DetectionConfig::default());
+    let mut emitted_focus_pattern = false;
+    for pattern in patterns {
+        let Some(focus_area) = pattern.focus_area() else {
+            continue;
+        };
+        if !matches!(focus_area, "architecture" | "code" | "process") {
+            continue;
+        }
+
+        emitted_focus_pattern = true;
+        horizon.push(HorizonCommentary::risk(
+            format!("pattern:{}", pattern.pattern_id()),
+            format!(
+                "{focus_area} debt signal: rising {focus_area} pattern (+{:.0}% across {} refs)",
+                pattern.trend_delta() * 100.0,
+                pattern.evidence_ids().len()
+            ),
+        ));
+        horizon.push(HorizonCommentary::advisory(
+            format!("pattern:{}", pattern.pattern_id()),
+            format!("codify the recurring {focus_area} pattern in an ADR or bearing"),
+        ));
+    }
+
+    if !emitted_focus_pattern {
+        let pending_debt_ids: Vec<_> = pending_ranked
+            .iter()
+            .filter(|ranked| {
+                matches!(
+                    ranked.knowledge.category.as_str(),
+                    "architecture" | "code" | "process"
+                )
+            })
+            .map(|ranked| ranked.knowledge.id.clone())
+            .collect();
+        if !pending_debt_ids.is_empty() {
+            horizon.push(HorizonCommentary::risk(
+                "pending-tech-process-knowledge",
+                format!(
+                    "process debt signal: pending scoped knowledge {} is still unapplied",
+                    pending_debt_ids.join(", ")
+                ),
+            ));
+        }
+    }
+
+    let pending_ids: Vec<_> = pending_ranked
+        .iter()
+        .map(|ranked| ranked.knowledge.id.clone())
+        .collect();
+    if !pending_ids.is_empty() {
+        horizon.push(HorizonCommentary::advisory(
+            "pending-knowledge",
+            format!(
+                "review pending knowledge {} before continuing the epic flow",
+                pending_ids.join(", ")
+            ),
+        ));
+    }
+
+    horizon
+}
+
+fn knowledge_matches_epic(unit: &knowledge::Knowledge, epic_id: &str) -> bool {
+    unit.scope
+        .as_deref()
+        .is_some_and(|scope| scope == epic_id || scope.starts_with(&format!("{epic_id}/")))
+}
+
+fn compare_recent_knowledge(
+    left: &knowledge::Knowledge,
+    right: &knowledge::Knowledge,
+) -> std::cmp::Ordering {
+    let left_observed = left
+        .observed_at
+        .map(|value| value.timestamp())
+        .unwrap_or(i64::MIN);
+    let right_observed = right
+        .observed_at
+        .map(|value| value.timestamp())
+        .unwrap_or(i64::MIN);
+    let left_created = left
+        .created_at
+        .map(|value| value.and_utc().timestamp())
+        .unwrap_or(i64::MIN);
+    let right_created = right
+        .created_at
+        .map(|value| value.and_utc().timestamp())
+        .unwrap_or(i64::MIN);
+
+    right_observed
+        .cmp(&left_observed)
+        .then_with(|| right_created.cmp(&left_created))
+        .then_with(|| left.id.cmp(&right.id))
 }
 
 #[cfg(test)]
