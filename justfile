@@ -33,10 +33,10 @@ quality:
   cargo fmt --all -- --check
   cargo clippy --all-targets --all-features -- -D warnings
 
-# Generate test coverage report (use --html for HTML report)
+# Generate an LCOV coverage report at coverage/lcov.info (pass custom args to override)
 coverage args="":
   mkdir -p coverage
-  cargo llvm-cov nextest --output-dir ./coverage {{args}}
+  if [[ -n "{{args}}" ]]; then cargo llvm-cov nextest {{args}}; else cargo llvm-cov nextest --lcov --output-path ./coverage/lcov.info; fi
 
 # Run the keel binary via cargo with arguments
 keel *args:
