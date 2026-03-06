@@ -34,10 +34,11 @@ fn build_topology_output_with_width(
 ) -> Result<String> {
     let board = load_board(board_dir)?;
     let epic = board.require_epic(epic_id)?;
-    let projection =
-        build_epic_topology_projection(&board, epic, TopologyBuildOptions { include_done })?;
+    let options = TopologyBuildOptions { include_done };
+    let projection = build_epic_topology_projection(&board, epic, options)?;
+    let effective_include_done = options.includes_done_for(epic);
 
-    Ok(render_topology(&projection, include_done, width))
+    Ok(render_topology(&projection, effective_include_done, width))
 }
 
 #[cfg(test)]
@@ -349,6 +350,29 @@ Out of scope:
         temp
     }
 
+    fn done_epic_fixture() -> tempfile::TempDir {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1").title("Completed Epic"))
+            .voyage(
+                TestVoyage::new("v1", "e1")
+                    .title("Done Voyage")
+                    .status("done")
+                    .index(1)
+                    .srs_content(SRS),
+            )
+            .story(
+                TestStory::new("S1")
+                    .title("Done Story")
+                    .scope("e1/v1")
+                    .index(1)
+                    .status(StoryState::Done)
+                    .body("## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] shipped node"),
+            )
+            .build();
+        write_epic_prd(temp.path(), "e1", PRD);
+        temp
+    }
+
     fn hotspot_fixture() -> tempfile::TempDir {
         let temp = TestBoardBuilder::new()
             .epic(
@@ -593,6 +617,19 @@ Out of scope:
         assert!(output.contains("Done Story"));
         assert!(output.contains("Archived Story"));
         assert!(output.contains("all entities (including done)"));
+    }
+
+    #[test]
+    fn topology_command_auto_includes_done_for_done_epic() {
+        let temp = done_epic_fixture();
+
+        let output = build_topology_output(temp.path(), "e1", false).unwrap();
+
+        assert!(output.contains("Completed Epic"));
+        assert!(output.contains("Done Voyage"));
+        assert!(output.contains("Done Story"));
+        assert!(output.contains("all entities (including done)"));
+        assert!(!output.contains("(no voyages or stories visible for this epic)"));
     }
 
     #[test]

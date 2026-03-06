@@ -20,6 +20,12 @@ pub struct TopologyBuildOptions {
     pub include_done: bool,
 }
 
+impl TopologyBuildOptions {
+    pub fn includes_done_for(self, epic: &Epic) -> bool {
+        self.include_done || epic.status() == EpicState::Done
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct EpicTopologyProjection {
     pub epic: EpicTopologyEpic,
@@ -133,6 +139,7 @@ pub fn build_epic_topology_projection(
     epic: &Epic,
     options: TopologyBuildOptions,
 ) -> Result<EpicTopologyProjection> {
+    let include_done = options.includes_done_for(epic);
     let epic_show = planning_show::build_epic_show_projection(board, epic)?;
     let traceability = traceability::build_matrix(board);
     let dependencies = traceability::derive_implementation_dependencies(board);
@@ -144,7 +151,7 @@ pub fn build_epic_topology_projection(
 
     let voyages = voyages
         .into_iter()
-        .filter(|voyage| options.include_done || voyage.status() != VoyageState::Done)
+        .filter(|voyage| include_done || voyage.status() != VoyageState::Done)
         .map(|voyage| {
             let voyage_show = planning_show::build_voyage_show_projection(board, voyage)?;
 
@@ -155,7 +162,7 @@ pub fn build_epic_topology_projection(
 
             let stories = stories
                 .into_iter()
-                .filter(|story| options.include_done || story.status() != StoryState::Done)
+                .filter(|story| include_done || story.status() != StoryState::Done)
                 .map(|story| {
                     let show = planning_show::build_story_show_projection(story)?;
                     let requirement_refs = traceability
@@ -600,6 +607,95 @@ Need an epic topology view.
         )
     }
 
+    fn done_epic_fixture_builder() -> (TestBoardBuilder, &'static str) {
+        let srs = r#"# SRS
+> Ship a topology projection.
+
+## Scope
+In scope:
+- [SCOPE-01] Render projection rows.
+
+Out of scope:
+- [SCOPE-02] Rendering polish.
+
+## Requirements
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+| SRS-01 | Render projection nodes. | SCOPE-01 | FR-01 | automated |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#;
+
+        let prd = r#"# PRD
+
+## Problem Statement
+
+Need an epic topology view.
+
+## Goals & Objectives
+
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | Render topology. | Visible nodes. | 1 command |
+
+## Users
+
+| Persona | Description | Primary Need |
+|---------|-------------|--------------|
+| Operator | Reviews one epic. | See flow. |
+
+## Scope
+
+### In Scope
+
+- [SCOPE-01] Render topology rows.
+
+### Out of Scope
+
+- [SCOPE-02] Export formats.
+
+## Requirements
+
+### Functional Requirements
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| FR-01 | Render a topology view. | GOAL-01 | must | Required for epic review. |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+
+### Non-Functional Requirements
+
+<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Goals | Priority | Rationale |
+|----|-------------|-------|----------|-----------|
+| NFR-01 | Keep output deterministic. | GOAL-01 | must | Required for trust. |
+<!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+"#;
+
+        (
+            TestBoardBuilder::new()
+                .epic(TestEpic::new("e1").title("Completed Epic"))
+                .voyage(
+                    TestVoyage::new("v1", "e1")
+                        .title("Done Voyage")
+                        .status("done")
+                        .index(1)
+                        .srs_content(srs),
+                )
+                .story(
+                    TestStory::new("S1")
+                        .title("Done Story")
+                        .scope("e1/v1")
+                        .index(1)
+                        .status(StoryState::Done)
+                        .body("## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] shipped node"),
+                ),
+            prd,
+        )
+    }
+
     fn write_epic_prd(board_root: &Path, epic_id: &str, content: &str) {
         fs::write(
             board_root.join("epics").join(epic_id).join("PRD.md"),
@@ -779,6 +875,26 @@ Need an epic topology view.
         .unwrap();
 
         assert_eq!(projection_a, projection_b);
+    }
+
+    #[test]
+    fn topology_projection_keeps_done_descendants_visible_for_done_epic() {
+        let (builder, prd) = done_epic_fixture_builder();
+        let temp = builder.build();
+        write_epic_prd(temp.path(), "e1", prd);
+        let board = load_board(temp.path()).unwrap();
+        let epic = board.require_epic("e1").unwrap();
+
+        let projection =
+            build_epic_topology_projection(&board, epic, TopologyBuildOptions::default()).unwrap();
+
+        assert_eq!(projection.epic.status, EpicState::Done);
+        assert_eq!(projection.voyages.len(), 1);
+        assert_eq!(projection.voyages[0].id, "v1");
+        assert_eq!(projection.voyages[0].status, VoyageState::Done);
+        assert_eq!(projection.voyages[0].stories.len(), 1);
+        assert_eq!(projection.voyages[0].stories[0].id, "S1");
+        assert_eq!(projection.voyages[0].stories[0].status, StoryState::Done);
     }
 
     #[test]
