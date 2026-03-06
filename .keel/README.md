@@ -100,3 +100,9 @@
 |--------|--------|
 | [Epic Topology Terminal View](epics/1vyWIF000/voyages/1vyWIM000/) | in-progress |
 
+### [Dogfood VHS Acceptance Verification](epics/1vyWLl000/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Tape-Driven Dogfood Workflow Suite](epics/1vyWLl000/voyages/1vyWNL000/) | planned |
+| [Artifact-Aware Judge Contract](epics/1vyWLl000/voyages/1vyWNV000/) | planned |
