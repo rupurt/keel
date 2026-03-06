@@ -11,6 +11,15 @@ pub mod start;
 use anyhow::Result;
 use clap::Subcommand;
 
+const VOYAGE_STATUS_VALUES: &[&str] = &["draft", "planned", "in-progress", "done"];
+
+pub(crate) fn parse_voyage_status(value: &str) -> Result<String, String> {
+    crate::cli::commands::management::status_filter::validate_status_arg(
+        value,
+        VOYAGE_STATUS_VALUES,
+    )
+}
+
 #[derive(Subcommand, Debug)]
 pub enum VoyageAction {
     /// Create a new voyage
@@ -67,9 +76,9 @@ pub enum VoyageAction {
         /// Filter by epic
         #[arg(long, short)]
         epic: Option<String>,
-        /// Filter by status
-        #[arg(long, short, value_parser = ["draft", "planned", "in-progress", "done"])]
-        status: Option<String>,
+        /// Filter by status. Repeat to override or use + / - to modify the default active view.
+        #[arg(long, short, action = clap::ArgAction::Append, value_parser = parse_voyage_status)]
+        status: Vec<String>,
     },
 }
 
@@ -90,6 +99,6 @@ pub fn run(action: VoyageAction) -> Result<()> {
             different,
         } => done::run(&id, well, hard, different),
         VoyageAction::Show { id } => show::run(&id),
-        VoyageAction::List { epic, status } => list::run(epic.as_deref(), status.as_deref()),
+        VoyageAction::List { epic, status } => list::run(epic.as_deref(), &status),
     }
 }

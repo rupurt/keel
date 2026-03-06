@@ -63,17 +63,17 @@ mod tests {
             .story(
                 TestStory::new("FEAT0001")
                     .title("Active Story")
-                    .stage(StoryState::InProgress),
+                    .status(StoryState::InProgress),
             )
             .story(
                 TestStory::new("FEAT0002")
                     .title("Pending Story")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .story(
                 TestStory::new("FEAT0003")
                     .title("Complete Story")
-                    .stage(StoryState::Done),
+                    .status(StoryState::Done),
             )
             .build();
         let board = load_board(temp.path()).unwrap();
@@ -106,7 +106,7 @@ mod tests {
             .story(
                 TestStory::new("STORY1")
                     .title("Test Story")
-                    .stage(StoryState::InProgress),
+                    .status(StoryState::InProgress),
             )
             .build();
         let board = load_board(temp.path()).unwrap();

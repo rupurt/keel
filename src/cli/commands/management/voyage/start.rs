@@ -269,7 +269,7 @@ mod tests {
             .story(
                 TestStory::new("STORY01")
                     .scope("test-epic/01-test")
-                    .stage(StoryState::InProgress),
+                    .status(StoryState::InProgress),
             )
             .build();
 
@@ -295,7 +295,7 @@ mod tests {
             .story(
                 TestStory::new("STORY01")
                     .scope("test-epic/01-test")
-                    .stage(StoryState::NeedsHumanVerification),
+                    .status(StoryState::NeedsHumanVerification),
             )
             .build();
 
@@ -321,7 +321,7 @@ mod tests {
             .story(
                 TestStory::new("STORY01")
                     .scope("test-epic/01-test")
-                    .stage(StoryState::Done),
+                    .status(StoryState::Done),
             )
             .build();
 
@@ -345,12 +345,12 @@ mod tests {
             .story(
                 TestStory::new("STORY01")
                     .scope("test-epic/01-test")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .story(
                 TestStory::new("STORY02")
                     .scope("test-epic/01-test")
-                    .stage(StoryState::Icebox),
+                    .status(StoryState::Icebox),
             )
             .build();
 
@@ -374,17 +374,17 @@ mod tests {
             .story(
                 TestStory::new("STORY01")
                     .scope("test-epic/01-test")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .story(
                 TestStory::new("STORY02")
                     .scope("test-epic/01-test")
-                    .stage(StoryState::InProgress),
+                    .status(StoryState::InProgress),
             )
             .story(
                 TestStory::new("STORY03")
                     .scope("test-epic/01-test")
-                    .stage(StoryState::Done),
+                    .status(StoryState::Done),
             )
             .build();
 

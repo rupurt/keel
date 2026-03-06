@@ -99,7 +99,7 @@ pub fn run(board_dir: &Path, id: Option<&str>, all: bool, json: bool) -> Result<
             let story = board.require_story(id)?;
             let content = std::fs::read_to_string(&story.path)?;
             let report = verification::verify_story(board_dir, story.id(), &content)?;
-            let guidance = guidance_for_verify_story(story.id(), story.stage, &report);
+            let guidance = guidance_for_verify_story(story.id(), story.status, &report);
 
             if json {
                 let payload = build_payload(

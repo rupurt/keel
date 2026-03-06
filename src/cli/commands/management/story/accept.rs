@@ -18,7 +18,7 @@ pub fn run(board_dir: &Path, id: &str, human: bool, reflect: Option<&str>) -> Re
 
     let board = load_board(board_dir)?;
     let story = board.require_story(id)?;
-    let guidance = guidance_for_action(StoryLifecycleAction::Accept, story.stage, story.id());
+    let guidance = guidance_for_action(StoryLifecycleAction::Accept, story.status, story.id());
     print_human(guidance.as_ref());
 
     Ok(())
@@ -41,7 +41,7 @@ mod tests {
             .story(
                 TestStory::new("READY1")
                     .title("Ready Story")
-                    .stage(StoryState::NeedsHumanVerification)
+                    .status(StoryState::NeedsHumanVerification)
                     .scope("test-epic/01-voyage"),
             )
             .build();
@@ -62,7 +62,7 @@ mod tests {
             .story(
                 TestStory::new("UPDATE1")
                     .title("Update Story")
-                    .stage(StoryState::NeedsHumanVerification)
+                    .status(StoryState::NeedsHumanVerification)
                     .scope("test-epic/01-voyage"),
             )
             .build();
@@ -95,7 +95,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("1vkqtsHH1")
-                    .stage(StoryState::NeedsHumanVerification)
+                    .status(StoryState::NeedsHumanVerification)
                     .body("## Acceptance Criteria\n\n- [x] Check this <!-- verify: manual -->"),
             )
             .build();
@@ -117,7 +117,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("1vkqtsHH2")
-                    .stage(StoryState::NeedsHumanVerification)
+                    .status(StoryState::NeedsHumanVerification)
                     .body("## Acceptance Criteria\n\n- [x] Check this <!-- verify: manual -->"),
             )
             .build();
@@ -135,7 +135,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("1vkqtsHH3")
-                    .stage(StoryState::NeedsHumanVerification)
+                    .status(StoryState::NeedsHumanVerification)
                     .body("## Acceptance Criteria\n\n- [x] Check this <!-- verify: echo ok -->"),
             )
             .build();
@@ -153,7 +153,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("1vkqtsHH4")
-                    .stage(StoryState::NeedsHumanVerification)
+                    .status(StoryState::NeedsHumanVerification)
                     .body("## Acceptance Criteria\n\n- [x] Simple criteria"),
             )
             .build();
@@ -174,7 +174,7 @@ mod tests {
             .story(
                 TestStory::new("1vkqtsAAA")
                     .title("Flat Story")
-                    .stage(StoryState::NeedsHumanVerification)
+                    .status(StoryState::NeedsHumanVerification)
                     .scope("test-epic/01-first"),
             )
             .build();
@@ -196,7 +196,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("1vqNrfl01")
-                    .stage(StoryState::NeedsHumanVerification)
+                    .status(StoryState::NeedsHumanVerification)
                     .body("\n## Acceptance Criteria\n\n- [x] Something done"),
             )
             .build();
@@ -224,7 +224,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("1vqNrfl02")
-                    .stage(StoryState::NeedsHumanVerification)
+                    .status(StoryState::NeedsHumanVerification)
                     .body("\n## Acceptance Criteria\n\n- [x] Something done"),
             )
             .build();
@@ -242,7 +242,7 @@ mod tests {
     #[test]
     fn accept_without_reflect_unchanged() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("1vqNrfl03").stage(StoryState::NeedsHumanVerification))
+            .story(TestStory::new("1vqNrfl03").status(StoryState::NeedsHumanVerification))
             .build();
 
         run(temp.path(), "1vqNrfl03", false, None).unwrap();
@@ -255,7 +255,7 @@ mod tests {
     #[test]
     fn multiple_reflections_append() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("1vqNrfl04").stage(StoryState::NeedsHumanVerification))
+            .story(TestStory::new("1vqNrfl04").status(StoryState::NeedsHumanVerification))
             .build();
 
         let s_dir = temp.path().join("stories/1vqNrfl04");

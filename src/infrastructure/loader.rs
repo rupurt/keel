@@ -79,12 +79,7 @@ impl FromPath for Story {
             .with_context(|| format!("Failed to read story file: {}", path.display()))?;
         let (frontmatter, _body): (StoryFrontmatter, _) = parse_frontmatter(&content)
             .with_context(|| format!("Failed to parse story frontmatter: {}", path.display()))?;
-        let stage = frontmatter.status;
-        Ok(Story {
-            frontmatter,
-            path: path.to_path_buf(),
-            stage,
-        })
+        Ok(Story::new(frontmatter, path.to_path_buf()))
     }
     fn entity_id(&self) -> &str {
         self.id()
@@ -424,7 +419,7 @@ Voyage description
         let board = load_board(temp.path()).unwrap();
 
         let story = board.stories.get("FEAT0001").unwrap();
-        assert_eq!(story.stage, StoryState::Backlog);
+        assert_eq!(story.status, StoryState::Backlog);
     }
 
     #[test]
@@ -614,10 +609,10 @@ Voyage description
 
         // Story status should come from frontmatter, not directory
         let backlog_story = board.stories.get("1vkqAAA01").unwrap();
-        assert_eq!(backlog_story.stage, StoryState::Backlog);
+        assert_eq!(backlog_story.status, StoryState::Backlog);
 
         let in_progress_story = board.stories.get("1vkqAAA02").unwrap();
-        assert_eq!(in_progress_story.stage, StoryState::InProgress);
+        assert_eq!(in_progress_story.status, StoryState::InProgress);
     }
 
     #[test]

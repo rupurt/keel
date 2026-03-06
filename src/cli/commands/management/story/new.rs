@@ -327,7 +327,7 @@ status: in-progress
             .story(
                 TestStory::new("EXIST1")
                     .title("Existing Story")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
         let board_dir = temp.path();
@@ -422,7 +422,7 @@ status: in-progress
                 TestStory::new("S1")
                     .scope("epic1/v1")
                     .index(1)
-                    .stage(StoryState::Icebox),
+                    .status(StoryState::Icebox),
             )
             .build();
         let board_dir = temp.path();

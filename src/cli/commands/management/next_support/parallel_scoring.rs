@@ -101,21 +101,21 @@ mod tests {
                     .title("Core auth work")
                     .scope("core/01-auth")
                     .role("engineer/software")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .story(
                 TestStory::new("S2")
                     .title("Core storage work")
                     .scope("core/02-storage")
                     .role("engineer/software")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .story(
                 TestStory::new("S3")
                     .title("Ops pipeline work")
                     .scope("ops/01-ci")
                     .role("operator/infra")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 
@@ -155,19 +155,19 @@ mod tests {
                     .title("Certain A")
                     .scope("core/01-a")
                     .role("engineer/software")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .story(
                 TestStory::new("S-CERTAIN-B")
                     .title("Certain B")
                     .scope("core/02-b")
                     .role("engineer/software")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .story(
                 TestStory::new("S-UNKNOWN")
                     .title("Unknown structure")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 

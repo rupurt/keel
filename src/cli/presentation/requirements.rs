@@ -115,7 +115,7 @@ mod tests {
                 scope_refs: vec!["SCOPE-01".to_string()],
                 linked_stories: vec![StoryRef {
                     id: "S1".to_string(),
-                    stage: StoryState::Done,
+                    status: StoryState::Done,
                     index: Some(1),
                 }],
                 completion: RequirementCompletion::Done,
@@ -139,7 +139,7 @@ mod tests {
             scope_refs: vec!["SCOPE-01".to_string(), "SCOPE-03".to_string()],
             linked_stories: vec![StoryRef {
                 id: "S1".to_string(),
-                stage: StoryState::Done,
+                status: StoryState::Done,
                 index: Some(1),
             }],
             completion: RequirementCompletion::Done,

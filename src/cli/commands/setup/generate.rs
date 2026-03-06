@@ -82,7 +82,7 @@ mod tests {
             .story(
                 TestStory::new("FEAT0001")
                     .title("Active Story")
-                    .stage(crate::domain::model::StoryState::InProgress)
+                    .status(crate::domain::model::StoryState::InProgress)
                     .scope("test-epic/01-first"),
             )
             .build();
@@ -128,7 +128,7 @@ mod tests {
             .story(
                 TestStory::new("FEAT0001")
                     .title("Active Story")
-                    .stage(crate::domain::model::StoryState::InProgress)
+                    .status(crate::domain::model::StoryState::InProgress)
                     .scope("test-epic/01-first"),
             )
             .build();

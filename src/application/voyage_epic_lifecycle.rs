@@ -326,12 +326,12 @@ mod tests {
             .story(
                 TestStory::new("DONE01")
                     .scope("test-epic/01-planned")
-                    .stage(crate::domain::model::StoryState::Done),
+                    .status(crate::domain::model::StoryState::Done),
             )
             .story(
                 TestStory::new("BACKLOG01")
                     .scope("test-epic/01-planned")
-                    .stage(crate::domain::model::StoryState::Backlog)
+                    .status(crate::domain::model::StoryState::Backlog)
                     .body("## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] First criteria <!-- verify: manual -->"),
             )
             .build();

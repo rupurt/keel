@@ -540,13 +540,13 @@ More details.
             .voyage(TestVoyage::new("v1", "epic1"))
             .story(
                 TestStory::new("DONE1")
-                    .stage(StoryState::Done)
+                    .status(StoryState::Done)
                     .scope("epic1/v1")
                     .body("- [x] done"),
             )
             .story(
                 TestStory::new("TODO1")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .scope("epic1/v1")
                     .body("- [ ] todo"),
             )

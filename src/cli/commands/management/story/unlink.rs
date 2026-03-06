@@ -76,7 +76,7 @@ mod tests {
             .story(
                 TestStory::new("FEAT0001")
                     .title("Linked Story")
-                    .stage(crate::domain::model::StoryState::Backlog)
+                    .status(crate::domain::model::StoryState::Backlog)
                     .scope("test-epic/01-first"),
             )
             .build();

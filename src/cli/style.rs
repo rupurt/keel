@@ -37,15 +37,15 @@ const GOAL_HIGHLIGHT_BG: (u8, u8, u8) = (112, 80, 0);
 const SCOPE_HIGHLIGHT_FG: (u8, u8, u8) = (214, 247, 255);
 const SCOPE_HIGHLIGHT_BG: (u8, u8, u8) = (0, 83, 104);
 
-/// Color a stage label by its workflow meaning
-pub fn styled_stage(stage: &StoryState) -> String {
-    match stage {
-        StoryState::Backlog => format!("{}", stage.dimmed()),
-        StoryState::InProgress => format!("{}", stage.blue()),
-        StoryState::NeedsHumanVerification => format!("{}", stage.yellow()),
-        StoryState::Done => format!("{}", stage.green()),
-        StoryState::Rejected => format!("{}", stage.red()),
-        StoryState::Icebox => format!("{}", stage.dimmed()),
+/// Color a story status label by its workflow meaning
+pub fn styled_story_status(status: &StoryState) -> String {
+    match status {
+        StoryState::Backlog => format!("{}", status.dimmed()),
+        StoryState::InProgress => format!("{}", status.blue()),
+        StoryState::NeedsHumanVerification => format!("{}", status.yellow()),
+        StoryState::Done => format!("{}", status.green()),
+        StoryState::Rejected => format!("{}", status.red()),
+        StoryState::Icebox => format!("{}", status.dimmed()),
     }
 }
 
@@ -757,9 +757,9 @@ mod tests {
     }
 
     #[test]
-    fn styled_stage_colors() {
-        assert!(styled_stage(&StoryState::InProgress).contains("\x1b[34m")); // blue
-        assert!(styled_stage(&StoryState::Done).contains("\x1b[32m")); // green
-        assert!(styled_stage(&StoryState::Rejected).contains("\x1b[31m")); // red
+    fn styled_story_status_colors() {
+        assert!(styled_story_status(&StoryState::InProgress).contains("\x1b[34m")); // blue
+        assert!(styled_story_status(&StoryState::Done).contains("\x1b[32m")); // green
+        assert!(styled_story_status(&StoryState::Rejected).contains("\x1b[31m")); // red
     }
 }

@@ -43,7 +43,7 @@ pub fn generate_epic_readme(board: &Board, epic: &Epic) -> String {
         .stories
         .values()
         .filter(|s| {
-            s.epic() == Some(epic.id()) && s.stage == crate::domain::model::StoryState::Done
+            s.epic() == Some(epic.id()) && s.status == crate::domain::model::StoryState::Done
         })
         .count();
 
@@ -71,7 +71,7 @@ pub fn generate_epic_readme(board: &Board, epic: &Epic) -> String {
             let v_stories = board.stories_for_voyage(v);
             let v_done = v_stories
                 .iter()
-                .filter(|s| s.stage == crate::domain::model::StoryState::Done)
+                .filter(|s| s.status == crate::domain::model::StoryState::Done)
                 .count();
 
             writeln!(

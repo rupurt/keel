@@ -54,7 +54,7 @@ fn find_most_recent_epic(board: &Board, draft_voyages: &[&Voyage]) -> Option<Str
         std::collections::HashMap::new();
 
     for story in board.stories.values() {
-        if story.stage == StoryState::NeedsHumanVerification {
+        if story.status == StoryState::NeedsHumanVerification {
             if let Some(submitted) = story.frontmatter.submitted_at {
                 if let Some(epic) = epic_from_scope(&story.frontmatter.scope) {
                     epic_activity
@@ -72,7 +72,7 @@ fn find_most_recent_epic(board: &Board, draft_voyages: &[&Voyage]) -> Option<Str
 
     // Also check in-progress stories (current work)
     for story in board.stories.values() {
-        if story.stage == StoryState::InProgress {
+        if story.status == StoryState::InProgress {
             if let Some(updated) = story.frontmatter.updated_at {
                 if let Some(epic) = epic_from_scope(&story.frontmatter.scope) {
                     epic_activity
@@ -130,7 +130,7 @@ fn find_most_recent_epic(board: &Board, draft_voyages: &[&Voyage]) -> Option<Str
             let count = board
                 .stories
                 .values()
-                .filter(|s| s.stage == StoryState::NeedsHumanVerification)
+                .filter(|s| s.status == StoryState::NeedsHumanVerification)
                 .filter(|s| epic_from_scope(&s.frontmatter.scope).as_ref() == Some(epic))
                 .count();
             (epic.clone(), count)
@@ -178,7 +178,7 @@ fn build_human_next_up(board: &Board) -> Vec<NextUpItem> {
     let mut to_accept: Vec<&Story> = board
         .stories
         .values()
-        .filter(|s| s.stage == StoryState::NeedsHumanVerification)
+        .filter(|s| s.status == StoryState::NeedsHumanVerification)
         .collect();
     to_accept.sort_by_key(|s| s.frontmatter.submitted_at);
     if let Some(story) = to_accept.first() {
@@ -324,7 +324,7 @@ fn build_agent_next_up(board: &Board) -> Vec<NextUpItem> {
     let in_progress: Vec<&Story> = board
         .stories
         .values()
-        .filter(|s| s.stage == StoryState::InProgress)
+        .filter(|s| s.status == StoryState::InProgress)
         .collect();
 
     // Extract epic names from WIP stories (epic = first segment of scope)
@@ -339,7 +339,7 @@ fn build_agent_next_up(board: &Board) -> Vec<NextUpItem> {
     let mut backlog: Vec<&Story> = board
         .stories
         .values()
-        .filter(|s| s.stage == StoryState::Backlog)
+        .filter(|s| s.status == StoryState::Backlog)
         .collect();
 
     // Sort with epic momentum: same-epic first, then by index
@@ -397,14 +397,20 @@ mod tests {
     };
     use std::path::PathBuf;
 
-    fn make_story(id: &str, title: &str, stage: StoryState, index: Option<u32>) -> Story {
-        Story {
-            frontmatter: StoryFrontmatter {
+    fn make_story_with_optional_scope(
+        id: &str,
+        title: &str,
+        status: StoryState,
+        index: Option<u32>,
+        scope: Option<&str>,
+    ) -> Story {
+        Story::new(
+            StoryFrontmatter {
                 id: id.to_string(),
                 title: title.to_string(),
                 story_type: StoryType::Feat,
-                status: stage,
-                scope: None,
+                status,
+                scope: scope.map(|value| value.to_string()),
                 milestone: None,
                 created_at: None,
                 updated_at: None,
@@ -416,9 +422,12 @@ mod tests {
                 blocked_by: vec![],
                 role: None,
             },
-            path: PathBuf::from(format!("{}.md", id)),
-            stage,
-        }
+            PathBuf::from(format!("{}.md", id)),
+        )
+    }
+
+    fn make_story(id: &str, title: &str, status: StoryState, index: Option<u32>) -> Story {
+        make_story_with_optional_scope(id, title, status, index, None)
     }
 
     fn make_voyage(id: &str, title: &str, status: VoyageState) -> Voyage {
@@ -657,31 +666,11 @@ mod tests {
     fn make_story_with_scope(
         id: &str,
         title: &str,
-        stage: StoryState,
+        status: StoryState,
         index: Option<u32>,
         scope: &str,
     ) -> Story {
-        Story {
-            frontmatter: StoryFrontmatter {
-                id: id.to_string(),
-                title: title.to_string(),
-                story_type: StoryType::Feat,
-                status: stage,
-                scope: Some(scope.to_string()),
-                milestone: None,
-                created_at: None,
-                updated_at: None,
-                started_at: None,
-                completed_at: None,
-                submitted_at: None,
-                index,
-                governed_by: vec![],
-                blocked_by: vec![],
-                role: None,
-            },
-            path: PathBuf::from(format!("{}.md", id)),
-            stage,
-        }
+        make_story_with_optional_scope(id, title, status, index, Some(scope))
     }
 
     #[test]

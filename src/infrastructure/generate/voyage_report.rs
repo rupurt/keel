@@ -20,7 +20,7 @@ pub fn generate_voyage_report(board: &Board, voyage: &Voyage) -> String {
     let stories = board.stories_for_voyage(voyage);
     let done_count = stories
         .iter()
-        .filter(|s| s.stage == StoryState::Done)
+        .filter(|s| s.status == StoryState::Done)
         .count();
     let total_count = stories.len();
 
@@ -31,7 +31,7 @@ pub fn generate_voyage_report(board: &Board, voyage: &Voyage) -> String {
     for story in &sorted_stories {
         writeln!(narrative, "### {}", story.title()).unwrap();
         writeln!(narrative, "- **ID:** {}", story.id()).unwrap();
-        writeln!(narrative, "- **Status:** {}", story.stage).unwrap();
+        writeln!(narrative, "- **Status:** {}", story.status).unwrap();
 
         if let Ok(content) = fs::read_to_string(&story.path) {
             // Include summary if available

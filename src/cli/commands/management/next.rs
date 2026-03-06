@@ -370,7 +370,7 @@ fn project_parallel_work<'a>(
                 board
                     .stories
                     .get(id)
-                    .map(|dep| dep.stage == crate::domain::model::StoryState::Done)
+                    .map(|dep| dep.status == crate::domain::model::StoryState::Done)
                     .unwrap_or(false)
             })
         });
@@ -554,7 +554,7 @@ mod tests {
     #[test]
     fn exit_code_work_is_0() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("S1").stage(StoryState::Backlog))
+            .story(TestStory::new("S1").status(StoryState::Backlog))
             .build();
         let result = run(temp.path(), true, false, false, None);
         assert!(result.is_ok());
@@ -567,7 +567,7 @@ mod tests {
                 TestStory::new("S1")
                     .title("Story 1")
                     .scope("EPIC-1/VOY-1")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
@@ -584,7 +584,7 @@ mod tests {
             .story(
                 TestStory::new("S2")
                     .title("Story 2")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
@@ -851,20 +851,20 @@ mod tests {
                     .title("Follow-on core work")
                     .scope("keel/01-parallel")
                     .body("- [ ] [SRS-02/AC-01] follow-on")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .story(
                 TestStory::new("S1")
                     .title("Core foundation")
                     .scope("keel/01-parallel")
                     .body("- [ ] [SRS-01/AC-01] foundation")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .story(
                 TestStory::new("S3")
                     .title("Ops lane")
                     .scope("ops/01-parallel")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 
@@ -900,20 +900,20 @@ mod tests {
                 TestStory::new("S1")
                     .title("Core lane")
                     .scope("keel/01-parallel")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .story(
                 TestStory::new("S2")
                     .title("Ops lane")
                     .scope("keel/01-parallel")
                     .blocked_by(&["S1"])
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .story(
                 TestStory::new("S3")
                     .title("Docs lane")
                     .scope("keel/01-parallel")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 

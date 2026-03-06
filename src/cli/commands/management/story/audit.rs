@@ -27,7 +27,7 @@ pub fn run(board_dir: &Path, id: Option<&str>) -> Result<()> {
                 );
                 println!();
                 audit_story(story, 0)?;
-                Ok(guidance_for_audit_story(story.id(), story.stage))
+                Ok(guidance_for_audit_story(story.id(), story.status))
             } else if let Some(voyage) = board.voyages.get(id) {
                 println!("{}", "Voyage Evidence Audit".magenta().bold().underline());
                 println!();
@@ -80,7 +80,7 @@ fn audit_story(story: &crate::domain::model::Story, indent_level: usize) -> Resu
     let indent = " ".repeat(indent_level);
     let sub_indent = " ".repeat(indent_level + 2);
 
-    let status_indicator = if story.stage == crate::domain::model::StoryState::Done {
+    let status_indicator = if story.status == crate::domain::model::StoryState::Done {
         "✓ ".green().bold().to_string()
     } else {
         "".to_string()
@@ -92,7 +92,7 @@ fn audit_story(story: &crate::domain::model::Story, indent_level: usize) -> Resu
         status_indicator,
         format!("Story/{}", story.id()).bright_blue().bold(),
         story.frontmatter.title,
-        style::styled_stage(&story.stage)
+        style::styled_story_status(&story.status)
     );
 
     let content = std::fs::read_to_string(&story.path)?;
@@ -181,7 +181,7 @@ fn audit_voyage(
     let stories = board.stories_for_voyage(voyage);
     let done_count = stories
         .iter()
-        .filter(|s| s.stage == crate::domain::model::StoryState::Done)
+        .filter(|s| s.status == crate::domain::model::StoryState::Done)
         .count();
     let total_count = stories.len();
 
@@ -247,7 +247,7 @@ fn audit_epic(board: &Board, epic: &crate::domain::model::Epic) -> Result<()> {
         total_stories += stories.len();
         done_stories += stories
             .iter()
-            .filter(|s| s.stage == crate::domain::model::StoryState::Done)
+            .filter(|s| s.status == crate::domain::model::StoryState::Done)
             .count();
     }
 

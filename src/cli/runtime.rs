@@ -133,7 +133,7 @@ fn handle_epic_command(matches: &ArgMatches) -> Result<()> {
             id: m.get_one::<String>("id").expect("required").clone(),
         },
         ("list", m) => super::commands::management::epic::EpicAction::List {
-            status: m.get_one::<String>("status").cloned(),
+            status: collect_many_strings(m, "status"),
         },
         (name, _) => return Err(anyhow::anyhow!("Unsupported epic subcommand: {name}")),
     };
@@ -171,7 +171,7 @@ fn handle_voyage_command(matches: &ArgMatches) -> Result<()> {
         },
         ("list", m) => super::commands::management::voyage::VoyageAction::List {
             epic: m.get_one::<String>("epic").cloned(),
-            status: m.get_one::<String>("status").cloned(),
+            status: collect_many_strings(m, "status"),
         },
         (name, _) => return Err(anyhow::anyhow!("Unsupported voyage subcommand: {name}")),
     };
@@ -220,7 +220,7 @@ fn handle_story_command(matches: &ArgMatches) -> Result<()> {
             id: m.get_one::<String>("id").expect("required").clone(),
         },
         ("list", m) => super::commands::management::story::StoryAction::List {
-            stage: m.get_one::<String>("stage").cloned(),
+            status: collect_many_strings(m, "status"),
             epic: m.get_one::<String>("epic").cloned(),
             reflections: *m.get_one::<bool>("reflections").unwrap_or(&false),
         },
@@ -264,7 +264,7 @@ fn handle_bearing_command(matches: &ArgMatches) -> Result<()> {
             name: m.get_one::<String>("name").expect("required").clone(),
         },
         ("list", m) => super::commands::management::bearing::BearingAction::List {
-            status: m.get_one::<String>("status").cloned(),
+            status: collect_many_strings(m, "status"),
         },
         ("show", m) => super::commands::management::bearing::BearingAction::Show {
             name: m.get_one::<String>("name").expect("required").clone(),
@@ -283,6 +283,13 @@ fn handle_bearing_command(matches: &ArgMatches) -> Result<()> {
     };
 
     super::commands::management::bearing::run(action)
+}
+
+fn collect_many_strings(matches: &ArgMatches, name: &str) -> Vec<String> {
+    matches
+        .get_many::<String>(name)
+        .map(|values| values.cloned().collect())
+        .unwrap_or_default()
 }
 
 fn handle_adr_command(matches: &ArgMatches) -> Result<()> {

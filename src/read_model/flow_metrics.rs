@@ -61,7 +61,7 @@ pub fn calculate_metrics(board: &Board) -> FlowMetrics {
     let backlog_stories: Vec<_> = board
         .stories
         .values()
-        .filter(|s| s.stage == StoryState::Backlog)
+        .filter(|s| s.status == StoryState::Backlog)
         .collect();
     metrics.execution.backlog_count = backlog_stories.len();
     let (ready, blocked) = execution_queue::backlog_queue_counts(board);
@@ -71,7 +71,7 @@ pub fn calculate_metrics(board: &Board) -> FlowMetrics {
     metrics.execution.in_progress_count = board
         .stories
         .values()
-        .filter(|s| s.stage == StoryState::InProgress)
+        .filter(|s| s.status == StoryState::InProgress)
         .count();
     metrics.execution.active_voyages_count = board
         .voyages
@@ -132,7 +132,7 @@ pub fn calculate_metrics(board: &Board) -> FlowMetrics {
     metrics.verification.count = board
         .stories
         .values()
-        .filter(|s| s.stage == StoryState::NeedsHumanVerification)
+        .filter(|s| s.status == StoryState::NeedsHumanVerification)
         .count();
     // TODO: Age calculation
 
@@ -152,7 +152,7 @@ pub fn calculate_metrics(board: &Board) -> FlowMetrics {
     metrics.done_count = board
         .stories
         .values()
-        .filter(|s| s.stage == StoryState::Done)
+        .filter(|s| s.status == StoryState::Done)
         .count();
 
     metrics
@@ -166,9 +166,9 @@ mod tests {
     #[test]
     fn calculate_counts_stories_by_stage() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("S1").stage(StoryState::InProgress))
-            .story(TestStory::new("S2").stage(StoryState::Backlog))
-            .story(TestStory::new("S3").stage(StoryState::Done))
+            .story(TestStory::new("S1").status(StoryState::InProgress))
+            .story(TestStory::new("S2").status(StoryState::Backlog))
+            .story(TestStory::new("S3").status(StoryState::Done))
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
         let m = calculate_metrics(&board);
@@ -189,19 +189,19 @@ mod tests {
             .story(
                 TestStory::new("S1")
                     .scope("keel/01-flow")
-                    .stage(StoryState::InProgress)
+                    .status(StoryState::InProgress)
                     .body("- [ ] [SRS-01/AC-01] First requirement"),
             )
             .story(
                 TestStory::new("S2")
                     .scope("keel/01-flow")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body("- [ ] [SRS-02/AC-01] Depends on S1"),
             )
             .story(
                 TestStory::new("S3")
                     .scope("keel/01-flow")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body("- [ ] [SRS-01/AC-02] Parallel with S1"),
             )
             .build();
@@ -226,7 +226,7 @@ mod tests {
             .story(
                 TestStory::new("S1")
                     .scope("keel/01-test")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body("- [ ] [SRS-01/AC-01] req1"),
             )
             .build();

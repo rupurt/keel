@@ -26,7 +26,7 @@ mod tests {
             .story(
                 TestStory::new("0001")
                     .title("Test Story")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 
@@ -47,7 +47,7 @@ mod tests {
             .story(
                 TestStory::new("0001")
                     .title("Test Story")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 
@@ -65,7 +65,7 @@ mod tests {
             .story(
                 TestStory::new("0002")
                     .title("Frozen Story")
-                    .stage(StoryState::Icebox),
+                    .status(StoryState::Icebox),
             )
             .build();
 
@@ -84,7 +84,7 @@ mod tests {
             .story(
                 TestStory::new("0003")
                     .title("Done Story")
-                    .stage(StoryState::Done),
+                    .status(StoryState::Done),
             )
             .build();
 
@@ -110,7 +110,7 @@ mod tests {
             .story(
                 TestStory::new("1vkqtsAAA")
                     .title("Test Story")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 
@@ -131,7 +131,7 @@ mod tests {
             .story(
                 TestStory::new("1vkqtsBBB")
                     .title("Frozen Story")
-                    .stage(StoryState::Icebox),
+                    .status(StoryState::Icebox),
             )
             .build();
 

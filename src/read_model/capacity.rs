@@ -73,7 +73,7 @@ pub fn project(board: &Board) -> SystemCapacity {
             continue;
         };
 
-        match story.stage {
+        match story.status {
             StoryState::Done => report.capacity.done += 1,
             StoryState::InProgress => report.capacity.in_flight += 1,
             StoryState::Backlog => match classify_backlog_story(board, story, &deps) {
@@ -132,13 +132,13 @@ mod tests {
             .story(
                 TestStory::new("S1")
                     .scope("keel/01-test")
-                    .stage(StoryState::InProgress)
+                    .status(StoryState::InProgress)
                     .body("- [ ] [SRS-01/AC-01] req1"),
             )
             .story(
                 TestStory::new("S2")
                     .scope("keel/01-test")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body("- [ ] [SRS-02/AC-01] req2"),
             )
             .build();
@@ -160,13 +160,13 @@ mod tests {
             .story(
                 TestStory::new("S1")
                     .scope("keel/01-test")
-                    .stage(StoryState::Done)
+                    .status(StoryState::Done)
                     .body("- [x] [SRS-01/AC-01] req1"),
             )
             .story(
                 TestStory::new("S2")
                     .scope("keel/01-test")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body("- [ ] [SRS-02/AC-01] req2"),
             )
             .build();
@@ -192,7 +192,7 @@ mod tests {
             .story(
                 TestStory::new("S1")
                     .scope("keel/01-test")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body("- [ ] [SRS-01/AC-01] req1"),
             )
             .build();

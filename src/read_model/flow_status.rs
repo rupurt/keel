@@ -85,8 +85,8 @@ mod tests {
     #[test]
     fn project_exposes_flow_and_status_views() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("S1").stage(StoryState::Backlog))
-            .story(TestStory::new("S2").stage(StoryState::InProgress))
+            .story(TestStory::new("S1").status(StoryState::Backlog))
+            .story(TestStory::new("S2").status(StoryState::InProgress))
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 

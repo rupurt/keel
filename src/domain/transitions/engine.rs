@@ -27,7 +27,7 @@ pub fn execute(
     let board = load_board(board_dir)?;
     let story = board.require_story(story_id)?;
 
-    let from_stage = story.stage;
+    let from_stage = story.status;
     let to_stage = spec.to;
 
     // Validate transition is allowed
@@ -104,7 +104,7 @@ where
     let story = board.require_story(story_id)?;
 
     // Validate transition is allowed
-    if !spec.from.contains(&story.stage) {
+    if !spec.from.contains(&story.status) {
         return Err(anyhow!(
             "Cannot {} story {} — must be in one of: {:?}",
             spec.name,
@@ -136,7 +136,7 @@ where
     let story = board.require_story(story_id)?;
 
     // Validate transition is allowed
-    if !spec.from.contains(&story.stage) {
+    if !spec.from.contains(&story.status) {
         return Err(anyhow!(
             "Cannot {} story {} — must be in one of: {:?}",
             spec.name,
@@ -164,7 +164,7 @@ where
 
     Ok(TransitionResult {
         story: updated_story,
-        from: story.stage,
+        from: story.status,
         to: spec.to,
     })
 }
@@ -178,7 +178,7 @@ mod tests {
     #[test]
     fn start_transition_moves_to_in_progress() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("FEAT0001").stage(StoryState::Backlog))
+            .story(TestStory::new("FEAT0001").status(StoryState::Backlog))
             .build();
 
         let result = execute(temp.path(), "FEAT0001", &transitions::START).unwrap();
@@ -198,7 +198,7 @@ mod tests {
     #[test]
     fn submit_transition_moves_to_ready_for_acceptance() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("FEAT0002").stage(StoryState::InProgress))
+            .story(TestStory::new("FEAT0002").status(StoryState::InProgress))
             .build();
 
         let result = execute(temp.path(), "FEAT0002", &transitions::SUBMIT).unwrap();
@@ -210,7 +210,7 @@ mod tests {
     #[test]
     fn accept_transition_moves_to_done() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("FEAT0003").stage(StoryState::NeedsHumanVerification))
+            .story(TestStory::new("FEAT0003").status(StoryState::NeedsHumanVerification))
             .build();
 
         let result = execute(temp.path(), "FEAT0003", &transitions::ACCEPT).unwrap();
@@ -222,7 +222,7 @@ mod tests {
     #[test]
     fn reject_transition_moves_to_rejected() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("FEAT0003").stage(StoryState::NeedsHumanVerification))
+            .story(TestStory::new("FEAT0003").status(StoryState::NeedsHumanVerification))
             .build();
 
         let result = execute(temp.path(), "FEAT0003", &transitions::REJECT).unwrap();
@@ -234,7 +234,7 @@ mod tests {
     #[test]
     fn ice_transition_moves_to_icebox() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("FEAT0001").stage(StoryState::Backlog))
+            .story(TestStory::new("FEAT0001").status(StoryState::Backlog))
             .build();
 
         let result = execute(temp.path(), "FEAT0001", &transitions::ICE).unwrap();
@@ -246,7 +246,7 @@ mod tests {
     #[test]
     fn thaw_transition_moves_to_backlog() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("FEAT0004").stage(StoryState::Icebox))
+            .story(TestStory::new("FEAT0004").status(StoryState::Icebox))
             .build();
 
         let result = execute(temp.path(), "FEAT0004", &transitions::THAW).unwrap();
@@ -268,7 +268,7 @@ mod tests {
     #[test]
     fn invalid_transition_returns_error() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("FEAT0001").stage(StoryState::Backlog))
+            .story(TestStory::new("FEAT0001").status(StoryState::Backlog))
             .build();
 
         // Cannot submit from backlog
@@ -282,7 +282,7 @@ mod tests {
     #[test]
     fn flat_structure_updates_in_place() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("1vkqtsAAA").stage(StoryState::Backlog))
+            .story(TestStory::new("1vkqtsAAA").status(StoryState::Backlog))
             .build();
 
         execute(temp.path(), "1vkqtsAAA", &transitions::START).unwrap();
@@ -299,7 +299,7 @@ mod tests {
     #[test]
     fn test_execute_with_validate() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("S1").stage(StoryState::InProgress))
+            .story(TestStory::new("S1").status(StoryState::InProgress))
             .build();
 
         // Should pass
@@ -320,7 +320,7 @@ mod tests {
     #[test]
     fn test_execute_with_body_transform() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("S1").stage(StoryState::InProgress))
+            .story(TestStory::new("S1").status(StoryState::InProgress))
             .build();
 
         let result = execute_with_body_transform(temp.path(), "S1", &transitions::SUBMIT, |body| {

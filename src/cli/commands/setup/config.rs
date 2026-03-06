@@ -357,7 +357,7 @@ disable = ["rust-coverage"]
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S1")
-                    .stage(StoryState::Done)
+                    .status(StoryState::Done)
                     .body(
                         "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] judge <!-- verify: llm-judge, SRS-01:start:end -->",
                     ),

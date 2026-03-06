@@ -378,7 +378,16 @@ pub fn build_cli() -> Command {
                 .subcommand(
                     Command::new("list")
                         .about("List all bearings")
-                        .arg(Arg::new("status").long("status").value_name("STATUS")),
+                        .arg(
+                            Arg::new("status")
+                                .long("status")
+                                .help("Repeat to override defaults or use + / - to add or remove statuses")
+                                .action(ArgAction::Append)
+                                .value_parser(
+                                    crate::cli::commands::management::bearing::parse_bearing_status,
+                                )
+                                .value_name("STATUS"),
+                        ),
                 )
                 .subcommand(
                     Command::new("show")
@@ -431,8 +440,11 @@ pub fn build_cli() -> Command {
                             Arg::new("status")
                                 .long("status")
                                 .short('s')
-                                .help("Filter by derived epic state")
-                                .value_parser(["draft", "active", "done"])
+                                .help("Repeat to override defaults or use + / - to add or remove statuses")
+                                .action(ArgAction::Append)
+                                .value_parser(
+                                    crate::cli::commands::management::epic::parse_epic_status,
+                                )
                                 .value_name("STATUS"),
                         ),
                 )
@@ -492,8 +504,11 @@ pub fn build_cli() -> Command {
                         .arg(
                             Arg::new("status")
                                 .long("status")
-                                .help("Filter by canonical voyage state")
-                                .value_parser(["draft", "planned", "in-progress", "done"])
+                                .help("Repeat to override defaults or use + / - to add or remove statuses")
+                                .action(ArgAction::Append)
+                                .value_parser(
+                                    crate::cli::commands::management::voyage::parse_voyage_status,
+                                )
                                 .value_name("STATUS"),
                         ),
                 )
@@ -567,18 +582,15 @@ pub fn build_cli() -> Command {
                     Command::new("list")
                         .about("List stories")
                         .arg(
-                            Arg::new("stage")
-                                .long("stage")
-                                .help("Filter by canonical story stage")
-                                .value_parser([
-                                    "backlog",
-                                    "in-progress",
-                                    "needs-human-verification",
-                                    "done",
-                                    "rejected",
-                                    "icebox",
-                                ])
-                                .value_name("STAGE"),
+                            Arg::new("status")
+                                .long("status")
+                                .short('s')
+                                .help("Repeat to override defaults or use + / - to add or remove statuses")
+                                .action(ArgAction::Append)
+                                .value_parser(
+                                    crate::cli::commands::management::story::parse_story_status,
+                                )
+                                .value_name("STATUS"),
                         )
                         .arg(Arg::new("epic").long("epic").value_name("EPIC"))
                         .arg(

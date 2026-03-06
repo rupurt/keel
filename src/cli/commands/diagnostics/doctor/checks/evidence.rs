@@ -18,9 +18,9 @@ pub fn check_evidence_phase_syntax(board: &Board) -> Vec<Problem> {
     let mut problems = Vec::new();
 
     for story in board.stories.values() {
-        if story.stage != StoryState::InProgress
-            && story.stage != StoryState::NeedsHumanVerification
-            && story.stage != StoryState::Done
+        if story.status != StoryState::InProgress
+            && story.status != StoryState::NeedsHumanVerification
+            && story.status != StoryState::Done
         {
             continue;
         }
@@ -169,7 +169,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S1")
-                    .stage(StoryState::InProgress)
+                    .status(StoryState::InProgress)
                     .body("- [ ] [SRS-01/AC-01] t1 <!-- verify: cargo test -- srs:start -->"),
             )
             .build();
@@ -209,7 +209,7 @@ mod tests {
             .story(
                 TestStory::new("S1")
                     .scope("test-epic/01-in-progress")
-                    .stage(StoryState::InProgress)
+                    .status(StoryState::InProgress)
                     .body(
                         "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Partial chain <!-- verify: manual, SRS-01:start -->",
                     ),
@@ -245,7 +245,7 @@ mod tests {
             .story(
                 TestStory::new("S1")
                     .scope("test-epic/01-in-progress")
-                    .stage(StoryState::InProgress)
+                    .status(StoryState::InProgress)
                     .body(
                         "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Invalid chain <!-- verify: manual, SRS-01:end -->",
                     ),

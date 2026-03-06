@@ -21,6 +21,19 @@ use clap::Subcommand;
 
 use crate::infrastructure::config::find_board_dir;
 
+const STORY_STATUS_VALUES: &[&str] = &[
+    "backlog",
+    "in-progress",
+    "needs-human-verification",
+    "done",
+    "rejected",
+    "icebox",
+];
+
+pub(crate) fn parse_story_status(value: &str) -> Result<String, String> {
+    crate::cli::commands::management::status_filter::validate_status_arg(value, STORY_STATUS_VALUES)
+}
+
 #[derive(Subcommand, Debug)]
 pub enum StoryAction {
     /// Create a new story
@@ -84,20 +97,9 @@ pub enum StoryAction {
     },
     /// List stories
     List {
-        /// Filter by stage
-        #[arg(
-            long,
-            short,
-            value_parser = [
-                "backlog",
-                "in-progress",
-                "needs-human-verification",
-                "done",
-                "rejected",
-                "icebox",
-            ]
-        )]
-        stage: Option<String>,
+        /// Filter by status. Repeat to override or use + / - to modify the default active view.
+        #[arg(long = "status", short, action = clap::ArgAction::Append, value_parser = parse_story_status)]
+        status: Vec<String>,
         /// Filter by epic
         #[arg(long, short)]
         epic: Option<String>,
@@ -158,10 +160,10 @@ pub fn run(action: StoryAction) -> Result<()> {
         StoryAction::Thaw { id } => thaw::run(&find_board_dir()?, &id),
         StoryAction::Show { id } => show::run(&id),
         StoryAction::List {
-            stage,
+            status,
             epic,
             reflections,
-        } => list::run(stage.as_deref(), epic.as_deref(), reflections),
+        } => list::run(&status, epic.as_deref(), reflections),
         StoryAction::Link { id, voyage } => link::run(&id, &voyage),
         StoryAction::Unlink { id, voyage } => unlink::run(&id, &voyage),
         StoryAction::Record {

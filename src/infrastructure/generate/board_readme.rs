@@ -205,7 +205,7 @@ mod tests {
             .story(
                 TestStory::new("0001")
                     .title("Active Story")
-                    .stage(crate::domain::model::StoryState::InProgress),
+                    .status(crate::domain::model::StoryState::InProgress),
             )
             .build();
         let board = load_board(temp.path()).unwrap();

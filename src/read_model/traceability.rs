@@ -209,7 +209,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("DONE1")
-                    .stage(StoryState::Done)
+                    .status(StoryState::Done)
                     .body("## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] done"),
             )
             .build();

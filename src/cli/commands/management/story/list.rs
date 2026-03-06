@@ -4,14 +4,58 @@ use anyhow::Result;
 use owo_colors::OwoColorize;
 
 use crate::cli::table::Table;
-use crate::domain::model::{Board, Story, StoryState};
+use crate::domain::model::{Board, Story};
 use crate::infrastructure::loader::load_board;
 
-/// List stories with optional filters
-pub fn run(stage: Option<&str>, epic: Option<&str>, reflections: bool) -> Result<()> {
+const DEFAULT_STORY_STATUSES: &[&str] = &[
+    "backlog",
+    "in-progress",
+    "needs-human-verification",
+    "rejected",
+    "icebox",
+];
+const ALLOWED_STORY_STATUSES: &[&str] = &[
+    "backlog",
+    "in-progress",
+    "needs-human-verification",
+    "done",
+    "rejected",
+    "icebox",
+];
+
+/// List stories with optional filters.
+pub fn run(status_filters: &[String], epic: Option<&str>, reflections: bool) -> Result<()> {
     let board_dir = crate::infrastructure::config::find_board_dir()?;
     let board = load_board(&board_dir)?;
-    let stories = list_stories(&board, stage, epic);
+    let status_filter = crate::cli::commands::management::status_filter::resolve_status_filter(
+        status_filters,
+        DEFAULT_STORY_STATUSES,
+        ALLOWED_STORY_STATUSES,
+    )?;
+    let stories = collect_stories(&board, &status_filter, epic);
+
+    if stories.is_empty() {
+        let done_hidden = board
+            .stories
+            .values()
+            .any(|story| story.status.to_string() == "done" && !status_filter.contains("done"));
+        let tip = if done_hidden {
+            crate::cli::commands::management::status_filter::build_append_status_suggestion(
+                &["done"],
+                "completed stories",
+            )
+        } else {
+            None
+        };
+        let state = crate::cli::commands::management::status_filter::build_empty_list_state(
+            "stories",
+            !board.stories.is_empty(),
+            &status_filter,
+            tip,
+        );
+        crate::cli::commands::management::status_filter::print_empty_list_state(&state);
+        return Ok(());
+    }
 
     let mut table = Table::new(&["ID", "TYPE", "TITLE", "STAGE", "SCOPE"]);
     for story in &stories {
@@ -36,7 +80,7 @@ pub fn run(stage: Option<&str>, epic: Option<&str>, reflections: bool) -> Result
             &crate::cli::style::styled_story_id(story.id()),
             &story.story_type().to_string(),
             &story.frontmatter.title,
-            &story.stage.to_string(),
+            &story.status.to_string(),
             &styled_scope.unwrap_or_else(|| "-".to_string()),
         ]);
     }
@@ -63,21 +107,30 @@ pub fn run(stage: Option<&str>, epic: Option<&str>, reflections: bool) -> Result
     Ok(())
 }
 
-fn list_stories<'a>(board: &'a Board, stage: Option<&str>, epic: Option<&str>) -> Vec<&'a Story> {
-    let stage_filter = stage.and_then(|s| match s.to_lowercase().as_str() {
-        "backlog" => Some(StoryState::Backlog),
-        "in-progress" => Some(StoryState::InProgress),
-        "needs-human-verification" => Some(StoryState::NeedsHumanVerification),
-        "done" => Some(StoryState::Done),
-        "rejected" => Some(StoryState::Rejected),
-        "icebox" => Some(StoryState::Icebox),
-        _ => None,
-    });
+#[cfg(test)]
+fn list_stories<'a>(
+    board: &'a Board,
+    status_filters: &[String],
+    epic: Option<&str>,
+) -> Result<Vec<&'a Story>> {
+    let status_filter = crate::cli::commands::management::status_filter::resolve_status_filter(
+        status_filters,
+        DEFAULT_STORY_STATUSES,
+        ALLOWED_STORY_STATUSES,
+    )?;
 
+    Ok(collect_stories(board, &status_filter, epic))
+}
+
+fn collect_stories<'a>(
+    board: &'a Board,
+    status_filter: &crate::cli::commands::management::status_filter::StatusFilter,
+    epic: Option<&str>,
+) -> Vec<&'a Story> {
     let mut stories: Vec<_> = board
         .stories
         .values()
-        .filter(|s| stage_filter.is_none() || Some(&s.stage) == stage_filter.as_ref())
+        .filter(|s| status_filter.contains(&s.status.to_string()))
         .filter(|s| epic.is_none() || s.epic() == epic)
         .collect();
 
@@ -123,6 +176,7 @@ fn list_stories<'a>(board: &'a Board, stage: Option<&str>, epic: Option<&str>) -
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::domain::state_machine::StoryState;
     use crate::test_helpers::{TestBoardBuilder, TestStory};
 
     #[test]
@@ -130,25 +184,25 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S1")
-                    .stage(StoryState::InProgress)
+                    .status(StoryState::InProgress)
                     .scope("epic1"),
             )
             .story(
                 TestStory::new("S2")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .scope("epic2"),
             )
             .build();
         let board = load_board(temp.path()).unwrap();
 
-        let all = list_stories(&board, None, None);
+        let all = list_stories(&board, &[], None).unwrap();
         assert_eq!(all.len(), 2);
 
-        let in_progress = list_stories(&board, Some("in-progress"), None);
+        let in_progress = list_stories(&board, &["in-progress".to_string()], None).unwrap();
         assert_eq!(in_progress.len(), 1);
         assert_eq!(in_progress[0].id(), "S1");
 
-        let by_epic = list_stories(&board, None, Some("epic2"));
+        let by_epic = list_stories(&board, &[], Some("epic2")).unwrap();
         assert_eq!(by_epic.len(), 1);
         assert_eq!(by_epic[0].id(), "S2");
     }
@@ -168,7 +222,7 @@ mod tests {
             .build();
         let board = load_board(temp.path()).unwrap();
 
-        let stories = list_stories(&board, None, None);
+        let stories = list_stories(&board, &[], None).unwrap();
 
         // Expected order (ASC):
         // 1. E1/V1/S1 (Epic index 1, Voyage index 1, Story index 1)
@@ -180,5 +234,25 @@ mod tests {
         assert_eq!(stories[1].id(), "S2");
         assert_eq!(stories[2].id(), "S3");
         assert_eq!(stories[3].id(), "S4");
+    }
+
+    #[test]
+    fn test_list_stories_default_excludes_done_but_plus_done_adds_it_back() {
+        let temp = TestBoardBuilder::new()
+            .story(TestStory::new("S1").status(StoryState::Backlog))
+            .story(TestStory::new("S2").status(StoryState::Done))
+            .build();
+        let board = load_board(temp.path()).unwrap();
+
+        let default = list_stories(&board, &[], None).unwrap();
+        assert_eq!(default.len(), 1);
+        assert_eq!(default[0].id(), "S1");
+
+        let with_done = list_stories(&board, &["+done".to_string()], None).unwrap();
+        assert_eq!(with_done.len(), 2);
+
+        let done_only = list_stories(&board, &["done".to_string()], None).unwrap();
+        assert_eq!(done_only.len(), 1);
+        assert_eq!(done_only[0].id(), "S2");
     }
 }

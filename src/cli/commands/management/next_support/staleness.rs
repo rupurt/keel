@@ -43,7 +43,7 @@ mod tests {
         status: StoryState,
         completed_at: Option<NaiveDate>,
     ) -> crate::domain::model::Story {
-        let mut factory = StoryFactory::new(id).scope(scope).stage(status);
+        let mut factory = StoryFactory::new(id).scope(scope).status(status);
         if let Some(date) = completed_at {
             factory = factory.completed_at(date.and_hms_opt(12, 0, 0).unwrap());
         }

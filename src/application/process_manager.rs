@@ -144,7 +144,7 @@ fn plan_story_accepted_actions(board: &Board, scope: &str) -> Vec<ProcessAction>
         return Vec::new();
     }
 
-    let all_done = stories.iter().all(|story| story.stage == StoryState::Done);
+    let all_done = stories.iter().all(|story| story.status == StoryState::Done);
     if !all_done {
         return Vec::new();
     }
@@ -193,7 +193,7 @@ mod tests {
             .story(
                 TestStory::new("S1")
                     .scope("e1/v1")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 
@@ -221,8 +221,8 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("e1"))
             .voyage(TestVoyage::new("v1", "e1").status("in-progress"))
-            .story(TestStory::new("S1").scope("e1/v1").stage(StoryState::Done))
-            .story(TestStory::new("S2").scope("e1/v1").stage(StoryState::Done))
+            .story(TestStory::new("S1").scope("e1/v1").status(StoryState::Done))
+            .story(TestStory::new("S2").scope("e1/v1").status(StoryState::Done))
             .build();
 
         let calls = Arc::new(Mutex::new(Vec::new()));
@@ -249,11 +249,11 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("e1"))
             .voyage(TestVoyage::new("v1", "e1").status("in-progress"))
-            .story(TestStory::new("S1").scope("e1/v1").stage(StoryState::Done))
+            .story(TestStory::new("S1").scope("e1/v1").status(StoryState::Done))
             .story(
                 TestStory::new("S2")
                     .scope("e1/v1")
-                    .stage(StoryState::InProgress),
+                    .status(StoryState::InProgress),
             )
             .build();
 

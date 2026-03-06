@@ -6,11 +6,42 @@ use crate::cli::table::Table;
 use crate::domain::model::{Board, Epic};
 use crate::infrastructure::loader::load_board;
 
-/// List epics with optional status filter
-pub fn run(status: Option<&str>) -> Result<()> {
+const DEFAULT_EPIC_STATUSES: &[&str] = &["draft", "active"];
+const ALLOWED_EPIC_STATUSES: &[&str] = &["draft", "active", "done"];
+
+/// List epics with optional status filters.
+pub fn run(status_filters: &[String]) -> Result<()> {
     let board_dir = crate::infrastructure::config::find_board_dir()?;
     let board = load_board(&board_dir)?;
-    let epics = list_epics(&board, status);
+    let status_filter = crate::cli::commands::management::status_filter::resolve_status_filter(
+        status_filters,
+        DEFAULT_EPIC_STATUSES,
+        ALLOWED_EPIC_STATUSES,
+    )?;
+    let epics = collect_epics(&board, &status_filter);
+
+    if epics.is_empty() {
+        let done_hidden = board
+            .epics
+            .values()
+            .any(|epic| epic.status().to_string() == "done" && !status_filter.contains("done"));
+        let tip = if done_hidden {
+            crate::cli::commands::management::status_filter::build_append_status_suggestion(
+                &["done"],
+                "completed epics",
+            )
+        } else {
+            None
+        };
+        let state = crate::cli::commands::management::status_filter::build_empty_list_state(
+            "epics",
+            !board.epics.is_empty(),
+            &status_filter,
+            tip,
+        );
+        crate::cli::commands::management::status_filter::print_empty_list_state(&state);
+        return Ok(());
+    }
 
     let mut table = Table::new(&["ID", "TITLE", "STATUS"]);
     for epic in epics {
@@ -25,13 +56,25 @@ pub fn run(status: Option<&str>) -> Result<()> {
     Ok(())
 }
 
-fn list_epics<'a>(board: &'a Board, status: Option<&str>) -> Vec<&'a Epic> {
+#[cfg(test)]
+fn list_epics<'a>(board: &'a Board, status_filters: &[String]) -> Result<Vec<&'a Epic>> {
+    let status_filter = crate::cli::commands::management::status_filter::resolve_status_filter(
+        status_filters,
+        DEFAULT_EPIC_STATUSES,
+        ALLOWED_EPIC_STATUSES,
+    )?;
+
+    Ok(collect_epics(board, &status_filter))
+}
+
+fn collect_epics<'a>(
+    board: &'a Board,
+    status_filter: &crate::cli::commands::management::status_filter::StatusFilter,
+) -> Vec<&'a Epic> {
     let mut epics: Vec<_> = board
         .epics
         .values()
-        .filter(|e| {
-            status.is_none() || status.map(|s| s == e.status().to_string()).unwrap_or(false)
-        })
+        .filter(|e| status_filter.contains(&e.status().to_string()))
         .collect();
 
     epics.sort_by(|a, b| a.id().cmp(b.id()));
@@ -55,18 +98,33 @@ mod tests {
             .build();
         let board = load_board(temp.path()).unwrap();
 
-        let all = list_epics(&board, None);
-        assert_eq!(all.len(), 3);
+        let default = list_epics(&board, &[]).unwrap();
+        assert_eq!(default.len(), 2);
+        assert_eq!(default[0].id(), "active-epic");
+        assert_eq!(default[1].id(), "draft-epic");
 
-        let active = list_epics(&board, Some("active"));
+        let active = list_epics(&board, &["active".to_string()]).unwrap();
         assert_eq!(active.len(), 1);
         assert_eq!(active[0].id(), "active-epic");
 
-        let draft = list_epics(&board, Some("draft"));
+        let draft = list_epics(&board, &["draft".to_string()]).unwrap();
         assert_eq!(draft.len(), 1);
         assert_eq!(draft[0].id(), "draft-epic");
 
-        let done = list_epics(&board, Some("done"));
+        let done = list_epics(&board, &["+done".to_string()]).unwrap();
+        assert_eq!(done.len(), 3);
+
+        let done_only = list_epics(&board, &["done".to_string()]).unwrap();
+        assert_eq!(done_only.len(), 1);
+        assert_eq!(done_only[0].id(), "done-epic");
+
+        let draft_and_done =
+            list_epics(&board, &["draft".to_string(), "+done".to_string()]).unwrap();
+        assert_eq!(draft_and_done.len(), 2);
+        assert_eq!(draft_and_done[0].id(), "done-epic");
+        assert_eq!(draft_and_done[1].id(), "draft-epic");
+
+        let done = done_only;
         assert_eq!(done.len(), 1);
         assert_eq!(done[0].id(), "done-epic");
     }

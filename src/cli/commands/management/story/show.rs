@@ -37,7 +37,7 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     let mut metadata = ShowKeyValues::new().with_min_label_width(9);
     metadata.push_row("Title:", format!("{}", story.frontmatter.title.bold()));
     metadata.push_row("Type:", style::styled_type(&story.story_type()));
-    metadata.push_row("Status:", style::styled_stage(&story.stage));
+    metadata.push_row("Status:", style::styled_story_status(&story.status));
     metadata.push_optional_row(
         "Scope:",
         story.frontmatter.scope.as_deref().map(styled_story_scope),
@@ -327,7 +327,7 @@ mod tests {
             .story(
                 TestStory::new("FEAT0001")
                     .title("Test Story")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .scope("test-epic/01-first")
                     .body("\n# Test Story\n\n## Acceptance Criteria\n\n- [ ] First criterion\n"),
             )

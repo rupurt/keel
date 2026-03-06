@@ -15,11 +15,11 @@ fn board_with_verification_and_ready(verify_count: usize, ready_count: usize) ->
     let mut builder = TestBoardBuilder::new();
     for i in 0..verify_count {
         let id = format!("VERIFY{:02}", i + 1);
-        builder = builder.story(TestStory::new(&id).stage(StoryState::NeedsHumanVerification));
+        builder = builder.story(TestStory::new(&id).status(StoryState::NeedsHumanVerification));
     }
     for i in 0..ready_count {
         let id = format!("READY{:02}", i + 1);
-        builder = builder.story(TestStory::new(&id).stage(StoryState::Backlog));
+        builder = builder.story(TestStory::new(&id).status(StoryState::Backlog));
     }
     builder.build()
 }
@@ -74,7 +74,7 @@ fn regression_story_lifecycle_command_chain_reaches_done() {
     let temp = TestBoardBuilder::new()
         .story(
             TestStory::new("REGCHAIN1")
-                .stage(StoryState::Backlog)
+                .status(StoryState::Backlog)
                 .body(
                     "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Manual check <!-- verify: manual, SRS-01:start:end -->",
                 ),
@@ -97,7 +97,7 @@ fn regression_story_lifecycle_command_chain_reaches_done() {
 
     let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
     let story = board.require_story("REGCHAIN1").unwrap();
-    assert_eq!(story.stage, StoryState::Done);
+    assert_eq!(story.status, StoryState::Done);
 
     let content = fs::read_to_string(temp.path().join("stories/REGCHAIN1/README.md")).unwrap();
     assert!(content.contains("submitted_at:"));

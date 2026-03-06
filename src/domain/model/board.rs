@@ -141,7 +141,7 @@ impl Board {
         for id in story_ids {
             if let Some(story) = self.stories.get(id) {
                 id.hash(&mut hasher);
-                story.stage.hash(&mut hasher);
+                story.status.hash(&mut hasher);
             }
         }
 
@@ -165,7 +165,7 @@ impl Board {
     pub fn active_workers(&self) -> Vec<&Story> {
         self.stories
             .values()
-            .filter(|s| s.stage == StoryState::InProgress)
+            .filter(|s| s.status == StoryState::InProgress)
             .collect()
     }
 }
@@ -332,7 +332,7 @@ mod tests {
 
         // Change story state
         if let Some(story) = board.stories.get_mut("FEAT0001") {
-            story.stage = StoryState::InProgress;
+            story.set_status(StoryState::InProgress);
         }
 
         let version2 = board.snapshot_version();
@@ -404,15 +404,15 @@ mod tests {
         let mut board = Board::new(PathBuf::from("test"));
 
         let mut story1 = make_story("FEAT0001", None);
-        story1.stage = StoryState::InProgress;
+        story1.set_status(StoryState::InProgress);
         board.stories.insert("FEAT0001".to_string(), story1);
 
         let mut story2 = make_story("FEAT0002", None);
-        story2.stage = StoryState::Backlog;
+        story2.set_status(StoryState::Backlog);
         board.stories.insert("FEAT0002".to_string(), story2);
 
         let mut story3 = make_story("FEAT0003", None);
-        story3.stage = StoryState::InProgress;
+        story3.set_status(StoryState::InProgress);
         board.stories.insert("FEAT0003".to_string(), story3);
 
         let workers = board.active_workers();
@@ -498,11 +498,11 @@ mod tests {
         let mut board = Board::new(PathBuf::from("test"));
 
         let mut story1 = make_story("FEAT0001", None);
-        story1.stage = StoryState::Backlog;
+        story1.set_status(StoryState::Backlog);
         board.stories.insert("FEAT0001".to_string(), story1);
 
         let mut story2 = make_story("FEAT0002", None);
-        story2.stage = StoryState::Done;
+        story2.set_status(StoryState::Done);
         board.stories.insert("FEAT0002".to_string(), story2);
 
         let workers = board.active_workers();

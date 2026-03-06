@@ -35,7 +35,7 @@ pub fn pad_to_width(s: &str, target_width: usize) -> String {
 pub struct StoryScopeSummary<'a> {
     pub id: &'a str,
     pub title: &'a str,
-    pub stage: crate::domain::model::StoryState,
+    pub status: crate::domain::model::StoryState,
     pub index: Option<u32>,
     pub scope: Option<&'a str>,
 }
@@ -100,11 +100,11 @@ pub fn classify_stories(
 
     for story in sorted_stories {
         let mut blockers = Vec::new();
-        let status = if story.stage == crate::domain::model::StoryState::Done {
+        let status = if story.status == crate::domain::model::StoryState::Done {
             DepStatus::Done
-        } else if story.stage == crate::domain::model::StoryState::InProgress {
+        } else if story.status == crate::domain::model::StoryState::InProgress {
             DepStatus::InProgress
-        } else if story.stage == crate::domain::model::StoryState::Icebox {
+        } else if story.status == crate::domain::model::StoryState::Icebox {
             DepStatus::Inactive
         } else if verify_ids.contains(story.id) {
             DepStatus::VerifyBlocked
@@ -115,7 +115,7 @@ pub fn classify_stories(
                 .filter(|dep_id| {
                     // Dependency is unmet if it's not marked as done in the current scope_stories
                     !scope_stories.iter().any(|s| {
-                        s.id == *dep_id && s.stage == crate::domain::model::StoryState::Done
+                        s.id == *dep_id && s.status == crate::domain::model::StoryState::Done
                     })
                 })
                 .cloned()
@@ -368,21 +368,21 @@ mod tests {
             StoryScopeSummary {
                 id: "S1",
                 title: "Story 1",
-                stage: StoryState::Done,
+                status: StoryState::Done,
                 index: Some(1),
                 scope: Some("epic1"),
             },
             StoryScopeSummary {
                 id: "S2",
                 title: "Story 2",
-                stage: StoryState::InProgress,
+                status: StoryState::InProgress,
                 index: Some(2),
                 scope: Some("epic1"),
             },
             StoryScopeSummary {
                 id: "S3",
                 title: "Story 3",
-                stage: StoryState::Backlog,
+                status: StoryState::Backlog,
                 index: Some(3),
                 scope: Some("epic1"),
             },

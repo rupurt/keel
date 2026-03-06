@@ -103,8 +103,8 @@ pub fn voyage_ready_for_work(voyage: &Voyage, requirements: &[String]) -> bool {
 /// * `_board_dir` - Path to the board directory (for SRS file access)
 #[allow(dead_code)] // Used by tests now, production use in future stories (SRS-05, SRS-06)
 pub fn story_workable(story: &Story, board: &Board, _board_dir: &Path) -> bool {
-    // Must be in backlog stage
-    if story.stage != StoryState::Backlog {
+    // Must be in backlog status
+    if story.status != StoryState::Backlog {
         return false;
     }
 
@@ -1413,13 +1413,13 @@ mod tests {
     use tempfile::TempDir;
 
     use crate::domain::model::{StoryFrontmatter, VoyageFrontmatter};
-    fn make_story(id: &str, stage: StoryState, scope: Option<&str>) -> Story {
-        Story {
-            frontmatter: StoryFrontmatter {
+    fn make_story(id: &str, status: StoryState, scope: Option<&str>) -> Story {
+        Story::new(
+            StoryFrontmatter {
                 id: id.to_string(),
                 title: format!("Story {}", id),
                 story_type: crate::domain::model::StoryType::Feat,
-                status: stage,
+                status,
                 scope: scope.map(|s| s.to_string()),
                 milestone: None,
                 created_at: None,
@@ -1432,9 +1432,8 @@ mod tests {
                 blocked_by: vec![],
                 role: None,
             },
-            path: std::path::PathBuf::from(format!("{}.md", id)),
-            stage,
-        }
+            std::path::PathBuf::from(format!("{}.md", id)),
+        )
     }
 
     fn make_voyage(id: &str, status: VoyageState, path: &Path) -> Voyage {

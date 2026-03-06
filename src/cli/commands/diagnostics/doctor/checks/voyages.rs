@@ -24,7 +24,7 @@ pub fn check_voyage_status_drift(board: &Board) -> Vec<Problem> {
         let story_states: Vec<_> = board
             .stories_for_voyage(voyage)
             .into_iter()
-            .map(|story| story.stage)
+            .map(|story| story.status)
             .collect();
 
         let violations = invariants::validate_voyage_story_coherence(
@@ -229,7 +229,7 @@ mod tests {
                     .status("draft")
                     .srs_content("# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req | test |\nEND FUNCTIONAL_REQUIREMENTS"),
             )
-            .story(TestStory::new("S1").scope("e1/v1").stage(StoryState::Backlog))
+            .story(TestStory::new("S1").scope("e1/v1").status(StoryState::Backlog))
             .build();
 
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
@@ -250,7 +250,7 @@ mod tests {
                     .status("in-progress")
                     .srs_content("# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req | test |\nEND FUNCTIONAL_REQUIREMENTS"),
             )
-            .story(TestStory::new("S1").scope("e1/v1").stage(StoryState::Done))
+            .story(TestStory::new("S1").scope("e1/v1").status(StoryState::Done))
             .build();
 
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
@@ -576,7 +576,7 @@ Out of scope:
                     .status("planned")
                     .srs_content("# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req | test |\nEND FUNCTIONAL_REQUIREMENTS"),
             )
-            .story(TestStory::new("S1").scope("e1/v1").stage(StoryState::Backlog))
+            .story(TestStory::new("S1").scope("e1/v1").status(StoryState::Backlog))
             .build();
 
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
@@ -631,8 +631,8 @@ Out of scope:
                     .status("planned")
                     .srs_content("# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req | test |\nEND FUNCTIONAL_REQUIREMENTS"),
             )
-            .story(TestStory::new("S1").scope("e1/v1").stage(StoryState::Done))
-            .story(TestStory::new("S2").scope("e1/v1").stage(StoryState::Backlog))
+            .story(TestStory::new("S1").scope("e1/v1").status(StoryState::Done))
+            .story(TestStory::new("S2").scope("e1/v1").status(StoryState::Backlog))
             .build();
 
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
@@ -652,8 +652,8 @@ Out of scope:
                     .status("planned")
                     .srs_content("# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req | test |\nEND FUNCTIONAL_REQUIREMENTS"),
             )
-            .story(TestStory::new("S1").scope("e1/v1").stage(StoryState::Done))
-            .story(TestStory::new("S2").scope("e1/v1").stage(StoryState::Done))
+            .story(TestStory::new("S1").scope("e1/v1").status(StoryState::Done))
+            .story(TestStory::new("S2").scope("e1/v1").status(StoryState::Done))
             .build();
 
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();

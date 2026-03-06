@@ -81,7 +81,7 @@ mod tests {
             .story(
                 TestStory::new("FEAT0001")
                     .title("Test Story")
-                    .stage(crate::domain::model::StoryState::Backlog),
+                    .status(crate::domain::model::StoryState::Backlog),
             )
             .build();
 

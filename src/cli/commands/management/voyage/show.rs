@@ -236,7 +236,7 @@ Out of scope:
                 TestStory::new("S1")
                     .scope("e1/v1")
                     .index(2)
-                    .stage(StoryState::Done)
+                    .status(StoryState::Done)
                     .body(
                         r#"## Acceptance Criteria
 - [x] [SRS-01/AC-01] Goal summary present <!-- verify: cargo test --lib voyage_show_goal_scope, SRS-01:start:end -->
@@ -247,7 +247,7 @@ Out of scope:
                 TestStory::new("S2")
                     .scope("e1/v1")
                     .index(1)
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body(
                         r#"## Acceptance Criteria
 - [ ] [SRS-02/AC-01] Matrix present <!-- verify: manual, SRS-02:start:end -->
@@ -300,7 +300,7 @@ Out of scope:
             .story(
                 TestStory::new("S1")
                     .scope("e1/v1")
-                    .stage(StoryState::Done)
+                    .status(StoryState::Done)
                     .body(
                         r#"## Acceptance Criteria
 - [x] [SRS-01/AC-01] done <!-- verify: cargo test --lib x, SRS-01:start:end -->
@@ -310,7 +310,7 @@ Out of scope:
             .story(
                 TestStory::new("S2")
                     .scope("e1/v1")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body(
                         r#"## Acceptance Criteria
 - [ ] [SRS-02/AC-01] todo <!-- verify: manual, SRS-02:start:end -->
@@ -410,7 +410,7 @@ Out of scope:
                     scope_refs: vec!["SCOPE-01".to_string()],
                     linked_stories: vec![StoryRef {
                         id: "S1".to_string(),
-                        stage: StoryState::Done,
+                        status: StoryState::Done,
                         index: Some(1),
                     }],
                     completion: RequirementCompletion::Done,

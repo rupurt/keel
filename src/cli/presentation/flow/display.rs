@@ -116,7 +116,7 @@ pub fn render_annotated_flow(
             |story| crate::cli::presentation::flow::format::StoryScopeSummary {
                 id: story.id(),
                 title: story.title(),
-                stage: story.stage,
+                status: story.status,
                 index: story.index(),
                 scope: story.scope(),
             },
@@ -126,7 +126,7 @@ pub fn render_annotated_flow(
     let verify_ids = board
         .stories
         .values()
-        .filter(|s| s.stage == crate::domain::model::StoryState::NeedsHumanVerification)
+        .filter(|s| s.status == crate::domain::model::StoryState::NeedsHumanVerification)
         .map(|s| s.id())
         .collect::<std::collections::HashSet<_>>();
 

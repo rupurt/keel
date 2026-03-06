@@ -54,7 +54,7 @@ mod tests {
             .story(
                 TestStory::new("BACKLOG1")
                     .title("Backlog Story")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 
@@ -72,7 +72,7 @@ mod tests {
             .story(
                 TestStory::new("UPDATE1")
                     .title("Update Story")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 
@@ -91,7 +91,7 @@ mod tests {
             .story(
                 TestStory::new("FUZZY1")
                     .title("Fuzzy Story")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 
@@ -107,7 +107,7 @@ mod tests {
             .story(
                 TestStory::new("REJECTED1")
                     .title("Rejected Story")
-                    .stage(StoryState::Rejected)
+                    .status(StoryState::Rejected)
                     .body("## Rejections\n\n### 2026-01-25\n\nMissing tests coverage."),
             )
             .build();
@@ -128,7 +128,7 @@ mod tests {
             .story(
                 TestStory::new("RESTART1")
                     .title("Restarted Story")
-                    .stage(StoryState::Rejected),
+                    .status(StoryState::Rejected),
             )
             .build();
 
@@ -154,7 +154,7 @@ mod tests {
             .story(
                 TestStory::new("READY1")
                     .title("Ready Story")
-                    .stage(StoryState::NeedsHumanVerification),
+                    .status(StoryState::NeedsHumanVerification),
             )
             .build();
 
@@ -213,7 +213,7 @@ mod tests {
             .story(
                 TestStory::new("FLAT1")
                     .title("Flat Story")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 
@@ -230,7 +230,7 @@ mod tests {
     #[test]
     fn start_errors_on_version_conflict() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("S1").stage(StoryState::Backlog))
+            .story(TestStory::new("S1").status(StoryState::Backlog))
             .build();
 
         // Pass an old version (0 instead of current)
@@ -250,7 +250,7 @@ mod tests {
             .voyage(TestVoyage::new("v1", "e1").status("planned"))
             .story(
                 TestStory::new("S1")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .scope("e1/v1"),
             )
             .build();

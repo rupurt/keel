@@ -560,7 +560,7 @@ mod tests {
     #[test]
     fn validate_returns_all_story_checks() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("FEAT0001").stage(StoryState::Backlog))
+            .story(TestStory::new("FEAT0001").status(StoryState::Backlog))
             .build();
 
         let report = validate(temp.path()).unwrap();
@@ -599,7 +599,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S1")
-                    .stage(StoryState::NeedsHumanVerification)
+                    .status(StoryState::NeedsHumanVerification)
                     .body("## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Unchecked <!-- verify: manual SRS-01:start:end -->")
             )
             .build();
@@ -622,7 +622,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S1")
-                    .stage(StoryState::Done)
+                    .status(StoryState::Done)
                     .body("## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Unchecked <!-- verify: manual SRS-01:start:end -->")
             )
             .build();
@@ -647,7 +647,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S1")
-                    .stage(StoryState::NeedsHumanVerification)
+                    .status(StoryState::NeedsHumanVerification)
                     .body("## Summary\n\nTODO: Describe the story\n\n## Acceptance Criteria\n\n- [x] [SRS-02/AC-01] done <!-- verify: manual, SRS-02:start:end -->"),
             )
             .build();
@@ -687,7 +687,7 @@ mod tests {
             .story(
                 TestStory::new("S1")
                     .scope("e1/v1")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body(
                         "## Summary\n\nTODO: Describe the story\n\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Define acceptance criteria for this slice",
                     ),

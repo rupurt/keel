@@ -178,8 +178,8 @@ mod tests {
         )
         .unwrap();
 
-        Story {
-            frontmatter: StoryFrontmatter {
+        Story::new(
+            StoryFrontmatter {
                 id: id.to_string(),
                 title: format!("Story {id}"),
                 story_type: StoryType::Feat,
@@ -196,9 +196,8 @@ mod tests {
                 blocked_by: Vec::new(),
                 role: None,
             },
-            path: story_dir.join("README.md"),
-            stage: StoryState::Done,
-        }
+            story_dir.join("README.md"),
+        )
     }
 
     #[test]

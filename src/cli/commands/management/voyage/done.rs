@@ -105,7 +105,7 @@ END FUNCTIONAL_REQUIREMENTS
             .story(
                 TestStory::new("EVID1")
                     .title("Evidence Story")
-                    .stage(crate::domain::model::StoryState::InProgress)
+                    .status(crate::domain::model::StoryState::InProgress)
                     .scope("evidence-epic/01-evidence")
                     .body(
                         "- [x] [SRS-01/AC-01] Validate end-only evidence <!-- verify: echo evidence-ready SRS-01:end -->\n",
@@ -192,7 +192,7 @@ END FUNCTIONAL_REQUIREMENTS
                 TestStory::new("S1")
                     .title("Story 1")
                     .scope("release-epic/01-release")
-                    .stage(crate::domain::model::StoryState::Done)
+                    .status(crate::domain::model::StoryState::Done)
                     .body("## Summary\nThis is story 1 summary.\n"),
             )
             .build();
@@ -223,7 +223,7 @@ END FUNCTIONAL_REQUIREMENTS
                 TestStory::new("R1")
                     .title("Report Story")
                     .scope("report-epic/01-report")
-                    .stage(crate::domain::model::StoryState::Done),
+                    .status(crate::domain::model::StoryState::Done),
             )
             .build();
 

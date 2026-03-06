@@ -32,7 +32,7 @@ impl StoryLifecycleService {
 
         // Early fetch story info for warnings.
         let story = board.require_story(id)?;
-        let was_rejected = story.stage == StoryState::Rejected;
+        let was_rejected = story.status == StoryState::Rejected;
         let scope = story.frontmatter.scope.clone();
         let epic = story.epic().map(String::from);
 
@@ -47,7 +47,7 @@ impl StoryLifecycleService {
             }
         }
 
-        let transition = if story.stage == StoryState::Rejected {
+        let transition = if story.status == StoryState::Rejected {
             StoryTransition::Restart
         } else {
             StoryTransition::Start
@@ -496,7 +496,7 @@ mod tests {
             .story(
                 TestStory::new("MANUAL01")
                     .title("Manual Verification Story")
-                    .stage(StoryState::NeedsHumanVerification)
+                    .status(StoryState::NeedsHumanVerification)
                     .body("## Acceptance Criteria\n\n- [x] Manual verification <!-- verify: manual -->"),
             )
             .build();
@@ -516,7 +516,7 @@ mod tests {
             .story(
                 TestStory::new("MANUAL02")
                     .title("Manual Verification Story")
-                    .stage(StoryState::NeedsHumanVerification)
+                    .status(StoryState::NeedsHumanVerification)
                     .body("## Acceptance Criteria\n\n- [x] Manual verification <!-- verify: manual -->"),
             )
             .build();
@@ -525,7 +525,7 @@ mod tests {
 
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
         let story = board.require_story("MANUAL02").unwrap();
-        assert_eq!(story.stage, StoryState::Done);
+        assert_eq!(story.status, StoryState::Done);
     }
 
     #[test]
@@ -534,7 +534,7 @@ mod tests {
             .story(
                 TestStory::new("OLD000001")
                     .title("Existing Story")
-                    .stage(StoryState::Done)
+                    .status(StoryState::Done)
                     .body(
                         "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] done <!-- verify: manual, SRS-01:start:end -->",
                     ),
@@ -542,7 +542,7 @@ mod tests {
             .story(
                 TestStory::new("NEW000001")
                     .title("New Story")
-                    .stage(StoryState::InProgress)
+                    .status(StoryState::InProgress)
                     .body(
                         "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] done <!-- verify: manual, SRS-01:start:end -->",
                     ),
@@ -597,7 +597,7 @@ mod tests {
             .story(
                 TestStory::new("DONE00001")
                     .title("Done Story")
-                    .stage(StoryState::NeedsHumanVerification)
+                    .status(StoryState::NeedsHumanVerification)
                     .body(
                         "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] done <!-- verify: manual, SRS-01:start:end -->",
                     ),

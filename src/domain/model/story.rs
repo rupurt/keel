@@ -10,6 +10,7 @@ use crate::domain::model::taxonomy::{self, ParseError, RoleTaxonomy};
 
 /// Story frontmatter from YAML
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct StoryFrontmatter {
     pub id: String,
     pub title: String,
@@ -56,11 +57,21 @@ pub struct Story {
     pub frontmatter: StoryFrontmatter,
     /// Path to the story file
     pub path: PathBuf,
-    /// Which stage directory the story is in
-    pub stage: StoryState,
+    /// Canonical lifecycle status for the story
+    pub status: StoryState,
 }
 
 impl Story {
+    /// Construct a story from parsed frontmatter and its README path.
+    pub fn new(frontmatter: StoryFrontmatter, path: impl Into<PathBuf>) -> Self {
+        let status = frontmatter.status;
+        Self {
+            frontmatter,
+            path: path.into(),
+            status,
+        }
+    }
+
     /// Get the story ID
     pub fn id(&self) -> &str {
         &self.frontmatter.id
@@ -127,6 +138,12 @@ impl Story {
         self.frontmatter.role.as_ref().map(|r| taxonomy::parse(r))
     }
 
+    /// Update the canonical story status in memory.
+    pub fn set_status(&mut self, status: StoryState) {
+        self.frontmatter.status = status;
+        self.status = status;
+    }
+
     /// Check if story matches a pattern (fuzzy match)
     pub fn matches(&self, pattern: &str) -> bool {
         super::fuzzy_match(&self.frontmatter.id, &self.frontmatter.title, pattern)
@@ -172,6 +189,17 @@ started_at: 2025-01-23T12:00:00
 "#
     }
 
+    fn sample_story(path: &str) -> Story {
+        Story::new(
+            serde_yaml::from_str(sample_frontmatter_yaml()).unwrap(),
+            PathBuf::from(path),
+        )
+    }
+
+    fn story_from_yaml(yaml: &str, path: &str) -> Story {
+        Story::new(serde_yaml::from_str(yaml).unwrap(), PathBuf::from(path))
+    }
+
     #[test]
     fn story_frontmatter_deserializes() {
         let fm: StoryFrontmatter = serde_yaml::from_str(sample_frontmatter_yaml()).unwrap();
@@ -198,6 +226,20 @@ status: in-progress
 
         assert_eq!(fm.id, "BUG0001");
         assert!(fm.scope.is_none());
+    }
+
+    #[test]
+    fn story_frontmatter_rejects_legacy_stage_field() {
+        let yaml = r#"
+id: BUG0001
+title: Fix crash
+type: bug
+stage: backlog
+"#;
+        let err = serde_yaml::from_str::<StoryFrontmatter>(yaml).unwrap_err();
+
+        assert!(err.to_string().contains("unknown field"));
+        assert!(err.to_string().contains("stage"));
     }
 
     #[test]
@@ -240,11 +282,7 @@ completed_at: 2026-01-29T11:00:00
 
     #[test]
     fn story_matches_by_id() {
-        let story = Story {
-            frontmatter: serde_yaml::from_str(sample_frontmatter_yaml()).unwrap(),
-            path: PathBuf::from("test.md"),
-            stage: StoryState::Backlog,
-        };
+        let story = sample_story("test.md");
 
         assert!(story.matches("FEAT0238"));
         assert!(story.matches("feat0238")); // case insensitive
@@ -283,21 +321,13 @@ status: backlog
 
     #[test]
     fn filename_extracts_from_path() {
-        let story = Story {
-            frontmatter: serde_yaml::from_str(sample_frontmatter_yaml()).unwrap(),
-            path: PathBuf::from("/board/stories/[FEAT][0238]-create-board-crate.md"),
-            stage: StoryState::Backlog,
-        };
+        let story = sample_story("/board/stories/[FEAT][0238]-create-board-crate.md");
         assert_eq!(story.filename(), "[FEAT][0238]-create-board-crate.md");
     }
 
     #[test]
     fn filename_handles_missing_filename() {
-        let story = Story {
-            frontmatter: serde_yaml::from_str(sample_frontmatter_yaml()).unwrap(),
-            path: PathBuf::from("/"),
-            stage: StoryState::Backlog,
-        };
+        let story = sample_story("/");
         assert_eq!(story.filename(), "unknown");
     }
 
@@ -310,11 +340,7 @@ type: feat
 status: backlog
 scope: core/01-session
 "#;
-        let story = Story {
-            frontmatter: serde_yaml::from_str(yaml).unwrap(),
-            path: PathBuf::from("test.md"),
-            stage: StoryState::Backlog,
-        };
+        let story = story_from_yaml(yaml, "test.md");
         assert_eq!(story.epic(), Some("core"));
     }
 
@@ -326,11 +352,7 @@ title: Test
 type: feat
 status: backlog
 "#;
-        let story = Story {
-            frontmatter: serde_yaml::from_str(yaml).unwrap(),
-            path: PathBuf::from("test.md"),
-            stage: StoryState::Backlog,
-        };
+        let story = story_from_yaml(yaml, "test.md");
         assert_eq!(story.epic(), None);
     }
 
@@ -343,11 +365,7 @@ type: feat
 status: backlog
 scope: core/01-session
 "#;
-        let story = Story {
-            frontmatter: serde_yaml::from_str(yaml).unwrap(),
-            path: PathBuf::from("test.md"),
-            stage: StoryState::Backlog,
-        };
+        let story = story_from_yaml(yaml, "test.md");
         assert_eq!(story.voyage(), Some("01-session"));
     }
 
@@ -360,11 +378,7 @@ type: feat
 status: backlog
 scope: core
 "#;
-        let story = Story {
-            frontmatter: serde_yaml::from_str(yaml).unwrap(),
-            path: PathBuf::from("test.md"),
-            stage: StoryState::Backlog,
-        };
+        let story = story_from_yaml(yaml, "test.md");
         assert_eq!(story.voyage(), None);
     }
 
@@ -376,11 +390,7 @@ title: Test
 type: feat
 status: backlog
 "#;
-        let story = Story {
-            frontmatter: serde_yaml::from_str(yaml).unwrap(),
-            path: PathBuf::from("test.md"),
-            stage: StoryState::Backlog,
-        };
+        let story = story_from_yaml(yaml, "test.md");
         assert_eq!(story.voyage(), None);
     }
 
@@ -443,11 +453,7 @@ governed-by: [ADR-0001]
     #[test]
     fn required_role_returns_none_when_no_role() {
         // [SRS-05/AC-02] When `role` is None, method returns `None`
-        let story = Story {
-            frontmatter: serde_yaml::from_str(sample_frontmatter_yaml()).unwrap(),
-            path: PathBuf::from("test.md"),
-            stage: StoryState::Backlog,
-        };
+        let story = sample_story("test.md");
         assert!(story.required_role().is_none());
     }
 
@@ -462,11 +468,7 @@ type: feat
 status: backlog
 role: "engineer/software"
 "#;
-        let story = Story {
-            frontmatter: serde_yaml::from_str(yaml).unwrap(),
-            path: PathBuf::from("test.md"),
-            stage: StoryState::Backlog,
-        };
+        let story = story_from_yaml(yaml, "test.md");
         let result = story.required_role();
         assert!(result.is_some());
         let taxonomy = result.unwrap().unwrap();
@@ -484,11 +486,7 @@ type: feat
 status: backlog
 role: ""
 "#;
-        let story = Story {
-            frontmatter: serde_yaml::from_str(yaml).unwrap(),
-            path: PathBuf::from("test.md"),
-            stage: StoryState::Backlog,
-        };
+        let story = story_from_yaml(yaml, "test.md");
         let result = story.required_role();
         assert!(result.is_some());
         assert!(result.unwrap().is_err());

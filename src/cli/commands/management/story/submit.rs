@@ -18,7 +18,7 @@ pub fn run(board_dir: &Path, id: &str) -> Result<()> {
 
     let board = load_board(board_dir)?;
     let story = board.require_story(id)?;
-    let guidance = guidance_for_action(StoryLifecycleAction::Submit, story.stage, story.id());
+    let guidance = guidance_for_action(StoryLifecycleAction::Submit, story.status, story.id());
     print_human(guidance.as_ref());
 
     Ok(())
@@ -42,7 +42,7 @@ mod tests {
             .story(
                 TestStory::new("ACTIVE1")
                     .title("Active Story")
-                    .stage(StoryState::InProgress)
+                    .status(StoryState::InProgress)
                     .body("## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Done <!-- verify: manual, SRS-01:start:end -->")
             )
             .build();
@@ -69,7 +69,7 @@ mod tests {
             .story(
                 TestStory::new("SUBMIT1")
                     .title("Submit Story")
-                    .stage(StoryState::InProgress)
+                    .status(StoryState::InProgress)
                     .body("## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Done <!-- verify: manual, SRS-01:start:end -->")
             )
             .build();
@@ -111,7 +111,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("1vkqtsCCC")
-                    .stage(StoryState::InProgress)
+                    .status(StoryState::InProgress)
                     .body("## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Not done <!-- verify: manual, SRS-01:start:end -->")
             )
             .build();
@@ -137,7 +137,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("1vkqtsREF")
-                    .stage(StoryState::InProgress)
+                    .status(StoryState::InProgress)
                     .body("## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Done <!-- verify: manual, SRS-01:start:end -->"),
             )
             .build();
@@ -161,7 +161,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("1vkqtsDDD")
-                    .stage(StoryState::InProgress)
+                    .status(StoryState::InProgress)
                     .body("## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Done <!-- verify: manual, SRS-01:start:end -->")
             )
             .build();
@@ -183,7 +183,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("1vkqtsEEE")
-                    .stage(StoryState::InProgress)
+                    .status(StoryState::InProgress)
                     .body("# No AC section"),
             )
             .build();
@@ -210,7 +210,7 @@ mod tests {
             .story(
                 TestStory::new("FLATACT")
                     .title("Active Story")
-                    .stage(StoryState::InProgress)
+                    .status(StoryState::InProgress)
                     .body("## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Done <!-- verify: manual, SRS-01:start:end -->")
             )
             .build();
@@ -240,7 +240,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("1vkqtsVV1")
-                    .stage(StoryState::InProgress)
+                    .status(StoryState::InProgress)
                     .body("## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Auto <!-- verify: echo ok == ok, SRS-01:start:end -->")
             )
             .build();
@@ -264,7 +264,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("1vkqtsVV2")
-                    .stage(StoryState::InProgress)
+                    .status(StoryState::InProgress)
                     .body("## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Manual <!-- verify: manual, SRS-01:start:end -->")
             )
             .build();
@@ -289,7 +289,7 @@ mod tests {
             .story(
                 TestStory::new("1vkqtsVV4")
                     .title("Fail Story")
-                    .stage(StoryState::InProgress)
+                    .status(StoryState::InProgress)
                     .body("\n## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Check output value <!-- verify: echo wrong == expected, SRS-01:start:end -->\n")
             )
             .build();

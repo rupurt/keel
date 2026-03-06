@@ -23,7 +23,7 @@ pub fn classify_backlog_story(
     story: &Story,
     dependencies: &HashMap<String, Vec<String>>,
 ) -> BacklogQueueState {
-    if story.stage != StoryState::Backlog {
+    if story.status != StoryState::Backlog {
         return BacklogQueueState::Blocked;
     }
 
@@ -38,7 +38,7 @@ pub fn classify_backlog_story(
             board
                 .stories
                 .get(dep_id)
-                .is_some_and(|dep_story| dep_story.stage != StoryState::Done)
+                .is_some_and(|dep_story| dep_story.status != StoryState::Done)
         })
     });
 
@@ -58,7 +58,7 @@ pub fn backlog_queue_counts(board: &Board) -> (usize, usize) {
     for story in board
         .stories
         .values()
-        .filter(|story| story.stage == StoryState::Backlog)
+        .filter(|story| story.status == StoryState::Backlog)
     {
         match classify_backlog_story(board, story, &dependencies) {
             BacklogQueueState::Ready => ready_count += 1,

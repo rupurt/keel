@@ -128,18 +128,18 @@ mod tests {
                 TestStory::new("S1")
                     .title("Structured core work")
                     .scope("core/01-structured")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .story(
                 TestStory::new("S2")
                     .title("Unknown architecture work")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .story(
                 TestStory::new("S3")
                     .title("Structured ops work")
                     .scope("ops/01-structured")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 
@@ -182,14 +182,14 @@ mod tests {
                 TestStory::new("S1")
                     .title("Structured core work")
                     .scope("core/01-structured")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .story(
                 TestStory::new("S2")
                     .title("Structured ops work")
                     .scope("ops/01-structured")
                     .blocked_by(&["S1"])
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 

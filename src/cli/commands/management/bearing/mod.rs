@@ -10,6 +10,22 @@ use clap::Subcommand;
 pub(crate) mod guidance;
 pub mod show;
 
+const BEARING_STATUS_VALUES: &[&str] = &[
+    "exploring",
+    "evaluating",
+    "ready",
+    "laid",
+    "parked",
+    "declined",
+];
+
+pub(crate) fn parse_bearing_status(value: &str) -> Result<String, String> {
+    crate::cli::commands::management::status_filter::validate_status_arg(
+        value,
+        BEARING_STATUS_VALUES,
+    )
+}
+
 #[derive(Subcommand, Debug)]
 pub enum BearingAction {
     /// Create a new bearing
@@ -29,9 +45,9 @@ pub enum BearingAction {
     },
     /// List all bearings
     List {
-        /// Filter by status
-        #[arg(long)]
-        status: Option<String>,
+        /// Filter by status. Repeat to override or use + / - to modify the default active view.
+        #[arg(long, action = clap::ArgAction::Append, value_parser = parse_bearing_status)]
+        status: Vec<String>,
     },
     /// Show bearing details
     Show {
@@ -104,7 +120,7 @@ pub fn run(action: BearingAction) -> Result<()> {
         BearingAction::New { name } => run_new(&name),
         BearingAction::Survey { name } => run_survey(&name),
         BearingAction::Assess { name } => run_assess(&name),
-        BearingAction::List { status } => run_list(status.as_deref()),
+        BearingAction::List { status } => run_list(&status),
         BearingAction::Show { name } => show::run(&name),
         BearingAction::Park { name } => run_park(&name),
         BearingAction::Decline { name, reason } => run_decline(&name, &reason),
@@ -183,23 +199,25 @@ fn update_bearing_status(
     Ok(())
 }
 
-/// Run the list command - shows all bearings with status and EV score
-pub fn run_list(status_filter: Option<&str>) -> Result<()> {
+const DEFAULT_BEARING_STATUSES: &[&str] = &["exploring", "evaluating", "ready"];
+
+/// Run the list command - shows bearings with status and EV score.
+pub fn run_list(status_filters: &[String]) -> Result<()> {
     let board_dir = find_board_dir()?;
     let board = load_board(&board_dir)?;
     let (config, _source) = load_config();
     let weights = config.current_weights();
-
-    // Parse status filter if provided
-    let filter_status: Option<BearingStatus> = status_filter
-        .map(|s| s.parse().map_err(|_| anyhow!("Invalid status: {}", s)))
-        .transpose()?;
+    let status_filter = crate::cli::commands::management::status_filter::resolve_status_filter(
+        status_filters,
+        DEFAULT_BEARING_STATUSES,
+        BEARING_STATUS_VALUES,
+    )?;
 
     // Collect bearings with their scores
     let mut bearings_with_scores: Vec<(&Bearing, Option<f64>)> = board
         .bearings
         .values()
-        .filter(|b| filter_status.is_none() || Some(b.frontmatter.status) == filter_status)
+        .filter(|b| status_filter.contains(&b.frontmatter.status.to_string()))
         .map(|b| {
             let score = get_bearing_score(&board_dir, b, &weights);
             (b, score)
@@ -215,11 +233,27 @@ pub fn run_list(status_filter: Option<&str>) -> Result<()> {
     });
 
     if bearings_with_scores.is_empty() {
-        if filter_status.is_some() {
-            println!("No bearings with status: {}", status_filter.unwrap());
-        } else {
-            println!("No bearings found.");
-        }
+        let hidden_terminal_statuses = ["laid", "parked", "declined"]
+            .into_iter()
+            .filter(|status| {
+                !status_filter.contains(status)
+                    && board
+                        .bearings
+                        .values()
+                        .any(|bearing| bearing.frontmatter.status.to_string() == *status)
+            })
+            .collect::<Vec<_>>();
+        let tip = crate::cli::commands::management::status_filter::build_append_status_suggestion(
+            &hidden_terminal_statuses,
+            "terminal bearings",
+        );
+        let state = crate::cli::commands::management::status_filter::build_empty_list_state(
+            "bearings",
+            !board.bearings.is_empty(),
+            &status_filter,
+            tip,
+        );
+        crate::cli::commands::management::status_filter::print_empty_list_state(&state);
         print_human(informational_for_list().as_ref());
         return Ok(());
     }

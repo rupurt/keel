@@ -193,8 +193,8 @@ mod tests {
     use std::path::PathBuf;
 
     fn make_completed_story(id: &str, completed_at: NaiveDate) -> Story {
-        Story {
-            frontmatter: StoryFrontmatter {
+        Story::new(
+            StoryFrontmatter {
                 id: id.to_string(),
                 title: format!("Story {}", id),
                 story_type: StoryType::Feat,
@@ -211,9 +211,8 @@ mod tests {
                 blocked_by: vec![],
                 role: None,
             },
-            path: PathBuf::from(format!("{}.md", id)),
-            stage: StoryState::Done,
-        }
+            PathBuf::from(format!("{}.md", id)),
+        )
     }
 
     fn make_laid_bearing(id: &str, laid_at: NaiveDate) -> Bearing {

@@ -186,8 +186,8 @@ mod tests {
         submitted_at: Option<&str>,
         completed_at: Option<&str>,
     ) -> Story {
-        Story {
-            frontmatter: StoryFrontmatter {
+        Story::new(
+            StoryFrontmatter {
                 id: id.to_string(),
                 title: format!("Story {id}"),
                 story_type: StoryType::Feat,
@@ -204,9 +204,8 @@ mod tests {
                 blocked_by: vec![],
                 role: None,
             },
-            path: PathBuf::from(format!("{id}.md")),
-            stage: StoryState::Done,
-        }
+            PathBuf::from(format!("{id}.md")),
+        )
     }
 
     fn make_voyage(id: &str, completed_at: Option<&str>) -> Voyage {

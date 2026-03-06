@@ -175,7 +175,7 @@ fn story_temporal_invariant_problems(story: &Story) -> Vec<Problem> {
 }
 
 fn missing_started_at_problem(story: &Story) -> Option<Problem> {
-    if !stage_requires_started_at(story.stage) || story.frontmatter.started_at.is_some() {
+    if !status_requires_started_at(story.status) || story.frontmatter.started_at.is_some() {
         return None;
     }
 
@@ -184,7 +184,7 @@ fn missing_started_at_problem(story: &Story) -> Option<Problem> {
             story.path.clone(),
             format!(
                 "story in '{}' state must define started_at timestamp",
-                story.stage
+                story.status
             ),
         )
         .with_check_id(CheckId::StoryDateConsistency)
@@ -218,14 +218,8 @@ fn submitted_before_completed_problem(story: &Story) -> Option<Problem> {
     )
 }
 
-fn stage_requires_started_at(stage: StoryState) -> bool {
-    matches!(
-        stage,
-        StoryState::InProgress
-            | StoryState::NeedsHumanVerification
-            | StoryState::Done
-            | StoryState::Rejected
-    )
+fn status_requires_started_at(status: StoryState) -> bool {
+    status.is_active() || status.is_terminal()
 }
 
 /// Check that story role fields have valid taxonomy syntax
@@ -328,10 +322,10 @@ pub fn check_index_validation(board: &Board) -> Vec<Problem> {
         let mut active_indices = Vec::new();
         for (seq, id, _) in &entries {
             if let Some(story) = board.stories.get(*id) {
-                if story.stage == StoryState::Icebox {
+                if story.status == StoryState::Icebox {
                     icebox_indices.push(*seq);
-                } else if story.stage == StoryState::Backlog
-                    || story.stage == StoryState::InProgress
+                } else if story.status == StoryState::Backlog
+                    || story.status == StoryState::InProgress
                 {
                     active_indices.push(*seq);
                 }
@@ -416,7 +410,7 @@ pub fn check_acceptance_criteria_complete(board: &Board) -> Vec<Problem> {
     let mut problems = Vec::new();
 
     for story in board.stories.values() {
-        if story.stage != StoryState::NeedsHumanVerification && story.stage != StoryState::Done {
+        if story.status != StoryState::NeedsHumanVerification && story.status != StoryState::Done {
             continue;
         }
 
@@ -487,7 +481,7 @@ pub fn check_verification_manifests(board: &Board) -> Vec<Problem> {
     for story in board.stories.values() {
         // Manifest is required for terminal stages
 
-        if story.stage != StoryState::NeedsHumanVerification && story.stage != StoryState::Done {
+        if story.status != StoryState::NeedsHumanVerification && story.status != StoryState::Done {
             continue;
         }
 
@@ -628,9 +622,9 @@ pub fn check_verification_annotations(board: &Board) -> Vec<Problem> {
     let mut problems = Vec::new();
 
     for story in board.stories.values() {
-        if story.stage != StoryState::InProgress
-            && story.stage != StoryState::NeedsHumanVerification
-            && story.stage != StoryState::Done
+        if story.status != StoryState::InProgress
+            && story.status != StoryState::NeedsHumanVerification
+            && story.status != StoryState::Done
         {
             continue;
         }
@@ -731,10 +725,10 @@ pub fn check_srs_traceability(board: &Board) -> Vec<Problem> {
     let mut problems = Vec::new();
 
     for story in board.stories.values() {
-        if story.stage != StoryState::Backlog
-            && story.stage != StoryState::InProgress
-            && story.stage != StoryState::NeedsHumanVerification
-            && story.stage != StoryState::Done
+        if story.status != StoryState::Backlog
+            && story.status != StoryState::InProgress
+            && story.status != StoryState::NeedsHumanVerification
+            && story.status != StoryState::Done
         {
             continue;
         }
@@ -808,7 +802,7 @@ pub fn check_story_dependency_cycles(board: &Board) -> Vec<Problem> {
     let active_story_ids: HashSet<String> = board
         .stories
         .values()
-        .filter(|story| story.stage != StoryState::Done)
+        .filter(|story| story.status != StoryState::Done)
         .map(|story| story.id().to_string())
         .collect();
 
@@ -1073,7 +1067,7 @@ pub fn check_terminal_story_coherence(board: &Board) -> Vec<Problem> {
     let mut problems = Vec::new();
 
     for story in board.stories.values() {
-        if story.stage != StoryState::NeedsHumanVerification && story.stage != StoryState::Done {
+        if story.status != StoryState::NeedsHumanVerification && story.status != StoryState::Done {
             continue;
         }
 
@@ -1247,7 +1241,7 @@ pub fn check_reflection_coherence(board: &Board) -> Vec<Problem> {
     let mut problems = Vec::new();
 
     for story in board.stories.values() {
-        if story.stage != StoryState::Backlog && story.stage != StoryState::Icebox {
+        if story.status != StoryState::Backlog && story.status != StoryState::Icebox {
             continue;
         }
 
@@ -1256,7 +1250,7 @@ pub fn check_reflection_coherence(board: &Board) -> Vec<Problem> {
             problems.push(
                 Problem::warning(
                     reflect_path.clone(),
-                    format!("story is in {} stage but has a REFLECT.md", story.stage),
+                    format!("story is in {} status but has a REFLECT.md", story.status),
                 )
                 .with_check_id(CheckId::StoryUnexpectedReflection)
                 .with_scope(story.scope().unwrap_or_default())
@@ -1357,7 +1351,7 @@ mod tests {
 
         for stage in stages {
             let temp = TestBoardBuilder::new()
-                .story(TestStory::new("S1").stage(stage))
+                .story(TestStory::new("S1").status(stage))
                 .build();
             let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
             let problems = check_story_dates(&board);
@@ -1378,7 +1372,7 @@ mod tests {
 
         for stage in stages {
             let temp = TestBoardBuilder::new()
-                .story(TestStory::new("S1").stage(stage))
+                .story(TestStory::new("S1").status(stage))
                 .build();
             let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
             let problems = check_story_dates(&board);
@@ -1396,7 +1390,7 @@ mod tests {
     #[test]
     fn date_consistency_fails_when_submitted_at_is_not_before_completed_at() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("S1").stage(StoryState::Done))
+            .story(TestStory::new("S1").status(StoryState::Done))
             .build();
         let path = temp.path().join("stories/S1/README.md");
         let content = fs::read_to_string(&path).unwrap();
@@ -1421,7 +1415,7 @@ mod tests {
     #[test]
     fn date_consistency_allows_submitted_at_before_completed_at() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("S1").stage(StoryState::Done))
+            .story(TestStory::new("S1").status(StoryState::Done))
             .build();
         let path = temp.path().join("stories/S1/README.md");
         let content = fs::read_to_string(&path).unwrap();
@@ -1448,7 +1442,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S1")
-                    .stage(StoryState::InProgress)
+                    .status(StoryState::InProgress)
                     .body("## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] legacy <!-- verify: manual SRS-01:start -->")
             )
             .build();
@@ -1474,7 +1468,7 @@ mod tests {
 
                     TestStory::new("S1")
 
-                        .stage(StoryState::InProgress)
+                        .status(StoryState::InProgress)
 
                         .body("## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] valid <!-- verify: manual, SRS-01:start -->")
 
@@ -1497,13 +1491,13 @@ mod tests {
                 TestStory::new("S1")
                     .scope("epic/v1")
                     .index(1)
-                    .stage(StoryState::Icebox),
+                    .status(StoryState::Icebox),
             )
             .story(
                 TestStory::new("S2")
                     .scope("epic/v1")
                     .index(2)
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 
@@ -1584,17 +1578,17 @@ mod tests {
             .story(
                 TestStory::new("S1")
                     .blocked_by(&["MISSING-STORY"])
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .story(
                 TestStory::new("S2")
                     .blocked_by(&["S3"])
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .story(
                 TestStory::new("S3")
                     .blocked_by(&["S2"])
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 
@@ -1626,12 +1620,12 @@ mod tests {
             .story(
                 TestStory::new("PAIR-A")
                     .blocked_by(&["PAIR-B"])
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .story(
                 TestStory::new("PAIR-B")
                     .blocked_by(&["PAIR-A"])
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 
@@ -1656,7 +1650,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S1")
-                    .stage(StoryState::NeedsHumanVerification)
+                    .status(StoryState::NeedsHumanVerification)
                     .body("## Summary\n\nTODO: Describe the story\n\n## Acceptance Criteria\n\n- [x] [SRS-02/AC-01] done <!-- verify: manual, SRS-02:start:end -->"),
             )
             .build();
@@ -1679,7 +1673,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S1")
-                    .stage(StoryState::Done)
+                    .status(StoryState::Done)
                     .body("## Summary\n\nImplemented.\n\n## Acceptance Criteria\n\n- [x] [SRS-03/AC-01] done <!-- verify: manual, SRS-03:start:end -->"),
             )
             .build();
@@ -1710,7 +1704,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S1")
-                    .stage(StoryState::Done)
+                    .status(StoryState::Done)
                     .body("## Summary\n\nImplemented.\n\n## Acceptance Criteria\n\n- [x] [SRS-03/AC-01] done <!-- verify: manual, SRS-03:start:end -->"),
             )
             .build();
@@ -1738,7 +1732,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S1")
-                    .stage(StoryState::Done)
+                    .status(StoryState::Done)
                     .body("## Summary\n\nImplemented.\n\n## Acceptance Criteria\n\n- [x] [SRS-03/AC-01] done <!-- verify: manual, SRS-03:start:end -->"),
             )
             .build();
@@ -1766,7 +1760,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S1")
-                    .stage(StoryState::InProgress)
+                    .status(StoryState::InProgress)
                     .body("## Summary\n\nTODO: Describe the story\n\n## Acceptance Criteria\n\n- [ ] [SRS-02/AC-02] todo <!-- verify: manual, SRS-02:start:end -->"),
             )
             .build();
@@ -1795,7 +1789,7 @@ mod tests {
             .story(
                 TestStory::new("S1")
                     .scope("e1/v1")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body(
                         "## Summary\n\nTODO: Describe the story\n\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Define acceptance criteria for this slice",
                     ),
@@ -1823,7 +1817,7 @@ mod tests {
             .story(
                 TestStory::new("S1")
                     .scope("e1/v1")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body("## Summary\n\nReady.\n\n## Acceptance Criteria\n\nTBD"),
             )
             .build();
@@ -1849,7 +1843,7 @@ mod tests {
             .story(
                 TestStory::new("S1")
                     .scope("e1/v1")
-                    .stage(StoryState::Icebox)
+                    .status(StoryState::Icebox)
                     .body(
                         "## Summary\n\nTODO: Describe the story\n\n## Acceptance Criteria\n\n- [ ] TODO: Add criteria",
                     ),
@@ -1870,7 +1864,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S1")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body("## Acceptance Criteria\n\n- [ ] Missing traceability marker"),
             )
             .build();
@@ -1888,7 +1882,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S1")
-                    .stage(StoryState::Icebox)
+                    .status(StoryState::Icebox)
                     .body("## Acceptance Criteria\n\n- [ ] Missing traceability marker"),
             )
             .build();

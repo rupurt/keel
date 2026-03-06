@@ -91,7 +91,7 @@ pub struct ScopeSummary {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StoryRef {
     pub id: String,
-    pub stage: StoryState,
+    pub status: StoryState,
     pub index: Option<u32>,
 }
 
@@ -187,7 +187,7 @@ pub struct StoryShowProjection {
 #[derive(Debug, Clone)]
 struct StoryEvidence {
     id: String,
-    stage: StoryState,
+    status: StoryState,
     index: Option<u32>,
     references: Vec<String>,
     automated_count_by_req: BTreeMap<String, usize>,
@@ -267,7 +267,7 @@ pub fn build_epic_show_projection(board: &Board, epic: &Epic) -> Result<EpicShow
 
     let done_stories = stories
         .iter()
-        .filter(|story| story.stage.to_string() == "done")
+        .filter(|story| story.status.to_string() == "done")
         .count();
     let total_stories = stories.len();
     let remaining_stories = total_stories.saturating_sub(done_stories);
@@ -460,7 +460,7 @@ pub fn build_voyage_show_projection(
 
             Some(StoryEvidence {
                 id: story.id().to_string(),
-                stage: story.stage,
+                status: story.status,
                 index: story.index(),
                 references,
                 automated_count_by_req,
@@ -473,7 +473,7 @@ pub fn build_voyage_show_projection(
     let total_stories = story_evidence.len();
     let done_stories = story_evidence
         .iter()
-        .filter(|story| story.stage == StoryState::Done)
+        .filter(|story| story.status == StoryState::Done)
         .count();
 
     let mut rows = Vec::new();
@@ -483,7 +483,7 @@ pub fn build_voyage_show_projection(
             .filter(|story| story.references.iter().any(|req| req == &requirement.id))
             .map(|story| StoryRef {
                 id: story.id.clone(),
-                stage: story.stage,
+                status: story.status,
                 index: story.index,
             })
             .collect();
@@ -1190,10 +1190,10 @@ fn story_ref_ordering(a: &StoryRef, b: &StoryRef) -> Ordering {
 fn requirement_completion_state(linked: &[StoryRef]) -> RequirementCompletion {
     if linked.is_empty() {
         RequirementCompletion::Unmapped
-    } else if linked.iter().all(|story| story.stage == StoryState::Done) {
+    } else if linked.iter().all(|story| story.status == StoryState::Done) {
         RequirementCompletion::Done
     } else if linked.iter().any(|story| {
-        story.stage == StoryState::InProgress || story.stage == StoryState::NeedsHumanVerification
+        story.status == StoryState::InProgress || story.status == StoryState::NeedsHumanVerification
     }) {
         RequirementCompletion::InProgress
     } else {
@@ -2302,7 +2302,7 @@ Out of scope:
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 "#,
             ))
-            .story(TestStory::new("S1").scope("e1/v1").stage(StoryState::Done).body(
+            .story(TestStory::new("S1").scope("e1/v1").status(StoryState::Done).body(
                 r#"## Acceptance Criteria
 - [x] [SRS-01/AC-01] preserve evidence section <!-- verify: cargo test -p keel planning_show_preserves_existing_sections, SRS-01:start:end, proof: ac-1.log -->
 "#,

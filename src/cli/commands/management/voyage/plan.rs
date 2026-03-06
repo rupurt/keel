@@ -79,7 +79,7 @@ pub fn run_with_dir(board_dir: &Path, id: &str, no_review: bool) -> Result<()> {
 
     // Promote draft-scoped stories from icebox to backlog
     let mut thawed = 0usize;
-    for story in stories.iter().filter(|s| s.stage == StoryState::Icebox) {
+    for story in stories.iter().filter(|s| s.status == StoryState::Icebox) {
         let content = fs::read_to_string(&story.path)
             .with_context(|| format!("Failed to read story: {}", story.path.display()))?;
 
@@ -441,13 +441,13 @@ mod tests {
             .story(
                 TestStory::new("0005")
                     .scope("test-epic/01-draft")
-                    .stage(StoryState::Icebox)
+                    .status(StoryState::Icebox)
                     .body("\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] test"),
             )
             .story(
                 TestStory::new("0006")
                     .scope("test-epic/01-draft")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body("\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-02] test"),
             )
             .build();

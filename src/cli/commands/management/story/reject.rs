@@ -35,7 +35,7 @@ mod tests {
             .story(
                 TestStory::new("0001")
                     .title("Story to Reject")
-                    .stage(StoryState::NeedsHumanVerification),
+                    .status(StoryState::NeedsHumanVerification),
             )
             .build();
 
@@ -55,7 +55,7 @@ mod tests {
             .story(
                 TestStory::new("0001")
                     .title("Story to Reject")
-                    .stage(StoryState::NeedsHumanVerification),
+                    .status(StoryState::NeedsHumanVerification),
             )
             .build();
 
@@ -73,7 +73,7 @@ mod tests {
             .story(
                 TestStory::new("0001")
                     .title("Story to Reject")
-                    .stage(StoryState::NeedsHumanVerification),
+                    .status(StoryState::NeedsHumanVerification),
             )
             .build();
 
@@ -91,7 +91,7 @@ mod tests {
             .story(
                 TestStory::new("0002")
                     .title("Rejected Story")
-                    .stage(StoryState::Rejected),
+                    .status(StoryState::Rejected),
             )
             .build();
 
@@ -110,7 +110,7 @@ mod tests {
             .story(
                 TestStory::new("0003")
                     .title("Done Story")
-                    .stage(StoryState::Done),
+                    .status(StoryState::Done),
             )
             .build();
 
@@ -136,7 +136,7 @@ mod tests {
             .story(
                 TestStory::new("1vkqtsAAA")
                     .title("Story to Reject")
-                    .stage(StoryState::NeedsHumanVerification),
+                    .status(StoryState::NeedsHumanVerification),
             )
             .build();
 
@@ -158,7 +158,7 @@ mod tests {
             .story(
                 TestStory::new("1vkqtsBBB")
                     .title("Rejected Story")
-                    .stage(StoryState::Rejected),
+                    .status(StoryState::Rejected),
             )
             .build();
 

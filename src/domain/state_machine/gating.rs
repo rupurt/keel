@@ -578,10 +578,10 @@ fn evaluate_voyage_start(_board: &Board, voyage: &Voyage, stories: &[&Story]) ->
     let mut invalid_stories = Vec::new();
     for story in stories {
         if !matches!(
-            story.stage,
+            story.status,
             StoryState::Backlog | StoryState::Icebox | StoryState::Done
         ) {
-            invalid_stories.push(format!("{} ({})", story.id(), story.stage));
+            invalid_stories.push(format!("{} ({})", story.id(), story.status));
         }
     }
 
@@ -690,14 +690,14 @@ pub fn evaluate_voyage_completion(
             if Some(s.id()) == candidate_story_done {
                 true
             } else {
-                s.stage == StoryState::Done
+                s.status == StoryState::Done
             }
         });
 
         if !all_done {
             let done_count = stories
                 .iter()
-                .filter(|s| s.stage == StoryState::Done)
+                .filter(|s| s.status == StoryState::Done)
                 .count();
             let next_count = if candidate_story_done.is_some() {
                 done_count + 1
@@ -979,7 +979,7 @@ mod tests {
             .story(
                 TestStory::new("PLAN01")
                     .scope("test-epic/01-planned")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body(
                         "## Summary\n\nReady for work.\n\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Planned item",
                     ),
@@ -1019,7 +1019,7 @@ mod tests {
             .story(
                 TestStory::new("PLAN01")
                     .scope("test-epic/01-draft")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body(
                         "## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Requirement 1 covered <!-- verify: cargo test SRS-01:start:end -->",
                     ),
@@ -1075,7 +1075,7 @@ mod tests {
             .story(
                 TestStory::new("PLAN01")
                     .scope("test-epic/01-draft")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body(
                         "## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Requirement 1 covered <!-- verify: cargo test SRS-01:start:end -->",
                     ),
@@ -1098,7 +1098,7 @@ mod tests {
             .story(
                 TestStory::new("PLAN01")
                     .scope("test-epic/01-draft")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body(
                         "## Summary\n\nImplemented details pending.\n\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Define acceptance criteria for this slice",
                     ),
@@ -1127,7 +1127,7 @@ mod tests {
             .story(
                 TestStory::new("PLAN01")
                     .scope("test-epic/01-draft")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body("## Summary\n\nReady.\n\n## Acceptance Criteria\n\nTBD"),
             )
             .build();
@@ -1167,7 +1167,7 @@ mod tests {
             .story(
                 TestStory::new("PLAN01")
                     .scope("test-epic/01-draft")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body(
                         "## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Requirement 1 covered <!-- verify: cargo test SRS-01:start:end -->",
                     ),
@@ -1211,12 +1211,12 @@ mod tests {
             .story(
                 TestStory::new("STORY01")
                     .scope("test-epic/01-inprogress")
-                    .stage(StoryState::Done),
+                    .status(StoryState::Done),
             )
             .story(
                 TestStory::new("STORY02")
                     .scope("test-epic/01-inprogress")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 
@@ -1255,7 +1255,7 @@ mod tests {
             .story(
                 TestStory::new("STORY01")
                     .scope("test-epic/01-inprogress")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body("- [ ] [SRS-01/AC-01] started <!-- verify: cargo test, SRS-01:start -->"),
             )
             .build();
@@ -1283,12 +1283,12 @@ mod tests {
             .story(
                 TestStory::new("DONE01")
                     .scope("test-epic/01-planned")
-                    .stage(StoryState::Done),
+                    .status(StoryState::Done),
             )
             .story(
                 TestStory::new("BACKLOG01")
                     .scope("test-epic/01-planned")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 
@@ -1310,7 +1310,7 @@ mod tests {
             .story(
                 TestStory::new("S1")
                     .scope("test-epic/01-draft")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
         let board = load_board(temp.path()).unwrap();
@@ -1329,7 +1329,7 @@ mod tests {
             .story(
                 TestStory::new("S1")
                     .scope("test-epic/01-planned")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
         fs::write(
@@ -1492,7 +1492,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S-ACCEPT")
-                    .stage(StoryState::NeedsHumanVerification)
+                    .status(StoryState::NeedsHumanVerification)
                     .body(
                         "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Manual validation <!-- verify: manual -->",
                     ),
@@ -1511,7 +1511,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S-ACCEPT2")
-                    .stage(StoryState::NeedsHumanVerification)
+                    .status(StoryState::NeedsHumanVerification)
                     .body(
                         "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Manual validation <!-- verify: manual -->",
                     ),
@@ -1532,7 +1532,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S-ACCEPT-REFLECT")
-                    .stage(StoryState::NeedsHumanVerification)
+                    .status(StoryState::NeedsHumanVerification)
                     .body(
                         "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Done <!-- verify: cargo test, SRS-01:start:end -->",
                     ),
@@ -1568,7 +1568,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S-ACCEPT-KNOWLEDGE")
-                    .stage(StoryState::NeedsHumanVerification)
+                    .status(StoryState::NeedsHumanVerification)
                     .body(
                         "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Done <!-- verify: cargo test, SRS-01:start:end -->",
                     ),
@@ -1594,7 +1594,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S-ACCEPT-OPTIONAL-KNOWLEDGE")
-                    .stage(StoryState::NeedsHumanVerification)
+                    .status(StoryState::NeedsHumanVerification)
                     .body(
                         "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Done <!-- verify: cargo test, SRS-01:start:end -->",
                     ),
@@ -1625,7 +1625,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S-ACCEPT-MANIFEST")
-                    .stage(StoryState::NeedsHumanVerification)
+                    .status(StoryState::NeedsHumanVerification)
                     .body(
                         "## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] Done <!-- verify: cargo test, SRS-01:start:end -->",
                     ),

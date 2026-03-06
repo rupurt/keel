@@ -94,7 +94,7 @@ pub fn generate_voyage_readme(board: &Board, voyage: &Voyage) -> String {
     let stories = board.stories_for_voyage(voyage);
     let done_count = stories
         .iter()
-        .filter(|s| s.stage == StoryState::Done)
+        .filter(|s| s.status == StoryState::Done)
         .count();
 
     // Generated content - Stories header should be above the markers in template
@@ -128,7 +128,7 @@ pub fn generate_voyage_readme(board: &Board, voyage: &Voyage) -> String {
                 "| {} | {} | {} |",
                 link,
                 story.story_type(),
-                story.stage
+                story.status
             )
             .unwrap();
         }
@@ -151,13 +151,13 @@ mod tests {
             .story(
                 TestStory::new("FEAT0001")
                     .title("Active Story")
-                    .stage(StoryState::InProgress)
+                    .status(StoryState::InProgress)
                     .scope("test-epic/01-first"),
             )
             .story(
                 TestStory::new("FEAT0002")
                     .title("Done Story")
-                    .stage(StoryState::Done)
+                    .status(StoryState::Done)
                     .scope("test-epic/01-first"),
             )
             .build();
@@ -197,12 +197,12 @@ mod tests {
             .voyage(TestVoyage::new("01-first", "test-epic").status("in-progress"))
             .story(
                 TestStory::new("FEAT0001")
-                    .stage(StoryState::Done)
+                    .status(StoryState::Done)
                     .scope("test-epic/01-first"),
             )
             .story(
                 TestStory::new("FEAT0002")
-                    .stage(StoryState::InProgress)
+                    .status(StoryState::InProgress)
                     .scope("test-epic/01-first"),
             )
             .build();

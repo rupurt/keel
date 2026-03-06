@@ -222,7 +222,7 @@ fn enforce_story_transition(
         let remaining = stories
             .iter()
             .filter(|s| s.id() != story.id())
-            .filter(|s| s.stage != crate::domain::model::StoryState::Done)
+            .filter(|s| s.status != crate::domain::model::StoryState::Done)
             .count();
 
         if remaining == 0 {
@@ -269,7 +269,7 @@ fn enforce_voyage_transition(
 }
 
 fn validate_story_legality(story: &Story, transition: StoryTransition) -> Vec<Problem> {
-    if transition.valid_from().contains(&story.stage) {
+    if transition.valid_from().contains(&story.status) {
         return Vec::new();
     }
 
@@ -288,7 +288,7 @@ fn validate_story_legality(story: &Story, transition: StoryTransition) -> Vec<Pr
             "Cannot {} story '{}' from '{}' state (must be {})",
             TransitionIntent::Story(transition).name(),
             story.id(),
-            story.stage,
+            story.status,
             valid_states
         ),
         fix: None,
@@ -377,7 +377,7 @@ mod tests {
 
     fn submit_transition_with_missing_bundle(policy: EnforcementPolicy) -> EnforcementResult {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("STORY-RUNTIME").stage(StoryState::InProgress))
+            .story(TestStory::new("STORY-RUNTIME").status(StoryState::InProgress))
             .build();
 
         fs::remove_file(temp.path().join("stories/STORY-RUNTIME/REFLECT.md")).unwrap();
@@ -401,7 +401,7 @@ mod tests {
             .story(
                 TestStory::new("ACTIVE-STORY")
                     .scope("test-epic/01-planned")
-                    .stage(StoryState::InProgress),
+                    .status(StoryState::InProgress),
             )
             .build();
 
@@ -419,7 +419,7 @@ mod tests {
     #[test]
     fn story_transition_composes_legality_and_gate_results() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("STORY1").stage(StoryState::InProgress))
+            .story(TestStory::new("STORY1").status(StoryState::InProgress))
             .build();
 
         fs::remove_file(temp.path().join("stories/STORY1/REFLECT.md")).unwrap();
@@ -462,7 +462,7 @@ mod tests {
     #[test]
     fn story_transition_legality_problem_is_structured() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("STORY2").stage(StoryState::Backlog))
+            .story(TestStory::new("STORY2").status(StoryState::Backlog))
             .build();
 
         let board = load_board(temp.path()).unwrap();
@@ -539,7 +539,7 @@ mod tests {
             .story(
                 TestStory::new("STORY3")
                     .scope("test-epic/01-inprogress")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body(
                         "- [x] [SRS-01/AC-01] Partial chain <!-- verify: manual, SRS-01:start -->",
                     ),
@@ -599,7 +599,7 @@ mod tests {
             .story(
                 TestStory::new("STORY4")
                     .scope("test-epic/01-inprogress")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body(
                         "- [x] [SRS-01/AC-01] Partial chain <!-- verify: manual, SRS-01:start -->",
                     ),

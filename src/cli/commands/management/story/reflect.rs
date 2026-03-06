@@ -25,11 +25,11 @@ fn run_impl(board_dir: &Path, id: &str) -> Result<()> {
     let board = load_board(board_dir)?;
     let story = board.require_story(id)?;
 
-    if matches!(story.stage, StoryState::Backlog | StoryState::Icebox) {
+    if matches!(story.status, StoryState::Backlog | StoryState::Icebox) {
         bail!(
-            "Cannot create REFLECT.md for story {} in {} stage. Move it into active work first.",
+            "Cannot create REFLECT.md for story {} in {} status. Move it into active work first.",
             story.id(),
-            story.stage
+            story.status
         );
     }
 
@@ -77,7 +77,7 @@ fn run_impl(board_dir: &Path, id: &str) -> Result<()> {
         5,
         Some("Link existing knowledge in REFLECT.md when it already captures the insight."),
     )?;
-    let guidance = guidance_for_action(StoryLifecycleAction::Reflect, story.stage, story.id());
+    let guidance = guidance_for_action(StoryLifecycleAction::Reflect, story.status, story.id());
     print_human(guidance.as_ref());
 
     Ok(())
@@ -94,7 +94,7 @@ mod tests {
             .story(
                 TestStory::new("SREF01")
                     .title("Reflect Story")
-                    .stage(StoryState::InProgress),
+                    .status(StoryState::InProgress),
             )
             .build();
         let reflect_path = temp.path().join("stories/SREF01/REFLECT.md");
@@ -117,7 +117,7 @@ mod tests {
             .story(
                 TestStory::new("SREF02")
                     .title("Backlog Story")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 
@@ -134,7 +134,7 @@ mod tests {
             .story(
                 TestStory::new("SREF03")
                     .title("Existing Reflect Story")
-                    .stage(StoryState::InProgress),
+                    .status(StoryState::InProgress),
             )
             .build();
         let reflect_path = temp.path().join("stories/SREF03/REFLECT.md");

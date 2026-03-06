@@ -219,7 +219,7 @@ mod tests {
             .story(
                 TestStory::new("REPO01")
                     .title("Repo Story")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .scope("repo-epic/01-repo"),
             )
             .build();
@@ -243,7 +243,7 @@ mod tests {
             .story(
                 TestStory::new("PERSIST1")
                     .title("Original Title")
-                    .stage(StoryState::Backlog)
+                    .status(StoryState::Backlog)
                     .body("## Acceptance Criteria\n\n- [ ] Keep body"),
             )
             .build();
@@ -251,14 +251,13 @@ mod tests {
         let adapter = FilesystemAdapter::new(temp.path());
         let mut story = adapter.load_story("PERSIST1").unwrap().unwrap();
         story.frontmatter.title = "Updated Title".to_string();
-        story.frontmatter.status = StoryState::Done;
-        story.stage = StoryState::Done;
+        story.set_status(StoryState::Done);
         adapter.persist_story(&story).unwrap();
 
         let reloaded = crate::infrastructure::loader::load_board(temp.path()).unwrap();
         let persisted = reloaded.require_story("PERSIST1").unwrap();
         assert_eq!(persisted.title(), "Updated Title");
-        assert_eq!(persisted.stage, StoryState::Done);
+        assert_eq!(persisted.status, StoryState::Done);
 
         let content = fs::read_to_string(temp.path().join("stories/PERSIST1/README.md")).unwrap();
         assert!(content.contains("status: done"));

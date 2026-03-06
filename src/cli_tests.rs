@@ -400,13 +400,13 @@ fn cli_parses_story_list() {
     if let Commands::Management(ManagementCommands::Story {
         action:
             StoryAction::List {
-                stage,
+                status,
                 epic,
                 reflections,
             },
     }) = cli.command
     {
-        assert!(stage.is_none());
+        assert!(status.is_empty());
         assert!(epic.is_none());
         assert!(!reflections);
     } else {
@@ -420,8 +420,10 @@ fn cli_parses_story_list_with_filters() {
         "board",
         "story",
         "list",
-        "--stage",
+        "--status",
         "backlog",
+        "--status",
+        "+done",
         "--epic",
         "board-cli",
     ])
@@ -429,13 +431,13 @@ fn cli_parses_story_list_with_filters() {
     if let Commands::Management(ManagementCommands::Story {
         action:
             StoryAction::List {
-                stage,
+                status,
                 epic,
                 reflections,
             },
     }) = cli.command
     {
-        assert_eq!(stage, Some("backlog".to_string()));
+        assert_eq!(status, vec!["backlog".to_string(), "+done".to_string()]);
         assert_eq!(epic, Some("board-cli".to_string()));
         assert!(!reflections);
     } else {
@@ -667,7 +669,7 @@ fn cli_parses_epic_list() {
         action: EpicAction::List { status },
     }) = cli.command
     {
-        assert!(status.is_none());
+        assert!(status.is_empty());
     } else {
         panic!("Expected Epic List command");
     }
@@ -675,12 +677,15 @@ fn cli_parses_epic_list() {
 
 #[test]
 fn cli_parses_epic_list_with_filter() {
-    let cli = Cli::try_parse_from(["board", "epic", "list", "--status", "active"]).unwrap();
+    let cli = Cli::try_parse_from([
+        "board", "epic", "list", "--status", "active", "--status", "+done",
+    ])
+    .unwrap();
     if let Commands::Management(ManagementCommands::Epic {
         action: EpicAction::List { status },
     }) = cli.command
     {
-        assert_eq!(status, Some("active".to_string()));
+        assert_eq!(status, vec!["active".to_string(), "+done".to_string()]);
     } else {
         panic!("Expected Epic List command");
     }
@@ -888,7 +893,7 @@ fn cli_parses_voyage_list() {
     }) = cli.command
     {
         assert!(epic.is_none());
-        assert!(status.is_none());
+        assert!(status.is_empty());
     } else {
         panic!("Expected Voyage List command");
     }
@@ -904,6 +909,8 @@ fn cli_parses_voyage_list_with_filters() {
         "board-cli",
         "--status",
         "in-progress",
+        "--status",
+        "+done",
     ])
     .unwrap();
     if let Commands::Management(ManagementCommands::Voyage {
@@ -911,9 +918,31 @@ fn cli_parses_voyage_list_with_filters() {
     }) = cli.command
     {
         assert_eq!(epic, Some("board-cli".to_string()));
-        assert_eq!(status, Some("in-progress".to_string()));
+        assert_eq!(status, vec!["in-progress".to_string(), "+done".to_string()]);
     } else {
         panic!("Expected Voyage List command");
+    }
+}
+
+#[test]
+fn cli_parses_bearing_list_with_filters() {
+    let cli = Cli::try_parse_from([
+        "board",
+        "bearing",
+        "list",
+        "--status",
+        "ready",
+        "--status",
+        "+declined",
+    ])
+    .unwrap();
+    if let Commands::Management(ManagementCommands::Bearing {
+        action: BearingAction::List { status },
+    }) = cli.command
+    {
+        assert_eq!(status, vec!["ready".to_string(), "+declined".to_string()]);
+    } else {
+        panic!("Expected Bearing List command");
     }
 }
 
@@ -927,6 +956,58 @@ fn cli_rejects_legacy_story_stage_filter() {
         "ready-for-acceptance",
     ]);
     assert!(result.is_err());
+}
+
+#[test]
+fn build_cli_collects_repeated_status_filters() {
+    let cases = vec![
+        (
+            vec![
+                "keel", "story", "list", "--status", "backlog", "--status", "+done",
+            ],
+            "story",
+            vec!["backlog", "+done"],
+        ),
+        (
+            vec![
+                "keel", "epic", "list", "--status", "active", "--status", "+done",
+            ],
+            "epic",
+            vec!["active", "+done"],
+        ),
+        (
+            vec![
+                "keel", "voyage", "list", "--status", "planned", "--status", "+done",
+            ],
+            "voyage",
+            vec!["planned", "+done"],
+        ),
+        (
+            vec![
+                "keel",
+                "bearing",
+                "list",
+                "--status",
+                "ready",
+                "--status",
+                "+declined",
+            ],
+            "bearing",
+            vec!["ready", "+declined"],
+        ),
+    ];
+
+    for (args, command, expected) in cases {
+        let matches = crate::build_cli().try_get_matches_from(args).unwrap();
+        let subcommand = matches.subcommand_matches(command).unwrap();
+        let list = subcommand.subcommand_matches("list").unwrap();
+        let status: Vec<_> = list
+            .get_many::<String>("status")
+            .unwrap()
+            .map(|value| value.as_str())
+            .collect();
+        assert_eq!(status, expected, "unexpected status filters for {command}");
+    }
 }
 
 #[test]

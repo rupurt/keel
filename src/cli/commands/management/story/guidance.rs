@@ -149,9 +149,9 @@ fn recovery_command_for_error(
             }
         }
         StoryLifecycleAction::Reflect => {
-            if lower.contains("in backlog stage") {
+            if lower.contains("in backlog status") {
                 Some(format!("keel story start {story_id}"))
-            } else if lower.contains("in icebox stage") {
+            } else if lower.contains("in icebox status") {
                 Some(format!("keel story thaw {story_id}"))
             } else if lower.contains("reflect.md already exists") {
                 Some(format!("keel story submit {story_id}"))

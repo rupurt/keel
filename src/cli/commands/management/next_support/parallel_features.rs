@@ -133,20 +133,20 @@ mod tests {
                     .title("Tenth story")
                     .scope("core/10-risk")
                     .role("engineer/software")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .story(
                 TestStory::new("S2")
                     .title("Second story")
                     .scope("core/02-risk")
                     .role("engineer/software")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .story(
                 TestStory::new("S1")
                     .title("First story")
                     .scope("core/01-risk")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 
@@ -182,13 +182,13 @@ mod tests {
             .story(
                 TestStory::new("S-MISSING-SCOPE")
                     .title("Missing architectural scope")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .story(
                 TestStory::new("S-STRUCTURED")
                     .title("Scoped story")
                     .scope("core/01-risk")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 

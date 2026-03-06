@@ -26,7 +26,7 @@ pub struct TestStory {
     pub id: String,
     pub title: String,
     pub story_type: String,
-    pub stage: StoryState,
+    pub status: StoryState,
     pub scope: Option<String>,
     pub index: Option<u32>,
     pub body: String,
@@ -76,7 +76,7 @@ impl Default for TestStory {
             id: "TEST0001".to_string(),
             title: "Test Story".to_string(),
             story_type: "feat".to_string(),
-            stage: StoryState::Backlog,
+            status: StoryState::Backlog,
             scope: None,
             index: None,
             body: "Body content".to_string(),
@@ -104,8 +104,8 @@ impl TestStory {
         self
     }
 
-    pub fn stage(mut self, stage: StoryState) -> Self {
-        self.stage = stage;
+    pub fn status(mut self, status: StoryState) -> Self {
+        self.status = status;
         self
     }
 
@@ -138,7 +138,7 @@ impl TestStory {
     fn frontmatter(&self) -> String {
         let mut fm = format!(
             "---\nid: {}\ntitle: {}\ntype: {}\nstatus: {}\n",
-            self.id, self.title, self.story_type, self.stage
+            self.id, self.title, self.story_type, self.status
         );
 
         if let Some(ref scope) = self.scope {
@@ -663,7 +663,7 @@ use crate::domain::model::{
 pub struct StoryFactory {
     id: String,
     title: String,
-    stage: StoryState,
+    status: StoryState,
     scope: Option<String>,
     index: Option<u32>,
     submitted_at: Option<NaiveDateTime>,
@@ -677,7 +677,7 @@ impl Default for StoryFactory {
         Self {
             id: "test".to_string(),
             title: "Test Story".to_string(),
-            stage: StoryState::Backlog,
+            status: StoryState::Backlog,
             scope: None,
             index: None,
             submitted_at: None,
@@ -704,9 +704,9 @@ impl StoryFactory {
         self
     }
 
-    /// Set the story stage.
-    pub fn stage(mut self, stage: StoryState) -> Self {
-        self.stage = stage;
+    /// Set the story status.
+    pub fn status(mut self, status: StoryState) -> Self {
+        self.status = status;
         self
     }
 
@@ -748,12 +748,12 @@ impl StoryFactory {
 
     /// Build the Story struct.
     pub fn build(self) -> Story {
-        Story {
-            frontmatter: StoryFrontmatter {
+        Story::new(
+            StoryFrontmatter {
                 id: self.id.clone(),
                 title: self.title,
                 story_type: StoryType::Feat,
-                status: self.stage,
+                status: self.status,
                 scope: self.scope,
                 milestone: None,
                 created_at: None,
@@ -766,9 +766,8 @@ impl StoryFactory {
                 blocked_by: self.blocked_by,
                 role: self.role,
             },
-            path: PathBuf::from(format!("{}.md", self.id)),
-            stage: self.stage,
-        }
+            PathBuf::from(format!("{}.md", self.id)),
+        )
     }
 }
 
@@ -971,7 +970,7 @@ mod tests {
     #[test]
     fn builder_creates_staged_board() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("TEST001").stage(StoryState::Backlog))
+            .story(TestStory::new("TEST001").status(StoryState::Backlog))
             .build();
 
         assert!(temp.path().join("stories/TEST001/README.md").exists());
@@ -982,7 +981,7 @@ mod tests {
     #[test]
     fn builder_creates_flat_board() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("TEST001").stage(StoryState::InProgress))
+            .story(TestStory::new("TEST001").status(StoryState::InProgress))
             .build();
 
         assert!(temp.path().join("stories/TEST001/README.md").exists());
@@ -1008,7 +1007,7 @@ mod tests {
         let story = TestStory::new("ABC123")
             .title("My Test Story")
             .story_type("bug")
-            .stage(StoryState::InProgress)
+            .status(StoryState::InProgress)
             .scope("my-epic/01-voyage");
 
         let content = story.content();

@@ -26,7 +26,7 @@ mod tests {
             .story(
                 TestStory::new("0001")
                     .title("Frozen Story")
-                    .stage(StoryState::Icebox),
+                    .status(StoryState::Icebox),
             )
             .build();
 
@@ -47,7 +47,7 @@ mod tests {
             .story(
                 TestStory::new("0001")
                     .title("Frozen Story")
-                    .stage(StoryState::Icebox),
+                    .status(StoryState::Icebox),
             )
             .build();
 
@@ -65,7 +65,7 @@ mod tests {
             .story(
                 TestStory::new("0002")
                     .title("Pending Story")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 
@@ -94,7 +94,7 @@ mod tests {
             .story(
                 TestStory::new("1vkqtsAAA")
                     .title("Frozen Story")
-                    .stage(StoryState::Icebox),
+                    .status(StoryState::Icebox),
             )
             .build();
 
@@ -115,7 +115,7 @@ mod tests {
             .story(
                 TestStory::new("1vkqtsBBB")
                     .title("Pending Story")
-                    .stage(StoryState::Backlog),
+                    .status(StoryState::Backlog),
             )
             .build();
 
@@ -132,7 +132,7 @@ mod tests {
                 TestStory::new("TSCOPE01")
                     .title("Scoped Frozen Story")
                     .scope("test-epic/01-draft")
-                    .stage(StoryState::Icebox)
+                    .status(StoryState::Icebox)
                     .body("\n## Acceptance Criteria\n\n- [ ] Missing traceability"),
             )
             .build();
@@ -151,7 +151,7 @@ mod tests {
                 TestStory::new("TSCOPE02")
                     .title("Scoped Frozen Story")
                     .scope("test-epic/01-draft")
-                    .stage(StoryState::Icebox)
+                    .status(StoryState::Icebox)
                     .body("\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Valid traceability"),
             )
             .build();

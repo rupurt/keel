@@ -212,7 +212,7 @@ fn run_impl(
         "Story {} updated with link to proof.",
         story.id().bright_blue()
     );
-    let guidance = guidance_for_action(StoryLifecycleAction::Record, story.stage, story.id());
+    let guidance = guidance_for_action(StoryLifecycleAction::Record, story.status, story.id());
     print_human(guidance.as_ref());
 
     Ok(())

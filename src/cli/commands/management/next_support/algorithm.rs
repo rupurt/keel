@@ -87,7 +87,7 @@ pub fn calculate_next(
         let ready = board
             .stories
             .values()
-            .find(|s| s.stage == StoryState::NeedsHumanVerification)
+            .find(|s| s.status == StoryState::NeedsHumanVerification)
             .cloned()
             .unwrap();
         return Ok(NextDecision::Blocked(BlockedDecision {
@@ -108,7 +108,7 @@ pub fn calculate_next(
         let blocked_stories: Vec<_> = board
             .stories
             .values()
-            .filter(|s| s.stage == StoryState::Backlog)
+            .filter(|s| s.status == StoryState::Backlog)
             .filter(|s| {
                 s.frontmatter
                     .governed_by
@@ -130,7 +130,7 @@ pub fn calculate_next(
         let stories: Vec<_> = board
             .stories
             .values()
-            .filter(|s| s.stage == StoryState::NeedsHumanVerification)
+            .filter(|s| s.status == StoryState::NeedsHumanVerification)
             .cloned()
             .collect();
 
@@ -191,7 +191,7 @@ pub fn calculate_next(
         let in_progress: Vec<_> = board
             .stories
             .values()
-            .filter(|s| s.stage == StoryState::InProgress)
+            .filter(|s| s.status == StoryState::InProgress)
             .filter(|s| {
                 actor_role
                     .map(|role| crate::domain::model::taxonomy::actor_matches_story(role, s))
@@ -212,7 +212,7 @@ pub fn calculate_next(
         let workable_backlog: Vec<_> = board
             .stories
             .values()
-            .filter(|s| s.stage == StoryState::Backlog)
+            .filter(|s| s.status == StoryState::Backlog)
             .filter(|s| {
                 crate::domain::state_machine::invariants::story_workable(s, board, board_dir)
             })
@@ -233,7 +233,7 @@ pub fn calculate_next(
                         board
                             .stories
                             .get(id)
-                            .map(|dep| dep.stage == StoryState::Done)
+                            .map(|dep| dep.status == StoryState::Done)
                             .unwrap_or(false)
                     })
                 })
@@ -322,12 +322,12 @@ mod tests {
 
         for i in 0..verify_count {
             let id = format!("V{}", i + 1);
-            builder = builder.story(TestStory::new(&id).stage(StoryState::NeedsHumanVerification));
+            builder = builder.story(TestStory::new(&id).status(StoryState::NeedsHumanVerification));
         }
 
         for i in 0..ready_count {
             let id = format!("R{}", i + 1);
-            builder = builder.story(TestStory::new(&id).stage(StoryState::Backlog));
+            builder = builder.story(TestStory::new(&id).status(StoryState::Backlog));
         }
 
         let temp = builder.build();
@@ -344,7 +344,7 @@ mod tests {
     #[test]
     fn selects_backlog_story_when_nothing_else() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("S1").stage(StoryState::Backlog))
+            .story(TestStory::new("S1").status(StoryState::Backlog))
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
@@ -359,8 +359,8 @@ mod tests {
     #[test]
     fn prefers_in_progress_over_backlog() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("S1").stage(StoryState::Backlog))
-            .story(TestStory::new("S2").stage(StoryState::InProgress))
+            .story(TestStory::new("S1").status(StoryState::Backlog))
+            .story(TestStory::new("S2").status(StoryState::InProgress))
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
@@ -422,7 +422,7 @@ mod tests {
         let mut builder = TestBoardBuilder::new();
         for i in 0..HUMAN_NEXT_VERIFY_BLOCK_THRESHOLD {
             let id = format!("S{}", i + 1);
-            builder = builder.story(TestStory::new(&id).stage(StoryState::NeedsHumanVerification));
+            builder = builder.story(TestStory::new(&id).status(StoryState::NeedsHumanVerification));
         }
         let temp = builder.build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
@@ -437,7 +437,7 @@ mod tests {
     #[test]
     fn human_mode_accepts_when_verify_queue_below_block_threshold() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("S1").stage(StoryState::NeedsHumanVerification))
+            .story(TestStory::new("S1").status(StoryState::NeedsHumanVerification))
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
@@ -448,8 +448,8 @@ mod tests {
     #[test]
     fn backlog_work_ordering_uses_policy_comparator() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("S2").stage(StoryState::Backlog))
-            .story(TestStory::new("S1").stage(StoryState::Backlog))
+            .story(TestStory::new("S2").status(StoryState::Backlog))
+            .story(TestStory::new("S1").status(StoryState::Backlog))
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
@@ -463,7 +463,7 @@ mod tests {
     #[test]
     fn human_mode_never_returns_work_when_only_in_progress_exists() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("S1").stage(StoryState::InProgress))
+            .story(TestStory::new("S1").status(StoryState::InProgress))
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
@@ -474,7 +474,7 @@ mod tests {
     #[test]
     fn human_mode_never_returns_work_when_only_backlog_exists() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("S1").stage(StoryState::Backlog))
+            .story(TestStory::new("S1").status(StoryState::Backlog))
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
@@ -485,8 +485,8 @@ mod tests {
     #[test]
     fn human_mode_never_returns_work_in_mixed_execution_queues() {
         let temp = TestBoardBuilder::new()
-            .story(TestStory::new("S1").stage(StoryState::InProgress))
-            .story(TestStory::new("S2").stage(StoryState::Backlog))
+            .story(TestStory::new("S1").status(StoryState::InProgress))
+            .story(TestStory::new("S2").status(StoryState::Backlog))
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
