@@ -19,8 +19,8 @@ created_at: 2026-03-06T06:36:43
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 2/4 stories done
+**Progress:** 0/1 voyages complete, 3/4 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Epic Topology Terminal View](voyages/1vyWIM000/) | in-progress | 2/4 |
+| [Epic Topology Terminal View](voyages/1vyWIM000/) | in-progress | 3/4 |
 <!-- END GENERATED -->

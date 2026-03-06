@@ -2,12 +2,53 @@
 
 use owo_colors::OwoColorize;
 
+use crate::cli::presentation::planning_lineage;
 use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::style;
-use crate::read_model::topology::{EpicTopologyProjection, StoryTopologyNode};
+use crate::read_model::planning_show::ScopeDriftRow;
+use crate::read_model::topology::{EpicTopologyEpic, EpicTopologyProjection, StoryTopologyNode};
 
 const EMPTY_TOPOLOGY_PLACEHOLDER: &str = "(no voyages or stories visible for this epic)";
 const EMPTY_STORIES_PLACEHOLDER: &str = "(no stories visible)";
+
+#[derive(Debug, Clone, Copy)]
+struct LayoutHints {
+    epic_title_limit: usize,
+    voyage_title_limit: usize,
+    story_title_limit: usize,
+    requirement_limit: usize,
+    hotspot_limit: usize,
+}
+
+impl LayoutHints {
+    fn for_width(width: usize) -> Self {
+        if width < 90 {
+            Self {
+                epic_title_limit: 28,
+                voyage_title_limit: 24,
+                story_title_limit: 22,
+                requirement_limit: 2,
+                hotspot_limit: 1,
+            }
+        } else if width < 120 {
+            Self {
+                epic_title_limit: 40,
+                voyage_title_limit: 30,
+                story_title_limit: 28,
+                requirement_limit: 3,
+                hotspot_limit: 2,
+            }
+        } else {
+            Self {
+                epic_title_limit: 56,
+                voyage_title_limit: 42,
+                story_title_limit: 36,
+                requirement_limit: 4,
+                hotspot_limit: 4,
+            }
+        }
+    }
+}
 
 /// Render an epic topology projection for terminal output.
 pub fn render_topology(
@@ -36,7 +77,10 @@ pub fn render_topology(
         .row("Stories:", story_count.to_string());
 
     let mut topology = ShowSection::new("Topology");
-    topology.push_lines(render_topology_lines(projection));
+    topology.push_lines(render_topology_lines(
+        projection,
+        LayoutHints::for_width(width),
+    ));
 
     let mut document = ShowDocument::new();
     document.push_header(metadata, Some(width));
@@ -44,13 +88,8 @@ pub fn render_topology(
     document.render()
 }
 
-fn render_topology_lines(projection: &EpicTopologyProjection) -> Vec<String> {
-    let mut lines = vec![format!(
-        "  {} {} ({})",
-        style::styled_epic_id(&projection.epic.id),
-        style::styled_inline_markdown(&projection.epic.title),
-        style::styled_epic_stage(&projection.epic.status)
-    )];
+fn render_topology_lines(projection: &EpicTopologyProjection, layout: LayoutHints) -> Vec<String> {
+    let mut lines = vec![render_epic_line(&projection.epic, layout)];
 
     if projection.voyages.is_empty() {
         lines.push(format!("  {}", EMPTY_TOPOLOGY_PLACEHOLDER.dimmed()));
@@ -60,12 +99,15 @@ fn render_topology_lines(projection: &EpicTopologyProjection) -> Vec<String> {
     for (voyage_index, voyage) in projection.voyages.iter().enumerate() {
         let voyage_is_last = voyage_index + 1 == projection.voyages.len();
         let voyage_connector = if voyage_is_last { "└─" } else { "├─" };
+        let voyage_hotspots = summarize_hotspots(voyage_hotspots(voyage), layout.hotspot_limit);
+
         lines.push(format!(
-            "  {} {} {} ({})",
+            "  {} {} {} ({}){}",
             voyage_connector,
             style::styled_voyage_id(&voyage.id),
-            style::styled_inline_markdown(&voyage.title),
-            style::styled_voyage_stage(&voyage.status)
+            style::styled_inline_markdown(&truncate_text(&voyage.title, layout.voyage_title_limit)),
+            style::styled_voyage_stage(&voyage.status),
+            render_annotation_suffix(&voyage_hotspots)
         ));
 
         let story_prefix = if voyage_is_last { "   " } else { "│  " };
@@ -85,7 +127,7 @@ fn render_topology_lines(projection: &EpicTopologyProjection) -> Vec<String> {
                 "  {} {} {}",
                 story_prefix,
                 story_connector,
-                render_story_line(story)
+                render_story_line(story, layout)
             ));
         }
     }
@@ -93,32 +135,188 @@ fn render_topology_lines(projection: &EpicTopologyProjection) -> Vec<String> {
     lines
 }
 
-fn render_story_line(story: &StoryTopologyNode) -> String {
-    let mut fragments = vec![
-        style::styled_story_id(&story.id),
-        style::styled_inline_markdown(&story.title),
-        format!("({})", style::styled_story_status(&story.status)),
-    ];
+fn render_epic_line(epic: &EpicTopologyEpic, layout: LayoutHints) -> String {
+    let epic_hotspots = summarize_hotspots(epic_hotspots(epic), layout.hotspot_limit);
+    format!(
+        "  {} {} ({}){}",
+        style::styled_epic_id(&epic.id),
+        style::styled_inline_markdown(&truncate_text(&epic.title, layout.epic_title_limit)),
+        style::styled_epic_stage(&epic.status),
+        render_annotation_suffix(&epic_hotspots)
+    )
+}
 
-    if !story.requirement_refs.is_empty() {
-        let requirements = story
+fn render_story_line(story: &StoryTopologyNode, layout: LayoutHints) -> String {
+    let requirement_refs = summarize_annotations(
+        story
             .requirement_refs
             .iter()
             .map(|requirement| style::styled_requirement_id(requirement))
-            .collect::<Vec<_>>()
-            .join(", ");
-        fragments.push(format!("[{}]", requirements));
+            .collect(),
+        layout.requirement_limit,
+    );
+    let story_hotspots = summarize_hotspots(story_hotspots(story), layout.hotspot_limit);
+
+    let mut fragments = vec![
+        style::styled_story_id(&story.id),
+        style::styled_inline_markdown(&truncate_text(&story.title, layout.story_title_limit)),
+        format!("({})", style::styled_story_status(&story.status)),
+    ];
+
+    if !requirement_refs.is_empty() {
+        fragments.push(format!("[{}]", requirement_refs.join(", ")));
     }
 
-    if !story.dependencies.is_empty() {
-        let dependencies = story
-            .dependencies
+    let mut rendered = fragments.join(" ");
+    rendered.push_str(&render_annotation_suffix(&story_hotspots));
+    rendered
+}
+
+fn epic_hotspots(epic: &EpicTopologyEpic) -> Vec<String> {
+    let mut hotspots: Vec<String> = epic
+        .show
+        .scope_drift
+        .iter()
+        .filter(|row| row.voyage_id.is_none())
+        .map(format_scope_drift_hotspot)
+        .collect();
+
+    hotspots.extend(
+        epic.show
+            .requirement_coverage
             .iter()
-            .map(|dependency| style::styled_story_id(dependency))
-            .collect::<Vec<_>>()
-            .join(", ");
-        fragments.push(format!("deps: {}", dependencies));
+            .filter(|row| !row.is_covered())
+            .map(|row| {
+                format!(
+                    "coverage gap: uncovered PRD requirements {}",
+                    style::styled_requirement_id(&row.id)
+                )
+            }),
+    );
+
+    hotspots
+}
+
+fn voyage_hotspots(voyage: &crate::read_model::topology::VoyageTopologyNode) -> Vec<String> {
+    let mut hotspots: Vec<String> = voyage
+        .show
+        .scope_drift
+        .iter()
+        .map(format_scope_drift_hotspot)
+        .collect();
+
+    hotspots.extend(
+        voyage
+            .show
+            .requirements
+            .iter()
+            .filter(|row| row.linked_stories.is_empty())
+            .map(|row| {
+                format!(
+                    "coverage gap: uncovered SRS requirements {}",
+                    style::styled_requirement_id(&row.id)
+                )
+            }),
+    );
+
+    hotspots
+}
+
+fn story_hotspots(story: &StoryTopologyNode) -> Vec<String> {
+    let mut hotspots = Vec::new();
+
+    if !story.unmet_dependencies.is_empty() {
+        hotspots.push(format!(
+            "dependency block: blocked by {}",
+            render_story_id_list(&story.unmet_dependencies)
+        ));
+    } else if !story.dependencies.is_empty() {
+        hotspots.push(format!(
+            "dependency block: depends on {}",
+            render_story_id_list(&story.dependencies)
+        ));
     }
 
-    fragments.join(" ")
+    if !story.show.evidence.missing_proofs.is_empty() {
+        hotspots.push(format!(
+            "verification gap: missing proofs {}",
+            story.show.evidence.missing_proofs.join(", ")
+        ));
+    }
+
+    if story.show.evidence.items.is_empty() {
+        hotspots.push("verification gap: no verification coverage".to_string());
+    }
+
+    hotspots
+}
+
+fn format_scope_drift_hotspot(row: &ScopeDriftRow) -> String {
+    format!(
+        "scope drift: {}",
+        style::styled_inline_markdown(&planning_lineage::format_scope_drift_row(row))
+    )
+}
+
+fn summarize_annotations(items: Vec<String>, limit: usize) -> Vec<String> {
+    if items.len() <= limit {
+        return items;
+    }
+
+    let total = items.len();
+    let mut summary = items.into_iter().take(limit).collect::<Vec<_>>();
+    let more = total.saturating_sub(limit);
+    summary.push(format!("+{more} more"));
+    summary
+}
+
+fn summarize_hotspots(items: Vec<String>, limit: usize) -> Vec<String> {
+    if items.len() <= limit {
+        return items;
+    }
+
+    let mut categories = Vec::new();
+    for item in &items {
+        let category = item
+            .split_once(':')
+            .map(|(category, _)| category.trim())
+            .unwrap_or(item.as_str());
+        if !categories.iter().any(|existing| existing == category) {
+            categories.push(category.to_string());
+        }
+    }
+
+    vec![format!(
+        "{} hotspot(s): {}",
+        items.len(),
+        categories.join("; ")
+    )]
+}
+
+fn render_annotation_suffix(items: &[String]) -> String {
+    if items.is_empty() {
+        String::new()
+    } else {
+        format!(" [{}]", items.join(" | "))
+    }
+}
+
+fn render_story_id_list(ids: &[String]) -> String {
+    ids.iter()
+        .map(|dependency| style::styled_story_id(dependency))
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+fn truncate_text(value: &str, max_chars: usize) -> String {
+    let char_count = value.chars().count();
+    if char_count <= max_chars {
+        return value.to_string();
+    }
+
+    let head = value
+        .chars()
+        .take(max_chars.saturating_sub(1))
+        .collect::<String>();
+    format!("{}…", head)
 }
