@@ -19,9 +19,9 @@ created_at: 2026-03-06T06:40:21
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/2 voyages complete, 5/9 stories done
+**Progress:** 1/2 voyages complete, 6/9 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Tape-Driven Dogfood Workflow Suite](voyages/1vyWNL000/) | in-progress | 5/5 |
-| [Artifact-Aware Judge Contract](voyages/1vyWNV000/) | planned | 0/4 |
+| [Tape-Driven Dogfood Workflow Suite](voyages/1vyWNL000/) | done | 5/5 |
+| [Artifact-Aware Judge Contract](voyages/1vyWNV000/) | in-progress | 1/4 |
 <!-- END GENERATED -->
