@@ -82,7 +82,7 @@ impl VoyageState {
     ///
     /// # Examples
     /// ```
-    /// use keel::state_machine::voyage::VoyageState;
+    /// use keel::domain::state_machine::voyage::VoyageState;
     ///
     /// assert!(VoyageState::Planned.is_ready_for_work());
     /// assert!(VoyageState::InProgress.is_ready_for_work());

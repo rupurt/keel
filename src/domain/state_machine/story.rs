@@ -92,7 +92,7 @@ impl StoryState {
     ///
     /// # Examples
     /// ```
-    /// use keel::state_machine::story::StoryState;
+    /// use keel::domain::state_machine::story::StoryState;
     ///
     /// assert!(StoryState::InProgress.is_active());
     /// assert!(StoryState::NeedsHumanVerification.is_active());
@@ -113,7 +113,7 @@ impl StoryState {
     ///
     /// # Examples
     /// ```
-    /// use keel::state_machine::story::StoryState;
+    /// use keel::domain::state_machine::story::StoryState;
     ///
     /// assert!(StoryState::Backlog.is_workable());
     /// assert!(!StoryState::InProgress.is_workable());
@@ -131,7 +131,7 @@ impl StoryState {
     ///
     /// # Examples
     /// ```
-    /// use keel::state_machine::story::StoryState;
+    /// use keel::domain::state_machine::story::StoryState;
     ///
     /// assert!(StoryState::Done.is_terminal());
     /// assert!(!StoryState::InProgress.is_terminal());
