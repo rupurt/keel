@@ -7,20 +7,30 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
 
 1. **Pull Context**: Read current board health and identify bottlenecks with `just keel flow`.
 2. **Claim Work**: Pull the highest-priority implementation item with `just keel next --agent`. Use `--parallel` to identify safe concurrent tasks.
-3. **Check Story Coherence Before Coding**: Confirm acceptance criteria are traceable and verifiable:
+3. **Open the Show Surfaces First**: Use the CLI read views as the default entry points for implementation context and clarification:
+   - `just keel story show <story-id>` for the active work item, acceptance criteria, status, evidence, and story path.
+   - `just keel voyage show <voyage-id>` for parent requirements, scope, drift, progress, and the rendered `SRS.md` / `SDD.md` paths.
+   - `just keel epic show <epic-id>` for the problem statement, goals, requirement coverage, scope drift, and the rendered `PRD.md` path.
+   - When you need full authored detail, follow the document paths shown in these views (`README.md`, `PRD.md`, `SRS.md`, `SDD.md`, and related artifacts) instead of guessing from summaries.
+4. **Check Story Coherence Before Coding**: Confirm acceptance criteria are traceable and verifiable:
    - Acceptance criteria are linked to source requirements (for example `[SRS-XX/AC-YY]`).
    - Evidence strategy is clear for each criterion (test, CLI proof, or manual proof).
-   - If requirements are ambiguous, loop back to planning artifacts before implementation.
-4. **Execute (TDD)**: Follow test-driven development:
+   - If requirements are ambiguous, loop back to the relevant `show` command and then the linked planning artifacts before implementation.
+5. **Execute (TDD)**: Follow test-driven development:
    - Write a failing test first.
    - Implement only enough to pass.
    - Refactor within the same change slice.
-5. **Record Evidence**: Capture proof of requirement satisfaction for each acceptance criterion:
+6. **Record Evidence**: Capture proof of requirement satisfaction for each acceptance criterion:
    - `just keel story record <ID> --ac <NUM> --msg "Description of the proof"`
    - For manual proofs, use the `--msg` flag or editor integration.
-6. **Reflect**: Mandatory observational capture. Run `just keel story reflect <ID>` and document what was learned or discovered during implementation.
-7. **Submit**: Move to the human queue for review with `just keel story submit <ID>`. This triggers automated verification and generates the verification manifest. Resolve any failures and rerun `submit` until the story reaches its post-submit state.
-8. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this story after `submit`, not before. Include the resulting `.keel` changes from submission in the same commit (for example story status updates, manifests, synthesized knowledge, and board projections). Do not batch multiple stories into one commit.
+7. **Reflect Selectively (Optional)**: Use `just keel story reflect <ID>` only when the work uncovered a novel, reusable insight that is likely to help future stories.
+   - Start from the similar knowledge surfaced by the command. Prefer linking an existing knowledge file over creating a new one when the insight is already covered.
+   - Capture only durable guidance another agent can reuse: a decision rule, failure mode, parser/rendering trap, verification lesson, or workflow guardrail.
+   - Include the trigger/context, the reusable takeaway, and where it applies. The bar should be: would this help a future agent avoid drift on a different story?
+   - Do not record story recap, commit summary, obvious implementation steps, or one-off cleanup details already visible in the diff, proofs, or authored artifacts.
+   - If there is no reusable insight, skip reflection or leave the `## Knowledge` section empty.
+8. **Submit**: Move to the human queue for review with `just keel story submit <ID>`. This triggers automated verification and generates the verification manifest. Resolve any failures and rerun `submit` until the story reaches its post-submit state.
+9. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this story after `submit`, not before. Include the resulting `.keel` changes from submission in the same commit (for example story status updates, manifests, synthesized knowledge, and board projections). Do not batch multiple stories into one commit.
 
 ## Planning Workflow (Architect)
 
@@ -38,8 +48,16 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
    - `## Assumptions`
    - `## Open Questions & Risks`
    - `## Success Criteria` (`SUCCESS_CRITERIA` marker block)
+   - Author `Goals & Objectives` with canonical `GOAL-*` rows.
+   - Author both scope lists with canonical `[SCOPE-*]` bullets.
+   - Keep every PRD requirement row linked to one or more valid `GOAL-*` IDs in the `Goals` column so goal coverage is explicit.
    - Optional: create `epics/<epic-id>/PRESS_RELEASE.md` only for large user-facing value shifts. Skip it for incremental improvements, refactors, and architecture-only changes.
-4. **Define Requirements (SRS)**: Fill out the `SRS.md` in the new voyage bundle. Ensure requirements are atomic, uniquely identified (e.g., `SRS-01`), and written so they can map directly to story acceptance criteria and verification evidence.
+4. **Define Scope + Requirements (SRS)**: Fill out the `SRS.md` in the new voyage bundle.
+   - In `## Scope`, map the parent epic scope with canonical `[SCOPE-*]` bullets so the voyage explicitly states what it takes on and what it defers.
+   - Keep requirements atomic and uniquely identified (for example `SRS-01`).
+   - The `Scope` column must use one or more canonical `SCOPE-*` IDs already declared by the voyage scope mapping.
+   - The `Source` column must use exactly one canonical parent PRD requirement ID (`FR-*` or `NFR-*`).
+   - Write requirements so they map directly to story acceptance criteria and verification evidence.
 5. **Detail Design (SDD)**: Fill out the `SDD.md` describing the architectural approach and component changes, with enough specificity that implementers can produce objective proofs.
 6. **Decompose Stories**: Break the design into implementable units:
    - `just keel story new "<Title>" --epic <epic-id> --voyage <voyage-id>`
@@ -50,7 +68,9 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
    - Use `just keel verify recommend` to plan against detected+active options for the current project.
    - If needed techniques are missing or disabled, update `keel.toml` first, then continue decomposition.
 8. **Run Coherence Review (Downstream Check)**: Before planning is sealed, review the full chain:
-   - Every SRS requirement has at least one linked story acceptance criterion.
+   - Every PRD requirement row has valid `Goals` links, and every authored `GOAL-*` is covered by at least one PRD requirement.
+   - Voyage scope bullets and SRS `Scope` cells use canonical parent `SCOPE-*` IDs consistently.
+   - Every SRS requirement has exactly one valid parent PRD `Source` (`FR-*` or `NFR-*`) and at least one linked story acceptance criterion.
    - Every acceptance criterion has a clear verification approach (automated test, CLI proof, or documented manual evidence).
    - Verification commands align with `just keel verify recommend` output, informed by `just keel verify detect`, unless explicitly justified.
    - CLI options and authored entity content are explicit enough for downstream automation and transitions.
@@ -102,6 +122,7 @@ Apply these checks to **every change** before finalizing work:
    - `refactor:` (code change, no behavior change)
    - `test:` (adding/updating tests)
    - `chore:` (build/tooling)
+6. **Knowledge Quality Bar**: Prefer no new knowledge over low-signal knowledge. A new knowledge entry should be novel, reusable across stories, and materially reduce future drift; otherwise link existing knowledge or omit capture entirely.
 
 ## Compatibility Policy (Hard Cutover)
 

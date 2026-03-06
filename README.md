@@ -59,12 +59,53 @@ Keel coordinates work between humans and agents using a **pull-based** model. Ea
 - `keel next --agent` returns implementation work from the agent queue (`in-progress` then `backlog`).
 - `keel flow` uses the same queue policy categories and thresholds as `next` (`>= 5` human block, `> 20` flow block).
 
-### Why It's Agent-Friendly
+### Lineage and Proof Chain
 
-1.  **Parseable by design**: Markdown files with YAML frontmatter. No databases, no APIs — just files agents can read and write.
-2.  **Context surfaces automatically**: When starting a story, relevant knowledge from past implementation informs current work.
-3.  **Institutional Memory**: The knowledge system converts individual story reflections into project-wide thematic threads, ensuring agents don't repeat the same mistakes across different epics.
-4.  **Health is verifiable**: `keel doctor` checks for broken references and status mismatches. Agents can validate their own state before submitting.
+Keel is designed to make drift visible by preserving a machine-checkable lineage chain across planning and execution:
+
+- Epic `PRD.md` defines the problem, canonical `GOAL-*` rows, canonical `[SCOPE-*]` bullets, and `FR-*` / `NFR-*` requirement rows.
+- Voyage `SRS.md` maps each requirement back to that plan with explicit `Scope` (`SCOPE-*`) and `Source` (`FR-*` / `NFR-*`) lineage.
+- Story acceptance criteria link back to voyage requirements (`[SRS-XX/AC-YY]`) so implementation work stays grounded in the authored plan.
+- Proofs, verification manifests, and reflections close the loop so every accepted story has evidence and every reflection can feed back into reusable knowledge.
+
+That chain is what powers drift prevention. `keel doctor`, `keel audit`, and the `show` surfaces do not just render prose; they validate and summarize whether goals, scope, requirements, acceptance criteria, and proofs still line up.
+
+### Read Models and Steering Surfaces
+
+Markdown files are the source of truth, but agents should not need to reread the whole board on every step. Keel aggregates authored artifacts into read models and summarized CLI surfaces such as:
+
+- `keel epic show`, `keel voyage show`, and `keel story show` for scoped planning and execution context
+- `keel next` and `keel flow` for queue steering
+- `keel audit` for traceability and proof review
+- `keel knowledge ...` for institutional memory and repeated implementation signals
+
+This keeps the workflow agent-friendly: the CLI provides compact, deterministic summaries for orientation, while still rendering the underlying artifact paths (`PRD.md`, `SRS.md`, `SDD.md`, story `README.md`, and more) when full authored detail is needed.
+
+### Detection and Verification Techniques
+
+Verification is modeled as a technique bank rather than a single hardcoded test path. Keel supports built-in and custom verification techniques, and the detection engine evaluates project signals such as files, stack hints, and configured commands to determine which techniques are:
+
+- `detected`: relevant for the current project
+- `disabled`: configured off
+- `active`: both detected and enabled
+
+The main command surfaces are:
+
+- `keel config show` for the full technique inventory and per-technique status
+- `keel verify detect` for detection signals and status inputs
+- `keel verify recommend` for advisory-only detected+active techniques
+- `keel verify run` for actual proof execution
+
+This separation keeps planning, recommendation, and execution distinct while making it straightforward to extend Keel with additional verifiers over time.
+
+### Throughput and Estimation
+
+Keel also uses board history to reason about delivery pace:
+
+- `keel throughput` shows weekly throughput and timing sparklines
+- `keel epic show` uses a recent 4-week throughput window to estimate ETA when enough data exists
+
+That gives planners and agents a lightweight estimation surface without leaving the same markdown-backed workflow.
 
 ## Commands
 
@@ -102,6 +143,7 @@ Diagnostics
   doctor      Validate board health and optionally fix issues
   status      Show board status summary
   flow        Show two-actor flow dashboard (human queue vs agent queue)
+  throughput  Show weekly throughput and timing sparklines
   capacity    Show per-epic capacity breakdown with parallel potential
   gaps        Show gap classification summary (runs doctor, shows only gap counts)
 ```
@@ -124,6 +166,7 @@ Diagnostics
 | `next` | Pull from the human queue by default; use `--agent` to pull implementation work |
 | `play` | Trigger play-driven discovery for a bearing |
 | `audit` | Generate a detailed traceability report for a story |
+| `verify run/recommend/detect` | Execute proofs, inspect detection signals, and review detected+active verification guidance |
 | `knowledge list/show` | Inventory and details of implementation insights |
 | `knowledge explore` | Surface "Rising Patterns" and thematic trends |
 | `knowledge graph` | Visualize connections between insights and entities |
@@ -141,9 +184,9 @@ Diagnostics
 | `doctor` | Validate board health and fix consistency issues |
 | `status` | High-level summary of entity counts and blockers |
 | `flow` | Real-time dashboard of Human vs. Agent queues |
+| `throughput` | Show recent weekly throughput and timing sparklines |
 | `capacity` | Analyze epic-level bandwidth and parallel potential |
 | `gaps` | Identify missing requirements or design coverage |
-| `verify` | Execute automated verification proofs |
 
 ### Harness Guidance Contract
 

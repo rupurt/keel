@@ -26,7 +26,7 @@
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Scope | Source | Verification |
 |----|-------------|-------|--------|--------------|
-| SRS-01 | Implement the core voyage capability needed to satisfy this epic goal. | SCOPE-01 | PRD-01 | automated test + demo |
+| SRS-01 | Implement the core voyage capability needed to satisfy this epic goal. | SCOPE-01 | FR-01 | automated test + demo |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ### Non-Functional Requirements
