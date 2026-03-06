@@ -42,7 +42,8 @@ use std::sync::LazyLock;
 
 use regex::Regex;
 
-use crate::domain::model::{Board, Story, StoryState, Voyage, VoyageState};
+use crate::domain::model::{Board, Epic, Story, StoryState, Voyage, VoyageState};
+use crate::infrastructure::validation::{CheckId, Problem};
 use std::collections::{BTreeMap, HashSet};
 use std::fs;
 
@@ -260,6 +261,26 @@ impl PrdLineageIssue {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PrdCoverageChild {
+    pub voyage_id: String,
+    pub voyage_index: Option<u32>,
+    pub requirement_id: String,
+    pub kind: SrsRequirementKind,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PrdCoverageRow {
+    pub parent: PrdRequirementEntry,
+    pub linked_children: Vec<PrdCoverageChild>,
+}
+
+impl PrdCoverageRow {
+    pub fn is_covered(&self) -> bool {
+        !self.linked_children.is_empty()
+    }
+}
+
 pub fn parse_prd_requirement_lineage(epic_id: &str, prd_path: &Path) -> PrdRequirementLineage {
     let prd_content = match fs::read_to_string(prd_path) {
         Ok(content) => content,
@@ -333,63 +354,133 @@ pub fn evaluate_prd_srs_lineage(voyage: &Voyage, board: &Board) -> Vec<PrdLineag
 
     let mut issues = Vec::new();
     for requirement in requirements {
-        let Some(raw_source) = requirement
-            .source
-            .as_deref()
-            .map(str::trim)
-            .filter(|value| !value.is_empty())
-        else {
-            issues.push(PrdLineageIssue {
-                srs_path: srs_path.clone(),
-                requirement_id: requirement.id,
-                source_value: None,
-                kind: PrdLineageIssueKind::MissingSource,
-            });
-            continue;
-        };
-
-        let source_tokens: Vec<&str> = SOURCE_TOKEN_SPLIT_RE
-            .split(raw_source)
-            .filter(|token| !token.is_empty())
-            .collect();
-
-        if source_tokens.len() != 1 {
-            issues.push(PrdLineageIssue {
-                srs_path: srs_path.clone(),
-                requirement_id: requirement.id,
-                source_value: Some(raw_source.to_string()),
-                kind: PrdLineageIssueKind::MultipleSources,
-            });
-            continue;
-        }
-
-        let source_token = source_tokens[0];
-        if !PRD_FUNCTIONAL_REQ_RE.is_match(source_token)
-            && !PRD_NON_FUNCTIONAL_REQ_RE.is_match(source_token)
-        {
-            issues.push(PrdLineageIssue {
-                srs_path: srs_path.clone(),
-                requirement_id: requirement.id,
-                source_value: Some(source_token.to_string()),
-                kind: PrdLineageIssueKind::NonCanonicalSource,
-            });
-            continue;
-        }
-
-        if !parent_lineage
-            .parent_requirements
-            .contains_key(source_token)
-        {
-            issues.push(PrdLineageIssue {
-                srs_path: srs_path.clone(),
-                requirement_id: requirement.id,
-                source_value: Some(source_token.to_string()),
-                kind: PrdLineageIssueKind::UnknownParent,
-            });
+        if let Err(issue) = canonical_prd_source_id(&requirement, &srs_path, &parent_lineage) {
+            issues.push(issue);
         }
     }
 
     issues
+}
+
+pub fn prd_srs_lineage_problems(voyage: &Voyage, board: &Board, check_id: CheckId) -> Vec<Problem> {
+    evaluate_prd_srs_lineage(voyage, board)
+        .into_iter()
+        .map(|issue| {
+            Problem::error(issue.srs_path.clone(), issue.message())
+                .with_scope(voyage.scope_path())
+                .with_check_id(check_id)
+        })
+        .collect()
+}
+
+pub fn build_epic_prd_requirement_coverage(epic: &Epic, board: &Board) -> Vec<PrdCoverageRow> {
+    let prd_path = epic.path.parent().unwrap_or(&epic.path).join("PRD.md");
+    let parent_lineage = parse_prd_requirement_lineage(epic.id(), &prd_path);
+
+    let mut linked_children_by_parent: BTreeMap<String, Vec<PrdCoverageChild>> = BTreeMap::new();
+    let mut voyages = board.voyages_for_epic_id(epic.id());
+    voyages.sort_by(|a, b| a.index().cmp(&b.index()).then_with(|| a.id().cmp(b.id())));
+
+    for voyage in voyages {
+        let srs_path = voyage.path.parent().unwrap_or(&voyage.path).join("SRS.md");
+        for requirement in parse_srs_requirement_entries(&srs_path) {
+            let Ok(parent_id) = canonical_prd_source_id(&requirement, &srs_path, &parent_lineage)
+            else {
+                continue;
+            };
+
+            linked_children_by_parent
+                .entry(parent_id)
+                .or_default()
+                .push(PrdCoverageChild {
+                    voyage_id: voyage.id().to_string(),
+                    voyage_index: voyage.index(),
+                    requirement_id: requirement.id,
+                    kind: requirement.kind,
+                });
+        }
+    }
+
+    parent_lineage
+        .ordered_entries()
+        .into_iter()
+        .map(|parent| {
+            let mut linked_children = linked_children_by_parent
+                .remove(&parent.id)
+                .unwrap_or_default();
+            linked_children.sort_by(|a, b| {
+                a.voyage_index
+                    .cmp(&b.voyage_index)
+                    .then_with(|| a.voyage_id.cmp(&b.voyage_id))
+                    .then_with(|| a.requirement_id.cmp(&b.requirement_id))
+            });
+
+            PrdCoverageRow {
+                parent: parent.clone(),
+                linked_children,
+            }
+        })
+        .collect()
+}
+
+fn canonical_prd_source_id(
+    requirement: &SrsRequirementEntry,
+    srs_path: &Path,
+    parent_lineage: &PrdRequirementLineage,
+) -> Result<String, PrdLineageIssue> {
+    let Some(raw_source) = requirement
+        .source
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    else {
+        return Err(PrdLineageIssue {
+            srs_path: srs_path.to_path_buf(),
+            requirement_id: requirement.id.clone(),
+            source_value: None,
+            kind: PrdLineageIssueKind::MissingSource,
+        });
+    };
+
+    let source_tokens: Vec<&str> = SOURCE_TOKEN_SPLIT_RE
+        .split(raw_source)
+        .filter(|token| !token.is_empty())
+        .collect();
+
+    if source_tokens.len() != 1 {
+        return Err(PrdLineageIssue {
+            srs_path: srs_path.to_path_buf(),
+            requirement_id: requirement.id.clone(),
+            source_value: Some(raw_source.to_string()),
+            kind: PrdLineageIssueKind::MultipleSources,
+        });
+    }
+
+    let source_token = source_tokens[0];
+    if !PRD_FUNCTIONAL_REQ_RE.is_match(source_token)
+        && !PRD_NON_FUNCTIONAL_REQ_RE.is_match(source_token)
+    {
+        return Err(PrdLineageIssue {
+            srs_path: srs_path.to_path_buf(),
+            requirement_id: requirement.id.clone(),
+            source_value: Some(source_token.to_string()),
+            kind: PrdLineageIssueKind::NonCanonicalSource,
+        });
+    }
+
+    if !parent_lineage
+        .parent_requirements
+        .contains_key(source_token)
+    {
+        return Err(PrdLineageIssue {
+            srs_path: srs_path.to_path_buf(),
+            requirement_id: requirement.id.clone(),
+            source_value: Some(source_token.to_string()),
+            kind: PrdLineageIssueKind::UnknownParent,
+        });
+    }
+
+    Ok(source_token.to_string())
 }
 
 fn parse_prd_requirement_block(
@@ -588,7 +679,6 @@ mod tests {
     use tempfile::TempDir;
 
     use crate::domain::model::{StoryFrontmatter, VoyageFrontmatter};
-
     fn make_story(id: &str, stage: StoryState, scope: Option<&str>) -> Story {
         Story {
             frontmatter: StoryFrontmatter {
@@ -1050,6 +1140,142 @@ mod tests {
             .map(|entry| entry.id.clone())
             .collect();
         assert_eq!(ordered_ids, vec!["FR-02", "FR-10", "NFR-03"]);
+    }
+
+    #[test]
+    fn prd_requirement_coverage_preserves_one_to_many_parent_fanout() {
+        let temp = crate::test_helpers::TestBoardBuilder::new()
+            .epic(crate::test_helpers::TestEpic::new("epic-1"))
+            .voyage(
+                crate::test_helpers::TestVoyage::new("v1", "epic-1")
+                    .index(2)
+                    .srs_content(
+                        r#"# SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-02 | Second child. | FR-01 | cargo test |
+| SRS-01 | First child. | FR-01 | cargo test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+                    ),
+            )
+            .voyage(
+                crate::test_helpers::TestVoyage::new("v2", "epic-1")
+                    .index(1)
+                    .srs_content(
+                        r#"# SRS
+
+<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-NFR-01 | Fanout child. | NFR-01 | cargo test |
+<!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+"#,
+                    ),
+            )
+            .build();
+        fs::write(
+            temp.path().join("epics/epic-1/PRD.md"),
+            r#"# PRD
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | Shared parent. | must | fanout |
+| FR-02 | Uncovered parent. | should | uncovered |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+
+<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| NFR-01 | Non-functional parent. | must | coverage |
+<!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let epic = board.require_epic("epic-1").unwrap();
+
+        let coverage = build_epic_prd_requirement_coverage(epic, &board);
+
+        assert_eq!(coverage.len(), 3);
+        let fr01 = coverage
+            .iter()
+            .find(|row| row.parent.id == "FR-01")
+            .unwrap();
+        assert!(fr01.is_covered());
+        let fr01_children: Vec<_> = fr01
+            .linked_children
+            .iter()
+            .map(|child| format!("{}/{}", child.voyage_id, child.requirement_id))
+            .collect();
+        assert_eq!(fr01_children, vec!["v1/SRS-01", "v1/SRS-02"]);
+
+        let fr02 = coverage
+            .iter()
+            .find(|row| row.parent.id == "FR-02")
+            .unwrap();
+        assert!(!fr02.is_covered());
+        assert!(fr02.linked_children.is_empty());
+
+        let nfr01 = coverage
+            .iter()
+            .find(|row| row.parent.id == "NFR-01")
+            .unwrap();
+        assert_eq!(nfr01.linked_children.len(), 1);
+        assert_eq!(nfr01.linked_children[0].voyage_id, "v2");
+        assert_eq!(nfr01.linked_children[0].requirement_id, "SRS-NFR-01");
+    }
+
+    #[test]
+    fn prd_requirement_coverage_ignores_invalid_or_unknown_sources() {
+        let temp = crate::test_helpers::TestBoardBuilder::new()
+            .epic(crate::test_helpers::TestEpic::new("epic-1"))
+            .voyage(
+                crate::test_helpers::TestVoyage::new("v1", "epic-1").srs_content(
+                    r#"# SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-01 | Missing source. |  | cargo test |
+| SRS-02 | Alias source. | PRD-01 | cargo test |
+| SRS-03 | Unknown source. | FR-99 | cargo test |
+| SRS-04 | Valid source. | FR-01 | cargo test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+            "#,
+                ),
+            )
+            .build();
+        fs::write(
+            temp.path().join("epics/epic-1/PRD.md"),
+            r#"# PRD
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | Canonical parent. | must | coverage |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let epic = board.require_epic("epic-1").unwrap();
+
+        let coverage = build_epic_prd_requirement_coverage(epic, &board);
+
+        assert_eq!(coverage.len(), 1);
+        let parent = &coverage[0];
+        let child_ids: Vec<_> = parent
+            .linked_children
+            .iter()
+            .map(|child| child.requirement_id.as_str())
+            .collect();
+        assert_eq!(child_ids, vec!["SRS-04"]);
     }
 
     #[test]

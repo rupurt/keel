@@ -4,7 +4,7 @@ use anyhow::Result;
 use std::path::Path;
 
 use super::super::types::{CheckId, Fix, GapCategory, Problem, Severity};
-use crate::domain::model::Board;
+use crate::domain::model::{Board, VoyageState};
 use crate::domain::state_machine::invariants;
 use crate::infrastructure::validation::structural;
 
@@ -54,6 +54,25 @@ pub fn check_voyage_status_drift(board: &Board) -> Vec<Problem> {
                 check_id: CheckId::VoyageStatusDrift,
             });
         }
+    }
+
+    problems
+}
+
+pub fn check_prd_lineage_coherence(board: &Board) -> Vec<Problem> {
+    let mut voyages: Vec<_> = board.voyages.values().collect();
+    voyages.sort_by(|a, b| a.index().cmp(&b.index()).then_with(|| a.id().cmp(b.id())));
+
+    let mut problems = Vec::new();
+    for voyage in voyages {
+        if voyage.status() == VoyageState::Done {
+            continue;
+        }
+        problems.extend(invariants::prd_srs_lineage_problems(
+            voyage,
+            board,
+            CheckId::VoyagePrdLineageCoherence,
+        ));
     }
 
     problems
@@ -221,6 +240,96 @@ mod tests {
                 ref new_status, ..
             }) if new_status == "done"
         ));
+    }
+
+    #[test]
+    fn doctor_and_gate_share_prd_lineage_rules() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").status("draft").srs_content(
+                r#"# SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-01 | Missing source. |  | cargo test |
+| SRS-02 | Alias source. | PRD-01 | cargo test |
+| SRS-03 | Unknown parent. | FR-99 | cargo test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+            ))
+            .story(
+                TestStory::new("S1")
+                    .scope("e1/v1")
+                    .body("## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] valid planning story"),
+            )
+            .build();
+        std::fs::write(
+            temp.path().join("epics/e1/PRD.md"),
+            r#"# PRD
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | Canonical parent. | must | coverage |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let voyage = board.require_voyage("v1").unwrap();
+
+        let gate_messages: Vec<_> = crate::domain::state_machine::evaluate_voyage_transition(
+            &board,
+            voyage,
+            crate::domain::state_machine::VoyageTransition::Plan,
+            true,
+        )
+        .into_iter()
+        .filter(|problem| problem.check_id == CheckId::VoyagePrdLineageCoherence)
+        .map(|problem| problem.message)
+        .collect();
+
+        let doctor_messages: Vec<_> = check_prd_lineage_coherence(&board)
+            .into_iter()
+            .map(|problem| problem.message)
+            .collect();
+
+        assert_eq!(doctor_messages, gate_messages);
+    }
+
+    #[test]
+    fn doctor_prd_lineage_skips_done_voyages() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").status("done").srs_content(
+                r#"# SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-01 | Legacy completed voyage. | PRD-01 | cargo test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+            ))
+            .build();
+        std::fs::write(
+            temp.path().join("epics/e1/PRD.md"),
+            r#"# PRD
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | Canonical parent. | must | coverage |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+
+        assert!(check_prd_lineage_coherence(&board).is_empty());
     }
 
     #[test]

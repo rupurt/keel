@@ -61,6 +61,7 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     document.push_header(metadata, Some(width));
     let mut sections = vec![
         render_planning_summary(&report),
+        render_requirement_coverage(&report),
         render_press_release(epic),
         render_progress(&report),
         render_verification_readiness(&report),
@@ -153,6 +154,52 @@ fn render_progress(report: &EpicShowProjection) -> ShowSection {
     };
     fields.push_row("ETA:", eta);
     section.push_key_values(fields);
+    section
+}
+
+fn render_requirement_coverage(report: &EpicShowProjection) -> ShowSection {
+    let mut section = ShowSection::new("Requirement Coverage");
+
+    if report.requirement_coverage.is_empty() {
+        section.push_lines([format!("  {}", REQUIREMENTS_PLACEHOLDER.dimmed())]);
+        return section;
+    }
+
+    for row in &report.requirement_coverage {
+        let summary = if row.is_covered() {
+            format!(
+                "{} linked SRS row(s) across {} voyage(s)",
+                row.linked_child_count(),
+                row.linked_voyage_count()
+            )
+        } else {
+            "uncovered (0 linked SRS rows)".to_string()
+        };
+
+        section.push_lines([format!(
+            "  {} - {} ({})",
+            style::styled_requirement_id(&row.id),
+            style::styled_inline_markdown(&row.description),
+            summary
+        )]);
+
+        if !row.linked_children.is_empty() {
+            let linked_children = row
+                .linked_children
+                .iter()
+                .map(|child| {
+                    format!(
+                        "{}/{}",
+                        style::styled_voyage_id(&child.voyage_id),
+                        style::styled_requirement_id(&child.requirement_id)
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join(", ");
+            section.push_lines([format!("    Linked children: {linked_children}")]);
+        }
+    }
+
     section
 }
 
@@ -599,6 +646,7 @@ More details.
                 ),
                 ..planning_show::PlanningDocSummary::default()
             },
+            requirement_coverage: Vec::new(),
             total_voyages: 0,
             done_voyages: 0,
             total_stories: 0,
@@ -622,5 +670,57 @@ More details.
         assert!(rendered.contains("  Problem:\n    Inline "));
         assert!(rendered.contains("problem"));
         assert!(!rendered.contains("  Problem: Inline "));
+    }
+
+    #[test]
+    fn requirement_coverage_section_renders_counts_and_uncovered_rows() {
+        let report = EpicShowProjection {
+            doc: planning_show::PlanningDocSummary::default(),
+            requirement_coverage: vec![
+                planning_show::EpicRequirementCoverageRow {
+                    id: "FR-01".to_string(),
+                    description: "Shared parent.".to_string(),
+                    kind: planning_show::RequirementKind::Functional,
+                    linked_children: vec![
+                        planning_show::EpicRequirementCoverageChild {
+                            voyage_id: "v1".to_string(),
+                            requirement_id: "SRS-01".to_string(),
+                        },
+                        planning_show::EpicRequirementCoverageChild {
+                            voyage_id: "v2".to_string(),
+                            requirement_id: "SRS-02".to_string(),
+                        },
+                    ],
+                },
+                planning_show::EpicRequirementCoverageRow {
+                    id: "FR-02".to_string(),
+                    description: "Uncovered parent.".to_string(),
+                    kind: planning_show::RequirementKind::Functional,
+                    linked_children: Vec::new(),
+                },
+            ],
+            total_voyages: 0,
+            done_voyages: 0,
+            total_stories: 0,
+            done_stories: 0,
+            started_at: None,
+            completed_at: None,
+            updated_at: None,
+            eta: planning_show::EtaSummary {
+                throughput_stories_per_week: 0.0,
+                remaining_stories: 0,
+                eta_weeks: None,
+            },
+            verification: planning_show::VerificationRollup::default(),
+        };
+
+        let section = render_requirement_coverage(&report);
+        let mut document = ShowDocument::new();
+        document.push_sections_spaced([section]);
+        let rendered = document.render();
+
+        assert!(rendered.contains("2 linked SRS row(s) across 2 voyage(s)"));
+        assert!(rendered.contains("Linked children:"));
+        assert!(rendered.contains("uncovered (0 linked SRS rows)"));
     }
 }

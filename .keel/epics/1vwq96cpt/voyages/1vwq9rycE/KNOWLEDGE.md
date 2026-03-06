@@ -8,40 +8,6 @@ created_at: 2026-03-02T10:34:57
 
 ## Story Knowledge
 
-## Story: Unify Queue Policy Consumption (1vwqCfgC4)
-
-### 1vyDuwSPf: Queue-policy facades prevent decision/rendering drift
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Queue classifications were being consumed directly by multiple modules (`next`, `flow/bottleneck`, and `state_machine/flow`) with repeated policy calls. |
-| **Insight** | A small read-model facade (`read_model::queue_policy`) creates one consumption surface for policy outputs while keeping source-of-truth thresholds in `policy::queue`. |
-| **Suggested Action** | Add architecture contracts for policy-facade usage whenever policy semantics are consumed by multiple adapters or decision paths. |
-| **Applies To** | `src/read_model/queue_policy.rs`, `src/next/algorithm.rs`, `src/flow/bottleneck.rs`, `src/state_machine/flow.rs`, `src/architecture_contract_tests.rs` |
-| **Applied** | story `1vwqCfgC4` |
-
-
-
----
-
-## Story: Build Canonical Flow Status Projection (1vwqCfS0F)
-
-### 1vyDuwXBN: Keep Operational Metrics In A Single Read Model
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Consolidating repeated queue/flow/status metrics used across diagnostics and next-decision logic |
-| **Insight** | A canonical projection DTO that embeds both flow metrics and status metrics removes drift and lets adapters format output without recalculating business metrics |
-| **Suggested Action** | Add read-model projection services first, then migrate every consumer to the projection API before deleting local metric structs |
-| **Applies To** | src/read_model/flow_status.rs; src/commands/diagnostics/{flow,status}.rs; src/next/algorithm.rs |
-| **Applied** | 1vwqCfS0F |
-
-
-
----
-
 ## Story: Remove Duplicate Projection Implementations (1vwqCfma0)
 
 ### 1vyDuwCgL: Interface Adapters Should Delegate Instead Of Recompute
@@ -76,23 +42,9 @@ created_at: 2026-03-02T10:34:57
 
 ---
 
-## Synthesis
+## Story: Build Canonical Flow Status Projection (1vwqCfS0F)
 
-### qUF0j5GEl: Queue-policy facades prevent decision/rendering drift
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Queue classifications were being consumed directly by multiple modules (`next`, `flow/bottleneck`, and `state_machine/flow`) with repeated policy calls. |
-| **Insight** | A small read-model facade (`read_model::queue_policy`) creates one consumption surface for policy outputs while keeping source-of-truth thresholds in `policy::queue`. |
-| **Suggested Action** | Add architecture contracts for policy-facade usage whenever policy semantics are consumed by multiple adapters or decision paths. |
-| **Applies To** | `src/read_model/queue_policy.rs`, `src/next/algorithm.rs`, `src/flow/bottleneck.rs`, `src/state_machine/flow.rs`, `src/architecture_contract_tests.rs` |
-| **Linked Knowledge IDs** | 1vyDuwSPf |
-| **Score** | 0.86 |
-| **Confidence** | 0.95 |
-| **Applied** | story `1vwqCfgC4` |
-
-### IxTCT6ayY: Keep Operational Metrics In A Single Read Model
+### 1vyDuwXBN: Keep Operational Metrics In A Single Read Model
 
 | Field | Value |
 |-------|-------|
@@ -101,10 +53,30 @@ created_at: 2026-03-02T10:34:57
 | **Insight** | A canonical projection DTO that embeds both flow metrics and status metrics removes drift and lets adapters format output without recalculating business metrics |
 | **Suggested Action** | Add read-model projection services first, then migrate every consumer to the projection API before deleting local metric structs |
 | **Applies To** | src/read_model/flow_status.rs; src/commands/diagnostics/{flow,status}.rs; src/next/algorithm.rs |
-| **Linked Knowledge IDs** | 1vyDuwXBN |
-| **Score** | 0.84 |
-| **Confidence** | 0.89 |
 | **Applied** | 1vwqCfS0F |
+
+
+
+---
+
+## Story: Unify Queue Policy Consumption (1vwqCfgC4)
+
+### 1vyDuwSPf: Queue-policy facades prevent decision/rendering drift
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Queue classifications were being consumed directly by multiple modules (`next`, `flow/bottleneck`, and `state_machine/flow`) with repeated policy calls. |
+| **Insight** | A small read-model facade (`read_model::queue_policy`) creates one consumption surface for policy outputs while keeping source-of-truth thresholds in `policy::queue`. |
+| **Suggested Action** | Add architecture contracts for policy-facade usage whenever policy semantics are consumed by multiple adapters or decision paths. |
+| **Applies To** | `src/read_model/queue_policy.rs`, `src/next/algorithm.rs`, `src/flow/bottleneck.rs`, `src/state_machine/flow.rs`, `src/architecture_contract_tests.rs` |
+| **Applied** | story `1vwqCfgC4` |
+
+
+
+---
+
+## Synthesis
 
 ### KwQM6oOZE: Interface Adapters Should Delegate Instead Of Recompute
 
@@ -133,4 +105,32 @@ created_at: 2026-03-02T10:34:57
 | **Score** | 0.89 |
 | **Confidence** | 0.96 |
 | **Applied** | story `1vwqCfHz7` |
+
+### IxTCT6ayY: Keep Operational Metrics In A Single Read Model
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Consolidating repeated queue/flow/status metrics used across diagnostics and next-decision logic |
+| **Insight** | A canonical projection DTO that embeds both flow metrics and status metrics removes drift and lets adapters format output without recalculating business metrics |
+| **Suggested Action** | Add read-model projection services first, then migrate every consumer to the projection API before deleting local metric structs |
+| **Applies To** | src/read_model/flow_status.rs; src/commands/diagnostics/{flow,status}.rs; src/next/algorithm.rs |
+| **Linked Knowledge IDs** | 1vyDuwXBN |
+| **Score** | 0.84 |
+| **Confidence** | 0.89 |
+| **Applied** | 1vwqCfS0F |
+
+### qUF0j5GEl: Queue-policy facades prevent decision/rendering drift
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Queue classifications were being consumed directly by multiple modules (`next`, `flow/bottleneck`, and `state_machine/flow`) with repeated policy calls. |
+| **Insight** | A small read-model facade (`read_model::queue_policy`) creates one consumption surface for policy outputs while keeping source-of-truth thresholds in `policy::queue`. |
+| **Suggested Action** | Add architecture contracts for policy-facade usage whenever policy semantics are consumed by multiple adapters or decision paths. |
+| **Applies To** | `src/read_model/queue_policy.rs`, `src/next/algorithm.rs`, `src/flow/bottleneck.rs`, `src/state_machine/flow.rs`, `src/architecture_contract_tests.rs` |
+| **Linked Knowledge IDs** | 1vyDuwSPf |
+| **Score** | 0.86 |
+| **Confidence** | 0.95 |
+| **Applied** | story `1vwqCfgC4` |
 

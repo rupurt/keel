@@ -664,19 +664,7 @@ fn uncovered_requirements_gate_problems(voyage: &Voyage, board: &Board) -> Vec<S
 }
 
 fn prd_lineage_gate_problems(voyage: &Voyage, board: &Board) -> Vec<Problem> {
-    let srs_path = voyage.path.parent().unwrap_or(&voyage.path).join("SRS.md");
-    invariants::evaluate_prd_srs_lineage(voyage, board)
-        .into_iter()
-        .map(|issue| Problem {
-            severity: Severity::Error,
-            path: srs_path.clone(),
-            scope: Some(voyage.scope_path()),
-            message: issue.message(),
-            fix: None,
-            category: None,
-            check_id: CheckId::Unknown,
-        })
-        .collect()
+    invariants::prd_srs_lineage_problems(voyage, board, CheckId::VoyagePrdLineageCoherence)
 }
 
 /// Evaluate completion/evidence gates for a voyage.

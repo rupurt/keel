@@ -19,10 +19,10 @@ created_at: 2026-03-05T12:52:35
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/4 voyages complete, 2/12 stories done
+**Progress:** 0/4 voyages complete, 3/12 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Canonical PRD Requirement Lineage](voyages/1vyFiQPoH/) | in-progress | 2/3 |
+| [Canonical PRD Requirement Lineage](voyages/1vyFiQPoH/) | in-progress | 3/3 |
 | [Epic Problem Hydration](voyages/1vyFlAgHB/) | planned | 0/3 |
 | [Goal-to-Requirement Lineage](voyages/1vyFmfjA9/) | planned | 0/3 |
 | [Scope Lineage and Drift Detection](voyages/1vyFn0OuN/) | planned | 0/3 |

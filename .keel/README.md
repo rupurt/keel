@@ -25,7 +25,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Render Epic Requirement Coverage](stories/1vyGZEZNc/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Canonical PRD Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFiQPoH/) |
 | [Replace Epic Goal CLI With Problem Input](stories/1vyGZd1to/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Epic Problem Hydration](epics/1vyFgR2MA/voyages/1vyFlAgHB/) |
 | [Hydrate Epic Problem Into Fresh Scaffolds](stories/1vyGZdgBX/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Epic Problem Hydration](epics/1vyFgR2MA/voyages/1vyFlAgHB/) |
 | [Validate Goal Links In PRD Requirements](stories/1vyGZeEI7/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Goal-to-Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFmfjA9/) |

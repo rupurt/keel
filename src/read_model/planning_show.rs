@@ -9,6 +9,7 @@ use anyhow::Result;
 use chrono::{Datelike, Duration, Local, NaiveDate, NaiveDateTime};
 
 use crate::domain::model::{Board, Epic, EpicState, Story, StoryState, Voyage};
+use crate::domain::state_machine::invariants;
 use crate::infrastructure::verification::parser::{
     Comparison, parse_ac_references, parse_verify_annotations,
 };
@@ -63,6 +64,7 @@ impl VerificationRollup {
 #[derive(Debug, Clone, PartialEq)]
 pub struct EpicShowProjection {
     pub doc: PlanningDocSummary,
+    pub requirement_coverage: Vec<EpicRequirementCoverageRow>,
     pub total_voyages: usize,
     pub done_voyages: usize,
     pub total_stories: usize,
@@ -85,6 +87,38 @@ pub struct StoryRef {
     pub id: String,
     pub stage: StoryState,
     pub index: Option<u32>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EpicRequirementCoverageChild {
+    pub voyage_id: String,
+    pub requirement_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EpicRequirementCoverageRow {
+    pub id: String,
+    pub description: String,
+    pub kind: RequirementKind,
+    pub linked_children: Vec<EpicRequirementCoverageChild>,
+}
+
+impl EpicRequirementCoverageRow {
+    pub fn linked_child_count(&self) -> usize {
+        self.linked_children.len()
+    }
+
+    pub fn linked_voyage_count(&self) -> usize {
+        self.linked_children
+            .iter()
+            .map(|child| child.voyage_id.as_str())
+            .collect::<BTreeSet<_>>()
+            .len()
+    }
+
+    pub fn is_covered(&self) -> bool {
+        !self.linked_children.is_empty()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -197,6 +231,25 @@ pub fn build_epic_show_projection(
     let prd_path = epic.path.parent().unwrap().join("PRD.md");
     let prd_content = fs::read_to_string(&prd_path).unwrap_or_default();
     let doc = extract_planning_doc_summary(&prd_content);
+    let requirement_coverage = invariants::build_epic_prd_requirement_coverage(epic, board)
+        .into_iter()
+        .map(|row| EpicRequirementCoverageRow {
+            id: row.parent.id,
+            description: row.parent.description,
+            kind: match row.parent.kind {
+                invariants::PrdRequirementKind::Functional => RequirementKind::Functional,
+                invariants::PrdRequirementKind::NonFunctional => RequirementKind::NonFunctional,
+            },
+            linked_children: row
+                .linked_children
+                .into_iter()
+                .map(|child| EpicRequirementCoverageChild {
+                    voyage_id: child.voyage_id,
+                    requirement_id: child.requirement_id,
+                })
+                .collect(),
+        })
+        .collect();
 
     let voyages = board.voyages_for_epic_id(epic.id());
     let done_voyages = voyages
@@ -330,6 +383,7 @@ pub fn build_epic_show_projection(
 
     Ok(EpicShowProjection {
         doc,
+        requirement_coverage,
         total_voyages: voyages.len(),
         done_voyages,
         total_stories,
@@ -1489,6 +1543,193 @@ Operators need reliable planning summaries.
     }
 
     #[test]
+    fn epic_show_aggregates_prd_requirement_coverage_across_voyages() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").index(2).srs_content(
+                r#"# SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-02 | Second child. | FR-01 | cargo test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+            ))
+            .voyage(TestVoyage::new("v2", "e1").index(1).srs_content(
+                r#"# SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-01 | First child. | FR-01 | cargo test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+
+<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-NFR-01 | Quality child. | NFR-01 | cargo test |
+<!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+"#,
+            ))
+            .build();
+
+        std::fs::write(
+            temp.path().join("epics/e1/PRD.md"),
+            r#"# PRD
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | Shared parent. | must | fanout |
+| FR-02 | Uncovered parent. | should | uncovered |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+
+<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| NFR-01 | Quality parent. | must | coverage |
+<!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let epic =
+            build_epic_show_projection(temp.path(), &board, board.require_epic("e1").unwrap())
+                .unwrap();
+
+        let coverage_ids: Vec<_> = epic
+            .requirement_coverage
+            .iter()
+            .map(|row| row.id.clone())
+            .collect();
+        assert_eq!(coverage_ids, vec!["FR-01", "FR-02", "NFR-01"]);
+
+        let fr01 = epic
+            .requirement_coverage
+            .iter()
+            .find(|row| row.id == "FR-01")
+            .unwrap();
+        assert_eq!(fr01.linked_child_count(), 2);
+        assert_eq!(fr01.linked_voyage_count(), 2);
+        let fr01_children: Vec<_> = fr01
+            .linked_children
+            .iter()
+            .map(|child| format!("{}/{}", child.voyage_id, child.requirement_id))
+            .collect();
+        assert_eq!(fr01_children, vec!["v2/SRS-01", "v1/SRS-02"]);
+
+        let fr02 = epic
+            .requirement_coverage
+            .iter()
+            .find(|row| row.id == "FR-02")
+            .unwrap();
+        assert!(!fr02.is_covered());
+        assert_eq!(fr02.linked_child_count(), 0);
+
+        let nfr01 = epic
+            .requirement_coverage
+            .iter()
+            .find(|row| row.id == "NFR-01")
+            .unwrap();
+        assert_eq!(nfr01.linked_child_count(), 1);
+        assert_eq!(nfr01.linked_children[0].voyage_id, "v2");
+        assert_eq!(nfr01.linked_children[0].requirement_id, "SRS-NFR-01");
+    }
+
+    #[test]
+    fn epic_prd_coverage_projection_is_deterministic() {
+        let board_a = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v2", "e1").index(2).srs_content(
+                r#"# SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-02 | Second child. | FR-01 | cargo test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+            ))
+            .voyage(TestVoyage::new("v1", "e1").index(1).srs_content(
+                r#"# SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-01 | First child. | FR-01 | cargo test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+            ))
+            .build();
+        let board_b = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").index(1).srs_content(
+                r#"# SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-01 | First child. | FR-01 | cargo test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+            ))
+            .voyage(TestVoyage::new("v2", "e1").index(2).srs_content(
+                r#"# SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-02 | Second child. | FR-01 | cargo test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+            ))
+            .build();
+
+        let prd = r#"# PRD
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-02 | Uncovered parent. | should | uncovered |
+| FR-01 | Shared parent. | must | fanout |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#;
+        std::fs::write(board_a.path().join("epics/e1/PRD.md"), prd).unwrap();
+        std::fs::write(board_b.path().join("epics/e1/PRD.md"), prd).unwrap();
+
+        let loaded_a = load_board(board_a.path()).unwrap();
+        let loaded_b = load_board(board_b.path()).unwrap();
+        let epic_a = build_epic_show_projection(
+            board_a.path(),
+            &loaded_a,
+            loaded_a.require_epic("e1").unwrap(),
+        )
+        .unwrap();
+        let epic_b = build_epic_show_projection(
+            board_b.path(),
+            &loaded_b,
+            loaded_b.require_epic("e1").unwrap(),
+        )
+        .unwrap();
+
+        assert_eq!(epic_a.requirement_coverage, epic_b.requirement_coverage);
+        let coverage_ids: Vec<_> = epic_a
+            .requirement_coverage
+            .iter()
+            .map(|row| row.id.clone())
+            .collect();
+        assert_eq!(coverage_ids, vec!["FR-01", "FR-02"]);
+        let linked_children: Vec<_> = epic_a.requirement_coverage[0]
+            .linked_children
+            .iter()
+            .map(|child| format!("{}/{}", child.voyage_id, child.requirement_id))
+            .collect();
+        assert_eq!(linked_children, vec!["v1/SRS-01", "v2/SRS-02"]);
+    }
+
+    #[test]
     fn planning_show_omits_verification_recommendations() {
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("e1"))
@@ -1510,6 +1751,7 @@ Operators need reliable planning summaries.
 
         let EpicShowProjection {
             doc,
+            requirement_coverage,
             total_voyages,
             done_voyages,
             total_stories,
@@ -1522,6 +1764,7 @@ Operators need reliable planning summaries.
         } = epic;
         let _ = (
             doc,
+            requirement_coverage,
             total_voyages,
             done_voyages,
             total_stories,
