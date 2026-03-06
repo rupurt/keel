@@ -2,7 +2,7 @@
 
 ## FOR IMMEDIATE RELEASE
 
-**Keel introduces {{title}}: {{goal}}**
+**Keel introduces {{title}}: {{problem}}**
 
 **LUNAR BASE ALPHA** — Keel today announced {{title}}, a major leap forward in agentic SDLC management.
 

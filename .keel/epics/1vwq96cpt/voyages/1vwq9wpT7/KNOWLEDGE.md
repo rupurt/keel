@@ -25,6 +25,23 @@ created_at: 2026-03-02T10:42:29
 
 ---
 
+## Story: Add Architecture Contract Verification Suite (1vwqCfdUl)
+
+### 1vyDuwvt7: Production-only import checks reduce false positives
+
+| Field | Value |
+|-------|-------|
+| **Category** | testing |
+| **Context** | Architecture contract tests scanning modules that also contain `#[cfg(test)]` helper imports |
+| **Insight** | Import-boundary checks should target production sections to avoid test-only imports triggering invalid architectural failures. |
+| **Suggested Action** | Split source at `#[cfg(test)]` and enforce forbidden-edge patterns only on production content for adapter boundary tests. |
+| **Applies To** | `src/architecture_contract_tests.rs`, `src/commands/diagnostics/*.rs`, `src/main.rs`, `src/next/algorithm.rs` |
+| **Applied** | story `1vwqCfdUl` |
+
+
+
+---
+
 ## Story: Refactor Main Dispatch To Interface Adapters (1vwqCf53S)
 
 ### 1vyDuwf3P: Build Typed Command Actions Before Dispatching
@@ -59,23 +76,6 @@ created_at: 2026-03-02T10:42:29
 
 ---
 
-## Story: Add Architecture Contract Verification Suite (1vwqCfdUl)
-
-### 1vyDuwvt7: Production-only import checks reduce false positives
-
-| Field | Value |
-|-------|-------|
-| **Category** | testing |
-| **Context** | Architecture contract tests scanning modules that also contain `#[cfg(test)]` helper imports |
-| **Insight** | Import-boundary checks should target production sections to avoid test-only imports triggering invalid architectural failures. |
-| **Suggested Action** | Split source at `#[cfg(test)]` and enforce forbidden-edge patterns only on production content for adapter boundary tests. |
-| **Applies To** | `src/architecture_contract_tests.rs`, `src/commands/diagnostics/*.rs`, `src/main.rs`, `src/next/algorithm.rs` |
-| **Applied** | story `1vwqCfdUl` |
-
-
-
----
-
 ## Synthesis
 
 ### gYNMP5JXn: Regression Parity Needs Cross-Command Coverage
@@ -91,6 +91,20 @@ created_at: 2026-03-02T10:42:29
 | **Score** | 0.80 |
 | **Confidence** | 0.89 |
 | **Applied** | Added `command_regression_tests` cases for human-block and flow-block boundaries plus lifecycle start/submit/accept chain |
+
+### erV4YlxVN: Production-only import checks reduce false positives
+
+| Field | Value |
+|-------|-------|
+| **Category** | testing |
+| **Context** | Architecture contract tests scanning modules that also contain `#[cfg(test)]` helper imports |
+| **Insight** | Import-boundary checks should target production sections to avoid test-only imports triggering invalid architectural failures. |
+| **Suggested Action** | Split source at `#[cfg(test)]` and enforce forbidden-edge patterns only on production content for adapter boundary tests. |
+| **Applies To** | `src/architecture_contract_tests.rs`, `src/commands/diagnostics/*.rs`, `src/main.rs`, `src/next/algorithm.rs` |
+| **Linked Knowledge IDs** | 1vyDuwvt7 |
+| **Score** | 0.87 |
+| **Confidence** | 0.95 |
+| **Applied** | story `1vwqCfdUl` |
 
 ### xb3Zn8PjR: Build Typed Command Actions Before Dispatching
 
@@ -119,18 +133,4 @@ created_at: 2026-03-02T10:42:29
 | **Score** | 0.78 |
 | **Confidence** | 0.88 |
 | **Applied** | Added `MIGRATION_CHECKLIST.md` for `1vwq9wpT7` and linked it from voyage documents |
-
-### erV4YlxVN: Production-only import checks reduce false positives
-
-| Field | Value |
-|-------|-------|
-| **Category** | testing |
-| **Context** | Architecture contract tests scanning modules that also contain `#[cfg(test)]` helper imports |
-| **Insight** | Import-boundary checks should target production sections to avoid test-only imports triggering invalid architectural failures. |
-| **Suggested Action** | Split source at `#[cfg(test)]` and enforce forbidden-edge patterns only on production content for adapter boundary tests. |
-| **Applies To** | `src/architecture_contract_tests.rs`, `src/commands/diagnostics/*.rs`, `src/main.rs`, `src/next/algorithm.rs` |
-| **Linked Knowledge IDs** | 1vyDuwvt7 |
-| **Score** | 0.87 |
-| **Confidence** | 0.95 |
-| **Applied** | story `1vwqCfdUl` |
 

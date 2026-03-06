@@ -8,6 +8,23 @@ created_at: 2026-03-02T07:36:50
 
 ## Story Knowledge
 
+## Story: Define Layer Dependency Matrix (1vwqCd6wg)
+
+### 1vyDuw12T: Matrix Contracts Need Both Narrative and Table Forms
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Defining a dependency contract that engineers can read quickly and tests can consume with minimal interpretation |
+| **Insight** | A single layer table is not enough for review; adding a compact `From \\ To` matrix reduces ambiguity about allowed and forbidden dependencies. |
+| **Suggested Action** | Keep layer contracts in two forms: descriptive per-layer rules plus a normalized matrix that can be translated directly into architecture tests. |
+| **Applies To** | ARCHITECTURE.md, upcoming architecture contract tests |
+| **Applied** | yes |
+
+
+
+---
+
 ## Story: Map Bounded Context Ownership (1vwqCdXMs)
 
 ### 1vyDuwbHB: Context Maps Need Enforceable Ownership
@@ -42,9 +59,9 @@ created_at: 2026-03-02T07:36:50
 
 ---
 
-## Story: Define Layer Dependency Matrix (1vwqCd6wg)
+## Synthesis
 
-### 1vyDuw12T: Matrix Contracts Need Both Narrative and Table Forms
+### 1jCvlheVL: Matrix Contracts Need Both Narrative and Table Forms
 
 | Field | Value |
 |-------|-------|
@@ -53,13 +70,10 @@ created_at: 2026-03-02T07:36:50
 | **Insight** | A single layer table is not enough for review; adding a compact `From \\ To` matrix reduces ambiguity about allowed and forbidden dependencies. |
 | **Suggested Action** | Keep layer contracts in two forms: descriptive per-layer rules plus a normalized matrix that can be translated directly into architecture tests. |
 | **Applies To** | ARCHITECTURE.md, upcoming architecture contract tests |
+| **Linked Knowledge IDs** | 1vyDuw12T |
+| **Score** | 0.84 |
+| **Confidence** | 0.89 |
 | **Applied** | yes |
-
-
-
----
-
-## Synthesis
 
 ### Xl3pnhZXo: Context Maps Need Enforceable Ownership
 
@@ -88,18 +102,4 @@ created_at: 2026-03-02T07:36:50
 | **Score** | 0.80 |
 | **Confidence** | 0.90 |
 | **Applied** | Added enforceable boundary tests and wired them into test compilation via main test module declarations. |
-
-### 1jCvlheVL: Matrix Contracts Need Both Narrative and Table Forms
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Defining a dependency contract that engineers can read quickly and tests can consume with minimal interpretation |
-| **Insight** | A single layer table is not enough for review; adding a compact `From \\ To` matrix reduces ambiguity about allowed and forbidden dependencies. |
-| **Suggested Action** | Keep layer contracts in two forms: descriptive per-layer rules plus a normalized matrix that can be translated directly into architecture tests. |
-| **Applies To** | ARCHITECTURE.md, upcoming architecture contract tests |
-| **Linked Knowledge IDs** | 1vyDuw12T |
-| **Score** | 0.84 |
-| **Confidence** | 0.89 |
-| **Applied** | yes |
 

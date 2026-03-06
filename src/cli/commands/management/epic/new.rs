@@ -66,7 +66,7 @@ fn new_epic(board_dir: &Path, name: &str, problem: &str) -> Result<()> {
             ("id", &epic_id),
             ("title", name),
             ("created_at", &now),
-            ("goal", problem_text),
+            ("problem", problem_text),
         ],
     );
 
@@ -85,7 +85,7 @@ fn new_epic(board_dir: &Path, name: &str, problem: &str) -> Result<()> {
     // Write PRD
     let prd_content = template_rendering::render(
         templates::epic::PRD,
-        &[("title", name), ("goal", problem_text)],
+        &[("title", name), ("problem", problem_text)],
     );
     let prd_path = epic_dir.join("PRD.md");
     fs::write(&prd_path, prd_content)
@@ -114,6 +114,30 @@ mod tests {
     use crate::test_helpers::TestBoardBuilder;
     use regex::Regex;
 
+    fn find_epic_dir(board_dir: &std::path::Path, title: &str) -> std::path::PathBuf {
+        fs::read_dir(board_dir.join("epics"))
+            .unwrap()
+            .map(|entry| entry.unwrap().path())
+            .find(|path| {
+                fs::read_to_string(path.join("README.md"))
+                    .unwrap()
+                    .contains(&format!("title: {title}"))
+            })
+            .expect("Epic not found")
+    }
+
+    fn extract_section<'a>(content: &'a str, heading: &str, next_heading: &str) -> &'a str {
+        let start = content
+            .find(heading)
+            .unwrap_or_else(|| panic!("missing heading: {heading}"));
+        let start = start + heading.len();
+        let tail = &content[start..];
+        let end = tail
+            .find(next_heading)
+            .unwrap_or_else(|| panic!("missing heading: {next_heading}"));
+        tail[..end].trim()
+    }
+
     #[test]
     fn test_new_epic_success() {
         let temp = TestBoardBuilder::new().build();
@@ -122,15 +146,7 @@ mod tests {
         new_epic(board_dir, "My New Epic", "A problem").unwrap();
 
         // Find the epic directory (it's random now)
-        let epics_dir = board_dir.join("epics");
-        let epic_dir = fs::read_dir(epics_dir)
-            .unwrap()
-            .map(|e| e.unwrap().path())
-            .find(|p| {
-                let content = fs::read_to_string(p.join("README.md")).unwrap();
-                content.contains("title: My New Epic")
-            })
-            .expect("Epic not found");
+        let epic_dir = find_epic_dir(board_dir, "My New Epic");
 
         assert!(epic_dir.is_dir());
         assert!(epic_dir.join("README.md").exists());
@@ -208,5 +224,81 @@ mod tests {
             created_epics, 0,
             "should not scaffold a new epic on invalid input"
         );
+    }
+
+    #[test]
+    fn epic_new_hydrates_problem_into_prd_and_summary_surface() {
+        let temp = TestBoardBuilder::new().build();
+        let board_dir = temp.path();
+
+        new_epic(
+            board_dir,
+            "My New Epic",
+            "Users cannot recover access after sign-in failures.",
+        )
+        .unwrap();
+
+        let epic_dir = find_epic_dir(board_dir, "My New Epic");
+        let readme = fs::read_to_string(epic_dir.join("README.md")).unwrap();
+        let prd = fs::read_to_string(epic_dir.join("PRD.md")).unwrap();
+
+        assert!(readme.contains("> Users cannot recover access after sign-in failures."));
+        assert!(prd.contains("> Users cannot recover access after sign-in failures."));
+        assert!(prd.contains(
+            "## Problem Statement\n\nUsers cannot recover access after sign-in failures."
+        ));
+    }
+
+    #[test]
+    fn epic_new_leaves_goal_table_for_direct_prd_authoring() {
+        let temp = TestBoardBuilder::new().build();
+        let board_dir = temp.path();
+
+        new_epic(
+            board_dir,
+            "My New Epic",
+            "Users cannot recover access after sign-in failures.",
+        )
+        .unwrap();
+
+        let epic_dir = find_epic_dir(board_dir, "My New Epic");
+        let prd = fs::read_to_string(epic_dir.join("PRD.md")).unwrap();
+        let goals_section = extract_section(&prd, "## Goals & Objectives", "## Users");
+
+        assert!(goals_section.contains("| Goal | Success Metric | Target |"));
+        assert!(!goals_section.contains("Users cannot recover access after sign-in failures."));
+    }
+
+    #[test]
+    fn epic_problem_scaffold_is_deterministic() {
+        let board_a = TestBoardBuilder::new().build();
+        let board_b = TestBoardBuilder::new().build();
+        let title = "My New Epic";
+        let problem = "Users cannot recover access after sign-in failures.";
+
+        new_epic(board_a.path(), title, problem).unwrap();
+        new_epic(board_b.path(), title, problem).unwrap();
+
+        let epic_dir_a = find_epic_dir(board_a.path(), title);
+        let epic_dir_b = find_epic_dir(board_b.path(), title);
+
+        let readme_a = fs::read_to_string(epic_dir_a.join("README.md")).unwrap();
+        let readme_b = fs::read_to_string(epic_dir_b.join("README.md")).unwrap();
+        let prd_a = fs::read_to_string(epic_dir_a.join("PRD.md")).unwrap();
+        let prd_b = fs::read_to_string(epic_dir_b.join("PRD.md")).unwrap();
+
+        let normalize = |content: &str| {
+            let content = Regex::new(r"id: [A-Za-z0-9]+")
+                .unwrap()
+                .replace_all(content, "id: <id>")
+                .into_owned();
+            Regex::new(r"created_at: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}")
+                .unwrap()
+                .replace_all(&content, "created_at: <created_at>")
+                .into_owned()
+        };
+
+        assert_eq!(normalize(&readme_a), normalize(&readme_b));
+        assert_eq!(prd_a, prd_b);
     }
 }

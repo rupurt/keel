@@ -1,10 +1,10 @@
 # {{title}} - Product Requirements
 
-> {{goal}}
+> {{problem}}
 
 ## Problem Statement
 
-<!-- What user problem does this solve? Include evidence/data if available -->
+{{problem}}
 
 ## Goals & Objectives
 

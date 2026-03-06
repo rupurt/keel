@@ -63,6 +63,7 @@ mod tests {
         "context",
         "epic",
         "goal",
+        "problem",
         "knowledge_example_id",
         "title",
         "type",
@@ -194,18 +195,18 @@ mod tests {
     }
 
     #[test]
-    fn epic_readme_contains_goal_placeholder() {
+    fn epic_readme_contains_problem_placeholder() {
         assert!(
-            epic::README.contains("{{goal}}"),
-            "Epic README should have goal placeholder for value proposition"
+            epic::README.contains("{{problem}}"),
+            "Epic README should have problem placeholder for epic context"
         );
     }
 
     #[test]
-    fn epic_prd_contains_goal_placeholder() {
+    fn epic_prd_contains_problem_placeholder() {
         assert!(
-            epic::PRD.contains("{{goal}}"),
-            "Epic PRD should have goal placeholder for value proposition"
+            epic::PRD.contains("{{problem}}"),
+            "Epic PRD should have problem placeholder for epic context"
         );
     }
 

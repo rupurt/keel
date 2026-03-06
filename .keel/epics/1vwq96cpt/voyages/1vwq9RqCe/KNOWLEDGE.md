@@ -8,23 +8,6 @@ created_at: 2026-03-02T10:07:49
 
 ## Story Knowledge
 
-## Story: Define Repository Port Interfaces (1vwqCe8MK)
-
-### 1vyDuwLCH: Ports Should Mirror Aggregate Boundaries
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Defining persistence abstractions before filesystem adapters are extracted from command modules |
-| **Insight** | Repository ports are easier to evolve when contracts are grouped by aggregate boundary (story, voyage, epic, bearing, adr) plus one board snapshot port for orchestration use cases. |
-| **Suggested Action** | Keep port interfaces in the application layer and defer adapter wiring to subsequent stories to minimize behavior risk during migration. |
-| **Applies To** | src/application/ports.rs, upcoming infrastructure adapter stories |
-| **Applied** | yes |
-
-
-
----
-
 ## Story: Implement Filesystem Adapter Layer (1vwqCeXD8)
 
 ### 1vyDuwPS4: Frontmatter-rewrite adapters preserve markdown parity with low migration risk
@@ -42,18 +25,18 @@ created_at: 2026-03-02T10:07:49
 
 ---
 
-## Story: Extract Template Rendering Service (1vwqCeX9I)
+## Story: Define Repository Port Interfaces (1vwqCe8MK)
 
-### 1vyDuwrqB: Shared template rendering reduces cross-command coupling
+### 1vyDuwLCH: Ports Should Mirror Aggregate Boundaries
 
 | Field | Value |
 |-------|-------|
 | **Category** | architecture |
-| **Context** | Multiple creation paths (story, epic, voyage, bearing, ADR, transitions) performing placeholder substitution |
-| **Insight** | Keeping placeholder substitution in command-local helpers increases coupling and makes cross-command refactors noisier than necessary. |
-| **Suggested Action** | Route all template substitution through `infrastructure::template_rendering::render` and enforce usage with architecture contract tests. |
-| **Applies To** | `src/infrastructure/template_rendering.rs`, `src/commands/*/new.rs`, `src/commands/story/reflect.rs`, `src/transitions/bearing_engine.rs` |
-| **Applied** | story `1vwqCeX9I` |
+| **Context** | Defining persistence abstractions before filesystem adapters are extracted from command modules |
+| **Insight** | Repository ports are easier to evolve when contracts are grouped by aggregate boundary (story, voyage, epic, bearing, adr) plus one board snapshot port for orchestration use cases. |
+| **Suggested Action** | Keep port interfaces in the application layer and defer adapter wiring to subsequent stories to minimize behavior risk during migration. |
+| **Applies To** | src/application/ports.rs, upcoming infrastructure adapter stories |
+| **Applied** | yes |
 
 
 
@@ -76,21 +59,24 @@ created_at: 2026-03-02T10:07:49
 
 ---
 
-## Synthesis
+## Story: Extract Template Rendering Service (1vwqCeX9I)
 
-### xds3XilMh: Ports Should Mirror Aggregate Boundaries
+### 1vyDuwrqB: Shared template rendering reduces cross-command coupling
 
 | Field | Value |
 |-------|-------|
 | **Category** | architecture |
-| **Context** | Defining persistence abstractions before filesystem adapters are extracted from command modules |
-| **Insight** | Repository ports are easier to evolve when contracts are grouped by aggregate boundary (story, voyage, epic, bearing, adr) plus one board snapshot port for orchestration use cases. |
-| **Suggested Action** | Keep port interfaces in the application layer and defer adapter wiring to subsequent stories to minimize behavior risk during migration. |
-| **Applies To** | src/application/ports.rs, upcoming infrastructure adapter stories |
-| **Linked Knowledge IDs** | 1vyDuwLCH |
-| **Score** | 0.82 |
-| **Confidence** | 0.88 |
-| **Applied** | yes |
+| **Context** | Multiple creation paths (story, epic, voyage, bearing, ADR, transitions) performing placeholder substitution |
+| **Insight** | Keeping placeholder substitution in command-local helpers increases coupling and makes cross-command refactors noisier than necessary. |
+| **Suggested Action** | Route all template substitution through `infrastructure::template_rendering::render` and enforce usage with architecture contract tests. |
+| **Applies To** | `src/infrastructure/template_rendering.rs`, `src/commands/*/new.rs`, `src/commands/story/reflect.rs`, `src/transitions/bearing_engine.rs` |
+| **Applied** | story `1vwqCeX9I` |
+
+
+
+---
+
+## Synthesis
 
 ### hpVUqQ88C: Frontmatter-rewrite adapters preserve markdown parity with low migration risk
 
@@ -106,19 +92,19 @@ created_at: 2026-03-02T10:07:49
 | **Confidence** | 0.95 |
 | **Applied** | story `1vwqCeXD8` |
 
-### rbij9ueSM: Shared template rendering reduces cross-command coupling
+### xds3XilMh: Ports Should Mirror Aggregate Boundaries
 
 | Field | Value |
 |-------|-------|
 | **Category** | architecture |
-| **Context** | Multiple creation paths (story, epic, voyage, bearing, ADR, transitions) performing placeholder substitution |
-| **Insight** | Keeping placeholder substitution in command-local helpers increases coupling and makes cross-command refactors noisier than necessary. |
-| **Suggested Action** | Route all template substitution through `infrastructure::template_rendering::render` and enforce usage with architecture contract tests. |
-| **Applies To** | `src/infrastructure/template_rendering.rs`, `src/commands/*/new.rs`, `src/commands/story/reflect.rs`, `src/transitions/bearing_engine.rs` |
-| **Linked Knowledge IDs** | 1vyDuwrqB |
-| **Score** | 0.88 |
-| **Confidence** | 0.96 |
-| **Applied** | story `1vwqCeX9I` |
+| **Context** | Defining persistence abstractions before filesystem adapters are extracted from command modules |
+| **Insight** | Repository ports are easier to evolve when contracts are grouped by aggregate boundary (story, voyage, epic, bearing, adr) plus one board snapshot port for orchestration use cases. |
+| **Suggested Action** | Keep port interfaces in the application layer and defer adapter wiring to subsequent stories to minimize behavior risk during migration. |
+| **Applies To** | src/application/ports.rs, upcoming infrastructure adapter stories |
+| **Linked Knowledge IDs** | 1vyDuwLCH |
+| **Score** | 0.82 |
+| **Confidence** | 0.88 |
+| **Applied** | yes |
 
 ### YerUoeCw5: Declarative Frontmatter Patches Reduce Drift Across Commands
 
@@ -133,4 +119,18 @@ created_at: 2026-03-02T10:07:49
 | **Score** | 0.82 |
 | **Confidence** | 0.90 |
 | **Applied** | Migrated status/timestamp/scope mutations to infrastructure::frontmatter_mutation::apply. |
+
+### rbij9ueSM: Shared template rendering reduces cross-command coupling
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Multiple creation paths (story, epic, voyage, bearing, ADR, transitions) performing placeholder substitution |
+| **Insight** | Keeping placeholder substitution in command-local helpers increases coupling and makes cross-command refactors noisier than necessary. |
+| **Suggested Action** | Route all template substitution through `infrastructure::template_rendering::render` and enforce usage with architecture contract tests. |
+| **Applies To** | `src/infrastructure/template_rendering.rs`, `src/commands/*/new.rs`, `src/commands/story/reflect.rs`, `src/transitions/bearing_engine.rs` |
+| **Linked Knowledge IDs** | 1vyDuwrqB |
+| **Score** | 0.88 |
+| **Confidence** | 0.96 |
+| **Applied** | story `1vwqCeX9I` |
 

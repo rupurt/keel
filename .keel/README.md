@@ -25,7 +25,6 @@
 
 | Story | Type | Scope |
 |-------|------|-------|
-| [Hydrate Epic Problem Into Fresh Scaffolds](stories/1vyGZdgBX/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Epic Problem Hydration](epics/1vyFgR2MA/voyages/1vyFlAgHB/) |
 | [Validate Goal Links In PRD Requirements](stories/1vyGZeEI7/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Goal-to-Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFmfjA9/) |
 | [Parse Canonical Goal Lineage](stories/1vyGZeNMa/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Goal-to-Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFmfjA9/) |
 | [Keep Fresh Epic Scaffolds Doctor Clean](stories/1vyGZet0Z/README.md) | feat | [Planning Lineage and PRD Traceability](epics/1vyFgR2MA/) / [Epic Problem Hydration](epics/1vyFgR2MA/voyages/1vyFlAgHB/) |

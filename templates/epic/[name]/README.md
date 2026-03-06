@@ -6,7 +6,7 @@ created_at: {{created_at}}
 
 # {{title}}
 
-> {{goal}}
+> {{problem}}
 
 ## Documents
 

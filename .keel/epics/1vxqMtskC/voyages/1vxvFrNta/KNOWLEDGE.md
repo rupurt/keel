@@ -8,6 +8,23 @@ created_at: 2026-03-04T16:27:11
 
 ## Story Knowledge
 
+## Story: Implement Verify Recommend For Active Detected Techniques (1vxvIaM4w)
+
+### 1vyDuwmNc: Centralize technique status before rendering
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | Multiple commands (`config show`, `verify recommend`) need the same detected/disabled/active evaluation. |
+| **Insight** | A shared status report API in the read model removes duplicated filtering logic and keeps recommendation output consistent across surfaces. |
+| **Suggested Action** | Route all verification-technique render paths through `resolve_technique_status_report` rather than command-local detection code. |
+| **Applies To** | `src/read_model/verification_techniques.rs`, `src/cli/commands/setup/config.rs`, `src/cli/commands/management/verify.rs` |
+| **Applied** | yes |
+
+
+
+---
+
 ## Story: Remove Planning Show Recommendations And Update Planning Guidance (1vxvIa2RC)
 
 ### 1vyDuwUUO: Keep recommendation sourcing decoupled from planning read surfaces
@@ -59,9 +76,9 @@ created_at: 2026-03-04T16:27:11
 
 ---
 
-## Story: Implement Verify Recommend For Active Detected Techniques (1vxvIaM4w)
+## Synthesis
 
-### 1vyDuwmNc: Centralize technique status before rendering
+### tDRpzXuPC: Centralize technique status before rendering
 
 | Field | Value |
 |-------|-------|
@@ -70,13 +87,10 @@ created_at: 2026-03-04T16:27:11
 | **Insight** | A shared status report API in the read model removes duplicated filtering logic and keeps recommendation output consistent across surfaces. |
 | **Suggested Action** | Route all verification-technique render paths through `resolve_technique_status_report` rather than command-local detection code. |
 | **Applies To** | `src/read_model/verification_techniques.rs`, `src/cli/commands/setup/config.rs`, `src/cli/commands/management/verify.rs` |
+| **Linked Knowledge IDs** | 1vyDuwmNc |
+| **Score** | 0.83 |
+| **Confidence** | 0.92 |
 | **Applied** | yes |
-
-
-
----
-
-## Synthesis
 
 ### ng7SivrJS: Keep recommendation sourcing decoupled from planning read surfaces
 
@@ -118,19 +132,5 @@ created_at: 2026-03-04T16:27:11
 | **Linked Knowledge IDs** | 1vyDuwBfG |
 | **Score** | 0.86 |
 | **Confidence** | 0.90 |
-| **Applied** | yes |
-
-### tDRpzXuPC: Centralize technique status before rendering
-
-| Field | Value |
-|-------|-------|
-| **Category** | architecture |
-| **Context** | Multiple commands (`config show`, `verify recommend`) need the same detected/disabled/active evaluation. |
-| **Insight** | A shared status report API in the read model removes duplicated filtering logic and keeps recommendation output consistent across surfaces. |
-| **Suggested Action** | Route all verification-technique render paths through `resolve_technique_status_report` rather than command-local detection code. |
-| **Applies To** | `src/read_model/verification_techniques.rs`, `src/cli/commands/setup/config.rs`, `src/cli/commands/management/verify.rs` |
-| **Linked Knowledge IDs** | 1vyDuwmNc |
-| **Score** | 0.83 |
-| **Confidence** | 0.92 |
 | **Applied** | yes |
 

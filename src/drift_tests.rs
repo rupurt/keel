@@ -758,6 +758,31 @@ mod token_bucket_contract {
     }
 
     #[test]
+    fn epic_template_tokens_match_problem_only_contract() {
+        for (label, template) in [
+            (
+                "epic README",
+                crate::infrastructure::templates::epic::README,
+            ),
+            ("epic PRD", crate::infrastructure::templates::epic::PRD),
+            (
+                "epic PRESS_RELEASE",
+                crate::infrastructure::templates::epic::PRESS_RELEASE,
+            ),
+        ] {
+            let tokens = extract_tokens(template);
+            assert!(
+                tokens.contains("problem"),
+                "{label} must expose the problem token"
+            );
+            assert!(
+                !tokens.contains("goal"),
+                "{label} must not retain the legacy goal token"
+            );
+        }
+    }
+
+    #[test]
     fn generated_marker_contract_remains_literal() {
         let marker_templates = [
             (
