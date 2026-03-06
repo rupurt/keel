@@ -25,12 +25,12 @@ started_at: 2026-03-06T07:31:07
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/4 stories complete
+**Progress:** 2/4 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Build Epic Topology Projection](../../../../stories/1vyWNb000/README.md) | feat | done |
-| [Add Topology Command And Filters](../../../../stories/1vyWNd000/README.md) | feat | backlog |
+| [Add Topology Command And Filters](../../../../stories/1vyWNd000/README.md) | feat | done |
 | [Render Topology Drift Hotspots](../../../../stories/1vyWNi000/README.md) | feat | backlog |
 | [Surface Topology Knowledge And Horizon Warnings](../../../../stories/1vyWNn000/README.md) | feat | backlog |
 <!-- END GENERATED -->

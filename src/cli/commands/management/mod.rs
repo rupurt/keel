@@ -12,6 +12,7 @@ pub mod play;
 pub(crate) mod play_guidance;
 pub(crate) mod status_filter;
 pub mod story;
+pub mod topology;
 pub(crate) mod verification_guidance;
 pub mod verify;
 pub mod voyage;

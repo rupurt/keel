@@ -12,6 +12,7 @@ Setup
 
 Management
   next        Pull from human queue (default) or agent queue (--agent)
+  topology    Show an epic-scoped topology map
   play        Invite play-driven discovery
   audit       Rich evidence/traceability report
   verify      Execute verification proofs
@@ -128,6 +129,24 @@ pub fn build_cli() -> Command {
                     Arg::new("parallel")
                         .long("parallel")
                         .help("Return all parallel-safe stories for batch dispatch")
+                        .action(ArgAction::SetTrue),
+                ),
+        )
+        .subcommand(
+            Command::new("topology")
+                .about("Show an epic-scoped topology map")
+                .hide(true)
+                .arg(
+                    Arg::new("epic")
+                        .long("epic")
+                        .value_name("ID")
+                        .required(true)
+                        .help("Epic ID to render"),
+                )
+                .arg(
+                    Arg::new("include_done")
+                        .long("include-done")
+                        .help("Include done voyages and stories")
                         .action(ArgAction::SetTrue),
                 ),
         )

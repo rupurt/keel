@@ -9,3 +9,4 @@ pub mod show;
 pub mod terminal;
 pub mod theme;
 pub mod throughput;
+pub mod topology;

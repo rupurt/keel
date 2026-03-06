@@ -61,6 +61,11 @@ pub fn run() -> Result<()> {
                 role.as_ref(),
             )
         }
+        Some(("topology", m)) => {
+            let epic_id = m.get_one::<String>("epic").expect("required");
+            let include_done = *m.get_one::<bool>("include_done").unwrap_or(&false);
+            super::commands::management::topology::run(epic_id, include_done)
+        }
         Some(("capacity", _)) => super::commands::diagnostics::capacity::run(&resolve_board_dir()?),
         Some(("gaps", _)) => super::commands::diagnostics::gaps::run(&resolve_board_dir()?),
         Some(("play", m)) => {

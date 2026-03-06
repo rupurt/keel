@@ -190,6 +190,22 @@ fn cli_rejects_removed_migrate_command() {
 }
 
 #[test]
+fn cli_parses_topology_command() {
+    let matches = crate::build_cli()
+        .try_get_matches_from(["keel", "topology", "--epic", "e1", "--include-done"])
+        .unwrap();
+    assert_eq!(matches.subcommand_name(), Some("topology"));
+    let topology = matches.subcommand_matches("topology").unwrap();
+    assert_eq!(
+        topology
+            .get_one::<String>("epic")
+            .map(|value| value.as_str()),
+        Some("e1")
+    );
+    assert!(*topology.get_one::<bool>("include_done").unwrap());
+}
+
+#[test]
 fn cli_parses_knowledge_prune_command() {
     let matches = crate::build_cli()
         .try_get_matches_from(["keel", "knowledge", "prune"])
