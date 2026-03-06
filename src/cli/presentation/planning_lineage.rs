@@ -1,33 +1,7 @@
 //! Shared render helpers for planning lineage sections.
 
-use crate::domain::state_machine::invariants::{ScopeDisposition, ScopeLineageIssueKind};
-use crate::read_model::planning_show::{ScopeDriftRow, ScopeLineageRow};
-
-pub fn format_scope_lineage_row(row: &ScopeLineageRow) -> String {
-    let voyage_disposition = scope_disposition_label(row.voyage_disposition);
-    match (row.epic_disposition, row.epic_description.as_deref()) {
-        (Some(epic_disposition), Some(epic_description)) => {
-            let epic_disposition = scope_disposition_label(epic_disposition);
-            let epic_detail = if same_scope_description(&row.voyage_description, epic_description) {
-                String::new()
-            } else {
-                format!(": {epic_description}")
-            };
-            format!(
-                "`{}`: {} (voyage {}; epic {}{})",
-                row.scope_id,
-                row.voyage_description,
-                voyage_disposition,
-                epic_disposition,
-                epic_detail
-            )
-        }
-        _ => format!(
-            "`{}`: {} (voyage {}; epic unknown)",
-            row.scope_id, row.voyage_description, voyage_disposition
-        ),
-    }
-}
+use crate::domain::state_machine::invariants::ScopeLineageIssueKind;
+use crate::read_model::planning_show::ScopeDriftRow;
 
 pub fn format_scope_drift_row(row: &ScopeDriftRow) -> String {
     let prefix = row
@@ -59,43 +33,10 @@ pub fn format_scope_drift_row(row: &ScopeDriftRow) -> String {
     }
 }
 
-fn scope_disposition_label(disposition: ScopeDisposition) -> &'static str {
-    match disposition {
-        ScopeDisposition::In => "in-scope",
-        ScopeDisposition::Out => "out-of-scope",
-    }
-}
-
-fn same_scope_description(left: &str, right: &str) -> bool {
-    normalize_scope_description(left) == normalize_scope_description(right)
-}
-
-fn normalize_scope_description(value: &str) -> String {
-    value.split_whitespace().collect::<Vec<_>>().join(" ")
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::state_machine::invariants::{
-        ScopeDisposition, ScopeLineageIssue, ScopeLineageIssueKind,
-    };
-
-    #[test]
-    fn scope_lineage_formatter_includes_parent_context_only_when_needed() {
-        let row = ScopeLineageRow {
-            scope_id: "SCOPE-01".to_string(),
-            voyage_description: "Render lineage output.".to_string(),
-            voyage_disposition: ScopeDisposition::In,
-            epic_description: Some("Render lineage output.".to_string()),
-            epic_disposition: Some(ScopeDisposition::In),
-        };
-
-        let rendered = format_scope_lineage_row(&row);
-
-        assert!(rendered.contains("voyage in-scope; epic in-scope"));
-        assert!(!rendered.contains("epic in-scope:"));
-    }
+    use crate::domain::state_machine::invariants::{ScopeLineageIssue, ScopeLineageIssueKind};
 
     #[test]
     fn scope_drift_formatter_includes_voyage_prefix_when_present() {

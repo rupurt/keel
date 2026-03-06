@@ -243,6 +243,7 @@ pub struct SrsRequirementEntry {
     pub id: String,
     pub description: String,
     pub kind: SrsRequirementKind,
+    pub scope_refs: Vec<String>,
     pub source: Option<String>,
 }
 
@@ -344,6 +345,52 @@ pub enum ScopeLineageIssueKind {
     UnknownScopeRef,
     OutOfScopeContradiction,
     LegacyUntaggedScopePath,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RequirementScopeLineageIssueKind {
+    MissingScopeRefs,
+    NonCanonicalScopeRef,
+    UnknownScopeRef,
+    OutOfScopeRef,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RequirementScopeLineageIssue {
+    pub srs_path: PathBuf,
+    pub requirement_id: String,
+    pub scope_ref: Option<String>,
+    pub kind: RequirementScopeLineageIssueKind,
+}
+
+impl RequirementScopeLineageIssue {
+    pub fn message(&self) -> String {
+        match self.kind {
+            RequirementScopeLineageIssueKind::MissingScopeRefs => format!(
+                "{} in {} is missing Scope refs (expected one or more canonical SCOPE-* IDs linked from the voyage's in-scope section)",
+                self.requirement_id,
+                self.srs_path.display()
+            ),
+            RequirementScopeLineageIssueKind::NonCanonicalScopeRef => format!(
+                "{} in {} uses non-canonical Scope ref '{}' (expected SCOPE-*)",
+                self.requirement_id,
+                self.srs_path.display(),
+                self.scope_ref.as_deref().unwrap_or("<empty>")
+            ),
+            RequirementScopeLineageIssueKind::UnknownScopeRef => format!(
+                "{} in {} references unknown Scope ref '{}' (expected a SCOPE-* defined in the parent epic PRD)",
+                self.requirement_id,
+                self.srs_path.display(),
+                self.scope_ref.as_deref().unwrap_or("<empty>")
+            ),
+            RequirementScopeLineageIssueKind::OutOfScopeRef => format!(
+                "{} in {} references Scope ref '{}' that is not marked in scope for this voyage",
+                self.requirement_id,
+                self.srs_path.display(),
+                self.scope_ref.as_deref().unwrap_or("<empty>")
+            ),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -727,6 +774,97 @@ pub fn voyage_scope_lineage_problems(
         .collect()
 }
 
+pub fn evaluate_voyage_requirement_scope_lineage(
+    voyage: &Voyage,
+    board: &Board,
+) -> Vec<RequirementScopeLineageIssue> {
+    let srs_path = voyage.path.parent().unwrap().join("SRS.md");
+    let srs_content = match fs::read_to_string(&srs_path) {
+        Ok(content) => content,
+        Err(_) => return Vec::new(),
+    };
+    let scope_links = parse_srs_scope_links(&srs_content);
+    if scope_links.is_empty() {
+        return Vec::new();
+    }
+
+    let Some(epic) = board.epics.get(&voyage.epic_id) else {
+        return Vec::new();
+    };
+    let prd_path = epic.path.parent().unwrap().join("PRD.md");
+    let prd_content = match fs::read_to_string(&prd_path) {
+        Ok(content) => content,
+        Err(_) => return Vec::new(),
+    };
+    let known_scope: HashSet<String> = parse_prd_scope_entries(&prd_content)
+        .into_iter()
+        .map(|entry| entry.id)
+        .collect();
+    let in_scope_ids: HashSet<String> = scope_links
+        .into_iter()
+        .filter(|link| link.disposition == ScopeDisposition::In)
+        .map(|link| link.parent_id)
+        .collect();
+
+    let mut issues = Vec::new();
+    for requirement in parse_srs_requirement_entries(&srs_path) {
+        if requirement.scope_refs.is_empty() {
+            issues.push(RequirementScopeLineageIssue {
+                srs_path: srs_path.clone(),
+                requirement_id: requirement.id,
+                scope_ref: None,
+                kind: RequirementScopeLineageIssueKind::MissingScopeRefs,
+            });
+            continue;
+        }
+
+        for scope_ref in requirement.scope_refs {
+            let kind = if !SCOPE_ID_RE.is_match(&scope_ref) {
+                Some(RequirementScopeLineageIssueKind::NonCanonicalScopeRef)
+            } else if !known_scope.contains(&scope_ref) {
+                Some(RequirementScopeLineageIssueKind::UnknownScopeRef)
+            } else if !in_scope_ids.contains(&scope_ref) {
+                Some(RequirementScopeLineageIssueKind::OutOfScopeRef)
+            } else {
+                None
+            };
+
+            if let Some(kind) = kind {
+                issues.push(RequirementScopeLineageIssue {
+                    srs_path: srs_path.clone(),
+                    requirement_id: requirement.id.clone(),
+                    scope_ref: Some(scope_ref),
+                    kind,
+                });
+            }
+        }
+    }
+
+    issues.sort_by(|a, b| {
+        a.srs_path
+            .cmp(&b.srs_path)
+            .then_with(|| a.requirement_id.cmp(&b.requirement_id))
+            .then_with(|| a.scope_ref.cmp(&b.scope_ref))
+            .then_with(|| format!("{:?}", a.kind).cmp(&format!("{:?}", b.kind)))
+    });
+    issues
+}
+
+pub fn voyage_requirement_scope_lineage_problems(
+    voyage: &Voyage,
+    board: &Board,
+    check_id: CheckId,
+) -> Vec<Problem> {
+    evaluate_voyage_requirement_scope_lineage(voyage, board)
+        .into_iter()
+        .map(|issue| {
+            Problem::error(issue.srs_path.clone(), issue.message())
+                .with_scope(voyage.scope_path())
+                .with_check_id(check_id)
+        })
+        .collect()
+}
+
 pub fn evaluate_epic_goal_lineage(epic: &Epic) -> Vec<PrdGoalLineageIssue> {
     let prd_path = epic.path.parent().unwrap_or(&epic.path).join("PRD.md");
     let prd_content = match fs::read_to_string(&prd_path) {
@@ -1014,11 +1152,13 @@ fn parse_srs_requirement_block(
     entries: &mut Vec<SrsRequirementEntry>,
 ) {
     let mut in_block = false;
+    let mut scope_column_index: Option<usize> = None;
     let mut source_column_index: Option<usize> = None;
 
     for line in content.lines() {
         if line.contains(start_marker) {
             in_block = true;
+            scope_column_index = None;
             source_column_index = None;
             continue;
         }
@@ -1041,6 +1181,9 @@ fn parse_srs_requirement_block(
 
         let id = cols[0];
         if id.eq_ignore_ascii_case("ID") {
+            scope_column_index = cols
+                .iter()
+                .position(|col| col.eq_ignore_ascii_case("Scope"));
             source_column_index = cols
                 .iter()
                 .position(|col| col.eq_ignore_ascii_case("Source"));
@@ -1052,6 +1195,13 @@ fn parse_srs_requirement_block(
             continue;
         }
 
+        let mut scope_refs = scope_column_index
+            .and_then(|idx| cols.get(idx))
+            .map(|value| scope_ref_tokens(value))
+            .unwrap_or_default();
+        scope_refs.sort();
+        scope_refs.dedup();
+
         let source = source_column_index
             .and_then(|idx| cols.get(idx))
             .map(|value| value.trim())
@@ -1062,6 +1212,7 @@ fn parse_srs_requirement_block(
             id: id.to_string(),
             description: description.to_string(),
             kind,
+            scope_refs,
             source,
         });
     }
@@ -1087,6 +1238,14 @@ fn is_table_separator_cell(cell: &str) -> bool {
 }
 
 fn goal_ref_tokens(raw: &str) -> Vec<String> {
+    SOURCE_TOKEN_SPLIT_RE
+        .split(raw.trim())
+        .filter(|token| !token.is_empty())
+        .map(ToOwned::to_owned)
+        .collect()
+}
+
+fn scope_ref_tokens(raw: &str) -> Vec<String> {
     SOURCE_TOKEN_SPLIT_RE
         .split(raw.trim())
         .filter(|token| !token.is_empty())
@@ -1574,6 +1733,92 @@ mod tests {
             issue.requirement_id == "SRS-05"
                 && issue.kind == PrdLineageIssueKind::UnknownParent
                 && issue.source_value.as_deref() == Some("FR-99")
+        }));
+    }
+
+    #[test]
+    fn srs_requirement_scope_refs_require_in_scope_canonical_scope_ids() {
+        use crate::infrastructure::loader::load_board;
+        use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+
+        let srs = r#"# Test SRS
+
+## Scope
+
+In scope:
+- [SCOPE-01] Ship the scoped slice.
+
+Out of scope:
+- [SCOPE-02] Defer follow-on work.
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+| SRS-01 | Valid scope ref | SCOPE-01 | FR-01 | test |
+| SRS-02 | Missing scope ref |  | FR-01 | test |
+| SRS-03 | Unknown scope ref | SCOPE-99 | FR-01 | test |
+| SRS-04 | Out-of-scope ref | SCOPE-02 | FR-01 | test |
+| SRS-05 | Non-canonical ref | scope-a | FR-01 | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#;
+
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("test-epic"))
+            .voyage(
+                TestVoyage::new("01-planned", "test-epic")
+                    .status("planned")
+                    .srs_content(srs),
+            )
+            .story(
+                TestStory::new("PLAN01")
+                    .scope("test-epic/01-planned")
+                    .body("## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] test"),
+            )
+            .build();
+        fs::write(
+            temp.path().join("epics/test-epic/PRD.md"),
+            r#"# PRD
+
+## Scope
+
+### In Scope
+- [SCOPE-01] Ship the scoped slice.
+
+### Out of Scope
+- [SCOPE-02] Defer follow-on work.
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | Valid source. | must | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let voyage = board.require_voyage("01-planned").unwrap();
+        let issues = evaluate_voyage_requirement_scope_lineage(voyage, &board);
+
+        assert_eq!(issues.len(), 4);
+        assert!(issues.iter().any(|issue| {
+            issue.requirement_id == "SRS-02"
+                && issue.kind == RequirementScopeLineageIssueKind::MissingScopeRefs
+        }));
+        assert!(issues.iter().any(|issue| {
+            issue.requirement_id == "SRS-03"
+                && issue.kind == RequirementScopeLineageIssueKind::UnknownScopeRef
+                && issue.scope_ref.as_deref() == Some("SCOPE-99")
+        }));
+        assert!(issues.iter().any(|issue| {
+            issue.requirement_id == "SRS-04"
+                && issue.kind == RequirementScopeLineageIssueKind::OutOfScopeRef
+                && issue.scope_ref.as_deref() == Some("SCOPE-02")
+        }));
+        assert!(issues.iter().any(|issue| {
+            issue.requirement_id == "SRS-05"
+                && issue.kind == RequirementScopeLineageIssueKind::NonCanonicalScopeRef
+                && issue.scope_ref.as_deref() == Some("scope-a")
         }));
     }
 

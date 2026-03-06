@@ -40,21 +40,21 @@ Out of scope:
 ### Functional Requirements
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Source | Verification |
-|----|-------------|--------|--------------|
-| SRS-01 | `keel epic new` MUST accept a required `--problem` argument and reject empty problem values at CLI/runtime validation time. | FR-05 | CLI parsing tests + epic creation tests |
-| SRS-02 | `keel epic new --problem` MUST hydrate authored narrative content into the PRD `## Problem Statement` section and any epic scaffold summary surface that depends on CLI strategic input. | FR-05 | template rendering tests + scaffold fixture assertions |
-| SRS-03 | `keel epic new` MUST stop treating `Goals & Objectives` as CLI-owned scaffold content; fresh PRDs leave that section for direct authoring instead of hydrating a single `--goal` value. | FR-05 | scaffold output tests + PRD content assertions |
-| SRS-04 | Template token inventory and rendering paths MUST support the new problem-only strategic-input contract without introducing placeholder or ownership drift. | FR-05 | template token tests + rendering regression tests |
-| SRS-05 | Freshly scaffolded epic artifacts MUST remain doctor-clean and structurally coherent after the problem-only hydration behavior lands. | FR-05 | doctor regression tests on new epic fixtures |
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+| SRS-01 | `keel epic new` MUST accept a required `--problem` argument and reject empty problem values at CLI/runtime validation time. | SCOPE-04 | FR-05 | CLI parsing tests + epic creation tests |
+| SRS-02 | `keel epic new --problem` MUST hydrate authored narrative content into the PRD `## Problem Statement` section and any epic scaffold summary surface that depends on CLI strategic input. | SCOPE-04 | FR-05 | template rendering tests + scaffold fixture assertions |
+| SRS-03 | `keel epic new` MUST stop treating `Goals & Objectives` as CLI-owned scaffold content; fresh PRDs leave that section for direct authoring instead of hydrating a single `--goal` value. | SCOPE-04 | FR-05 | scaffold output tests + PRD content assertions |
+| SRS-04 | Template token inventory and rendering paths MUST support the new problem-only strategic-input contract without introducing placeholder or ownership drift. | SCOPE-04 | FR-05 | template token tests + rendering regression tests |
+| SRS-05 | Freshly scaffolded epic artifacts MUST remain doctor-clean and structurally coherent after the problem-only hydration behavior lands. | SCOPE-04 | FR-05 | doctor regression tests on new epic fixtures |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ### Non-Functional Requirements
 
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Source | Verification |
-|----|-------------|--------|--------------|
-| SRS-NFR-01 | Epic scaffolding behavior MUST be deterministic for identical CLI inputs. | NFR-02 | deterministic fixture tests |
-| SRS-NFR-02 | The new CLI path MUST fail fast instead of injecting compatibility defaults or fake narrative when required strategic input is missing. | NFR-01 | negative tests for empty/missing input |
-| SRS-NFR-03 | Generated problem seed content and revised goal scaffolds MUST remain concise, human-editable, and free of unresolved placeholders. | NFR-03 | string assertions + doctor hygiene tests |
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+| SRS-NFR-01 | Epic scaffolding behavior MUST be deterministic for identical CLI inputs. | SCOPE-04 | NFR-02 | deterministic fixture tests |
+| SRS-NFR-02 | The new CLI path MUST fail fast instead of injecting compatibility defaults or fake narrative when required strategic input is missing. | SCOPE-04 | NFR-01 | negative tests for empty/missing input |
+| SRS-NFR-03 | Generated problem seed content and revised goal scaffolds MUST remain concise, human-editable, and free of unresolved placeholders. | SCOPE-04 | NFR-03 | string assertions + doctor hygiene tests |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->

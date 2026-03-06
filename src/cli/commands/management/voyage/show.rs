@@ -17,7 +17,6 @@ use crate::read_model::planning_show::{self, VoyageShowProjection};
 
 const GOAL_PLACEHOLDER: &str = "(goal not authored yet)";
 const SCOPE_PLACEHOLDER: &str = "(scope not authored in SRS.md yet)";
-const SCOPE_LINEAGE_PLACEHOLDER: &str = "(no canonical scope links authored in SRS.md)";
 const SCOPE_DRIFT_PLACEHOLDER: &str = "(no scope drift detected)";
 const REQUIREMENTS_PLACEHOLDER: &str = "(no requirements found in SRS.md)";
 
@@ -65,9 +64,11 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
 
     let mut document = ShowDocument::new();
     document.push_header(metadata, Some(width));
-    document.push_sections_spaced(vec![goal_scope_section(&report), progress_section(&report)]);
+    document.push_sections_spaced(voyage_sections(&report));
     document.push_spacer();
     document.push_lines(requirement_matrix_lines(&report));
+    document.push_spacer();
+    document.push_section(progress_section(&report));
     document.print();
 
     Ok(())
@@ -77,36 +78,43 @@ fn build_voyage_show_report(board: &Board, voyage: &Voyage) -> Result<VoyageShow
     planning_show::build_voyage_show_projection(board, voyage)
 }
 
-fn goal_scope_section(report: &VoyageShowProjection) -> ShowSection {
-    let mut section = ShowSection::new("Voyage Summary");
-    section.push_labeled_text_block("Goal:", report.goal.as_deref().unwrap_or(GOAL_PLACEHOLDER));
-    section.push_labeled_bullets(
-        "In scope:",
-        report.scope.in_scope.iter().cloned(),
-        Some(format!("{}", SCOPE_PLACEHOLDER.dimmed())),
-    );
-    section.push_labeled_bullets(
-        "Out of scope:",
-        report.scope.out_of_scope.iter().cloned(),
-        Some(format!("{}", SCOPE_PLACEHOLDER.dimmed())),
-    );
-    section.push_labeled_bullets(
-        "Scope Lineage:",
-        report
-            .scope_lineage
-            .iter()
-            .map(planning_lineage::format_scope_lineage_row),
-        Some(format!("{}", SCOPE_LINEAGE_PLACEHOLDER.dimmed())),
-    );
-    section.push_labeled_bullets(
-        "Scope Drift:",
-        report
-            .scope_drift
-            .iter()
-            .map(planning_lineage::format_scope_drift_row),
-        Some(format!("{}", SCOPE_DRIFT_PLACEHOLDER.dimmed())),
-    );
+fn voyage_sections(report: &VoyageShowProjection) -> Vec<ShowSection> {
+    vec![
+        goal_section(report),
+        scope_section(
+            "In Scope",
+            report.scope.in_scope.iter().cloned(),
+            SCOPE_PLACEHOLDER,
+        ),
+        scope_section(
+            "Out of Scope",
+            report.scope.out_of_scope.iter().cloned(),
+            SCOPE_PLACEHOLDER,
+        ),
+        scope_section(
+            "Scope Drift",
+            report
+                .scope_drift
+                .iter()
+                .map(planning_lineage::format_scope_drift_row),
+            SCOPE_DRIFT_PLACEHOLDER,
+        ),
+    ]
+}
 
+fn goal_section(report: &VoyageShowProjection) -> ShowSection {
+    let mut section = ShowSection::new("Goal");
+    section.push_text_block(report.goal.as_deref().unwrap_or(GOAL_PLACEHOLDER));
+    section
+}
+
+fn scope_section<I, S>(title: &str, items: I, empty_placeholder: &str) -> ShowSection
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+{
+    let mut section = ShowSection::new(title);
+    section.push_bullets(items, Some(format!("{}", empty_placeholder.dimmed())));
     section
 }
 
@@ -148,12 +156,9 @@ fn requirement_matrix_lines(report: &VoyageShowProjection) -> Vec<String> {
 mod tests {
     use super::*;
     use crate::domain::model::StoryState;
-    use crate::domain::state_machine::invariants::{
-        ScopeDisposition, ScopeLineageIssue, ScopeLineageIssueKind,
-    };
+    use crate::domain::state_machine::invariants::{ScopeLineageIssue, ScopeLineageIssueKind};
     use crate::read_model::planning_show::{
-        RequirementCompletion, RequirementKind, RequirementRow, ScopeDriftRow, ScopeLineageRow,
-        StoryRef,
+        RequirementCompletion, RequirementKind, RequirementRow, ScopeDriftRow, StoryRef,
     };
     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use chrono::NaiveDate;
@@ -220,10 +225,10 @@ Out of scope:
                 r#"# SRS
 ## Requirements
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Verification |
-|----|-------------|--------------|
-| SRS-01 | Render goal summary. | test |
-| SRS-02 | Render requirement matrix. | test |
+| ID | Requirement | Scope | Verification |
+|----|-------------|-------|--------------|
+| SRS-01 | Render goal summary. | SCOPE-01 | test |
+| SRS-02 | Render requirement matrix. | SCOPE-02 | test |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 "#,
             ))
@@ -263,6 +268,7 @@ Out of scope:
             .unwrap();
         assert_eq!(req_one.completion, RequirementCompletion::Done);
         assert_eq!(req_one.verification, "automated (1)");
+        assert_eq!(req_one.scope_refs, vec!["SCOPE-01"]);
         assert_eq!(req_one.linked_stories[0].id, "S1");
 
         let req_two = report
@@ -272,6 +278,7 @@ Out of scope:
             .unwrap();
         assert_eq!(req_two.completion, RequirementCompletion::Queued);
         assert_eq!(req_two.verification, "manual (1)");
+        assert_eq!(req_two.scope_refs, vec!["SCOPE-02"]);
         assert_eq!(req_two.linked_stories[0].id, "S2");
     }
 
@@ -283,10 +290,10 @@ Out of scope:
                 r#"# SRS
 ## Requirements
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Verification |
-|----|-------------|--------------|
-| SRS-01 | Requirement one. | test |
-| SRS-02 | Requirement two. | test |
+| ID | Requirement | Scope | Verification |
+|----|-------------|-------|--------------|
+| SRS-01 | Requirement one. | SCOPE-01 | test |
+| SRS-02 | Requirement two. | SCOPE-02 | test |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 "#,
             ))
@@ -334,11 +341,11 @@ Out of scope:
                 r#"# SRS
 ## Requirements
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Verification |
-|----|-------------|--------------|
-| SRS-10 | Req ten. | test |
-| SRS-02 | Req two. | test |
-| SRS-01 | Req one. | test |
+| ID | Requirement | Scope | Verification |
+|----|-------------|-------|--------------|
+| SRS-10 | Req ten. | SCOPE-03 | test |
+| SRS-02 | Req two. | SCOPE-02 | test |
+| SRS-01 | Req one. | SCOPE-01 | test |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 "#,
             ))
@@ -385,13 +392,13 @@ Out of scope:
         let report = VoyageShowProjection {
             goal: None,
             scope: Default::default(),
-            scope_lineage: Vec::new(),
             scope_drift: Vec::new(),
             requirements: vec![
                 RequirementRow {
                     id: "SRS-NFR-01".to_string(),
                     description: "Meet latency budget".to_string(),
                     kind: RequirementKind::NonFunctional,
+                    scope_refs: vec![],
                     linked_stories: vec![],
                     completion: RequirementCompletion::Queued,
                     verification: "manual (1)".to_string(),
@@ -400,6 +407,7 @@ Out of scope:
                     id: "SRS-01".to_string(),
                     description: "Render grouped requirement output".to_string(),
                     kind: RequirementKind::Functional,
+                    scope_refs: vec!["SCOPE-01".to_string()],
                     linked_stories: vec![StoryRef {
                         id: "S1".to_string(),
                         stage: StoryState::Done,
@@ -429,6 +437,7 @@ Out of scope:
         assert!(functional_idx < non_functional_idx);
         assert!(rendered.contains("Verification:"));
         assert!(rendered.contains("Linked Stories:"));
+        assert!(rendered.contains("Linked scope (1):"));
     }
 
     #[test]
@@ -436,13 +445,13 @@ Out of scope:
         let report = VoyageShowProjection {
             goal: None,
             scope: Default::default(),
-            scope_lineage: Vec::new(),
             scope_drift: Vec::new(),
             requirements: vec![
                 RequirementRow {
                     id: "SRS-01".to_string(),
                     description: "Functional done".to_string(),
                     kind: RequirementKind::Functional,
+                    scope_refs: vec!["SCOPE-01".to_string()],
                     linked_stories: vec![],
                     completion: RequirementCompletion::Done,
                     verification: "automated (1)".to_string(),
@@ -451,6 +460,7 @@ Out of scope:
                     id: "SRS-02".to_string(),
                     description: "Functional queued".to_string(),
                     kind: RequirementKind::Functional,
+                    scope_refs: vec!["SCOPE-02".to_string()],
                     linked_stories: vec![],
                     completion: RequirementCompletion::Queued,
                     verification: "manual (1)".to_string(),
@@ -459,6 +469,7 @@ Out of scope:
                     id: "SRS-NFR-01".to_string(),
                     description: "NFR queued".to_string(),
                     kind: RequirementKind::NonFunctional,
+                    scope_refs: vec!["SCOPE-03".to_string()],
                     linked_stories: vec![],
                     completion: RequirementCompletion::Queued,
                     verification: "manual (1)".to_string(),
@@ -484,17 +495,13 @@ Out of scope:
     }
 
     #[test]
-    fn voyage_show_renders_scope_lineage_and_drift_sections() {
+    fn voyage_show_renders_top_level_scope_sections_and_hides_scope_lineage() {
         let report = VoyageShowProjection {
             goal: Some("Render planning scope context.".to_string()),
-            scope: Default::default(),
-            scope_lineage: vec![ScopeLineageRow {
-                scope_id: "SCOPE-01".to_string(),
-                voyage_description: "Render lineage output".to_string(),
-                voyage_disposition: ScopeDisposition::In,
-                epic_description: Some("Render lineage output".to_string()),
-                epic_disposition: Some(ScopeDisposition::In),
-            }],
+            scope: planning_show::ScopeSummary {
+                in_scope: vec!["[SCOPE-01] Render lineage output".to_string()],
+                out_of_scope: vec!["[SCOPE-02] Leave contradictions for later".to_string()],
+            },
             scope_drift: vec![ScopeDriftRow {
                 voyage_id: None,
                 issue: ScopeLineageIssue {
@@ -515,14 +522,55 @@ Out of scope:
             total_requirements: 0,
         };
 
-        let section = goal_scope_section(&report);
         let mut document = ShowDocument::new();
-        document.push_section(section);
+        document.push_sections_spaced(voyage_sections(&report));
         let rendered = document.render();
 
-        assert!(rendered.contains("Scope Lineage:"));
+        assert!(rendered.contains("Goal"));
+        assert!(rendered.contains("In Scope"));
+        assert!(rendered.contains("Out of Scope"));
+        assert!(!rendered.contains("Voyage Summary"));
+        assert!(!rendered.contains("Scope Lineage"));
         assert!(rendered.contains("SCOPE-01"));
-        assert!(rendered.contains("Scope Drift:"));
+        assert!(rendered.contains("Scope Drift"));
         assert!(rendered.contains("SCOPE-02"));
+    }
+
+    #[test]
+    fn voyage_show_places_progress_below_requirements() {
+        let report = VoyageShowProjection {
+            goal: Some("Render voyage summaries.".to_string()),
+            scope: Default::default(),
+            scope_drift: Vec::new(),
+            requirements: vec![RequirementRow {
+                id: "SRS-01".to_string(),
+                description: "Render grouped requirement output".to_string(),
+                kind: RequirementKind::Functional,
+                scope_refs: vec!["SCOPE-01".to_string()],
+                linked_stories: vec![],
+                completion: RequirementCompletion::Queued,
+                verification: "manual (1)".to_string(),
+            }],
+            done_stories: 0,
+            total_stories: 1,
+            done_functional_requirements: 0,
+            total_functional_requirements: 1,
+            done_non_functional_requirements: 0,
+            total_non_functional_requirements: 0,
+            done_requirements: 0,
+            total_requirements: 1,
+        };
+
+        let mut document = ShowDocument::new();
+        document.push_sections_spaced(voyage_sections(&report));
+        document.push_spacer();
+        document.push_lines(requirement_matrix_lines(&report));
+        document.push_spacer();
+        document.push_section(progress_section(&report));
+        let rendered = document.render();
+
+        let requirements_idx = rendered.find("Functional Requirements").unwrap();
+        let progress_idx = rendered.find("Progress").unwrap();
+        assert!(requirements_idx < progress_idx);
     }
 }

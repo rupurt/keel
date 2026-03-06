@@ -25,10 +25,17 @@ static EMPHASIS_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\*([^*]+)\*").expect("valid emphasis regex"));
 static GOAL_ID_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\b(GOAL-\d+)\b").expect("valid goal id regex"));
+static SCOPE_REF_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"\[(SCOPE-\d+)\]|\b(SCOPE-\d+)\b").expect("valid scope ref regex")
+});
+static SCOPE_ID_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\b(SCOPE-\d+)\b").expect("valid scope id regex"));
 const GITHUB_INLINE_CODE_FG: (u8, u8, u8) = (230, 237, 243);
 const GITHUB_INLINE_CODE_BG: (u8, u8, u8) = (48, 54, 61);
 const GOAL_HIGHLIGHT_FG: (u8, u8, u8) = (255, 244, 214);
 const GOAL_HIGHLIGHT_BG: (u8, u8, u8) = (112, 80, 0);
+const SCOPE_HIGHLIGHT_FG: (u8, u8, u8) = (214, 247, 255);
+const SCOPE_HIGHLIGHT_BG: (u8, u8, u8) = (0, 83, 104);
 
 /// Color a stage label by its workflow meaning
 pub fn styled_stage(stage: &StoryState) -> String {
@@ -283,10 +290,27 @@ pub fn styled_inline_markdown(value: &str) -> String {
 }
 
 fn styled_inline_text(value: &str) -> String {
-    styled_goal_refs(&styled_inline_emphasis(value))
+    apply_inline_token_highlights(&styled_inline_emphasis(value))
 }
 
 fn styled_inline_code(value: &str) -> String {
+    if let Some(token) = highlight_exact_inline_token(value) {
+        return token;
+    }
+    styled_generic_inline_code(value)
+}
+
+fn apply_inline_token_highlights(value: &str) -> String {
+    styled_scope_refs(&styled_goal_refs(value))
+}
+
+fn highlight_exact_inline_token(value: &str) -> Option<String> {
+    exact_token_match(value, &GOAL_ID_RE)
+        .map(styled_goal_id)
+        .or_else(|| exact_scope_ref(value).map(styled_scope_id))
+}
+
+fn styled_generic_inline_code(value: &str) -> String {
     format!(
         "{}",
         value.style(
@@ -307,32 +331,64 @@ fn styled_inline_code(value: &str) -> String {
 
 /// Color a goal ID with a distinct highlight so strategic lineage stands out in read surfaces.
 pub fn styled_goal_id(id: &str) -> String {
+    styled_highlighted_token(id, GOAL_HIGHLIGHT_FG, GOAL_HIGHLIGHT_BG)
+}
+
+/// Color a scope ID with a distinct highlight so scope lineage stands out in read surfaces.
+pub fn styled_scope_id(id: &str) -> String {
+    styled_highlighted_token(id, SCOPE_HIGHLIGHT_FG, SCOPE_HIGHLIGHT_BG)
+}
+
+fn styled_highlighted_token(id: &str, fg: (u8, u8, u8), bg: (u8, u8, u8)) -> String {
     format!(
         "{}",
         id.style(
             Style::new()
                 .bold()
-                .truecolor(
-                    GOAL_HIGHLIGHT_FG.0,
-                    GOAL_HIGHLIGHT_FG.1,
-                    GOAL_HIGHLIGHT_FG.2
-                )
-                .on_truecolor(
-                    GOAL_HIGHLIGHT_BG.0,
-                    GOAL_HIGHLIGHT_BG.1,
-                    GOAL_HIGHLIGHT_BG.2
-                )
+                .truecolor(fg.0, fg.1, fg.2)
+                .on_truecolor(bg.0, bg.1, bg.2)
         )
     )
 }
 
 /// Highlight canonical goal IDs inside already-rendered inline text.
 pub fn styled_goal_refs(value: &str) -> String {
-    GOAL_ID_RE
+    styled_highlighted_refs(value, &GOAL_ID_RE, styled_goal_id)
+}
+
+/// Highlight canonical scope IDs inside already-rendered inline text.
+pub fn styled_scope_refs(value: &str) -> String {
+    SCOPE_REF_RE
         .replace_all(value, |captures: &regex::Captures<'_>| {
-            styled_goal_id(&captures[1])
+            capture_token(captures).map_or_else(String::new, styled_scope_id)
         })
         .into_owned()
+}
+
+fn styled_highlighted_refs(value: &str, re: &Regex, render: impl Fn(&str) -> String) -> String {
+    re.replace_all(value, |captures: &regex::Captures<'_>| render(&captures[1]))
+        .into_owned()
+}
+
+fn capture_token<'a>(captures: &'a regex::Captures<'a>) -> Option<&'a str> {
+    (1..captures.len()).find_map(|index| captures.get(index).map(|capture| capture.as_str()))
+}
+
+fn exact_token_match<'a>(value: &'a str, re: &Regex) -> Option<&'a str> {
+    re.find(value)
+        .filter(|matched| matched.as_str() == value)
+        .map(|_| value)
+}
+
+fn exact_scope_ref(value: &str) -> Option<&str> {
+    bracketed_scope_id(value).or_else(|| exact_token_match(value, &SCOPE_ID_RE))
+}
+
+fn bracketed_scope_id(value: &str) -> Option<&str> {
+    value
+        .strip_prefix('[')
+        .and_then(|rest| rest.strip_suffix(']'))
+        .filter(|candidate| exact_token_match(candidate, &SCOPE_ID_RE).is_some())
 }
 
 /// Map common fenced code block language tags to syntect file extensions.
@@ -578,6 +634,41 @@ mod tests {
         assert!(rendered.contains("GOAL-01"));
         assert!(rendered.contains("GOAL-02"));
         assert!(rendered.contains(";48;2;"));
+    }
+
+    #[test]
+    fn styled_scope_id_uses_highlight_colors() {
+        let rendered = styled_scope_id("SCOPE-01");
+        assert!(rendered.contains("SCOPE-01"));
+        assert!(rendered.contains("\x1b[38;2;"));
+        assert!(rendered.contains(";48;2;"));
+    }
+
+    #[test]
+    fn styled_inline_markdown_highlights_scope_ids() {
+        let rendered = styled_inline_markdown("Link SCOPE-01 to SCOPE-02.");
+        assert!(rendered.contains("SCOPE-01"));
+        assert!(rendered.contains("SCOPE-02"));
+        assert!(rendered.contains(";48;2;"));
+    }
+
+    #[test]
+    fn styled_inline_markdown_uses_scope_highlight_for_backticked_scope_ids() {
+        let rendered = styled_inline_markdown("`SCOPE-01`");
+        assert_eq!(rendered, styled_scope_id("SCOPE-01"));
+    }
+
+    #[test]
+    fn styled_inline_markdown_strips_brackets_around_scope_ids() {
+        let rendered = styled_inline_markdown("Track [SCOPE-01] in scope.");
+        assert!(rendered.contains("SCOPE-01"));
+        assert!(!rendered.contains("[SCOPE-01]"));
+    }
+
+    #[test]
+    fn styled_inline_markdown_uses_scope_highlight_for_backticked_bracketed_scope_ids() {
+        let rendered = styled_inline_markdown("`[SCOPE-01]`");
+        assert_eq!(rendered, styled_scope_id("SCOPE-01"));
     }
 
     #[test]

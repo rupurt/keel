@@ -38,21 +38,21 @@ Out of scope:
 ### Functional Requirements
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Source | Verification |
-|----|-------------|--------|--------------|
-| SRS-01 | PRD Goals & Objectives entries MUST use canonical `GOAL-*` identifiers in a parseable table form. | FR-06 | parser tests + PRD fixture assertions |
-| SRS-02 | PRD FR/NFR requirement rows MUST reference one or more valid `GOAL-*` identifiers. | FR-06 | requirement parser tests + invalid linkage fixtures |
-| SRS-03 | Doctor diagnostics MUST report invalid goal references, orphaned goals, and PRD requirements with no goal linkage. | FR-06 | doctor regression tests + message assertions |
-| SRS-04 | Epic planning read surfaces MUST summarize goal-to-requirement lineage so planners can review objective coverage directly from the PRD. | FR-06 | read-model tests + epic show snapshot tests |
-| SRS-05 | Goal lineage parsing and reporting MUST preserve one-to-many goal fanout to requirements without unstable ordering. | FR-06 | fanout tests + deterministic projection fixtures |
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+| SRS-01 | PRD Goals & Objectives entries MUST use canonical `GOAL-*` identifiers in a parseable table form. | SCOPE-05 | FR-06 | parser tests + PRD fixture assertions |
+| SRS-02 | PRD FR/NFR requirement rows MUST reference one or more valid `GOAL-*` identifiers. | SCOPE-05 | FR-06 | requirement parser tests + invalid linkage fixtures |
+| SRS-03 | Doctor diagnostics MUST report invalid goal references, orphaned goals, and PRD requirements with no goal linkage. | SCOPE-05 | FR-06 | doctor regression tests + message assertions |
+| SRS-04 | Epic planning read surfaces MUST summarize goal-to-requirement lineage so planners can review objective coverage directly from the PRD. | SCOPE-05 | FR-06 | read-model tests + epic show snapshot tests |
+| SRS-05 | Goal lineage parsing and reporting MUST preserve one-to-many goal fanout to requirements without unstable ordering. | SCOPE-05 | FR-06 | fanout tests + deterministic projection fixtures |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ### Non-Functional Requirements
 
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Source | Verification |
-|----|-------------|--------|--------------|
-| SRS-NFR-01 | Goal-lineage parsing and rendering MUST be deterministic for equivalent PRDs. | NFR-02 | deterministic parser and projection tests |
-| SRS-NFR-02 | Goal-lineage failures MUST identify the offending goal ID, requirement ID, and artifact path. | NFR-03 | assertion tests on diagnostic messages |
-| SRS-NFR-03 | The new goal-lineage contract MUST not introduce compatibility aliases for non-canonical goal tokens. | NFR-01 | negative tests for legacy/invalid goal tokens |
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+| SRS-NFR-01 | Goal-lineage parsing and rendering MUST be deterministic for equivalent PRDs. | SCOPE-05 | NFR-02 | deterministic parser and projection tests |
+| SRS-NFR-02 | Goal-lineage failures MUST identify the offending goal ID, requirement ID, and artifact path. | SCOPE-05 | NFR-03 | assertion tests on diagnostic messages |
+| SRS-NFR-03 | The new goal-lineage contract MUST not introduce compatibility aliases for non-canonical goal tokens. | SCOPE-05 | NFR-01 | negative tests for legacy/invalid goal tokens |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->

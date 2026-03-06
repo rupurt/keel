@@ -51,7 +51,7 @@ pub fn requirement_lines(row: &RequirementRow) -> Vec<String> {
             .join(", ")
     };
 
-    vec![
+    let mut lines = vec![
         format!(
             "  {} {} {}",
             requirement_completion_icon(row.completion),
@@ -62,7 +62,22 @@ pub fn requirement_lines(row: &RequirementRow) -> Vec<String> {
             "    Verification: {} | Linked Stories: {linked}",
             style::styled_inline_markdown(&row.verification)
         ),
-    ]
+    ];
+
+    if !row.scope_refs.is_empty() {
+        let linked_scope = row
+            .scope_refs
+            .iter()
+            .map(|scope_ref| style::styled_scope_id(scope_ref))
+            .collect::<Vec<_>>()
+            .join(", ");
+        lines.push(format!(
+            "    Linked scope ({}): {linked_scope}",
+            row.scope_refs.len()
+        ));
+    }
+
+    lines
 }
 
 fn requirement_completion_icon(completion: RequirementCompletion) -> String {
@@ -88,6 +103,7 @@ mod tests {
                 id: "SRS-NFR-01".to_string(),
                 description: "Meet latency budget".to_string(),
                 kind: RequirementKind::NonFunctional,
+                scope_refs: vec![],
                 linked_stories: vec![],
                 completion: RequirementCompletion::Queued,
                 verification: "manual (1)".to_string(),
@@ -96,6 +112,7 @@ mod tests {
                 id: "SRS-01".to_string(),
                 description: "Render grouped requirement output".to_string(),
                 kind: RequirementKind::Functional,
+                scope_refs: vec!["SCOPE-01".to_string()],
                 linked_stories: vec![StoryRef {
                     id: "S1".to_string(),
                     stage: StoryState::Done,
@@ -119,6 +136,7 @@ mod tests {
             id: "SRS-01".to_string(),
             description: "Render grouped requirement output".to_string(),
             kind: RequirementKind::Functional,
+            scope_refs: vec!["SCOPE-01".to_string(), "SCOPE-03".to_string()],
             linked_stories: vec![StoryRef {
                 id: "S1".to_string(),
                 stage: StoryState::Done,
@@ -129,9 +147,12 @@ mod tests {
         };
 
         let lines = requirement_lines(&row);
-        assert_eq!(lines.len(), 2);
+        assert_eq!(lines.len(), 3);
         assert!(lines[1].contains("Verification:"));
         assert!(lines[1].contains("| Linked Stories:"));
         assert!(lines[1].contains(&style::styled_story_id("S1")));
+        assert!(lines[2].contains("Linked scope (2):"));
+        assert!(lines[2].contains("SCOPE-01"));
+        assert!(lines[2].contains("SCOPE-03"));
     }
 }

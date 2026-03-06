@@ -77,15 +77,6 @@ pub struct EpicShowProjection {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ScopeLineageRow {
-    pub scope_id: String,
-    pub voyage_description: String,
-    pub voyage_disposition: invariants::ScopeDisposition,
-    pub epic_description: Option<String>,
-    pub epic_disposition: Option<invariants::ScopeDisposition>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ScopeDriftRow {
     pub voyage_id: Option<String>,
     pub issue: invariants::ScopeLineageIssue,
@@ -133,6 +124,7 @@ pub struct RequirementRow {
     pub id: String,
     pub description: String,
     pub kind: RequirementKind,
+    pub scope_refs: Vec<String>,
     pub linked_stories: Vec<StoryRef>,
     pub completion: RequirementCompletion,
     pub verification: String,
@@ -142,7 +134,6 @@ pub struct RequirementRow {
 pub struct VoyageShowProjection {
     pub goal: Option<String>,
     pub scope: ScopeSummary,
-    pub scope_lineage: Vec<ScopeLineageRow>,
     pub scope_drift: Vec<ScopeDriftRow>,
     pub requirements: Vec<RequirementRow>,
     pub done_stories: usize,
@@ -208,6 +199,7 @@ struct RequirementEntry {
     id: String,
     description: String,
     kind: RequirementKind,
+    scope_refs: Vec<String>,
     verification: Option<String>,
 }
 
@@ -426,7 +418,7 @@ pub fn build_voyage_show_projection(
         .or_else(|| extract_goal_from_srs(&srs));
 
     let scope = parse_scope_summary(&srs);
-    let (scope_lineage, scope_drift) = build_voyage_scope_projection(board, voyage, &srs);
+    let scope_drift = build_voyage_scope_drift(board, voyage);
     let mut requirements = parse_srs_requirement_rows(&srs);
     requirements.sort_by(|a, b| a.id.cmp(&b.id));
 
@@ -511,6 +503,7 @@ pub fn build_voyage_show_projection(
             id: requirement.id,
             description: requirement.description,
             kind: requirement.kind,
+            scope_refs: requirement.scope_refs,
             linked_stories,
             completion,
             verification: requirement_verification_label(automated, manual),
@@ -540,7 +533,6 @@ pub fn build_voyage_show_projection(
     Ok(VoyageShowProjection {
         goal,
         scope,
-        scope_lineage,
         scope_drift,
         done_stories,
         total_stories,
@@ -790,44 +782,7 @@ pub fn parse_scope_summary(srs: &str) -> ScopeSummary {
     summary
 }
 
-fn build_voyage_scope_projection(
-    board: &Board,
-    voyage: &Voyage,
-    srs_content: &str,
-) -> (Vec<ScopeLineageRow>, Vec<ScopeDriftRow>) {
-    let Some(epic) = board.epics.get(&voyage.epic_id) else {
-        return (Vec::new(), Vec::new());
-    };
-    let prd_path = epic.path.parent().unwrap().join("PRD.md");
-    let prd_content = fs::read_to_string(&prd_path).unwrap_or_default();
-
-    let parent_scope: BTreeMap<String, invariants::PrdScopeEntry> =
-        invariants::parse_prd_scope_entries(&prd_content)
-            .into_iter()
-            .map(|entry| (entry.id.clone(), entry))
-            .collect();
-
-    let mut scope_lineage = invariants::parse_srs_scope_links(srs_content)
-        .into_iter()
-        .map(|link| ScopeLineageRow {
-            scope_id: link.parent_id.clone(),
-            voyage_description: link.description.clone(),
-            voyage_disposition: link.disposition,
-            epic_description: parent_scope
-                .get(&link.parent_id)
-                .map(|parent| parent.description.clone()),
-            epic_disposition: parent_scope
-                .get(&link.parent_id)
-                .map(|parent| parent.disposition),
-        })
-        .collect::<Vec<_>>();
-    scope_lineage.sort_by(|left, right| {
-        left.scope_id
-            .cmp(&right.scope_id)
-            .then_with(|| left.voyage_disposition.cmp(&right.voyage_disposition))
-            .then_with(|| left.voyage_description.cmp(&right.voyage_description))
-    });
-
+fn build_voyage_scope_drift(board: &Board, voyage: &Voyage) -> Vec<ScopeDriftRow> {
     let mut scope_drift = invariants::evaluate_voyage_scope_lineage(voyage, board)
         .into_iter()
         .map(|issue| ScopeDriftRow {
@@ -836,8 +791,7 @@ fn build_voyage_scope_projection(
         })
         .collect::<Vec<_>>();
     sort_scope_drift_rows(&mut scope_drift);
-
-    (scope_lineage, scope_drift)
+    scope_drift
 }
 
 fn build_epic_scope_drift(board: &Board, epic: &Epic) -> Vec<ScopeDriftRow> {
@@ -1056,11 +1010,13 @@ fn parse_requirement_entries(
 ) -> Vec<RequirementEntry> {
     let mut entries = Vec::new();
     let mut in_block = false;
+    let mut scope_column_index: Option<usize> = None;
     let mut verification_column_index: Option<usize> = None;
 
     for line in content.lines() {
         if line.contains(start_marker) {
             in_block = true;
+            scope_column_index = None;
             verification_column_index = None;
             continue;
         }
@@ -1085,6 +1041,9 @@ fn parse_requirement_entries(
         let requirement = cols[1].as_str();
 
         if id.eq_ignore_ascii_case("ID") {
+            scope_column_index = cols
+                .iter()
+                .position(|col| col.eq_ignore_ascii_case("Scope"));
             verification_column_index = cols
                 .iter()
                 .position(|col| col.eq_ignore_ascii_case("Verification"));
@@ -1104,11 +1063,24 @@ fn parse_requirement_entries(
             .map(|value| value.trim())
             .filter(|value| !value.is_empty() && !is_scaffold_text(value))
             .map(ToOwned::to_owned);
+        let mut scope_refs = scope_column_index
+            .and_then(|idx| cols.get(idx))
+            .map(|value| {
+                value
+                    .split(|ch: char| ch.is_whitespace() || [',', ';', '/'].contains(&ch))
+                    .filter(|token| !token.is_empty())
+                    .map(ToOwned::to_owned)
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+        scope_refs.sort();
+        scope_refs.dedup();
 
         entries.push(RequirementEntry {
             id: id.to_string(),
             description: requirement.to_string(),
             kind,
+            scope_refs,
             verification,
         });
     }
@@ -1314,7 +1286,7 @@ pub fn is_media_artifact(path: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::state_machine::invariants::{ScopeDisposition, ScopeLineageIssueKind};
+    use crate::domain::state_machine::invariants::{self, ScopeDisposition, ScopeLineageIssueKind};
     use crate::infrastructure::loader::load_board;
     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use tempfile::TempDir;
@@ -1325,6 +1297,14 @@ mod tests {
         let voyage =
             build_voyage_show_projection(&board, board.require_voyage("v1").unwrap()).unwrap();
         (epic, voyage)
+    }
+
+    fn load_scope_links(temp: &TempDir) -> Vec<invariants::SrsScopeLink> {
+        let board = load_board(temp.path()).unwrap();
+        let voyage = board.require_voyage("v1").unwrap();
+        let srs_path = voyage.path.parent().unwrap().join("SRS.md");
+        let srs_content = fs::read_to_string(srs_path).unwrap();
+        invariants::parse_srs_scope_links(&srs_content)
     }
 
     #[test]
@@ -2033,22 +2013,19 @@ Out of scope:
         .unwrap();
 
         let (epic, voyage) = load_scope_reports(&temp);
+        let scope_links = load_scope_links(&temp);
 
-        let deferred = voyage
-            .scope_lineage
+        let deferred = scope_links
             .iter()
-            .find(|row| row.scope_id == "SCOPE-02")
+            .find(|row| row.parent_id == "SCOPE-02")
             .unwrap();
-        assert_eq!(deferred.voyage_disposition, ScopeDisposition::Out);
-        assert_eq!(deferred.epic_disposition, Some(ScopeDisposition::In));
+        assert_eq!(deferred.disposition, ScopeDisposition::Out);
 
-        let contradiction = voyage
-            .scope_lineage
+        let contradiction = scope_links
             .iter()
-            .find(|row| row.scope_id == "SCOPE-03")
+            .find(|row| row.parent_id == "SCOPE-03")
             .unwrap();
-        assert_eq!(contradiction.voyage_disposition, ScopeDisposition::In);
-        assert_eq!(contradiction.epic_disposition, Some(ScopeDisposition::Out));
+        assert_eq!(contradiction.disposition, ScopeDisposition::In);
 
         let unknown = voyage
             .scope_drift
@@ -2110,39 +2087,25 @@ Out of scope:
         )
         .unwrap();
 
-        let (epic, voyage) = load_scope_reports(&temp);
+        let (epic, _voyage) = load_scope_reports(&temp);
+        let scope_links = load_scope_links(&temp);
 
-        let deferred = voyage
-            .scope_lineage
+        let deferred = scope_links
             .iter()
-            .find(|row| row.scope_id == "SCOPE-02")
+            .find(|row| row.parent_id == "SCOPE-02")
+            .unwrap();
+        assert_eq!(deferred.description, "Defer drift rendering until later.");
+        assert_eq!(deferred.disposition, ScopeDisposition::Out);
+
+        let contradiction = scope_links
+            .iter()
+            .find(|row| row.parent_id == "SCOPE-03")
             .unwrap();
         assert_eq!(
-            deferred.voyage_description,
-            "Defer drift rendering until later."
-        );
-        assert_eq!(deferred.voyage_disposition, ScopeDisposition::Out);
-        assert_eq!(
-            deferred.epic_description.as_deref(),
-            Some("Render scope drift findings.")
-        );
-        assert_eq!(deferred.epic_disposition, Some(ScopeDisposition::In));
-
-        let contradiction = voyage
-            .scope_lineage
-            .iter()
-            .find(|row| row.scope_id == "SCOPE-03")
-            .unwrap();
-        assert_eq!(
-            contradiction.voyage_description,
+            contradiction.description,
             "Pull runtime enforcement into this voyage."
         );
-        assert_eq!(contradiction.voyage_disposition, ScopeDisposition::In);
-        assert_eq!(
-            contradiction.epic_description.as_deref(),
-            Some("Story-level runtime enforcement.")
-        );
-        assert_eq!(contradiction.epic_disposition, Some(ScopeDisposition::Out));
+        assert_eq!(contradiction.disposition, ScopeDisposition::In);
 
         let epic_contradiction = epic
             .scope_drift
@@ -2202,6 +2165,7 @@ Out of scope:
         .unwrap();
 
         let (_epic, voyage) = load_scope_reports(&temp);
+        let scope_links = load_scope_links(&temp);
 
         assert_eq!(
             voyage.scope.in_scope,
@@ -2211,23 +2175,21 @@ Out of scope:
             voyage.scope.out_of_scope,
             vec!["[SCOPE-02] Leave contradiction repair for a later slice.".to_string()]
         );
-        let in_scope_lineage = voyage
-            .scope_lineage
+        let in_scope_lineage = scope_links
             .iter()
-            .find(|row| row.scope_id == "SCOPE-01")
+            .find(|row| row.parent_id == "SCOPE-01")
             .unwrap();
         assert_eq!(
-            in_scope_lineage.voyage_description,
+            in_scope_lineage.description,
             "Render scope lineage inside the voyage summary."
         );
 
-        let out_of_scope_lineage = voyage
-            .scope_lineage
+        let out_of_scope_lineage = scope_links
             .iter()
-            .find(|row| row.scope_id == "SCOPE-02")
+            .find(|row| row.parent_id == "SCOPE-02")
             .unwrap();
         assert_eq!(
-            out_of_scope_lineage.voyage_description,
+            out_of_scope_lineage.description,
             "Leave contradiction repair for a later slice."
         );
     }
@@ -2282,7 +2244,6 @@ Out of scope:
         let VoyageShowProjection {
             goal,
             scope,
-            scope_lineage,
             scope_drift,
             requirements,
             done_stories,
@@ -2297,7 +2258,6 @@ Out of scope:
         let _ = (
             goal,
             scope,
-            scope_lineage,
             scope_drift,
             requirements,
             done_stories,

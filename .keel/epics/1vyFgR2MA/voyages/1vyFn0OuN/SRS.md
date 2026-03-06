@@ -38,21 +38,21 @@ Out of scope:
 ### Functional Requirements
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Source | Verification |
-|----|-------------|--------|--------------|
-| SRS-01 | PRD scope items MUST use canonical identifiers for both `In Scope` and `Out of Scope` entries. | FR-07 | scope parser tests + PRD fixture assertions |
-| SRS-02 | Voyage SRS scope statements MUST reference parent PRD scope IDs for included and excluded scope items. | FR-07 | SRS scope parsing tests + invalid fixture cases |
-| SRS-03 | Doctor diagnostics MUST report unknown scope refs, missing scope mappings, and direct contradictions with PRD out-of-scope definitions. | FR-07 | doctor regression tests + contradiction fixtures |
-| SRS-04 | Planning read surfaces MUST summarize linked scope items and highlight scope drift findings for the voyage and epic. | FR-07 | read-model tests + planning output snapshots |
-| SRS-05 | Scope parsing MUST preserve authored descriptive text while requiring canonical IDs for machine checks. | FR-07 | mixed prose/ID parser tests |
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+| SRS-01 | PRD scope items MUST use canonical identifiers for both `In Scope` and `Out of Scope` entries. | SCOPE-06 | FR-07 | scope parser tests + PRD fixture assertions |
+| SRS-02 | Voyage SRS scope statements MUST reference parent PRD scope IDs for included and excluded scope items. | SCOPE-06 | FR-07 | SRS scope parsing tests + invalid fixture cases |
+| SRS-03 | Doctor diagnostics MUST report unknown scope refs, missing scope mappings, and direct contradictions with PRD out-of-scope definitions. | SCOPE-06 | FR-07 | doctor regression tests + contradiction fixtures |
+| SRS-04 | Planning read surfaces MUST summarize linked scope items and highlight scope drift findings for the voyage and epic. | SCOPE-06 | FR-07 | read-model tests + planning output snapshots |
+| SRS-05 | Scope parsing MUST preserve authored descriptive text while requiring canonical IDs for machine checks. | SCOPE-06 | FR-07 | mixed prose/ID parser tests |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ### Non-Functional Requirements
 
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Source | Verification |
-|----|-------------|--------|--------------|
-| SRS-NFR-01 | Scope-lineage parsing and drift rendering MUST be deterministic for equivalent PRD/SRS artifacts. | NFR-02 | deterministic fixture tests |
-| SRS-NFR-02 | Scope drift failures MUST identify the artifact, offending scope ID, and contradiction type. | NFR-03 | diagnostic message assertion tests |
-| SRS-NFR-03 | The new scope-lineage contract MUST not retain legacy untagged compatibility paths in the validation logic. | NFR-01 | hard-cutover negative tests |
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+| SRS-NFR-01 | Scope-lineage parsing and drift rendering MUST be deterministic for equivalent PRD/SRS artifacts. | SCOPE-06 | NFR-02 | deterministic fixture tests |
+| SRS-NFR-02 | Scope drift failures MUST identify the artifact, offending scope ID, and contradiction type. | SCOPE-06 | NFR-03 | diagnostic message assertion tests |
+| SRS-NFR-03 | The new scope-lineage contract MUST not retain legacy untagged compatibility paths in the validation logic. | SCOPE-06 | NFR-01 | hard-cutover negative tests |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->

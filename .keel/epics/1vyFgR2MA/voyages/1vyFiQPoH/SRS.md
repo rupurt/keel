@@ -39,22 +39,22 @@ Out of scope:
 ### Functional Requirements
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Source | Verification |
-|----|-------------|--------|--------------|
-| SRS-01 | Parse canonical parent `FR-*` / `NFR-*` rows from the epic `PRD.md` into a reusable lineage model keyed by epic. | FR-01 | parser unit tests + invalid fixture coverage |
-| SRS-02 | Validate each voyage SRS requirement row so its `Source` column contains exactly one existing parent FR/NFR from the epic PRD. | FR-02 | SRS validation tests + invalid lineage fixtures |
-| SRS-03 | `voyage plan` MUST hard-block when any SRS requirement is missing a parent source, references a non-existent FR/NFR, or uses a non-canonical legacy token. | FR-03 | voyage plan command tests + enforcement-path tests |
-| SRS-04 | Doctor diagnostics MUST report PRD-to-SRS lineage problems using the same coherence rules used by planning transitions. | FR-03 | doctor regression tests + gate/doctor parity tests |
-| SRS-05 | Epic planning projections MUST aggregate parent FR/NFR coverage across all voyages and identify uncovered parent requirements with linked-child counts. | FR-04 | read-model tests + epic show snapshot tests |
-| SRS-06 | Coverage aggregation MUST preserve exactly-one-parent ownership for each SRS requirement while allowing one-to-many parent FR/NFR fanout without double counting. | FR-04 | coverage model tests + deterministic fixture assertions |
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+| SRS-01 | Parse canonical parent `FR-*` / `NFR-*` rows from the epic `PRD.md` into a reusable lineage model keyed by epic. | SCOPE-01 | FR-01 | parser unit tests + invalid fixture coverage |
+| SRS-02 | Validate each voyage SRS requirement row so its `Source` column contains exactly one existing parent FR/NFR from the epic PRD. | SCOPE-02 | FR-02 | SRS validation tests + invalid lineage fixtures |
+| SRS-03 | `voyage plan` MUST hard-block when any SRS requirement is missing a parent source, references a non-existent FR/NFR, or uses a non-canonical legacy token. | SCOPE-02 | FR-03 | voyage plan command tests + enforcement-path tests |
+| SRS-04 | Doctor diagnostics MUST report PRD-to-SRS lineage problems using the same coherence rules used by planning transitions. | SCOPE-02 | FR-03 | doctor regression tests + gate/doctor parity tests |
+| SRS-05 | Epic planning projections MUST aggregate parent FR/NFR coverage across all voyages and identify uncovered parent requirements with linked-child counts. | SCOPE-03 | FR-04 | read-model tests + epic show snapshot tests |
+| SRS-06 | Coverage aggregation MUST preserve exactly-one-parent ownership for each SRS requirement while allowing one-to-many parent FR/NFR fanout without double counting. | SCOPE-03 | FR-04 | coverage model tests + deterministic fixture assertions |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ### Non-Functional Requirements
 
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Source | Verification |
-|----|-------------|--------|--------------|
-| SRS-NFR-01 | Lineage parsing and epic coverage output MUST be deterministic for equivalent PRD/SRS inputs. | NFR-02 | deterministic parser and projection tests |
-| SRS-NFR-02 | Blocking and diagnostic error messages MUST name the artifact path, offending source token, and expected canonical form. | NFR-03 | assertion tests on gate and doctor messages |
-| SRS-NFR-03 | New validation behavior MUST not retain compatibility aliases for legacy `PRD-*` or custom source tokens. | NFR-01 | negative tests + hard-cutover regression fixtures |
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+| SRS-NFR-01 | Lineage parsing and epic coverage output MUST be deterministic for equivalent PRD/SRS inputs. | SCOPE-03 | NFR-02 | deterministic parser and projection tests |
+| SRS-NFR-02 | Blocking and diagnostic error messages MUST name the artifact path, offending source token, and expected canonical form. | SCOPE-02 | NFR-03 | assertion tests on gate and doctor messages |
+| SRS-NFR-03 | New validation behavior MUST not retain compatibility aliases for legacy `PRD-*` or custom source tokens. | SCOPE-02 | NFR-01 | negative tests + hard-cutover regression fixtures |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->

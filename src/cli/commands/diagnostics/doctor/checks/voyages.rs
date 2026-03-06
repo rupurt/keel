@@ -92,6 +92,11 @@ pub fn check_scope_lineage_coherence(board: &Board) -> Vec<Problem> {
             board,
             CheckId::VoyageScopeLineageCoherence,
         ));
+        problems.extend(invariants::voyage_requirement_scope_lineage_problems(
+            voyage,
+            board,
+            CheckId::VoyageScopeLineageCoherence,
+        ));
     }
 
     problems
@@ -455,6 +460,69 @@ Out of scope:
             problem.path == srs_path
                 && problem.message.contains("SCOPE-03")
                 && problem.message.contains("out-of-scope item as in scope")
+        }));
+    }
+
+    #[test]
+    fn scope_lineage_reports_requirement_scope_ref_issues() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").status("planned").srs_content(
+                r#"# SRS
+
+## Scope
+
+In scope:
+- [SCOPE-01] Ship the scoped slice.
+
+Out of scope:
+- [SCOPE-02] Defer follow-on work.
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+| SRS-01 | Missing scope ref. |  | FR-01 | test |
+| SRS-02 | Out-of-scope ref. | SCOPE-02 | FR-01 | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+            ))
+            .build();
+        std::fs::write(
+            temp.path().join("epics/e1/PRD.md"),
+            r#"# PRD
+
+## Scope
+
+### In Scope
+- [SCOPE-01] Ship the scoped slice.
+
+### Out of Scope
+- [SCOPE-02] Defer follow-on work.
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | Valid source. | must | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_scope_lineage_coherence(&board);
+        let srs_path = temp.path().join("epics/e1/voyages/v1/SRS.md");
+
+        assert!(problems.iter().any(|problem| {
+            problem.path == srs_path
+                && problem.message.contains("SRS-01")
+                && problem.message.contains("missing Scope refs")
+        }));
+        assert!(problems.iter().any(|problem| {
+            problem.path == srs_path
+                && problem.message.contains("SRS-02")
+                && problem
+                    .message
+                    .contains("not marked in scope for this voyage")
         }));
     }
 

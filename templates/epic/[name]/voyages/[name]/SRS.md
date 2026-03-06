@@ -24,15 +24,15 @@
 ### Functional Requirements
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Source | Verification |
-|----|-------------|--------|--------------|
-| SRS-01 | Implement the core voyage capability needed to satisfy this epic goal. | PRD-01 | automated test + demo |
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+| SRS-01 | Implement the core voyage capability needed to satisfy this epic goal. | SCOPE-01 | PRD-01 | automated test + demo |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ### Non-Functional Requirements
 
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Source | Verification |
-|----|-------------|--------|--------------|
-| SRS-NFR-01 | Ensure operational reliability for the voyage capability under expected load and failure conditions. | NFR-01 | automated test + inspection |
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+| SRS-NFR-01 | Ensure operational reliability for the voyage capability under expected load and failure conditions. | SCOPE-01 | NFR-01 | automated test + inspection |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
