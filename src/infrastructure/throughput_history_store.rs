@@ -48,7 +48,7 @@ mod tests {
         let path = board_dir.join(THROUGHPUT_HISTORY_FILE);
         assert!(path.exists());
         let content = fs::read_to_string(path).unwrap();
-        assert!(content.contains("\"schema_version\": 2"));
+        assert!(content.contains("\"schema_version\": 3"));
     }
 
     #[test]
@@ -67,6 +67,12 @@ mod tests {
                     cycle_median_hours: Some(2.0),
                     cycle_max_hours: Some(3.0),
                     acceptance_wait_median_hours: Some(0.5),
+                    voyage_cycle_min_hours: Some(4.0),
+                    voyage_cycle_median_hours: Some(5.0),
+                    voyage_cycle_max_hours: Some(6.0),
+                    epic_cycle_min_hours: Some(7.0),
+                    epic_cycle_median_hours: Some(8.0),
+                    epic_cycle_max_hours: Some(9.0),
                 },
             ],
         };

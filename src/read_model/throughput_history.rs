@@ -1,11 +1,11 @@
 //! Canonical throughput history projection for diagnostics rendering.
 
-use chrono::{Datelike, Duration, NaiveDate, Utc};
+use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::domain::model::{Board, Epic, EpicState};
 
-pub const THROUGHPUT_HISTORY_SCHEMA_VERSION: u32 = 2;
+pub const THROUGHPUT_HISTORY_SCHEMA_VERSION: u32 = 3;
 pub const DEFAULT_HISTORY_WEEKS: usize = 12;
 
 /// Persistable snapshot containing weekly throughput and timing aggregates.
@@ -35,6 +35,18 @@ pub struct WeeklyThroughputBucket {
     pub cycle_max_hours: Option<f64>,
     /// Story wait-for-acceptance time (submit -> done), median in hours.
     pub acceptance_wait_median_hours: Option<f64>,
+    /// Voyage cycle time (start -> done), min value in hours.
+    pub voyage_cycle_min_hours: Option<f64>,
+    /// Voyage cycle time (start -> done), median value in hours.
+    pub voyage_cycle_median_hours: Option<f64>,
+    /// Voyage cycle time (start -> done), max value in hours.
+    pub voyage_cycle_max_hours: Option<f64>,
+    /// Epic cycle time (first voyage start -> epic done), min value in hours.
+    pub epic_cycle_min_hours: Option<f64>,
+    /// Epic cycle time (first voyage start -> epic done), median value in hours.
+    pub epic_cycle_median_hours: Option<f64>,
+    /// Epic cycle time (first voyage start -> epic done), max value in hours.
+    pub epic_cycle_max_hours: Option<f64>,
 }
 
 /// Build the default rolling weekly projection anchored to the current UTC date.
@@ -92,11 +104,19 @@ fn bucket_for_week(board: &Board, week_start: NaiveDate) -> WeeklyThroughputBuck
     let epics_done = board
         .epics
         .values()
-        .filter(|epic| in_week(epic_completed_date(board, epic), week_start, week_end))
+        .filter(|epic| {
+            in_week(
+                epic_completed_at(board, epic).map(|completed| completed.date()),
+                week_start,
+                week_end,
+            )
+        })
         .count();
 
     let mut cycle_hours = Vec::new();
     let mut acceptance_wait_hours = Vec::new();
+    let mut voyage_cycle_hours = Vec::new();
+    let mut epic_cycle_hours = Vec::new();
 
     for story in board.stories.values() {
         if let Some(started) = story.frontmatter.started_at {
@@ -122,10 +142,37 @@ fn bucket_for_week(board: &Board, week_start: NaiveDate) -> WeeklyThroughputBuck
         }
     }
 
+    for voyage in board.voyages.values() {
+        if let (Some(started), Some(completed)) = (
+            voyage.frontmatter.started_at,
+            voyage.frontmatter.completed_at,
+        ) && completed >= started
+            && in_week(Some(completed.date()), week_start, week_end)
+        {
+            voyage_cycle_hours.push((completed - started).num_seconds() as f64 / 3600.0);
+        }
+    }
+
+    for epic in board.epics.values() {
+        if let (Some(started), Some(completed)) =
+            (epic_started_at(board, epic), epic_completed_at(board, epic))
+            && completed >= started
+            && in_week(Some(completed.date()), week_start, week_end)
+        {
+            epic_cycle_hours.push((completed - started).num_seconds() as f64 / 3600.0);
+        }
+    }
+
     let cycle_min_hours = min_value(&cycle_hours);
     let cycle_median_hours = median(&cycle_hours);
     let cycle_max_hours = max_value(&cycle_hours);
     let acceptance_wait_median_hours = median(&acceptance_wait_hours);
+    let voyage_cycle_min_hours = min_value(&voyage_cycle_hours);
+    let voyage_cycle_median_hours = median(&voyage_cycle_hours);
+    let voyage_cycle_max_hours = max_value(&voyage_cycle_hours);
+    let epic_cycle_min_hours = min_value(&epic_cycle_hours);
+    let epic_cycle_median_hours = median(&epic_cycle_hours);
+    let epic_cycle_max_hours = max_value(&epic_cycle_hours);
 
     WeeklyThroughputBucket {
         week_start,
@@ -136,10 +183,24 @@ fn bucket_for_week(board: &Board, week_start: NaiveDate) -> WeeklyThroughputBuck
         cycle_median_hours,
         cycle_max_hours,
         acceptance_wait_median_hours,
+        voyage_cycle_min_hours,
+        voyage_cycle_median_hours,
+        voyage_cycle_max_hours,
+        epic_cycle_min_hours,
+        epic_cycle_median_hours,
+        epic_cycle_max_hours,
     }
 }
 
-fn epic_completed_date(board: &Board, epic: &Epic) -> Option<NaiveDate> {
+fn epic_started_at(board: &Board, epic: &Epic) -> Option<NaiveDateTime> {
+    board
+        .voyages_for_epic_id(epic.id())
+        .into_iter()
+        .filter_map(|voyage| voyage.frontmatter.started_at)
+        .min()
+}
+
+fn epic_completed_at(board: &Board, epic: &Epic) -> Option<NaiveDateTime> {
     if epic.status() != EpicState::Done {
         return None;
     }
@@ -147,7 +208,7 @@ fn epic_completed_date(board: &Board, epic: &Epic) -> Option<NaiveDate> {
     board
         .voyages_for_epic_id(epic.id())
         .into_iter()
-        .filter_map(|voyage| voyage.frontmatter.completed_at.map(|dt| dt.date()))
+        .filter_map(|voyage| voyage.frontmatter.completed_at)
         .max()
 }
 
@@ -229,7 +290,7 @@ mod tests {
         )
     }
 
-    fn make_voyage(id: &str, completed_at: Option<&str>) -> Voyage {
+    fn make_voyage(id: &str, started_at: Option<&str>, completed_at: Option<&str>) -> Voyage {
         Voyage {
             frontmatter: VoyageFrontmatter {
                 id: id.to_string(),
@@ -240,7 +301,7 @@ mod tests {
                 index: None,
                 created_at: None,
                 updated_at: None,
-                started_at: None,
+                started_at: started_at.map(parse_dt),
                 completed_at: completed_at.map(parse_dt),
             },
             path: PathBuf::from(format!("{id}/README.md")),
@@ -290,7 +351,11 @@ mod tests {
         );
         board.voyages.insert(
             "v1".to_string(),
-            make_voyage("v1", Some(&completed_this_week)),
+            make_voyage(
+                "v1",
+                Some("2026-02-28T12:00:00"),
+                Some(&completed_this_week),
+            ),
         );
         board
             .epics
@@ -331,5 +396,47 @@ mod tests {
         assert_eq!(bucket.cycle_median_hours, Some(10.0));
         assert_eq!(bucket.cycle_max_hours, Some(10.0));
         assert_eq!(bucket.acceptance_wait_median_hours, Some(5.0));
+    }
+
+    #[test]
+    fn project_tracks_voyage_and_epic_cycle_timing() {
+        let mut board = Board::new(PathBuf::from(".keel"));
+        let anchor = NaiveDate::from_ymd_opt(2026, 3, 2).unwrap();
+        let week_start = start_of_week_monday(anchor);
+
+        let voyage_1_started = week_start.and_hms_opt(8, 0, 0).unwrap();
+        let voyage_1_completed = voyage_1_started + Duration::hours(24);
+        let voyage_2_started = voyage_1_started + Duration::hours(24);
+        let voyage_2_completed = voyage_2_started + Duration::hours(48);
+
+        board.voyages.insert(
+            "v1".to_string(),
+            make_voyage(
+                "v1",
+                Some(&voyage_1_started.format("%Y-%m-%dT%H:%M:%S").to_string()),
+                Some(&voyage_1_completed.format("%Y-%m-%dT%H:%M:%S").to_string()),
+            ),
+        );
+        board.voyages.insert(
+            "v2".to_string(),
+            make_voyage(
+                "v2",
+                Some(&voyage_2_started.format("%Y-%m-%dT%H:%M:%S").to_string()),
+                Some(&voyage_2_completed.format("%Y-%m-%dT%H:%M:%S").to_string()),
+            ),
+        );
+        board
+            .epics
+            .insert("epic-1".to_string(), make_epic("epic-1", EpicState::Done));
+
+        let history = project(&board, anchor, 1);
+        let bucket = &history.weekly[0];
+
+        assert_eq!(bucket.voyage_cycle_min_hours, Some(24.0));
+        assert_eq!(bucket.voyage_cycle_median_hours, Some(36.0));
+        assert_eq!(bucket.voyage_cycle_max_hours, Some(48.0));
+        assert_eq!(bucket.epic_cycle_min_hours, Some(72.0));
+        assert_eq!(bucket.epic_cycle_median_hours, Some(72.0));
+        assert_eq!(bucket.epic_cycle_max_hours, Some(72.0));
     }
 }

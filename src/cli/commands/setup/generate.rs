@@ -102,7 +102,7 @@ mod tests {
         run(temp.path()).unwrap();
 
         let history = fs::read_to_string(temp.path().join("flow_history.json")).unwrap();
-        assert!(history.contains("\"schema_version\": 2"));
+        assert!(history.contains("\"schema_version\": 3"));
     }
 
     #[test]

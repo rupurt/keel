@@ -6,6 +6,12 @@ use crate::cli::presentation::theme::Theme;
 use crate::cli::style;
 use crate::read_model::throughput_history::{ThroughputHistory, WeeklyThroughputBucket};
 
+struct CycleTimingSeries<'a> {
+    min_hours: &'a [Option<f64>],
+    median_hours: &'a [Option<f64>],
+    max_hours: &'a [Option<f64>],
+}
+
 /// Render weekly throughput/timing sparkline graphs.
 pub fn render_throughput_graphs(
     history: &ThroughputHistory,
@@ -170,16 +176,30 @@ fn timing_lines(
     theme: &Theme,
     sparkline_width: usize,
 ) -> Vec<String> {
-    let cycle_min_hours: Vec<Option<f64>> = weekly.iter().map(|w| w.cycle_min_hours).collect();
-    let cycle_median_hours: Vec<Option<f64>> =
+    let story_cycle_min_hours: Vec<Option<f64>> =
+        weekly.iter().map(|w| w.cycle_min_hours).collect();
+    let story_cycle_median_hours: Vec<Option<f64>> =
         weekly.iter().map(|w| w.cycle_median_hours).collect();
-    let cycle_max_hours: Vec<Option<f64>> = weekly.iter().map(|w| w.cycle_max_hours).collect();
-    let acceptance_wait_hours: Vec<Option<f64>> = weekly
+    let story_cycle_max_hours: Vec<Option<f64>> =
+        weekly.iter().map(|w| w.cycle_max_hours).collect();
+    let story_acceptance_wait_hours: Vec<Option<f64>> = weekly
         .iter()
         .map(|w| w.acceptance_wait_median_hours)
         .collect();
+    let voyage_cycle_min_hours: Vec<Option<f64>> =
+        weekly.iter().map(|w| w.voyage_cycle_min_hours).collect();
+    let voyage_cycle_median_hours: Vec<Option<f64>> =
+        weekly.iter().map(|w| w.voyage_cycle_median_hours).collect();
+    let voyage_cycle_max_hours: Vec<Option<f64>> =
+        weekly.iter().map(|w| w.voyage_cycle_max_hours).collect();
+    let epic_cycle_min_hours: Vec<Option<f64>> =
+        weekly.iter().map(|w| w.epic_cycle_min_hours).collect();
+    let epic_cycle_median_hours: Vec<Option<f64>> =
+        weekly.iter().map(|w| w.epic_cycle_median_hours).collect();
+    let epic_cycle_max_hours: Vec<Option<f64>> =
+        weekly.iter().map(|w| w.epic_cycle_max_hours).collect();
 
-    vec![
+    let mut lines = vec![
         "  Story timing (hours)".to_string(),
         "  Cycle: start -> submit/done".to_string(),
         "  Wait : submit -> done".to_string(),
@@ -187,7 +207,7 @@ fn timing_lines(
             "  {:<15} {}",
             "Cycle min",
             colorize(
-                &sparkline_from_values(&cycle_min_hours, sparkline_width),
+                &sparkline_from_values(&story_cycle_min_hours, sparkline_width),
                 theme.muted,
                 theme
             )
@@ -196,7 +216,7 @@ fn timing_lines(
             "  {:<15} {}",
             "Cycle med",
             colorize(
-                &sparkline_from_values(&cycle_median_hours, sparkline_width),
+                &sparkline_from_values(&story_cycle_median_hours, sparkline_width),
                 theme.human,
                 theme
             )
@@ -205,7 +225,7 @@ fn timing_lines(
             "  {:<15} {}",
             "Cycle max",
             colorize(
-                &sparkline_from_values(&cycle_max_hours, sparkline_width),
+                &sparkline_from_values(&story_cycle_max_hours, sparkline_width),
                 theme.warning,
                 theme
             )
@@ -214,22 +234,97 @@ fn timing_lines(
             "  {:<15} {}",
             "Wait med",
             colorize(
-                &sparkline_from_values(&acceptance_wait_hours, sparkline_width),
+                &sparkline_from_values(&story_acceptance_wait_hours, sparkline_width),
                 theme.agent,
                 theme
             )
         ),
         format!(
             "  Latest cyc  {}/{}/{}",
-            format_hours(last_some(&cycle_min_hours)),
-            format_hours(last_some(&cycle_median_hours)),
-            format_hours(last_some(&cycle_max_hours))
+            format_hours(last_some(&story_cycle_min_hours)),
+            format_hours(last_some(&story_cycle_median_hours)),
+            format_hours(last_some(&story_cycle_max_hours))
         ),
         format!(
             "  Latest wait {}",
-            format_hours(last_some(&acceptance_wait_hours))
+            format_hours(last_some(&story_acceptance_wait_hours))
         ),
-    ]
+    ];
+
+    lines.push(String::new());
+    append_cycle_timing_section(
+        &mut lines,
+        "Voyage timing (hours)",
+        "Cycle: start -> done",
+        CycleTimingSeries {
+            min_hours: &voyage_cycle_min_hours,
+            median_hours: &voyage_cycle_median_hours,
+            max_hours: &voyage_cycle_max_hours,
+        },
+        theme,
+        sparkline_width,
+    );
+
+    lines.push(String::new());
+    append_cycle_timing_section(
+        &mut lines,
+        "Epic timing (hours)",
+        "Cycle: first voyage start -> epic done",
+        CycleTimingSeries {
+            min_hours: &epic_cycle_min_hours,
+            median_hours: &epic_cycle_median_hours,
+            max_hours: &epic_cycle_max_hours,
+        },
+        theme,
+        sparkline_width,
+    );
+
+    lines
+}
+
+fn append_cycle_timing_section(
+    lines: &mut Vec<String>,
+    title: &str,
+    cycle_label: &str,
+    series: CycleTimingSeries<'_>,
+    theme: &Theme,
+    sparkline_width: usize,
+) {
+    lines.push(format!("  {title}"));
+    lines.push(format!("  {cycle_label}"));
+    lines.push(format!(
+        "  {:<15} {}",
+        "Cycle min",
+        colorize(
+            &sparkline_from_values(series.min_hours, sparkline_width),
+            theme.muted,
+            theme
+        )
+    ));
+    lines.push(format!(
+        "  {:<15} {}",
+        "Cycle med",
+        colorize(
+            &sparkline_from_values(series.median_hours, sparkline_width),
+            theme.human,
+            theme
+        )
+    ));
+    lines.push(format!(
+        "  {:<15} {}",
+        "Cycle max",
+        colorize(
+            &sparkline_from_values(series.max_hours, sparkline_width),
+            theme.warning,
+            theme
+        )
+    ));
+    lines.push(format!(
+        "  Latest cyc  {}/{}/{}",
+        format_hours(last_some(series.min_hours)),
+        format_hours(last_some(series.median_hours)),
+        format_hours(last_some(series.max_hours))
+    ));
 }
 
 fn rolling_average_relative(
@@ -342,7 +437,7 @@ mod tests {
     #[test]
     fn render_throughput_graphs_contains_expected_sections() {
         let history = ThroughputHistory {
-            schema_version: 2,
+            schema_version: 3,
             weekly: vec![
                 WeeklyThroughputBucket {
                     week_start: NaiveDate::from_ymd_opt(2026, 2, 23).unwrap(),
@@ -353,6 +448,12 @@ mod tests {
                     cycle_median_hours: Some(48.0),
                     cycle_max_hours: Some(72.0),
                     acceptance_wait_median_hours: Some(12.0),
+                    voyage_cycle_min_hours: Some(36.0),
+                    voyage_cycle_median_hours: Some(48.0),
+                    voyage_cycle_max_hours: Some(60.0),
+                    epic_cycle_min_hours: Some(72.0),
+                    epic_cycle_median_hours: Some(72.0),
+                    epic_cycle_max_hours: Some(72.0),
                 },
                 WeeklyThroughputBucket {
                     week_start: NaiveDate::from_ymd_opt(2026, 2, 16).unwrap(),
@@ -363,6 +464,12 @@ mod tests {
                     cycle_median_hours: Some(18.0),
                     cycle_max_hours: Some(30.0),
                     acceptance_wait_median_hours: None,
+                    voyage_cycle_min_hours: Some(24.0),
+                    voyage_cycle_median_hours: Some(24.0),
+                    voyage_cycle_max_hours: Some(24.0),
+                    epic_cycle_min_hours: Some(48.0),
+                    epic_cycle_median_hours: Some(48.0),
+                    epic_cycle_max_hours: Some(48.0),
                 },
             ],
         };
@@ -373,6 +480,8 @@ mod tests {
         assert!(rendered.contains("Voyages done"));
         assert!(rendered.contains("Epics done"));
         assert!(rendered.contains("Story timing (hours)"));
+        assert!(rendered.contains("Voyage timing (hours)"));
+        assert!(rendered.contains("Epic timing (hours)"));
         assert!(rendered.contains("Wait med"));
     }
 
