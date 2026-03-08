@@ -1,59 +1,18 @@
 //! Generate command - regenerate all README files
 
-use std::fs;
 use std::path::Path;
 
 use anyhow::Result;
 
-use crate::domain::model::VoyageState;
-use crate::infrastructure::loader::load_board;
-
 /// Run the generate command
 pub fn run(board_dir: &Path) -> Result<()> {
-    let board = load_board(board_dir)?;
-
-    // 1. Generate board-level README.md
-    crate::infrastructure::generate::board_readme::generate(board_dir, &board)?;
-
-    // 2. Generate epic-level README.md files
-    for epic in board.epics.values() {
-        crate::infrastructure::generate::epic_readme::generate(board_dir, &board, epic)?;
-    }
-
-    // 3. Generate voyage-level README.md and done-only report artifacts
-    for voyage in board.voyages.values() {
-        crate::infrastructure::generate::voyage_readme::generate(board_dir, &board, voyage)?;
-
-        if voyage.status() == VoyageState::Done {
-            crate::infrastructure::generate::voyage_report::generate(board_dir, &board, voyage)?;
-            crate::infrastructure::generate::compliance_report::generate(
-                board_dir, &board, voyage,
-            )?;
-        } else {
-            remove_report_artifacts(voyage)?;
-        }
-    }
-
-    // 4. Regenerate persistent weekly throughput history for diagnostics graphs.
-    let history = crate::read_model::throughput_history::project_default(&board);
-    crate::infrastructure::throughput_history_store::save_if_changed(board_dir, &history)?;
+    let board = crate::infrastructure::loader::load_board(board_dir)?;
+    crate::infrastructure::generate::sync_board_artifacts(
+        &board,
+        &crate::infrastructure::generate::BoardArtifactSyncOptions::default(),
+    )?;
 
     println!("Board updated");
-
-    Ok(())
-}
-
-fn remove_report_artifacts(voyage: &crate::domain::model::Voyage) -> Result<()> {
-    let Some(voyage_dir) = voyage.path.parent() else {
-        return Ok(());
-    };
-
-    for artifact in ["VOYAGE_REPORT.md", "COMPLIANCE_REPORT.md"] {
-        let artifact_path = voyage_dir.join(artifact);
-        if artifact_path.exists() {
-            fs::remove_file(artifact_path)?;
-        }
-    }
 
     Ok(())
 }

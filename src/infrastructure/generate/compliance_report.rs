@@ -3,18 +3,18 @@
 use std::collections::HashMap;
 use std::fmt::Write;
 use std::fs;
-use std::path::Path;
 
 use crate::domain::model::{Board, Voyage};
 use crate::domain::state_machine::invariants::parse_requirements;
+use crate::infrastructure::template_rendering;
 use crate::infrastructure::templates;
 use crate::infrastructure::verification::parser::parse_verify_annotations;
 
 /// Generate a stakeholder-ready COMPLIANCE_REPORT.md for the voyage
-pub fn generate(_board_dir: &Path, board: &Board, voyage: &Voyage) -> anyhow::Result<()> {
+pub fn generate(board: &Board, voyage: &Voyage) -> anyhow::Result<()> {
     let content = generate_compliance_report(board, voyage);
     let report_path = voyage.path.parent().unwrap().join("COMPLIANCE_REPORT.md");
-    fs::write(report_path, content)?;
+    super::artifact_io::write_if_changed(&report_path, &content)?;
     Ok(())
 }
 
@@ -90,9 +90,10 @@ pub fn generate_compliance_report(board: &Board, voyage: &Voyage) -> String {
         .unwrap();
     }
 
-    templates::voyage::COMPLIANCE
-        .replace("{{title}}", voyage.title())
-        .replace("{{matrix}}", matrix.trim())
+    template_rendering::render(
+        templates::voyage::COMPLIANCE,
+        &[("title", voyage.title()), ("matrix", matrix.trim())],
+    )
 }
 
 #[cfg(test)]

@@ -1,26 +1,21 @@
 //! Epic README generation
 
 use std::fmt::Write;
-use std::fs;
-use std::path::Path;
 
 use crate::domain::model::{Board, Epic, VoyageState};
 use crate::infrastructure::utils::cmp_optional_index_then_id;
 
 /// Generate and update an epic's README.md
-pub fn generate(board_dir: &Path, board: &Board, epic: &Epic) -> anyhow::Result<()> {
+pub fn generate(board: &Board, epic: &Epic) -> anyhow::Result<()> {
     let content = generate_epic_readme(board, epic);
-    let readme_path = board_dir.join("epics").join(epic.id()).join("README.md");
-
-    // Update only the generated section
-    let original = fs::read_to_string(&readme_path)?;
-    let updated = crate::infrastructure::generate::voyage_readme::update_section(
-        &original,
-        "GENERATED",
-        &content,
-    )?;
-    fs::write(readme_path, updated)?;
-    Ok(())
+    let readme_path = board.root.join("epics").join(epic.id()).join("README.md");
+    super::sections::rewrite_sections(
+        &readme_path,
+        &[super::sections::SectionPatch::required(
+            "GENERATED",
+            &content,
+        )],
+    )
 }
 
 /// Generate an epic's README.md content

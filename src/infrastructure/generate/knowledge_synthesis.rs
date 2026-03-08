@@ -6,7 +6,6 @@ use crate::domain::model::{Board, Voyage};
 use anyhow::{Context, Result};
 use chrono::NaiveDateTime;
 use std::collections::hash_map::DefaultHasher;
-use std::fs;
 use std::hash::{Hash, Hasher};
 
 fn synthesized_knowledge_id(voyage_id: &str, story_id: &str, source_knowledge_id: &str) -> String {
@@ -153,7 +152,7 @@ pub fn synthesize_voyage_knowledge(board: &Board, voyage: &Voyage) -> Result<()>
     if found_reflections {
         let voyage_dir = voyage.path.parent().unwrap();
         let knowledge_path = voyage_dir.join("KNOWLEDGE.md");
-        fs::write(&knowledge_path, synthesis)
+        super::artifact_io::write_if_changed(&knowledge_path, &synthesis)
             .with_context(|| format!("Failed to write KNOWLEDGE.md for voyage {}", voyage.id()))?;
         println!("  ✓ Synthesized knowledge in {}", knowledge_path.display());
     }

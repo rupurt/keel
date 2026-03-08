@@ -128,29 +128,21 @@ impl VoyageEpicLifecycleService {
         let refreshed_board = load_board(board_dir)?;
         let refreshed_voyage = refreshed_board.require_voyage(id)?;
 
-        if let Err(e) = crate::infrastructure::generate::voyage_report::generate(
-            board_dir,
+        for issue in crate::infrastructure::generate::voyage_artifacts::sync(
             &refreshed_board,
             refreshed_voyage,
-        ) {
-            eprintln!("Warning: Failed to generate VOYAGE_REPORT.md: {}", e);
-        }
-
-        if let Err(e) = crate::infrastructure::generate::compliance_report::generate(
-            board_dir,
-            &refreshed_board,
-            refreshed_voyage,
-        ) {
-            eprintln!("Warning: Failed to generate COMPLIANCE_REPORT.md: {}", e);
-        }
-
-        if let Err(e) =
-            crate::infrastructure::generate::knowledge_synthesis::synthesize_voyage_knowledge(
-                &refreshed_board,
-                refreshed_voyage,
-            )
+            crate::infrastructure::generate::voyage_artifacts::SyncOptions {
+                synthesize_knowledge: true,
+            },
+        )
+        .issues
         {
-            eprintln!("Warning: Failed to synthesize voyage knowledge: {}", e);
+            eprintln!(
+                "Warning: Failed to sync {} for voyage {}: {}",
+                issue.artifact,
+                refreshed_voyage.id(),
+                issue.message
+            );
         }
 
         println!("Completed voyage: {}", voyage.id());

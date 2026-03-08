@@ -246,4 +246,29 @@ END FUNCTIONAL_REQUIREMENTS
         assert!(compliance_report.contains("# COMPLIANCE REPORT: 01-report Voyage"));
         assert!(!compliance_report.contains("stale-compliance-report"));
     }
+
+    #[test]
+    fn done_voyage_updates_readme_documents_for_done_artifacts() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("docs-epic"))
+            .voyage(TestVoyage::new("01-docs", "docs-epic").status("in-progress"))
+            .story(
+                TestStory::new("D1")
+                    .title("Docs Story")
+                    .scope("docs-epic/01-docs")
+                    .status(crate::domain::model::StoryState::Done),
+            )
+            .build();
+
+        run_with_dir(temp.path(), "01-docs", None, None, None).unwrap();
+
+        let readme = fs::read_to_string(
+            temp.path()
+                .join("epics/docs-epic/voyages/01-docs/README.md"),
+        )
+        .unwrap();
+
+        assert!(readme.contains("VOYAGE_REPORT.md"));
+        assert!(readme.contains("COMPLIANCE_REPORT.md"));
+    }
 }

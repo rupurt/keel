@@ -2,16 +2,16 @@
 
 use std::fmt::Write;
 use std::fs;
-use std::path::Path;
 
 use crate::domain::model::{Board, StoryState, Voyage};
+use crate::infrastructure::template_rendering;
 use crate::infrastructure::templates;
 
 /// Generate a comprehensive VOYAGE_REPORT.md for the voyage
-pub fn generate(_board_dir: &Path, board: &Board, voyage: &Voyage) -> anyhow::Result<()> {
+pub fn generate(board: &Board, voyage: &Voyage) -> anyhow::Result<()> {
     let content = generate_voyage_report(board, voyage);
     let report_path = voyage.path.parent().unwrap().join("VOYAGE_REPORT.md");
-    fs::write(report_path, content)?;
+    super::artifact_io::write_if_changed(&report_path, &content)?;
     Ok(())
 }
 
@@ -94,18 +94,23 @@ pub fn generate_voyage_report(board: &Board, voyage: &Voyage) -> String {
         writeln!(narrative).unwrap();
     }
 
-    templates::voyage::REPORT
-        .replace("{{title}}", voyage.title())
-        .replace("{{id}}", voyage.id())
-        .replace("{{epic_id}}", &voyage.epic_id)
-        .replace("{{status}}", &voyage.status().to_string())
-        .replace(
-            "{{goal}}",
-            voyage.frontmatter.goal.as_deref().unwrap_or("-"),
-        )
-        .replace("{{done_count}}", &done_count.to_string())
-        .replace("{{total_count}}", &total_count.to_string())
-        .replace("{{narrative}}", &narrative)
+    let status = voyage.status().to_string();
+    let done_count = done_count.to_string();
+    let total_count = total_count.to_string();
+
+    template_rendering::render(
+        templates::voyage::REPORT,
+        &[
+            ("title", voyage.title()),
+            ("id", voyage.id()),
+            ("epic_id", &voyage.epic_id),
+            ("status", &status),
+            ("goal", voyage.frontmatter.goal.as_deref().unwrap_or("-")),
+            ("done_count", &done_count),
+            ("total_count", &total_count),
+            ("narrative", &narrative),
+        ],
+    )
 }
 
 fn extract_summary(content: &str) -> Option<String> {

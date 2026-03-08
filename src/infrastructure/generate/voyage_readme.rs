@@ -1,53 +1,21 @@
 //! Voyage README generation
 
 use std::fmt::Write;
-use std::fs;
-use std::path::Path;
 
 use crate::domain::model::{Board, StoryState, Voyage, VoyageState};
 
 /// Generate and update a voyage's README.md
-pub fn generate(_board_dir: &Path, board: &Board, voyage: &Voyage) -> anyhow::Result<()> {
+pub fn generate(board: &Board, voyage: &Voyage) -> anyhow::Result<()> {
     let readme_path = voyage.path.clone();
-    let mut original = fs::read_to_string(&readme_path)?;
-
-    // 1. Update Documents section
     let doc_content = generate_documents_table_for_state(voyage.status());
-    if original.contains("<!-- BEGIN DOCUMENTS -->") {
-        original = update_section(&original, "DOCUMENTS", &doc_content)?;
-    }
-
-    // 2. Update Stories section
     let stories_content = generate_voyage_readme(board, voyage);
-    let updated = update_section(&original, "GENERATED", &stories_content)?;
-
-    fs::write(readme_path, updated)?;
-    Ok(())
-}
-
-/// Update content between <!-- BEGIN {tag} --> and <!-- END {tag} -->
-pub fn update_section(original: &str, tag: &str, new_content: &str) -> anyhow::Result<String> {
-    let start_marker = format!("<!-- BEGIN {} -->", tag);
-    let end_marker = format!("<!-- END {} -->", tag);
-
-    let start_pos = original
-        .find(&start_marker)
-        .ok_or_else(|| anyhow::anyhow!("Missing {} marker", start_marker))?;
-    let search_start = start_pos + start_marker.len();
-    let end_pos = original[search_start..]
-        .rfind(&end_marker)
-        .map(|rel| search_start + rel)
-        .ok_or_else(|| anyhow::anyhow!("Missing {} marker", end_marker))?;
-
-    let mut result = original[..start_pos].to_string();
-    result.push_str(&start_marker);
-    result.push('\n');
-    result.push_str(new_content.trim());
-    result.push('\n');
-    result.push_str(&end_marker);
-    result.push_str(&original[end_pos + end_marker.len()..]);
-
-    Ok(result)
+    super::sections::rewrite_sections(
+        &readme_path,
+        &[
+            super::sections::SectionPatch::optional("DOCUMENTS", &doc_content),
+            super::sections::SectionPatch::required("GENERATED", &stories_content),
+        ],
+    )
 }
 
 /// Generate the default documents table for migration/fixup paths.
@@ -173,7 +141,9 @@ mod tests {
     #[test]
     fn test_update_section() {
         let original = "Header\n<!-- BEGIN TEST -->\nOld\n<!-- END TEST -->\nFooter";
-        let updated = update_section(original, "TEST", "New").unwrap();
+        let updated =
+            crate::infrastructure::generate::sections::update_section(original, "TEST", "New")
+                .unwrap();
         assert_eq!(
             updated,
             "Header\n<!-- BEGIN TEST -->\nNew\n<!-- END TEST -->\nFooter"
@@ -183,7 +153,9 @@ mod tests {
     #[test]
     fn test_update_section_collapses_duplicate_markers() {
         let original = "Header\n<!-- BEGIN TEST -->\n<!-- BEGIN TEST -->\nOld\n<!-- END TEST -->\n<!-- END TEST -->\nFooter";
-        let updated = update_section(original, "TEST", "New").unwrap();
+        let updated =
+            crate::infrastructure::generate::sections::update_section(original, "TEST", "New")
+                .unwrap();
         assert_eq!(
             updated,
             "Header\n<!-- BEGIN TEST -->\nNew\n<!-- END TEST -->\nFooter"
