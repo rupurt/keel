@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
-use super::{Entity, FuzzyMatch, VoyageState, deserialize_strict_datetime};
+use super::{Entity, VoyageState, deserialize_strict_datetime};
 
 /// Derived states for an epic.
 ///
@@ -99,11 +99,6 @@ impl Epic {
     pub fn index(&self) -> Option<u32> {
         self.frontmatter.index
     }
-
-    /// Check if epic matches a pattern (fuzzy match)
-    pub fn matches(&self, pattern: &str) -> bool {
-        super::fuzzy_match(&self.frontmatter.id, &self.frontmatter.title, pattern)
-    }
 }
 
 impl Entity for Epic {
@@ -115,16 +110,6 @@ impl Entity for Epic {
     }
     fn path(&self) -> &Path {
         &self.path
-    }
-}
-
-impl FuzzyMatch for Epic {
-    fn id(&self) -> &str {
-        &self.frontmatter.id
-    }
-
-    fn matches(&self, pattern: &str) -> bool {
-        Epic::matches(self, pattern)
     }
 }
 
@@ -176,27 +161,6 @@ completed_at: 2026-01-01T00:00:00
 "#;
         let err = serde_yaml::from_str::<EpicFrontmatter>(yaml).unwrap_err();
         assert!(err.to_string().contains("completed_at"));
-    }
-
-    #[test]
-    fn epic_matches() {
-        let epic = Epic {
-            frontmatter: EpicFrontmatter {
-                id: "board-cli".to_string(),
-                title: "Board CLI".to_string(),
-                description: None,
-                bearing: None,
-                index: None,
-                created_at: None,
-            },
-            path: PathBuf::from("test"),
-            status: EpicState::Draft,
-        };
-
-        assert!(epic.matches("board-cli"));
-        assert!(epic.matches("board"));
-        assert!(epic.matches("CLI"));
-        assert!(!epic.matches("web"));
     }
 
     #[test]

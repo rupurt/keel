@@ -1,5 +1,6 @@
 //! Epic command implementations
 
+pub mod file;
 pub mod list;
 pub mod new;
 pub mod show;
@@ -25,8 +26,18 @@ pub enum EpicAction {
     },
     /// Show epic details
     Show {
-        /// Epic ID (supports fuzzy matching)
+        /// Epic ID
         id: String,
+    },
+    /// Show an epic markdown document
+    File {
+        /// Epic ID
+        id: String,
+        /// Document name (README, PRD, PRESS_RELEASE)
+        file: String,
+        /// Print raw markdown without terminal rendering
+        #[arg(long)]
+        raw: bool,
     },
     /// List epics
     List {
@@ -41,6 +52,9 @@ pub fn run(action: EpicAction) -> Result<()> {
     match action {
         EpicAction::New { name, problem } => new::run(&name, &problem),
         EpicAction::Show { id } => show::run(&id),
+        EpicAction::File { id, file, raw } => {
+            crate::cli::commands::management::epic::file::run(&id, &file, raw)
+        }
         EpicAction::List { status } => list::run(&status),
     }
 }

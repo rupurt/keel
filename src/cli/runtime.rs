@@ -137,6 +137,11 @@ fn handle_epic_command(matches: &ArgMatches) -> Result<()> {
         ("show", m) => super::commands::management::epic::EpicAction::Show {
             id: m.get_one::<String>("id").expect("required").clone(),
         },
+        ("file", m) => super::commands::management::epic::EpicAction::File {
+            id: m.get_one::<String>("id").expect("required").clone(),
+            file: m.get_one::<String>("file").expect("required").clone(),
+            raw: *m.get_one::<bool>("raw").unwrap_or(&false),
+        },
         ("list", m) => super::commands::management::epic::EpicAction::List {
             status: collect_many_strings(m, "status"),
         },
@@ -173,6 +178,11 @@ fn handle_voyage_command(matches: &ArgMatches) -> Result<()> {
         },
         ("show", m) => super::commands::management::voyage::VoyageAction::Show {
             id: m.get_one::<String>("id").expect("required").clone(),
+        },
+        ("file", m) => super::commands::management::voyage::VoyageAction::File {
+            id: m.get_one::<String>("id").expect("required").clone(),
+            file: m.get_one::<String>("file").expect("required").clone(),
+            raw: *m.get_one::<bool>("raw").unwrap_or(&false),
         },
         ("list", m) => super::commands::management::voyage::VoyageAction::List {
             epic: m.get_one::<String>("epic").cloned(),
@@ -224,6 +234,11 @@ fn handle_story_command(matches: &ArgMatches) -> Result<()> {
         ("show", m) => super::commands::management::story::StoryAction::Show {
             id: m.get_one::<String>("id").expect("required").clone(),
         },
+        ("file", m) => super::commands::management::story::StoryAction::File {
+            id: m.get_one::<String>("id").expect("required").clone(),
+            file: m.get_one::<String>("file").expect("required").clone(),
+            raw: *m.get_one::<bool>("raw").unwrap_or(&false),
+        },
         ("list", m) => super::commands::management::story::StoryAction::List {
             status: collect_many_strings(m, "status"),
             epic: m.get_one::<String>("epic").cloned(),
@@ -263,26 +278,31 @@ fn handle_bearing_command(matches: &ArgMatches) -> Result<()> {
             name: m.get_one::<String>("name").expect("required").clone(),
         },
         ("survey", m) => super::commands::management::bearing::BearingAction::Survey {
-            name: m.get_one::<String>("name").expect("required").clone(),
+            id: m.get_one::<String>("id").expect("required").clone(),
         },
         ("assess", m) => super::commands::management::bearing::BearingAction::Assess {
-            name: m.get_one::<String>("name").expect("required").clone(),
+            id: m.get_one::<String>("id").expect("required").clone(),
         },
         ("list", m) => super::commands::management::bearing::BearingAction::List {
             status: collect_many_strings(m, "status"),
         },
         ("show", m) => super::commands::management::bearing::BearingAction::Show {
-            name: m.get_one::<String>("name").expect("required").clone(),
+            id: m.get_one::<String>("id").expect("required").clone(),
+        },
+        ("file", m) => super::commands::management::bearing::BearingAction::File {
+            id: m.get_one::<String>("id").expect("required").clone(),
+            file: m.get_one::<String>("file").expect("required").clone(),
+            raw: *m.get_one::<bool>("raw").unwrap_or(&false),
         },
         ("park", m) => super::commands::management::bearing::BearingAction::Park {
-            name: m.get_one::<String>("name").expect("required").clone(),
+            id: m.get_one::<String>("id").expect("required").clone(),
         },
         ("decline", m) => super::commands::management::bearing::BearingAction::Decline {
-            name: m.get_one::<String>("name").expect("required").clone(),
+            id: m.get_one::<String>("id").expect("required").clone(),
             reason: m.get_one::<String>("reason").expect("required").clone(),
         },
         ("lay", m) => super::commands::management::bearing::BearingAction::Lay {
-            name: m.get_one::<String>("name").expect("required").clone(),
+            id: m.get_one::<String>("id").expect("required").clone(),
         },
         (name, _) => return Err(anyhow::anyhow!("Unsupported bearing subcommand: {name}")),
     };
@@ -315,6 +335,10 @@ fn handle_adr_command(matches: &ArgMatches) -> Result<()> {
         },
         ("show", m) => super::commands::management::adr::AdrAction::Show {
             id: m.get_one::<String>("id").expect("required").clone(),
+        },
+        ("file", m) => super::commands::management::adr::AdrAction::File {
+            id: m.get_one::<String>("id").expect("required").clone(),
+            raw: *m.get_one::<bool>("raw").unwrap_or(&false),
         },
         ("accept", m) => super::commands::management::adr::AdrAction::Accept {
             id: m.get_one::<String>("id").expect("required").clone(),

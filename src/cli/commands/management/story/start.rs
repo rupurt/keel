@@ -86,7 +86,7 @@ mod tests {
     }
 
     #[test]
-    fn start_fuzzy_matches_by_partial_id() {
+    fn start_requires_exact_story_id() {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("FUZZY1")
@@ -95,10 +95,8 @@ mod tests {
             )
             .build();
 
-        run(temp.path(), "UZZY1", None).unwrap();
-
-        let content = fs::read_to_string(temp.path().join("stories/FUZZY1/README.md")).unwrap();
-        assert!(content.contains("status: in-progress"));
+        let err = run(temp.path(), "UZZY1", None).unwrap_err().to_string();
+        assert!(err.contains("Story not found: UZZY1"));
     }
 
     #[test]

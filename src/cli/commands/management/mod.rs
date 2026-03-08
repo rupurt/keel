@@ -4,6 +4,7 @@ pub mod adr;
 pub mod bearing;
 pub(crate) mod capability_map;
 pub mod epic;
+pub(crate) mod file_support;
 pub mod guidance;
 pub mod knowledge;
 pub mod next;

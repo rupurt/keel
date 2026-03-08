@@ -7,7 +7,6 @@ mod bearing;
 mod board;
 mod entity;
 mod epic;
-mod fuzzy;
 mod manifest;
 mod priority;
 mod story;
@@ -23,7 +22,6 @@ pub use bearing::{Bearing, BearingFrontmatter, BearingStatus};
 pub use board::Board;
 pub use entity::Entity;
 pub use epic::{Epic, EpicFrontmatter, EpicState};
-pub use fuzzy::{FuzzyMatch, find_in, fuzzy_match};
 pub use manifest::Manifest;
 #[allow(unused_imports)] // Priority may be used for voyages in future
 pub use priority::Priority;

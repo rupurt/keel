@@ -40,11 +40,7 @@ fn run_impl(
     files: Vec<String>,
 ) -> Result<()> {
     let board = load_board(board_dir)?;
-    let story = board
-        .stories
-        .get(&id)
-        .or_else(|| board.stories.values().find(|s| s.matches(&id)))
-        .context(format!("Story not found: {}", id))?;
+    let story = board.require_story(&id)?;
 
     let content = fs::read_to_string(&story.path)?;
     let annotations = parse_verify_annotations(&content);

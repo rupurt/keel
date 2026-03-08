@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
-use super::{Entity, FuzzyMatch, deserialize_strict_datetime};
+use super::{Entity, deserialize_strict_datetime};
 
 /// ADR status lifecycle
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
@@ -139,11 +139,6 @@ impl Adr {
     pub fn is_blocking(&self) -> bool {
         self.frontmatter.status == AdrStatus::Proposed
     }
-
-    /// Check if ADR matches a pattern (fuzzy match)
-    pub fn matches(&self, pattern: &str) -> bool {
-        super::fuzzy_match(&self.frontmatter.id, &self.frontmatter.title, pattern)
-    }
 }
 
 impl Entity for Adr {
@@ -155,16 +150,6 @@ impl Entity for Adr {
     }
     fn path(&self) -> &Path {
         &self.path
-    }
-}
-
-impl FuzzyMatch for Adr {
-    fn id(&self) -> &str {
-        &self.frontmatter.id
-    }
-
-    fn matches(&self, pattern: &str) -> bool {
-        Adr::matches(self, pattern)
     }
 }
 
@@ -266,11 +251,7 @@ title: Test ADR
             path: PathBuf::from("test"),
         };
 
-        assert!(adr.matches("ADR-0001"));
-        assert!(adr.matches("0001"));
-        assert!(adr.matches("queue"));
-        assert!(adr.matches("pull"));
-        assert!(!adr.matches("nonexistent"));
+        assert_eq!(adr.id(), "ADR-0001");
     }
 
     #[test]

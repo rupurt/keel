@@ -7,6 +7,7 @@ use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 use clap::Subcommand;
 
+pub mod file;
 pub(crate) mod guidance;
 pub mod show;
 
@@ -35,13 +36,13 @@ pub enum BearingAction {
     },
     /// Add SURVEY.md to a bearing
     Survey {
-        /// Bearing name or ID (fuzzy match)
-        name: String,
+        /// Bearing ID
+        id: String,
     },
     /// Add ASSESSMENT.md to a bearing
     Assess {
-        /// Bearing name or ID (fuzzy match)
-        name: String,
+        /// Bearing ID
+        id: String,
     },
     /// List all bearings
     List {
@@ -51,25 +52,35 @@ pub enum BearingAction {
     },
     /// Show bearing details
     Show {
-        /// Bearing name or ID (fuzzy match)
-        name: String,
+        /// Bearing ID
+        id: String,
+    },
+    /// Show a bearing markdown document
+    File {
+        /// Bearing ID
+        id: String,
+        /// Document name (README, BRIEF, SURVEY, ASSESSMENT)
+        file: String,
+        /// Print raw markdown without terminal rendering
+        #[arg(long)]
+        raw: bool,
     },
     /// Park a bearing for later
     Park {
-        /// Bearing name or ID (fuzzy match)
-        name: String,
+        /// Bearing ID
+        id: String,
     },
     /// Decline a bearing with reason
     Decline {
-        /// Bearing name or ID (fuzzy match)
-        name: String,
+        /// Bearing ID
+        id: String,
         /// Reason for declining
         reason: String,
     },
     /// Graduate bearing to epic
     Lay {
-        /// Bearing name or ID (fuzzy match)
-        name: String,
+        /// Bearing ID
+        id: String,
     },
 }
 
@@ -118,13 +129,16 @@ pub fn run_new(name: &str) -> Result<()> {
 pub fn run(action: BearingAction) -> Result<()> {
     match action {
         BearingAction::New { name } => run_new(&name),
-        BearingAction::Survey { name } => run_survey(&name),
-        BearingAction::Assess { name } => run_assess(&name),
+        BearingAction::Survey { id } => run_survey(&id),
+        BearingAction::Assess { id } => run_assess(&id),
         BearingAction::List { status } => run_list(&status),
-        BearingAction::Show { name } => show::run(&name),
-        BearingAction::Park { name } => run_park(&name),
-        BearingAction::Decline { name, reason } => run_decline(&name, &reason),
-        BearingAction::Lay { name } => run_lay(&name),
+        BearingAction::Show { id } => show::run(&id),
+        BearingAction::File { id, file, raw } => {
+            crate::cli::commands::management::bearing::file::run(&id, &file, raw)
+        }
+        BearingAction::Park { id } => run_park(&id),
+        BearingAction::Decline { id, reason } => run_decline(&id, &reason),
+        BearingAction::Lay { id } => run_lay(&id),
     }
 }
 

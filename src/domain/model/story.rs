@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
-use super::{Entity, FuzzyMatch, StoryState, StoryType, deserialize_strict_datetime};
+use super::{Entity, StoryState, StoryType, deserialize_strict_datetime};
 use crate::domain::model::taxonomy::{self, ParseError, RoleTaxonomy};
 
 /// Story frontmatter from YAML
@@ -144,11 +144,6 @@ impl Story {
     pub fn set_status(&mut self, status: StoryState) {
         self.frontmatter.status = status;
     }
-
-    /// Check if story matches a pattern (fuzzy match)
-    pub fn matches(&self, pattern: &str) -> bool {
-        super::fuzzy_match(&self.frontmatter.id, &self.frontmatter.title, pattern)
-    }
 }
 
 impl Deref for Story {
@@ -168,16 +163,6 @@ impl Entity for Story {
     }
     fn path(&self) -> &Path {
         &self.path
-    }
-}
-
-impl FuzzyMatch for Story {
-    fn id(&self) -> &str {
-        &self.frontmatter.id
-    }
-
-    fn matches(&self, pattern: &str) -> bool {
-        Story::matches(self, pattern)
     }
 }
 
@@ -287,17 +272,6 @@ completed_at: 2026-01-29T11:00:00
             fm.completed_at,
             NaiveDateTime::parse_from_str("2026-01-29T11:00:00", "%Y-%m-%dT%H:%M:%S").ok()
         );
-    }
-
-    #[test]
-    fn story_matches_by_id() {
-        let story = sample_story("test.md");
-
-        assert!(story.matches("FEAT0238"));
-        assert!(story.matches("feat0238")); // case insensitive
-        assert!(story.matches("0238")); // partial
-        assert!(story.matches("Create")); // title match
-        assert!(!story.matches("BUG"));
     }
 
     #[test]

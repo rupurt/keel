@@ -6,6 +6,7 @@ use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 use clap::Subcommand;
 
+pub mod file;
 pub(crate) mod guidance;
 pub mod show;
 
@@ -30,24 +31,32 @@ pub enum AdrAction {
     },
     /// Show ADR details
     Show {
-        /// ADR ID or title (fuzzy match)
+        /// ADR ID
         id: String,
+    },
+    /// Show an ADR markdown document
+    File {
+        /// ADR ID
+        id: String,
+        /// Print raw markdown without terminal rendering
+        #[arg(long)]
+        raw: bool,
     },
     /// Accept a proposed ADR
     Accept {
-        /// ADR ID or title (fuzzy match)
+        /// ADR ID
         id: String,
     },
     /// Reject a proposed ADR
     Reject {
-        /// ADR ID or title (fuzzy match)
+        /// ADR ID
         id: String,
         /// Reason for rejection
         reason: String,
     },
     /// Deprecate an accepted ADR (no longer recommended)
     Deprecate {
-        /// ADR ID or title (fuzzy match)
+        /// ADR ID
         id: String,
         /// Reason for deprecation
         reason: String,
@@ -81,6 +90,7 @@ pub fn run(action: AdrAction) -> Result<()> {
         } => run_new(&title, context.as_deref(), &applies_to),
         AdrAction::List { status } => run_list(status.as_deref()),
         AdrAction::Show { id } => show::run(&id),
+        AdrAction::File { id, raw } => crate::cli::commands::management::adr::file::run(&id, raw),
         AdrAction::Accept { id } => run_accept(&id),
         AdrAction::Reject { id, reason } => run_reject(&id, &reason),
         AdrAction::Deprecate { id, reason } => run_deprecate(&id, &reason),

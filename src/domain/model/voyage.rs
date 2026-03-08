@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
-use super::{Entity, FuzzyMatch, VoyageState, deserialize_strict_datetime};
+use super::{Entity, VoyageState, deserialize_strict_datetime};
 
 /// Voyage frontmatter from YAML
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -71,11 +71,6 @@ impl Voyage {
     pub fn scope_path(&self) -> String {
         format!("{}/{}", self.epic_id, self.frontmatter.id)
     }
-
-    /// Check if voyage matches a pattern (fuzzy match)
-    pub fn matches(&self, pattern: &str) -> bool {
-        super::fuzzy_match(&self.frontmatter.id, &self.frontmatter.title, pattern)
-    }
 }
 
 impl Entity for Voyage {
@@ -87,16 +82,6 @@ impl Entity for Voyage {
     }
     fn path(&self) -> &Path {
         &self.path
-    }
-}
-
-impl FuzzyMatch for Voyage {
-    fn id(&self) -> &str {
-        &self.frontmatter.id
-    }
-
-    fn matches(&self, pattern: &str) -> bool {
-        Voyage::matches(self, pattern)
     }
 }
 
@@ -157,31 +142,6 @@ title: Generate Command
         };
 
         assert_eq!(v.scope_path(), "board-cli/01-core");
-    }
-
-    #[test]
-    fn voyage_matches() {
-        let v = Voyage {
-            frontmatter: VoyageFrontmatter {
-                id: "01-core-infrastructure".to_string(),
-                title: "Core Infrastructure".to_string(),
-                goal: None,
-                status: VoyageState::Planned,
-                epic: None,
-                index: None,
-                created_at: None,
-                updated_at: None,
-                started_at: None,
-                completed_at: None,
-            },
-            path: PathBuf::from("test"),
-            epic_id: "board-cli".to_string(),
-        };
-
-        assert!(v.matches("01-core"));
-        assert!(v.matches("infrastructure"));
-        assert!(v.matches("Core"));
-        assert!(!v.matches("generate"));
     }
 
     #[test]

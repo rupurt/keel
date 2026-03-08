@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
-use super::{Entity, FuzzyMatch, deserialize_strict_datetime};
+use super::{Entity, deserialize_strict_datetime};
 
 /// Bearing status lifecycle
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
@@ -144,11 +144,6 @@ impl Bearing {
             BearingStatus::Laid | BearingStatus::Parked | BearingStatus::Declined
         )
     }
-
-    /// Check if bearing matches a pattern (fuzzy match)
-    pub fn matches(&self, pattern: &str) -> bool {
-        super::fuzzy_match(&self.frontmatter.id, &self.frontmatter.title, pattern)
-    }
 }
 
 impl Entity for Bearing {
@@ -160,16 +155,6 @@ impl Entity for Bearing {
     }
     fn path(&self) -> &Path {
         &self.path
-    }
-}
-
-impl FuzzyMatch for Bearing {
-    fn id(&self) -> &str {
-        &self.frontmatter.id
-    }
-
-    fn matches(&self, pattern: &str) -> bool {
-        Bearing::matches(self, pattern)
     }
 }
 
@@ -271,30 +256,6 @@ title: Test Bearing
         assert_eq!(fm.status, BearingStatus::Exploring);
         assert!(fm.created_at.is_none());
         assert!(fm.decline_reason.is_none());
-    }
-
-    #[test]
-    fn bearing_matches() {
-        let b = Bearing {
-            frontmatter: BearingFrontmatter {
-                id: "ai-powered-search".to_string(),
-                title: "AI-Powered Search".to_string(),
-                status: BearingStatus::Exploring,
-                index: None,
-                created_at: None,
-                decline_reason: None,
-                laid_at: None,
-            },
-            path: PathBuf::from("test"),
-            has_survey: false,
-            has_assessment: false,
-        };
-
-        assert!(b.matches("ai-powered"));
-        assert!(b.matches("search"));
-        assert!(b.matches("AI"));
-        assert!(b.matches("powered"));
-        assert!(!b.matches("voyages"));
     }
 
     #[test]

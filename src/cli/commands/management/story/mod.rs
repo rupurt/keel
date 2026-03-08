@@ -2,6 +2,7 @@
 
 pub mod accept;
 pub mod audit;
+pub mod file;
 pub(crate) mod guidance;
 pub mod ice;
 pub mod link;
@@ -46,7 +47,7 @@ pub enum StoryAction {
     },
     /// Move story to in-progress
     Start {
-        /// Story ID (supports fuzzy matching)
+        /// Story ID
         id: String,
         /// Expected board version for optimistic locking (SRS-05)
         #[arg(long)]
@@ -54,12 +55,12 @@ pub enum StoryAction {
     },
     /// Submit story for acceptance (in-progress -> needs-human-verification)
     Submit {
-        /// Story ID (supports fuzzy matching)
+        /// Story ID
         id: String,
     },
     /// Accept a story (needs-human-verification -> done)
     Accept {
-        /// Story ID (supports fuzzy matching)
+        /// Story ID
         id: String,
         /// Acknowledge manual verification steps have been verified by a human
         #[arg(long)]
@@ -70,30 +71,40 @@ pub enum StoryAction {
     },
     /// Create a reflection scaffold for a story bundle
     Reflect {
-        /// Story ID (supports fuzzy matching)
+        /// Story ID
         id: String,
     },
     /// Reject a story (needs-human-verification -> rejected)
     Reject {
-        /// Story ID (supports fuzzy matching)
+        /// Story ID
         id: String,
         /// Reason for rejection
         reason: String,
     },
     /// Move story to icebox
     Ice {
-        /// Story ID (supports fuzzy matching)
+        /// Story ID
         id: String,
     },
     /// Move story from icebox to backlog
     Thaw {
-        /// Story ID (supports fuzzy matching)
+        /// Story ID
         id: String,
     },
     /// Show story details
     Show {
-        /// Story ID (supports fuzzy matching)
+        /// Story ID
         id: String,
+    },
+    /// Show a story markdown document
+    File {
+        /// Story ID
+        id: String,
+        /// Document name (README, REFLECT)
+        file: String,
+        /// Print raw markdown without terminal rendering
+        #[arg(long)]
+        raw: bool,
     },
     /// List stories
     List {
@@ -123,7 +134,7 @@ pub enum StoryAction {
     },
     /// Record proof for an acceptance criterion
     Record {
-        /// Story ID (supports fuzzy matching)
+        /// Story ID
         id: String,
         /// Acceptance criterion number (1-based index)
         #[arg(long, short)]
@@ -159,6 +170,9 @@ pub fn run(action: StoryAction) -> Result<()> {
         StoryAction::Ice { id } => ice::run(&find_board_dir()?, &id),
         StoryAction::Thaw { id } => thaw::run(&find_board_dir()?, &id),
         StoryAction::Show { id } => show::run(&id),
+        StoryAction::File { id, file, raw } => {
+            crate::cli::commands::management::story::file::run(&id, &file, raw)
+        }
         StoryAction::List {
             status,
             epic,

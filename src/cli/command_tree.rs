@@ -351,6 +351,12 @@ pub fn build_cli() -> Command {
                         .arg(Arg::new("id").required(true).value_name("ID")),
                 )
                 .subcommand(
+                    Command::new("file")
+                        .about("Show an ADR markdown document")
+                        .arg(Arg::new("id").required(true).value_name("ID"))
+                        .arg(Arg::new("raw").long("raw").action(ArgAction::SetTrue)),
+                )
+                .subcommand(
                     Command::new("accept")
                         .about("Accept a proposed ADR")
                         .arg(Arg::new("id").required(true).value_name("ID")),
@@ -387,12 +393,12 @@ pub fn build_cli() -> Command {
                 .subcommand(
                     Command::new("survey")
                         .about("Add SURVEY.md to a bearing")
-                        .arg(Arg::new("name").required(true).value_name("NAME")),
+                        .arg(Arg::new("id").required(true).value_name("ID")),
                 )
                 .subcommand(
                     Command::new("assess")
                         .about("Add ASSESSMENT.md to a bearing")
-                        .arg(Arg::new("name").required(true).value_name("NAME")),
+                        .arg(Arg::new("id").required(true).value_name("ID")),
                 )
                 .subcommand(
                     Command::new("list")
@@ -411,22 +417,29 @@ pub fn build_cli() -> Command {
                 .subcommand(
                     Command::new("show")
                         .about("Show bearing details")
-                        .arg(Arg::new("name").required(true).value_name("NAME")),
+                        .arg(Arg::new("id").required(true).value_name("ID")),
+                )
+                .subcommand(
+                    Command::new("file")
+                        .about("Show a bearing markdown document")
+                        .arg(Arg::new("id").required(true).value_name("ID"))
+                        .arg(Arg::new("file").required(true).value_name("FILE"))
+                        .arg(Arg::new("raw").long("raw").action(ArgAction::SetTrue)),
                 )
                 .subcommand(
                     Command::new("park")
                         .about("Park a bearing for later")
-                        .arg(Arg::new("name").required(true).value_name("NAME")),
+                        .arg(Arg::new("id").required(true).value_name("ID")),
                 )
                 .subcommand(
                     Command::new("decline")
                         .about("Decline a bearing with reason")
-                        .arg(Arg::new("name").required(true).value_name("NAME"))
+                        .arg(Arg::new("id").required(true).value_name("ID"))
                         .arg(Arg::new("reason").required(true).value_name("REASON")),
                 )
                 .subcommand(
                     Command::new("lay").about("Graduate bearing to epic").arg(
-                        Arg::new("name").required(true).value_name("NAME"),
+                        Arg::new("id").required(true).value_name("ID"),
                     ),
                 )
                 .subcommand_required(true),
@@ -451,6 +464,13 @@ pub fn build_cli() -> Command {
                     Command::new("show")
                         .about("Show epic details")
                         .arg(Arg::new("id").required(true)),
+                )
+                .subcommand(
+                    Command::new("file")
+                        .about("Show an epic markdown document")
+                        .arg(Arg::new("id").required(true).value_name("ID"))
+                        .arg(Arg::new("file").required(true).value_name("FILE"))
+                        .arg(Arg::new("raw").long("raw").action(ArgAction::SetTrue)),
                 )
                 .subcommand(
                     Command::new("list")
@@ -515,6 +535,13 @@ pub fn build_cli() -> Command {
                     Command::new("show")
                         .about("Show voyage details")
                         .arg(Arg::new("id").required(true).value_name("ID")),
+                )
+                .subcommand(
+                    Command::new("file")
+                        .about("Show a voyage markdown document")
+                        .arg(Arg::new("id").required(true).value_name("ID"))
+                        .arg(Arg::new("file").required(true).value_name("FILE"))
+                        .arg(Arg::new("raw").long("raw").action(ArgAction::SetTrue)),
                 )
                 .subcommand(
                     Command::new("list")
@@ -596,6 +623,13 @@ pub fn build_cli() -> Command {
                     Command::new("show")
                         .about("Show story details")
                         .arg(Arg::new("id").required(true).value_name("ID")),
+                )
+                .subcommand(
+                    Command::new("file")
+                        .about("Show a story markdown document")
+                        .arg(Arg::new("id").required(true).value_name("ID"))
+                        .arg(Arg::new("file").required(true).value_name("FILE"))
+                        .arg(Arg::new("raw").long("raw").action(ArgAction::SetTrue)),
                 )
                 .subcommand(
                     Command::new("list")

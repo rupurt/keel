@@ -2,6 +2,7 @@
 
 pub mod duration;
 pub mod flow;
+pub mod markdown;
 pub mod planning_lineage;
 pub mod progress;
 pub mod requirements;

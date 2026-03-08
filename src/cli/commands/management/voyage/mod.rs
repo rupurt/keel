@@ -1,6 +1,7 @@
 //! Voyage command implementations
 
 pub mod done;
+pub mod file;
 pub(crate) mod guidance;
 pub mod list;
 pub mod new;
@@ -35,7 +36,7 @@ pub enum VoyageAction {
     },
     /// Start a voyage
     Start {
-        /// Voyage ID (supports fuzzy matching)
+        /// Voyage ID
         id: String,
         /// Force start even if preconditions fail
         #[arg(long, short)]
@@ -46,7 +47,7 @@ pub enum VoyageAction {
     },
     /// Plan a voyage (promote from draft to planned)
     Plan {
-        /// Voyage ID (supports fuzzy matching)
+        /// Voyage ID
         id: String,
         /// Skip interactive review (still validates)
         #[arg(long)]
@@ -54,7 +55,7 @@ pub enum VoyageAction {
     },
     /// Complete a voyage
     Done {
-        /// Voyage ID (supports fuzzy matching)
+        /// Voyage ID
         id: String,
         /// What went well?
         #[arg(long)]
@@ -68,8 +69,18 @@ pub enum VoyageAction {
     },
     /// Show voyage details
     Show {
-        /// Voyage ID (supports fuzzy matching)
+        /// Voyage ID
         id: String,
+    },
+    /// Show a voyage markdown document
+    File {
+        /// Voyage ID
+        id: String,
+        /// Document name (README, SRS, SDD, VOYAGE_REPORT, COMPLIANCE_REPORT, KNOWLEDGE)
+        file: String,
+        /// Print raw markdown without terminal rendering
+        #[arg(long)]
+        raw: bool,
     },
     /// List voyages
     List {
@@ -99,6 +110,9 @@ pub fn run(action: VoyageAction) -> Result<()> {
             different,
         } => done::run(&id, well, hard, different),
         VoyageAction::Show { id } => show::run(&id),
+        VoyageAction::File { id, file, raw } => {
+            crate::cli::commands::management::voyage::file::run(&id, &file, raw)
+        }
         VoyageAction::List { epic, status } => list::run(epic.as_deref(), &status),
     }
 }

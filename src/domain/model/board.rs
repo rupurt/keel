@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use anyhow::{Result, anyhow};
 
-use super::{Adr, Bearing, Epic, FuzzyMatch, Story, StoryState, Voyage, find_in};
+use super::{Adr, Bearing, Entity, Epic, Story, StoryState, Voyage};
 
 /// The board contains all stories, voyages, epics, bearings, and ADRs
 #[derive(Debug, Clone)]
@@ -47,60 +47,60 @@ impl Board {
         }
     }
 
-    /// Find a story by pattern (fuzzy match)
-    pub fn find_story(&self, pattern: &str) -> Option<&Story> {
-        find_in(&self.stories, pattern)
+    /// Find a story by exact ID.
+    pub fn find_story(&self, id: &str) -> Option<&Story> {
+        self.stories.get(id)
     }
 
-    /// Find a voyage by pattern (fuzzy match)
-    pub fn find_voyage(&self, pattern: &str) -> Option<&Voyage> {
-        find_in(&self.voyages, pattern)
+    /// Find a voyage by exact ID.
+    pub fn find_voyage(&self, id: &str) -> Option<&Voyage> {
+        self.voyages.get(id)
     }
 
-    /// Find an epic by pattern (fuzzy match)
-    pub fn find_epic(&self, pattern: &str) -> Option<&Epic> {
-        find_in(&self.epics, pattern)
+    /// Find an epic by exact ID.
+    pub fn find_epic(&self, id: &str) -> Option<&Epic> {
+        self.epics.get(id)
     }
 
-    /// Find a bearing by pattern (fuzzy match)
-    pub fn find_bearing(&self, pattern: &str) -> Option<&Bearing> {
-        find_in(&self.bearings, pattern)
+    /// Find a bearing by exact ID.
+    pub fn find_bearing(&self, id: &str) -> Option<&Bearing> {
+        self.bearings.get(id)
     }
 
-    /// Find an ADR by pattern (fuzzy match)
+    /// Find an ADR by exact ID.
     #[allow(dead_code)] // Used by future doctor checks (SRS-05)
-    pub fn find_adr(&self, pattern: &str) -> Option<&Adr> {
-        find_in(&self.adrs, pattern)
+    pub fn find_adr(&self, id: &str) -> Option<&Adr> {
+        self.adrs.get(id)
     }
 
-    /// Require a story by pattern, returning an error with fuzzy suggestions if not found
-    pub fn require_story(&self, pattern: &str) -> Result<&Story> {
-        self.find_story(pattern)
-            .ok_or_else(|| not_found_error("Story", pattern, &self.stories))
+    /// Require a story by exact ID, returning an error with nearby ID suggestions if not found.
+    pub fn require_story(&self, id: &str) -> Result<&Story> {
+        self.find_story(id)
+            .ok_or_else(|| not_found_error("Story", id, self.stories.values()))
     }
 
-    /// Require a voyage by pattern, returning an error with fuzzy suggestions if not found
-    pub fn require_voyage(&self, pattern: &str) -> Result<&Voyage> {
-        self.find_voyage(pattern)
-            .ok_or_else(|| not_found_error("Voyage", pattern, &self.voyages))
+    /// Require a voyage by exact ID, returning an error with nearby ID suggestions if not found.
+    pub fn require_voyage(&self, id: &str) -> Result<&Voyage> {
+        self.find_voyage(id)
+            .ok_or_else(|| not_found_error("Voyage", id, self.voyages.values()))
     }
 
-    /// Require an epic by pattern, returning an error with fuzzy suggestions if not found
-    pub fn require_epic(&self, pattern: &str) -> Result<&Epic> {
-        self.find_epic(pattern)
-            .ok_or_else(|| not_found_error("Epic", pattern, &self.epics))
+    /// Require an epic by exact ID, returning an error with nearby ID suggestions if not found.
+    pub fn require_epic(&self, id: &str) -> Result<&Epic> {
+        self.find_epic(id)
+            .ok_or_else(|| not_found_error("Epic", id, self.epics.values()))
     }
 
-    /// Require a bearing by pattern, returning an error with fuzzy suggestions if not found
-    pub fn require_bearing(&self, pattern: &str) -> Result<&Bearing> {
-        self.find_bearing(pattern)
-            .ok_or_else(|| not_found_error("Bearing", pattern, &self.bearings))
+    /// Require a bearing by exact ID, returning an error with nearby ID suggestions if not found.
+    pub fn require_bearing(&self, id: &str) -> Result<&Bearing> {
+        self.find_bearing(id)
+            .ok_or_else(|| not_found_error("Bearing", id, self.bearings.values()))
     }
 
-    /// Require an ADR by pattern, returning an error with fuzzy suggestions if not found
-    pub fn require_adr(&self, pattern: &str) -> Result<&Adr> {
-        self.find_adr(pattern)
-            .ok_or_else(|| not_found_error("ADR", pattern, &self.adrs))
+    /// Require an ADR by exact ID, returning an error with nearby ID suggestions if not found.
+    pub fn require_adr(&self, id: &str) -> Result<&Adr> {
+        self.find_adr(id)
+            .ok_or_else(|| not_found_error("ADR", id, self.adrs.values()))
     }
 
     /// Get stories for a voyage (by scope)
@@ -170,27 +170,27 @@ impl Board {
     }
 }
 
-/// Build a "not found" error with fuzzy suggestions from matching IDs
-fn not_found_error<T: FuzzyMatch>(
+/// Build a "not found" error with nearby ID suggestions.
+fn not_found_error<'a, T: Entity + 'a>(
     entity: &str,
-    pattern: &str,
-    collection: &HashMap<String, T>,
+    id: &str,
+    collection: impl IntoIterator<Item = &'a T>,
 ) -> anyhow::Error {
-    let pattern_lower = pattern.to_lowercase();
+    let pattern_lower = id.to_lowercase();
     let suggestions: Vec<_> = collection
-        .values()
+        .into_iter()
         .filter(|e| e.id().to_lowercase().contains(&pattern_lower))
         .take(3)
         .map(|e| e.id().to_string())
         .collect();
 
     if suggestions.is_empty() {
-        anyhow!("{} not found: {}", entity, pattern)
+        anyhow!("{} not found: {}", entity, id)
     } else {
         anyhow!(
             "{} not found: {}. Did you mean: {}?",
             entity,
-            pattern,
+            id,
             suggestions.join(", ")
         )
     }
@@ -253,17 +253,6 @@ mod tests {
 
         assert!(board.find_story("FEAT0001").is_some());
         assert!(board.find_story("FEAT0002").is_none());
-    }
-
-    #[test]
-    fn board_find_story_fuzzy() {
-        let mut board = Board::new(PathBuf::from("test"));
-        board
-            .stories
-            .insert("FEAT0001".to_string(), make_story("FEAT0001", None));
-
-        assert!(board.find_story("0001").is_some());
-        assert!(board.find_story("feat").is_some());
     }
 
     #[test]
@@ -434,7 +423,6 @@ mod tests {
             .insert("FEAT0001".to_string(), make_story("FEAT0001", None));
 
         assert!(board.require_story("FEAT0001").is_ok());
-        assert!(board.require_story("0001").is_ok()); // fuzzy
     }
 
     #[test]
@@ -449,14 +437,13 @@ mod tests {
     }
 
     #[test]
-    fn require_story_fuzzy_match_returns_ok() {
+    fn require_story_uses_strict_id_lookup() {
         let mut board = Board::new(PathBuf::from("test"));
         board
             .stories
             .insert("FEAT0001".to_string(), make_story("FEAT0001", None));
 
-        // "feat" fuzzy-matches "FEAT0001" via case-insensitive contains
-        assert!(board.require_story("feat").is_ok());
+        assert!(board.require_story("feat").is_err());
     }
 
     #[test]
