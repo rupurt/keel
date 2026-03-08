@@ -51,6 +51,32 @@ mod tests {
         fs::write(temp.path().join(format!("epics/{epic_id}/PRD.md")), content).unwrap();
     }
 
+    fn scoped_srs(requirements: &[(&str, &str)]) -> String {
+        let mut srs = String::from(
+            r#"# SRS
+
+## Scope
+
+In scope:
+- [SCOPE-01] Ship the planned slice.
+
+Out of scope:
+- [SCOPE-02] Leave follow-on hardening for later.
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+"#,
+        );
+        for (requirement_id, source_id) in requirements {
+            srs.push_str(&format!(
+                "| {requirement_id} | Requirement {requirement_id} | SCOPE-01 | {source_id} | test |\n"
+            ));
+        }
+        srs.push_str("<!-- END FUNCTIONAL_REQUIREMENTS -->\n");
+        srs
+    }
+
     #[test]
     fn start_voyage_updates_status() {
         let temp = TestBoardBuilder::new()
@@ -100,15 +126,7 @@ mod tests {
     fn start_voyage_blocks_on_uncovered_requirements() {
         use crate::test_helpers::TestStory;
 
-        let srs = r#"# Test SRS
-
-<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Source | Verification |
-|----|-------------|--------|--------------|
-| SRS-01 | First requirement | FR-01 | test |
-| SRS-02 | Second requirement | FR-02 | test |
-<!-- END FUNCTIONAL_REQUIREMENTS -->
-"#;
+        let srs = scoped_srs(&[("SRS-01", "FR-01"), ("SRS-02", "FR-02")]);
 
         // Story only covers SRS-01, not SRS-02
         let temp = TestBoardBuilder::new()
@@ -116,7 +134,7 @@ mod tests {
             .voyage(
                 TestVoyage::new("01-draft", "test-epic")
                     .status("draft")
-                    .srs_content(srs),
+                    .srs_content(&srs),
             )
             .story(
                 TestStory::new("STORY01")
@@ -130,6 +148,14 @@ mod tests {
             &temp,
             "test-epic",
             r#"# PRD
+
+## Scope
+
+### In Scope
+- [SCOPE-01] Ship the planned slice.
+
+### Out of Scope
+- [SCOPE-02] Leave follow-on hardening for later.
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Priority | Rationale |
@@ -160,21 +186,14 @@ mod tests {
     fn start_voyage_allows_when_all_requirements_covered() {
         use crate::test_helpers::TestStory;
 
-        let srs = r#"# Test SRS
-
-<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Source | Verification |
-|----|-------------|--------|--------------|
-| SRS-01 | First requirement | FR-01 | test |
-<!-- END FUNCTIONAL_REQUIREMENTS -->
-"#;
+        let srs = scoped_srs(&[("SRS-01", "FR-01")]);
 
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
             .voyage(
                 TestVoyage::new("01-draft", "test-epic")
                     .status("draft")
-                    .srs_content(srs),
+                    .srs_content(&srs),
             )
             .story(
                 TestStory::new("STORY01")
@@ -188,6 +207,14 @@ mod tests {
             &temp,
             "test-epic",
             r#"# PRD
+
+## Scope
+
+### In Scope
+- [SCOPE-01] Ship the planned slice.
+
+### Out of Scope
+- [SCOPE-02] Leave follow-on hardening for later.
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Priority | Rationale |
@@ -210,15 +237,7 @@ mod tests {
     fn start_voyage_force_bypasses_coverage_check() {
         use crate::test_helpers::TestStory;
 
-        let srs = r#"# Test SRS
-
-<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Source | Verification |
-|----|-------------|--------|--------------|
-| SRS-01 | First requirement | FR-01 | test |
-| SRS-02 | Second requirement | FR-02 | test |
-<!-- END FUNCTIONAL_REQUIREMENTS -->
-"#;
+        let srs = scoped_srs(&[("SRS-01", "FR-01"), ("SRS-02", "FR-02")]);
 
         // Story only covers SRS-01, not SRS-02
         let temp = TestBoardBuilder::new()
@@ -226,7 +245,7 @@ mod tests {
             .voyage(
                 TestVoyage::new("01-draft", "test-epic")
                     .status("draft")
-                    .srs_content(srs),
+                    .srs_content(&srs),
             )
             .story(
                 TestStory::new("STORY01")
@@ -240,6 +259,14 @@ mod tests {
             &temp,
             "test-epic",
             r#"# PRD
+
+## Scope
+
+### In Scope
+- [SCOPE-01] Ship the planned slice.
+
+### Out of Scope
+- [SCOPE-02] Leave follow-on hardening for later.
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Priority | Rationale |

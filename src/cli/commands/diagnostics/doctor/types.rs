@@ -50,11 +50,13 @@ impl DoctorReport {
 /// Result of a single health check category
 #[derive(Debug, Serialize, Clone)]
 pub struct CheckResult {
+    pub id: &'static str,
     pub name: &'static str,
     pub problems: Vec<Problem>,
     pub evaluations: usize,
     pub duration: Duration,
     pub passed: bool,
+    pub disabled: bool,
 }
 
 /// Summary result for a section of checks

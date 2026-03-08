@@ -131,11 +131,41 @@ mod tests {
         fs::write(temp.path().join(format!("epics/{epic_id}/PRD.md")), content).unwrap();
     }
 
+    fn scoped_srs(requirements: &[(&str, &str)]) -> String {
+        let mut srs = String::from(
+            r#"# SRS
+
+## Scope
+
+In scope:
+- [SCOPE-01] Ship the planned slice.
+
+Out of scope:
+- [SCOPE-02] Leave follow-on hardening for later.
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+"#,
+        );
+        for (requirement_id, source_id) in requirements {
+            srs.push_str(&format!(
+                "| {requirement_id} | Requirement {requirement_id} | SCOPE-01 | {source_id} | test |\n"
+            ));
+        }
+        srs.push_str("<!-- END FUNCTIONAL_REQUIREMENTS -->\n");
+        srs
+    }
+
     #[test]
     fn plan_voyage_updates_status_to_planned() {
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
-            .voyage(TestVoyage::new("01-draft", "test-epic").status("draft"))
+            .voyage(
+                TestVoyage::new("01-draft", "test-epic")
+                    .status("draft")
+                    .srs_content(&scoped_srs(&[("SRS-01", "FR-01")])),
+            )
             .story(
                 TestStory::new("0001")
                     .scope("test-epic/01-draft")
@@ -187,7 +217,11 @@ mod tests {
     fn plan_voyage_review_checks_acceptance_criteria() {
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
-            .voyage(TestVoyage::new("01-draft", "test-epic").status("draft"))
+            .voyage(
+                TestVoyage::new("01-draft", "test-epic")
+                    .status("draft")
+                    .srs_content(&scoped_srs(&[("SRS-01", "FR-01")])),
+            )
             .story(
                 TestStory::new("0002")
                     .scope("test-epic/01-draft")
@@ -210,7 +244,11 @@ mod tests {
     fn plan_voyage_review_passes_with_acceptance_criteria() {
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
-            .voyage(TestVoyage::new("01-draft", "test-epic").status("draft"))
+            .voyage(
+                TestVoyage::new("01-draft", "test-epic")
+                    .status("draft")
+                    .srs_content(&scoped_srs(&[("SRS-01", "FR-01")])),
+            )
             .story(
                 TestStory::new("0003")
                     .scope("test-epic/01-draft")
@@ -227,7 +265,11 @@ mod tests {
     fn plan_voyage_blocks_story_scaffold_even_when_review_is_disabled() {
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
-            .voyage(TestVoyage::new("01-draft", "test-epic").status("draft"))
+            .voyage(
+                TestVoyage::new("01-draft", "test-epic")
+                    .status("draft")
+                    .srs_content(&scoped_srs(&[("SRS-01", "FR-01")])),
+            )
             .story(
                 TestStory::new("0009")
                     .scope("test-epic/01-draft")
@@ -248,22 +290,14 @@ mod tests {
 
     #[test]
     fn plan_voyage_blocks_uncovered_requirements() {
-        let srs = r#"# SRS
-
-<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Source | Verification |
-|----|-------------|--------|--------------|
-| SRS-01 | req1 | FR-01 | test |
-| SRS-02 | req2 | FR-02 | test |
-<!-- END FUNCTIONAL_REQUIREMENTS -->
-"#;
+        let srs = scoped_srs(&[("SRS-01", "FR-01"), ("SRS-02", "FR-02")]);
 
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
             .voyage(
                 TestVoyage::new("01-draft", "test-epic")
                     .status("draft")
-                    .srs_content(srs),
+                    .srs_content(&srs),
             )
             .story(
                 TestStory::new("0003")
@@ -275,6 +309,14 @@ mod tests {
             &temp,
             "test-epic",
             r#"# PRD
+
+## Scope
+
+### In Scope
+- [SCOPE-01] Ship the planned slice.
+
+### Out of Scope
+- [SCOPE-02] Leave follow-on hardening for later.
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Priority | Rationale |
@@ -295,21 +337,14 @@ mod tests {
 
     #[test]
     fn voyage_plan_blocks_invalid_prd_lineage() {
-        let srs = r#"# Test SRS
-
-<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Source | Verification |
-|----|-------------|--------|--------------|
-| SRS-01 | Requirement 1 | FR-99 | test |
-<!-- END FUNCTIONAL_REQUIREMENTS -->
-"#;
+        let srs = scoped_srs(&[("SRS-01", "FR-99")]);
 
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
             .voyage(
                 TestVoyage::new("01-draft", "test-epic")
                     .status("draft")
-                    .srs_content(srs),
+                    .srs_content(&srs),
             )
             .story(
                 TestStory::new("0003")
@@ -321,6 +356,14 @@ mod tests {
             &temp,
             "test-epic",
             r#"# PRD
+
+## Scope
+
+### In Scope
+- [SCOPE-01] Ship the planned slice.
+
+### Out of Scope
+- [SCOPE-02] Leave follow-on hardening for later.
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Priority | Rationale |
@@ -341,21 +384,14 @@ mod tests {
 
     #[test]
     fn prd_lineage_rejects_legacy_source_aliases() {
-        let srs = r#"# Test SRS
-
-<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Source | Verification |
-|----|-------------|--------|--------------|
-| SRS-01 | Requirement 1 | PRD-01 | test |
-<!-- END FUNCTIONAL_REQUIREMENTS -->
-"#;
+        let srs = scoped_srs(&[("SRS-01", "PRD-01")]);
 
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
             .voyage(
                 TestVoyage::new("01-draft", "test-epic")
                     .status("draft")
-                    .srs_content(srs),
+                    .srs_content(&srs),
             )
             .story(
                 TestStory::new("0003")
@@ -367,6 +403,14 @@ mod tests {
             &temp,
             "test-epic",
             r#"# PRD
+
+## Scope
+
+### In Scope
+- [SCOPE-01] Ship the planned slice.
+
+### Out of Scope
+- [SCOPE-02] Leave follow-on hardening for later.
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Priority | Rationale |
@@ -386,22 +430,14 @@ mod tests {
 
     #[test]
     fn plan_voyage_allows_covered_requirements() {
-        let srs = r#"# SRS
-
-<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Source | Verification |
-|----|-------------|--------|--------------|
-| SRS-01 | req1 | FR-01 | test |
-| SRS-02 | req2 | FR-02 | test |
-<!-- END FUNCTIONAL_REQUIREMENTS -->
-"#;
+        let srs = scoped_srs(&[("SRS-01", "FR-01"), ("SRS-02", "FR-02")]);
 
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
             .voyage(
                 TestVoyage::new("01-draft", "test-epic")
                     .status("draft")
-                    .srs_content(srs),
+                    .srs_content(&srs),
             )
             .story(
                 TestStory::new("0007")
@@ -418,6 +454,14 @@ mod tests {
             &temp,
             "test-epic",
             r#"# PRD
+
+## Scope
+
+### In Scope
+- [SCOPE-01] Ship the planned slice.
+
+### Out of Scope
+- [SCOPE-02] Leave follow-on hardening for later.
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Priority | Rationale |
@@ -437,7 +481,11 @@ mod tests {
     fn plan_voyage_thaws_draft_scoped_stories() {
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
-            .voyage(TestVoyage::new("01-draft", "test-epic").status("draft"))
+            .voyage(
+                TestVoyage::new("01-draft", "test-epic")
+                    .status("draft")
+                    .srs_content(&scoped_srs(&[("SRS-01", "FR-01")])),
+            )
             .story(
                 TestStory::new("0005")
                     .scope("test-epic/01-draft")
@@ -465,7 +513,11 @@ mod tests {
     fn plan_voyage_blocks_story_without_srs_traceability() {
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
-            .voyage(TestVoyage::new("01-draft", "test-epic").status("draft"))
+            .voyage(
+                TestVoyage::new("01-draft", "test-epic")
+                    .status("draft")
+                    .srs_content(&scoped_srs(&[("SRS-01", "FR-01")])),
+            )
             .story(
                 TestStory::new("0010")
                     .scope("test-epic/01-draft")

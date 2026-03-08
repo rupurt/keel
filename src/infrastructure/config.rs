@@ -104,6 +104,31 @@ impl Default for ScoringConfig {
     }
 }
 
+/// Per-check doctor override.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct DoctorCheckOverride {
+    /// Disable this doctor check when true.
+    #[serde(default)]
+    pub disabled: bool,
+}
+
+/// Doctor diagnostics configuration.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct DoctorConfig {
+    /// Per-check disable overrides keyed by stable doctor check id.
+    #[serde(default)]
+    pub checks: std::collections::HashMap<String, DoctorCheckOverride>,
+}
+
+impl DoctorConfig {
+    /// Whether a given doctor check is disabled by config.
+    pub fn is_disabled(&self, id: &str) -> bool {
+        self.checks
+            .get(id)
+            .is_some_and(|override_| override_.disabled)
+    }
+}
+
 /// Default board directory
 fn default_board_dir() -> String {
     ".keel".to_string()
@@ -120,6 +145,10 @@ pub struct Config {
     /// Scoring configuration
     #[serde(default)]
     pub scoring: ScoringConfig,
+
+    /// Doctor diagnostics configuration.
+    #[serde(default)]
+    pub doctor: DoctorConfig,
 }
 
 impl Default for Config {
@@ -127,6 +156,7 @@ impl Default for Config {
         Self {
             board_dir: default_board_dir(),
             scoring: ScoringConfig::default(),
+            doctor: DoctorConfig::default(),
         }
     }
 }
@@ -298,6 +328,22 @@ mod tests {
         let toml_str = toml::to_string_pretty(&config).unwrap();
         let parsed: Config = toml::from_str(&toml_str).unwrap();
         assert_eq!(config, parsed);
+    }
+
+    #[test]
+    fn load_from_file_parses_doctor_check_overrides() {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("keel.toml");
+
+        let content = r#"
+[doctor.checks.voyage-scope-authored-content]
+disabled = true
+"#;
+        fs::write(&path, content).unwrap();
+
+        let config = load_from_file(&path).unwrap();
+        assert!(config.doctor.is_disabled("voyage-scope-authored-content"));
+        assert!(!config.doctor.is_disabled("story-id-uniqueness"));
     }
 
     #[test]

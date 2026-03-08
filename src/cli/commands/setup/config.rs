@@ -8,6 +8,7 @@ use anyhow::{Result, bail};
 use clap::Subcommand;
 use serde::Serialize;
 
+use crate::cli::commands::diagnostics::doctor::catalog::ALL_DOCTOR_CHECKS;
 use crate::infrastructure::config::{self, Config};
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::verification::parser::parse_verify_annotations;
@@ -65,6 +66,19 @@ struct ConfigShowVerificationPayload {
     diagnostics: Vec<String>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+struct DoctorCheckStatusRow {
+    id: String,
+    section: String,
+    name: String,
+    disabled: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+struct ConfigShowDoctorPayload {
+    checks: Vec<DoctorCheckStatusRow>,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize)]
 struct ConfigShowScoringPayload {
     mode: String,
@@ -81,6 +95,7 @@ struct ConfigShowPayload {
     board_dir: String,
     scoring: ConfigShowScoringPayload,
     verification: ConfigShowVerificationPayload,
+    doctor: ConfigShowDoctorPayload,
 }
 
 fn build_show_payload(
@@ -106,7 +121,22 @@ fn build_show_payload(
             techniques: projection.rows,
             diagnostics: projection.diagnostics,
         },
+        doctor: ConfigShowDoctorPayload {
+            checks: build_doctor_check_rows(config),
+        },
     }
+}
+
+fn build_doctor_check_rows(config: &Config) -> Vec<DoctorCheckStatusRow> {
+    ALL_DOCTOR_CHECKS
+        .iter()
+        .map(|check| DoctorCheckStatusRow {
+            id: check.id.to_string(),
+            section: check.section.to_string(),
+            name: check.name.to_string(),
+            disabled: config.doctor.is_disabled(check.id),
+        })
+        .collect()
 }
 
 fn render_show_payload(payload: &ConfigShowPayload) -> Vec<String> {
@@ -148,6 +178,20 @@ fn render_show_payload(payload: &ConfigShowPayload) -> Vec<String> {
         lines.push("# Config diagnostics:".to_string());
         for diagnostic in &payload.verification.diagnostics {
             lines.push(format!("  - {}", diagnostic));
+        }
+    }
+
+    lines.push(String::new());
+    lines.push("# Doctor check status (`disabled` is configurable):".to_string());
+    if payload.doctor.checks.is_empty() {
+        lines.push("  (none)".to_string());
+    } else {
+        for check in &payload.doctor.checks {
+            lines.push(format!("[doctor.checks.{}]", check.id));
+            lines.push(format!("section = \"{}\"", check.section));
+            lines.push(format!("name = \"{}\"", check.name));
+            lines.push(format!("disabled = {}", check.disabled));
+            lines.push(String::new());
         }
     }
 
@@ -347,8 +391,11 @@ disable = ["rust-coverage"]
         assert!(rendered.contains("[verification.rust-coverage]"));
         assert!(rendered.contains("command = \"cargo test\""));
         assert!(rendered.contains("disabled = true"));
+        assert!(rendered.contains("# Doctor check status (`disabled` is configurable):"));
+        assert!(rendered.contains("[doctor.checks.story-id-uniqueness]"));
+        assert!(rendered.contains("section = \"Stories\""));
+        assert!(rendered.contains("name = \"ID uniqueness\""));
         assert!(!rendered.contains("label = \""));
-        assert!(!rendered.contains("name = \""));
         assert!(!rendered.contains("modality = \""));
     }
 
@@ -427,6 +474,13 @@ enable = ["llm-judge"]
         );
         assert!(json["scoring"]["impact_weight"].as_f64().unwrap() > 0.0);
         assert!(json["verification"]["summary"].is_null());
+        let doctor_checks = json["doctor"]["checks"].as_array().unwrap().clone();
+        assert!(!doctor_checks.is_empty());
+        let first_doctor_check = &doctor_checks[0];
+        assert!(first_doctor_check.get("id").is_some());
+        assert!(first_doctor_check.get("section").is_some());
+        assert!(first_doctor_check.get("name").is_some());
+        assert!(first_doctor_check.get("disabled").is_some());
         let techniques = json["verification"]["techniques"]
             .as_array()
             .unwrap()
@@ -440,5 +494,27 @@ enable = ["llm-judge"]
         assert!(first.get("command").is_some());
         assert!(first.get("name").is_none());
         assert!(first.get("modality").is_none());
+    }
+
+    #[test]
+    fn config_show_marks_disabled_doctor_checks() {
+        let config = Config {
+            doctor: crate::infrastructure::config::DoctorConfig {
+                checks: std::collections::HashMap::from([(
+                    "voyage-scope-authored-content".to_string(),
+                    crate::infrastructure::config::DoctorCheckOverride { disabled: true },
+                )]),
+            },
+            ..Config::default()
+        };
+
+        let payload = build_show_payload(&config, &config::ConfigSource::Defaults, Path::new("."));
+        assert!(
+            payload
+                .doctor
+                .checks
+                .iter()
+                .any(|check| { check.id == "voyage-scope-authored-content" && check.disabled })
+        );
     }
 }

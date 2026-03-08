@@ -603,6 +603,43 @@ pub fn check_voyage_srs_structure(path: &Path) -> Vec<Problem> {
     problems
 }
 
+/// Check voyage SRS authored scope content.
+pub fn check_voyage_srs_authored_content(path: &Path) -> Vec<Problem> {
+    let mut problems = Vec::new();
+    let content = match fs::read_to_string(path) {
+        Ok(c) => c,
+        Err(_) => return problems,
+    };
+
+    let scope = extract_markdown_section(&content, "## Scope");
+    let (in_scope_count, out_scope_count) = scope
+        .as_deref()
+        .map(parse_canonical_scope_bullets)
+        .unwrap_or((0, 0));
+
+    if in_scope_count == 0 {
+        problems.push(
+            Problem::error(
+                path.to_path_buf(),
+                "SRS section 'Scope' must include at least one canonical 'In scope' [SCOPE-*] bullet",
+            )
+            .with_check_id(CheckId::VoyageSrsAuthoredContent),
+        );
+    }
+
+    if out_scope_count == 0 {
+        problems.push(
+            Problem::error(
+                path.to_path_buf(),
+                "SRS section 'Scope' must include at least one canonical 'Out of scope' [SCOPE-*] bullet",
+            )
+            .with_check_id(CheckId::VoyageSrsAuthoredContent),
+        );
+    }
+
+    problems
+}
+
 /// Check voyage SDD structure.
 pub fn check_voyage_sdd_structure(path: &Path) -> Vec<Problem> {
     let mut problems = Vec::new();
@@ -1009,11 +1046,14 @@ fn parse_canonical_scope_bullets(scope_section: &str) -> (usize, usize) {
 
     for line in scope_section.lines() {
         let trimmed = line.trim();
-        if trimmed.eq_ignore_ascii_case("### In Scope") {
+        if trimmed.eq_ignore_ascii_case("### In Scope") || trimmed.eq_ignore_ascii_case("In scope:")
+        {
             mode = Mode::InScope;
             continue;
         }
-        if trimmed.eq_ignore_ascii_case("### Out of Scope") {
+        if trimmed.eq_ignore_ascii_case("### Out of Scope")
+            || trimmed.eq_ignore_ascii_case("Out of scope:")
+        {
             mode = Mode::OutScope;
             continue;
         }
@@ -1467,5 +1507,33 @@ TODO: fill product requirements
                 .iter()
                 .any(|p| p.message.contains("pattern: TODO:"))
         );
+    }
+
+    #[test]
+    fn voyage_srs_authored_content_requires_canonical_scope_bullets() {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("SRS.md");
+        fs::write(
+            &path,
+            r#"# SRS
+
+## Scope
+
+In scope:
+- Describe the planned slice in prose only.
+
+Out of scope:
+- Leave follow-on hardening for later.
+"#,
+        )
+        .unwrap();
+
+        let problems = check_voyage_srs_authored_content(&path);
+
+        assert_eq!(problems.len(), 2);
+        assert!(problems.iter().all(|problem| {
+            problem.check_id == CheckId::VoyageSrsAuthoredContent
+                && problem.message.contains("SRS section 'Scope'")
+        }));
     }
 }

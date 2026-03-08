@@ -201,6 +201,7 @@ pub enum CheckId {
     StoryMissingManifest,
     StoryManifestTampered,
     VoyageStatusDrift,
+    VoyageSrsAuthoredContent,
     VoyagePrdLineageCoherence,
     VoyageScopeLineageCoherence,
     EpicGoalLineageCoherence,

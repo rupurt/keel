@@ -19,6 +19,17 @@ pub fn print_report(report: &DoctorReport) {
 fn print_section(name: &str, checks: &[super::types::CheckResult]) {
     println!("{}:", name.bold().cyan());
     for check in checks {
+        if check.disabled {
+            println!(
+                "  {} {} ({} checks) {}",
+                "⊝".bright_black(),
+                check.name,
+                check.evaluations,
+                "[disabled]".bright_black()
+            );
+            continue;
+        }
+
         let status = if check.passed {
             "✓".green().to_string()
         } else {

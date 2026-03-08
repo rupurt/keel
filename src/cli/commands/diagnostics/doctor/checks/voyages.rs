@@ -102,6 +102,27 @@ pub fn check_scope_lineage_coherence(board: &Board) -> Vec<Problem> {
     problems
 }
 
+pub fn check_scope_authored_content(board: &Board) -> Vec<Problem> {
+    let mut voyages: Vec<_> = board.voyages.values().collect();
+    voyages.sort_by(|a, b| a.index().cmp(&b.index()).then_with(|| a.id().cmp(b.id())));
+
+    let mut problems = Vec::new();
+    for voyage in voyages {
+        if voyage.status() == VoyageState::Done {
+            continue;
+        }
+
+        let srs_path = voyage.path.parent().unwrap_or(&voyage.path).join("SRS.md");
+        problems.extend(
+            structural::check_voyage_srs_authored_content(&srs_path)
+                .into_iter()
+                .map(|problem| problem.with_scope(voyage.scope_path())),
+        );
+    }
+
+    problems
+}
+
 /// Check voyage title case
 pub fn check_voyage_title_case(board: &Board) -> Vec<Problem> {
     let mut problems = Vec::new();
@@ -620,6 +641,64 @@ Out of scope:
         let problems = check_scope_lineage_coherence(&board);
 
         assert!(problems.is_empty(), "{problems:#?}");
+    }
+
+    #[test]
+    fn scope_authored_content_requires_canonical_scope_bullets() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").status("planned").srs_content(
+                r#"# SRS
+
+## Scope
+
+In scope:
+- Describe the planned slice in prose only.
+
+Out of scope:
+- Leave follow-on hardening for later.
+"#,
+            ))
+            .build();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_scope_authored_content(&board);
+
+        assert_eq!(problems.len(), 2);
+        assert!(problems.iter().all(|problem| {
+            problem.check_id == CheckId::VoyageSrsAuthoredContent
+                && problem.message.contains("SRS section 'Scope'")
+        }));
+    }
+
+    #[test]
+    fn doctor_reports_voyage_scope_authored_content_gaps() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").status("planned").srs_content(
+                r#"# SRS
+
+## Scope
+
+In scope:
+- [SCOPE-01] Ship the planned slice.
+"#,
+            ))
+            .build();
+
+        let report = crate::cli::commands::diagnostics::doctor::validate(temp.path()).unwrap();
+        let findings: Vec<_> = report
+            .voyage_checks
+            .iter()
+            .find(|check| check.id == "voyage-scope-authored-content")
+            .unwrap()
+            .problems
+            .iter()
+            .filter(|problem| problem.check_id == CheckId::VoyageSrsAuthoredContent)
+            .collect();
+
+        assert_eq!(findings.len(), 1);
+        assert!(findings[0].message.contains("Out of scope"));
     }
 
     #[test]

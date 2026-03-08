@@ -461,6 +461,7 @@ fn evaluate_voyage_plan(
     }
 
     if require_requirements_coverage {
+        problems.extend(voyage_scope_gate_problems(voyage, board));
         problems.extend(prd_lineage_gate_problems(voyage, board));
         problems.extend(
             uncovered_requirements_gate_problems(voyage, board)
@@ -664,6 +665,26 @@ fn uncovered_requirements_gate_problems(voyage: &Voyage, board: &Board) -> Vec<S
         .into_iter()
         .map(|id| format!("{} requirements not covered by stories", id))
         .collect()
+}
+
+fn voyage_scope_gate_problems(voyage: &Voyage, board: &Board) -> Vec<Problem> {
+    let srs_path = voyage.path.parent().unwrap_or(&voyage.path).join("SRS.md");
+    let mut problems =
+        crate::infrastructure::validation::structural::check_voyage_srs_authored_content(&srs_path)
+            .into_iter()
+            .map(|problem| problem.with_scope(voyage.scope_path()))
+            .collect::<Vec<_>>();
+    problems.extend(invariants::voyage_scope_lineage_problems(
+        voyage,
+        board,
+        CheckId::VoyageScopeLineageCoherence,
+    ));
+    problems.extend(invariants::voyage_requirement_scope_lineage_problems(
+        voyage,
+        board,
+        CheckId::VoyageScopeLineageCoherence,
+    ));
+    problems
 }
 
 fn prd_lineage_gate_problems(voyage: &Voyage, board: &Board) -> Vec<Problem> {
@@ -971,11 +992,67 @@ mod tests {
         fs::write(temp.path().join(format!("epics/{epic_id}/PRD.md")), content).unwrap();
     }
 
+    fn scoped_srs(requirements: &[(&str, &str)]) -> String {
+        let mut srs = String::from(
+            r#"# Test SRS
+
+## Scope
+
+In scope:
+- [SCOPE-01] Ship the planned slice.
+
+Out of scope:
+- [SCOPE-02] Leave follow-on hardening for later.
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+"#,
+        );
+        for (requirement_id, source_id) in requirements {
+            srs.push_str(&format!(
+                "| {requirement_id} | Requirement {requirement_id} | SCOPE-01 | {source_id} | test |\n"
+            ));
+        }
+        srs.push_str("<!-- END FUNCTIONAL_REQUIREMENTS -->\n");
+        srs
+    }
+
+    fn scoped_prd(requirements: &[&str]) -> String {
+        let mut prd = String::from(
+            r#"# PRD
+
+## Scope
+
+### In Scope
+- [SCOPE-01] Ship the planned slice.
+
+### Out of Scope
+- [SCOPE-02] Leave follow-on hardening for later.
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+"#,
+        );
+        for requirement_id in requirements {
+            prd.push_str(&format!(
+                "| {requirement_id} | Requirement {requirement_id} | must | test |\n"
+            ));
+        }
+        prd.push_str("<!-- END FUNCTIONAL_REQUIREMENTS -->\n");
+        prd
+    }
+
     #[test]
     fn evaluate_voyage_transition_plan_skips_legality_checks() {
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
-            .voyage(TestVoyage::new("01-planned", "test-epic").status("planned"))
+            .voyage(
+                TestVoyage::new("01-planned", "test-epic")
+                    .status("planned")
+                    .srs_content(&scoped_srs(&[("SRS-01", "FR-01")])),
+            )
             .story(
                 TestStory::new("PLAN01")
                     .scope("test-epic/01-planned")
@@ -999,13 +1076,48 @@ mod tests {
 
     #[test]
     fn evaluate_voyage_transition_plan_requires_requirements_when_requested() {
+        let srs = scoped_srs(&[("SRS-01", "FR-01"), ("SRS-02", "FR-02")]);
+
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("test-epic"))
+            .voyage(
+                TestVoyage::new("01-draft", "test-epic")
+                    .status("draft")
+                    .srs_content(&srs),
+            )
+            .story(
+                TestStory::new("PLAN01")
+                    .scope("test-epic/01-draft")
+                    .status(StoryState::Backlog)
+                    .body(
+                        "## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Requirement 1 covered <!-- verify: cargo test SRS-01:start:end -->",
+                    ),
+            )
+            .build();
+        write_prd(&temp, "test-epic", &scoped_prd(&["FR-01", "FR-02"]));
+
+        let board = load_board(temp.path()).unwrap();
+        let voyage = board.require_voyage("01-draft").unwrap();
+
+        let problems = evaluate_voyage_transition(&board, voyage, VoyageTransition::Plan, true);
+
+        assert_eq!(
+            problems.len(),
+            1,
+            "uncovered SRS requirements should fail plan gate"
+        );
+        assert!(has_message(&problems, "SRS-02"));
+        assert!(problems[0].severity == Severity::Error);
+    }
+
+    #[test]
+    fn evaluate_voyage_transition_plan_requires_authored_scope_contract() {
         let srs = r#"# Test SRS
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Source | Verification |
 |----|-------------|--------|--------------|
 | SRS-01 | Requirement 1 | FR-01 | test |
-| SRS-02 | Requirement 2 | FR-02 | test |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 "#;
 
@@ -1030,11 +1142,18 @@ mod tests {
             "test-epic",
             r#"# PRD
 
+## Scope
+
+### In Scope
+- [SCOPE-01] Ship the planned slice.
+
+### Out of Scope
+- [SCOPE-02] Leave follow-on hardening for later.
+
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Priority | Rationale |
 |----|-------------|----------|-----------|
 | FR-01 | Requirement 1 | must | test |
-| FR-02 | Requirement 2 | must | test |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 "#,
         );
@@ -1044,13 +1163,10 @@ mod tests {
 
         let problems = evaluate_voyage_transition(&board, voyage, VoyageTransition::Plan, true);
 
-        assert_eq!(
-            problems.len(),
-            1,
-            "uncovered SRS requirements should fail plan gate"
-        );
-        assert!(has_message(&problems, "SRS-02"));
-        assert!(problems[0].severity == Severity::Error);
+        assert!(problems.iter().any(|problem| {
+            problem.check_id == CheckId::VoyageSrsAuthoredContent
+                && problem.message.contains("SRS section 'Scope'")
+        }));
     }
 
     #[test]
@@ -1120,6 +1236,73 @@ mod tests {
     }
 
     #[test]
+    fn evaluate_voyage_transition_plan_rejects_scope_lineage_drift() {
+        let srs = r#"# Test SRS
+
+## Scope
+
+In scope:
+- [SCOPE-99] Pull an unknown parent scope item into this slice.
+
+Out of scope:
+- [SCOPE-02] Leave follow-on hardening for later.
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+| SRS-01 | Requirement 1 | SCOPE-99 | FR-01 | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#;
+
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("test-epic"))
+            .voyage(
+                TestVoyage::new("01-draft", "test-epic")
+                    .status("draft")
+                    .srs_content(srs),
+            )
+            .story(
+                TestStory::new("PLAN01")
+                    .scope("test-epic/01-draft")
+                    .status(StoryState::Backlog)
+                    .body(
+                        "## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Requirement 1 covered <!-- verify: cargo test SRS-01:start:end -->",
+                    ),
+            )
+            .build();
+        write_prd(
+            &temp,
+            "test-epic",
+            r#"# PRD
+
+## Scope
+
+### In Scope
+- [SCOPE-01] Ship the planned slice.
+
+### Out of Scope
+- [SCOPE-02] Leave follow-on hardening for later.
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Priority | Rationale |
+|----|-------------|----------|-----------|
+| FR-01 | Requirement 1 | must | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        );
+
+        let board = load_board(temp.path()).unwrap();
+        let voyage = board.require_voyage("01-draft").unwrap();
+
+        let problems = evaluate_voyage_transition(&board, voyage, VoyageTransition::Plan, true);
+
+        assert!(problems.iter().any(|problem| {
+            problem.check_id == CheckId::VoyageScopeLineageCoherence
+                && problem.message.contains("unknown parent scope ID")
+        }));
+    }
+
+    #[test]
     fn evaluate_voyage_transition_plan_requires_acceptance_criteria_items() {
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
@@ -1148,21 +1331,14 @@ mod tests {
 
     #[test]
     fn prd_lineage_gate_errors_are_actionable() {
-        let srs = r#"# Test SRS
-
-<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Source | Verification |
-|----|-------------|--------|--------------|
-| SRS-01 | Requirement 1 | PRD-01 | test |
-<!-- END FUNCTIONAL_REQUIREMENTS -->
-"#;
+        let srs = scoped_srs(&[("SRS-01", "PRD-01")]);
 
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
             .voyage(
                 TestVoyage::new("01-draft", "test-epic")
                     .status("draft")
-                    .srs_content(srs),
+                    .srs_content(&srs),
             )
             .story(
                 TestStory::new("PLAN01")
@@ -1173,18 +1349,7 @@ mod tests {
                     ),
             )
             .build();
-        write_prd(
-            &temp,
-            "test-epic",
-            r#"# PRD
-
-<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Priority | Rationale |
-|----|-------------|----------|-----------|
-| FR-01 | Requirement 1 | must | test |
-<!-- END FUNCTIONAL_REQUIREMENTS -->
-"#,
-        );
+        write_prd(&temp, "test-epic", &scoped_prd(&["FR-01"]));
 
         let board = load_board(temp.path()).unwrap();
         let voyage = board.require_voyage("01-draft").unwrap();
