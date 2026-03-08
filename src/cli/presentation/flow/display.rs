@@ -92,9 +92,11 @@ pub fn render_annotated_flow(
 
     // 3. Execution Capacity (Strategic Throughput)
     let capacity = crate::cli::presentation::flow::capacity::calculate_system_capacity(board);
+    let has_actionable_capacity = strategic_capacity_available(&capacity.epics);
     let cap_map = capacity
         .epics
-        .into_iter()
+        .iter()
+        .cloned()
         .map(|report| (report.id.clone(), report))
         .collect::<std::collections::HashMap<_, _>>();
 
@@ -105,6 +107,10 @@ pub fn render_annotated_flow(
         writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
         writeln!(output).unwrap();
         writeln!(output, "{}", cap_render).unwrap();
+        if !has_actionable_capacity {
+            writeln!(output).unwrap();
+            writeln!(output, "  {}", strategic_capacity_guidance(board, metrics)).unwrap();
+        }
     }
 
     // 4. Bottleneck Dependencies (Only shown when blockage exists)
@@ -263,6 +269,30 @@ fn render_stacked_queue_boxes(health: &TwoActorHealth, width: usize, theme: &The
     output
 }
 
+fn strategic_capacity_available(
+    reports: &[crate::cli::presentation::flow::format::EpicCapacityReport],
+) -> bool {
+    reports.iter().any(|report| {
+        report.capacity.ready + report.capacity.in_flight + report.capacity.blocked > 0
+    })
+}
+
+fn strategic_capacity_guidance(board: &Board, metrics: &FlowMetrics) -> &'static str {
+    if board.epics.is_empty() {
+        return "No executable epic capacity. Next step: create an epic with `keel epic new` or lay an assessed bearing.";
+    }
+
+    if metrics.planning.draft_count > 0 {
+        return "No executable epic capacity. Next step: plan a draft voyage with `keel voyage plan <id>` to thaw scoped work.";
+    }
+
+    if metrics.planning.epics_needing_voyages > 0 {
+        return "No executable epic capacity. Next step: add a voyage with `keel voyage new` under the next draft epic.";
+    }
+
+    "No executable epic capacity. Next step: add or thaw scoped stories inside a planned voyage."
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -338,5 +368,6 @@ mod tests {
         assert!(rendered.contains("Verification"));
         assert!(rendered.contains("HUMAN QUEUE"));
         assert!(rendered.contains("AGENT QUEUE"));
+        assert!(rendered.contains("No executable epic capacity"));
     }
 }
