@@ -9,4 +9,12 @@ created_at: 2026-03-04T12:00:00
 
 Improve the knowledge system of Keel by implementing semantic search and ranking over Markdown documents. This research explores pure Rust implementations that operate without an external database to maintain Keel's standalone, statically-linked nature.
 
-See [BRIEF.md](BRIEF.md) for research details.
+## Documents
+
+<!-- BEGIN DOCUMENTS -->
+| Document | Description |
+|----------|-------------|
+| [BRIEF.md](BRIEF.md) | Core research brief covering the hypothesis, problem space, success criteria, and open questions |
+| [SURVEY.md](SURVEY.md) | Survey findings, market and technical research, and discovered constraints |
+| [ASSESSMENT.md](ASSESSMENT.md) | Impact scoring, tradeoff analysis, and the final recommendation |
+<!-- END DOCUMENTS -->

@@ -395,6 +395,11 @@ mod tests {
         assert!(bearing::README.contains("{{id}}"));
         assert!(bearing::README.contains("{{title}}"));
         assert!(bearing::README.contains("{{created_at}}"));
+        assert!(bearing::README.contains("## Documents"));
+        assert!(bearing::README.contains("<!-- BEGIN DOCUMENTS -->"));
+        assert!(bearing::README.contains("[BRIEF.md](BRIEF.md)"));
+        assert!(bearing::README.contains("[SURVEY.md](SURVEY.md)"));
+        assert!(bearing::README.contains("[ASSESSMENT.md](ASSESSMENT.md)"));
     }
 
     #[test]

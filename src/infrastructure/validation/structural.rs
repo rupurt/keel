@@ -22,6 +22,11 @@ static EPIC_PRD_DEFAULT_ROW_MARKERS: &[&str] = &[
     "Maintain reliability and observability for all new workflow paths introduced by this epic.",
     "Users can complete the primary workflow described in this PRD without manual intervention.",
 ];
+static BEARING_REQUIRED_DOCUMENT_LINKS: &[&str] = &[
+    "[BRIEF.md](BRIEF.md)",
+    "[SURVEY.md](SURVEY.md)",
+    "[ASSESSMENT.md](ASSESSMENT.md)",
+];
 
 /// Check for date field naming and type consistency.
 ///
@@ -560,6 +565,77 @@ pub fn check_voyage_readme_structure(path: &Path) -> Vec<Problem> {
     problems
 }
 
+/// Check bearing README structure.
+pub fn check_bearing_readme_structure(path: &Path) -> Vec<Problem> {
+    let mut problems = Vec::new();
+    let content = match fs::read_to_string(path) {
+        Ok(c) => c,
+        Err(_) => return problems,
+    };
+
+    if let Some(pattern) = first_unfilled_placeholder_pattern(&content) {
+        problems.push(
+            Problem::error(
+                path.to_path_buf(),
+                format!(
+                    "README contains unresolved scaffold/default text (pattern: {})",
+                    pattern
+                ),
+            )
+            .with_check_id(CheckId::BearingReadmeStructure)
+            .with_fix(Fix::ClearPlaceholder {
+                path: path.to_path_buf(),
+                pattern,
+            }),
+        );
+    }
+
+    if !content.contains("## Documents") {
+        problems.push(
+            Problem::error(path.to_path_buf(), "README missing Documents section")
+                .with_check_id(CheckId::BearingReadmeStructure),
+        );
+    }
+
+    let Some(documents_block) = extract_marker_block(&content, "DOCUMENTS") else {
+        problems.push(
+            Problem::error(
+                path.to_path_buf(),
+                "README missing standard Documents section markers",
+            )
+            .with_check_id(CheckId::BearingReadmeStructure),
+        );
+        return problems;
+    };
+
+    if !documents_block.contains("| Document | Description |") {
+        problems.push(
+            Problem::error(
+                path.to_path_buf(),
+                "README Documents section must include markdown table headers",
+            )
+            .with_check_id(CheckId::BearingReadmeStructure),
+        );
+    }
+
+    for document_link in BEARING_REQUIRED_DOCUMENT_LINKS {
+        if !documents_block_has_authored_document_row(&documents_block, document_link) {
+            problems.push(
+                Problem::error(
+                    path.to_path_buf(),
+                    format!(
+                        "README Documents section must include authored row for {}",
+                        document_link
+                    ),
+                )
+                .with_check_id(CheckId::BearingReadmeStructure),
+            );
+        }
+    }
+
+    problems
+}
+
 /// Check voyage SRS structure.
 pub fn check_voyage_srs_structure(path: &Path) -> Vec<Problem> {
     let mut problems = Vec::new();
@@ -916,6 +992,28 @@ fn extract_marker_block(content: &str, marker_name: &str) -> Option<String> {
     Some(after_begin[..end_idx].to_string())
 }
 
+fn documents_block_has_authored_document_row(section: &str, expected_link: &str) -> bool {
+    section.lines().any(|line| {
+        let trimmed = line.trim();
+        if !trimmed.starts_with('|') {
+            return false;
+        }
+
+        let cells: Vec<_> = trimmed
+            .trim_matches('|')
+            .split('|')
+            .map(|cell| cell.trim())
+            .collect();
+        if cells.len() < 2 || is_table_separator_row(&cells) || is_table_header_row(&cells) {
+            return false;
+        }
+
+        cells[0] == expected_link
+            && !cells[1].is_empty()
+            && first_unfilled_placeholder_pattern(cells[1]).is_none()
+    })
+}
+
 fn section_has_authored_paragraph(section: &str) -> bool {
     section.lines().any(|line| {
         let trimmed = line.trim();
@@ -1217,6 +1315,84 @@ mod tests {
                 .iter()
                 .any(|p| p.message.contains("pattern: TODO:"))
         );
+    }
+
+    #[test]
+    fn test_check_bearing_readme_structure_requires_documents_table_rows() {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("README.md");
+        fs::write(
+            &path,
+            r#"---
+id: B1
+title: Bearing Title
+status: exploring
+created_at: 2026-01-01T00:00:00
+---
+
+# Bearing Title
+
+## Documents
+
+<!-- BEGIN DOCUMENTS -->
+| Document | Description |
+|----------|-------------|
+| [BRIEF.md](BRIEF.md) | Core research brief |
+<!-- END DOCUMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let problems = check_bearing_readme_structure(&path);
+
+        assert_eq!(problems.len(), 2);
+        assert!(
+            problems
+                .iter()
+                .all(|p| p.check_id == CheckId::BearingReadmeStructure)
+        );
+        assert!(
+            problems
+                .iter()
+                .any(|p| p.message.contains("[SURVEY.md](SURVEY.md)"))
+        );
+        assert!(
+            problems
+                .iter()
+                .any(|p| p.message.contains("[ASSESSMENT.md](ASSESSMENT.md)"))
+        );
+    }
+
+    #[test]
+    fn test_check_bearing_readme_structure_accepts_filled_documents_table() {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("README.md");
+        fs::write(
+            &path,
+            r#"---
+id: B1
+title: Bearing Title
+status: exploring
+created_at: 2026-01-01T00:00:00
+---
+
+# Bearing Title
+
+## Documents
+
+<!-- BEGIN DOCUMENTS -->
+| Document | Description |
+|----------|-------------|
+| [BRIEF.md](BRIEF.md) | Core research brief covering the hypothesis and open questions |
+| [SURVEY.md](SURVEY.md) | Survey findings, market research, and technical constraints |
+| [ASSESSMENT.md](ASSESSMENT.md) | Tradeoff analysis and recommendation |
+<!-- END DOCUMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let problems = check_bearing_readme_structure(&path);
+        assert!(problems.is_empty(), "{problems:?}");
     }
 
     #[test]

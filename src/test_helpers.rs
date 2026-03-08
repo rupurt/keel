@@ -603,7 +603,7 @@ Test harness epic problem statement.
                 fs::write(
                                             bearing_dir.join("README.md"),
                                             format!(
-                                                "---\nid: {}\ntitle: {}\nstatus: {}\ncreated_at: 2026-01-01T00:00:00\n{}---\n\n# {}\n\nSee [BRIEF.md](BRIEF.md) for details.\n",
+                                                "---\nid: {}\ntitle: {}\nstatus: {}\ncreated_at: 2026-01-01T00:00:00\n{}---\n\n# {}\n\n## Documents\n\n<!-- BEGIN DOCUMENTS -->\n| Document | Description |\n|----------|-------------|\n| [BRIEF.md](BRIEF.md) | Core research brief covering the hypothesis, problem space, success criteria, and open questions |\n| [SURVEY.md](SURVEY.md) | Survey findings, market and technical research, and discovered constraints |\n| [ASSESSMENT.md](ASSESSMENT.md) | Impact scoring, tradeoff analysis, and the final recommendation |\n<!-- END DOCUMENTS -->\n",
                                                 bearing.id, bearing.title, bearing.status, index_line, bearing.title
                                             )
                                         ).unwrap();

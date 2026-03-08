@@ -34,6 +34,11 @@ pub fn scan_bearing_files(board_dir: &Path) -> Result<(Vec<Problem>, usize)> {
             if let Some(problem) = check_bearing_file(&readme_path) {
                 problems.push(problem);
             }
+            problems.extend(
+                crate::infrastructure::validation::structural::check_bearing_readme_structure(
+                    &readme_path,
+                ),
+            );
         } else {
             problems.push(Problem {
                 severity: Severity::Error,
@@ -602,6 +607,27 @@ mod tests {
         let path = temp.path().join("bearings/BRG-01/README.md");
         let problem = check_bearing_file(&path);
         assert!(problem.is_none());
+    }
+
+    #[test]
+    fn test_scan_bearing_files_flags_legacy_readme_without_documents_table() {
+        let temp = TestBoardBuilder::new()
+            .bearing(TestBearing::new("BRG-01"))
+            .build();
+        let path = temp.path().join("bearings/BRG-01/README.md");
+        fs::write(
+            &path,
+            "---\nid: BRG-01\ntitle: Test Research\nstatus: exploring\ncreated_at: 2026-01-01T00:00:00\n---\n\n# Test Research\n\nSee [BRIEF.md](BRIEF.md) for details.\n",
+        )
+        .unwrap();
+
+        let (problems, _count) = scan_bearing_files(temp.path()).unwrap();
+
+        assert!(
+            problems
+                .iter()
+                .any(|problem| problem.message.contains("README missing Documents section"))
+        );
     }
 
     #[test]

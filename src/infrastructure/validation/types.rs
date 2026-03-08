@@ -169,6 +169,7 @@ pub enum GapCategory {
 pub enum CheckId {
     #[default]
     Unknown,
+    BearingReadmeStructure,
     VoyagesReadmeStructure,
     VoyagesSrsExists,
     VoyagesSddExists,
