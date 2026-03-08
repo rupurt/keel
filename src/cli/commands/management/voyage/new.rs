@@ -7,6 +7,7 @@ use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 
 use crate::infrastructure::duplicate_ids::{self, DuplicateEntity};
+use crate::infrastructure::frontmatter_mutation::Mutation;
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::story_id::generate_story_id;
 use crate::infrastructure::template_rendering;
@@ -66,7 +67,8 @@ fn new_voyage(board_dir: &Path, name: &str, epic_id: &str, goal: &str) -> Result
     })?;
 
     // Render template (including epic placeholder)
-    let mut content = template_rendering::render(
+    let index_string = next_num.to_string();
+    let content = template_rendering::render_with_mutations(
         templates::voyage::README,
         &[
             ("id", &voyage_id),
@@ -75,13 +77,7 @@ fn new_voyage(board_dir: &Path, name: &str, epic_id: &str, goal: &str) -> Result
             ("epic", epic_id),
             ("goal", goal_text),
         ],
-    );
-
-    // Insert index
-    content = crate::cli::commands::management::story::new::insert_frontmatter_field(
-        &content,
-        &format!("id: {}", voyage_id),
-        &format!("index: {}", next_num),
+        &[Mutation::set("index", index_string.as_str())],
     );
 
     // Write README

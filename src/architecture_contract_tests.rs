@@ -320,7 +320,7 @@ fn creation_paths_use_shared_template_rendering_service() {
     ] {
         let content = read_production_source(path);
         assert!(
-            content.contains("template_rendering::render"),
+            content.contains("template_rendering::"),
             "{path} should call shared template rendering service"
         );
         assert!(

@@ -7,6 +7,7 @@ use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 
 use crate::infrastructure::duplicate_ids::{self, DuplicateEntity};
+use crate::infrastructure::frontmatter_mutation::Mutation;
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::story_id::generate_story_id;
 use crate::infrastructure::template_rendering;
@@ -69,7 +70,8 @@ fn new_bearing(board_dir: &Path, name: &str) -> Result<String> {
     })?;
 
     // Render README.md template
-    let readme_content = template_rendering::render(
+    let index_string = next_index.to_string();
+    let readme_content = template_rendering::render_with_mutations(
         templates::bearing::README,
         &[
             ("id", &bearing_id),
@@ -77,13 +79,7 @@ fn new_bearing(board_dir: &Path, name: &str) -> Result<String> {
             ("created_at", &now),
             ("status", "exploring"),
         ],
-    );
-
-    // Insert index into README frontmatter
-    let readme_content = crate::cli::commands::management::story::new::insert_frontmatter_field(
-        &readme_content,
-        &format!("id: {}", bearing_id),
-        &format!("index: {}", next_index),
+        &[Mutation::set("index", index_string.as_str())],
     );
 
     // Write README.md
@@ -92,21 +88,7 @@ fn new_bearing(board_dir: &Path, name: &str) -> Result<String> {
         .with_context(|| format!("Failed to write bearing README: {}", readme_path.display()))?;
 
     // Render BRIEF.md template
-    let brief_content = template_rendering::render(templates::bearing::BRIEF, &[("title", name)]);
-
-    // Strip frontmatter if the template still includes it (templates usually have it)
-    // For now, I will just write it as is, but if BRIEF.md template is updated, this is clean.
-    // Actually, I should probably ensure BRIEF.md doesn't have frontmatter if I want to be strict.
-    let brief_body = if brief_content.starts_with("---") {
-        let parts: Vec<&str> = brief_content.splitn(3, "---").collect();
-        if parts.len() == 3 {
-            parts[2].trim_start().to_string()
-        } else {
-            brief_content
-        }
-    } else {
-        brief_content
-    };
+    let brief_body = template_rendering::render_body(templates::bearing::BRIEF, &[("title", name)]);
 
     // Write BRIEF.md (content only)
     let brief_path = bearing_dir.join("BRIEF.md");

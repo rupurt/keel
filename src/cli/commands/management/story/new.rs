@@ -6,9 +6,9 @@ use std::path::Path;
 use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 
-use crate::domain::model::{AdrStatus, Board, StoryState};
-use crate::domain::transitions::{TimestampUpdates, update_frontmatter};
+use crate::domain::model::{AdrStatus, Board};
 use crate::infrastructure::duplicate_ids::{self, DuplicateEntity};
+use crate::infrastructure::frontmatter_mutation::Mutation;
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::story_id::generate_story_id;
 use crate::infrastructure::template_rendering;
@@ -19,25 +19,6 @@ use crate::infrastructure::utils::slugify;
 pub fn run(title: &str, story_type: &str, epic: Option<&str>, voyage: Option<&str>) -> Result<()> {
     let board_dir = crate::infrastructure::config::find_board_dir()?;
     new_story(&board_dir, title, story_type, epic, voyage)
-}
-
-/// Insert a field into frontmatter after a specific field
-pub fn insert_frontmatter_field(content: &str, after_field: &str, new_line: &str) -> String {
-    let marker = format!(
-        "{}
-",
-        after_field
-    );
-    if let Some(pos) = content.find(&marker) {
-        let insert_pos = pos + marker.len();
-        let mut result = content[..insert_pos].to_string();
-        result.push_str(new_line);
-        result.push('\n');
-        result.push_str(&content[insert_pos..]);
-        result
-    } else {
-        content.to_string()
-    }
 }
 
 /// Find the next index number for a given scope
@@ -199,7 +180,21 @@ fn new_story(
 
     let story_path = story_bundle_dir.join("README.md");
 
-    let mut content = template_rendering::render(
+    let mut mutations = Vec::new();
+    if let Some(s) = &scope {
+        mutations.push(Mutation::set("scope", s.clone()));
+    }
+    if let Some(seq) = index {
+        mutations.push(Mutation::set("index", seq.to_string()));
+    }
+    if !governing_adrs.is_empty() {
+        mutations.push(Mutation::set(
+            "governed-by",
+            format!("[{}]", governing_adrs.join(", ")),
+        ));
+    }
+
+    let content = template_rendering::render_with_mutations(
         templates::story::STORY,
         &[
             ("id", &story_id),
@@ -208,44 +203,8 @@ fn new_story(
             ("created_at", &now),
             ("updated_at", &now),
         ],
+        &mutations,
     );
-
-    if let Some(s) = &scope {
-        content = insert_frontmatter_field(
-            &content,
-            &format!("updated_at: {}", now),
-            &format!("scope: {}", s),
-        );
-    }
-    if let (Some(s), Some(seq)) = (&scope, index) {
-        content = insert_frontmatter_field(
-            &content,
-            &format!("scope: {}", s),
-            &format!("index: {}", seq),
-        );
-    }
-    if !governing_adrs.is_empty() {
-        let insert_after = if let (Some(_), Some(seq)) = (&scope, index) {
-            format!("index: {}", seq)
-        } else if let Some(s) = &scope {
-            format!("scope: {}", s)
-        } else {
-            format!("updated_at: {}", now)
-        };
-        let governed_by_value = format!("[{}]", governing_adrs.join(", "));
-        content = insert_frontmatter_field(
-            &content,
-            &insert_after,
-            &format!("governed-by: {}", governed_by_value),
-        );
-    }
-
-    // Canonical hard-cutover path: all newly created stories enter Icebox.
-    content = update_frontmatter(
-        &content,
-        StoryState::Icebox,
-        &TimestampUpdates::updated_only(),
-    )?;
 
     fs::write(&story_path, content)
         .with_context(|| format!("Failed to write story: {}", story_path.display()))?;
@@ -298,25 +257,6 @@ mod tests {
             &[("title", "World"), ("created_at", "2026-03-02T00:00:00")],
         );
         assert_eq!(result, "Story World created at 2026-03-02T00:00:00");
-    }
-
-    #[test]
-    fn insert_frontmatter_field_inserts_after_marker() {
-        let content = "---
-id: test
-status: in-progress
----
-";
-        let result = insert_frontmatter_field(content, "id: test", "title: New");
-        assert_eq!(
-            result,
-            "---
-id: test
-title: New
-status: in-progress
----
-"
-        );
     }
 
     #[test]

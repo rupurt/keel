@@ -10,6 +10,10 @@ use std::path::{Path, PathBuf};
 use tempfile::TempDir;
 
 use crate::domain::model::StoryState;
+use crate::infrastructure::frontmatter_mutation::Mutation;
+use crate::infrastructure::{template_rendering, templates};
+
+const FIXED_DATETIME: &str = "2026-01-01T00:00:00";
 
 /// Builder for creating test boards with flexible configuration.
 pub struct TestBoardBuilder {
@@ -372,6 +376,62 @@ impl TestBearing {
     }
 }
 
+fn render_fixture_epic_readme(epic: &TestEpic) -> String {
+    let mut mutations = Vec::new();
+    if let Some(index) = epic.index {
+        mutations.push(Mutation::set("index", index.to_string()));
+    }
+
+    template_rendering::render_with_mutations(
+        templates::epic::README,
+        &[
+            ("id", &epic.id),
+            ("title", &epic.title),
+            ("created_at", FIXED_DATETIME),
+            ("problem", "Test harness epic problem statement."),
+        ],
+        &mutations,
+    )
+}
+
+fn render_fixture_voyage_readme(voyage: &TestVoyage) -> String {
+    let mut mutations = vec![Mutation::set("status", voyage.status.clone())];
+    if let Some(index) = voyage.index {
+        mutations.push(Mutation::set("index", index.to_string()));
+    }
+    let goal = format!("Deliver {}", voyage.title);
+
+    template_rendering::render_with_mutations(
+        templates::voyage::README,
+        &[
+            ("id", &voyage.id),
+            ("title", &voyage.title),
+            ("created_at", FIXED_DATETIME),
+            ("epic", &voyage.epic_id),
+            ("goal", &goal),
+        ],
+        &mutations,
+    )
+}
+
+fn render_fixture_bearing_readme(bearing: &TestBearing) -> String {
+    let mut mutations = Vec::new();
+    if let Some(index) = bearing.index {
+        mutations.push(Mutation::set("index", index.to_string()));
+    }
+
+    template_rendering::render_with_mutations(
+        templates::bearing::README,
+        &[
+            ("id", &bearing.id),
+            ("title", &bearing.title),
+            ("status", &bearing.status),
+            ("created_at", FIXED_DATETIME),
+        ],
+        &mutations,
+    )
+}
+
 impl TestBoardBuilder {
     /// Create a new test board builder.
     pub fn new() -> Self {
@@ -433,18 +493,7 @@ impl TestBoardBuilder {
         for epic in &epics {
             let epic_dir = root.join("epics").join(&epic.id);
             fs::create_dir_all(&epic_dir).unwrap();
-            let index_line = epic
-                .index
-                .map(|i| format!("index: {}\n", i))
-                .unwrap_or_default();
-            fs::write(
-                        epic_dir.join("README.md"),
-                        format!(
-                            "---\nid: {}\ntitle: {}\n{}---\n\n# {}\n\n## Voyages\n\n<!-- BEGIN GENERATED -->\n<!-- END GENERATED -->\n",
-                            epic.id, epic.title, index_line, epic.title
-                        ),
-                    )
-                    .unwrap();
+            fs::write(epic_dir.join("README.md"), render_fixture_epic_readme(epic)).unwrap();
 
             // Create default PRD.md
             fs::write(
@@ -526,18 +575,11 @@ Test harness epic problem statement.
                 .join("voyages")
                 .join(&voyage.id);
             fs::create_dir_all(&voyage_dir).unwrap();
-            let index_line = voyage
-                .index
-                .map(|i| format!("index: {}\n", i))
-                .unwrap_or_default();
             fs::write(
-                        voyage_dir.join("README.md"),
-                        format!(
-                            "---\nid: {}\ntitle: {}\nstatus: {}\nepic: {}\n{}---\n\n# {}\n\n## Stories\n\n<!-- BEGIN GENERATED -->\n<!-- END GENERATED -->\n",
-                            voyage.id, voyage.title, voyage.status, voyage.epic_id, index_line, voyage.title
-                        ),
-                    )
-                    .unwrap();
+                voyage_dir.join("README.md"),
+                render_fixture_voyage_readme(voyage),
+            )
+            .unwrap();
 
             // Write SRS.md if specified
             if let Some(ref srs) = voyage.srs_content {
@@ -594,25 +636,21 @@ Test harness epic problem statement.
                 let bearing_dir = bearings_dir.join(&bearing.id);
                 fs::create_dir_all(&bearing_dir).unwrap();
 
-                let index_line = bearing
-                    .index
-                    .map(|i| format!("index: {}\n", i))
-                    .unwrap_or_default();
-
-                // README.md (new source of truth)
                 fs::write(
-                                            bearing_dir.join("README.md"),
-                                            format!(
-                                                "---\nid: {}\ntitle: {}\nstatus: {}\ncreated_at: 2026-01-01T00:00:00\n{}---\n\n# {}\n\n## Documents\n\n<!-- BEGIN DOCUMENTS -->\n| Document | Description |\n|----------|-------------|\n| [BRIEF.md](BRIEF.md) | Core research brief covering the hypothesis, problem space, success criteria, and open questions |\n| [SURVEY.md](SURVEY.md) | Survey findings, market and technical research, and discovered constraints |\n| [ASSESSMENT.md](ASSESSMENT.md) | Impact scoring, tradeoff analysis, and the final recommendation |\n<!-- END DOCUMENTS -->\n",
-                                                bearing.id, bearing.title, bearing.status, index_line, bearing.title
-                                            )
-                                        ).unwrap();
+                    bearing_dir.join("README.md"),
+                    render_fixture_bearing_readme(bearing),
+                )
+                .unwrap();
 
                 // BRIEF.md
                 fs::write(
-                                            bearing_dir.join("BRIEF.md"),
-                                            "# BRIEF\n\n## Hypothesis\nTest\n## Problem Space\nTest\n## Success Criteria\nTest\n## Open Questions\nTest\n"
-                                        ).unwrap();
+                    bearing_dir.join("BRIEF.md"),
+                    template_rendering::render_body(
+                        templates::bearing::BRIEF,
+                        &[("title", &bearing.title)],
+                    ),
+                )
+                .unwrap();
 
                 // SURVEY.md
                 if bearing.has_survey {

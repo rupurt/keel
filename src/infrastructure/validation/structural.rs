@@ -540,16 +540,13 @@ pub fn check_voyage_readme_structure(path: &Path) -> Vec<Problem> {
         );
     }
 
-    if !content.contains("<!-- BEGIN DOCUMENTS -->") || !content.contains("<!-- END DOCUMENTS -->")
-    {
-        problems.push(
-            Problem::warning(
-                path.to_path_buf(),
-                "README missing standard Documents section markers",
-            )
-            .with_check_id(CheckId::VoyagesReadmeStructure),
-        );
-    }
+    problems.extend(check_documents_section_contract(
+        &content,
+        path,
+        CheckId::VoyagesReadmeStructure,
+        Severity::Warning,
+        &[],
+    ));
 
     if !content.contains("<!-- BEGIN GENERATED -->") || !content.contains("<!-- END GENERATED -->")
     {
@@ -590,48 +587,13 @@ pub fn check_bearing_readme_structure(path: &Path) -> Vec<Problem> {
         );
     }
 
-    if !content.contains("## Documents") {
-        problems.push(
-            Problem::error(path.to_path_buf(), "README missing Documents section")
-                .with_check_id(CheckId::BearingReadmeStructure),
-        );
-    }
-
-    let Some(documents_block) = extract_marker_block(&content, "DOCUMENTS") else {
-        problems.push(
-            Problem::error(
-                path.to_path_buf(),
-                "README missing standard Documents section markers",
-            )
-            .with_check_id(CheckId::BearingReadmeStructure),
-        );
-        return problems;
-    };
-
-    if !documents_block.contains("| Document | Description |") {
-        problems.push(
-            Problem::error(
-                path.to_path_buf(),
-                "README Documents section must include markdown table headers",
-            )
-            .with_check_id(CheckId::BearingReadmeStructure),
-        );
-    }
-
-    for document_link in BEARING_REQUIRED_DOCUMENT_LINKS {
-        if !documents_block_has_authored_document_row(&documents_block, document_link) {
-            problems.push(
-                Problem::error(
-                    path.to_path_buf(),
-                    format!(
-                        "README Documents section must include authored row for {}",
-                        document_link
-                    ),
-                )
-                .with_check_id(CheckId::BearingReadmeStructure),
-            );
-        }
-    }
+    problems.extend(check_documents_section_contract(
+        &content,
+        path,
+        CheckId::BearingReadmeStructure,
+        Severity::Error,
+        BEARING_REQUIRED_DOCUMENT_LINKS,
+    ));
 
     problems
 }
@@ -990,6 +952,76 @@ fn extract_marker_block(content: &str, marker_name: &str) -> Option<String> {
     let after_begin = &content[begin_idx + begin_marker.len()..];
     let end_idx = after_begin.find(&end_marker)?;
     Some(after_begin[..end_idx].to_string())
+}
+
+fn check_documents_section_contract(
+    content: &str,
+    path: &Path,
+    check_id: CheckId,
+    severity: Severity,
+    required_document_links: &[&str],
+) -> Vec<Problem> {
+    let mut problems = Vec::new();
+
+    if !content.contains("## Documents") {
+        problems.push(contract_problem(
+            path,
+            severity,
+            check_id,
+            "README missing Documents section",
+        ));
+    }
+
+    let Some(documents_block) = extract_marker_block(content, "DOCUMENTS") else {
+        problems.push(contract_problem(
+            path,
+            severity,
+            check_id,
+            "README missing standard Documents section markers",
+        ));
+        return problems;
+    };
+
+    if !required_document_links.is_empty()
+        && !documents_block.contains("| Document | Description |")
+    {
+        problems.push(contract_problem(
+            path,
+            severity,
+            check_id,
+            "README Documents section must include markdown table headers",
+        ));
+    }
+
+    for document_link in required_document_links {
+        if !documents_block_has_authored_document_row(&documents_block, document_link) {
+            problems.push(contract_problem(
+                path,
+                severity,
+                check_id,
+                format!(
+                    "README Documents section must include authored row for {}",
+                    document_link
+                ),
+            ));
+        }
+    }
+
+    problems
+}
+
+fn contract_problem(
+    path: &Path,
+    severity: Severity,
+    check_id: CheckId,
+    message: impl Into<String>,
+) -> Problem {
+    match severity {
+        Severity::Error => Problem::error(path.to_path_buf(), message).with_check_id(check_id),
+        Severity::Warning | Severity::Info => {
+            Problem::warning(path.to_path_buf(), message).with_check_id(check_id)
+        }
+    }
 }
 
 fn documents_block_has_authored_document_row(section: &str, expected_link: &str) -> bool {

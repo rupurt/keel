@@ -7,6 +7,7 @@ use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 
 use crate::infrastructure::duplicate_ids::{self, DuplicateEntity};
+use crate::infrastructure::frontmatter_mutation::Mutation;
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::story_id::generate_story_id;
 use crate::infrastructure::template_rendering;
@@ -60,7 +61,8 @@ fn new_epic(board_dir: &Path, name: &str, problem: &str) -> Result<()> {
         .with_context(|| format!("Failed to create epic directory: {}", epic_dir.display()))?;
 
     // Render template
-    let mut content = template_rendering::render(
+    let index_string = next_index.to_string();
+    let content = template_rendering::render_with_mutations(
         templates::epic::README,
         &[
             ("id", &epic_id),
@@ -68,13 +70,7 @@ fn new_epic(board_dir: &Path, name: &str, problem: &str) -> Result<()> {
             ("created_at", &now),
             ("problem", problem_text),
         ],
-    );
-
-    // Insert index
-    content = crate::cli::commands::management::story::new::insert_frontmatter_field(
-        &content,
-        &format!("id: {}", epic_id),
-        &format!("index: {}", next_index),
+        &[Mutation::set("index", index_string.as_str())],
     );
 
     // Write README
