@@ -420,10 +420,179 @@ fn lang_to_extension(lang: &str) -> &str {
 
 const THEME: &str = "base16-ocean.dark";
 
+fn highlight_toml_block(code: &str) -> String {
+    let mut output = String::new();
+
+    for line in LinesWithEndings::from(code) {
+        output.push_str(&highlight_toml_line(line));
+    }
+
+    output.push_str("\x1b[0m");
+    output
+}
+
+fn highlight_toml_line(line: &str) -> String {
+    let (content, line_ending) = split_line_ending(line);
+    if content.trim().is_empty() {
+        return line.to_string();
+    }
+
+    let indent_len = content.len() - content.trim_start().len();
+    let indent = &content[..indent_len];
+    let trimmed = &content[indent_len..];
+
+    if trimmed.starts_with('#') {
+        return format!("{indent}{}{}", trimmed.dimmed(), line_ending);
+    }
+
+    if trimmed.starts_with('[') && trimmed.ends_with(']') {
+        return format!("{indent}{}{}", trimmed.bright_cyan().bold(), line_ending);
+    }
+
+    let (code_part, comment_part) = split_toml_comment(trimmed);
+    let mut rendered = format!("{indent}{}", highlight_toml_expression(code_part));
+    if let Some((comment_ws, comment)) = comment_part {
+        rendered.push_str(comment_ws);
+        rendered.push_str(&format!("{}", comment.dimmed()));
+    }
+    rendered.push_str(line_ending);
+    rendered
+}
+
+fn split_line_ending(line: &str) -> (&str, &str) {
+    if let Some(content) = line.strip_suffix("\r\n") {
+        (content, "\r\n")
+    } else if let Some(content) = line.strip_suffix('\n') {
+        (content, "\n")
+    } else {
+        (line, "")
+    }
+}
+
+fn split_toml_comment(line: &str) -> (&str, Option<(&str, &str)>) {
+    let mut in_string = false;
+    let mut escaped = false;
+
+    for (idx, ch) in line.char_indices() {
+        match ch {
+            '"' if !escaped => in_string = !in_string,
+            '\\' if in_string => {
+                escaped = !escaped;
+                continue;
+            }
+            '#' if !in_string => {
+                let raw_code = &line[..idx];
+                let code = raw_code.trim_end_matches(char::is_whitespace);
+                let comment_ws = &raw_code[code.len()..];
+                return (code, Some((comment_ws, &line[idx..])));
+            }
+            _ => {}
+        }
+        escaped = false;
+    }
+
+    (line.trim_end_matches(char::is_whitespace), None)
+}
+
+fn highlight_toml_expression(expr: &str) -> String {
+    let Some(eq_idx) = expr.find('=') else {
+        return expr.to_string();
+    };
+
+    let raw_key = &expr[..eq_idx];
+    let key = raw_key.trim_end_matches(char::is_whitespace);
+    let key_ws = &raw_key[key.len()..];
+
+    let raw_value = &expr[eq_idx + 1..];
+    let value_indent_len = raw_value.len() - raw_value.trim_start().len();
+    let value_indent = &raw_value[..value_indent_len];
+    let value = raw_value.trim();
+
+    format!(
+        "{}{}{}{}{}",
+        key.bright_blue().bold(),
+        key_ws,
+        "=".dimmed(),
+        value_indent,
+        highlight_toml_value(value)
+    )
+}
+
+fn highlight_toml_value(value: &str) -> String {
+    if value.is_empty() {
+        return String::new();
+    }
+
+    if value.starts_with('[') && value.ends_with(']') {
+        return highlight_toml_array(value);
+    }
+
+    if value.starts_with('"') && value.ends_with('"') && value.len() >= 2 {
+        return format!("{}", value.green());
+    }
+
+    if matches!(value, "true" | "false") {
+        return format!("{}", value.magenta().bold());
+    }
+
+    if value.parse::<i64>().is_ok() || value.parse::<f64>().is_ok() {
+        return format!("{}", value.cyan());
+    }
+
+    value.to_string()
+}
+
+fn highlight_toml_array(value: &str) -> String {
+    let inner = &value[1..value.len() - 1];
+    let mut rendered = format!("{}", "[".dimmed());
+    let mut in_string = false;
+    let mut escaped = false;
+    let mut segment_start = 0;
+
+    for (idx, ch) in inner.char_indices() {
+        match ch {
+            '"' if !escaped => in_string = !in_string,
+            '\\' if in_string => {
+                escaped = !escaped;
+                continue;
+            }
+            ',' if !in_string => {
+                rendered.push_str(&highlight_toml_array_item(&inner[segment_start..idx]));
+                rendered.push_str(&format!("{}", ",".dimmed()));
+                segment_start = idx + 1;
+            }
+            _ => {}
+        }
+        escaped = false;
+    }
+
+    rendered.push_str(&highlight_toml_array_item(&inner[segment_start..]));
+    rendered.push_str(&format!("{}", "]".dimmed()));
+    rendered
+}
+
+fn highlight_toml_array_item(segment: &str) -> String {
+    let leading_len = segment.len() - segment.trim_start().len();
+    let leading = &segment[..leading_len];
+    let trimmed = segment.trim();
+
+    if trimmed.is_empty() {
+        return segment.to_string();
+    }
+
+    let trailing_len = segment.len() - leading_len - trimmed.len();
+    let trailing = &segment[segment.len() - trailing_len..];
+    format!("{leading}{}{trailing}", highlight_toml_value(trimmed))
+}
+
 /// Highlight a code block using syntect.
 /// Returns highlighted lines with ANSI escape codes, or None if the
 /// language isn't recognized (caller should fall back to plain rendering).
 pub fn highlight_code_block(code: &str, lang: &str) -> Option<String> {
+    if lang.eq_ignore_ascii_case("toml") {
+        return Some(highlight_toml_block(code));
+    }
+
     let ss = SyntaxSet::load_defaults_newlines();
     let ts = ThemeSet::load_defaults();
 
@@ -669,6 +838,33 @@ mod tests {
     fn styled_inline_markdown_uses_scope_highlight_for_backticked_bracketed_scope_ids() {
         let rendered = styled_inline_markdown("`[SCOPE-01]`");
         assert_eq!(rendered, styled_scope_id("SCOPE-01"));
+    }
+
+    #[test]
+    fn highlight_code_block_styles_toml_sections_keys_and_values() {
+        let rendered = highlight_code_block(
+            "# config\n[scoring]\nmode = \"constrained\"\ndisabled = false\nimpact_weight = 1.5\n",
+            "toml",
+        )
+        .expect("toml highlighter should render");
+
+        assert!(rendered.contains("# config"));
+        assert!(rendered.contains("[scoring]"));
+        assert!(rendered.contains("mode"));
+        assert!(rendered.contains("\"constrained\""));
+        assert!(rendered.contains("false"));
+        assert!(rendered.contains("1.5"));
+        assert!(rendered.contains("\x1b["));
+    }
+
+    #[test]
+    fn highlight_code_block_styles_toml_arrays() {
+        let rendered = highlight_code_block("enable = [\"a\", \"b\"]\n", "toml")
+            .expect("toml highlighter should render arrays");
+
+        assert!(rendered.contains("\"a\""));
+        assert!(rendered.contains("\"b\""));
+        assert!(rendered.contains("\x1b["));
     }
 
     #[test]

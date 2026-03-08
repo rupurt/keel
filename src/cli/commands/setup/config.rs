@@ -37,8 +37,10 @@ pub fn run_show(json: bool) -> Result<()> {
     if json {
         println!("{}", serde_json::to_string_pretty(&payload)?);
     } else {
-        for line in render_show_payload(&payload) {
-            println!("{}", line);
+        let rendered = render_show_output(&payload);
+        print!("{rendered}");
+        if !rendered.ends_with('\n') {
+            println!();
         }
     }
 
@@ -141,7 +143,7 @@ fn build_doctor_check_rows(config: &Config) -> Vec<DoctorCheckStatusRow> {
 
 fn render_show_payload(payload: &ConfigShowPayload) -> Vec<String> {
     let mut lines = Vec::new();
-    lines.push(format!("Configuration source: {}", payload.source));
+    lines.push(format!("# Configuration source: {}", payload.source));
     lines.push(format!("project_root = \"{}\"", payload.project_root));
     lines.push(String::new());
     lines.push(format!("board_dir = \"{}\"", payload.board_dir));
@@ -196,6 +198,11 @@ fn render_show_payload(payload: &ConfigShowPayload) -> Vec<String> {
     }
 
     lines
+}
+
+fn render_show_output(payload: &ConfigShowPayload) -> String {
+    let toml = render_show_payload(payload).join("\n");
+    crate::cli::style::highlight_code_block(&toml, "toml").unwrap_or(toml)
 }
 
 fn build_verification_technique_projection(
@@ -375,6 +382,10 @@ disable = ["rust-coverage"]
         let lines = render_show_payload(&payload);
         let rendered = lines.join("\n");
 
+        assert!(rendered.contains(&format!(
+            "# Configuration source: {}",
+            config::ConfigSource::Defaults
+        )));
         assert!(rendered.contains("[scoring]"));
         assert!(rendered.contains("mode = \"constrained\""));
         assert!(rendered.contains("impact_weight = 1"));
@@ -397,6 +408,21 @@ disable = ["rust-coverage"]
         assert!(rendered.contains("name = \"ID uniqueness\""));
         assert!(!rendered.contains("label = \""));
         assert!(!rendered.contains("modality = \""));
+    }
+
+    #[test]
+    fn config_show_human_output_uses_toml_highlighting() {
+        let payload = build_show_payload(
+            &Config::default(),
+            &config::ConfigSource::Defaults,
+            Path::new("."),
+        );
+
+        let rendered = render_show_output(&payload);
+
+        assert!(rendered.contains("Configuration source:"));
+        assert!(rendered.contains("[scoring]"));
+        assert!(rendered.contains("\x1b["));
     }
 
     #[test]
