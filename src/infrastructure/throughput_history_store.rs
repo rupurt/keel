@@ -48,7 +48,7 @@ mod tests {
         let path = board_dir.join(THROUGHPUT_HISTORY_FILE);
         assert!(path.exists());
         let content = fs::read_to_string(path).unwrap();
-        assert!(content.contains("\"schema_version\": 1"));
+        assert!(content.contains("\"schema_version\": 2"));
     }
 
     #[test]
@@ -62,6 +62,7 @@ mod tests {
                     week_start: NaiveDate::from_ymd_opt(2026, 3, 2).unwrap(),
                     stories_done: 1,
                     voyages_done: 0,
+                    epics_done: 0,
                     cycle_min_hours: Some(1.0),
                     cycle_median_hours: Some(2.0),
                     cycle_max_hours: Some(3.0),

@@ -43,17 +43,22 @@ fn throughput_lines(
 ) -> Vec<String> {
     let story_counts: Vec<f64> = weekly.iter().map(|w| w.stories_done as f64).collect();
     let voyage_counts: Vec<f64> = weekly.iter().map(|w| w.voyages_done as f64).collect();
+    let epic_counts: Vec<f64> = weekly.iter().map(|w| w.epics_done as f64).collect();
 
     let story_start = first_nonzero_index(&story_counts);
     let voyage_start = first_nonzero_index(&voyage_counts);
+    let epic_start = first_nonzero_index(&epic_counts);
     let story_elapsed_weeks = elapsed_weeks(story_start, story_counts.len());
     let voyage_elapsed_weeks = elapsed_weeks(voyage_start, voyage_counts.len());
-    let show_3m = story_elapsed_weeks > 4 || voyage_elapsed_weeks > 4;
+    let epic_elapsed_weeks = elapsed_weeks(epic_start, epic_counts.len());
+    let show_3m = story_elapsed_weeks > 4 || voyage_elapsed_weeks > 4 || epic_elapsed_weeks > 4;
 
     let story_4w = rolling_average_relative(&story_counts, story_start, 4);
     let voyage_4w = rolling_average_relative(&voyage_counts, voyage_start, 4);
+    let epic_4w = rolling_average_relative(&epic_counts, epic_start, 4);
     let story_12w = rolling_average_relative(&story_counts, story_start, 12);
     let voyage_12w = rolling_average_relative(&voyage_counts, voyage_start, 12);
+    let epic_12w = rolling_average_relative(&epic_counts, epic_start, 12);
 
     let story_line = sparkline_from_values(
         &story_counts.iter().map(|v| Some(*v)).collect::<Vec<_>>(),
@@ -61,6 +66,10 @@ fn throughput_lines(
     );
     let voyage_line = sparkline_from_values(
         &voyage_counts.iter().map(|v| Some(*v)).collect::<Vec<_>>(),
+        sparkline_width,
+    );
+    let epic_line = sparkline_from_values(
+        &epic_counts.iter().map(|v| Some(*v)).collect::<Vec<_>>(),
         sparkline_width,
     );
     let mut lines = vec![
@@ -77,6 +86,11 @@ fn throughput_lines(
         ),
         format!(
             "  {:<15} {}",
+            "Epics done",
+            colorize(&epic_line, theme.muted, theme)
+        ),
+        format!(
+            "  {:<15} {}",
             "Stories 1m",
             colorize(
                 &sparkline_from_values(&story_4w, sparkline_width),
@@ -89,6 +103,15 @@ fn throughput_lines(
             "Voyages 1m",
             colorize(
                 &sparkline_from_values(&voyage_4w, sparkline_width),
+                theme.warning,
+                theme
+            )
+        ),
+        format!(
+            "  {:<15} {}",
+            "Epics 1m",
+            colorize(
+                &sparkline_from_values(&epic_4w, sparkline_width),
                 theme.warning,
                 theme
             )
@@ -114,18 +137,29 @@ fn throughput_lines(
                 theme
             )
         ));
+        lines.push(format!(
+            "  {:<15} {}",
+            "Epics 3m",
+            colorize(
+                &sparkline_from_values(&epic_12w, sparkline_width),
+                theme.muted,
+                theme
+            )
+        ));
     }
 
     lines.push(format!(
-        "  Avg now S:{}  V:{}",
+        "  Avg now S:{}  V:{}  E:{}",
         format_avg(last_some(&story_4w)),
-        format_avg(last_some(&voyage_4w))
+        format_avg(last_some(&voyage_4w)),
+        format_avg(last_some(&epic_4w))
     ));
     if show_3m {
         lines.push(format!(
-            "  Avg 3m S:{}  V:{}",
+            "  Avg 3m S:{}  V:{}  E:{}",
             format_avg(last_some(&story_12w)),
-            format_avg(last_some(&voyage_12w))
+            format_avg(last_some(&voyage_12w)),
+            format_avg(last_some(&epic_12w))
         ));
     }
     lines
@@ -308,12 +342,13 @@ mod tests {
     #[test]
     fn render_throughput_graphs_contains_expected_sections() {
         let history = ThroughputHistory {
-            schema_version: 1,
+            schema_version: 2,
             weekly: vec![
                 WeeklyThroughputBucket {
                     week_start: NaiveDate::from_ymd_opt(2026, 2, 23).unwrap(),
                     stories_done: 3,
                     voyages_done: 1,
+                    epics_done: 1,
                     cycle_min_hours: Some(24.0),
                     cycle_median_hours: Some(48.0),
                     cycle_max_hours: Some(72.0),
@@ -323,6 +358,7 @@ mod tests {
                     week_start: NaiveDate::from_ymd_opt(2026, 2, 16).unwrap(),
                     stories_done: 1,
                     voyages_done: 0,
+                    epics_done: 0,
                     cycle_min_hours: Some(12.0),
                     cycle_median_hours: Some(18.0),
                     cycle_max_hours: Some(30.0),
@@ -335,6 +371,7 @@ mod tests {
         assert!(rendered.contains("Weekly Flow Sparklines"));
         assert!(rendered.contains("Stories done"));
         assert!(rendered.contains("Voyages done"));
+        assert!(rendered.contains("Epics done"));
         assert!(rendered.contains("Story timing (hours)"));
         assert!(rendered.contains("Wait med"));
     }

@@ -3,9 +3,9 @@
 use chrono::{Datelike, Duration, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::domain::model::Board;
+use crate::domain::model::{Board, Epic, EpicState};
 
-pub const THROUGHPUT_HISTORY_SCHEMA_VERSION: u32 = 1;
+pub const THROUGHPUT_HISTORY_SCHEMA_VERSION: u32 = 2;
 pub const DEFAULT_HISTORY_WEEKS: usize = 12;
 
 /// Persistable snapshot containing weekly throughput and timing aggregates.
@@ -25,6 +25,8 @@ pub struct WeeklyThroughputBucket {
     pub stories_done: usize,
     /// Voyages reaching done this week.
     pub voyages_done: usize,
+    /// Epics reaching done this week.
+    pub epics_done: usize,
     /// Story cycle time (start -> submit/done), min value in hours.
     pub cycle_min_hours: Option<f64>,
     /// Story cycle time (start -> submit/done), median value in hours.
@@ -87,6 +89,12 @@ fn bucket_for_week(board: &Board, week_start: NaiveDate) -> WeeklyThroughputBuck
         })
         .count();
 
+    let epics_done = board
+        .epics
+        .values()
+        .filter(|epic| in_week(epic_completed_date(board, epic), week_start, week_end))
+        .count();
+
     let mut cycle_hours = Vec::new();
     let mut acceptance_wait_hours = Vec::new();
 
@@ -123,11 +131,24 @@ fn bucket_for_week(board: &Board, week_start: NaiveDate) -> WeeklyThroughputBuck
         week_start,
         stories_done,
         voyages_done,
+        epics_done,
         cycle_min_hours,
         cycle_median_hours,
         cycle_max_hours,
         acceptance_wait_median_hours,
     }
+}
+
+fn epic_completed_date(board: &Board, epic: &Epic) -> Option<NaiveDate> {
+    if epic.status() != EpicState::Done {
+        return None;
+    }
+
+    board
+        .voyages_for_epic_id(epic.id())
+        .into_iter()
+        .filter_map(|voyage| voyage.frontmatter.completed_at.map(|dt| dt.date()))
+        .max()
 }
 
 fn in_week(date: Option<NaiveDate>, week_start: NaiveDate, week_end: NaiveDate) -> bool {
@@ -175,8 +196,8 @@ fn generate_week_starts(from: NaiveDate, weeks: usize) -> Vec<NaiveDate> {
 mod tests {
     use super::*;
     use crate::domain::model::{
-        Board, Story, StoryFrontmatter, StoryState, StoryType, Voyage, VoyageFrontmatter,
-        VoyageState,
+        Board, EpicFrontmatter, Story, StoryFrontmatter, StoryState, StoryType, Voyage,
+        VoyageFrontmatter, VoyageState,
     };
     use std::path::PathBuf;
 
@@ -227,6 +248,21 @@ mod tests {
         }
     }
 
+    fn make_epic(id: &str, status: EpicState) -> crate::domain::model::Epic {
+        crate::domain::model::Epic {
+            frontmatter: EpicFrontmatter {
+                id: id.to_string(),
+                title: format!("Epic {id}"),
+                description: None,
+                bearing: None,
+                index: None,
+                created_at: None,
+            },
+            path: PathBuf::from(format!("{id}/README.md")),
+            status,
+        }
+    }
+
     fn parse_dt(raw: &str) -> chrono::NaiveDateTime {
         chrono::NaiveDateTime::parse_from_str(raw, "%Y-%m-%dT%H:%M:%S").unwrap()
     }
@@ -256,12 +292,16 @@ mod tests {
             "v1".to_string(),
             make_voyage("v1", Some(&completed_this_week)),
         );
+        board
+            .epics
+            .insert("epic-1".to_string(), make_epic("epic-1", EpicState::Done));
 
         let history = project(&board, anchor, 4);
 
         assert_eq!(history.weekly.len(), 4);
         assert_eq!(history.weekly[0].stories_done, 1);
         assert_eq!(history.weekly[0].voyages_done, 1);
+        assert_eq!(history.weekly[0].epics_done, 1);
     }
 
     #[test]
