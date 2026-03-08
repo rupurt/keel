@@ -94,6 +94,7 @@ pub fn run(pattern: &str) -> Result<()> {
     }
 
     metadata.push_row("Path:", format!("{}", bearing.path.display().dimmed()));
+    push_document_path_rows(&mut metadata, &brief_path, &survey_path, &assessment_path);
 
     let mut sections = vec![
         render_documents_section(bearing),
@@ -184,11 +185,10 @@ fn render_brief_section(summary: &BearingBriefSummary) -> ShowSection {
             ),
         );
     }
-    fields.push_row("Open Questions:", summary.open_questions.len().to_string());
     section.push_key_values(fields);
 
     section.push_labeled_bullets(
-        "Open Questions:",
+        counted_label("Open Questions", summary.open_questions.len()),
         summary.open_questions.iter().cloned(),
         Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
     );
@@ -218,18 +218,13 @@ fn render_survey_section(summary: Option<&BearingSurveySummary>) -> ShowSection 
             .to_string(),
     );
 
-    let mut fields = ShowKeyValues::new().with_indent(2).with_min_label_width(13);
-    fields.push_row("Key Findings:", summary.key_findings.len().to_string());
-    fields.push_row("Unknowns:", summary.unknowns.len().to_string());
-    section.push_key_values(fields);
-
     section.push_labeled_bullets(
-        "Key Findings:",
+        counted_label("Key Findings", summary.key_findings.len()),
         summary.key_findings.iter().cloned(),
         Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
     );
     section.push_labeled_bullets(
-        "Unknowns:",
+        counted_label("Unknowns", summary.unknowns.len()),
         summary.unknowns.iter().cloned(),
         Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
     );
@@ -284,18 +279,13 @@ fn render_assessment_section(
             .to_string(),
     );
 
-    let mut counts = ShowKeyValues::new().with_indent(2).with_min_label_width(17);
-    counts.push_row("Dependencies:", summary.dependencies.len().to_string());
-    counts.push_row("Alternatives:", summary.alternatives.len().to_string());
-    section.push_key_values(counts);
-
     section.push_labeled_bullets(
-        "Dependencies:",
+        counted_label("Dependencies", summary.dependencies.len()),
         summary.dependencies.iter().cloned(),
         Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
     );
     section.push_labeled_bullets(
-        "Alternatives:",
+        counted_label("Alternatives", summary.alternatives.len()),
         summary.alternatives.iter().cloned(),
         Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
     );
@@ -305,4 +295,144 @@ fn render_assessment_section(
 
 fn push_labeled_text_block(section: &mut ShowSection, label: &str, value: String) {
     section.push_labeled_text_block(label, value);
+}
+
+fn push_document_path_rows(
+    metadata: &mut ShowKeyValues,
+    brief_path: &Path,
+    survey_path: &Path,
+    assessment_path: &Path,
+) {
+    metadata.push_row("BRIEF.md:", format!("{}", brief_path.display().dimmed()));
+    metadata.push_row("SURVEY.md:", format!("{}", survey_path.display().dimmed()));
+    metadata.push_row(
+        "ASSESSMENT.md:",
+        format!("{}", assessment_path.display().dimmed()),
+    );
+}
+
+fn counted_label(label: &str, count: usize) -> String {
+    format!("{label}({count}):")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        BearingAssessmentSummary, BearingBriefSummary, BearingSurveySummary,
+        push_document_path_rows, render_assessment_section, render_brief_section,
+        render_survey_section,
+    };
+    use crate::cli::presentation::show::{ShowDocument, ShowKeyValues};
+    use crate::infrastructure::config::ModeWeights;
+    use std::path::Path;
+
+    fn render_lines(section: crate::cli::presentation::show::ShowSection) -> Vec<String> {
+        let mut document = ShowDocument::new();
+        document.push_section(section);
+        document.render().lines().map(ToString::to_string).collect()
+    }
+
+    #[test]
+    fn bearing_brief_renders_inline_open_question_count() {
+        let section = render_brief_section(&BearingBriefSummary {
+            hypothesis: Some("Test hypothesis".to_string()),
+            problem_space: Some("Test problem".to_string()),
+            checked_success_criteria: 1,
+            total_success_criteria: 2,
+            unchecked_success_criteria: vec!["Criterion two".to_string()],
+            open_questions: vec!["Question one".to_string(), "Question two".to_string()],
+        });
+
+        let lines = render_lines(section);
+
+        assert!(lines.contains(&"  Open Questions(2):".to_string()));
+        assert!(lines.contains(&"    - Question one".to_string()));
+        assert!(lines.contains(&"    - Question two".to_string()));
+        assert!(
+            lines
+                .iter()
+                .all(|line| !line.starts_with("  Open Questions:"))
+        );
+    }
+
+    #[test]
+    fn bearing_survey_renders_inline_list_counts() {
+        let section = render_survey_section(Some(&BearingSurveySummary {
+            feasibility: Some("Looks feasible".to_string()),
+            key_findings: vec!["Finding one".to_string()],
+            unknowns: vec!["Unknown one".to_string(), "Unknown two".to_string()],
+        }));
+
+        let lines = render_lines(section);
+
+        assert!(lines.contains(&"  Key Findings(1):".to_string()));
+        assert!(lines.contains(&"  Unknowns(2):".to_string()));
+        assert!(
+            lines
+                .iter()
+                .all(|line| !line.starts_with("  Key Findings:"))
+        );
+        assert!(lines.iter().all(|line| !line.starts_with("  Unknowns:")));
+    }
+
+    #[test]
+    fn bearing_assessment_renders_inline_list_counts() {
+        let section = render_assessment_section(
+            Path::new("/tmp/ASSESSMENT.md"),
+            Some(&BearingAssessmentSummary {
+                recommendation: Some("Proceed".to_string()),
+                opportunity_cost: Some("A roadmap delay".to_string()),
+                dependencies: vec!["Dependency one".to_string()],
+                alternatives: vec!["Alternative one".to_string(), "Alternative two".to_string()],
+            }),
+            "balanced",
+            &ModeWeights::default(),
+        );
+
+        let lines = render_lines(section);
+
+        assert!(lines.contains(&"  Dependencies(1):".to_string()));
+        assert!(lines.contains(&"  Alternatives(2):".to_string()));
+        assert!(
+            lines
+                .iter()
+                .all(|line| !line.starts_with("  Dependencies:"))
+        );
+        assert!(
+            lines
+                .iter()
+                .all(|line| !line.starts_with("  Alternatives:"))
+        );
+    }
+
+    #[test]
+    fn bearing_metadata_includes_document_paths_below_readme_path() {
+        let mut metadata = ShowKeyValues::new().with_min_label_width(9);
+        metadata.push_row(
+            "Path:",
+            format!("{}", Path::new("/tmp/README.md").display()),
+        );
+        push_document_path_rows(
+            &mut metadata,
+            Path::new("/tmp/BRIEF.md"),
+            Path::new("/tmp/SURVEY.md"),
+            Path::new("/tmp/ASSESSMENT.md"),
+        );
+
+        let mut document = ShowDocument::new();
+        document.push_header(metadata, None);
+        let rendered = document.render();
+
+        let path_idx = rendered.find("Path:").unwrap();
+        let brief_idx = rendered.find("BRIEF.md:").unwrap();
+        let survey_idx = rendered.find("SURVEY.md:").unwrap();
+        let assessment_idx = rendered.find("ASSESSMENT.md:").unwrap();
+
+        assert!(path_idx < brief_idx);
+        assert!(brief_idx < survey_idx);
+        assert!(survey_idx < assessment_idx);
+        assert!(rendered.contains("/tmp/BRIEF.md"));
+        assert!(rendered.contains("/tmp/SURVEY.md"));
+        assert!(rendered.contains("/tmp/ASSESSMENT.md"));
+    }
 }
