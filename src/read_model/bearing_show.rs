@@ -1,12 +1,10 @@
 //! Canonical bearing-show projection and markdown extraction helpers.
 
-use std::collections::BTreeSet;
-
 use crate::infrastructure::bearing_evidence::parse_evidence_records;
 use crate::infrastructure::markdown_sections::{
     SectionExcerpt, extract_section, extract_section_excerpt, parse_markdown_list_items,
 };
-use crate::infrastructure::scoring::parse_assessment_document;
+use crate::infrastructure::scoring::{CitedAssessmentItem, parse_assessment_document};
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct BearingShowProjection {
@@ -46,7 +44,6 @@ pub struct BearingEvidenceSourceSummary {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct BearingAssessmentSummary {
     pub recommendation: Option<String>,
-    pub cited_sources: Vec<String>,
     pub findings: Vec<String>,
     pub opportunity_cost: Option<SectionExcerpt>,
     pub dependencies: Vec<String>,
@@ -109,20 +106,18 @@ pub fn build_bearing_show_projection(
 
     let assessment = assessment_content.map(|content| {
         let document = parse_assessment_document(content);
-        let recommendation_section = section_text(content, "## Recommendation");
         BearingAssessmentSummary {
-            recommendation: extract_checked_recommendation(&recommendation_section),
-            cited_sources: collect_cited_sources(&document),
-            findings: parse_markdown_list_items(&section_text(content, "### Findings")),
+            recommendation: document
+                .recommendation
+                .as_ref()
+                .map(|item| item.text.clone()),
+            findings: cited_item_texts(&document.findings),
             opportunity_cost: extract_section_excerpt(&section_text(
                 content,
                 "### Opportunity Cost",
             )),
-            dependencies: parse_markdown_list_items(&section_text(content, "### Dependencies")),
-            alternatives: parse_markdown_list_items(&section_text(
-                content,
-                "### Alternatives Considered",
-            )),
+            dependencies: cited_item_texts(&document.dependencies),
+            alternatives: cited_item_texts(&document.alternatives),
         }
     });
 
@@ -136,6 +131,25 @@ pub fn build_bearing_show_projection(
 
 fn section_text(content: &str, heading: &str) -> String {
     extract_section(content, heading).unwrap_or_default()
+}
+
+fn cited_item_texts(items: &[CitedAssessmentItem]) -> Vec<String> {
+    items.iter().map(format_cited_item).collect()
+}
+
+fn format_cited_item(item: &CitedAssessmentItem) -> String {
+    if item.citations.is_empty() {
+        return item.text.clone();
+    }
+
+    format!(
+        "{} {}",
+        item.text,
+        item.citations
+            .iter()
+            .map(|citation| format!("[{citation}]"))
+            .collect::<String>()
+    )
 }
 
 fn parse_checkbox_items(section: &str) -> Vec<(bool, String)> {
@@ -158,23 +172,6 @@ fn parse_checkbox_items(section: &str) -> Vec<(bool, String)> {
         }
     }
     items
-}
-
-fn extract_checked_recommendation(section: &str) -> Option<String> {
-    for line in section.lines() {
-        let trimmed = line.trim();
-        if let Some(value) = trimmed
-            .strip_prefix("[x] ")
-            .or_else(|| trimmed.strip_prefix("[X] "))
-            .or_else(|| trimmed.strip_prefix("- [x] "))
-            .or_else(|| trimmed.strip_prefix("- [X] "))
-            .map(str::trim)
-            .filter(|value| !value.is_empty())
-        {
-            return Some(value.to_string());
-        }
-    }
-    None
 }
 
 fn extract_frontmatter_datetime_fields(content: &str) -> Vec<FrontmatterDatetimeField> {
@@ -212,30 +209,6 @@ fn extract_frontmatter_datetime_fields(content: &str) -> Vec<FrontmatterDatetime
     fields
 }
 
-fn collect_cited_sources(
-    document: &crate::infrastructure::scoring::AssessmentDocument,
-) -> Vec<String> {
-    let mut cited_sources = BTreeSet::new();
-
-    for item in &document.findings {
-        cited_sources.extend(item.citations.iter().cloned());
-    }
-    if let Some(opportunity_cost) = &document.opportunity_cost {
-        cited_sources.extend(opportunity_cost.citations.iter().cloned());
-    }
-    for item in &document.dependencies {
-        cited_sources.extend(item.citations.iter().cloned());
-    }
-    for item in &document.alternatives {
-        cited_sources.extend(item.citations.iter().cloned());
-    }
-    if let Some(recommendation) = &document.recommendation {
-        cited_sources.extend(recommendation.citations.iter().cloned());
-    }
-
-    cited_sources.into_iter().collect()
-}
-
 fn datetime_field_label(key: &str) -> String {
     let base = key.strip_suffix("_at").unwrap_or(key);
     base.split('_')
@@ -254,19 +227,6 @@ fn datetime_field_label(key: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn extract_checked_recommendation_returns_selected_option() {
-        let section = r#"
-[ ] Proceed → convert to epic
-[x] Park → revisit later
-[ ] Decline → document learnings
-"#;
-        assert_eq!(
-            extract_checked_recommendation(section).as_deref(),
-            Some("Park → revisit later")
-        );
-    }
 
     #[test]
     fn extract_frontmatter_datetime_fields_collects_all_at_keys() {
@@ -421,11 +381,7 @@ Delayed roadmap item [SRC-02].
         );
 
         let assessment = projection.assessment.unwrap();
-        assert_eq!(
-            assessment.recommendation.as_deref(),
-            Some("Proceed [SRC-01][SRC-02]")
-        );
-        assert_eq!(assessment.cited_sources, vec!["SRC-01", "SRC-02"]);
+        assert_eq!(assessment.recommendation.as_deref(), Some("Proceed"));
         assert_eq!(
             assessment.findings,
             vec!["Finding supported by evidence [SRC-01]"]

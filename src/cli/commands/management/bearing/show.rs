@@ -191,10 +191,11 @@ fn render_brief_section(summary: &BearingBriefSummary) -> ShowSection {
         summary.unchecked_success_criteria.iter().cloned(),
         Some(success_criteria_placeholder),
     );
-    section.push_labeled_bullets(
-        counted_label("Open Questions", summary.open_questions.len()),
+    push_counted_bullets(
+        &mut section,
+        "Open Questions",
         summary.open_questions.iter().cloned(),
-        Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
+        dimmed_none_placeholder(),
     );
 
     section
@@ -217,20 +218,23 @@ fn render_evidence_section(
         Some(EVIDENCE_PLACEHOLDER),
     );
 
-    section.push_labeled_bullets(
-        counted_label("Key Findings", summary.key_findings.len()),
+    push_counted_bullets(
+        &mut section,
+        "Key Findings",
         summary.key_findings.iter().cloned(),
-        Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
+        dimmed_none_placeholder(),
     );
-    section.push_labeled_bullets(
-        counted_label("Unknowns", summary.unknowns.len()),
+    push_counted_bullets(
+        &mut section,
+        "Unknowns",
         summary.unknowns.iter().cloned(),
-        Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
+        dimmed_none_placeholder(),
     );
-    section.push_labeled_bullets(
-        counted_label("Sources", summary.sources.len()),
+    push_counted_bullets(
+        &mut section,
+        "Sources",
         summary.sources.iter().map(format_source_summary),
-        Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
+        dimmed_none_placeholder(),
     );
     section.push_labeled_bullets(
         "Drill Down:",
@@ -287,17 +291,14 @@ fn render_assessment_section(
         "Recommendation:",
         summary.recommendation.as_deref().map(ToString::to_string),
     );
-    fields.push_optional_row(
-        "Cited Sources:",
-        (!summary.cited_sources.is_empty()).then(|| summary.cited_sources.join(", ")),
-    );
 
     section.push_key_values(fields);
 
-    section.push_labeled_bullets(
-        counted_label("Findings", summary.findings.len()),
+    push_counted_bullets(
+        &mut section,
+        "Findings",
         summary.findings.iter().cloned(),
-        Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
+        dimmed_none_placeholder(),
     );
     section.push_labeled_excerpt(
         "Opportunity Cost:",
@@ -306,15 +307,17 @@ fn render_assessment_section(
         Some(NONE_PLACEHOLDER),
     );
 
-    section.push_labeled_bullets(
-        counted_label("Dependencies", summary.dependencies.len()),
+    push_counted_bullets(
+        &mut section,
+        "Dependencies",
         summary.dependencies.iter().cloned(),
-        Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
+        dimmed_none_placeholder(),
     );
-    section.push_labeled_bullets(
-        counted_label("Alternatives", summary.alternatives.len()),
+    push_counted_bullets(
+        &mut section,
+        "Alternatives",
         summary.alternatives.iter().cloned(),
-        Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
+        dimmed_none_placeholder(),
     );
     section.push_labeled_bullets(
         "Drill Down:",
@@ -359,6 +362,30 @@ fn push_document_path_rows(
 
 fn counted_label(label: &str, count: usize) -> String {
     format!("{label}({count}):")
+}
+
+fn dimmed_none_placeholder() -> String {
+    format!("{}", NONE_PLACEHOLDER.dimmed())
+}
+
+fn push_counted_bullets<I, S>(
+    section: &mut ShowSection,
+    label: &str,
+    items: I,
+    empty_placeholder: String,
+) where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+{
+    let items: Vec<String> = items
+        .into_iter()
+        .map(|item| item.as_ref().to_string())
+        .collect();
+    section.push_labeled_bullets(
+        counted_label(label, items.len()),
+        items,
+        Some(empty_placeholder),
+    );
 }
 
 fn success_criteria_label(checked: usize, total: usize) -> String {
@@ -460,7 +487,6 @@ mod tests {
             Path::new("/tmp/ASSESSMENT.md"),
             Some(&BearingAssessmentSummary {
                 recommendation: Some("Proceed".to_string()),
-                cited_sources: Vec::new(),
                 findings: vec!["Finding one [SRC-01]".to_string()],
                 opportunity_cost: Some(SectionExcerpt {
                     paragraphs: vec!["A roadmap delay".to_string()],
@@ -653,13 +679,7 @@ mod tests {
             Path::new("/tmp/EVIDENCE.md"),
             Path::new("/tmp/ASSESSMENT.md"),
             Some(&BearingAssessmentSummary {
-                recommendation: Some("Proceed → convert to epic [SRC-01][SRC-02]".to_string()),
-                cited_sources: vec![
-                    "SRC-01".to_string(),
-                    "SRC-02".to_string(),
-                    "SRC-03".to_string(),
-                    "SRC-04".to_string(),
-                ],
+                recommendation: Some("Proceed → convert to epic".to_string()),
                 findings: vec!["Finding one [SRC-01]".to_string()],
                 opportunity_cost: None,
                 dependencies: vec!["Dependency one [SRC-02]".to_string()],
@@ -672,22 +692,24 @@ mod tests {
         let rendered = document.render();
 
         assert!(rendered.contains("Sources(4):"));
-        assert!(rendered.contains(
-            "SRC-01 academic via manual:prior-art-review | authority high | freshness medium"
-        ));
         assert!(
-            rendered
-                .contains("SRC-02 web via manual:official-doc | authority high | freshness high")
+            rendered.contains(
+                "academic via manual:prior-art-review | authority high | freshness medium"
+            )
         );
-        assert!(rendered.contains(
-            "SRC-03 social via manual:community-signal | authority low | freshness high"
-        ));
-        assert!(rendered.contains(
-            "SRC-04 manual via manual:internal-notes | authority medium | freshness medium"
-        ));
+        assert!(rendered.contains("web via manual:official-doc | authority high | freshness high"));
+        assert!(
+            rendered.matches("SRC-01").count() >= 2,
+            "expected highlighted source ids to remain visible in both evidence and findings: {rendered}"
+        );
+        assert!(rendered.contains("SRC-02"));
+        assert!(rendered.contains("SRC-03"));
+        assert!(rendered.contains("SRC-04"));
         assert!(!rendered.contains("... 1 more"));
-        assert!(rendered.contains("Cited Sources:"));
-        assert!(rendered.contains("SRC-01, SRC-02, SRC-03, SRC-04"));
+        assert!(rendered.contains("Recommendation:"));
+        assert!(rendered.contains("Proceed → convert to epic"));
+        assert!(!rendered.contains("Proceed → convert to epic [SRC-01][SRC-02]"));
+        assert!(!rendered.contains("Cited Sources:"));
         assert!(rendered.contains("keel bearing file BRG-01 BRIEF"));
         assert!(rendered.contains("keel bearing file BRG-01 EVIDENCE"));
         assert!(rendered.contains("keel bearing file BRG-01 ASSESSMENT"));

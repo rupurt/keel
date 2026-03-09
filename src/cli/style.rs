@@ -25,6 +25,15 @@ static EMPHASIS_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\*([^*]+)\*").expect("valid emphasis regex"));
 static GOAL_ID_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\b(GOAL-\d+)\b").expect("valid goal id regex"));
+static ADJACENT_SOURCE_REFS_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"\[(SRC-[A-Z0-9-]+)\]\s*\[(SRC-[A-Z0-9-]+)\]")
+        .expect("valid adjacent source ref regex")
+});
+static SOURCE_REF_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"\[(SRC-[A-Z0-9-]+)\]|\b(SRC-[A-Z0-9-]+)\b").expect("valid source ref regex")
+});
+static SOURCE_ID_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\b(SRC-[A-Z0-9-]+)\b").expect("valid source id regex"));
 static SCOPE_REF_RE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"\[(SCOPE-\d+)\]|\b(SCOPE-\d+)\b").expect("valid scope ref regex")
 });
@@ -34,8 +43,57 @@ const GITHUB_INLINE_CODE_FG: (u8, u8, u8) = (230, 237, 243);
 const GITHUB_INLINE_CODE_BG: (u8, u8, u8) = (48, 54, 61);
 const GOAL_HIGHLIGHT_FG: (u8, u8, u8) = (255, 244, 214);
 const GOAL_HIGHLIGHT_BG: (u8, u8, u8) = (112, 80, 0);
+const SOURCE_HIGHLIGHT_FG: (u8, u8, u8) = (225, 255, 229);
+const SOURCE_HIGHLIGHT_BG: (u8, u8, u8) = (24, 96, 43);
 const SCOPE_HIGHLIGHT_FG: (u8, u8, u8) = (214, 247, 255);
 const SCOPE_HIGHLIGHT_BG: (u8, u8, u8) = (0, 83, 104);
+
+#[derive(Clone, Copy)]
+struct HighlightTokenSpec<'a> {
+    ref_re: &'a Regex,
+    id_re: &'a Regex,
+    fg: (u8, u8, u8),
+    bg: (u8, u8, u8),
+    allow_brackets: bool,
+    adjacent_ref_re: Option<&'a Regex>,
+    adjacent_replacement: Option<&'a str>,
+}
+
+fn goal_token_spec() -> HighlightTokenSpec<'static> {
+    HighlightTokenSpec {
+        ref_re: &GOAL_ID_RE,
+        id_re: &GOAL_ID_RE,
+        fg: GOAL_HIGHLIGHT_FG,
+        bg: GOAL_HIGHLIGHT_BG,
+        allow_brackets: false,
+        adjacent_ref_re: None,
+        adjacent_replacement: None,
+    }
+}
+
+fn source_token_spec() -> HighlightTokenSpec<'static> {
+    HighlightTokenSpec {
+        ref_re: &SOURCE_REF_RE,
+        id_re: &SOURCE_ID_RE,
+        fg: SOURCE_HIGHLIGHT_FG,
+        bg: SOURCE_HIGHLIGHT_BG,
+        allow_brackets: true,
+        adjacent_ref_re: Some(&ADJACENT_SOURCE_REFS_RE),
+        adjacent_replacement: Some("[$1], [$2]"),
+    }
+}
+
+fn scope_token_spec() -> HighlightTokenSpec<'static> {
+    HighlightTokenSpec {
+        ref_re: &SCOPE_REF_RE,
+        id_re: &SCOPE_ID_RE,
+        fg: SCOPE_HIGHLIGHT_FG,
+        bg: SCOPE_HIGHLIGHT_BG,
+        allow_brackets: true,
+        adjacent_ref_re: None,
+        adjacent_replacement: None,
+    }
+}
 
 /// Color a story status label by its workflow meaning
 pub fn styled_story_status(status: &StoryState) -> String {
@@ -301,13 +359,22 @@ fn styled_inline_code(value: &str) -> String {
 }
 
 fn apply_inline_token_highlights(value: &str) -> String {
-    styled_scope_refs(&styled_goal_refs(value))
+    styled_source_refs(&styled_scope_refs(&styled_goal_refs(value)))
 }
 
 fn highlight_exact_inline_token(value: &str) -> Option<String> {
-    exact_token_match(value, &GOAL_ID_RE)
-        .map(styled_goal_id)
-        .or_else(|| exact_scope_ref(value).map(styled_scope_id))
+    let goal = goal_token_spec();
+    if let Some(token) = exact_token_ref(value, goal) {
+        return Some(styled_token_id(token, goal));
+    }
+
+    let scope = scope_token_spec();
+    if let Some(token) = exact_token_ref(value, scope) {
+        return Some(styled_token_id(token, scope));
+    }
+
+    let source = source_token_spec();
+    exact_token_ref(value, source).map(|token| styled_token_id(token, source))
 }
 
 fn styled_generic_inline_code(value: &str) -> String {
@@ -331,47 +398,74 @@ fn styled_generic_inline_code(value: &str) -> String {
 
 /// Color a goal ID with a distinct highlight so strategic lineage stands out in read surfaces.
 pub fn styled_goal_id(id: &str) -> String {
-    styled_highlighted_token(id, GOAL_HIGHLIGHT_FG, GOAL_HIGHLIGHT_BG)
+    styled_token_id(id, goal_token_spec())
+}
+
+/// Color a source ID with a distinct highlight so evidence lineage stands out in read surfaces.
+pub fn styled_source_id(id: &str) -> String {
+    styled_token_id(id, source_token_spec())
 }
 
 /// Color a scope ID with a distinct highlight so scope lineage stands out in read surfaces.
 pub fn styled_scope_id(id: &str) -> String {
-    styled_highlighted_token(id, SCOPE_HIGHLIGHT_FG, SCOPE_HIGHLIGHT_BG)
+    styled_token_id(id, scope_token_spec())
 }
 
-fn styled_highlighted_token(id: &str, fg: (u8, u8, u8), bg: (u8, u8, u8)) -> String {
+fn styled_token_id(id: &str, spec: HighlightTokenSpec<'_>) -> String {
     format!(
         "{}",
         id.style(
             Style::new()
                 .bold()
-                .truecolor(fg.0, fg.1, fg.2)
-                .on_truecolor(bg.0, bg.1, bg.2)
+                .truecolor(spec.fg.0, spec.fg.1, spec.fg.2)
+                .on_truecolor(spec.bg.0, spec.bg.1, spec.bg.2)
         )
     )
 }
 
 /// Highlight canonical goal IDs inside already-rendered inline text.
 pub fn styled_goal_refs(value: &str) -> String {
-    styled_highlighted_refs(value, &GOAL_ID_RE, styled_goal_id)
+    styled_token_refs(value, goal_token_spec())
+}
+
+/// Highlight canonical source IDs inside already-rendered inline text.
+pub fn styled_source_refs(value: &str) -> String {
+    styled_token_refs(value, source_token_spec())
 }
 
 /// Highlight canonical scope IDs inside already-rendered inline text.
 pub fn styled_scope_refs(value: &str) -> String {
-    SCOPE_REF_RE
-        .replace_all(value, |captures: &regex::Captures<'_>| {
-            capture_token(captures).map_or_else(String::new, styled_scope_id)
-        })
-        .into_owned()
+    styled_token_refs(value, scope_token_spec())
 }
 
-fn styled_highlighted_refs(value: &str, re: &Regex, render: impl Fn(&str) -> String) -> String {
-    re.replace_all(value, |captures: &regex::Captures<'_>| render(&captures[1]))
+fn styled_token_refs(value: &str, spec: HighlightTokenSpec<'_>) -> String {
+    let normalized =
+        normalize_adjacent_refs(value, spec.adjacent_ref_re, spec.adjacent_replacement);
+    spec.ref_re
+        .replace_all(&normalized, |captures: &regex::Captures<'_>| {
+            capture_token(captures).map_or_else(String::new, |token| styled_token_id(token, spec))
+        })
         .into_owned()
 }
 
 fn capture_token<'a>(captures: &'a regex::Captures<'a>) -> Option<&'a str> {
     (1..captures.len()).find_map(|index| captures.get(index).map(|capture| capture.as_str()))
+}
+
+fn normalize_adjacent_refs(
+    value: &str,
+    adjacent_ref_re: Option<&Regex>,
+    adjacent_replacement: Option<&str>,
+) -> String {
+    let (Some(re), Some(replacement)) = (adjacent_ref_re, adjacent_replacement) else {
+        return value.to_string();
+    };
+
+    let mut normalized = value.to_string();
+    while re.is_match(&normalized) {
+        normalized = re.replace_all(&normalized, replacement).into_owned();
+    }
+    normalized
 }
 
 fn exact_token_match<'a>(value: &'a str, re: &Regex) -> Option<&'a str> {
@@ -380,15 +474,20 @@ fn exact_token_match<'a>(value: &'a str, re: &Regex) -> Option<&'a str> {
         .map(|_| value)
 }
 
-fn exact_scope_ref(value: &str) -> Option<&str> {
-    bracketed_scope_id(value).or_else(|| exact_token_match(value, &SCOPE_ID_RE))
+fn exact_token_ref<'a>(value: &'a str, spec: HighlightTokenSpec<'_>) -> Option<&'a str> {
+    if spec.allow_brackets {
+        return bracketed_token_id(value, spec.id_re)
+            .or_else(|| exact_token_match(value, spec.id_re));
+    }
+
+    exact_token_match(value, spec.id_re)
 }
 
-fn bracketed_scope_id(value: &str) -> Option<&str> {
+fn bracketed_token_id<'a>(value: &'a str, id_re: &Regex) -> Option<&'a str> {
     value
         .strip_prefix('[')
         .and_then(|rest| rest.strip_suffix(']'))
-        .filter(|candidate| exact_token_match(candidate, &SCOPE_ID_RE).is_some())
+        .filter(|candidate| exact_token_match(candidate, id_re).is_some())
 }
 
 /// Map common fenced code block language tags to syntect file extensions.
@@ -806,6 +905,30 @@ mod tests {
     }
 
     #[test]
+    fn styled_source_id_uses_highlight_colors() {
+        let rendered = styled_source_id("SRC-01");
+        assert!(rendered.contains("SRC-01"));
+        assert!(rendered.contains("\x1b[38;2;"));
+        assert!(rendered.contains(";48;2;"));
+    }
+
+    #[test]
+    fn styled_inline_markdown_highlights_source_ids() {
+        let rendered = styled_inline_markdown("Supports SRC-01 and SRC-02.");
+        assert!(rendered.contains("SRC-01"));
+        assert!(rendered.contains("SRC-02"));
+        assert!(rendered.contains(";48;2;"));
+    }
+
+    #[test]
+    fn styled_inline_markdown_separates_adjacent_source_ids() {
+        let rendered = styled_inline_markdown("Backed by [SRC-01][SRC-02].");
+        assert!(rendered.contains("SRC-01"));
+        assert!(rendered.contains("SRC-02"));
+        assert!(rendered.contains(", "));
+    }
+
+    #[test]
     fn styled_scope_id_uses_highlight_colors() {
         let rendered = styled_scope_id("SCOPE-01");
         assert!(rendered.contains("SCOPE-01"));
@@ -835,9 +958,24 @@ mod tests {
     }
 
     #[test]
+    fn styled_inline_markdown_strips_brackets_around_source_ids() {
+        let rendered = styled_inline_markdown("Backed by [SRC-01] and [SRC-02].");
+        assert!(rendered.contains("SRC-01"));
+        assert!(rendered.contains("SRC-02"));
+        assert!(!rendered.contains("[SRC-01]"));
+        assert!(!rendered.contains("[SRC-02]"));
+    }
+
+    #[test]
     fn styled_inline_markdown_uses_scope_highlight_for_backticked_bracketed_scope_ids() {
         let rendered = styled_inline_markdown("`[SCOPE-01]`");
         assert_eq!(rendered, styled_scope_id("SCOPE-01"));
+    }
+
+    #[test]
+    fn styled_inline_markdown_uses_source_highlight_for_backticked_bracketed_source_ids() {
+        let rendered = styled_inline_markdown("`[SRC-01]`");
+        assert_eq!(rendered, styled_source_id("SRC-01"));
     }
 
     #[test]
