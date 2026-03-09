@@ -462,8 +462,8 @@ fn update_bearing_status(
 
     let mut mutations = vec![Mutation::set("status", new_status.to_string())];
     if new_status == BearingStatus::Laid {
-        let today = Local::now().format("%Y-%m-%d").to_string();
-        mutations.push(Mutation::set("laid_at", today));
+        let now = Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
+        mutations.push(Mutation::set("laid_at", now));
         // Persist the epic lineage token — the bearing ID is the epic ID
         mutations.push(Mutation::set("epic", bearing.id()));
         if !goals.is_empty() {
