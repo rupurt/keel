@@ -2,9 +2,35 @@
 name = "keel"
 version = "0.1.0"
 edition = "2024"
+authors = ["keel contributors"]
 license = "MIT"
+homepage = "https://github.com/rupurt/keel"
 repository = "https://github.com/rupurt/keel"
 description = "Fast CLI for project board management"
+
+[package.metadata.wix]
+upgrade-guid = "A1F530AB-C0A0-4811-8BF3-80A08ACC3E7F"
+path-guid = "5B298B7E-F56C-43DB-A7E1-AA2A97424EA8"
+license = false
+eula = false
+
+[package.metadata.deb]
+maintainer = "keel contributors"
+copyright = "2026, keel contributors"
+license-file = ["LICENSE", "0"]
+depends = "$auto"
+section = "utils"
+priority = "optional"
+extended-description = """\
+keel is a fast CLI for agentic SDLC management."""
+
+[package.metadata.generate-rpm]
+summary = "Fast CLI for project board management"
+assets = [
+  { source = "target/release/keel", dest = "/usr/bin/keel", mode = "755" },
+  { source = "README.md", dest = "/usr/share/doc/keel/README.md", mode = "644", doc = true },
+  { source = "LICENSE", dest = "/usr/share/doc/keel/LICENSE", mode = "644", doc = true },
+]
 
 [[bin]]
 name = "keel"
@@ -32,3 +58,8 @@ syntect = { version = "5", default-features = false, features = ["default-syntax
 tempfile = "3"
 
 [dev-dependencies]
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"

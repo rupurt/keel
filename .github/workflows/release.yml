@@ -1,0 +1,405 @@
+name: Release
+
+on:
+  pull_request:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*"
+      - "[0-9]+.[0-9]+.[0-9]+*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Semver tag to publish when publish=true (for example v0.2.0)"
+        required: false
+        default: ""
+        type: string
+      publish:
+        description: "Publish a GitHub release instead of only building artifacts"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  plan:
+    runs-on: ubuntu-22.04
+    outputs:
+      val: ${{ steps.plan.outputs.manifest }}
+      tag: ${{ steps.context.outputs.tag }}
+      tag-flag: ${{ steps.context.outputs.tag_flag }}
+      build_artifacts: ${{ steps.context.outputs.build_artifacts }}
+      publishing: ${{ steps.context.outputs.publishing }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Install dist
+        shell: bash
+        run: |
+          curl --proto '=https' --tlsv1.2 -LsSf \
+            https://github.com/axodotdev/cargo-dist/releases/download/v0.30.3/cargo-dist-installer.sh | sh
+
+      - name: Cache dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: cargo-dist-cache
+          path: ~/.cargo/bin/dist
+
+      - id: context
+        name: Resolve release context
+        shell: bash
+        run: |
+          tag=""
+          build_artifacts=false
+          publishing=false
+
+          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+            tag="${GITHUB_REF_NAME}"
+            build_artifacts=true
+            publishing=true
+          elif [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            tag="${{ inputs.tag }}"
+            build_artifacts=true
+            publishing="${{ inputs.publish }}"
+
+            if [[ "${publishing}" == "true" && -z "${tag}" ]]; then
+              echo "publish=true requires a semver tag input" >&2
+              exit 1
+            fi
+          fi
+
+          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+
+          if [[ -n "${tag}" ]]; then
+            echo "tag_flag=--tag=${tag}" >> "${GITHUB_OUTPUT}"
+          else
+            echo "tag_flag=" >> "${GITHUB_OUTPUT}"
+          fi
+
+          echo "publishing=${publishing}" >> "${GITHUB_OUTPUT}"
+          echo "build_artifacts=${build_artifacts}" >> "${GITHUB_OUTPUT}"
+
+      - id: plan
+        shell: bash
+        run: |
+          if [[ "${{ steps.context.outputs.publishing }}" == "true" ]]; then
+            dist host --steps=create ${{ steps.context.outputs.tag_flag }} --output-format=json > plan-dist-manifest.json
+          elif [[ -n "${{ steps.context.outputs.tag }}" ]]; then
+            dist plan ${{ steps.context.outputs.tag_flag }} --output-format=json > plan-dist-manifest.json
+          else
+            dist plan --output-format=json > plan-dist-manifest.json
+          fi
+
+          echo "dist ran successfully"
+          cat plan-dist-manifest.json
+          echo "manifest=$(jq -c "." plan-dist-manifest.json)" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload dist manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-plan-dist-manifest
+          path: plan-dist-manifest.json
+
+  build-local-artifacts:
+    name: build-local-artifacts (${{ join(matrix.targets, ', ') }})
+    needs:
+      - plan
+    if: ${{ fromJson(needs.plan.outputs.val).ci.github.artifacts_matrix.include != null && (needs.plan.outputs.build_artifacts == 'true' || fromJson(needs.plan.outputs.val).ci.github.pr_run_mode == 'upload') }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan.outputs.val).ci.github.artifacts_matrix }}
+    runs-on: ${{ matrix.runner }}
+    container: ${{ matrix.container && matrix.container.image || null }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      BUILD_MANIFEST_NAME: target/distrib/${{ join(matrix.targets, '-') }}-dist-manifest.json
+    steps:
+      - name: Enable Windows longpaths
+        run: git config --global core.longpaths true
+
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Install Rust non-interactively if not already installed
+        if: ${{ matrix.container }}
+        run: |
+          if ! command -v cargo > /dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+            echo "$HOME/.cargo/bin" >> "${GITHUB_PATH}"
+          fi
+
+      - name: Install dist
+        run: ${{ matrix.install_dist.run }}
+
+      - name: Fetch prior artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: artifacts-*
+          path: target/distrib/
+          merge-multiple: true
+
+      - name: Install dependencies
+        run: ${{ matrix.packages_install }}
+
+      - name: Build artifacts
+        run: |
+          dist build ${{ needs.plan.outputs.tag-flag }} --print=linkage --output-format=json ${{ matrix.dist_args }} > dist-manifest.json
+          echo "dist ran successfully"
+
+      - id: cargo-dist
+        name: Collect artifact paths
+        shell: bash
+        run: |
+          echo "paths<<EOF" >> "${GITHUB_OUTPUT}"
+          dist print-upload-files-from-manifest --manifest dist-manifest.json >> "${GITHUB_OUTPUT}"
+          echo "EOF" >> "${GITHUB_OUTPUT}"
+
+          cp dist-manifest.json "${BUILD_MANIFEST_NAME}"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-build-local-${{ join(matrix.targets, '_') }}
+          path: |
+            ${{ steps.cargo-dist.outputs.paths }}
+            ${{ env.BUILD_MANIFEST_NAME }}
+
+  build-linux-packages:
+    name: build-linux-packages (.deb, .rpm)
+    needs:
+      - plan
+    if: ${{ needs.plan.outputs.build_artifacts == 'true' }}
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-gnu
+
+      - name: Install packaging toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev liblzma-dev
+          cargo install --locked cargo-deb --version 3.6.3
+          cargo install --locked cargo-generate-rpm --version 0.20.0
+
+      - name: Build linux packages
+        shell: bash
+        run: |
+          cargo build --locked --profile dist --target x86_64-unknown-linux-gnu
+          strip --strip-unneeded target/x86_64-unknown-linux-gnu/dist/keel
+
+          version="$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "keel").version')"
+          mkdir -p target/distrib
+
+          cargo deb \
+            --no-build \
+            --profile dist \
+            --target x86_64-unknown-linux-gnu \
+            --output "target/distrib/keel_${version}_amd64.deb"
+
+          cargo generate-rpm \
+            --profile dist \
+            --target x86_64-unknown-linux-gnu \
+            -o target/distrib
+
+      - name: Upload linux packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-build-linux-packages
+          path: |
+            target/distrib/*.deb
+            target/distrib/*.rpm
+
+  build-global-artifacts:
+    needs:
+      - plan
+      - build-local-artifacts
+    if: ${{ needs.build-local-artifacts.result == 'success' }}
+    runs-on: ubuntu-22.04
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      BUILD_MANIFEST_NAME: target/distrib/global-dist-manifest.json
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Install cached dist
+        uses: actions/download-artifact@v4
+        with:
+          name: cargo-dist-cache
+          path: ~/.cargo/bin/
+
+      - run: chmod +x ~/.cargo/bin/dist
+
+      - name: Fetch local artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: artifacts-*
+          path: target/distrib/
+          merge-multiple: true
+
+      - id: cargo-dist
+        shell: bash
+        run: |
+          dist build ${{ needs.plan.outputs.tag-flag }} --output-format=json --artifacts=global > dist-manifest.json
+          echo "dist ran successfully"
+
+          echo "paths<<EOF" >> "${GITHUB_OUTPUT}"
+          jq --raw-output ".upload_files[]" dist-manifest.json >> "${GITHUB_OUTPUT}"
+          echo "EOF" >> "${GITHUB_OUTPUT}"
+
+          cp dist-manifest.json "${BUILD_MANIFEST_NAME}"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-build-global
+          path: |
+            ${{ steps.cargo-dist.outputs.paths }}
+            ${{ env.BUILD_MANIFEST_NAME }}
+
+  host:
+    needs:
+      - plan
+      - build-local-artifacts
+      - build-linux-packages
+      - build-global-artifacts
+    if: ${{ always() && needs.plan.result == 'success' && needs.plan.outputs.publishing == 'true' && (needs.build-global-artifacts.result == 'skipped' || needs.build-global-artifacts.result == 'success') && (needs.build-local-artifacts.result == 'skipped' || needs.build-local-artifacts.result == 'success') && (needs.build-linux-packages.result == 'skipped' || needs.build-linux-packages.result == 'success') }}
+    runs-on: ubuntu-22.04
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Install cached dist
+        uses: actions/download-artifact@v4
+        with:
+          name: cargo-dist-cache
+          path: ~/.cargo/bin/
+
+      - run: chmod +x ~/.cargo/bin/dist
+
+      - name: Fetch artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: artifacts-*
+          path: target/distrib/
+          merge-multiple: true
+
+      - id: host
+        shell: bash
+        run: |
+          dist host ${{ needs.plan.outputs.tag-flag }} --steps=upload --steps=release --output-format=json > dist-manifest.json
+          echo "artifacts uploaded and released successfully"
+          cat dist-manifest.json
+          echo "manifest=$(jq -c "." dist-manifest.json)" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload dist manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-dist-manifest
+          path: dist-manifest.json
+
+      - name: Download GitHub release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: artifacts-*
+          path: artifacts
+          merge-multiple: true
+
+      - name: Cleanup manifest scratch files
+        run: rm -f artifacts/*-dist-manifest.json
+
+      - name: Create or update GitHub release
+        env:
+          RELEASE_TAG: ${{ needs.plan.outputs.tag }}
+          PRERELEASE_FLAG: ${{ fromJson(steps.host.outputs.manifest).announcement_is_prerelease && '--prerelease' || '' }}
+          ANNOUNCEMENT_TITLE: ${{ fromJson(steps.host.outputs.manifest).announcement_title }}
+          ANNOUNCEMENT_BODY: ${{ fromJson(steps.host.outputs.manifest).announcement_github_body }}
+          RELEASE_COMMIT: ${{ github.sha }}
+        shell: bash
+        run: |
+          echo "${ANNOUNCEMENT_BODY}" > "${RUNNER_TEMP}/notes.txt"
+
+          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            gh release upload "${RELEASE_TAG}" artifacts/* --clobber
+          else
+            gh release create "${RELEASE_TAG}" \
+              --target "${RELEASE_COMMIT}" \
+              ${PRERELEASE_FLAG} \
+              --title "${ANNOUNCEMENT_TITLE}" \
+              --notes-file "${RUNNER_TEMP}/notes.txt" \
+              artifacts/*
+          fi
+
+  publish-homebrew:
+    name: publish-homebrew-formula
+    needs:
+      - plan
+      - host
+    if: ${{ needs.host.result == 'success' && vars.HOMEBREW_TAP_REPO != '' && secrets.HOMEBREW_TAP_TOKEN != '' }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: artifacts-*
+          path: artifacts
+          merge-multiple: true
+
+      - id: formula
+        name: Locate generated formula
+        shell: bash
+        run: |
+          formula_path="$(find artifacts -name '*.rb' | head -n 1)"
+
+          if [[ -z "${formula_path}" ]]; then
+            echo "No Homebrew formula artifact was generated" >&2
+            exit 1
+          fi
+
+          echo "path=${formula_path}" >> "${GITHUB_OUTPUT}"
+          echo "name=$(basename "${formula_path}")" >> "${GITHUB_OUTPUT}"
+
+      - uses: actions/checkout@v5
+        with:
+          repository: ${{ vars.HOMEBREW_TAP_REPO }}
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-tap
+
+      - name: Commit formula update
+        shell: bash
+        run: |
+          mkdir -p homebrew-tap/Formula
+          cp "${{ steps.formula.outputs.path }}" "homebrew-tap/Formula/${{ steps.formula.outputs.name }}"
+
+          cd homebrew-tap
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Formula/${{ steps.formula.outputs.name }}"
+
+          if git diff --cached --quiet; then
+            echo "Homebrew formula is already up to date"
+            exit 0
+          fi
+
+          git commit -m "chore: publish ${{ needs.plan.outputs.tag }}"
+          git push

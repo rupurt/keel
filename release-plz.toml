@@ -1,0 +1,13 @@
+[workspace]
+release_always = false
+pr_name = "chore: release"
+pr_labels = ["release"]
+
+[[package]]
+name = "keel"
+changelog_update = true
+git_only = true
+publish = false
+git_release_enable = false
+git_tag_enable = true
+git_tag_name = "v{{ version }}"
