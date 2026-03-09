@@ -13,6 +13,7 @@ pub struct DoctorReport {
     pub epic_checks: Vec<CheckResult>,
     pub adr_checks: Vec<CheckResult>,
     pub bearing_checks: Vec<CheckResult>,
+    pub mission_checks: Vec<CheckResult>,
 }
 
 impl DoctorReport {
@@ -20,6 +21,9 @@ impl DoctorReport {
         self.story_checks.iter().all(|c| c.passed)
             && self.voyage_checks.iter().all(|c| c.passed)
             && self.epic_checks.iter().all(|c| c.passed)
+            && self.adr_checks.iter().all(|c| c.passed)
+            && self.bearing_checks.iter().all(|c| c.passed)
+            && self.mission_checks.iter().all(|c| c.passed)
     }
 
     pub fn total_errors(&self) -> usize {
@@ -29,6 +33,7 @@ impl DoctorReport {
             .chain(&self.epic_checks)
             .chain(&self.adr_checks)
             .chain(&self.bearing_checks)
+            .chain(&self.mission_checks)
             .flat_map(|c| &c.problems)
             .filter(|p| p.severity == Severity::Error)
             .count()
@@ -41,6 +46,7 @@ impl DoctorReport {
             .chain(&self.epic_checks)
             .chain(&self.adr_checks)
             .chain(&self.bearing_checks)
+            .chain(&self.mission_checks)
             .flat_map(|c| &c.problems)
             .filter(|p| p.severity == Severity::Warning)
             .count()

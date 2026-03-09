@@ -301,4 +301,29 @@ pub const ALL_DOCTOR_CHECKS: &[DoctorCheckDefinition] = &[
         section: "ADRs",
         name: "ADR date consistency",
     },
+    DoctorCheckDefinition {
+        id: "mission-id-uniqueness",
+        section: "Missions",
+        name: "ID uniqueness",
+    },
+    DoctorCheckDefinition {
+        id: "mission-goal-achievement",
+        section: "Missions",
+        name: "Goal achievement",
+    },
+    DoctorCheckDefinition {
+        id: "mission-active-work-coherence",
+        section: "Missions",
+        name: "Active mission work coherence",
+    },
+    DoctorCheckDefinition {
+        id: "mission-orphaned-lineage",
+        section: "Missions",
+        name: "Orphaned mission lineage",
+    },
+    DoctorCheckDefinition {
+        id: "mission-date-consistency",
+        section: "Missions",
+        name: "Mission date consistency",
+    },
 ];

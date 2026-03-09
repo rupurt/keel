@@ -81,6 +81,7 @@ pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
     let mut epic_checks = Vec::new();
     let mut adr_checks = Vec::new();
     let mut bearing_checks = Vec::new();
+    let mut mission_checks = Vec::new();
 
     // 1. Story Checks
     let (story_file_problems, story_count) = checks::stories::scan_story_files(board_dir)?;
@@ -612,12 +613,59 @@ pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
         adr_date_problems,
     ));
 
+    // 6. Mission Checks
+    let mission_duplicate_problems = checks::missions::check_mission_duplicates(board_dir);
+    mission_checks.push(configured_check(
+        doctor_config,
+        "mission-id-uniqueness",
+        "ID uniqueness",
+        board.missions.len(),
+        mission_duplicate_problems,
+    ));
+
+    let mission_goal_problems = checks::missions::check_mission_goals(&board);
+    mission_checks.push(configured_check(
+        doctor_config,
+        "mission-goal-achievement",
+        "Goal achievement",
+        board.missions.len(),
+        mission_goal_problems,
+    ));
+
+    let mission_work_problems = checks::missions::check_mission_active_no_work(&board);
+    mission_checks.push(configured_check(
+        doctor_config,
+        "mission-active-work-coherence",
+        "Active mission work coherence",
+        board.missions.len(),
+        mission_work_problems,
+    ));
+
+    let mission_orphan_problems = checks::missions::check_mission_orphans(&board);
+    mission_checks.push(configured_check(
+        doctor_config,
+        "mission-orphaned-lineage",
+        "Orphaned mission lineage",
+        board.epics.len() + board.bearings.len() + board.adrs.len(),
+        mission_orphan_problems,
+    ));
+
+    let mission_date_problems = checks::missions::check_mission_dates(&board);
+    mission_checks.push(configured_check(
+        doctor_config,
+        "mission-date-consistency",
+        "Mission date consistency",
+        board.missions.len(),
+        mission_date_problems,
+    ));
+
     Ok(DoctorReport {
         story_checks,
         voyage_checks,
         epic_checks,
         adr_checks,
         bearing_checks,
+        mission_checks,
     })
 }
 
