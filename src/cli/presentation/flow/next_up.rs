@@ -3,6 +3,7 @@
 //! Shows priority items for both human and agent queues below the flow boxes.
 
 use crate::domain::model::{Bearing, BearingStatus, Board, Story, StoryState, Voyage, VoyageState};
+use crate::infrastructure::bearing_readiness::evaluate_bearing_readiness;
 
 /// Item to display in the NEXT UP section
 #[derive(Debug, Clone)]
@@ -262,26 +263,15 @@ fn build_human_next_up(board: &Board) -> Vec<NextUpItem> {
     }
 
     // 4. Next bearing needing attention (research flashlight)
-    if let Some((bearing, action)) = find_next_bearing_action(board) {
-        let command = match action.as_str() {
-            "lay" => format!("keel bearing lay {}", bearing.id()),
-            "research" => format!("keel bearing research {}", bearing.id()),
-            "assess" => format!("keel bearing assess {}", bearing.id()),
-            _ => format!("keel bearing show {}", bearing.id()),
-        };
-        items.push(NextUpItem {
-            id: bearing.id().to_string(),
-            title: bearing.title().to_string(),
-            category: action,
-            command: Some(command),
-        });
+    if let Some(item) = find_next_bearing_action(board) {
+        items.push(item);
     }
 
     items
 }
 
-/// Find the next bearing that needs action, returning (bearing, action_category)
-fn find_next_bearing_action(board: &Board) -> Option<(&Bearing, String)> {
+/// Find the next bearing that needs action.
+fn find_next_bearing_action(board: &Board) -> Option<NextUpItem> {
     let mut active_bearings: Vec<&Bearing> = board
         .bearings
         .values()
@@ -293,28 +283,64 @@ fn find_next_bearing_action(board: &Board) -> Option<(&Bearing, String)> {
         })
         .collect();
 
-    // Sort by priority: most actionable first (Ready > Evaluating > Exploring),
-    // then by progress (more artifacts = clearer next step), then alphabetically.
-    active_bearings.sort_by(|a, b| a.priority_key().cmp(&b.priority_key()));
+    // Sort by readiness pressure first so blocked "ready" research is repaired
+    // before already-decision-ready bearings are laid.
+    active_bearings.sort_by(|a, b| {
+        let a_pressure = bearing_action_rank(board, a);
+        let b_pressure = bearing_action_rank(board, b);
+        a_pressure
+            .cmp(&b_pressure)
+            .then_with(|| a.priority_key().cmp(&b.priority_key()))
+    });
 
     // Get the first bearing needing attention
     if let Some(bearing) = active_bearings.first() {
-        // Determine what action is needed
-        let action = if bearing.status() == BearingStatus::Ready {
-            "lay".to_string()
-        } else if !bearing.has_evidence {
-            "research".to_string()
-        } else if !bearing.has_assessment {
-            "assess".to_string()
-        } else {
-            // Has evidence and assessment but still exploring - might need review
-            "review".to_string()
-        };
+        let readiness = evaluate_bearing_readiness(&board.root, bearing, None);
+        let (category, command) =
+            if bearing.status() == BearingStatus::Ready && readiness.is_decision_ready() {
+                (
+                    "lay".to_string(),
+                    format!("keel bearing lay {}", bearing.id()),
+                )
+            } else if !bearing.has_evidence {
+                (
+                    "research".to_string(),
+                    format!("keel bearing research {}", bearing.id()),
+                )
+            } else if !bearing.has_assessment {
+                (
+                    "assess".to_string(),
+                    format!("keel bearing assess {}", bearing.id()),
+                )
+            } else {
+                (
+                    readiness.next_action_category().to_string(),
+                    readiness
+                        .primary_recovery_command(bearing.id())
+                        .unwrap_or_else(|| format!("keel bearing show {}", bearing.id())),
+                )
+            };
 
-        return Some((*bearing, action));
+        return Some(NextUpItem {
+            id: bearing.id().to_string(),
+            title: bearing.title().to_string(),
+            category,
+            command: Some(command),
+        });
     }
 
     None
+}
+
+fn bearing_action_rank(board: &Board, bearing: &Bearing) -> u8 {
+    let readiness = evaluate_bearing_readiness(&board.root, bearing, None);
+    match (bearing.status(), readiness.is_decision_ready()) {
+        (BearingStatus::Ready, false) => 0,
+        (BearingStatus::Evaluating, _) => 1,
+        (BearingStatus::Exploring, _) => 2,
+        (BearingStatus::Ready, true) => 3,
+        _ => 4,
+    }
 }
 
 fn build_agent_next_up(board: &Board) -> Vec<NextUpItem> {

@@ -497,7 +497,7 @@ pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
     bearing_checks.push(configured_check(
         doctor_config,
         "bearing-recommendation",
-        "Bearing recommendation",
+        "Bearing decision readiness",
         board.bearings.len(),
         bearing_recommendation_problems,
     ));

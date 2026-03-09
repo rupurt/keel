@@ -5,9 +5,9 @@
 
 ## Bearings
 
-| Bearing | Status | Evidence | Assessment | Laid |
-|---------|--------|----------|------------|------|
-| [Semantic Search and Ranking in Keel](bearings/1w5H2Bq9L/) | evaluating | ✓ | ✓ | - |
+| Bearing | Status | Evidence | Assessment | Readiness | EV | Laid |
+|---------|--------|----------|------------|-----------|----|------|
+| [Semantic Search and Ranking in Keel](bearings/1w5H2Bq9L/) | evaluating | ✓ | ✓ | decision-ready | 4.66 | - |
 
 ## Epics
 

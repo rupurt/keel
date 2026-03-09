@@ -3,6 +3,7 @@
 use std::fmt::Write;
 
 use crate::domain::model::{BearingStatus, Board};
+use crate::infrastructure::bearing_readiness::evaluate_bearing_readiness;
 use crate::infrastructure::utils::cmp_optional_index_then_id;
 
 /// Generate and save the board-level README.md
@@ -61,14 +62,16 @@ fn write_bearings_section(output: &mut String, board: &Board) {
         .collect();
 
     if !visible.is_empty() {
+        let (config, _source) = crate::infrastructure::config::load_config();
+        let weights = config.current_weights();
         writeln!(
             output,
-            "| Bearing | Status | Evidence | Assessment | Laid |"
+            "| Bearing | Status | Evidence | Assessment | Readiness | EV | Laid |"
         )
         .unwrap();
         writeln!(
             output,
-            "|---------|--------|----------|------------|------|"
+            "|---------|--------|----------|------------|-----------|----|------|"
         )
         .unwrap();
 
@@ -82,19 +85,27 @@ fn write_bearings_section(output: &mut String, board: &Board) {
         for bearing in sorted {
             let evidence = if bearing.has_evidence { "✓" } else { "-" };
             let assessment = if bearing.has_assessment { "✓" } else { "-" };
+            let readiness = evaluate_bearing_readiness(&board.root, bearing, Some(&weights));
             let laid = if bearing.frontmatter.status == BearingStatus::Laid {
                 "✓"
             } else {
                 "-"
             };
+            let ev = readiness
+                .score
+                .as_ref()
+                .map(|score| format!("{:.2}", score.weighted_score))
+                .unwrap_or_else(|| "-".to_string());
             writeln!(
                 output,
-                "| [{}](bearings/{}/) | {} | {} | {} | {} |",
+                "| [{}](bearings/{}/) | {} | {} | {} | {} | {} | {} |",
                 bearing.title(),
                 bearing.id(),
                 bearing.frontmatter.status,
                 evidence,
                 assessment,
+                readiness.short_status(),
+                ev,
                 laid
             )
             .unwrap();
@@ -287,7 +298,9 @@ mod tests {
 
         assert!(readme.contains("## Bearings"));
         assert!(readme.contains("test-research"));
-        assert!(readme.contains("| Bearing | Status | Evidence | Assessment | Laid |"));
+        assert!(
+            readme.contains("| Bearing | Status | Evidence | Assessment | Readiness | EV | Laid |")
+        );
     }
 
     #[test]
@@ -305,7 +318,8 @@ mod tests {
         let board = load_board(temp.path()).unwrap();
         let readme = generate_board_readme(&board);
 
-        assert!(readme.contains("[Test Bearing](bearings/laid-bearing/) | laid | ✓ | ✓ | ✓ |"));
+        assert!(readme.contains("[Test Bearing](bearings/laid-bearing/) | laid | ✓ | ✓ |"));
+        assert!(readme.contains("| complete scoring | - | ✓ |"));
         assert!(!readme.contains("<summary>Completed Bearings</summary>"));
     }
 

@@ -5,6 +5,7 @@ use anyhow::Result;
 
 use super::super::types::*;
 use crate::domain::model::Board;
+use crate::infrastructure::bearing_readiness::evaluate_bearing_readiness;
 use crate::infrastructure::parser::parse_frontmatter;
 
 /// Scan bearing files for structural problems
@@ -513,41 +514,27 @@ pub fn check_bearing_epic_coherence(board: &Board) -> Vec<Problem> {
     problems
 }
 
-/// Check bearing assessment recommendation
-/// Validates that evaluating bearings have a marked recommendation in ASSESSMENT.md
+/// Check bearing decision readiness
+/// Validates that ready/laid bearings satisfy the evidence-backed decision contract
 pub fn check_bearing_assessment_recommendation(board: &Board, board_dir: &Path) -> Vec<Problem> {
-    use crate::domain::model::BearingStatus;
-
     let mut problems = Vec::new();
 
     for bearing in board.bearings.values() {
-        // Only check bearings that are evaluating and have an assessment
-        if bearing.status() == BearingStatus::Evaluating && bearing.has_assessment {
-            let assessment_path = board_dir
-                .join("bearings")
-                .join(bearing.id())
-                .join("ASSESSMENT.md");
-
-            if let Ok(content) = fs::read_to_string(&assessment_path) {
-                // Check if any recommendation checkbox is marked
-                let has_marked_recommendation = content.contains("[x] Proceed")
-                    || content.contains("[x] Park")
-                    || content.contains("[x] Decline")
-                    || content.contains("[X] Proceed")
-                    || content.contains("[X] Park")
-                    || content.contains("[X] Decline");
-
-                if !has_marked_recommendation {
-                    problems.push(Problem {
-                        severity: Severity::Warning,
-                        path: bearing.path.clone(),
-                        message: "assessment has no recommendation marked".to_string(),
-                        fix: None,
-                        scope: None,
-                        category: None,
-                        check_id: CheckId::Unknown,
-                    });
-                }
+        if matches!(
+            bearing.status(),
+            crate::domain::model::BearingStatus::Ready | crate::domain::model::BearingStatus::Laid
+        ) {
+            let readiness = evaluate_bearing_readiness(board_dir, bearing, None);
+            for message in readiness.problem_messages(bearing.id()) {
+                problems.push(Problem {
+                    severity: Severity::Error,
+                    path: bearing.path.clone(),
+                    message,
+                    fix: None,
+                    scope: None,
+                    category: None,
+                    check_id: CheckId::Unknown,
+                });
             }
         }
     }

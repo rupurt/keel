@@ -107,6 +107,13 @@ fn recovery_command_for_error(
         return Some("keel bearing list".to_string());
     }
 
+    if lower.contains("not decision-ready") {
+        if lower.contains("assessment") || lower.contains("citation") || lower.contains("factor") {
+            return Some(format!("keel bearing file {bearing_ref} ASSESSMENT"));
+        }
+        return Some(format!("keel bearing file {bearing_ref} EVIDENCE"));
+    }
+
     if action == BearingLifecycleAction::Lay
         && lower.contains("epic already exists")
         && let Some(epic_id) = extract_epic_id(message)

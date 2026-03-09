@@ -239,7 +239,7 @@ pub const ALL_DOCTOR_CHECKS: &[DoctorCheckDefinition] = &[
     DoctorCheckDefinition {
         id: "bearing-recommendation",
         section: "Bearings",
-        name: "Bearing recommendation",
+        name: "Bearing decision readiness",
     },
     DoctorCheckDefinition {
         id: "adr-structure",

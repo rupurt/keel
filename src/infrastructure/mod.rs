@@ -2,6 +2,7 @@
 
 pub mod artifact_frontmatter;
 pub mod bearing_evidence;
+pub mod bearing_readiness;
 pub mod bearing_research;
 pub mod config;
 pub mod duplicate_ids;

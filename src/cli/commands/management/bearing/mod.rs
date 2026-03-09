@@ -112,8 +112,9 @@ pub enum BearingAction {
 pub mod new;
 
 use crate::cli::table::Table;
-use crate::domain::model::{Bearing, BearingStatus};
+use crate::domain::model::{Bearing, BearingStatus, Board};
 use crate::infrastructure::bearing_evidence::{EvidenceSourceClass, EvidenceStrength};
+use crate::infrastructure::bearing_readiness::evaluate_bearing_readiness;
 use crate::infrastructure::bearing_research::{self, ResearchCaptureRequest};
 use crate::infrastructure::config::{find_board_dir, load_config};
 use crate::infrastructure::frontmatter_mutation::{Mutation, apply};
@@ -132,6 +133,17 @@ enum FogType {
     Blocking,
     Protecting,
     Clear,
+}
+
+#[derive(Debug, Clone)]
+struct BearingListRow {
+    id: String,
+    title: String,
+    status: String,
+    evidence: String,
+    assessment: String,
+    readiness: String,
+    ev: String,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -406,14 +418,29 @@ fn run_assess_impl(pattern: &str) -> Result<()> {
     use crate::domain::transitions::bearing::{bearing_transitions, execute};
 
     let board_dir = find_board_dir()?;
+    let (config, _source) = load_config();
     let result = execute(&board_dir, pattern, &bearing_transitions::ASSESS)?;
+    let board = load_board(&board_dir)?;
+    let bearing = board.require_bearing(&result.bearing_id)?;
+    let readiness =
+        evaluate_bearing_readiness(&board_dir, bearing, Some(&config.current_weights()));
 
     if let Some(path) = &result.file_created {
         println!("Created: {}", path);
     }
     println!("  {} → {}", result.from, result.to);
-    let guidance = guidance_for_action(BearingLifecycleAction::Assess, &result.bearing_id);
-    print_human(guidance.as_ref());
+    if readiness.is_decision_ready() {
+        let guidance = guidance_for_action(BearingLifecycleAction::Assess, &result.bearing_id);
+        print_human(guidance.as_ref());
+    } else {
+        println!("Decision readiness blocked:");
+        for message in readiness.problem_messages(&result.bearing_id) {
+            println!("  - {}", message);
+        }
+        if let Some(command) = readiness.primary_recovery_command(&result.bearing_id) {
+            println!("\nNext step:\n  {}", command);
+        }
+    }
 
     Ok(())
 }
@@ -459,26 +486,9 @@ pub fn run_list(status_filters: &[String]) -> Result<()> {
         BEARING_STATUS_VALUES,
     )?;
 
-    // Collect bearings with their scores
-    let mut bearings_with_scores: Vec<(&Bearing, Option<f64>)> = board
-        .bearings
-        .values()
-        .filter(|b| status_filter.contains(&b.frontmatter.status.to_string()))
-        .map(|b| {
-            let score = get_bearing_score(&board_dir, b, &weights);
-            (b, score)
-        })
-        .collect();
+    let rows = build_bearing_list_rows(&board_dir, &board, &status_filter, &weights);
 
-    // Sort by EV score (highest first), bearings without scores at the end
-    bearings_with_scores.sort_by(|a, b| match (a.1, b.1) {
-        (Some(score_a), Some(score_b)) => score_b.partial_cmp(&score_a).unwrap(),
-        (Some(_), None) => std::cmp::Ordering::Less,
-        (None, Some(_)) => std::cmp::Ordering::Greater,
-        (None, None) => a.0.id().cmp(b.0.id()),
-    });
-
-    if bearings_with_scores.is_empty() {
+    if rows.is_empty() {
         let hidden_terminal_statuses = ["laid", "parked", "declined"]
             .into_iter()
             .filter(|status| {
@@ -504,27 +514,71 @@ pub fn run_list(status_filters: &[String]) -> Result<()> {
         return Ok(());
     }
 
-    let mut table = Table::new(&["ID", "TITLE", "STATUS", "EVIDENCE", "ASSESS", "EV"]);
-    for (bearing, score) in bearings_with_scores {
-        let evidence = if bearing.has_evidence { "✓" } else { "-" };
-        let assessment = if bearing.has_assessment { "✓" } else { "-" };
-        let score_str = score
-            .map(|s| format!("{:.2}", s))
-            .unwrap_or_else(|| "-".to_string());
-
+    let mut table = Table::new(&[
+        "ID",
+        "TITLE",
+        "STATUS",
+        "EVIDENCE",
+        "ASSESS",
+        "READINESS",
+        "EV",
+    ]);
+    for row in rows {
         table.row(&[
-            bearing.id(),
-            &bearing.frontmatter.title,
-            &bearing.frontmatter.status.to_string(),
-            evidence,
-            assessment,
-            &score_str,
+            &row.id,
+            &row.title,
+            &row.status,
+            &row.evidence,
+            &row.assessment,
+            &row.readiness,
+            &row.ev,
         ]);
     }
     table.print();
     print_human(informational_for_list().as_ref());
 
     Ok(())
+}
+
+fn build_bearing_list_rows(
+    board_dir: &Path,
+    board: &Board,
+    status_filter: &crate::cli::commands::management::status_filter::StatusFilter,
+    weights: &crate::infrastructure::config::ModeWeights,
+) -> Vec<BearingListRow> {
+    let mut rows: Vec<(&Bearing, Option<f64>, String)> = board
+        .bearings
+        .values()
+        .filter(|b| status_filter.contains(&b.frontmatter.status.to_string()))
+        .map(|bearing| {
+            let readiness = evaluate_bearing_readiness(board_dir, bearing, Some(weights));
+            let score = readiness
+                .score
+                .as_ref()
+                .map(|score| score.weighted_score)
+                .or_else(|| get_bearing_score(board_dir, bearing, weights));
+            (bearing, score, readiness.short_status())
+        })
+        .collect();
+
+    rows.sort_by(|a, b| match (a.1, b.1) {
+        (Some(score_a), Some(score_b)) => score_b.partial_cmp(&score_a).unwrap(),
+        (Some(_), None) => std::cmp::Ordering::Less,
+        (None, Some(_)) => std::cmp::Ordering::Greater,
+        (None, None) => a.0.id().cmp(b.0.id()),
+    });
+
+    rows.into_iter()
+        .map(|(bearing, score, readiness)| BearingListRow {
+            id: bearing.id().to_string(),
+            title: bearing.frontmatter.title.clone(),
+            status: bearing.frontmatter.status.to_string(),
+            evidence: if bearing.has_evidence { "✓" } else { "-" }.to_string(),
+            assessment: if bearing.has_assessment { "✓" } else { "-" }.to_string(),
+            readiness,
+            ev: format_ev_score(score),
+        })
+        .collect()
 }
 
 /// Run the park command - shelve a bearing for later
@@ -609,8 +663,13 @@ pub fn run_lay(pattern: &str) -> Result<()> {
 
 fn run_lay_impl(pattern: &str) -> Result<()> {
     let board_dir = find_board_dir()?;
-    let board = load_board(&board_dir)?;
+    run_lay_at(&board_dir, pattern)
+}
+
+fn run_lay_at(board_dir: &Path, pattern: &str) -> Result<()> {
+    let board = load_board(board_dir)?;
     let bearing = board.require_bearing(pattern)?;
+    let (config, _source) = load_config();
 
     let old_status = bearing.frontmatter.status;
 
@@ -639,12 +698,16 @@ fn run_lay_impl(pattern: &str) -> Result<()> {
         _ => {}
     }
 
-    // Warn if no assessment
-    if !bearing.has_assessment {
-        eprintln!(
-            "Warning: No ASSESSMENT.md for {}. Proceeding without EV evaluation.",
-            bearing.id()
-        );
+    let readiness = evaluate_bearing_readiness(board_dir, bearing, Some(&config.current_weights()));
+    if !readiness.is_decision_ready() {
+        let command = readiness
+            .primary_recovery_command(bearing.id())
+            .unwrap_or_else(|| format!("keel bearing show {}", bearing.id()));
+        return Err(anyhow!(
+            "{}\nRecovery step:\n  {}",
+            readiness.problem_messages(bearing.id()).join("\n"),
+            command
+        ));
     }
 
     // Create the epic
@@ -682,13 +745,13 @@ fn run_lay_impl(pattern: &str) -> Result<()> {
         .with_context(|| format!("Failed to write epic README: {}", readme_path.display()))?;
 
     // Create PRD.md seeded with bearing content
-    let prd_content = create_prd_from_bearing(&board_dir, bearing)?;
+    let prd_content = create_prd_from_bearing(board_dir, bearing)?;
     let prd_path = epic_dir.join("PRD.md");
     fs::write(&prd_path, prd_content)
         .with_context(|| format!("Failed to write PRD: {}", prd_path.display()))?;
 
     // Update bearing status to laid
-    update_bearing_status(&board_dir, bearing, BearingStatus::Laid)?;
+    update_bearing_status(board_dir, bearing, BearingStatus::Laid)?;
 
     println!("Laid: {} → epics/{}/", bearing.id(), epic_id);
     println!("  Epic created with PRD.md seeded from bearing documents");
@@ -697,7 +760,7 @@ fn run_lay_impl(pattern: &str) -> Result<()> {
     print_human(guidance.as_ref());
 
     // Regenerate board
-    crate::cli::commands::generate::run(&board_dir)?;
+    crate::cli::commands::generate::run(board_dir)?;
 
     Ok(())
 }
@@ -907,6 +970,12 @@ fn classify_fog(board_dir: &Path, bearing: &Bearing) -> FogType {
     }
 }
 
+fn format_ev_score(score: Option<f64>) -> String {
+    score
+        .map(|value| format!("{value:.2}"))
+        .unwrap_or_else(|| "-".to_string())
+}
+
 /// Format a factor value for display
 fn format_factor(value: Option<u8>) -> String {
     value
@@ -917,8 +986,13 @@ fn format_factor(value: Option<u8>) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cli::commands::diagnostics::doctor::checks::bearings::check_bearing_assessment_recommendation;
+    use crate::cli::presentation::flow::next_up::calculate_next_up;
     use crate::infrastructure::bearing_evidence::parse_evidence_records;
-    use std::path::PathBuf;
+    use crate::infrastructure::config::ModeWeights;
+    use crate::infrastructure::generate::board_readme::generate_board_readme;
+    use crate::test_helpers::{TestBearing, TestBoardBuilder};
+    use std::path::{Path, PathBuf};
     use tempfile::TempDir;
 
     fn create_test_bearing(temp: &TempDir) -> PathBuf {
@@ -1029,6 +1103,143 @@ status: {}
             freshness: EvidenceStrength::Medium,
             notes: notes.to_string(),
         }
+    }
+
+    fn strong_evidence_fixture() -> &'static str {
+        r#"
+## Sources
+
+| ID | Class | Provenance | Location | Observed / Published | Retrieved | Authority | Freshness | Notes |
+|----|-------|------------|----------|----------------------|-----------|-----------|-----------|-------|
+| SRC-01 | academic | manual:prior-art-review | https://example.com/paper | 2026-02-01 | 2026-03-07 | high | high | Prior art supports the direction. |
+| SRC-02 | web | manual:official-doc | https://example.com/docs | 2026-03-01 | 2026-03-08 | high | high | Official docs confirm feasibility. |
+"#
+    }
+
+    fn weak_evidence_fixture() -> &'static str {
+        r#"
+## Sources
+
+| ID | Class | Provenance | Location | Observed / Published | Retrieved | Authority | Freshness | Notes |
+|----|-------|------------|----------|----------------------|-----------|-----------|-----------|-------|
+| SRC-01 | social | manual:community-signal | https://example.com/thread | 2020-03-01 | 2026-03-08 | low | low | One anecdotal signal supports the direction. |
+| SRC-02 | social | manual:community-signal | https://example.com/thread-2 | 2020-04-01 | 2026-03-08 | low | low | A second anecdotal signal supports the direction. |
+"#
+    }
+
+    fn narrow_evidence_fixture() -> &'static str {
+        r#"
+## Sources
+
+| ID | Class | Provenance | Location | Observed / Published | Retrieved | Authority | Freshness | Notes |
+|----|-------|------------|----------|----------------------|-----------|-----------|-----------|-------|
+| SRC-01 | web | manual:official-doc | https://example.com/docs | 2026-03-01 | 2026-03-08 | high | high | One strong source supports the direction. |
+"#
+    }
+
+    fn cited_assessment_fixture() -> &'static str {
+        r#"
+# Assessment
+
+| Factor | Score |
+|--------|-------|
+| Impact | 4 |
+| Confidence | 4 |
+| Effort | 2 |
+| Risk | 2 |
+
+## Analysis
+
+### Findings
+- Delivery teams need source-backed recommendations before converting research into roadmap work [SRC-01][SRC-02]
+
+### Opportunity Cost
+Deferring this leaves roadmap work underspecified [SRC-02]
+
+### Dependencies
+- Evidence capture must produce canonical source records first [SRC-02]
+
+### Alternatives Considered
+- Keep factor-only scoring and trust operator judgment alone [SRC-01]
+
+## Recommendation
+
+[x] Proceed → convert to epic [SRC-01][SRC-02]
+[ ] Park → revisit later [SRC-02]
+[ ] Decline → document learnings [SRC-01]
+"#
+    }
+
+    fn citation_broken_assessment_fixture() -> &'static str {
+        r#"
+# Assessment
+
+| Factor | Score |
+|--------|-------|
+| Impact | 4 |
+| Confidence | 4 |
+| Effort | 2 |
+| Risk | 2 |
+
+## Analysis
+
+### Findings
+- Delivery teams need source-backed recommendations before converting research into roadmap work [SRC-99]
+
+### Opportunity Cost
+Deferring this leaves roadmap work underspecified [SRC-99]
+
+### Dependencies
+- Evidence capture must produce canonical source records first [SRC-99]
+
+### Alternatives Considered
+- Keep factor-only scoring and trust operator judgment alone [SRC-99]
+
+## Recommendation
+
+[x] Proceed → convert to epic [SRC-99]
+[ ] Park → revisit later [SRC-99]
+[ ] Decline → document learnings [SRC-99]
+"#
+    }
+
+    fn single_source_assessment_fixture() -> &'static str {
+        r#"
+# Assessment
+
+| Factor | Score |
+|--------|-------|
+| Impact | 4 |
+| Confidence | 4 |
+| Effort | 2 |
+| Risk | 2 |
+
+## Analysis
+
+### Findings
+- Delivery teams need source-backed recommendations before converting research into roadmap work [SRC-01]
+
+### Opportunity Cost
+Deferring this leaves roadmap work underspecified [SRC-01]
+
+### Dependencies
+- Evidence capture must produce canonical source records first [SRC-01]
+
+### Alternatives Considered
+- Keep factor-only scoring and trust operator judgment alone [SRC-01]
+
+## Recommendation
+
+[x] Proceed → convert to epic [SRC-01]
+[ ] Park → revisit later [SRC-01]
+[ ] Decline → document learnings [SRC-01]
+"#
+    }
+
+    fn seed_readiness_docs(board_dir: &Path, id: &str, evidence: &str, assessment: &str) {
+        let bearing_dir = board_dir.join("bearings").join(id);
+        fs::write(bearing_dir.join("EVIDENCE.md"), evidence).unwrap();
+        fs::write(bearing_dir.join("ASSESSMENT.md"), assessment).unwrap();
     }
 
     #[test]
@@ -1293,5 +1504,127 @@ Different section content.
         let bearing = board.bearings.get("test-research").unwrap();
 
         assert_eq!(classify_fog(&board_dir, bearing), FogType::Clear);
+    }
+
+    #[test]
+    fn bearing_readiness_requires_evidence_quality() {
+        let temp = TempDir::new().unwrap();
+        let board_dir = create_test_bearing_with_status(&temp, "ready");
+        seed_readiness_docs(
+            &board_dir,
+            "test-research",
+            narrow_evidence_fixture(),
+            single_source_assessment_fixture(),
+        );
+
+        let board = load_board(&board_dir).unwrap();
+        let doctor_problems = check_bearing_assessment_recommendation(&board, &board_dir);
+        assert!(
+            doctor_problems
+                .iter()
+                .any(|problem| problem.message.contains("not decision-ready"))
+        );
+        assert!(
+            doctor_problems
+                .iter()
+                .any(|problem| problem.message.contains("too narrow"))
+        );
+
+        let error = run_lay_at(&board_dir, "test-research")
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("not decision-ready"));
+        assert!(error.contains("keel bearing file test-research EVIDENCE"));
+    }
+
+    #[test]
+    fn bearing_projections_surface_evidence_quality() {
+        let temp = TestBoardBuilder::new()
+            .bearing(
+                TestBearing::new("1w5H2Bq9L")
+                    .status("ready")
+                    .has_evidence(true)
+                    .has_assessment(true),
+            )
+            .bearing(
+                TestBearing::new("1w5H2Bq9M")
+                    .status("ready")
+                    .has_evidence(true)
+                    .has_assessment(true),
+            )
+            .build();
+
+        seed_readiness_docs(
+            temp.path(),
+            "1w5H2Bq9L",
+            weak_evidence_fixture(),
+            cited_assessment_fixture(),
+        );
+        seed_readiness_docs(
+            temp.path(),
+            "1w5H2Bq9M",
+            strong_evidence_fixture(),
+            cited_assessment_fixture(),
+        );
+
+        let board = load_board(temp.path()).unwrap();
+        let status_filter = crate::cli::commands::management::status_filter::resolve_status_filter(
+            &["ready".to_string()],
+            DEFAULT_BEARING_STATUSES,
+            BEARING_STATUS_VALUES,
+        )
+        .unwrap();
+        let rows =
+            build_bearing_list_rows(temp.path(), &board, &status_filter, &ModeWeights::growth());
+        assert!(rows.iter().any(|row| {
+            row.id == "1w5H2Bq9L" && row.readiness == "raise authority" && row.ev != "-"
+        }));
+        assert!(rows.iter().any(|row| {
+            row.id == "1w5H2Bq9M" && row.readiness == "decision-ready" && row.ev != "-"
+        }));
+
+        let next_up = calculate_next_up(&board);
+        assert!(
+            next_up
+                .human_items
+                .iter()
+                .any(|item| item.id == "1w5H2Bq9L" && item.category == "research")
+        );
+
+        let readme = generate_board_readme(&board);
+        assert!(
+            readme.contains("| Bearing | Status | Evidence | Assessment | Readiness | EV | Laid |")
+        );
+        assert!(readme.contains("raise authority"));
+        assert!(readme.contains("decision-ready"));
+    }
+
+    #[test]
+    fn bearing_readiness_guidance_targets_missing_evidence() {
+        let evidence_temp = TempDir::new().unwrap();
+        let evidence_board_dir = create_test_bearing_with_status(&evidence_temp, "ready");
+        seed_readiness_docs(
+            &evidence_board_dir,
+            "test-research",
+            narrow_evidence_fixture(),
+            single_source_assessment_fixture(),
+        );
+        let evidence_error = run_lay_at(&evidence_board_dir, "test-research")
+            .unwrap_err()
+            .to_string();
+        assert!(evidence_error.contains("keel bearing file test-research EVIDENCE"));
+
+        let citation_temp = TempDir::new().unwrap();
+        let citation_board_dir = create_test_bearing_with_status(&citation_temp, "ready");
+        seed_readiness_docs(
+            &citation_board_dir,
+            "test-research",
+            strong_evidence_fixture(),
+            citation_broken_assessment_fixture(),
+        );
+        let citation_error = run_lay_at(&citation_board_dir, "test-research")
+            .unwrap_err()
+            .to_string();
+        assert!(citation_error.contains("keel bearing file test-research ASSESSMENT"));
     }
 }

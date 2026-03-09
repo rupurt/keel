@@ -2,11 +2,13 @@
 id: 1vzQws000
 title: Gate Readiness And Board Projections On Evidence Quality
 type: feat
-status: backlog
+status: done
 created_at: 2026-03-08T20:06:26
-updated_at: 2026-03-08T20:10:04
+updated_at: 2026-03-08T21:35:12
 scope: 1vzQpr000/1vzQu5000
 index: 3
+started_at: 2026-03-08T21:19:47
+completed_at: 2026-03-08T21:35:12
 ---
 
 # Gate Readiness And Board Projections On Evidence Quality
@@ -17,6 +19,6 @@ Gate bearing readiness on evidence quality and expose that state in board projec
 
 ## Acceptance Criteria
 
-- [ ] [SRS-03/AC-01] `keel doctor` and readiness gates block bearings whose evidence coverage, citation quality, or contradiction handling do not satisfy the decision-ready contract. <!-- verify: cargo test -p keel bearing_readiness_requires_evidence_quality, SRS-03:start, proof: ac-1.log-->
-- [ ] [SRS-03/AC-02] Bearing list, flow, and related projections surface evidence-backed readiness and score outputs so weak research is visible in board views. <!-- verify: cargo test -p keel bearing_projections_surface_evidence_quality, SRS-03:continues, proof: ac-2.log-->
-- [ ] [SRS-03/AC-03] Recovery guidance points operators toward missing evidence or citation work rather than generic document-presence checks. <!-- verify: cargo test -p keel bearing_readiness_guidance_targets_missing_evidence, SRS-03:end, proof: ac-3.log-->
+- [x] [SRS-03/AC-01] `keel doctor` and readiness gates block bearings whose evidence coverage, citation quality, or contradiction handling do not satisfy the decision-ready contract. <!-- verify: cargo test -p keel bearing_readiness_requires_evidence_quality, SRS-03:start, proof: ac-1.log-->
+- [x] [SRS-03/AC-02] Bearing list, flow, and related projections surface evidence-backed readiness and score outputs so weak research is visible in board views. <!-- verify: cargo test -p keel bearing_projections_surface_evidence_quality, SRS-03:continues, proof: ac-2.log-->
+- [x] [SRS-03/AC-03] Recovery guidance points operators toward missing evidence or citation work rather than generic document-presence checks. <!-- verify: cargo test -p keel bearing_readiness_guidance_targets_missing_evidence, SRS-03:end, proof: ac-3.log-->
