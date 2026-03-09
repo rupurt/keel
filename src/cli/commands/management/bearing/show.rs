@@ -98,8 +98,7 @@ pub fn run(pattern: &str) -> Result<()> {
         );
     }
 
-    metadata.push_row("Path:", format!("{}", bearing.path.display().dimmed()));
-    push_document_path_rows(&mut metadata, &brief_path, &evidence_path, &assessment_path);
+    // Document paths are intentionally shown in the Documents section.
 
     let mut sections = vec![
         render_documents_section(bearing),
@@ -347,23 +346,6 @@ fn format_source_summary(source: &BearingEvidenceSourceSummary) -> String {
     )
 }
 
-fn push_document_path_rows(
-    metadata: &mut ShowKeyValues,
-    brief_path: &Path,
-    evidence_path: &Path,
-    assessment_path: &Path,
-) {
-    metadata.push_row("BRIEF.md:", format!("{}", brief_path.display().dimmed()));
-    metadata.push_row(
-        "EVIDENCE.md:",
-        format!("{}", evidence_path.display().dimmed()),
-    );
-    metadata.push_row(
-        "ASSESSMENT.md:",
-        format!("{}", assessment_path.display().dimmed()),
-    );
-}
-
 fn counted_label(label: &str, count: usize) -> String {
     format!("{label}({count}):")
 }
@@ -400,7 +382,7 @@ fn success_criteria_label(checked: usize, total: usize) -> String {
 mod tests {
     use super::{
         BearingAssessmentSummary, BearingBriefSummary, BearingEvidenceSourceSummary,
-        BearingEvidenceSummary, push_document_path_rows, render_assessment_section,
+        BearingEvidenceSummary, render_assessment_section,
         render_brief_section, render_documents_section, render_evidence_section,
     };
     use crate::cli::presentation::show::{ShowDocument, ShowKeyValues};
@@ -543,34 +525,21 @@ mod tests {
     }
 
     #[test]
-    fn bearing_metadata_includes_document_paths_below_readme_path() {
+    fn bearing_metadata_does_not_include_document_paths() {
         let mut metadata = ShowKeyValues::new().with_min_label_width(9);
         metadata.push_row(
-            "Path:",
-            format!("{}", Path::new("/tmp/README.md").display()),
-        );
-        push_document_path_rows(
-            &mut metadata,
-            Path::new("/tmp/BRIEF.md"),
-            Path::new("/tmp/EVIDENCE.md"),
-            Path::new("/tmp/ASSESSMENT.md"),
+            "Created:",
+            format!("{}", Path::new("/tmp/created-at.txt").display()),
         );
 
         let mut document = ShowDocument::new();
         document.push_header(metadata, None);
         let rendered = document.render();
 
-        let path_idx = rendered.find("Path:").unwrap();
-        let brief_idx = rendered.find("BRIEF.md:").unwrap();
-        let evidence_idx = rendered.find("EVIDENCE.md:").unwrap();
-        let assessment_idx = rendered.find("ASSESSMENT.md:").unwrap();
-
-        assert!(path_idx < brief_idx);
-        assert!(brief_idx < evidence_idx);
-        assert!(evidence_idx < assessment_idx);
-        assert!(rendered.contains("/tmp/BRIEF.md"));
-        assert!(rendered.contains("/tmp/EVIDENCE.md"));
-        assert!(rendered.contains("/tmp/ASSESSMENT.md"));
+        assert!(!rendered.contains("Path:"));
+        assert!(!rendered.contains("BRIEF.md:"));
+        assert!(!rendered.contains("EVIDENCE.md:"));
+        assert!(!rendered.contains("ASSESSMENT.md:"));
     }
 
     #[test]
