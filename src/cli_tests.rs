@@ -5,7 +5,7 @@ use crate::cli::commands::management::epic::EpicAction;
 use crate::cli::commands::management::story::StoryAction;
 use crate::cli::commands::management::voyage::VoyageAction;
 use crate::cli::commands::setup::config::ConfigAction;
-use clap::{CommandFactory, Parser, Subcommand};
+use clap::{CommandFactory, FromArgMatches, Parser, Subcommand};
 
 #[derive(Debug, Parser)]
 #[command(name = "board")]
@@ -466,11 +466,19 @@ fn cli_parses_story_new() {
     let cli =
         Cli::try_parse_from(["board", "story", "new", "Add login", "--type", "feat"]).unwrap();
     if let Commands::Management(ManagementCommands::Story {
-        action: StoryAction::New { title, r#type },
+        action:
+            StoryAction::New {
+                title,
+                r#type,
+                epic,
+                voyage,
+            },
     }) = cli.command
     {
         assert_eq!(title, "Add login");
         assert_eq!(r#type, "feat");
+        assert_eq!(epic, None);
+        assert_eq!(voyage, None);
     } else {
         panic!("Expected Story New command");
     }
@@ -490,20 +498,75 @@ fn cli_rejects_story_new_scope_flag() {
 }
 
 #[test]
-fn cli_rejects_story_new_epic_flag() {
-    let result = crate::build_cli().try_get_matches_from([
-        "keel",
+fn cli_parses_story_new_scope_flags() {
+    let cli = Cli::try_parse_from([
+        "board",
         "story",
         "new",
         "Test Story",
+        "--type",
+        "feat",
         "--epic",
         "board",
-    ]);
-    assert!(result.is_err(), "Expected parse error for removed --epic");
+        "--voyage",
+        "09-acceptance-workflow",
+    ])
+    .unwrap();
+
+    if let Commands::Management(ManagementCommands::Story {
+        action:
+            StoryAction::New {
+                title,
+                r#type,
+                epic,
+                voyage,
+            },
+    }) = cli.command
+    {
+        assert_eq!(title, "Test Story");
+        assert_eq!(r#type, "feat");
+        assert_eq!(epic.as_deref(), Some("board"));
+        assert_eq!(voyage.as_deref(), Some("09-acceptance-workflow"));
+    } else {
+        panic!("Expected scoped Story New command");
+    }
 }
 
 #[test]
-fn cli_rejects_story_new_voyage_flag() {
+fn build_cli_story_new_stays_in_sync_with_story_action_contract() {
+    let matches = crate::build_cli()
+        .try_get_matches_from([
+            "keel",
+            "story",
+            "new",
+            "Test Story",
+            "--type",
+            "feat",
+            "--epic",
+            "board",
+            "--voyage",
+            "09-acceptance-workflow",
+        ])
+        .unwrap();
+    let story_matches = matches.subcommand_matches("story").unwrap();
+    let action = StoryAction::from_arg_matches(story_matches).unwrap();
+
+    assert!(matches!(
+        action,
+        StoryAction::New {
+            title,
+            r#type,
+            epic,
+            voyage,
+        } if title == "Test Story"
+            && r#type == "feat"
+            && epic.as_deref() == Some("board")
+            && voyage.as_deref() == Some("09-acceptance-workflow")
+    ));
+}
+
+#[test]
+fn cli_rejects_story_new_voyage_without_epic_flag() {
     let result = crate::build_cli().try_get_matches_from([
         "keel",
         "story",
@@ -512,7 +575,23 @@ fn cli_rejects_story_new_voyage_flag() {
         "--voyage",
         "09-acceptance-workflow",
     ]);
-    assert!(result.is_err(), "Expected parse error for removed --voyage");
+    assert!(
+        result.is_err(),
+        "Expected parse error when --voyage lacks --epic"
+    );
+}
+
+#[test]
+fn cli_parses_config_show_json() {
+    let cli = Cli::try_parse_from(["board", "config", "show", "--json"]).unwrap();
+    if let Commands::Management(ManagementCommands::Config {
+        action: ConfigAction::Show { json },
+    }) = cli.command
+    {
+        assert!(json);
+    } else {
+        panic!("Expected Config Show command");
+    }
 }
 
 #[test]

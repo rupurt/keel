@@ -44,6 +44,12 @@ pub enum StoryAction {
         /// Story type
         #[arg(long, short = 't', default_value = "feat")]
         r#type: String,
+        /// Epic ID for scoped story creation
+        #[arg(long)]
+        epic: Option<String>,
+        /// Voyage ID for scoped story creation (requires --epic)
+        #[arg(long, requires = "epic")]
+        voyage: Option<String>,
     },
     /// Move story to in-progress
     Start {
@@ -157,7 +163,12 @@ pub enum StoryAction {
 /// Run a story action through the story interface adapter.
 pub fn run(action: StoryAction) -> Result<()> {
     match action {
-        StoryAction::New { title, r#type } => new::run(&title, &r#type, None, None),
+        StoryAction::New {
+            title,
+            r#type,
+            epic,
+            voyage,
+        } => new::run(&title, &r#type, epic.as_deref(), voyage.as_deref()),
         StoryAction::Start { id, expect_version } => {
             start::run(&find_board_dir()?, &id, expect_version)
         }

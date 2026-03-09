@@ -19,6 +19,7 @@ pub enum ConfigAction {
     /// Show resolved configuration and source
     Show {
         /// Output as JSON for scripting
+        #[arg(long)]
         json: bool,
     },
     /// Show or change scoring mode
@@ -26,6 +27,14 @@ pub enum ConfigAction {
         /// Mode to switch to (omit to show current mode)
         name: Option<String>,
     },
+}
+
+/// Run a config action through the configuration interface adapter.
+pub fn run(action: ConfigAction) -> Result<()> {
+    match action {
+        ConfigAction::Show { json } => run_show(json),
+        ConfigAction::Mode { name } => run_mode(name),
+    }
 }
 
 /// Show resolved configuration and source

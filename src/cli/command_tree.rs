@@ -1,6 +1,6 @@
 //! Shared CLI command tree definition.
 
-use clap::{Arg, ArgAction, Command};
+use clap::{Arg, ArgAction, Command, Subcommand};
 
 const HELP_GROUPS: &str = r#"
 These are common Keel commands:
@@ -31,6 +31,14 @@ Diagnostics
   capacity    Show per-epic capacity breakdown with parallel potential
   gaps        Show gap classification summary (runs doctor, shows only gap counts)
 "#;
+
+fn hidden_subcommand_group<T>(name: &'static str, about: &'static str) -> Command
+where
+    T: Subcommand,
+{
+    T::augment_subcommands(Command::new(name).about(about).hide(true)).subcommand_required(true)
+}
+
 pub fn build_cli() -> Command {
     Command::new("keel")
         .about("Agentic SDLC management — minimize drift through planning, execution, and verification")
@@ -318,400 +326,22 @@ pub fn build_cli() -> Command {
                 )
                 .subcommand_required(true),
         )
-        .subcommand(
-            Command::new("adr")
-                .about("ADR commands (architecture decisions)")
-                .hide(true)
-                .subcommand(
-                    Command::new("new")
-                        .about("Create a new ADR")
-                        .arg(Arg::new("title").required(true).value_name("TITLE"))
-                        .arg(
-                            Arg::new("context")
-                                .long("context")
-                                .value_name("CONTEXT")
-                                .help("Primary bounded context this ADR applies to"),
-                        )
-                        .arg(
-                            Arg::new("applies-to")
-                                .long("applies-to")
-                                .value_name("SCOPE")
-                                .help("Additional scopes this ADR applies to (repeatable)")
-                                .action(ArgAction::Append),
-                        ),
-                )
-                .subcommand(
-                    Command::new("list")
-                        .about("List all ADRs")
-                        .arg(Arg::new("status").long("status").value_name("STATUS")),
-                )
-                .subcommand(
-                    Command::new("show")
-                        .about("Show ADR details")
-                        .arg(Arg::new("id").required(true).value_name("ID")),
-                )
-                .subcommand(
-                    Command::new("file")
-                        .about("Show an ADR markdown document")
-                        .arg(Arg::new("id").required(true).value_name("ID"))
-                        .arg(Arg::new("raw").long("raw").action(ArgAction::SetTrue)),
-                )
-                .subcommand(
-                    Command::new("accept")
-                        .about("Accept a proposed ADR")
-                        .arg(Arg::new("id").required(true).value_name("ID")),
-                )
-                .subcommand(
-                    Command::new("reject")
-                        .about("Reject a proposed ADR")
-                        .arg(Arg::new("id").required(true).value_name("ID"))
-                        .arg(Arg::new("reason").required(true).value_name("REASON")),
-                )
-                .subcommand(
-                    Command::new("deprecate")
-                        .about("Deprecate an accepted ADR (no longer recommended)")
-                        .arg(Arg::new("id").required(true).value_name("ID"))
-                        .arg(Arg::new("reason").required(true).value_name("REASON")),
-                )
-                .subcommand(
-                    Command::new("supersede")
-                        .about("Supersede an ADR with a newer one")
-                        .arg(Arg::new("new_id").required(true).value_name("NEW_ID"))
-                        .arg(Arg::new("old_id").required(true).value_name("OLD_ID")),
-                )
-                .subcommand_required(true),
-        )
-        .subcommand(
-            Command::new("bearing")
-                .about("Bearing commands (research phase)")
-                .hide(true)
-                .subcommand(
-                    Command::new("new").about("Create a new bearing").arg(
-                        Arg::new("name").required(true).value_name("NAME"),
-                    ),
-                )
-                .subcommand(
-                    Command::new("survey")
-                        .about("Add SURVEY.md to a bearing")
-                        .arg(Arg::new("id").required(true).value_name("ID")),
-                )
-                .subcommand(
-                    Command::new("assess")
-                        .about("Add ASSESSMENT.md to a bearing")
-                        .arg(Arg::new("id").required(true).value_name("ID")),
-                )
-                .subcommand(
-                    Command::new("list")
-                        .about("List all bearings")
-                        .arg(
-                            Arg::new("status")
-                                .long("status")
-                                .help("Repeat to override defaults or use + / - to add or remove statuses")
-                                .action(ArgAction::Append)
-                                .value_parser(
-                                    crate::cli::commands::management::bearing::parse_bearing_status,
-                                )
-                                .value_name("STATUS"),
-                        ),
-                )
-                .subcommand(
-                    Command::new("show")
-                        .about("Show bearing details")
-                        .arg(Arg::new("id").required(true).value_name("ID")),
-                )
-                .subcommand(
-                    Command::new("file")
-                        .about("Show a bearing markdown document")
-                        .arg(Arg::new("id").required(true).value_name("ID"))
-                        .arg(Arg::new("file").required(true).value_name("FILE"))
-                        .arg(Arg::new("raw").long("raw").action(ArgAction::SetTrue)),
-                )
-                .subcommand(
-                    Command::new("park")
-                        .about("Park a bearing for later")
-                        .arg(Arg::new("id").required(true).value_name("ID")),
-                )
-                .subcommand(
-                    Command::new("decline")
-                        .about("Decline a bearing with reason")
-                        .arg(Arg::new("id").required(true).value_name("ID"))
-                        .arg(Arg::new("reason").required(true).value_name("REASON")),
-                )
-                .subcommand(
-                    Command::new("lay").about("Graduate bearing to epic").arg(
-                        Arg::new("id").required(true).value_name("ID"),
-                    ),
-                )
-                .subcommand_required(true),
-        )
-        .subcommand(
-            Command::new("epic")
-                .about("Epic commands")
-                .hide(true)
-                .subcommand(
-                    Command::new("new")
-                        .about("Create a new epic")
-                        .arg(Arg::new("name").required(true).value_name("NAME"))
-                        .arg(
-                            Arg::new("problem")
-                                .long("problem")
-                                .short('p')
-                                .value_name("PROBLEM")
-                                .required(true),
-                        ),
-                )
-                .subcommand(
-                    Command::new("show")
-                        .about("Show epic details")
-                        .arg(Arg::new("id").required(true)),
-                )
-                .subcommand(
-                    Command::new("file")
-                        .about("Show an epic markdown document")
-                        .arg(Arg::new("id").required(true).value_name("ID"))
-                        .arg(Arg::new("file").required(true).value_name("FILE"))
-                        .arg(Arg::new("raw").long("raw").action(ArgAction::SetTrue)),
-                )
-                .subcommand(
-                    Command::new("list")
-                        .about("List epics")
-                        .arg(
-                            Arg::new("status")
-                                .long("status")
-                                .short('s')
-                                .help("Repeat to override defaults or use + / - to add or remove statuses")
-                                .action(ArgAction::Append)
-                                .value_parser(
-                                    crate::cli::commands::management::epic::parse_epic_status,
-                                )
-                                .value_name("STATUS"),
-                        ),
-                )
-                .subcommand_required(true),
-        )
-        .subcommand(
-            Command::new("voyage")
-                .about("Voyage commands")
-                .hide(true)
-                .subcommand(
-                    Command::new("new")
-                        .about("Create a new voyage")
-                        .arg(Arg::new("name").required(true).value_name("NAME"))
-                        .arg(Arg::new("epic").long("epic").required(true).value_name("EPIC"))
-                        .arg(
-                            Arg::new("goal")
-                                .long("goal")
-                                .short('g')
-                                .value_name("GOAL")
-                                .required(true),
-                        ),
-                )
-                .subcommand(
-                    Command::new("start")
-                        .about("Start a voyage")
-                        .arg(Arg::new("id").required(true).value_name("ID"))
-                        .arg(Arg::new("force").long("force").action(ArgAction::SetTrue))
-                        .arg(
-                            Arg::new("expect_version")
-                                .long("expect-version")
-                                .value_parser(clap::value_parser!(u64)),
-                        ),
-                )
-                .subcommand(
-                    Command::new("plan")
-                        .about("Plan a voyage (move from draft to planned)")
-                        .arg(Arg::new("id").required(true).value_name("ID"))
-                        .arg(Arg::new("no_review").long("no-review").action(ArgAction::SetTrue)),
-                )
-                .subcommand(
-                    Command::new("done")
-                        .about("Complete a voyage")
-                        .arg(Arg::new("id").required(true).value_name("ID"))
-                        .arg(Arg::new("well").long("well").value_name("WELL"))
-                        .arg(Arg::new("hard").long("hard").value_name("HARD"))
-                        .arg(Arg::new("different").long("different").value_name("DIFFERENT")),
-                )
-                .subcommand(
-                    Command::new("show")
-                        .about("Show voyage details")
-                        .arg(Arg::new("id").required(true).value_name("ID")),
-                )
-                .subcommand(
-                    Command::new("file")
-                        .about("Show a voyage markdown document")
-                        .arg(Arg::new("id").required(true).value_name("ID"))
-                        .arg(Arg::new("file").required(true).value_name("FILE"))
-                        .arg(Arg::new("raw").long("raw").action(ArgAction::SetTrue)),
-                )
-                .subcommand(
-                    Command::new("list")
-                        .about("List voyages")
-                        .arg(Arg::new("epic").long("epic").value_name("EPIC"))
-                        .arg(
-                            Arg::new("status")
-                                .long("status")
-                                .help("Repeat to override defaults or use + / - to add or remove statuses")
-                                .action(ArgAction::Append)
-                                .value_parser(
-                                    crate::cli::commands::management::voyage::parse_voyage_status,
-                                )
-                                .value_name("STATUS"),
-                        ),
-                )
-                .subcommand_required(true),
-        )
-        .subcommand(
-            Command::new("story")
-                .about("Story commands")
-                .hide(true)
-                .subcommand(
-                    Command::new("new")
-                        .about("Create a new story")
-                        .arg(Arg::new("title").required(true).value_name("TITLE"))
-                        .arg(
-                            Arg::new("type")
-                                .long("type")
-                                .short('t')
-                                .value_name("TYPE")
-                                .default_value("feat"),
-                        ),
-                )
-                .subcommand(
-                    Command::new("start")
-                        .about("Start working on a story")
-                        .arg(Arg::new("id").required(true).value_name("ID"))
-                        .arg(
-                            Arg::new("expect_version")
-                                .long("expect-version")
-                                .value_parser(clap::value_parser!(u64)),
-                        ),
-                )
-                .subcommand(
-                    Command::new("submit")
-                        .about("Submit a story for review")
-                        .arg(Arg::new("id").required(true).value_name("ID")),
-                )
-                .subcommand(
-                    Command::new("accept")
-                        .about("Accept a story (move to done)")
-                        .arg(Arg::new("id").required(true).value_name("ID"))
-                        .arg(Arg::new("human").long("human").action(ArgAction::SetTrue))
-                        .arg(Arg::new("reflect").long("reflect").value_name("REFLECT")),
-                )
-                .subcommand(
-                    Command::new("reflect")
-                        .about("Create REFLECT.md from the reflection template")
-                        .arg(Arg::new("id").required(true).value_name("ID")),
-                )
-                .subcommand(
-                    Command::new("reject")
-                        .about("Reject a story (move to rejected)")
-                        .arg(Arg::new("id").required(true).value_name("ID"))
-                        .arg(Arg::new("reason").required(true).value_name("REASON")),
-                )
-                .subcommand(
-                    Command::new("ice")
-                        .about("Move a story to icebox")
-                        .arg(Arg::new("id").required(true).value_name("ID")),
-                )
-                .subcommand(
-                    Command::new("thaw")
-                        .about("Move a story from icebox to backlog")
-                        .arg(Arg::new("id").required(true).value_name("ID")),
-                )
-                .subcommand(
-                    Command::new("show")
-                        .about("Show story details")
-                        .arg(Arg::new("id").required(true).value_name("ID")),
-                )
-                .subcommand(
-                    Command::new("file")
-                        .about("Show a story markdown document")
-                        .arg(Arg::new("id").required(true).value_name("ID"))
-                        .arg(Arg::new("file").required(true).value_name("FILE"))
-                        .arg(Arg::new("raw").long("raw").action(ArgAction::SetTrue)),
-                )
-                .subcommand(
-                    Command::new("list")
-                        .about("List stories")
-                        .arg(
-                            Arg::new("status")
-                                .long("status")
-                                .short('s')
-                                .help("Repeat to override defaults or use + / - to add or remove statuses")
-                                .action(ArgAction::Append)
-                                .value_parser(
-                                    crate::cli::commands::management::story::parse_story_status,
-                                )
-                                .value_name("STATUS"),
-                        )
-                        .arg(Arg::new("epic").long("epic").value_name("EPIC"))
-                        .arg(
-                            Arg::new("reflections")
-                                .long("reflections")
-                                .action(ArgAction::SetTrue),
-                        ),
-                )
-                .subcommand(
-                    Command::new("link")
-                        .about("Link a story to a voyage")
-                        .arg(Arg::new("id").required(true).value_name("ID"))
-                        .arg(Arg::new("voyage").required(true).value_name("VOYAGE")),
-                )
-                .subcommand(
-                    Command::new("unlink")
-                        .about("Unlink a story from a voyage")
-                        .arg(Arg::new("id").required(true).value_name("ID"))
-                        .arg(Arg::new("voyage").required(true).value_name("VOYAGE")),
-                )
-                .subcommand(
-                    Command::new("record")
-                        .about("Record proof for an acceptance criterion")
-                        .arg(Arg::new("id").required(true).value_name("ID"))
-                        .arg(
-                            Arg::new("ac")
-                                .long("ac")
-                                .short('a')
-                                .value_name("NUMBER")
-                                .value_parser(clap::value_parser!(usize)),
-                        )
-                        .arg(Arg::new("cmd").long("cmd").short('c').value_name("COMMAND"))
-                        .arg(Arg::new("msg").long("msg").short('m').value_name("MESSAGE"))
-                        .arg(
-                            Arg::new("judge")
-                                .long("judge")
-                                .help("Trigger LLM-Judge verification")
-                                .action(ArgAction::SetTrue),
-                        )
-                        .arg(
-                            Arg::new("files")
-                                .long("file")
-                                .short('f')
-                                .value_name("FILE")
-                                .action(ArgAction::Append),
-                        ),
-                )
-                .subcommand_required(true),
-        )
-        .subcommand(
-            Command::new("config")
-                .about("Configuration commands")
-                .hide(true)
-                .subcommand(
-                    Command::new("show")
-                        .about("Show resolved configuration and source")
-                        .arg(
-                            Arg::new("json")
-                                .long("json")
-                                .help("Output as JSON for scripting")
-                                .action(ArgAction::SetTrue),
-                        ),
-                )
-                .subcommand(
-                    Command::new("mode")
-                        .about("Show or change scoring mode")
-                        .arg(Arg::new("name").required(false).value_name("NAME")),
-                )
-                .subcommand_required(true),
-        )
+        .subcommand(hidden_subcommand_group::<
+            crate::cli::commands::management::adr::AdrAction,
+        >("adr", "ADR commands (architecture decisions)"))
+        .subcommand(hidden_subcommand_group::<
+            crate::cli::commands::management::bearing::BearingAction,
+        >("bearing", "Bearing commands (research phase)"))
+        .subcommand(hidden_subcommand_group::<
+            crate::cli::commands::management::epic::EpicAction,
+        >("epic", "Epic commands"))
+        .subcommand(hidden_subcommand_group::<
+            crate::cli::commands::management::voyage::VoyageAction,
+        >("voyage", "Voyage commands"))
+        .subcommand(hidden_subcommand_group::<
+            crate::cli::commands::management::story::StoryAction,
+        >("story", "Story commands"))
+        .subcommand(hidden_subcommand_group::<
+            crate::cli::commands::setup::config::ConfigAction,
+        >("config", "Configuration commands"))
 }

@@ -125,6 +125,7 @@ fn new_story(
     let board = load_board(board_dir)?;
 
     if let Some(context) = epic {
+        board.require_epic(context)?;
         let blocking = find_blocking_adrs(&board, context);
         if !blocking.is_empty() {
             let adr = &blocking[0];
@@ -431,6 +432,24 @@ mod tests {
                 content
             );
         }
+    }
+
+    #[test]
+    fn story_new_requires_existing_epic_for_scoped_creation() {
+        let temp = TestBoardBuilder::new().build();
+        let board_dir = temp.path();
+
+        let err = new_story(
+            board_dir,
+            "Scoped Story",
+            "feat",
+            Some("missing-epic"),
+            None,
+        )
+        .unwrap_err()
+        .to_string();
+
+        assert!(err.contains("Epic not found: missing-epic"));
     }
 
     #[test]

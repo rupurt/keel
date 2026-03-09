@@ -15,6 +15,7 @@ pub use super::next_support::{
 use crate::cli::commands::management::guidance::{
     CanonicalGuidance, CommandGuidance, render_command_guidance,
 };
+use crate::cli::commands::management::story::guidance::creation_command as story_creation_command;
 use crate::domain::model::Story;
 use crate::infrastructure::loader::load_board;
 
@@ -272,10 +273,10 @@ fn guidance_for_decision(decision: &NextDecision) -> Option<CanonicalGuidance> {
             d.story.id()
         ))),
         NextDecision::NeedsStories(d) => d.voyages.first().map(|voyage| {
-            CommandGuidance::next(format!(
-                "keel story new \"<title>\" --epic {} --voyage {}",
-                voyage.epic_id,
-                voyage.id()
+            CommandGuidance::next(story_creation_command(
+                "<title>",
+                Some(voyage.epic_id.as_str()),
+                Some(voyage.id()),
             ))
         }),
         NextDecision::NeedsPlanning(d) => d

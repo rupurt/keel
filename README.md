@@ -177,6 +177,13 @@ Diagnostics
 | `voyage new/plan/start` | Tactical planning (SRS/SDD) and execution |
 | `story new/start/submit` | Implementation units and acceptance criteria |
 
+Story creation flags:
+
+- `keel story new "<Title>"` creates an unscoped story.
+- `keel story new "<Title>" --type feat --epic <epic-id>` creates an epic-scoped story.
+- `keel story new "<Title>" --type feat --epic <epic-id> --voyage <voyage-id>` creates a voyage-scoped story.
+- `--voyage` requires `--epic`; `--type` defaults to `feat`.
+
 #### Diagnostics
 
 | Command | Purpose |

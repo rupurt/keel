@@ -120,7 +120,14 @@ fn new_voyage(board_dir: &Path, name: &str, epic_id: &str, goal: &str) -> Result
         "    2. Fill epics/{}/voyages/{}/SDD.md with design",
         epic_id, voyage_id
     );
-    println!("    3. Decompose into stories: keel story new \"<Title>\" --type feat");
+    println!(
+        "    3. Decompose into stories: {}",
+        crate::cli::commands::management::story::guidance::creation_command(
+            "<Title>",
+            Some(epic_id),
+            Some(&voyage_id),
+        )
+    );
     println!();
     println!("  Epic PRD: epics/{}/PRD.md", epic_id);
 

@@ -742,10 +742,12 @@ mod token_bucket_contract {
             .into_iter()
             .map(String::from)
             .collect();
-        let expected_story: BTreeSet<String> =
-            ["title", "type"].into_iter().map(String::from).collect();
+        let expected_story: BTreeSet<String> = ["title", "type", "epic", "voyage"]
+            .into_iter()
+            .map(String::from)
+            .collect();
         let expected_bearing: BTreeSet<String> = ["name"].into_iter().map(String::from).collect();
-        let expected_adr: BTreeSet<String> = ["title", "context", "applies-to"]
+        let expected_adr: BTreeSet<String> = ["title", "context", "applies_to"]
             .into_iter()
             .map(String::from)
             .collect();

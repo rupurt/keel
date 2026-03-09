@@ -19,6 +19,21 @@ pub enum StoryLifecycleAction {
     Thaw,
 }
 
+/// Render the canonical `story new` example for the requested scope.
+pub fn creation_command(title: &str, epic_id: Option<&str>, voyage_id: Option<&str>) -> String {
+    let mut command = format!("keel story new \"{title}\" --type feat");
+
+    if let Some(epic_id) = epic_id {
+        command.push_str(&format!(" --epic {epic_id}"));
+    }
+
+    if let Some(voyage_id) = voyage_id {
+        command.push_str(&format!(" --voyage {voyage_id}"));
+    }
+
+    command
+}
+
 /// Build canonical guidance for a lifecycle action after it succeeds.
 pub fn guidance_for_action(
     action: StoryLifecycleAction,
@@ -238,6 +253,22 @@ mod tests {
         assert_eq!(
             guidance.next_step.unwrap().command,
             "keel story start S3".to_string()
+        );
+    }
+
+    #[test]
+    fn creation_command_renders_epic_scoped_example() {
+        assert_eq!(
+            creation_command("<title>", Some("E1"), None),
+            "keel story new \"<title>\" --type feat --epic E1"
+        );
+    }
+
+    #[test]
+    fn creation_command_renders_voyage_scoped_example() {
+        assert_eq!(
+            creation_command("<Title>", Some("E1"), Some("V1")),
+            "keel story new \"<Title>\" --type feat --epic E1 --voyage V1"
         );
     }
 

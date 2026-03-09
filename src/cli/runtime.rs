@@ -5,7 +5,7 @@
 
 use super::{build_cli, resolve_board_dir};
 use anyhow::Result;
-use clap::ArgMatches;
+use clap::{ArgMatches, FromArgMatches};
 
 pub fn run() -> Result<()> {
     let matches = build_cli().get_matches();
@@ -126,239 +126,23 @@ pub fn run() -> Result<()> {
 }
 
 fn handle_epic_command(matches: &ArgMatches) -> Result<()> {
-    let command = matches
-        .subcommand()
-        .ok_or_else(|| anyhow::anyhow!("Missing epic subcommand"))?;
-    let action = match command {
-        ("new", m) => super::commands::management::epic::EpicAction::New {
-            name: m.get_one::<String>("name").expect("required").clone(),
-            problem: m.get_one::<String>("problem").expect("required").clone(),
-        },
-        ("show", m) => super::commands::management::epic::EpicAction::Show {
-            id: m.get_one::<String>("id").expect("required").clone(),
-        },
-        ("file", m) => super::commands::management::epic::EpicAction::File {
-            id: m.get_one::<String>("id").expect("required").clone(),
-            file: m.get_one::<String>("file").expect("required").clone(),
-            raw: *m.get_one::<bool>("raw").unwrap_or(&false),
-        },
-        ("list", m) => super::commands::management::epic::EpicAction::List {
-            status: collect_many_strings(m, "status"),
-        },
-        (name, _) => return Err(anyhow::anyhow!("Unsupported epic subcommand: {name}")),
-    };
-
-    super::commands::management::epic::run(action)
+    super::commands::management::epic::run(parse_subcommand_action(matches)?)
 }
 
 fn handle_voyage_command(matches: &ArgMatches) -> Result<()> {
-    let command = matches
-        .subcommand()
-        .ok_or_else(|| anyhow::anyhow!("Missing voyage subcommand"))?;
-    let action = match command {
-        ("new", m) => super::commands::management::voyage::VoyageAction::New {
-            name: m.get_one::<String>("name").expect("required").clone(),
-            epic: m.get_one::<String>("epic").expect("required").clone(),
-            goal: m.get_one::<String>("goal").expect("required").clone(),
-        },
-        ("start", m) => super::commands::management::voyage::VoyageAction::Start {
-            id: m.get_one::<String>("id").expect("required").clone(),
-            force: *m.get_one::<bool>("force").unwrap_or(&false),
-            expect_version: m.get_one::<u64>("expect_version").copied(),
-        },
-        ("plan", m) => super::commands::management::voyage::VoyageAction::Plan {
-            id: m.get_one::<String>("id").expect("required").clone(),
-            no_review: *m.get_one::<bool>("no_review").unwrap_or(&false),
-        },
-        ("done", m) => super::commands::management::voyage::VoyageAction::Done {
-            id: m.get_one::<String>("id").expect("required").clone(),
-            well: m.get_one::<String>("well").cloned(),
-            hard: m.get_one::<String>("hard").cloned(),
-            different: m.get_one::<String>("different").cloned(),
-        },
-        ("show", m) => super::commands::management::voyage::VoyageAction::Show {
-            id: m.get_one::<String>("id").expect("required").clone(),
-        },
-        ("file", m) => super::commands::management::voyage::VoyageAction::File {
-            id: m.get_one::<String>("id").expect("required").clone(),
-            file: m.get_one::<String>("file").expect("required").clone(),
-            raw: *m.get_one::<bool>("raw").unwrap_or(&false),
-        },
-        ("list", m) => super::commands::management::voyage::VoyageAction::List {
-            epic: m.get_one::<String>("epic").cloned(),
-            status: collect_many_strings(m, "status"),
-        },
-        (name, _) => return Err(anyhow::anyhow!("Unsupported voyage subcommand: {name}")),
-    };
-
-    super::commands::management::voyage::run(action)
+    super::commands::management::voyage::run(parse_subcommand_action(matches)?)
 }
 
 fn handle_story_command(matches: &ArgMatches) -> Result<()> {
-    let command = matches
-        .subcommand()
-        .ok_or_else(|| anyhow::anyhow!("Missing story subcommand"))?;
-    let action = match command {
-        ("new", m) => super::commands::management::story::StoryAction::New {
-            title: m.get_one::<String>("title").expect("required").clone(),
-            r#type: m
-                .get_one::<String>("type")
-                .expect("defaulted in clap")
-                .clone(),
-        },
-        ("start", m) => super::commands::management::story::StoryAction::Start {
-            id: m.get_one::<String>("id").expect("required").clone(),
-            expect_version: m.get_one::<u64>("expect_version").copied(),
-        },
-        ("submit", m) => super::commands::management::story::StoryAction::Submit {
-            id: m.get_one::<String>("id").expect("required").clone(),
-        },
-        ("accept", m) => super::commands::management::story::StoryAction::Accept {
-            id: m.get_one::<String>("id").expect("required").clone(),
-            human: *m.get_one::<bool>("human").unwrap_or(&false),
-            reflect: m.get_one::<String>("reflect").cloned(),
-        },
-        ("reflect", m) => super::commands::management::story::StoryAction::Reflect {
-            id: m.get_one::<String>("id").expect("required").clone(),
-        },
-        ("reject", m) => super::commands::management::story::StoryAction::Reject {
-            id: m.get_one::<String>("id").expect("required").clone(),
-            reason: m.get_one::<String>("reason").expect("required").clone(),
-        },
-        ("ice", m) => super::commands::management::story::StoryAction::Ice {
-            id: m.get_one::<String>("id").expect("required").clone(),
-        },
-        ("thaw", m) => super::commands::management::story::StoryAction::Thaw {
-            id: m.get_one::<String>("id").expect("required").clone(),
-        },
-        ("show", m) => super::commands::management::story::StoryAction::Show {
-            id: m.get_one::<String>("id").expect("required").clone(),
-        },
-        ("file", m) => super::commands::management::story::StoryAction::File {
-            id: m.get_one::<String>("id").expect("required").clone(),
-            file: m.get_one::<String>("file").expect("required").clone(),
-            raw: *m.get_one::<bool>("raw").unwrap_or(&false),
-        },
-        ("list", m) => super::commands::management::story::StoryAction::List {
-            status: collect_many_strings(m, "status"),
-            epic: m.get_one::<String>("epic").cloned(),
-            reflections: *m.get_one::<bool>("reflections").unwrap_or(&false),
-        },
-        ("link", m) => super::commands::management::story::StoryAction::Link {
-            id: m.get_one::<String>("id").expect("required").clone(),
-            voyage: m.get_one::<String>("voyage").expect("required").clone(),
-        },
-        ("unlink", m) => super::commands::management::story::StoryAction::Unlink {
-            id: m.get_one::<String>("id").expect("required").clone(),
-            voyage: m.get_one::<String>("voyage").expect("required").clone(),
-        },
-        ("record", m) => super::commands::management::story::StoryAction::Record {
-            id: m.get_one::<String>("id").expect("required").clone(),
-            ac: m.get_one::<usize>("ac").cloned(),
-            cmd: m.get_one::<String>("cmd").cloned(),
-            msg: m.get_one::<String>("msg").cloned(),
-            judge: *m.get_one::<bool>("judge").unwrap_or(&false),
-            files: m
-                .get_many::<String>("files")
-                .map(|v| v.cloned().collect())
-                .unwrap_or_default(),
-        },
-        (name, _) => return Err(anyhow::anyhow!("Unsupported story subcommand: {name}")),
-    };
-
-    super::commands::management::story::run(action)
+    super::commands::management::story::run(parse_subcommand_action(matches)?)
 }
 
 fn handle_bearing_command(matches: &ArgMatches) -> Result<()> {
-    let command = matches
-        .subcommand()
-        .ok_or_else(|| anyhow::anyhow!("Missing bearing subcommand"))?;
-    let action = match command {
-        ("new", m) => super::commands::management::bearing::BearingAction::New {
-            name: m.get_one::<String>("name").expect("required").clone(),
-        },
-        ("survey", m) => super::commands::management::bearing::BearingAction::Survey {
-            id: m.get_one::<String>("id").expect("required").clone(),
-        },
-        ("assess", m) => super::commands::management::bearing::BearingAction::Assess {
-            id: m.get_one::<String>("id").expect("required").clone(),
-        },
-        ("list", m) => super::commands::management::bearing::BearingAction::List {
-            status: collect_many_strings(m, "status"),
-        },
-        ("show", m) => super::commands::management::bearing::BearingAction::Show {
-            id: m.get_one::<String>("id").expect("required").clone(),
-        },
-        ("file", m) => super::commands::management::bearing::BearingAction::File {
-            id: m.get_one::<String>("id").expect("required").clone(),
-            file: m.get_one::<String>("file").expect("required").clone(),
-            raw: *m.get_one::<bool>("raw").unwrap_or(&false),
-        },
-        ("park", m) => super::commands::management::bearing::BearingAction::Park {
-            id: m.get_one::<String>("id").expect("required").clone(),
-        },
-        ("decline", m) => super::commands::management::bearing::BearingAction::Decline {
-            id: m.get_one::<String>("id").expect("required").clone(),
-            reason: m.get_one::<String>("reason").expect("required").clone(),
-        },
-        ("lay", m) => super::commands::management::bearing::BearingAction::Lay {
-            id: m.get_one::<String>("id").expect("required").clone(),
-        },
-        (name, _) => return Err(anyhow::anyhow!("Unsupported bearing subcommand: {name}")),
-    };
-
-    super::commands::management::bearing::run(action)
-}
-
-fn collect_many_strings(matches: &ArgMatches, name: &str) -> Vec<String> {
-    matches
-        .get_many::<String>(name)
-        .map(|values| values.cloned().collect())
-        .unwrap_or_default()
+    super::commands::management::bearing::run(parse_subcommand_action(matches)?)
 }
 
 fn handle_adr_command(matches: &ArgMatches) -> Result<()> {
-    let command = matches
-        .subcommand()
-        .ok_or_else(|| anyhow::anyhow!("Missing adr subcommand"))?;
-    let action = match command {
-        ("new", m) => super::commands::management::adr::AdrAction::New {
-            title: m.get_one::<String>("title").expect("required").clone(),
-            context: m.get_one::<String>("context").cloned(),
-            applies_to: m
-                .get_many::<String>("applies-to")
-                .map(|values| values.cloned().collect())
-                .unwrap_or_default(),
-        },
-        ("list", m) => super::commands::management::adr::AdrAction::List {
-            status: m.get_one::<String>("status").cloned(),
-        },
-        ("show", m) => super::commands::management::adr::AdrAction::Show {
-            id: m.get_one::<String>("id").expect("required").clone(),
-        },
-        ("file", m) => super::commands::management::adr::AdrAction::File {
-            id: m.get_one::<String>("id").expect("required").clone(),
-            raw: *m.get_one::<bool>("raw").unwrap_or(&false),
-        },
-        ("accept", m) => super::commands::management::adr::AdrAction::Accept {
-            id: m.get_one::<String>("id").expect("required").clone(),
-        },
-        ("reject", m) => super::commands::management::adr::AdrAction::Reject {
-            id: m.get_one::<String>("id").expect("required").clone(),
-            reason: m.get_one::<String>("reason").expect("required").clone(),
-        },
-        ("deprecate", m) => super::commands::management::adr::AdrAction::Deprecate {
-            id: m.get_one::<String>("id").expect("required").clone(),
-            reason: m.get_one::<String>("reason").expect("required").clone(),
-        },
-        ("supersede", m) => super::commands::management::adr::AdrAction::Supersede {
-            new_id: m.get_one::<String>("new_id").expect("required").clone(),
-            old_id: m.get_one::<String>("old_id").expect("required").clone(),
-        },
-        (name, _) => return Err(anyhow::anyhow!("Unsupported adr subcommand: {name}")),
-    };
-
-    super::commands::management::adr::run(action)
+    super::commands::management::adr::run(parse_subcommand_action(matches)?)
 }
 
 fn handle_knowledge_command(matches: &ArgMatches) -> Result<()> {
@@ -393,18 +177,12 @@ fn handle_knowledge_command(matches: &ArgMatches) -> Result<()> {
 }
 
 fn handle_config_command(matches: &ArgMatches) -> Result<()> {
-    let command = matches
-        .subcommand()
-        .ok_or_else(|| anyhow::anyhow!("Missing config subcommand"))?;
-    match command {
-        ("show", m) => {
-            let json = *m.get_one::<bool>("json").unwrap_or(&false);
-            super::commands::setup::config::run_show(json)
-        }
-        ("mode", m) => {
-            let name = m.get_one::<String>("name").cloned();
-            super::commands::setup::config::run_mode(name)
-        }
-        (name, _) => Err(anyhow::anyhow!("Unsupported config subcommand: {name}")),
-    }
+    super::commands::setup::config::run(parse_subcommand_action(matches)?)
+}
+
+fn parse_subcommand_action<T>(matches: &ArgMatches) -> Result<T>
+where
+    T: FromArgMatches,
+{
+    Ok(T::from_arg_matches(matches)?)
 }

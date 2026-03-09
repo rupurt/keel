@@ -60,7 +60,8 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
    - Write requirements so they map directly to story acceptance criteria and verification evidence.
 5. **Detail Design (SDD)**: Fill out the `SDD.md` describing the architectural approach and component changes, with enough specificity that implementers can produce objective proofs.
 6. **Decompose Stories**: Break the design into implementable units:
-   - `just keel story new "<Title>" --epic <epic-id> --voyage <voyage-id>`
+   - `just keel story new "<Title>" --type feat --epic <epic-id> --voyage <voyage-id>`
+   - `--voyage` requires `--epic`. Omit both flags for unscoped stories, or pass only `--epic` for epic-scoped stories.
    - Link stories to SRS requirements using `[SRS-XX/AC-YY]` markers in the acceptance criteria.
 7. **Align Verification Techniques From Config**: Run `just keel config show`, `just keel verify detect`, and `just keel verify recommend` before finalizing verification planning:
    - Use `just keel config show` as the full technique inventory (built-in + custom) and review each option's `detected`, `disabled`, and `active` flags.
@@ -201,7 +202,7 @@ Run `just keel --help` for the full command tree. The core commands you should r
 |----------|----------|
 | Discovery | `just keel bearing new <name>` `just keel bearing survey <id>` `just keel bearing assess <id>` `just keel bearing list` |
 | Planning | `just keel epic new <name> --problem <problem>` `just keel voyage new <name> --epic <epic-id> --goal <goal>` |
-| Execution | `just keel story new <title> --epic <epic-id> --voyage <voyage-id>` |
+| Execution | `just keel story new "<title>" [--type <type>] [--epic <epic-id> [--voyage <voyage-id>]]` |
 | Board Ops | `just keel next --agent` `just keel next` `just keel status` `just keel flow` `just keel doctor` `just keel generate` `just keel config show` |
 | Lifecycle | Story/voyage/epic transitions in the table below |
 
