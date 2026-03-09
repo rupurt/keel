@@ -116,8 +116,69 @@ pub struct EvidenceRecord {
     pub notes: String,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ParsedEvidenceRecords {
+    records: Vec<EvidenceRecord>,
+    saw_scaffold_row: bool,
+}
+
 /// Parse and normalize canonical evidence records from a full `EVIDENCE.md` document.
 pub fn parse_evidence_records(content: &str) -> Result<Vec<EvidenceRecord>, Vec<String>> {
+    parse_evidence_records_internal(content).map(|parsed| parsed.records)
+}
+
+/// Render evidence records as the canonical `## Sources` markdown table.
+pub fn render_evidence_records_table(records: &[EvidenceRecord]) -> String {
+    let mut sorted = records.to_vec();
+    sorted.sort_by(evidence_record_ordering);
+
+    let mut lines = vec![
+        format!("| {} |", CANONICAL_SOURCE_HEADERS.join(" | ")),
+        "|----|-------|------------|----------|----------------------|-----------|-----------|-----------|-------|"
+            .to_string(),
+    ];
+
+    for record in sorted {
+        lines.push(format!(
+            "| {} | {} | {} | {} | {} | {} | {} | {} | {} |",
+            sanitize_markdown_cell(&record.id),
+            sanitize_markdown_cell(record.class.as_str()),
+            sanitize_markdown_cell(&record.provenance),
+            sanitize_markdown_cell(&record.location),
+            record.observed_or_published_at.format("%Y-%m-%d"),
+            record.retrieved_at.format("%Y-%m-%d"),
+            sanitize_markdown_cell(record.authority.as_str()),
+            sanitize_markdown_cell(record.freshness.as_str()),
+            sanitize_markdown_cell(&record.notes),
+        ));
+    }
+
+    lines.join("\n")
+}
+
+/// Validate a full `EVIDENCE.md` document and return actionable error messages.
+pub fn validate_evidence_document(content: &str) -> Vec<String> {
+    match parse_evidence_records_internal(content) {
+        Ok(parsed) => {
+            let mut errors = Vec::new();
+            if parsed.saw_scaffold_row {
+                errors.push(
+                    "Sources table still contains scaffold/example values; replace the template row with authored evidence"
+                        .to_string(),
+                );
+            }
+            if parsed.records.is_empty() {
+                errors.push(
+                    "Sources table must include at least one authored evidence record".to_string(),
+                );
+            }
+            errors
+        }
+        Err(errors) => errors,
+    }
+}
+
+fn parse_evidence_records_internal(content: &str) -> Result<ParsedEvidenceRecords, Vec<String>> {
     let sources = extract_section(content, "## Sources")
         .filter(|section| !section.trim().is_empty())
         .ok_or_else(|| vec!["missing required '## Sources' section".to_string()])?;
@@ -158,6 +219,7 @@ pub fn parse_evidence_records(content: &str) -> Result<Vec<EvidenceRecord>, Vec<
     let mut errors = Vec::new();
     let mut records = Vec::new();
     let mut seen_ids = HashSet::new();
+    let mut saw_scaffold_row = false;
 
     for (row_index, row) in table_lines.iter().enumerate().skip(2) {
         if row.trim().is_empty() {
@@ -184,10 +246,7 @@ pub fn parse_evidence_records(content: &str) -> Result<Vec<EvidenceRecord>, Vec<
         }
 
         if is_scaffold_row(&cells) {
-            errors.push(
-                "Sources table still contains scaffold/example values; replace the template row with authored evidence"
-                    .to_string(),
-            );
+            saw_scaffold_row = true;
             continue;
         }
 
@@ -203,23 +262,17 @@ pub fn parse_evidence_records(content: &str) -> Result<Vec<EvidenceRecord>, Vec<
         }
     }
 
-    if records.is_empty() && errors.is_empty() {
-        errors.push("Sources table must include at least one authored evidence record".to_string());
-    }
-
     if errors.is_empty() {
         records.sort_by(evidence_record_ordering);
-        Ok(records)
+        Ok(ParsedEvidenceRecords {
+            records,
+            saw_scaffold_row,
+        })
     } else {
         errors.sort();
         errors.dedup();
         Err(errors)
     }
-}
-
-/// Validate a full `EVIDENCE.md` document and return actionable error messages.
-pub fn validate_evidence_document(content: &str) -> Vec<String> {
-    parse_evidence_records(content).err().unwrap_or_default()
 }
 
 fn parse_record(cells: &[String]) -> Result<EvidenceRecord, String> {
@@ -331,6 +384,16 @@ fn evidence_record_ordering(left: &EvidenceRecord, right: &EvidenceRecord) -> Or
         .then_with(|| left.notes.cmp(&right.notes))
 }
 
+fn sanitize_markdown_cell(value: &str) -> String {
+    value
+        .lines()
+        .map(str::trim)
+        .filter(|segment| !segment.is_empty())
+        .collect::<Vec<_>>()
+        .join(" ")
+        .replace('|', "/")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -430,5 +493,35 @@ mod tests {
             parse_evidence_records(variant_a).unwrap(),
             parse_evidence_records(variant_b).unwrap()
         );
+    }
+
+    #[test]
+    fn parse_evidence_records_ignores_template_row_for_capture_workflows() {
+        let scaffold = crate::infrastructure::template_rendering::render(
+            crate::infrastructure::templates::bearing::EVIDENCE,
+            &[("id", "BRG-01"), ("title", "Test Bearing")],
+        );
+
+        let records = parse_evidence_records(&scaffold).unwrap();
+
+        assert!(records.is_empty());
+        assert!(
+            validate_evidence_document(&scaffold)
+                .iter()
+                .any(|message| message.contains("scaffold/example values"))
+        );
+    }
+
+    #[test]
+    fn render_evidence_records_table_uses_canonical_headers() {
+        let records = parse_evidence_records(VALID_EVIDENCE).unwrap();
+
+        let rendered = render_evidence_records_table(&records);
+
+        assert!(rendered.starts_with(
+            "| ID | Class | Provenance | Location | Observed / Published | Retrieved | Authority | Freshness | Notes |"
+        ));
+        assert!(rendered.contains("| SRC-01 | academic | provider:arxiv |"));
+        assert!(rendered.contains("| SRC-02 | social | provider:hn |"));
     }
 }

@@ -2,6 +2,7 @@
 
 use std::fs;
 use std::path::Path;
+use std::str::FromStr;
 
 use anyhow::{Context, Result, anyhow};
 use chrono::Local;
@@ -34,10 +35,34 @@ pub enum BearingAction {
         /// Bearing title
         name: String,
     },
-    /// Advance a bearing into the research stage
+    /// Advance a bearing into the research stage or capture evidence
     Research {
         /// Bearing ID
         id: String,
+        /// Evidence source class (web, academic, social, manual)
+        #[arg(long)]
+        class: Option<String>,
+        /// Provider or provenance label stored with the captured source
+        #[arg(long)]
+        provider: Option<String>,
+        /// Source URL, path, or origin
+        #[arg(long)]
+        location: Option<String>,
+        /// Source observation or publication date (YYYY-MM-DD)
+        #[arg(long = "observed-at")]
+        observed_at: Option<String>,
+        /// Date the source was retrieved (YYYY-MM-DD)
+        #[arg(long = "retrieved-at")]
+        retrieved_at: Option<String>,
+        /// Evidence authority rating (low, medium, high)
+        #[arg(long)]
+        authority: Option<String>,
+        /// Evidence freshness rating (low, medium, high)
+        #[arg(long)]
+        freshness: Option<String>,
+        /// Authored claim or note supported by the source
+        #[arg(long)]
+        notes: Option<String>,
     },
     /// Add ASSESSMENT.md to a bearing
     Assess {
@@ -88,6 +113,8 @@ pub mod new;
 
 use crate::cli::table::Table;
 use crate::domain::model::{Bearing, BearingStatus};
+use crate::infrastructure::bearing_evidence::{EvidenceSourceClass, EvidenceStrength};
+use crate::infrastructure::bearing_research::{self, ResearchCaptureRequest};
 use crate::infrastructure::config::{find_board_dir, load_config};
 use crate::infrastructure::frontmatter_mutation::{Mutation, apply};
 use crate::infrastructure::loader::load_board;
@@ -105,6 +132,83 @@ enum FogType {
     Blocking,
     Protecting,
     Clear,
+}
+
+#[derive(Debug, Clone, Default)]
+struct ResearchCaptureArgs {
+    class: Option<String>,
+    provider: Option<String>,
+    location: Option<String>,
+    observed_at: Option<String>,
+    retrieved_at: Option<String>,
+    authority: Option<String>,
+    freshness: Option<String>,
+    notes: Option<String>,
+}
+
+impl ResearchCaptureArgs {
+    fn into_request(self) -> Result<Option<ResearchCaptureRequest>> {
+        let has_capture_args = self.class.is_some()
+            || self.provider.is_some()
+            || self.location.is_some()
+            || self.observed_at.is_some()
+            || self.retrieved_at.is_some()
+            || self.authority.is_some()
+            || self.freshness.is_some()
+            || self.notes.is_some();
+
+        if !has_capture_args {
+            return Ok(None);
+        }
+
+        let class = EvidenceSourceClass::from_str(
+            self.class
+                .as_deref()
+                .ok_or_else(|| anyhow!("--class is required when capturing evidence"))?,
+        )
+        .map_err(|err| anyhow!(err))?;
+        let observed_or_published_at = chrono::NaiveDate::parse_from_str(
+            self.observed_at
+                .as_deref()
+                .ok_or_else(|| anyhow!("--observed-at is required when capturing evidence"))?,
+            "%Y-%m-%d",
+        )
+        .map_err(|_| anyhow!("--observed-at must use YYYY-MM-DD"))?;
+        let retrieved_at = chrono::NaiveDate::parse_from_str(
+            self.retrieved_at
+                .as_deref()
+                .ok_or_else(|| anyhow!("--retrieved-at is required when capturing evidence"))?,
+            "%Y-%m-%d",
+        )
+        .map_err(|_| anyhow!("--retrieved-at must use YYYY-MM-DD"))?;
+        let authority = EvidenceStrength::from_str(
+            self.authority
+                .as_deref()
+                .ok_or_else(|| anyhow!("--authority is required when capturing evidence"))?,
+        )
+        .map_err(|err| anyhow!(err))?;
+        let freshness = EvidenceStrength::from_str(
+            self.freshness
+                .as_deref()
+                .ok_or_else(|| anyhow!("--freshness is required when capturing evidence"))?,
+        )
+        .map_err(|err| anyhow!(err))?;
+
+        Ok(Some(ResearchCaptureRequest {
+            class,
+            provider: self.provider,
+            location: self
+                .location
+                .ok_or_else(|| anyhow!("--location is required when capturing evidence"))?,
+            observed_or_published_at,
+            retrieved_at,
+            authority,
+            freshness,
+            notes: self
+                .notes
+                .ok_or_else(|| anyhow!("--notes is required when capturing evidence"))?,
+        }))
+    }
 }
 
 impl FogType {
@@ -130,7 +234,29 @@ pub fn run_new(name: &str) -> Result<()> {
 pub fn run(action: BearingAction) -> Result<()> {
     match action {
         BearingAction::New { name } => run_new(&name),
-        BearingAction::Research { id } => run_research(&id),
+        BearingAction::Research {
+            id,
+            class,
+            provider,
+            location,
+            observed_at,
+            retrieved_at,
+            authority,
+            freshness,
+            notes,
+        } => run_research(
+            &id,
+            ResearchCaptureArgs {
+                class,
+                provider,
+                location,
+                observed_at,
+                retrieved_at,
+                authority,
+                freshness,
+                notes,
+            },
+        ),
         BearingAction::Assess { id } => run_assess(&id),
         BearingAction::List { status } => run_list(&status),
         BearingAction::Show { id } => show::run(&id),
@@ -144,15 +270,35 @@ pub fn run(action: BearingAction) -> Result<()> {
 }
 
 /// Run the research command - advances a bearing into the research stage
-pub fn run_research(pattern: &str) -> Result<()> {
-    run_research_impl(pattern)
+fn run_research(pattern: &str, capture: ResearchCaptureArgs) -> Result<()> {
+    run_research_impl(pattern, capture)
         .map_err(|err| error_with_recovery(BearingLifecycleAction::Research, pattern, err))
 }
 
-fn run_research_impl(pattern: &str) -> Result<()> {
+fn run_research_impl(pattern: &str, capture: ResearchCaptureArgs) -> Result<()> {
     use crate::domain::transitions::bearing::{bearing_transitions, execute};
 
     let board_dir = find_board_dir()?;
+    let capture_request = capture.into_request()?;
+
+    if let Some(capture_request) = capture_request {
+        let result = run_research_capture(&board_dir, pattern, capture_request)?;
+        if let Some(transition) = result.transition {
+            if let Some(path) = transition.file_created {
+                println!("Created: {}", path);
+            }
+            println!("  {} → {}", transition.from, transition.to);
+        }
+        println!(
+            "Captured: {} [{} via {}]",
+            result.captured.id, result.captured.class, result.captured.provenance
+        );
+        println!("  {}", result.evidence_path.display());
+        let guidance = guidance_for_action(BearingLifecycleAction::Research, &result.bearing_id);
+        print_human(guidance.as_ref());
+        return Ok(());
+    }
+
     let result = execute(&board_dir, pattern, &bearing_transitions::RESEARCH)?;
 
     if let Some(path) = &result.file_created {
@@ -163,6 +309,76 @@ fn run_research_impl(pattern: &str) -> Result<()> {
     print_human(guidance.as_ref());
 
     Ok(())
+}
+
+#[derive(Debug)]
+struct ResearchCaptureRunResult {
+    bearing_id: String,
+    evidence_path: std::path::PathBuf,
+    transition: Option<ResearchTransitionSummary>,
+    captured: crate::infrastructure::bearing_evidence::EvidenceRecord,
+}
+
+#[derive(Debug)]
+struct ResearchTransitionSummary {
+    from: BearingStatus,
+    to: BearingStatus,
+    file_created: Option<String>,
+}
+
+fn run_research_capture(
+    board_dir: &Path,
+    pattern: &str,
+    request: ResearchCaptureRequest,
+) -> Result<ResearchCaptureRunResult> {
+    use crate::domain::transitions::bearing::{bearing_transitions, execute};
+
+    let board = load_board(board_dir)?;
+    let bearing = board.require_bearing(pattern)?;
+    let evidence_path = board_dir
+        .join("bearings")
+        .join(bearing.id())
+        .join("EVIDENCE.md");
+
+    let transition = match bearing.status() {
+        BearingStatus::Exploring => {
+            Some(execute(board_dir, pattern, &bearing_transitions::RESEARCH)?)
+        }
+        BearingStatus::Evaluating | BearingStatus::Ready => None,
+        other => {
+            return Err(anyhow!(
+                "Cannot capture research evidence for bearing '{}' from '{}' state",
+                bearing.id(),
+                other
+            ));
+        }
+    };
+
+    if !evidence_path.exists() {
+        return Err(anyhow!(
+            "bearing '{}' is missing EVIDENCE.md; rerun `keel bearing research {}` to repair the bundle",
+            bearing.id(),
+            bearing.id()
+        ));
+    }
+
+    let capture = bearing_research::capture_research_evidence_file(&evidence_path, &[request])?;
+    let captured = capture
+        .appended_records
+        .into_iter()
+        .next()
+        .ok_or_else(|| anyhow!("research capture did not produce a source record"))?;
+
+    Ok(ResearchCaptureRunResult {
+        bearing_id: bearing.id().to_string(),
+        evidence_path,
+        transition: transition.map(|transition| ResearchTransitionSummary {
+            from: transition.from,
+            to: transition.to,
+            file_created: transition.file_created,
+        }),
+        captured,
+    })
 }
 
 /// Run the assess command - adds ASSESSMENT.md to a bearing
@@ -687,6 +903,7 @@ fn format_factor(value: Option<u8>) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::infrastructure::bearing_evidence::parse_evidence_records;
     use std::path::PathBuf;
     use tempfile::TempDir;
 
@@ -781,6 +998,104 @@ status: {}
 
     // Note: research/assess/park transition tests are in transitions/bearing_engine.rs
     // Command-level tests below verify other command workflows
+
+    fn capture_request(
+        class: EvidenceSourceClass,
+        provider: &str,
+        location: &str,
+        notes: &str,
+    ) -> ResearchCaptureRequest {
+        ResearchCaptureRequest {
+            class,
+            provider: Some(provider.to_string()),
+            location: location.to_string(),
+            observed_or_published_at: chrono::NaiveDate::from_ymd_opt(2026, 3, 8).unwrap(),
+            retrieved_at: chrono::NaiveDate::from_ymd_opt(2026, 3, 9).unwrap(),
+            authority: EvidenceStrength::High,
+            freshness: EvidenceStrength::Medium,
+            notes: notes.to_string(),
+        }
+    }
+
+    #[test]
+    fn research_workflow_supports_all_signal_classes() {
+        let temp = TempDir::new().unwrap();
+        let board_dir = create_test_bearing(&temp);
+
+        let first = run_research_capture(
+            &board_dir,
+            "test-research",
+            capture_request(
+                EvidenceSourceClass::Web,
+                "web-search",
+                "https://example.com/web",
+                "Web evidence",
+            ),
+        )
+        .unwrap();
+        assert!(matches!(
+            first.transition,
+            Some(ResearchTransitionSummary {
+                from: BearingStatus::Exploring,
+                to: BearingStatus::Evaluating,
+                ..
+            })
+        ));
+
+        run_research_capture(
+            &board_dir,
+            "test-research",
+            capture_request(
+                EvidenceSourceClass::Academic,
+                "arxiv",
+                "https://arxiv.org/abs/1234.5678",
+                "Academic evidence",
+            ),
+        )
+        .unwrap();
+        run_research_capture(
+            &board_dir,
+            "test-research",
+            capture_request(
+                EvidenceSourceClass::Social,
+                "social-trends",
+                "https://news.ycombinator.com/item?id=42",
+                "Social evidence",
+            ),
+        )
+        .unwrap();
+        run_research_capture(
+            &board_dir,
+            "test-research",
+            capture_request(
+                EvidenceSourceClass::Manual,
+                "manual:internal-note",
+                "docs/internal/research.md",
+                "Manual evidence",
+            ),
+        )
+        .unwrap();
+
+        let board = load_board(&board_dir).unwrap();
+        let bearing = board.bearings.get("test-research").unwrap();
+        assert_eq!(bearing.status(), BearingStatus::Evaluating);
+
+        let evidence =
+            fs::read_to_string(board_dir.join("bearings/test-research/EVIDENCE.md")).unwrap();
+        let records = parse_evidence_records(&evidence).unwrap();
+        assert_eq!(
+            records
+                .iter()
+                .map(|record| &record.class)
+                .collect::<Vec<_>>(),
+            vec![
+                &EvidenceSourceClass::Web,
+                &EvidenceSourceClass::Academic,
+                &EvidenceSourceClass::Social,
+                &EvidenceSourceClass::Manual,
+            ]
+        );
+    }
 
     #[test]
     fn park_updates_status() {

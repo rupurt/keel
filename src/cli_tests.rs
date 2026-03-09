@@ -768,12 +768,63 @@ fn cli_parses_epic_list() {
 fn bearing_research_command_contract() {
     let cli = Cli::try_parse_from(["board", "bearing", "research", "B0"]).unwrap();
     if let Commands::Management(ManagementCommands::Bearing {
-        action: BearingAction::Research { id },
+        action: BearingAction::Research { id, .. },
     }) = cli.command
     {
         assert_eq!(id, "B0");
     } else {
         panic!("Expected Bearing Research command");
+    }
+
+    let capture = Cli::try_parse_from([
+        "board",
+        "bearing",
+        "research",
+        "B0",
+        "--class",
+        "web",
+        "--provider",
+        "web-search",
+        "--location",
+        "https://example.com",
+        "--observed-at",
+        "2026-03-08",
+        "--retrieved-at",
+        "2026-03-09",
+        "--authority",
+        "high",
+        "--freshness",
+        "medium",
+        "--notes",
+        "Captured claim",
+    ])
+    .unwrap();
+    if let Commands::Management(ManagementCommands::Bearing {
+        action:
+            BearingAction::Research {
+                id,
+                class,
+                provider,
+                location,
+                observed_at,
+                retrieved_at,
+                authority,
+                freshness,
+                notes,
+            },
+    }) = capture.command
+    {
+        assert_eq!(id, "B0");
+        assert_eq!(class.as_deref(), Some("web"));
+        assert_eq!(provider.as_deref(), Some("web-search"));
+        assert_eq!(location.as_deref(), Some("https://example.com"));
+        assert_eq!(observed_at.as_deref(), Some("2026-03-08"));
+        assert_eq!(retrieved_at.as_deref(), Some("2026-03-09"));
+        assert_eq!(authority.as_deref(), Some("high"));
+        assert_eq!(freshness.as_deref(), Some("medium"));
+        assert_eq!(notes.as_deref(), Some("Captured claim"));
+    } else {
+        panic!("Expected Bearing Research capture command");
     }
 
     let legacy = crate::build_cli().try_get_matches_from(["keel", "bearing", "survey", "B0"]);
