@@ -13,6 +13,7 @@ use crate::infrastructure::loader::load_board;
 const BEARING_DOCUMENTS: &[KnownDocument] = &[
     KnownDocument::new("README", "README.md"),
     KnownDocument::new("BRIEF", "BRIEF.md"),
+    KnownDocument::new("EVIDENCE", "EVIDENCE.md"),
     KnownDocument::new("SURVEY", "SURVEY.md"),
     KnownDocument::new("ASSESSMENT", "ASSESSMENT.md"),
 ];

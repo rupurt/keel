@@ -265,7 +265,7 @@ fn build_human_next_up(board: &Board) -> Vec<NextUpItem> {
     if let Some((bearing, action)) = find_next_bearing_action(board) {
         let command = match action.as_str() {
             "lay" => format!("keel bearing lay {}", bearing.id()),
-            "survey" => format!("keel bearing survey {}", bearing.id()),
+            "research" => format!("keel bearing research {}", bearing.id()),
             "assess" => format!("keel bearing assess {}", bearing.id()),
             _ => format!("keel bearing show {}", bearing.id()),
         };
@@ -303,7 +303,7 @@ fn find_next_bearing_action(board: &Board) -> Option<(&Bearing, String)> {
         let action = if bearing.status() == BearingStatus::Ready {
             "lay".to_string()
         } else if !bearing.has_survey {
-            "survey".to_string()
+            "research".to_string()
         } else if !bearing.has_assessment {
             "assess".to_string()
         } else {
@@ -590,7 +590,7 @@ mod tests {
             next_up
                 .human_items
                 .iter()
-                .any(|i| i.category == "survey" && i.id == "test-bearing")
+                .any(|i| i.category == "research" && i.id == "test-bearing")
         );
     }
 

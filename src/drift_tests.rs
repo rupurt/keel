@@ -1063,9 +1063,9 @@ mod guidance_contracts {
                 "next_step",
             ),
             (
-                "bearing survey",
+                "bearing research",
                 bearing_guidance::guidance_for_action(
-                    bearing_guidance::BearingLifecycleAction::Survey,
+                    bearing_guidance::BearingLifecycleAction::Research,
                     "B1",
                 ),
                 "next_step",

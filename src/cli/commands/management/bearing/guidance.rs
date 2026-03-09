@@ -10,7 +10,7 @@ use crate::cli::commands::management::guidance::{CanonicalGuidance, CommandGuida
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BearingLifecycleAction {
     New,
-    Survey,
+    Research,
     Assess,
     Park,
     Decline,
@@ -41,10 +41,10 @@ pub fn guidance_for_action(
     let (command_type, command) = match action {
         BearingLifecycleAction::New => (
             ManagementCommand::BearingNew,
-            Some(format!("keel bearing survey {bearing_id}")),
+            Some(format!("keel bearing research {bearing_id}")),
         ),
-        BearingLifecycleAction::Survey => (
-            ManagementCommand::BearingSurvey,
+        BearingLifecycleAction::Research => (
+            ManagementCommand::BearingResearch,
             Some(format!("keel bearing assess {bearing_id}")),
         ),
         BearingLifecycleAction::Assess => (
@@ -128,7 +128,7 @@ fn recovery_command_for_error(
 fn command_type_for_action(action: BearingLifecycleAction) -> ManagementCommand {
     match action {
         BearingLifecycleAction::New => ManagementCommand::BearingNew,
-        BearingLifecycleAction::Survey => ManagementCommand::BearingSurvey,
+        BearingLifecycleAction::Research => ManagementCommand::BearingResearch,
         BearingLifecycleAction::Assess => ManagementCommand::BearingAssess,
         BearingLifecycleAction::Park => ManagementCommand::BearingPark,
         BearingLifecycleAction::Decline => ManagementCommand::BearingDecline,
@@ -186,7 +186,7 @@ mod tests {
 
     #[test]
     fn survey_success_guidance_maps_to_assess() {
-        let guidance = guidance_for_action(BearingLifecycleAction::Survey, "B1").unwrap();
+        let guidance = guidance_for_action(BearingLifecycleAction::Research, "B1").unwrap();
         let json = serde_json::to_value(guidance).unwrap();
         assert_eq!(
             json,
@@ -203,7 +203,7 @@ mod tests {
         assert_eq!(
             json,
             json!({
-                "next_step": { "command": "keel bearing survey B0" }
+                "next_step": { "command": "keel bearing research B0" }
             })
         );
     }
@@ -218,6 +218,62 @@ mod tests {
                 "next_step": { "command": "keel bearing lay B2" }
             })
         );
+    }
+
+    #[test]
+    fn bearing_research_guidance_and_docs_are_consistent() {
+        let new_guidance = guidance_for_action(BearingLifecycleAction::New, "B0").unwrap();
+        let research_guidance =
+            guidance_for_action(BearingLifecycleAction::Research, "B0").unwrap();
+
+        assert_eq!(
+            serde_json::to_value(new_guidance).unwrap(),
+            json!({
+                "next_step": { "command": "keel bearing research B0" }
+            })
+        );
+        assert_eq!(
+            serde_json::to_value(research_guidance).unwrap(),
+            json!({
+                "next_step": { "command": "keel bearing assess B0" }
+            })
+        );
+
+        let readme = std::fs::read_to_string("README.md").unwrap();
+        let agents = std::fs::read_to_string("AGENTS.md").unwrap();
+        assert!(readme.contains("bearing new/research/lay"));
+        assert!(agents.contains("just keel bearing research <id>"));
+        assert!(!readme.contains("bearing new/survey/lay"));
+        assert!(!agents.contains("just keel bearing survey <id>"));
+    }
+
+    #[test]
+    fn bearing_research_guidance_is_deterministic() {
+        let left =
+            serde_json::to_value(guidance_for_action(BearingLifecycleAction::New, "B7")).unwrap();
+        let right =
+            serde_json::to_value(guidance_for_action(BearingLifecycleAction::New, "B7")).unwrap();
+        assert_eq!(left, right);
+
+        let recovery_left = serde_json::to_value(
+            recovery_for_error(
+                BearingLifecycleAction::Research,
+                "B7",
+                "Cannot research bearing 'B7' from 'evaluating' state (must be exploring)",
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        let recovery_right = serde_json::to_value(
+            recovery_for_error(
+                BearingLifecycleAction::Research,
+                "B7",
+                "Cannot research bearing 'B7' from 'evaluating' state (must be exploring)",
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(recovery_left, recovery_right);
     }
 
     #[test]

@@ -169,7 +169,7 @@ Diagnostics
 | `knowledge graph` | Visualize connections between insights and entities |
 | `knowledge impact` | Track drift risk and institutionalization progress |
 | `adr new/accept/supersede` | Architecture Decision Record lifecycle |
-| `bearing new/survey/lay` | Research and exploration lifecycle |
+| `bearing new/research/lay` | Research and exploration lifecycle |
 | `epic new/done/reopen` | Strategic grouping and PRD management |
 | `voyage new/plan/start` | Tactical planning (SRS/SDD) and execution |
 | `story new/start/submit` | Implementation units and acceptance criteria |
@@ -208,7 +208,7 @@ Contract rules:
 
 Capability classification:
 
-- Actionable: ADR transitions (`adr accept/reject/deprecate/supersede`), bearing lifecycle transitions (`bearing new/survey/assess/park/decline/lay`), guided play suggestion (`play --suggest`), story-scoped verification (`verify <story-id>`), story-scoped audit (`audit <story-id>`).
+- Actionable: ADR transitions (`adr accept/reject/deprecate/supersede`), bearing lifecycle transitions (`bearing new/research/assess/park/decline/lay`), guided play suggestion (`play --suggest`), story-scoped verification (`verify <story-id>`), story-scoped audit (`audit <story-id>`).
 - Informational: read/list commands (`adr list/show`, `bearing list/show`) and exploratory play outputs (`play`, `play --list-props`, `play <bearing>`, `play --cross`).
 
 Examples (minimal contract snippets):

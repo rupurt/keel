@@ -271,7 +271,8 @@ impl FromPath for Bearing {
         frontmatter.id = bearing_id;
 
         let bearing_dir = path.parent().unwrap();
-        let has_survey = bearing_dir.join("SURVEY.md").exists();
+        let has_survey =
+            bearing_dir.join("EVIDENCE.md").exists() || bearing_dir.join("SURVEY.md").exists();
         let has_assessment = bearing_dir.join("ASSESSMENT.md").exists();
 
         Ok(Bearing {

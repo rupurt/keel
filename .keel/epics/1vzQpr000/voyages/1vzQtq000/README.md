@@ -25,11 +25,11 @@ started_at: 2026-03-08T20:16:57
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/3 stories complete
+**Progress:** 2/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Replace Bearing Scaffolds With The Evidence Document Contract](../../../../stories/1vzQwj000/README.md) | feat | done |
-| [Cut Over Bearing Lifecycle Commands And Guidance To Research Language](../../../../stories/1vzQwk000/README.md) | feat | backlog |
+| [Cut Over Bearing Lifecycle Commands And Guidance To Research Language](../../../../stories/1vzQwk000/README.md) | feat | done |
 | [Enforce Hard-Cutover Validation And Migrate Bearing Fixtures](../../../../stories/1vzQwl000/README.md) | feat | backlog |
 <!-- END GENERATED -->

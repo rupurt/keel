@@ -14,7 +14,7 @@ pub enum TransitionSideEffect {
     CreateFile {
         /// Template content to render
         template: &'static str,
-        /// Filename to create (e.g., "SURVEY.md")
+        /// Filename to create (e.g., "EVIDENCE.md")
         filename: &'static str,
     },
 }
@@ -44,14 +44,14 @@ pub mod bearing_transitions {
     use super::*;
     use crate::infrastructure::templates;
 
-    /// Survey: exploring → evaluating, creates SURVEY.md
-    pub const SURVEY: BearingTransitionSpec = BearingTransitionSpec {
-        name: "survey",
+    /// Research: exploring → evaluating, ensures EVIDENCE.md exists
+    pub const RESEARCH: BearingTransitionSpec = BearingTransitionSpec {
+        name: "research",
         from: &[BearingStatus::Exploring],
         to: BearingStatus::Evaluating,
         side_effect: TransitionSideEffect::CreateFile {
-            template: templates::bearing::SURVEY,
-            filename: "SURVEY.md",
+            template: templates::bearing::EVIDENCE,
+            filename: "EVIDENCE.md",
         },
     };
 

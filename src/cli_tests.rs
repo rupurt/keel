@@ -765,6 +765,25 @@ fn cli_parses_epic_list() {
 }
 
 #[test]
+fn bearing_research_command_contract() {
+    let cli = Cli::try_parse_from(["board", "bearing", "research", "B0"]).unwrap();
+    if let Commands::Management(ManagementCommands::Bearing {
+        action: BearingAction::Research { id },
+    }) = cli.command
+    {
+        assert_eq!(id, "B0");
+    } else {
+        panic!("Expected Bearing Research command");
+    }
+
+    let legacy = crate::build_cli().try_get_matches_from(["keel", "bearing", "survey", "B0"]);
+    assert!(
+        legacy.is_err(),
+        "legacy survey subcommand should not remain in the public CLI contract"
+    );
+}
+
+#[test]
 fn cli_parses_epic_list_with_filter() {
     let cli = Cli::try_parse_from([
         "board", "epic", "list", "--status", "active", "--status", "+done",

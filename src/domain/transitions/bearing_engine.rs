@@ -92,13 +92,10 @@ fn execute_side_effect(
         TransitionSideEffect::CreateFile { template, filename } => {
             let file_path = bearing_dir.join(filename);
 
-            // Check file doesn't already exist
+            // New bearing scaffolds already materialize the document bundle, so
+            // lifecycle transitions should be idempotent if the target file exists.
             if file_path.exists() {
-                return Err(anyhow!(
-                    "{} already exists for bearing: {}",
-                    filename,
-                    bearing.id()
-                ));
+                return Ok(None);
             }
 
             // Render template
@@ -181,19 +178,19 @@ status: {}
     }
 
     #[test]
-    fn survey_creates_file_and_updates_status() {
+    fn research_creates_file_and_updates_status() {
         let temp = TempDir::new().unwrap();
         let board_dir = create_test_bearing_with_status(&temp, "exploring");
 
-        let result = execute(&board_dir, "test-research", &bearing_transitions::SURVEY).unwrap();
+        let result = execute(&board_dir, "test-research", &bearing_transitions::RESEARCH).unwrap();
 
         assert_eq!(result.from, BearingStatus::Exploring);
         assert_eq!(result.to, BearingStatus::Evaluating);
         assert!(result.file_created.is_some());
 
         // Verify file was created
-        let survey_path = board_dir.join("bearings/test-research/SURVEY.md");
-        assert!(survey_path.exists());
+        let evidence_path = board_dir.join("bearings/test-research/EVIDENCE.md");
+        assert!(evidence_path.exists());
 
         // Verify status was updated
         let readme =
@@ -202,11 +199,11 @@ status: {}
     }
 
     #[test]
-    fn survey_fails_if_wrong_state() {
+    fn research_fails_if_wrong_state() {
         let temp = TempDir::new().unwrap();
         let board_dir = create_test_bearing_with_status(&temp, "evaluating");
 
-        let result = execute(&board_dir, "test-research", &bearing_transitions::SURVEY);
+        let result = execute(&board_dir, "test-research", &bearing_transitions::RESEARCH);
 
         assert!(result.is_err());
         assert!(
@@ -218,21 +215,20 @@ status: {}
     }
 
     #[test]
-    fn survey_fails_if_file_exists() {
+    fn research_allows_existing_file() {
         let temp = TempDir::new().unwrap();
         let board_dir = create_test_bearing_with_status(&temp, "exploring");
 
         // Create file first
         fs::write(
-            board_dir.join("bearings/test-research/SURVEY.md"),
+            board_dir.join("bearings/test-research/EVIDENCE.md"),
             "existing",
         )
         .unwrap();
 
-        let result = execute(&board_dir, "test-research", &bearing_transitions::SURVEY);
-
-        assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("already exists"));
+        let result = execute(&board_dir, "test-research", &bearing_transitions::RESEARCH).unwrap();
+        assert_eq!(result.to, BearingStatus::Evaluating);
+        assert!(result.file_created.is_none());
     }
 
     #[test]

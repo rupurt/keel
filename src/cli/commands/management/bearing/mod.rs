@@ -1,4 +1,4 @@
-//! Bearing commands - survey, assess, list, show
+//! Bearing commands - research, assess, list, show
 
 use std::fs;
 use std::path::Path;
@@ -34,8 +34,8 @@ pub enum BearingAction {
         /// Bearing title
         name: String,
     },
-    /// Add SURVEY.md to a bearing
-    Survey {
+    /// Advance a bearing into the research stage
+    Research {
         /// Bearing ID
         id: String,
     },
@@ -59,7 +59,7 @@ pub enum BearingAction {
     File {
         /// Bearing ID
         id: String,
-        /// Document name (README, BRIEF, SURVEY, ASSESSMENT)
+        /// Document name (README, BRIEF, EVIDENCE, ASSESSMENT)
         file: String,
         /// Print raw markdown without terminal rendering
         #[arg(long)]
@@ -130,7 +130,7 @@ pub fn run_new(name: &str) -> Result<()> {
 pub fn run(action: BearingAction) -> Result<()> {
     match action {
         BearingAction::New { name } => run_new(&name),
-        BearingAction::Survey { id } => run_survey(&id),
+        BearingAction::Research { id } => run_research(&id),
         BearingAction::Assess { id } => run_assess(&id),
         BearingAction::List { status } => run_list(&status),
         BearingAction::Show { id } => show::run(&id),
@@ -143,23 +143,23 @@ pub fn run(action: BearingAction) -> Result<()> {
     }
 }
 
-/// Run the survey command - adds SURVEY.md to a bearing
-pub fn run_survey(pattern: &str) -> Result<()> {
-    run_survey_impl(pattern)
-        .map_err(|err| error_with_recovery(BearingLifecycleAction::Survey, pattern, err))
+/// Run the research command - advances a bearing into the research stage
+pub fn run_research(pattern: &str) -> Result<()> {
+    run_research_impl(pattern)
+        .map_err(|err| error_with_recovery(BearingLifecycleAction::Research, pattern, err))
 }
 
-fn run_survey_impl(pattern: &str) -> Result<()> {
+fn run_research_impl(pattern: &str) -> Result<()> {
     use crate::domain::transitions::bearing::{bearing_transitions, execute};
 
     let board_dir = find_board_dir()?;
-    let result = execute(&board_dir, pattern, &bearing_transitions::SURVEY)?;
+    let result = execute(&board_dir, pattern, &bearing_transitions::RESEARCH)?;
 
     if let Some(path) = &result.file_created {
         println!("Created: {}", path);
     }
     println!("  {} → {}", result.from, result.to);
-    let guidance = guidance_for_action(BearingLifecycleAction::Survey, &result.bearing_id);
+    let guidance = guidance_for_action(BearingLifecycleAction::Research, &result.bearing_id);
     print_human(guidance.as_ref());
 
     Ok(())
@@ -779,7 +779,7 @@ status: {}
         root
     }
 
-    // Note: survey/assess/park transition tests are in transitions/bearing_engine.rs
+    // Note: research/assess/park transition tests are in transitions/bearing_engine.rs
     // Command-level tests below verify other command workflows
 
     #[test]
