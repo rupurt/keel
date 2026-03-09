@@ -211,10 +211,17 @@ fn evidence_lines(story_id: &str, report: &EvidenceReport) -> Vec<String> {
                     style::styled_inline_markdown(command)
                 ));
             }
-            if let Some(requirement) = &item.requirement {
+            if !item.requirements.is_empty() {
+                let label = if item.requirements.len() == 1 {
+                    "Requirement"
+                } else {
+                    "Requirements"
+                };
+                let value = item.requirements.join(", ");
                 lines.push(format!(
-                    "    Requirement: {}",
-                    style::styled_inline_markdown(requirement)
+                    "    {}: {}",
+                    label,
+                    style::styled_inline_markdown(&value)
                 ));
             }
             if let Some(proof) = &item.proof_filename {

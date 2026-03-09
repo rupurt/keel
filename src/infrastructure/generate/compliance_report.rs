@@ -31,28 +31,27 @@ pub fn generate_compliance_report(board: &Board, voyage: &Voyage) -> String {
         if let Ok(content) = fs::read_to_string(&story.path) {
             let annotations = parse_verify_annotations(&content);
             for ann in annotations {
-                if let Some(req_ref) = ann.requirement {
-                    let mut proofs = Vec::new();
-                    // Check EVIDENCE/ directory for proof artifacts
-                    let story_dir = story.path.parent().unwrap();
-                    let evidence_dir = story_dir.join("EVIDENCE");
-                    if evidence_dir.exists()
-                        && let Ok(entries) = fs::read_dir(evidence_dir)
-                    {
-                        for entry in entries.flatten() {
-                            let path = entry.path();
-                            if path.is_file() {
-                                proofs
-                                    .push(path.file_name().unwrap().to_string_lossy().to_string());
-                            }
+                let mut proofs = Vec::new();
+                // Check EVIDENCE/ directory for proof artifacts
+                let story_dir = story.path.parent().unwrap();
+                let evidence_dir = story_dir.join("EVIDENCE");
+                if evidence_dir.exists()
+                    && let Ok(entries) = fs::read_dir(evidence_dir)
+                {
+                    for entry in entries.flatten() {
+                        let path = entry.path();
+                        if path.is_file() {
+                            proofs.push(path.file_name().unwrap().to_string_lossy().to_string());
                         }
-                        proofs.sort();
                     }
+                    proofs.sort();
+                }
 
+                for req_ref in ann.requirements {
                     req_map
                         .entry(req_ref.id)
                         .or_default()
-                        .push((story.id().to_string(), proofs));
+                        .push((story.id().to_string(), proofs.clone()));
                 }
             }
         }
@@ -287,5 +286,64 @@ mod tests {
         .collect::<Vec<_>>()
         .join("<br>");
         assert!(srs_01_line.contains(&expected_proof_links));
+    }
+
+    #[test]
+    fn compliance_report_maps_shared_annotation_to_each_requirement() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let voyage = make_voyage(temp.path());
+        let scope = voyage.scope_path();
+        let story_dir = temp.path().join("stories").join("FEATMULTI");
+        fs::create_dir_all(story_dir.join("EVIDENCE")).unwrap();
+        fs::write(story_dir.join("EVIDENCE").join("shared.log"), "proof").unwrap();
+        fs::write(
+            story_dir.join("README.md"),
+            format!(
+                "---\nid: FEATMULTI\ntitle: Story FEATMULTI\ntype: feat\nstatus: done\nscope: {scope}\ncreated_at: 2026-01-01T00:00:00\nupdated_at: 2026-01-01T00:00:00\nstarted_at: 2026-01-01T01:00:00\ncompleted_at: 2026-01-01T02:00:00\nsubmitted_at: 2026-01-01T03:00:00\n---\n\n# Story\n\n- [x] [SRS-01/AC-01] Shared proof <!-- verify: manual, SRS-01:start:end, SRS-02:end, proof: shared.log -->\n"
+            ),
+        )
+        .unwrap();
+
+        let mut board = Board::new(PathBuf::from(temp.path()));
+        board.stories.insert(
+            "FEATMULTI".to_string(),
+            Story::new(
+                StoryFrontmatter {
+                    id: "FEATMULTI".to_string(),
+                    title: "Story FEATMULTI".to_string(),
+                    story_type: StoryType::Feat,
+                    status: StoryState::Done,
+                    scope: Some(scope.clone()),
+                    milestone: None,
+                    created_at: None,
+                    updated_at: None,
+                    started_at: None,
+                    completed_at: None,
+                    submitted_at: None,
+                    index: None,
+                    governed_by: Vec::new(),
+                    blocked_by: Vec::new(),
+                    role: None,
+                },
+                story_dir.join("README.md"),
+            ),
+        );
+
+        let report = generate_compliance_report(&board, &voyage);
+        let srs_01_line = report
+            .lines()
+            .find(|line| line.starts_with("| SRS-01 |"))
+            .expect("SRS-01 row should exist");
+        let srs_02_line = report
+            .lines()
+            .find(|line| line.starts_with("| SRS-02 |"))
+            .expect("SRS-02 row should exist");
+
+        let story_link = "[FEATMULTI](../../../../stories/FEATMULTI/README.md)";
+        let proof_link = "[shared.log](../../../../stories/FEATMULTI/EVIDENCE/shared.log)";
+        assert!(srs_01_line.contains(story_link));
+        assert!(srs_01_line.contains(proof_link));
+        assert!(srs_02_line.contains(story_link));
+        assert!(srs_02_line.contains(proof_link));
     }
 }

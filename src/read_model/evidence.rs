@@ -23,28 +23,28 @@ pub fn collect_story_evidence(
     story_title: &str,
     content: &str,
 ) -> Vec<EvidenceEntry> {
-    let annotations = parse_verify_annotations(content);
-    annotations
-        .into_iter()
-        .filter_map(|ann| {
-            ann.requirement.map(|req_ref| {
-                let phase = match req_ref.phase {
-                    RequirementPhase::Start => "start",
-                    RequirementPhase::Continues => "continues",
-                    RequirementPhase::End => "end",
-                    RequirementPhase::StartEnd => "start:end",
-                };
-                EvidenceEntry {
-                    requirement_id: req_ref.id,
-                    story_id: story_id.to_string(),
-                    story_title: story_title.to_string(),
-                    criterion: ann.criterion,
-                    phase: phase.to_string(),
-                    proof: ann.proof,
-                }
-            })
-        })
-        .collect()
+    let mut entries = Vec::new();
+
+    for ann in parse_verify_annotations(content) {
+        for req_ref in ann.requirements {
+            let phase = match req_ref.phase {
+                RequirementPhase::Start => "start",
+                RequirementPhase::Continues => "continues",
+                RequirementPhase::End => "end",
+                RequirementPhase::StartEnd => "start:end",
+            };
+            entries.push(EvidenceEntry {
+                requirement_id: req_ref.id,
+                story_id: story_id.to_string(),
+                story_title: story_title.to_string(),
+                criterion: ann.criterion.clone(),
+                phase: phase.to_string(),
+                proof: ann.proof.clone(),
+            });
+        }
+    }
+
+    entries
 }
 
 /// Format a single evidence entry with phase-aware indentation (plain text, no color).
@@ -171,5 +171,28 @@ status: backlog
 "#;
         let entries = collect_story_evidence("TEST2", "Test", content);
         assert!(entries.is_empty());
+    }
+
+    #[test]
+    fn collect_duplicates_entry_for_each_requirement_ref() {
+        let content = r#"---
+id: TEST3
+title: Test
+type: feat
+status: done
+---
+
+## Acceptance Criteria
+
+- [x] Shared proof <!-- verify: manual, SRS-01:end, SRS-02:start:end, proof: shared.log -->
+"#;
+        let entries = collect_story_evidence("TEST3", "Test", content);
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].requirement_id, "SRS-01");
+        assert_eq!(entries[0].phase, "end");
+        assert_eq!(entries[0].proof, Some("shared.log".to_string()));
+        assert_eq!(entries[1].requirement_id, "SRS-02");
+        assert_eq!(entries[1].phase, "start:end");
+        assert_eq!(entries[1].proof, Some("shared.log".to_string()));
     }
 }

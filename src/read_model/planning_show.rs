@@ -157,7 +157,7 @@ pub struct ProofMetadata {
 pub struct EvidenceItem {
     pub ac_label: Option<String>,
     pub criterion: String,
-    pub requirement: Option<String>,
+    pub requirements: Vec<String>,
     pub mode: String,
     pub command: Option<String>,
     pub proof_filename: Option<String>,
@@ -343,13 +343,13 @@ pub fn build_epic_show_projection(board: &Board, epic: &Epic) -> Result<EpicShow
 
             if ann.comparison == Comparison::Manual {
                 verification.manual_criteria += 1;
-                if let Some(req) = ann.requirement {
-                    verification.manual_requirements.insert(req.id);
+                for req in &ann.requirements {
+                    verification.manual_requirements.insert(req.id.clone());
                 }
             } else {
                 verification.automated_criteria += 1;
-                if let Some(req) = ann.requirement {
-                    verification.automated_requirements.insert(req.id);
+                for req in &ann.requirements {
+                    verification.automated_requirements.insert(req.id.clone());
                 }
             }
 
@@ -438,20 +438,25 @@ pub fn build_voyage_show_projection(
             let mut manual_count_by_req: BTreeMap<String, usize> = BTreeMap::new();
 
             for ann in parse_verify_annotations(&content) {
-                let req_id = ann
-                    .requirement
-                    .as_ref()
-                    .map(|req| req.id.clone())
-                    .or_else(|| ann.ac_ref.as_ref().map(|ac| ac.srs_id.clone()));
-                let Some(req_id) = req_id else {
-                    continue;
-                };
-
-                references.push(req_id.clone());
-                if ann.comparison == Comparison::Manual {
-                    *manual_count_by_req.entry(req_id).or_insert(0) += 1;
+                let req_ids: Vec<String> = if ann.requirements.is_empty() {
+                    ann.ac_ref
+                        .as_ref()
+                        .map(|ac| vec![ac.srs_id.clone()])
+                        .unwrap_or_default()
                 } else {
-                    *automated_count_by_req.entry(req_id).or_insert(0) += 1;
+                    ann.requirements.iter().map(|req| req.id.clone()).collect()
+                };
+                if req_ids.is_empty() {
+                    continue;
+                }
+
+                for req_id in req_ids {
+                    references.push(req_id.clone());
+                    if ann.comparison == Comparison::Manual {
+                        *manual_count_by_req.entry(req_id).or_insert(0) += 1;
+                    } else {
+                        *automated_count_by_req.entry(req_id).or_insert(0) += 1;
+                    }
                 }
             }
 
@@ -585,11 +590,14 @@ pub fn build_story_evidence_projection(story_path: &Path, content: &str) -> Evid
     for ann in parse_verify_annotations(content) {
         let ac_label = ann.ac_ref.as_ref().map(|ac| format!("AC-{:02}", ac.ac_num));
         let proof_filename = ann.proof.clone();
-        let requirement = ann
-            .requirement
-            .as_ref()
-            .map(|req| req.id.clone())
-            .or_else(|| ann.ac_ref.as_ref().map(|ac| ac.srs_id.clone()));
+        let requirements = if ann.requirements.is_empty() {
+            ann.ac_ref
+                .as_ref()
+                .map(|ac| vec![ac.srs_id.clone()])
+                .unwrap_or_default()
+        } else {
+            ann.requirements.iter().map(|req| req.id.clone()).collect()
+        };
 
         let mut proof_metadata = ProofMetadata::default();
         let mut excerpt_lines = Vec::new();
@@ -621,7 +629,7 @@ pub fn build_story_evidence_projection(story_path: &Path, content: &str) -> Evid
         items.push(EvidenceItem {
             ac_label,
             criterion: ann.criterion,
-            requirement,
+            requirements,
             mode,
             command: ann.command,
             proof_filename,
@@ -2335,5 +2343,35 @@ Planning readers need concise summaries without recommendation noise.
         assert_eq!(story.checked_criteria, 1);
         assert_eq!(story.evidence.items.len(), 1);
         assert_eq!(story.evidence.linked_proofs, vec!["ac-1.log".to_string()]);
+    }
+
+    #[test]
+    fn story_evidence_projection_preserves_multiple_requirement_refs() {
+        let temp = TestBoardBuilder::new()
+            .story(TestStory::new("S-MULTI").body(
+                r#"## Acceptance Criteria
+- [x] [SRS-01/AC-01] shared evidence <!-- verify: manual, SRS-01:start:end, SRS-NFR-02:end, proof: ac-1.log -->
+"#,
+            ))
+            .build();
+        std::fs::write(
+            temp.path().join("stories/S-MULTI/EVIDENCE/ac-1.log"),
+            "proof",
+        )
+        .unwrap();
+
+        let story = build_story_show_projection(
+            load_board(temp.path())
+                .unwrap()
+                .require_story("S-MULTI")
+                .unwrap(),
+        )
+        .unwrap();
+
+        assert_eq!(story.evidence.items.len(), 1);
+        assert_eq!(
+            story.evidence.items[0].requirements,
+            vec!["SRS-01".to_string(), "SRS-NFR-02".to_string()]
+        );
     }
 }

@@ -66,7 +66,7 @@ fn parses_requirement_start_phase() {
     let content = "Start req <!-- verify: cmd, SRS-01:start -->";
     let annotations = parse_verify_annotations(content);
     assert_eq!(annotations.len(), 1);
-    let req = annotations[0].requirement.as_ref().unwrap();
+    let req = annotations[0].requirements.first().unwrap();
     assert_eq!(req.id, "SRS-01");
     assert!(matches!(req.phase, RequirementPhase::Start));
 }
@@ -76,7 +76,7 @@ fn parses_requirement_continues_phase() {
     let content = "Continue req <!-- verify: manual, SRS-01:continues -->";
     let annotations = parse_verify_annotations(content);
     assert_eq!(annotations.len(), 1);
-    let req = annotations[0].requirement.as_ref().unwrap();
+    let req = annotations[0].requirements.first().unwrap();
     assert_eq!(req.id, "SRS-01");
     assert!(matches!(req.phase, RequirementPhase::Continues));
 }
@@ -86,7 +86,7 @@ fn parses_requirement_end_phase() {
     let content = "End req <!-- verify: cmd, SRS-01:end -->";
     let annotations = parse_verify_annotations(content);
     assert_eq!(annotations.len(), 1);
-    let req = annotations[0].requirement.as_ref().unwrap();
+    let req = annotations[0].requirements.first().unwrap();
     assert_eq!(req.id, "SRS-01");
     assert!(matches!(req.phase, RequirementPhase::End));
 }
@@ -96,7 +96,7 @@ fn parses_requirement_start_end_phase() {
     let content = "One-shot req <!-- verify: cmd, SRS-01:start:end -->";
     let annotations = parse_verify_annotations(content);
     assert_eq!(annotations.len(), 1);
-    let req = annotations[0].requirement.as_ref().unwrap();
+    let req = annotations[0].requirements.first().unwrap();
     assert_eq!(req.id, "SRS-01");
     assert!(matches!(req.phase, RequirementPhase::StartEnd));
 }
@@ -111,7 +111,7 @@ fn parses_requirement_with_contains_comparison() {
     } else {
         panic!("Expected Contains");
     }
-    let req = annotations[0].requirement.as_ref().unwrap();
+    let req = annotations[0].requirements.first().unwrap();
     assert_eq!(req.id, "SRS-01");
     assert!(matches!(req.phase, RequirementPhase::End));
 }
@@ -126,7 +126,7 @@ fn parses_requirement_with_equals_comparison() {
     } else {
         panic!("Expected Equals");
     }
-    let req = annotations[0].requirement.as_ref().unwrap();
+    let req = annotations[0].requirements.first().unwrap();
     assert_eq!(req.id, "SRS-01");
     assert!(matches!(req.phase, RequirementPhase::Start));
 }
@@ -136,7 +136,7 @@ fn parses_nfr_requirement_phase() {
     let content = "NFR check <!-- verify: manual, SRS-NFR-01:start:end -->";
     let annotations = parse_verify_annotations(content);
     assert_eq!(annotations.len(), 1);
-    let req = annotations[0].requirement.as_ref().unwrap();
+    let req = annotations[0].requirements.first().unwrap();
     assert_eq!(req.id, "SRS-NFR-01");
     assert!(matches!(req.phase, RequirementPhase::StartEnd));
 }
@@ -146,8 +146,31 @@ fn ac_ref_coexists_with_requirement_phase() {
     let content = "[SRS-01/AC-01] req <!-- verify: cmd, SRS-01:start -->";
     let annotations = parse_verify_annotations(content);
     assert_eq!(annotations.len(), 1);
-    let req = annotations[0].requirement.as_ref().unwrap();
+    let req = annotations[0].requirements.first().unwrap();
     assert_eq!(req.id, "SRS-01");
+}
+
+#[test]
+fn parses_multiple_requirement_refs_in_single_annotation() {
+    let content = "Multi req <!-- verify: manual, SRS-NFR-02:start:end, SRS-04:end, SRS-03:end -->";
+    let annotations = parse_verify_annotations(content);
+    assert_eq!(annotations.len(), 1);
+    assert_eq!(annotations[0].requirements.len(), 3);
+    assert_eq!(annotations[0].requirements[0].id, "SRS-NFR-02");
+    assert!(matches!(
+        annotations[0].requirements[0].phase,
+        RequirementPhase::StartEnd
+    ));
+    assert_eq!(annotations[0].requirements[1].id, "SRS-04");
+    assert!(matches!(
+        annotations[0].requirements[1].phase,
+        RequirementPhase::End
+    ));
+    assert_eq!(annotations[0].requirements[2].id, "SRS-03");
+    assert!(matches!(
+        annotations[0].requirements[2].phase,
+        RequirementPhase::End
+    ));
 }
 
 #[test]

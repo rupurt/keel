@@ -277,7 +277,7 @@ fn evaluate_story_submit(_board: &Board, story: &Story) -> Vec<Problem> {
 
     // 3. Check for evidence chain phase markers
     let annotations = parse_verify_annotations(&content);
-    let has_phases = annotations.iter().any(|a| a.requirement.is_some());
+    let has_phases = annotations.iter().any(|a| !a.requirements.is_empty());
     if !has_phases && !ac_report.checked.is_empty() {
         problems.push(Problem {
             severity: Severity::Error,
@@ -765,7 +765,7 @@ pub fn evaluate_voyage_completion(
         };
 
         for annotation in parse_verify_annotations(&content) {
-            if let Some(req_ref) = annotation.requirement {
+            for req_ref in annotation.requirements {
                 let entry = evidence_by_req.entry(req_ref.id).or_default();
                 match req_ref.phase {
                     RequirementPhase::Start => entry.has_start = true,
@@ -1438,6 +1438,53 @@ Out of scope:
         assert_eq!(problems.len(), 1);
         assert!(has_message(&problems, "start but missing end"));
         assert_eq!(problems[0].severity, Severity::Warning);
+    }
+
+    #[test]
+    fn evaluate_voyage_completion_counts_all_requirement_refs_from_one_annotation() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("test-epic"))
+            .voyage(
+                TestVoyage::new("01-inprogress", "test-epic")
+                    .status("in-progress")
+                    .srs_content(
+                        r#"# Test SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Verification |
+|----|-------------|--------------|
+| SRS-01 | Requirement 1 | test |
+| SRS-02 | Requirement 2 | test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+                    ),
+            )
+            .story(
+                TestStory::new("STORY01")
+                    .scope("test-epic/01-inprogress")
+                    .status(StoryState::Done)
+                    .body("- [x] [SRS-01/AC-01] started <!-- verify: cargo test, SRS-01:start -->"),
+            )
+            .story(
+                TestStory::new("STORY02")
+                    .scope("test-epic/01-inprogress")
+                    .status(StoryState::Done)
+                    .body(
+                        "- [x] [SRS-01/AC-02] finished shared proof <!-- verify: manual, SRS-01:end, SRS-02:start:end -->",
+                    ),
+            )
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+        let voyage = board.require_voyage("01-inprogress").unwrap();
+
+        let policy = VoyageCompletionPolicy::RUNTIME;
+        let problems = evaluate_voyage_completion(&board, voyage, None, policy);
+
+        assert!(
+            problems.is_empty(),
+            "multi-requirement annotations should satisfy every referenced requirement: {problems:#?}"
+        );
     }
 
     #[test]

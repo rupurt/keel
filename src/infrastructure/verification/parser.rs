@@ -69,8 +69,8 @@ pub struct VerifyAnnotation {
     pub command: Option<String>,
     /// How to compare the output
     pub comparison: Comparison,
-    /// Optional requirement traceability
-    pub requirement: Option<RequirementRef>,
+    /// Requirement traceability refs carried by this annotation
+    pub requirements: Vec<RequirementRef>,
     /// Optional proof artifact filename
     pub proof: Option<String>,
     /// Optional AC reference parsed from [SRS-XX/AC-YY] marker (used by traceability matrix)
@@ -116,7 +116,7 @@ pub fn parse_verify_annotations(content: &str) -> Vec<VerifyAnnotation> {
                 // Check if it's a verify annotation
                 if let Some(verify_start) = comment_text.find("verify:") {
                     let verify_content = comment_text[verify_start + 7..].trim();
-                    let (command, comparison, requirement, proof) =
+                    let (command, comparison, requirements, proof) =
                         parse_verify_content(verify_content);
 
                     // For the criterion text, take everything before the comment
@@ -145,7 +145,7 @@ pub fn parse_verify_annotations(content: &str) -> Vec<VerifyAnnotation> {
                         criterion,
                         command,
                         comparison,
-                        requirement,
+                        requirements,
                         proof,
                         ac_ref,
                     });
@@ -163,14 +163,14 @@ fn parse_verify_content(
 ) -> (
     Option<String>,
     Comparison,
-    Option<RequirementRef>,
+    Vec<RequirementRef>,
     Option<String>,
 ) {
     // Strictly split by comma.
     let parts: Vec<&str> = content.split(',').map(|s| s.trim()).collect();
 
     let mut command_part = None;
-    let mut requirement = None;
+    let mut requirements = Vec::new();
     let mut proof = None;
 
     for part in parts {
@@ -192,7 +192,7 @@ fn parse_verify_content(
                 "start:end" => RequirementPhase::StartEnd,
                 _ => unreachable!(),
             };
-            requirement = Some(RequirementRef { id, phase });
+            requirements.push(RequirementRef { id, phase });
             continue;
         }
 
@@ -211,12 +211,12 @@ fn parse_verify_content(
 
     let command_str = command_part.unwrap_or("");
     if command_str.is_empty() {
-        return (None, Comparison::Success, requirement, proof);
+        return (None, Comparison::Success, requirements, proof);
     }
 
     // Handle manual
     if command_str == "manual" {
-        return (None, Comparison::Manual, requirement, proof);
+        return (None, Comparison::Manual, requirements, proof);
     }
 
     // Handle contains "text"
@@ -232,7 +232,7 @@ fn parse_verify_content(
         return (
             Some(command),
             Comparison::Contains(expected),
-            requirement,
+            requirements,
             proof,
         );
     }
@@ -244,7 +244,7 @@ fn parse_verify_content(
         return (
             Some(command),
             Comparison::Equals(expected),
-            requirement,
+            requirements,
             proof,
         );
     }
@@ -253,7 +253,7 @@ fn parse_verify_content(
     (
         Some(command_str.to_string()),
         Comparison::Success,
-        requirement,
+        requirements,
         proof,
     )
 }
