@@ -327,8 +327,9 @@ fn render_assessment_section(
     section
 }
 
-fn bearing_file_commands(bearing_id: &str) -> [String; 2] {
+fn bearing_file_commands(bearing_id: &str) -> [String; 3] {
     [
+        format!("keel bearing file {bearing_id} BRIEF"),
         format!("keel bearing file {bearing_id} EVIDENCE"),
         format!("keel bearing file {bearing_id} ASSESSMENT"),
     ]
@@ -683,6 +684,7 @@ mod tests {
         assert!(rendered.contains("... 1 more"));
         assert!(rendered.contains("Cited Sources:"));
         assert!(rendered.contains("SRC-01, SRC-02, SRC-03, SRC-04"));
+        assert!(rendered.contains("keel bearing file BRG-01 BRIEF"));
         assert!(rendered.contains("keel bearing file BRG-01 EVIDENCE"));
         assert!(rendered.contains("keel bearing file BRG-01 ASSESSMENT"));
     }

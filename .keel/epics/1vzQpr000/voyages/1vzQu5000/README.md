@@ -1,12 +1,13 @@
 ---
 id: 1vzQu5000
 title: Evidence-Backed Assessment and Surfaces
-status: in-progress
+status: done
 epic: 1vzQpr000
 created_at: 2026-03-08T20:03:33
 index: 3
 updated_at: 2026-03-08T20:10:04
 started_at: 2026-03-08T21:09:02
+completed_at: 2026-03-08T22:02:15
 ---
 
 # Evidence-Backed Assessment and Surfaces
@@ -20,6 +21,8 @@ started_at: 2026-03-08T21:09:02
 |----------|-------------|
 | [SRS.md](SRS.md) | Requirements and verification criteria |
 | [SDD.md](SDD.md) | Architecture and implementation details |
+| [VOYAGE_REPORT.md](VOYAGE_REPORT.md) | Narrative summary of implementation and evidence |
+| [COMPLIANCE_REPORT.md](COMPLIANCE_REPORT.md) | Traceability matrix and verification proof |
 <!-- END DOCUMENTS -->
 
 ## Stories
