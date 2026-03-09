@@ -24,6 +24,7 @@ const BRIEF_PLACEHOLDER: &str = "(not authored in BRIEF.md yet)";
 const EVIDENCE_PLACEHOLDER: &str = "(not authored in EVIDENCE.md yet)";
 const ASSESSMENT_PLACEHOLDER: &str = "(not authored in ASSESSMENT.md yet)";
 const NONE_PLACEHOLDER: &str = "(none)";
+const BEARING_DOCUMENTS: [&str; 4] = ["README.md", "BRIEF.md", "EVIDENCE.md", "ASSESSMENT.md"];
 const SECTION_EXCERPT_LIMITS: ShowExcerptLimits = ShowExcerptLimits {
     max_paragraphs: 1,
     max_list_items: 3,
@@ -131,29 +132,18 @@ pub fn run(pattern: &str) -> Result<()> {
 
 fn render_documents_section(bearing: &crate::domain::model::Bearing) -> ShowSection {
     let mut section = ShowSection::new("Documents");
-    let mut unauthored_documents: Vec<&str> = Vec::new();
-
-    if bearing.has_evidence {
-        // documented in inspect commands
-    } else {
-        unauthored_documents.push("EVIDENCE.md");
-    }
-
-    if bearing.has_assessment {
-        // documented in inspect commands
-    } else {
-        unauthored_documents.push("ASSESSMENT.md");
-    }
+    let documents = bearing_document_inventory(bearing);
+    let unauthored_documents: Vec<&str> = documents
+        .iter()
+        .filter_map(|(document, authored)| (!authored).then_some(*document))
+        .collect();
 
     if !unauthored_documents.is_empty() {
-        section.push_lines([format!(
-            "  unauthored: {}",
-            unauthored_documents.join(", ")
-        )]);
+        section.push_lines([format!("  unauthored: {}", unauthored_documents.join(", "))]);
     }
     section.push_labeled_bullets(
         "Inspect:",
-        bearing_file_commands(bearing.id()),
+        bearing_file_commands(bearing.id(), &documents),
         None::<String>,
     );
     section
@@ -327,16 +317,32 @@ fn render_assessment_section(
     section
 }
 
-fn bearing_file_commands(bearing_id: &str) -> Vec<String> {
-    let mut commands = vec![
-        format!("keel bearing file {bearing_id} README"),
-        format!("keel bearing file {bearing_id} BRIEF"),
-        format!("keel bearing file {bearing_id} EVIDENCE"),
-        format!("keel bearing file {bearing_id} ASSESSMENT"),
-    ];
+fn bearing_document_inventory(
+    bearing: &crate::domain::model::Bearing,
+) -> Vec<(&'static str, bool)> {
+    BEARING_DOCUMENTS
+        .into_iter()
+        .map(|document| {
+            let authored = match document {
+                "EVIDENCE.md" => bearing.has_evidence,
+                "ASSESSMENT.md" => bearing.has_assessment,
+                _ => true,
+            };
+            (document, authored)
+        })
+        .collect()
+}
 
-    commands.dedup();
-    commands
+fn bearing_file_commands(bearing_id: &str, documents: &[(&'static str, bool)]) -> Vec<String> {
+    documents
+        .iter()
+        .map(|(document, _)| {
+            format!(
+                "keel bearing file {bearing_id} {}",
+                document.trim_end_matches(".md")
+            )
+        })
+        .collect()
 }
 
 fn format_source_summary(source: &BearingEvidenceSourceSummary) -> String {
@@ -382,8 +388,8 @@ fn success_criteria_label(checked: usize, total: usize) -> String {
 mod tests {
     use super::{
         BearingAssessmentSummary, BearingBriefSummary, BearingEvidenceSourceSummary,
-        BearingEvidenceSummary, render_assessment_section,
-        render_brief_section, render_documents_section, render_evidence_section,
+        BearingEvidenceSummary, render_assessment_section, render_brief_section,
+        render_documents_section, render_evidence_section,
     };
     use crate::cli::presentation::show::{ShowDocument, ShowKeyValues};
     use crate::infrastructure::config::ModeWeights;
