@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-09T13:29:55.954835283-07:00
+mode: manual
+---
+abandon Active/Paused→Abandoned validated by tests mission_abandon_from_active and mission_abandon_from_paused

@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-09T13:29:56.055103885-07:00
+mode: manual
+---
+Invalid transitions rejected with descriptive error validated by tests mission_cannot_* and mission_invalid_transition_has_descriptive_error

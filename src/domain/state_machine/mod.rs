@@ -12,6 +12,7 @@ mod flow;
 mod formatting;
 mod gating;
 pub mod invariants;
+pub mod mission;
 pub mod preconditions;
 pub mod story;
 pub mod validation;
@@ -36,6 +37,8 @@ pub use gating::{
     VoyageCompletionPolicy, evaluate_epic_done, evaluate_story_transition,
     evaluate_voyage_completion, evaluate_voyage_transition, format_gate_error,
 };
+#[allow(unused_imports)]
+pub use mission::{MissionStateMachine, MissionStatus, MissionTransition};
 #[allow(unused_imports)]
 pub use preconditions::{PreconditionError, Preconditions, TransitionContext};
 #[allow(unused_imports)]

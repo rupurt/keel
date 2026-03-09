@@ -8,12 +8,14 @@ mod board;
 mod entity;
 mod epic;
 mod manifest;
+mod mission;
 mod priority;
 mod story;
 mod story_type;
 pub mod taxonomy;
 mod voyage;
 
+pub use crate::domain::state_machine::mission::MissionStatus;
 pub use crate::domain::state_machine::story::StoryState;
 pub use crate::domain::state_machine::voyage::VoyageState;
 #[allow(unused_imports)] // Used by future doctor checks (SRS-05)
@@ -23,6 +25,7 @@ pub use board::Board;
 pub use entity::Entity;
 pub use epic::{Epic, EpicFrontmatter, EpicState};
 pub use manifest::Manifest;
+pub use mission::{Mission, MissionFrontmatter};
 #[allow(unused_imports)] // Priority may be used for voyages in future
 pub use priority::Priority;
 pub use story::{Story, StoryFrontmatter};

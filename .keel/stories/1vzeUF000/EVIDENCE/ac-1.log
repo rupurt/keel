@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-09T13:29:55.344266574-07:00
+mode: manual
+---
+MissionFrontmatter struct with all 8 fields validated by test mission_frontmatter_has_all_fields

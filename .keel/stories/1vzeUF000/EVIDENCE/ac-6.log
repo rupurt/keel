@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-09T13:29:55.855198980-07:00
+mode: manual
+---
+pause Active→Paused and resume Paused→Active validated by tests mission_pause_active_to_paused and mission_resume_paused_to_active

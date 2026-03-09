@@ -120,7 +120,7 @@
 
 | Voyage | Status |
 |--------|--------|
-| [Domain Foundation](epics/1vzeJF000/voyages/1vzeMk000/) | planned |
+| [Domain Foundation](epics/1vzeJF000/voyages/1vzeMk000/) | in-progress |
 | [CLI Commands](epics/1vzeJF000/voyages/1vzeMq000/) | draft |
 | [Lineage And Doctor](epics/1vzeJF000/voyages/1vzeMv000/) | draft |
 | [Flow Integration](epics/1vzeJF000/voyages/1vzeMz000/) | draft |

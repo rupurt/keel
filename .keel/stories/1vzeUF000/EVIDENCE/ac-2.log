@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-09T13:29:55.450482059-07:00
+mode: manual
+---
+MissionStatus enum with 6 variants validated by tests mission_status_has_all_variants and mission_status_serializes_kebab_case

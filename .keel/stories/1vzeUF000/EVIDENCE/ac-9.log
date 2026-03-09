@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-09T13:29:56.159903322-07:00
+mode: manual
+---
+Mission struct implements Entity trait with has_charter and has_log fields validated by test mission_struct_has_entity_fields_and_artifact_flags
