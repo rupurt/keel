@@ -119,6 +119,37 @@ impl Board {
             .ok_or_else(|| not_found_error("Mission", id, self.missions.values()))
     }
 
+    /// Get all epics belonging to a mission
+    pub fn epics_for_mission(&self, mission_id: &str) -> Vec<&Epic> {
+        self.epics
+            .values()
+            .filter(|e| e.frontmatter.mission.as_deref() == Some(mission_id))
+            .collect()
+    }
+
+    /// Get all bearings belonging to a mission
+    pub fn bearings_for_mission(&self, mission_id: &str) -> Vec<&Bearing> {
+        self.bearings
+            .values()
+            .filter(|b| b.frontmatter.mission.as_deref() == Some(mission_id))
+            .collect()
+    }
+
+    /// Get all ADRs belonging to a mission
+    pub fn adrs_for_mission(&self, mission_id: &str) -> Vec<&Adr> {
+        self.adrs
+            .values()
+            .filter(|a| a.frontmatter.mission.as_deref() == Some(mission_id))
+            .collect()
+    }
+
+    /// Get total child count for a mission
+    pub fn mission_child_count(&self, mission_id: &str) -> usize {
+        self.epics_for_mission(mission_id).len()
+            + self.bearings_for_mission(mission_id).len()
+            + self.adrs_for_mission(mission_id).len()
+    }
+
     /// Get stories for a voyage (by scope)
     pub fn stories_for_voyage(&self, voyage: &Voyage) -> Vec<&Story> {
         let scope = voyage.scope_path();
@@ -252,6 +283,7 @@ mod tests {
                 title: format!("Epic {}", id),
                 description: None,
                 bearing: None,
+                mission: None,
                 index: None,
                 created_at: None,
             },

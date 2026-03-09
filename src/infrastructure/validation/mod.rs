@@ -1,5 +1,6 @@
 //! Shared validation logic for stories
 
+pub mod charter;
 pub mod goals;
 pub mod structural;
 pub mod types;

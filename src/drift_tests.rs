@@ -349,6 +349,7 @@ mod template_struct_fields {
             title: "t".to_string(),
             description: Some("d".to_string()),
             bearing: None,
+            mission: None,
             index: None,
             created_at: Some(dt),
         }
@@ -362,6 +363,7 @@ mod template_struct_fields {
             status: AdrStatus::Proposed,
             context: Some("c".to_string()),
             applies_to: vec!["a".to_string()],
+            mission: None,
             supersedes: vec!["s".to_string()],
             superseded_by: Some("sb".to_string()),
             rejection_reason: Some("rr".to_string()),

@@ -84,6 +84,9 @@ pub struct BearingFrontmatter {
     /// Epic ID this bearing graduated to (set during lay)
     #[serde(default)]
     pub epic: Option<String>,
+    /// Mission ID this bearing belongs to
+    #[serde(default)]
+    pub mission: Option<String>,
     /// Goal references from BRIEF.md Success Criteria linked to the target epic
     #[serde(default)]
     pub goals: Option<Vec<String>>,
@@ -339,6 +342,7 @@ title: Test Bearing
                 decline_reason: None,
                 laid_at: None,
                 epic: None,
+                mission: None,
                 goals: None,
             },
             path: PathBuf::from("test"),

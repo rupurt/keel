@@ -7,7 +7,8 @@ use std::path::{Path, PathBuf};
 use anyhow::{Result, bail};
 
 use crate::domain::model::{
-    AdrFrontmatter, BearingFrontmatter, EpicFrontmatter, StoryFrontmatter, VoyageFrontmatter,
+    AdrFrontmatter, BearingFrontmatter, EpicFrontmatter, MissionFrontmatter, StoryFrontmatter,
+    VoyageFrontmatter,
 };
 use crate::infrastructure::parser::parse_frontmatter;
 use crate::infrastructure::validation::{CheckId, Problem};
@@ -18,6 +19,7 @@ pub enum DuplicateEntity {
     Voyage,
     Epic,
     Bearing,
+    Mission,
     Adr,
 }
 
@@ -34,6 +36,7 @@ impl DuplicateEntity {
             Self::Voyage => "voyage",
             Self::Epic => "epic",
             Self::Bearing => "bearing",
+            Self::Mission => "mission",
             Self::Adr => "ADR",
         }
     }
@@ -44,6 +47,7 @@ impl DuplicateEntity {
             Self::Voyage => CheckId::VoyageDuplicateId,
             Self::Epic => CheckId::EpicDuplicateId,
             Self::Bearing => CheckId::BearingDuplicateId,
+            Self::Mission => CheckId::MissionDuplicateId,
             Self::Adr => CheckId::AdrDuplicateId,
         }
     }
@@ -54,6 +58,7 @@ impl DuplicateEntity {
             Self::Voyage => collect_voyage_paths(board_dir),
             Self::Epic => collect_epic_paths(board_dir),
             Self::Bearing => collect_bearing_paths(board_dir),
+            Self::Mission => collect_mission_paths(board_dir),
             Self::Adr => collect_adr_paths(board_dir),
         }
     }
@@ -70,6 +75,9 @@ impl DuplicateEntity {
                 .ok()
                 .map(|(fm, _)| fm.id),
             Self::Bearing => parse_frontmatter::<BearingFrontmatter>(content)
+                .ok()
+                .map(|(fm, _)| fm.id),
+            Self::Mission => parse_frontmatter::<MissionFrontmatter>(content)
                 .ok()
                 .map(|(fm, _)| fm.id),
             Self::Adr => parse_frontmatter::<AdrFrontmatter>(content)
@@ -249,6 +257,28 @@ fn collect_bearing_paths(board_dir: &Path) -> Vec<PathBuf> {
 
     let mut paths = Vec::new();
     if let Ok(entries) = fs::read_dir(&bearings_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                let readme = path.join("README.md");
+                if readme.exists() {
+                    paths.push(readme);
+                }
+            }
+        }
+    }
+    paths.sort();
+    paths
+}
+
+fn collect_mission_paths(board_dir: &Path) -> Vec<PathBuf> {
+    let missions_dir = board_dir.join("missions");
+    if !missions_dir.exists() {
+        return Vec::new();
+    }
+
+    let mut paths = Vec::new();
+    if let Ok(entries) = fs::read_dir(&missions_dir) {
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_dir() {

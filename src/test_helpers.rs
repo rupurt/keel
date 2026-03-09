@@ -23,6 +23,14 @@ pub struct TestBoardBuilder {
     voyages: Vec<TestVoyage>,
     adrs: Vec<TestAdr>,
     bearings: Vec<TestBearing>,
+    missions: Vec<TestMission>,
+}
+
+/// Configuration for a test mission.
+pub struct TestMission {
+    pub id: String,
+    pub title: String,
+    pub status: String,
 }
 
 /// Configuration for a test story.
@@ -43,6 +51,7 @@ pub struct TestEpic {
     pub id: String,
     pub title: String,
     pub index: Option<u32>,
+    pub mission: Option<String>,
 }
 
 /// Configuration for a test voyage.
@@ -62,6 +71,7 @@ pub struct TestAdr {
     pub status: String,
     pub context: Option<String>,
     pub applies_to: Vec<String>,
+    pub mission: Option<String>,
 }
 
 /// Configuration for a test bearing.
@@ -74,6 +84,36 @@ pub struct TestBearing {
     pub index: Option<u32>,
     pub epic: Option<String>,
     pub goals: Option<Vec<String>>,
+    pub mission: Option<String>,
+}
+
+impl Default for TestMission {
+    fn default() -> Self {
+        Self {
+            id: "M1".to_string(),
+            title: "Test Mission".to_string(),
+            status: "defining".to_string(),
+        }
+    }
+}
+
+impl TestMission {
+    pub fn new(id: &str) -> Self {
+        Self {
+            id: id.to_string(),
+            ..Default::default()
+        }
+    }
+
+    pub fn title(mut self, title: &str) -> Self {
+        self.title = title.to_string();
+        self
+    }
+
+    pub fn status(mut self, status: &str) -> Self {
+        self.status = status.to_string();
+        self
+    }
 }
 
 impl Default for TestStory {
@@ -182,6 +222,7 @@ impl Default for TestEpic {
             id: "test-epic".to_string(),
             title: "Test Epic".to_string(),
             index: None,
+            mission: None,
         }
     }
 }
@@ -197,6 +238,11 @@ impl TestEpic {
 
     pub fn index(mut self, index: u32) -> Self {
         self.index = Some(index);
+        self
+    }
+
+    pub fn mission(mut self, mission: &str) -> Self {
+        self.mission = Some(mission.to_string());
         self
     }
 
@@ -260,6 +306,7 @@ impl Default for TestAdr {
             status: "proposed".to_string(),
             context: None,
             applies_to: vec![],
+            mission: None,
         }
     }
 }
@@ -284,6 +331,11 @@ impl TestAdr {
 
     pub fn context(mut self, context: &str) -> Self {
         self.context = Some(context.to_string());
+        self
+    }
+
+    pub fn mission(mut self, mission: &str) -> Self {
+        self.mission = Some(mission.to_string());
         self
     }
 
@@ -347,6 +399,7 @@ impl Default for TestBearing {
             index: None,
             epic: None,
             goals: None,
+            mission: None,
         }
     }
 }
@@ -388,12 +441,20 @@ impl TestBearing {
         self.goals = Some(goals.into_iter().map(|g| g.to_string()).collect());
         self
     }
+
+    pub fn mission(mut self, mission: &str) -> Self {
+        self.mission = Some(mission.to_string());
+        self
+    }
 }
 
 fn render_fixture_epic_readme(epic: &TestEpic) -> String {
     let mut mutations = Vec::new();
     if let Some(index) = epic.index {
         mutations.push(Mutation::set("index", index.to_string()));
+    }
+    if let Some(ref mission) = epic.mission {
+        mutations.push(Mutation::set("mission", mission.clone()));
     }
 
     template_rendering::render_with_mutations(
@@ -435,6 +496,9 @@ fn render_fixture_bearing_readme(bearing: &TestBearing) -> String {
     }
     if let Some(epic) = &bearing.epic {
         mutations.push(Mutation::set("epic", epic.clone()));
+    }
+    if let Some(ref mission) = bearing.mission {
+        mutations.push(Mutation::set("mission", mission.clone()));
     }
     if let Some(goals) = &bearing.goals
         && !goals.is_empty()
@@ -495,6 +559,7 @@ impl TestBoardBuilder {
             voyages: vec![],
             adrs: vec![],
             bearings: vec![],
+            missions: vec![],
         }
     }
 
@@ -525,6 +590,12 @@ impl TestBoardBuilder {
     /// Add a bearing to the board.
     pub fn bearing(mut self, bearing: TestBearing) -> Self {
         self.bearings.push(bearing);
+        self
+    }
+
+    /// Add a mission to the board.
+    pub fn mission(mut self, mission: TestMission) -> Self {
+        self.missions.push(mission);
         self
     }
 
@@ -618,6 +689,36 @@ Test harness epic problem statement.
                 ),
             )
             .unwrap();
+        }
+
+        // Create missions
+        for mission in &self.missions {
+            let mission_dir = root.join("missions").join(&mission.id);
+            fs::create_dir_all(&mission_dir).unwrap();
+
+            let readme = template_rendering::render(
+                templates::mission::README,
+                &[
+                    ("id", &mission.id),
+                    ("title", &mission.title),
+                    ("created_at", FIXED_DATETIME),
+                    ("updated_at", FIXED_DATETIME),
+                    ("status", &mission.status),
+                ],
+            );
+            fs::write(mission_dir.join("README.md"), readme).unwrap();
+
+            let charter = template_rendering::render(
+                templates::mission::CHARTER,
+                &[("id", &mission.id), ("title", &mission.title)],
+            );
+            fs::write(mission_dir.join("CHARTER.md"), charter).unwrap();
+
+            let log = template_rendering::render(
+                templates::mission::LOG,
+                &[("id", &mission.id), ("title", &mission.title)],
+            );
+            fs::write(mission_dir.join("LOG.md"), log).unwrap();
         }
 
         // Create voyages
@@ -950,6 +1051,7 @@ impl BearingFactory {
                 decline_reason: None,
                 laid_at: None,
                 epic: self.epic,
+                mission: None,
                 goals: self.goals,
             },
             path: PathBuf::from(format!("{}.md", self.id)),
@@ -1064,6 +1166,7 @@ impl AdrFactory {
                 status: self.status,
                 context: None,
                 applies_to: vec![],
+                mission: None,
                 supersedes: vec![],
                 superseded_by: None,
                 decided_at: None,

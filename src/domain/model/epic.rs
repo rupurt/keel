@@ -43,6 +43,9 @@ pub struct EpicFrontmatter {
     /// Source bearing ID when this epic is laid from a bearing
     #[serde(default)]
     pub bearing: Option<String>,
+    /// Mission ID this epic belongs to
+    #[serde(default)]
+    pub mission: Option<String>,
     /// Ordering within the board (lower = earlier)
     #[serde(default)]
     pub index: Option<u32>,

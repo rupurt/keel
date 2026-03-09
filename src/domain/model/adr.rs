@@ -69,6 +69,9 @@ pub struct AdrFrontmatter {
     /// Additional scopes this ADR applies to (e.g., ["all"], ["state-machines"])
     #[serde(default, rename = "applies-to")]
     pub applies_to: Vec<String>,
+    /// Mission ID this ADR belongs to
+    #[serde(default)]
+    pub mission: Option<String>,
     /// ADR IDs that this decision supersedes
     #[serde(default)]
     pub supersedes: Vec<String>,
@@ -241,6 +244,7 @@ title: Test ADR
                 status: AdrStatus::Accepted,
                 context: Some("work-management".to_string()),
                 applies_to: vec!["all".to_string()],
+                mission: None,
                 supersedes: vec![],
                 superseded_by: None,
                 rejection_reason: None,
@@ -299,6 +303,7 @@ title: Test ADR
                 status: AdrStatus::Accepted,
                 context: None,
                 applies_to: vec![],
+                mission: None,
                 supersedes: vec![],
                 superseded_by: None,
                 rejection_reason: None,
@@ -317,6 +322,7 @@ title: Test ADR
                 status: AdrStatus::Proposed,
                 context: None,
                 applies_to: vec![],
+                mission: None,
                 supersedes: vec![],
                 superseded_by: None,
                 rejection_reason: None,
@@ -338,6 +344,7 @@ title: Test ADR
                 status: AdrStatus::Proposed,
                 context: None,
                 applies_to: vec![],
+                mission: None,
                 supersedes: vec![],
                 superseded_by: None,
                 rejection_reason: None,
@@ -356,6 +363,7 @@ title: Test ADR
                 status: AdrStatus::Accepted,
                 context: None,
                 applies_to: vec![],
+                mission: None,
                 supersedes: vec![],
                 superseded_by: None,
                 rejection_reason: None,
