@@ -7,6 +7,7 @@
 
 | Bearing | Status | Evidence | Assessment | Readiness | EV | Laid |
 |---------|--------|----------|------------|-----------|----|------|
+| [MissionEntity](bearings/1vzeJF000/) | laid | ✓ | ✓ | decision-ready | 3.60 | ✓ |
 | [Semantic Search and Ranking in Keel](bearings/1w5H2Bq9L/) | evaluating | ✓ | ✓ | decision-ready | 4.66 | - |
 
 ## Epics
@@ -108,10 +109,19 @@
 | [Evidence Capture and Provider Signals](epics/1vzQpr000/voyages/1vzQu0000/) | done |
 | [Evidence-Backed Assessment and Surfaces](epics/1vzQpr000/voyages/1vzQu5000/) | done |
 
-### [Bearing Lineage at Lay](epics/1vzWfz000/) (active)
+### [Bearing Lineage at Lay](epics/1vzWfz000/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Lineage Persistence](epics/1vzWfz000/voyages/1vzWg5000/) | in-progress |
-| [Lineage Validation](epics/1vzWfz000/voyages/1vzWg8000/) | in-progress |
+| [Lineage Persistence](epics/1vzWfz000/voyages/1vzWg5000/) | done |
+| [Lineage Validation](epics/1vzWfz000/voyages/1vzWg8000/) | done |
+
+### [Mission Entity](epics/1vzeJF000/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Domain Foundation](epics/1vzeJF000/voyages/1vzeMk000/) | planned |
+| [CLI Commands](epics/1vzeJF000/voyages/1vzeMq000/) | draft |
+| [Lineage And Doctor](epics/1vzeJF000/voyages/1vzeMv000/) | draft |
+| [Flow Integration](epics/1vzeJF000/voyages/1vzeMz000/) | draft |
 
