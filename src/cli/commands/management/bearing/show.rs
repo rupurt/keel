@@ -6,7 +6,7 @@ use std::collections::BTreeSet;
 use std::fs;
 use std::path::Path;
 
-use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
+use crate::cli::presentation::show::{ShowDocument, ShowExcerptLimits, ShowKeyValues, ShowSection};
 use crate::cli::style;
 use crate::domain::model::BearingStatus;
 use crate::infrastructure::config::{find_board_dir, load_config};
@@ -23,6 +23,10 @@ const BRIEF_PLACEHOLDER: &str = "(not authored in BRIEF.md yet)";
 const SURVEY_PLACEHOLDER: &str = "(not authored in SURVEY.md yet)";
 const ASSESSMENT_PLACEHOLDER: &str = "(not authored in ASSESSMENT.md yet)";
 const NONE_PLACEHOLDER: &str = "(none)";
+const SECTION_EXCERPT_LIMITS: ShowExcerptLimits = ShowExcerptLimits {
+    max_paragraphs: 1,
+    max_list_items: 3,
+};
 
 /// Show detailed bearing information.
 pub fn run(pattern: &str) -> Result<()> {
@@ -151,23 +155,17 @@ fn render_documents_section(bearing: &crate::domain::model::Bearing) -> ShowSect
 fn render_brief_section(summary: &BearingBriefSummary) -> ShowSection {
     let mut section = ShowSection::new("Brief");
 
-    push_labeled_text_block(
-        &mut section,
+    section.push_labeled_excerpt(
         "Hypothesis:",
-        summary
-            .hypothesis
-            .as_deref()
-            .unwrap_or(BRIEF_PLACEHOLDER)
-            .to_string(),
+        summary.hypothesis.as_ref(),
+        SECTION_EXCERPT_LIMITS,
+        Some(BRIEF_PLACEHOLDER),
     );
-    push_labeled_text_block(
-        &mut section,
+    section.push_labeled_excerpt(
         "Problem Space:",
-        summary
-            .problem_space
-            .as_deref()
-            .unwrap_or(BRIEF_PLACEHOLDER)
-            .to_string(),
+        summary.problem_space.as_ref(),
+        SECTION_EXCERPT_LIMITS,
+        Some(BRIEF_PLACEHOLDER),
     );
 
     let mut fields = ShowKeyValues::new().with_indent(2).with_min_label_width(18);
@@ -208,14 +206,11 @@ fn render_survey_section(summary: Option<&BearingSurveySummary>) -> ShowSection 
         return section;
     };
 
-    push_labeled_text_block(
-        &mut section,
+    section.push_labeled_excerpt(
         "Feasibility:",
-        summary
-            .feasibility
-            .as_deref()
-            .unwrap_or(SURVEY_PLACEHOLDER)
-            .to_string(),
+        summary.feasibility.as_ref(),
+        SECTION_EXCERPT_LIMITS,
+        Some(SURVEY_PLACEHOLDER),
     );
 
     section.push_labeled_bullets(
@@ -269,14 +264,11 @@ fn render_assessment_section(
 
     section.push_key_values(fields);
 
-    push_labeled_text_block(
-        &mut section,
+    section.push_labeled_excerpt(
         "Opportunity Cost:",
-        summary
-            .opportunity_cost
-            .as_deref()
-            .unwrap_or(NONE_PLACEHOLDER)
-            .to_string(),
+        summary.opportunity_cost.as_ref(),
+        SECTION_EXCERPT_LIMITS,
+        Some(NONE_PLACEHOLDER),
     );
 
     section.push_labeled_bullets(
@@ -291,10 +283,6 @@ fn render_assessment_section(
     );
 
     section
-}
-
-fn push_labeled_text_block(section: &mut ShowSection, label: &str, value: String) {
-    section.push_labeled_text_block(label, value);
 }
 
 fn push_document_path_rows(
@@ -324,6 +312,7 @@ mod tests {
     };
     use crate::cli::presentation::show::{ShowDocument, ShowKeyValues};
     use crate::infrastructure::config::ModeWeights;
+    use crate::infrastructure::markdown_sections::SectionExcerpt;
     use std::path::Path;
 
     fn render_lines(section: crate::cli::presentation::show::ShowSection) -> Vec<String> {
@@ -335,8 +324,14 @@ mod tests {
     #[test]
     fn bearing_brief_renders_inline_open_question_count() {
         let section = render_brief_section(&BearingBriefSummary {
-            hypothesis: Some("Test hypothesis".to_string()),
-            problem_space: Some("Test problem".to_string()),
+            hypothesis: Some(SectionExcerpt {
+                paragraphs: vec!["Test hypothesis".to_string()],
+                list_items: Vec::new(),
+            }),
+            problem_space: Some(SectionExcerpt {
+                paragraphs: vec!["Test problem".to_string()],
+                list_items: Vec::new(),
+            }),
             checked_success_criteria: 1,
             total_success_criteria: 2,
             unchecked_success_criteria: vec!["Criterion two".to_string()],
@@ -358,7 +353,10 @@ mod tests {
     #[test]
     fn bearing_survey_renders_inline_list_counts() {
         let section = render_survey_section(Some(&BearingSurveySummary {
-            feasibility: Some("Looks feasible".to_string()),
+            feasibility: Some(SectionExcerpt {
+                paragraphs: vec!["Looks feasible".to_string()],
+                list_items: Vec::new(),
+            }),
             key_findings: vec!["Finding one".to_string()],
             unknowns: vec!["Unknown one".to_string(), "Unknown two".to_string()],
         }));
@@ -381,7 +379,10 @@ mod tests {
             Path::new("/tmp/ASSESSMENT.md"),
             Some(&BearingAssessmentSummary {
                 recommendation: Some("Proceed".to_string()),
-                opportunity_cost: Some("A roadmap delay".to_string()),
+                opportunity_cost: Some(SectionExcerpt {
+                    paragraphs: vec!["A roadmap delay".to_string()],
+                    list_items: Vec::new(),
+                }),
                 dependencies: vec!["Dependency one".to_string()],
                 alternatives: vec!["Alternative one".to_string(), "Alternative two".to_string()],
             }),
@@ -434,5 +435,56 @@ mod tests {
         assert!(rendered.contains("/tmp/BRIEF.md"));
         assert!(rendered.contains("/tmp/SURVEY.md"));
         assert!(rendered.contains("/tmp/ASSESSMENT.md"));
+    }
+
+    #[test]
+    fn bearing_section_excerpt_renders_list_items_below_paragraph() {
+        let section = render_survey_section(Some(&BearingSurveySummary {
+            feasibility: Some(SectionExcerpt {
+                paragraphs: vec!["Looks feasible".to_string()],
+                list_items: vec![
+                    "First proof point".to_string(),
+                    "Second proof point".to_string(),
+                ],
+            }),
+            key_findings: Vec::new(),
+            unknowns: Vec::new(),
+        }));
+
+        let lines = render_lines(section);
+
+        assert!(lines.contains(&"  Feasibility:".to_string()));
+        assert!(lines.contains(&"    Looks feasible".to_string()));
+        assert!(lines.contains(&"    - First proof point".to_string()));
+        assert!(lines.contains(&"    - Second proof point".to_string()));
+    }
+
+    #[test]
+    fn bearing_section_excerpt_adds_ellipsis_when_more_content_exists() {
+        let section = render_brief_section(&BearingBriefSummary {
+            hypothesis: Some(SectionExcerpt {
+                paragraphs: vec!["Paragraph one".to_string(), "Paragraph two".to_string()],
+                list_items: vec![
+                    "Item one".to_string(),
+                    "Item two".to_string(),
+                    "Item three".to_string(),
+                    "Item four".to_string(),
+                ],
+            }),
+            problem_space: None,
+            checked_success_criteria: 0,
+            total_success_criteria: 0,
+            unchecked_success_criteria: Vec::new(),
+            open_questions: Vec::new(),
+        });
+
+        let lines = render_lines(section);
+
+        assert!(lines.contains(&"    Paragraph one".to_string()));
+        assert!(lines.contains(&"    - Item one".to_string()));
+        assert!(lines.contains(&"    - Item three".to_string()));
+        assert!(lines.contains(&"    ...".to_string()));
+        assert!(!lines.contains(&"    Paragraph two".to_string()));
+        assert!(!lines.contains(&"    - Item four".to_string()));
     }
 }

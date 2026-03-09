@@ -5,6 +5,7 @@
 use owo_colors::OwoColorize;
 
 use crate::cli::style;
+use crate::infrastructure::markdown_sections::SectionExcerpt;
 use crate::infrastructure::utils::visible_width;
 
 #[derive(Debug, Clone, Default)]
@@ -130,6 +131,12 @@ impl ShowBlock {
 pub struct ShowSection {
     title: String,
     blocks: Vec<ShowBlock>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct ShowExcerptLimits {
+    pub max_paragraphs: usize,
+    pub max_list_items: usize,
 }
 
 impl ShowSection {
@@ -303,6 +310,31 @@ impl ShowSection {
         self.push_lines(rendered);
     }
 
+    pub fn push_labeled_excerpt<P>(
+        &mut self,
+        label: impl Into<String>,
+        excerpt: Option<&SectionExcerpt>,
+        limits: ShowExcerptLimits,
+        empty_placeholder: Option<P>,
+    ) where
+        P: AsRef<str>,
+    {
+        let label = label.into();
+        self.push_lines([format!("  {label}")]);
+
+        if let Some(excerpt) = excerpt.filter(|excerpt| !excerpt.is_empty()) {
+            self.push_lines(render_excerpt_lines(excerpt, limits));
+            return;
+        }
+
+        if let Some(placeholder) = empty_placeholder {
+            self.push_lines([format!(
+                "    {}",
+                style::styled_inline_markdown(placeholder.as_ref())
+            )]);
+        }
+    }
+
     pub fn push_text_block(&mut self, value: impl AsRef<str>) {
         let value_lines = text_block_lines(value.as_ref());
 
@@ -461,6 +493,33 @@ fn text_block_lines(value: &str) -> Vec<String> {
 fn limited_text_block_lines(value: &str, max_paragraphs: usize) -> Vec<String> {
     let paragraphs = text_block_paragraphs(value);
     render_text_block_paragraphs(&paragraphs, Some(max_paragraphs.max(1)))
+}
+
+fn render_excerpt_lines(excerpt: &SectionExcerpt, limits: ShowExcerptLimits) -> Vec<String> {
+    let mut lines = Vec::new();
+    let max_paragraphs = limits.max_paragraphs.max(1);
+    let max_list_items = limits.max_list_items;
+
+    for (idx, paragraph) in excerpt.paragraphs.iter().take(max_paragraphs).enumerate() {
+        if idx > 0 {
+            lines.push(String::new());
+        }
+        lines.extend(text_block_lines(paragraph));
+    }
+
+    lines.extend(
+        excerpt
+            .list_items
+            .iter()
+            .take(max_list_items)
+            .map(|item| format!("    - {}", style::styled_inline_markdown(item))),
+    );
+
+    if excerpt.paragraphs.len() > max_paragraphs || excerpt.list_items.len() > max_list_items {
+        lines.push("    ...".to_string());
+    }
+
+    lines
 }
 
 fn render_text_block_paragraphs(
@@ -658,6 +717,62 @@ mod tests {
         assert_eq!(lines[2], "    First paragraph.");
         assert_eq!(lines[3], "");
         assert_eq!(lines[4], "    Second paragraph.");
+    }
+
+    #[test]
+    fn show_section_push_labeled_excerpt_renders_paragraph_and_list_items() {
+        let mut section = ShowSection::new("Summary");
+        section.push_labeled_excerpt(
+            "Feasibility:",
+            Some(&SectionExcerpt {
+                paragraphs: vec!["Works in principle.".to_string()],
+                list_items: vec!["First point".to_string(), "Second point".to_string()],
+            }),
+            ShowExcerptLimits {
+                max_paragraphs: 1,
+                max_list_items: 3,
+            },
+            None::<String>,
+        );
+
+        let mut lines = Vec::new();
+        section.render_into(&mut lines);
+
+        assert_eq!(lines[1], "  Feasibility:");
+        assert_eq!(lines[2], "    Works in principle.");
+        assert_eq!(lines[3], "    - First point");
+        assert_eq!(lines[4], "    - Second point");
+    }
+
+    #[test]
+    fn show_section_push_labeled_excerpt_adds_ellipsis_when_truncated() {
+        let mut section = ShowSection::new("Summary");
+        section.push_labeled_excerpt(
+            "Hypothesis:",
+            Some(&SectionExcerpt {
+                paragraphs: vec!["Paragraph one.".to_string(), "Paragraph two.".to_string()],
+                list_items: vec![
+                    "Item one".to_string(),
+                    "Item two".to_string(),
+                    "Item three".to_string(),
+                    "Item four".to_string(),
+                ],
+            }),
+            ShowExcerptLimits {
+                max_paragraphs: 1,
+                max_list_items: 2,
+            },
+            None::<String>,
+        );
+
+        let mut lines = Vec::new();
+        section.render_into(&mut lines);
+
+        assert_eq!(lines[1], "  Hypothesis:");
+        assert_eq!(lines[2], "    Paragraph one.");
+        assert_eq!(lines[3], "    - Item one");
+        assert_eq!(lines[4], "    - Item two");
+        assert_eq!(lines[5], "    ...");
     }
 
     #[test]

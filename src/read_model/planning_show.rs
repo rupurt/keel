@@ -877,32 +877,7 @@ fn parse_srs_requirement_rows(srs: &str) -> Vec<RequirementEntry> {
 }
 
 pub fn extract_section(content: &str, heading: &str) -> Option<String> {
-    let mut in_section = false;
-    let mut result = String::new();
-    let heading_level = heading.chars().take_while(|ch| *ch == '#').count();
-
-    for line in content.lines() {
-        if line.starts_with(heading) {
-            in_section = true;
-            continue;
-        }
-        if in_section {
-            if line.starts_with('#') {
-                let level = line.chars().take_while(|ch| *ch == '#').count();
-                if level <= heading_level {
-                    break;
-                }
-            }
-            result.push_str(line);
-            result.push('\n');
-        }
-    }
-
-    if result.trim().is_empty() {
-        None
-    } else {
-        Some(result)
-    }
+    crate::infrastructure::markdown_sections::extract_section(content, heading)
 }
 
 pub fn authored_section_text(section: &str) -> Option<String> {

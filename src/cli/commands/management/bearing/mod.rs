@@ -91,6 +91,7 @@ use crate::domain::model::{Bearing, BearingStatus};
 use crate::infrastructure::config::{find_board_dir, load_config};
 use crate::infrastructure::frontmatter_mutation::{Mutation, apply};
 use crate::infrastructure::loader::load_board;
+use crate::infrastructure::markdown_sections::extract_section;
 use crate::infrastructure::scoring::{calculate_score, load_assessment};
 use crate::infrastructure::template_rendering;
 use crate::infrastructure::templates;
@@ -480,9 +481,10 @@ fn create_prd_from_bearing(board_dir: &Path, bearing: &Bearing) -> Result<String
         .with_context(|| format!("Failed to read BRIEF.md: {}", brief_path.display()))?;
 
     // Extract sections from BRIEF.md
-    let hypothesis = extract_section(&brief_content, "## Hypothesis");
-    let problem_space = extract_section(&brief_content, "## Problem Space");
-    let success_criteria = extract_section(&brief_content, "## Success Criteria");
+    let hypothesis = extract_section(&brief_content, "## Hypothesis").unwrap_or_default();
+    let problem_space = extract_section(&brief_content, "## Problem Space").unwrap_or_default();
+    let success_criteria =
+        extract_section(&brief_content, "## Success Criteria").unwrap_or_default();
 
     // Read ASSESSMENT.md if it exists
     let assessment_path = bearing_dir.join("ASSESSMENT.md");
@@ -498,7 +500,7 @@ fn create_prd_from_bearing(board_dir: &Path, bearing: &Bearing) -> Result<String
     // Extract assessment analysis
     let analysis = assessment_content
         .as_ref()
-        .map(|c| extract_section(c, "## Analysis"))
+        .and_then(|c| extract_section(c, "## Analysis"))
         .unwrap_or_default();
 
     // Build PRD content
@@ -610,30 +612,6 @@ fn create_prd_from_bearing(board_dir: &Path, bearing: &Bearing) -> Result<String
     Ok(prd)
 }
 
-/// Extract content under a markdown section header
-fn extract_section(content: &str, header: &str) -> String {
-    let mut in_section = false;
-    let mut result = String::new();
-
-    for line in content.lines() {
-        if line.starts_with(header) {
-            in_section = true;
-            continue;
-        }
-
-        if in_section {
-            // Stop at next section header
-            if line.starts_with("## ") || line.starts_with("# ") {
-                break;
-            }
-            result.push_str(line);
-            result.push('\n');
-        }
-    }
-
-    result.trim().to_string()
-}
-
 /// Get the EV score for a bearing, if assessment exists and is complete
 fn get_bearing_score(
     board_dir: &Path,
@@ -671,12 +649,13 @@ fn classify_fog(board_dir: &Path, bearing: &Bearing) -> FogType {
         .join("BRIEF.md");
 
     let brief_content = fs::read_to_string(&brief_path).unwrap_or_default();
-    let open_questions = extract_section(&brief_content, "## Open Questions");
+    let open_questions = extract_section(&brief_content, "## Open Questions").unwrap_or_default();
     let open_question_count = open_questions
         .lines()
         .filter(|line| line.trim_start().starts_with("- "))
         .count();
-    let success_criteria = extract_section(&brief_content, "## Success Criteria");
+    let success_criteria =
+        extract_section(&brief_content, "## Success Criteria").unwrap_or_default();
     let unchecked_criteria = success_criteria
         .lines()
         .filter(|line| line.trim_start().starts_with("- [ ]"))
@@ -845,7 +824,7 @@ It spans multiple lines.
 
 Different section content.
 "#;
-        let hypothesis = extract_section(content, "## Hypothesis");
+        let hypothesis = extract_section(content, "## Hypothesis").unwrap();
         assert!(hypothesis.contains("hypothesis content"));
         assert!(hypothesis.contains("multiple lines"));
         assert!(!hypothesis.contains("Different section"));

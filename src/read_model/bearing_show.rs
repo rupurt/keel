@@ -1,6 +1,8 @@
 //! Canonical bearing-show projection and markdown extraction helpers.
 
-use crate::read_model::planning_show::extract_section;
+use crate::infrastructure::markdown_sections::{
+    SectionExcerpt, extract_section, extract_section_excerpt, parse_markdown_list_items,
+};
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct BearingShowProjection {
@@ -12,8 +14,8 @@ pub struct BearingShowProjection {
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct BearingBriefSummary {
-    pub hypothesis: Option<String>,
-    pub problem_space: Option<String>,
+    pub hypothesis: Option<SectionExcerpt>,
+    pub problem_space: Option<SectionExcerpt>,
     pub checked_success_criteria: usize,
     pub total_success_criteria: usize,
     pub unchecked_success_criteria: Vec<String>,
@@ -22,7 +24,7 @@ pub struct BearingBriefSummary {
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct BearingSurveySummary {
-    pub feasibility: Option<String>,
+    pub feasibility: Option<SectionExcerpt>,
     pub key_findings: Vec<String>,
     pub unknowns: Vec<String>,
 }
@@ -30,7 +32,7 @@ pub struct BearingSurveySummary {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct BearingAssessmentSummary {
     pub recommendation: Option<String>,
-    pub opportunity_cost: Option<String>,
+    pub opportunity_cost: Option<SectionExcerpt>,
     pub dependencies: Vec<String>,
     pub alternatives: Vec<String>,
 }
@@ -58,11 +60,8 @@ pub fn build_bearing_show_projection(
         .collect();
 
     let brief = BearingBriefSummary {
-        hypothesis: first_authored_non_list_text(&section_text(brief_content, "## Hypothesis")),
-        problem_space: first_authored_non_list_text(&section_text(
-            brief_content,
-            "## Problem Space",
-        )),
+        hypothesis: extract_section_excerpt(&section_text(brief_content, "## Hypothesis")),
+        problem_space: extract_section_excerpt(&section_text(brief_content, "## Problem Space")),
         checked_success_criteria: success_criteria
             .iter()
             .filter(|(checked, _)| *checked)
@@ -76,7 +75,7 @@ pub fn build_bearing_show_projection(
     };
 
     let survey = survey_content.map(|content| BearingSurveySummary {
-        feasibility: first_authored_non_list_text(&section_text(content, "### Feasibility")),
+        feasibility: extract_section_excerpt(&section_text(content, "### Feasibility")),
         key_findings: parse_markdown_list_items(&section_text(content, "## Key Findings")),
         unknowns: parse_markdown_list_items(&section_text(content, "## Unknowns")),
     });
@@ -85,7 +84,7 @@ pub fn build_bearing_show_projection(
         let recommendation_section = section_text(content, "## Recommendation");
         BearingAssessmentSummary {
             recommendation: extract_checked_recommendation(&recommendation_section),
-            opportunity_cost: first_authored_non_list_text(&section_text(
+            opportunity_cost: extract_section_excerpt(&section_text(
                 content,
                 "### Opportunity Cost",
             )),
@@ -107,73 +106,6 @@ pub fn build_bearing_show_projection(
 
 fn section_text(content: &str, heading: &str) -> String {
     extract_section(content, heading).unwrap_or_default()
-}
-
-fn first_authored_non_list_text(section: &str) -> Option<String> {
-    section
-        .lines()
-        .map(str::trim)
-        .find(|line| {
-            !line.is_empty()
-                && !line.starts_with("<!--")
-                && !line.starts_with('-')
-                && !line.starts_with('|')
-                && parse_ordered_list_item(line).is_none()
-        })
-        .map(ToOwned::to_owned)
-}
-
-fn parse_markdown_list_items(section: &str) -> Vec<String> {
-    let mut items = Vec::new();
-    for line in section.lines() {
-        let trimmed = line.trim();
-        if trimmed.is_empty() || trimmed.starts_with("<!--") {
-            continue;
-        }
-
-        if let Some(item) = trimmed
-            .strip_prefix("- [ ] ")
-            .map(str::trim)
-            .or_else(|| trimmed.strip_prefix("- [x] ").map(str::trim))
-            .or_else(|| trimmed.strip_prefix("- [X] ").map(str::trim))
-        {
-            if !item.is_empty() {
-                items.push(item.to_string());
-            }
-            continue;
-        }
-
-        if let Some(item) = trimmed.strip_prefix("- ").map(str::trim) {
-            if !item.is_empty() {
-                items.push(item.to_string());
-            }
-            continue;
-        }
-
-        if let Some(item) = parse_ordered_list_item(trimmed) {
-            if !item.is_empty() {
-                items.push(item.to_string());
-            }
-            continue;
-        }
-    }
-    items
-}
-
-fn parse_ordered_list_item(line: &str) -> Option<&str> {
-    let mut digits = 0usize;
-    for byte in line.as_bytes() {
-        if byte.is_ascii_digit() {
-            digits += 1;
-        } else {
-            break;
-        }
-    }
-    if digits == 0 || !line[digits..].starts_with(". ") {
-        return None;
-    }
-
-    Some(line[digits + 2..].trim())
 }
 
 fn parse_checkbox_items(section: &str) -> Vec<(bool, String)> {
@@ -268,25 +200,6 @@ fn datetime_field_label(key: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn parse_markdown_list_items_supports_bullets_and_ordered_items() {
-        let section = r#"
-- first
-- second
-1. third
-2. fourth
-"#;
-        assert_eq!(
-            parse_markdown_list_items(section),
-            vec![
-                "first".to_string(),
-                "second".to_string(),
-                "third".to_string(),
-                "fourth".to_string()
-            ]
-        );
-    }
 
     #[test]
     fn extract_checked_recommendation_returns_selected_option() {
@@ -386,8 +299,22 @@ Delayed roadmap item.
             build_bearing_show_projection(readme, brief, Some(survey), Some(assessment));
 
         assert_eq!(
-            projection.brief.hypothesis.as_deref(),
-            Some("**Users need speed**")
+            projection
+                .brief
+                .hypothesis
+                .as_ref()
+                .map(|excerpt| excerpt.paragraphs.clone()),
+            Some(vec!["**Users need speed**".to_string()])
+        );
+        assert_eq!(
+            projection
+                .brief
+                .problem_space
+                .as_ref()
+                .map(|excerpt| excerpt.paragraphs.clone()),
+            Some(vec![
+                "*Fast feedback loops* reduce coordination drag.".to_string()
+            ])
         );
         assert_eq!(projection.brief.checked_success_criteria, 1);
         assert_eq!(projection.brief.total_success_criteria, 2);
@@ -401,15 +328,24 @@ Delayed roadmap item.
         );
 
         let survey = projection.survey.unwrap();
-        assert_eq!(survey.feasibility.as_deref(), Some("Looks practical."));
+        assert_eq!(
+            survey
+                .feasibility
+                .as_ref()
+                .map(|excerpt| excerpt.paragraphs.clone()),
+            Some(vec!["Looks practical.".to_string()])
+        );
         assert_eq!(survey.key_findings, vec!["Existing tools are close."]);
         assert_eq!(survey.unknowns, vec!["Long-tail migration effort"]);
 
         let assessment = projection.assessment.unwrap();
         assert_eq!(assessment.recommendation.as_deref(), Some("Proceed"));
         assert_eq!(
-            assessment.opportunity_cost.as_deref(),
-            Some("Delayed roadmap item.")
+            assessment
+                .opportunity_cost
+                .as_ref()
+                .map(|excerpt| excerpt.paragraphs.clone()),
+            Some(vec!["Delayed roadmap item.".to_string()])
         );
         assert_eq!(assessment.dependencies, vec!["Team bandwidth"]);
         assert_eq!(assessment.alternatives, vec!["Delay and observe"]);

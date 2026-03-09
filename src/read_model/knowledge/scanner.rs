@@ -15,6 +15,8 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
+use crate::infrastructure::markdown_sections::extract_section_with_options;
+
 static KNOWLEDGE_FIELD_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\|\s*\*\*(\w+(?:\s+\w+)*)\*\*\s*\|\s*([^|]*)\|").unwrap());
 static KNOWLEDGE_HEADER_RE: LazyLock<Regex> =
@@ -549,21 +551,7 @@ pub fn validate_knowledge_content(content: &str) -> Vec<KnowledgeValidationIssue
 /// Extract a section from markdown content.
 /// Finds the section starting with the given header and returns content until the next section.
 fn extract_section(content: &str, header: &str) -> Option<String> {
-    // Find the start of the section
-    let header_with_newline = format!("{}\n", header);
-    let start_idx = content.find(&header_with_newline)?;
-    let content_start = start_idx + header_with_newline.len();
-
-    // Find the end - next ## header or --- or end of content
-    let remaining = &content[content_start..];
-
-    // Find the first occurrence of a new section marker
-    let end_offset = remaining
-        .find("\n## ")
-        .or_else(|| remaining.find("\n---"))
-        .unwrap_or(remaining.len());
-
-    Some(remaining[..end_offset].to_string())
+    extract_section_with_options(content, header, true)
 }
 
 /// Extract scope from story frontmatter

@@ -7,6 +7,7 @@ pub mod frontmatter_mutation;
 pub mod fs_adapters;
 pub mod generate;
 pub mod loader;
+pub mod markdown_sections;
 pub mod parser;
 pub mod scoring;
 pub mod story_id;

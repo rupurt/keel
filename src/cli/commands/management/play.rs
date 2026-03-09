@@ -7,6 +7,7 @@ use std::path::Path;
 use anyhow::{Context, Result, bail};
 
 use super::play_guidance::{guidance_for_suggest, informational_for_exploration, print_human};
+use crate::infrastructure::markdown_sections::extract_section;
 
 /// Run the play command
 pub fn run(
@@ -763,37 +764,6 @@ fn capitalize(s: &str) -> String {
     match chars.next() {
         None => String::new(),
         Some(c) => c.to_uppercase().to_string() + chars.as_str(),
-    }
-}
-
-/// Extract a markdown section by heading
-fn extract_section(content: &str, heading: &str) -> Option<String> {
-    let mut in_section = false;
-    let mut result = String::new();
-    let heading_level = heading.chars().take_while(|c| *c == '#').count();
-
-    for line in content.lines() {
-        if line.starts_with(heading) {
-            in_section = true;
-            continue;
-        }
-        if in_section {
-            // Stop at same or higher level heading
-            if line.starts_with('#') {
-                let level = line.chars().take_while(|c| *c == '#').count();
-                if level <= heading_level {
-                    break;
-                }
-            }
-            result.push_str(line);
-            result.push('\n');
-        }
-    }
-
-    if result.is_empty() {
-        None
-    } else {
-        Some(result)
     }
 }
 
