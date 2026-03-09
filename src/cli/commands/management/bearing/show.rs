@@ -132,26 +132,32 @@ pub fn run(pattern: &str) -> Result<()> {
 
 fn render_documents_section(bearing: &crate::domain::model::Bearing) -> ShowSection {
     let mut section = ShowSection::new("Documents");
-    let mut fields = ShowKeyValues::new().with_indent(2).with_min_label_width(15);
-    fields.push_row("README.md:", format!("{}", "authored".green()));
-    fields.push_row("BRIEF.md:", format!("{}", "authored".green()));
-    fields.push_row(
-        "EVIDENCE.md:",
-        if bearing.has_evidence {
-            format!("{}", "authored".green())
-        } else {
-            format!("{}", "not created".dimmed())
-        },
-    );
-    fields.push_row(
-        "ASSESSMENT.md:",
-        if bearing.has_assessment {
-            format!("{}", "authored".green())
-        } else {
-            format!("{}", "not created".dimmed())
-        },
-    );
-    section.push_key_values(fields);
+    let mut authored_documents: Vec<&str> = vec!["README.md", "BRIEF.md"];
+    let mut unauthored_documents: Vec<&str> = Vec::new();
+
+    if bearing.has_evidence {
+        authored_documents.push("EVIDENCE.md");
+    } else {
+        unauthored_documents.push("EVIDENCE.md");
+    }
+
+    if bearing.has_assessment {
+        authored_documents.push("ASSESSMENT.md");
+    } else {
+        unauthored_documents.push("ASSESSMENT.md");
+    }
+
+    section.push_lines([
+        format!("  authored: {}", authored_documents.join(", ")),
+        format!(
+            "  unauthored: {}",
+            if unauthored_documents.is_empty() {
+                format!("{}", "(none)".dimmed())
+            } else {
+                unauthored_documents.join(", ")
+            }
+        ),
+    ]);
     section.push_labeled_bullets(
         "Inspect:",
         bearing_file_commands(bearing.id()),
@@ -328,8 +334,9 @@ fn render_assessment_section(
     section
 }
 
-fn bearing_file_commands(bearing_id: &str) -> [String; 3] {
-    [
+fn bearing_file_commands(bearing_id: &str) -> Vec<String> {
+    vec![
+        format!("keel bearing file {bearing_id} README"),
         format!("keel bearing file {bearing_id} BRIEF"),
         format!("keel bearing file {bearing_id} EVIDENCE"),
         format!("keel bearing file {bearing_id} ASSESSMENT"),
@@ -710,6 +717,7 @@ mod tests {
         assert!(rendered.contains("Proceed → convert to epic"));
         assert!(!rendered.contains("Proceed → convert to epic [SRC-01][SRC-02]"));
         assert!(!rendered.contains("Cited Sources:"));
+        assert!(rendered.contains("keel bearing file BRG-01 README"));
         assert!(rendered.contains("keel bearing file BRG-01 BRIEF"));
         assert!(rendered.contains("keel bearing file BRG-01 EVIDENCE"));
         assert!(rendered.contains("keel bearing file BRG-01 ASSESSMENT"));
