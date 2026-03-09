@@ -1,6 +1,6 @@
 //! Global story ID generation using Crockford Base62 encoding
 //!
-//! Generates 9-character IDs: 6 chars timestamp + 3 chars suffix.
+//! Generates 9-character IDs: 7 chars timestamp (milliseconds) + 2 chars suffix.
 //! IDs are lexicographically sortable by creation time.
 
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -13,26 +13,26 @@ const CROCKFORD_BASE62: &[u8; 62] =
 
 /// Generate a new globally unique story ID
 ///
-/// Format: 9 characters (6 timestamp + 3 suffix)
-/// - First 6 chars: seconds since Unix epoch encoded in base62
-/// - Last 3 chars: per-process sequence 0..238327 encoded in base62
+/// Format: 9 characters (7 timestamp + 2 suffix)
+/// - First 7 chars: milliseconds since Unix epoch encoded in base62
+/// - Last 2 chars: per-process sequence 0..3843 encoded in base62
 ///
 /// IDs are lexicographically sortable by creation time.
 pub fn generate_story_id() -> String {
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards")
-        .as_secs();
+        .as_millis() as u64;
 
     generate_story_id_with_timestamp(timestamp)
 }
 
-/// Generate a story ID with a specific timestamp (for migration/testing)
-pub fn generate_story_id_with_timestamp(timestamp: u64) -> String {
+/// Generate a story ID with a specific timestamp (milliseconds)
+pub fn generate_story_id_with_timestamp(timestamp_ms: u64) -> String {
     let suffix = next_suffix_value();
 
-    let mut id = encode_base62(timestamp, 6);
-    id.push_str(&encode_base62(suffix as u64, 3));
+    let mut id = encode_base62(timestamp_ms, 7);
+    id.push_str(&encode_base62(suffix as u64, 2));
     id
 }
 
@@ -66,22 +66,32 @@ pub fn decode_base62(s: &str) -> Option<u64> {
     Some(result)
 }
 
-/// Extract the timestamp from a story ID (first 6 chars)
-#[allow(dead_code)] // Utility for debugging/migration
+/// Extract the timestamp from a story ID (first 7 chars)
 pub fn extract_timestamp(id: &str) -> Option<u64> {
-    if id.len() < 6 {
+    if id.len() < 7 {
         return None;
     }
-    decode_base62(&id[..6])
+    decode_base62(&id[..7])
 }
 
-/// Return the next suffix in the 3-character base62 space.
+/// Return the next suffix in the 2-character base62 space.
 ///
 /// This avoids the birthday-paradox collisions that made the old random
 /// implementation flaky in tests and in tight loops.
+///
+/// The counter is initialized based on the process ID to reduce collisions
+/// when multiple processes start at the same millisecond.
 fn next_suffix_value() -> u32 {
-    static COUNTER: AtomicU32 = AtomicU32::new(0);
-    const SUFFIX_SPACE: u32 = 62 * 62 * 62;
+    static COUNTER: AtomicU32 = AtomicU32::new(u32::MAX);
+    const SUFFIX_SPACE: u32 = 62 * 62;
+
+    let current = COUNTER.load(Ordering::Relaxed);
+    if current == u32::MAX {
+        // Initialize with a simple hash of the process ID
+        let pid = std::process::id();
+        let seed = (pid ^ (pid >> 16)) % SUFFIX_SPACE;
+        let _ = COUNTER.compare_exchange(u32::MAX, seed, Ordering::Relaxed, Ordering::Relaxed);
+    }
 
     COUNTER.fetch_add(1, Ordering::Relaxed) % SUFFIX_SPACE
 }
@@ -148,9 +158,9 @@ mod tests {
         sorted.sort();
 
         for i in 0..ids.len() {
-            // The timestamp portion (first 6 chars) should be sorted
+            // The timestamp portion (first 7 chars) should be sorted
             assert!(
-                ids[i][..6] == sorted[i][..6],
+                ids[i][..7] == sorted[i][..7],
                 "Timestamp portions should sort correctly"
             );
         }
@@ -167,10 +177,10 @@ mod tests {
     #[test]
     fn ids_are_unique_across_100_generations() {
         // The suffix space must stay collision-free for normal bursty usage,
-        // including generating many IDs within the same second.
+        // including generating many IDs within the same millisecond.
         let mut seen = HashSet::new();
         for _ in 0..100 {
-            let id = generate_story_id_with_timestamp(1_706_400_000);
+            let id = generate_story_id_with_timestamp(1_706_400_000_000);
             assert!(seen.insert(id.clone()), "Duplicate ID generated: {}", id);
         }
     }
@@ -178,13 +188,13 @@ mod tests {
     #[test]
     fn suffix_produces_varied_output() {
         // Verify the suffix varies across calls even with a fixed timestamp.
-        let ts = 1700000000u64;
+        let ts = 1700000000000u64;
         let ids: Vec<String> = (0..100)
             .map(|_| generate_story_id_with_timestamp(ts))
             .collect();
 
-        // Extract just the suffix (last 3 chars)
-        let suffixes: HashSet<&str> = ids.iter().map(|id| &id[6..]).collect();
+        // Extract just the suffix (last 2 chars)
+        let suffixes: HashSet<&str> = ids.iter().map(|id| &id[7..]).collect();
 
         // Should have full uniqueness in a normal local burst.
         assert!(
@@ -210,21 +220,21 @@ mod tests {
 
     #[test]
     fn timestamp_range_is_sufficient() {
-        // 6 base62 chars = 62^6 = 56,800,235,584 seconds
-        // That's about 1,800 years from epoch
-        let max_timestamp = 62u64.pow(6) - 1;
-        let years = max_timestamp / (365 * 24 * 60 * 60);
+        // 7 base62 chars = 62^7 = 3,521,614,606,208 milliseconds
+        // That's about 111 years from epoch
+        let max_timestamp = 62u64.pow(7) - 1;
+        let years = max_timestamp / (365 * 24 * 60 * 60 * 1000);
         assert!(
-            years > 1700,
-            "Timestamp range should cover >1700 years, got {}",
+            years > 110,
+            "Timestamp range should cover >110 years, got {}",
             years
         );
     }
 
     #[test]
     fn random_suffix_capacity() {
-        // 3 base62 chars = 62^3 = 238,328 possibilities per second
-        let capacity = 62u64.pow(3);
-        assert_eq!(capacity, 238328);
+        // 2 base62 chars = 62^2 = 3,844 possibilities per millisecond
+        let capacity = 62u64.pow(2);
+        assert_eq!(capacity, 3844);
     }
 }
