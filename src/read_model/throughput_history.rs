@@ -316,6 +316,7 @@ mod tests {
                 title: format!("Epic {id}"),
                 description: None,
                 bearing: None,
+                mission: None,
                 index: None,
                 created_at: None,
             },
