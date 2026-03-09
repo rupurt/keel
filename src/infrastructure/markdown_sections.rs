@@ -57,6 +57,59 @@ pub fn extract_section_with_options(
     }
 }
 
+pub fn replace_section(content: &str, heading: &str, new_section_content: &str) -> String {
+    let mut result = String::new();
+    let mut in_section = false;
+    let mut replaced = false;
+    let heading_level = heading.chars().take_while(|ch| *ch == '#').count();
+
+    for line in content.lines() {
+        if line.starts_with(heading) {
+            in_section = true;
+            result.push_str(line);
+            result.push('\n');
+            result.push_str(new_section_content);
+            if !new_section_content.ends_with('\n') {
+                result.push('\n');
+            }
+            replaced = true;
+            continue;
+        }
+
+        if in_section {
+            if line.starts_with('#') {
+                let level = line.chars().take_while(|ch| *ch == '#').count();
+                if level <= heading_level {
+                    in_section = false;
+                }
+            } else {
+                continue;
+            }
+        }
+
+        if !in_section {
+            result.push_str(line);
+            result.push('\n');
+        }
+    }
+
+    if !replaced {
+        // Heading not found, append at the end
+        if !result.is_empty() && !result.ends_with('\n') {
+            result.push('\n');
+        }
+        result.push('\n');
+        result.push_str(heading);
+        result.push('\n');
+        result.push_str(new_section_content);
+        if !new_section_content.ends_with('\n') {
+            result.push('\n');
+        }
+    }
+
+    result
+}
+
 pub fn extract_section_excerpt(section: &str) -> Option<SectionExcerpt> {
     let mut paragraphs = Vec::new();
     let mut list_items = Vec::new();

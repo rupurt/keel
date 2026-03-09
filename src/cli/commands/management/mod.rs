@@ -7,6 +7,7 @@ pub mod epic;
 pub(crate) mod file_support;
 pub mod guidance;
 pub mod knowledge;
+pub mod mission;
 pub mod next;
 mod next_support;
 pub mod play;

@@ -19,6 +19,10 @@ mod spec;
 mod bearing_engine;
 mod bearing_spec;
 
+// Mission transition support
+mod mission_engine;
+mod mission_spec;
+
 // Story transition exports
 pub use engine::execute;
 // pub use engine::{execute_with_body_transform, execute_with_validate};
@@ -29,4 +33,10 @@ pub use spec::{TimestampUpdates, TransitionSpec, transitions};
 pub mod bearing {
     pub use super::bearing_engine::execute;
     pub use super::bearing_spec::bearing_transitions;
+}
+
+// Mission transition exports
+pub mod mission {
+    pub use super::mission_engine::execute;
+    pub use super::mission_spec::mission_transitions;
 }

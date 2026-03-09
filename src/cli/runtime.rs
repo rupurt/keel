@@ -111,6 +111,7 @@ pub fn run() -> Result<()> {
         Some(("story", m)) => handle_story_command(m),
         Some(("bearing", m)) => handle_bearing_command(m),
         Some(("adr", m)) => handle_adr_command(m),
+        Some(("mission", m)) => handle_mission_command(m),
         Some(("config", m)) => handle_config_command(m),
         None => {
             let mut cli = build_cli();
@@ -140,6 +141,10 @@ fn handle_bearing_command(matches: &ArgMatches) -> Result<()> {
 
 fn handle_adr_command(matches: &ArgMatches) -> Result<()> {
     super::commands::management::adr::run(parse_subcommand_action(matches)?)
+}
+
+fn handle_mission_command(matches: &ArgMatches) -> Result<()> {
+    super::commands::management::mission::run(parse_subcommand_action(matches)?)
 }
 
 fn handle_knowledge_command(matches: &ArgMatches) -> Result<()> {

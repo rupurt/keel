@@ -14,6 +14,7 @@ use syntect::util::{LinesWithEndings, as_24_bit_terminal_escaped};
 use crate::domain::model::EpicState;
 use crate::domain::model::StoryState;
 use crate::domain::model::StoryType;
+use crate::domain::state_machine::mission::MissionStatus;
 use crate::domain::state_machine::voyage::VoyageState;
 
 /// Regex for SRS requirement references like [SRS-01/AC-01]
@@ -104,6 +105,18 @@ pub fn styled_story_status(status: &StoryState) -> String {
         StoryState::Done => format!("{}", status.green()),
         StoryState::Rejected => format!("{}", status.red()),
         StoryState::Icebox => format!("{}", status.dimmed()),
+    }
+}
+
+/// Color a mission status label
+pub fn styled_mission_status(status: &MissionStatus) -> String {
+    match status {
+        MissionStatus::Defining => format!("{}", status.dimmed()),
+        MissionStatus::Active => format!("{}", status.blue()),
+        MissionStatus::Achieved => format!("{}", status.green()),
+        MissionStatus::Verified => format!("{}", status.bright_green().bold()),
+        MissionStatus::Paused => format!("{}", status.yellow()),
+        MissionStatus::Abandoned => format!("{}", status.red()),
     }
 }
 

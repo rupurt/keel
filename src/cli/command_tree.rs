@@ -17,6 +17,7 @@ Management
   audit       Rich evidence/traceability report
   verify      Execute verification proofs
   knowledge   Manage institutional knowledge
+  mission     Mission commands (long-running objectives)
   adr         ADR commands (architecture decisions)
   bearing     Bearing commands (research phase)
   epic        Epic commands
@@ -299,6 +300,9 @@ pub fn build_cli() -> Command {
         .subcommand(hidden_subcommand_group::<
             crate::cli::commands::management::adr::AdrAction,
         >("adr", "ADR commands (architecture decisions)"))
+        .subcommand(hidden_subcommand_group::<
+            crate::cli::commands::management::mission::MissionAction,
+        >("mission", "Mission commands (long-running objectives)"))
         .subcommand(hidden_subcommand_group::<
             crate::cli::commands::management::bearing::BearingAction,
         >("bearing", "Bearing commands (research phase)"))
