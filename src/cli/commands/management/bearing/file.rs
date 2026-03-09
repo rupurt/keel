@@ -64,4 +64,19 @@ mod tests {
         assert!(err.contains("Unknown Bearing document 'SURVEY'"));
         assert!(err.contains("Available files: README, BRIEF, EVIDENCE, ASSESSMENT"));
     }
+
+    #[test]
+    fn bearing_file_surfaces_evidence_document() {
+        let temp = TestBoardBuilder::new()
+            .bearing(TestBearing::new("BRG-01").has_evidence(true))
+            .build();
+
+        let expected = temp.path().join("bearings/BRG-01/EVIDENCE.md");
+        let resolved = resolve_path(temp.path(), "BRG-01", "evidence.Md").unwrap();
+
+        assert_eq!(resolved, expected);
+        let content = fs::read_to_string(resolved).unwrap();
+        assert!(content.contains("— Evidence"));
+        assert!(content.contains("## Sources"));
+    }
 }

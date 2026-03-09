@@ -25,11 +25,11 @@ started_at: 2026-03-08T21:09:02
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 2/3 stories complete
+**Progress:** 3/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Make Bearing Assessment Evidence-Aware And Compute EV Scores](../../../../stories/1vzQwq000/README.md) | feat | done |
-| [Render Evidence-Backed Bearing Show And File Surfaces](../../../../stories/1vzQwr000/README.md) | feat | backlog |
+| [Render Evidence-Backed Bearing Show And File Surfaces](../../../../stories/1vzQwr000/README.md) | feat | done |
 | [Gate Readiness And Board Projections On Evidence Quality](../../../../stories/1vzQws000/README.md) | feat | done |
 <!-- END GENERATED -->

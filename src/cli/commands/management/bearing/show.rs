@@ -13,7 +13,8 @@ use crate::infrastructure::config::{find_board_dir, load_config};
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::scoring::{load_assessment, load_bearing_score};
 use crate::read_model::bearing_show::{
-    self, BearingAssessmentSummary, BearingBriefSummary, BearingEvidenceSummary,
+    self, BearingAssessmentSummary, BearingBriefSummary, BearingEvidenceSourceSummary,
+    BearingEvidenceSummary,
 };
 
 use super::guidance::{informational_for_show, print_human};
@@ -27,6 +28,7 @@ const SECTION_EXCERPT_LIMITS: ShowExcerptLimits = ShowExcerptLimits {
     max_paragraphs: 1,
     max_list_items: 3,
 };
+const SOURCE_SUMMARY_LIMIT: usize = 3;
 
 /// Show detailed bearing information.
 pub fn run(pattern: &str) -> Result<()> {
@@ -103,8 +105,9 @@ pub fn run(pattern: &str) -> Result<()> {
     let mut sections = vec![
         render_documents_section(bearing),
         render_brief_section(&projection.brief),
-        render_evidence_section(projection.evidence.as_ref()),
+        render_evidence_section(bearing.id(), projection.evidence.as_ref()),
         render_assessment_section(
+            bearing.id(),
             &evidence_path,
             &assessment_path,
             projection.assessment.as_ref(),
@@ -150,6 +153,11 @@ fn render_documents_section(bearing: &crate::domain::model::Bearing) -> ShowSect
         },
     );
     section.push_key_values(fields);
+    section.push_labeled_bullets(
+        "Inspect:",
+        bearing_file_commands(bearing.id()),
+        None::<String>,
+    );
     section
 }
 
@@ -193,7 +201,10 @@ fn render_brief_section(summary: &BearingBriefSummary) -> ShowSection {
     section
 }
 
-fn render_evidence_section(summary: Option<&BearingEvidenceSummary>) -> ShowSection {
+fn render_evidence_section(
+    bearing_id: &str,
+    summary: Option<&BearingEvidenceSummary>,
+) -> ShowSection {
     let mut section = ShowSection::new("Evidence");
     let Some(summary) = summary else {
         section.push_lines([format!("  {}", EVIDENCE_PLACEHOLDER.dimmed())]);
@@ -217,11 +228,23 @@ fn render_evidence_section(summary: Option<&BearingEvidenceSummary>) -> ShowSect
         summary.unknowns.iter().cloned(),
         Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
     );
+    section.push_labeled_bullets_limited(
+        counted_label("Sources", summary.sources.len()),
+        summary.sources.iter().map(format_source_summary),
+        SOURCE_SUMMARY_LIMIT,
+        Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
+    );
+    section.push_labeled_bullets(
+        "Drill Down:",
+        [format!("keel bearing file {bearing_id} EVIDENCE")],
+        None::<String>,
+    );
 
     section
 }
 
 fn render_assessment_section(
+    bearing_id: &str,
     evidence_path: &Path,
     assessment_path: &Path,
     summary: Option<&BearingAssessmentSummary>,
@@ -266,6 +289,10 @@ fn render_assessment_section(
         "Recommendation:",
         summary.recommendation.as_deref().map(ToString::to_string),
     );
+    fields.push_optional_row(
+        "Cited Sources:",
+        (!summary.cited_sources.is_empty()).then(|| summary.cited_sources.join(", ")),
+    );
 
     section.push_key_values(fields);
 
@@ -291,8 +318,27 @@ fn render_assessment_section(
         summary.alternatives.iter().cloned(),
         Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
     );
+    section.push_labeled_bullets(
+        "Drill Down:",
+        [format!("keel bearing file {bearing_id} ASSESSMENT")],
+        None::<String>,
+    );
 
     section
+}
+
+fn bearing_file_commands(bearing_id: &str) -> [String; 2] {
+    [
+        format!("keel bearing file {bearing_id} EVIDENCE"),
+        format!("keel bearing file {bearing_id} ASSESSMENT"),
+    ]
+}
+
+fn format_source_summary(source: &BearingEvidenceSourceSummary) -> String {
+    format!(
+        "{} {} via {} | authority {} | freshness {}",
+        source.id, source.class, source.provenance, source.authority, source.freshness
+    )
 }
 
 fn push_document_path_rows(
@@ -323,13 +369,14 @@ fn success_criteria_label(checked: usize, total: usize) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        BearingAssessmentSummary, BearingBriefSummary, BearingEvidenceSummary,
-        push_document_path_rows, render_assessment_section, render_brief_section,
-        render_evidence_section,
+        BearingAssessmentSummary, BearingBriefSummary, BearingEvidenceSourceSummary,
+        BearingEvidenceSummary, push_document_path_rows, render_assessment_section,
+        render_brief_section, render_documents_section, render_evidence_section,
     };
     use crate::cli::presentation::show::{ShowDocument, ShowKeyValues};
     use crate::infrastructure::config::ModeWeights;
     use crate::infrastructure::markdown_sections::SectionExcerpt;
+    use crate::test_helpers::BearingFactory;
     use std::path::Path;
 
     fn render_lines(section: crate::cli::presentation::show::ShowSection) -> Vec<String> {
@@ -381,14 +428,18 @@ mod tests {
 
     #[test]
     fn bearing_evidence_renders_inline_list_counts() {
-        let section = render_evidence_section(Some(&BearingEvidenceSummary {
-            feasibility: Some(SectionExcerpt {
-                paragraphs: vec!["Looks feasible".to_string()],
-                list_items: Vec::new(),
+        let section = render_evidence_section(
+            "BRG-01",
+            Some(&BearingEvidenceSummary {
+                feasibility: Some(SectionExcerpt {
+                    paragraphs: vec!["Looks feasible".to_string()],
+                    list_items: Vec::new(),
+                }),
+                key_findings: vec!["Finding one".to_string()],
+                unknowns: vec!["Unknown one".to_string(), "Unknown two".to_string()],
+                sources: Vec::new(),
             }),
-            key_findings: vec!["Finding one".to_string()],
-            unknowns: vec!["Unknown one".to_string(), "Unknown two".to_string()],
-        }));
+        );
 
         let lines = render_lines(section);
 
@@ -405,10 +456,12 @@ mod tests {
     #[test]
     fn bearing_assessment_renders_inline_list_counts() {
         let section = render_assessment_section(
+            "BRG-01",
             Path::new("/tmp/EVIDENCE.md"),
             Path::new("/tmp/ASSESSMENT.md"),
             Some(&BearingAssessmentSummary {
                 recommendation: Some("Proceed".to_string()),
+                cited_sources: Vec::new(),
                 findings: vec!["Finding one [SRC-01]".to_string()],
                 opportunity_cost: Some(SectionExcerpt {
                     paragraphs: vec!["A roadmap delay".to_string()],
@@ -471,17 +524,21 @@ mod tests {
 
     #[test]
     fn bearing_section_excerpt_renders_list_items_below_paragraph() {
-        let section = render_evidence_section(Some(&BearingEvidenceSummary {
-            feasibility: Some(SectionExcerpt {
-                paragraphs: vec!["Looks feasible".to_string()],
-                list_items: vec![
-                    "First proof point".to_string(),
-                    "Second proof point".to_string(),
-                ],
+        let section = render_evidence_section(
+            "BRG-01",
+            Some(&BearingEvidenceSummary {
+                feasibility: Some(SectionExcerpt {
+                    paragraphs: vec!["Looks feasible".to_string()],
+                    list_items: vec![
+                        "First proof point".to_string(),
+                        "Second proof point".to_string(),
+                    ],
+                }),
+                key_findings: Vec::new(),
+                unknowns: Vec::new(),
+                sources: Vec::new(),
             }),
-            key_findings: Vec::new(),
-            unknowns: Vec::new(),
-        }));
+        );
 
         let lines = render_lines(section);
 
@@ -542,5 +599,91 @@ mod tests {
             !success_criteria_line.contains("(none)"),
             "all checked state should not render the none placeholder: {lines:?}"
         );
+    }
+
+    #[test]
+    fn bearing_show_renders_compact_evidence_provenance() {
+        let bearing = BearingFactory::new("BRG-01")
+            .has_evidence(true)
+            .has_assessment(true)
+            .build();
+        let mut document = ShowDocument::new();
+        document.push_section(render_documents_section(&bearing));
+        document.push_spacer();
+        document.push_section(render_evidence_section(
+            "BRG-01",
+            Some(&BearingEvidenceSummary {
+                feasibility: None,
+                key_findings: vec!["Finding one".to_string()],
+                unknowns: vec!["Unknown one".to_string()],
+                sources: vec![
+                    BearingEvidenceSourceSummary {
+                        id: "SRC-01".to_string(),
+                        class: "academic".to_string(),
+                        provenance: "manual:prior-art-review".to_string(),
+                        authority: "high".to_string(),
+                        freshness: "medium".to_string(),
+                    },
+                    BearingEvidenceSourceSummary {
+                        id: "SRC-02".to_string(),
+                        class: "web".to_string(),
+                        provenance: "manual:official-doc".to_string(),
+                        authority: "high".to_string(),
+                        freshness: "high".to_string(),
+                    },
+                    BearingEvidenceSourceSummary {
+                        id: "SRC-03".to_string(),
+                        class: "social".to_string(),
+                        provenance: "manual:community-signal".to_string(),
+                        authority: "low".to_string(),
+                        freshness: "high".to_string(),
+                    },
+                    BearingEvidenceSourceSummary {
+                        id: "SRC-04".to_string(),
+                        class: "manual".to_string(),
+                        provenance: "manual:internal-notes".to_string(),
+                        authority: "medium".to_string(),
+                        freshness: "medium".to_string(),
+                    },
+                ],
+            }),
+        ));
+        document.push_spacer();
+        document.push_section(render_assessment_section(
+            "BRG-01",
+            Path::new("/tmp/EVIDENCE.md"),
+            Path::new("/tmp/ASSESSMENT.md"),
+            Some(&BearingAssessmentSummary {
+                recommendation: Some("Proceed → convert to epic [SRC-01][SRC-02]".to_string()),
+                cited_sources: vec![
+                    "SRC-01".to_string(),
+                    "SRC-02".to_string(),
+                    "SRC-03".to_string(),
+                    "SRC-04".to_string(),
+                ],
+                findings: vec!["Finding one [SRC-01]".to_string()],
+                opportunity_cost: None,
+                dependencies: vec!["Dependency one [SRC-02]".to_string()],
+                alternatives: vec!["Alternative one [SRC-03]".to_string()],
+            }),
+            "balanced",
+            &ModeWeights::default(),
+        ));
+
+        let rendered = document.render();
+
+        assert!(rendered.contains("Sources(4):"));
+        assert!(rendered.contains(
+            "SRC-01 academic via manual:prior-art-review | authority high | freshness medium"
+        ));
+        assert!(
+            rendered
+                .contains("SRC-02 web via manual:official-doc | authority high | freshness high")
+        );
+        assert!(rendered.contains("... 1 more"));
+        assert!(rendered.contains("Cited Sources:"));
+        assert!(rendered.contains("SRC-01, SRC-02, SRC-03, SRC-04"));
+        assert!(rendered.contains("keel bearing file BRG-01 EVIDENCE"));
+        assert!(rendered.contains("keel bearing file BRG-01 ASSESSMENT"));
     }
 }

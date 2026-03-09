@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-08T21:53:58.611666784-07:00
+mode: manual
+---
+Verified bearing file resolves EVIDENCE.md case-insensitively and the show surface now exposes explicit bearing file drill-down commands; proof captured in EVIDENCE/ac-2.log.

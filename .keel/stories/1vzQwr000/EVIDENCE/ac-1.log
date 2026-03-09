@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-08T21:53:58.586354869-07:00
+mode: manual
+---
+Added compact source provenance and citation rollups to bearing show; proof captured in EVIDENCE/ac-1.log via cargo test -p keel bearing_show_renders_compact_evidence_provenance.

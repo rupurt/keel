@@ -1,8 +1,12 @@
 //! Canonical bearing-show projection and markdown extraction helpers.
 
+use std::collections::BTreeSet;
+
+use crate::infrastructure::bearing_evidence::parse_evidence_records;
 use crate::infrastructure::markdown_sections::{
     SectionExcerpt, extract_section, extract_section_excerpt, parse_markdown_list_items,
 };
+use crate::infrastructure::scoring::parse_assessment_document;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct BearingShowProjection {
@@ -27,11 +31,22 @@ pub struct BearingEvidenceSummary {
     pub feasibility: Option<SectionExcerpt>,
     pub key_findings: Vec<String>,
     pub unknowns: Vec<String>,
+    pub sources: Vec<BearingEvidenceSourceSummary>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct BearingEvidenceSourceSummary {
+    pub id: String,
+    pub class: String,
+    pub provenance: String,
+    pub authority: String,
+    pub freshness: String,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct BearingAssessmentSummary {
     pub recommendation: Option<String>,
+    pub cited_sources: Vec<String>,
     pub findings: Vec<String>,
     pub opportunity_cost: Option<SectionExcerpt>,
     pub dependencies: Vec<String>,
@@ -79,12 +94,25 @@ pub fn build_bearing_show_projection(
         feasibility: extract_section_excerpt(&section_text(content, "### Feasibility")),
         key_findings: parse_markdown_list_items(&section_text(content, "## Key Findings")),
         unknowns: parse_markdown_list_items(&section_text(content, "## Unknowns")),
+        sources: parse_evidence_records(content)
+            .unwrap_or_default()
+            .into_iter()
+            .map(|record| BearingEvidenceSourceSummary {
+                id: record.id,
+                class: record.class.to_string(),
+                provenance: record.provenance,
+                authority: record.authority.to_string(),
+                freshness: record.freshness.to_string(),
+            })
+            .collect(),
     });
 
     let assessment = assessment_content.map(|content| {
+        let document = parse_assessment_document(content);
         let recommendation_section = section_text(content, "## Recommendation");
         BearingAssessmentSummary {
             recommendation: extract_checked_recommendation(&recommendation_section),
+            cited_sources: collect_cited_sources(&document),
             findings: parse_markdown_list_items(&section_text(content, "### Findings")),
             opportunity_cost: extract_section_excerpt(&section_text(
                 content,
@@ -184,6 +212,30 @@ fn extract_frontmatter_datetime_fields(content: &str) -> Vec<FrontmatterDatetime
     fields
 }
 
+fn collect_cited_sources(
+    document: &crate::infrastructure::scoring::AssessmentDocument,
+) -> Vec<String> {
+    let mut cited_sources = BTreeSet::new();
+
+    for item in &document.findings {
+        cited_sources.extend(item.citations.iter().cloned());
+    }
+    if let Some(opportunity_cost) = &document.opportunity_cost {
+        cited_sources.extend(opportunity_cost.citations.iter().cloned());
+    }
+    for item in &document.dependencies {
+        cited_sources.extend(item.citations.iter().cloned());
+    }
+    for item in &document.alternatives {
+        cited_sources.extend(item.citations.iter().cloned());
+    }
+    if let Some(recommendation) = &document.recommendation {
+        cited_sources.extend(recommendation.citations.iter().cloned());
+    }
+
+    cited_sources.into_iter().collect()
+}
+
 fn datetime_field_label(key: &str) -> String {
     let base = key.strip_suffix("_at").unwrap_or(key);
     base.split('_')
@@ -272,6 +324,12 @@ reviewed_at: 2026-03-06T12:00:00
 - What is the team capacity?
 "#;
         let evidence = r#"
+## Sources
+| ID | Class | Provenance | Location | Observed / Published | Retrieved | Authority | Freshness | Notes |
+|----|-------|------------|----------|----------------------|-----------|-----------|-----------|-------|
+| SRC-01 | academic | manual:prior-art-review | https://example.test/paper | 2026-03-01 | 2026-03-02 | high | medium | Prior art supports the direction. |
+| SRC-02 | web | manual:official-doc | https://example.test/docs | 2026-03-02 | 2026-03-03 | medium | high | Official docs confirm the implementation path. |
+
 ### Feasibility
 Looks practical.
 
@@ -287,16 +345,16 @@ Looks practical.
 - Finding supported by evidence [SRC-01]
 
 ### Opportunity Cost
-Delayed roadmap item.
+Delayed roadmap item [SRC-02].
 
 ### Dependencies
-- Team bandwidth
+- Team bandwidth [SRC-02]
 
 ### Alternatives Considered
 - Delay and observe
 
 ## Recommendation
-[x] Proceed
+[x] Proceed [SRC-01][SRC-02]
 [ ] Park
 "#;
 
@@ -342,9 +400,32 @@ Delayed roadmap item.
         );
         assert_eq!(evidence.key_findings, vec!["Existing tools are close."]);
         assert_eq!(evidence.unknowns, vec!["Long-tail migration effort"]);
+        assert_eq!(
+            evidence.sources,
+            vec![
+                BearingEvidenceSourceSummary {
+                    id: "SRC-01".to_string(),
+                    class: "academic".to_string(),
+                    provenance: "manual:prior-art-review".to_string(),
+                    authority: "high".to_string(),
+                    freshness: "medium".to_string(),
+                },
+                BearingEvidenceSourceSummary {
+                    id: "SRC-02".to_string(),
+                    class: "web".to_string(),
+                    provenance: "manual:official-doc".to_string(),
+                    authority: "medium".to_string(),
+                    freshness: "high".to_string(),
+                },
+            ]
+        );
 
         let assessment = projection.assessment.unwrap();
-        assert_eq!(assessment.recommendation.as_deref(), Some("Proceed"));
+        assert_eq!(
+            assessment.recommendation.as_deref(),
+            Some("Proceed [SRC-01][SRC-02]")
+        );
+        assert_eq!(assessment.cited_sources, vec!["SRC-01", "SRC-02"]);
         assert_eq!(
             assessment.findings,
             vec!["Finding supported by evidence [SRC-01]"]
@@ -354,9 +435,9 @@ Delayed roadmap item.
                 .opportunity_cost
                 .as_ref()
                 .map(|excerpt| excerpt.paragraphs.clone()),
-            Some(vec!["Delayed roadmap item.".to_string()])
+            Some(vec!["Delayed roadmap item [SRC-02].".to_string()])
         );
-        assert_eq!(assessment.dependencies, vec!["Team bandwidth"]);
+        assert_eq!(assessment.dependencies, vec!["Team bandwidth [SRC-02]"]);
         assert_eq!(assessment.alternatives, vec!["Delay and observe"]);
         assert_eq!(projection.frontmatter_datetimes.len(), 2);
     }
