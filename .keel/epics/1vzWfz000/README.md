@@ -19,9 +19,9 @@ index: 14
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/2 voyages complete, 0/7 stories done
+**Progress:** 0/2 voyages complete, 2/6 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Lineage](voyages/1vzWg5000/) | planned | 0/2 |
-| [Validation](voyages/1vzWg8000/) | in-progress | 0/5 |
+| [Lineage Persistence](voyages/1vzWg5000/) | in-progress | 1/2 |
+| [Lineage Validation](voyages/1vzWg8000/) | in-progress | 1/4 |
 <!-- END GENERATED -->

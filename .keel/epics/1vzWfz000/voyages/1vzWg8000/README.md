@@ -25,12 +25,12 @@ started_at: 2026-03-09T02:18:25
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/5 stories complete
+**Progress:** 1/4 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [UXDocs](../../../../stories/1vzWgD000/README.md) | feat | backlog |
-| [LineageDoctor](../../../../stories/1vzWgW000/README.md) | feat | backlog |
-| [ValidationDocs](../../../../stories/1vzWgX000/README.md) | feat | backlog |
-| [EpicMigration](../../../../stories/1vzWgY000/README.md) | feat | backlog |
+| [Lineage CLI Output](../../../../stories/1vzWgD000/README.md) | feat | done |
+| [Lineage Doctor Checks](../../../../stories/1vzWgW000/README.md) | feat | backlog |
+| [Correction Documentation](../../../../stories/1vzWgX000/README.md) | feat | backlog |
+| [Legacy Bearing Migration](../../../../stories/1vzWgY000/README.md) | feat | backlog |
 <!-- END GENERATED -->

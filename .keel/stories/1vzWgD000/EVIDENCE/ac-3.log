@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-09T09:06:32.780789301-07:00
+mode: manual
+---
+goal references rendered through styled_inline_markdown which highlights GOAL-* tokens; invalid/unknown values pass through without truncation; error path for invalid goals during lay produces anyhow error with the offending IDs

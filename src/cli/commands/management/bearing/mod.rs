@@ -463,6 +463,8 @@ fn update_bearing_status(
     if new_status == BearingStatus::Laid {
         let today = Local::now().format("%Y-%m-%d").to_string();
         mutations.push(Mutation::set("laid_at", today));
+        // Persist the epic lineage token — the bearing ID is the epic ID
+        mutations.push(Mutation::set("epic", bearing.id()));
     }
     let updated = apply(&content, &mutations);
 
@@ -756,6 +758,7 @@ fn run_lay_at(board_dir: &Path, pattern: &str) -> Result<()> {
     println!("Laid: {} → epics/{}/", bearing.id(), epic_id);
     println!("  Epic created with PRD.md seeded from bearing documents");
     println!("  Bearing status: {} → laid", old_status);
+    println!("  Lineage: epic={}", epic_id);
     let guidance = guidance_for_action(BearingLifecycleAction::Lay, bearing.id());
     print_human(guidance.as_ref());
 
@@ -1535,6 +1538,54 @@ Different section content.
             .to_string();
         assert!(error.contains("not decision-ready"));
         assert!(error.contains("keel bearing file test-research EVIDENCE"));
+    }
+
+    #[test]
+    fn bearing_lay_persists_epic_lineage_field() {
+        let temp = TempDir::new().unwrap();
+        let board_dir = create_test_bearing_with_status(&temp, "ready");
+        seed_readiness_docs(
+            &board_dir,
+            "test-research",
+            strong_evidence_fixture(),
+            cited_assessment_fixture(),
+        );
+
+        run_lay_at(&board_dir, "test-research").unwrap();
+
+        let readme =
+            fs::read_to_string(board_dir.join("bearings/test-research/README.md")).unwrap();
+        assert!(
+            readme.contains("status: laid"),
+            "bearing status must be laid"
+        );
+        assert!(
+            readme.contains("epic: test-research"),
+            "epic lineage field must be the bearing ID (which becomes the epic ID)"
+        );
+        assert!(readme.contains("laid_at:"), "laid_at must be set");
+    }
+
+    #[test]
+    fn bearing_lay_epic_field_preserves_existing_frontmatter() {
+        let temp = TempDir::new().unwrap();
+        let board_dir = create_test_bearing_with_status(&temp, "ready");
+        seed_readiness_docs(
+            &board_dir,
+            "test-research",
+            strong_evidence_fixture(),
+            cited_assessment_fixture(),
+        );
+
+        run_lay_at(&board_dir, "test-research").unwrap();
+
+        let readme =
+            fs::read_to_string(board_dir.join("bearings/test-research/README.md")).unwrap();
+        // Original fields preserved
+        assert!(readme.contains("id: test-research"));
+        assert!(readme.contains("title: Test Research"));
+        // New lineage field added
+        assert!(readme.contains("epic: test-research"));
     }
 
     #[test]

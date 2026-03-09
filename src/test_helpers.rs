@@ -852,6 +852,8 @@ pub struct BearingFactory {
     status: BearingStatus,
     has_evidence: bool,
     has_assessment: bool,
+    epic: Option<String>,
+    goals: Option<Vec<String>>,
 }
 
 impl Default for BearingFactory {
@@ -862,6 +864,8 @@ impl Default for BearingFactory {
             status: BearingStatus::Exploring,
             has_evidence: false,
             has_assessment: false,
+            epic: None,
+            goals: None,
         }
     }
 }
@@ -900,6 +904,18 @@ impl BearingFactory {
         self
     }
 
+    /// Set the epic lineage token.
+    pub fn epic(mut self, epic: &str) -> Self {
+        self.epic = Some(epic.to_string());
+        self
+    }
+
+    /// Set the goal lineage references.
+    pub fn goals(mut self, goals: Vec<&str>) -> Self {
+        self.goals = Some(goals.into_iter().map(ToString::to_string).collect());
+        self
+    }
+
     /// Build the Bearing struct.
     pub fn build(self) -> Bearing {
         Bearing {
@@ -911,6 +927,8 @@ impl BearingFactory {
                 created_at: None,
                 decline_reason: None,
                 laid_at: None,
+                epic: self.epic,
+                goals: self.goals,
             },
             path: PathBuf::from(format!("{}.md", self.id)),
             has_evidence: self.has_evidence,

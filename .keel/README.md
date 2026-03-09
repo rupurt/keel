@@ -112,6 +112,6 @@
 
 | Voyage | Status |
 |--------|--------|
-| [Lineage](epics/1vzWfz000/voyages/1vzWg5000/) | planned |
-| [Validation](epics/1vzWfz000/voyages/1vzWg8000/) | in-progress |
+| [Lineage Persistence](epics/1vzWfz000/voyages/1vzWg5000/) | in-progress |
+| [Lineage Validation](epics/1vzWfz000/voyages/1vzWg8000/) | in-progress |
 

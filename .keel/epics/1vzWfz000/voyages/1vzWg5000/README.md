@@ -1,11 +1,12 @@
 ---
 id: 1vzWg5000
 title: Lineage Persistence
-status: planned
+status: in-progress
 epic: 1vzWfz000
 created_at: 2026-03-09T02:13:29
 index: 1
 updated_at: 2026-03-09T02:18:17
+started_at: 2026-03-09T09:07:38
 ---
 
 # Lineage Persistence
@@ -24,10 +25,10 @@ updated_at: 2026-03-09T02:18:17
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/2 stories complete
+**Progress:** 1/2 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [LinkageModel](../../../../stories/1vzWgT000/README.md) | feat | backlog |
-| [GoalCapture](../../../../stories/1vzWgV000/README.md) | feat | backlog |
+| [Epic Lineage Field](../../../../stories/1vzWgT000/README.md) | feat | done |
+| [Goal Link Persistence](../../../../stories/1vzWgV000/README.md) | feat | backlog |
 <!-- END GENERATED -->

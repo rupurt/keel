@@ -83,6 +83,19 @@ pub fn run(pattern: &str) -> Result<()> {
             .laid_at
             .map(|laid_at| format!("{}", laid_at.dimmed())),
     );
+    metadata.push_optional_row(
+        "Epic:",
+        bearing
+            .frontmatter
+            .epic
+            .as_ref()
+            .map(|epic| epic.to_string()),
+    );
+    if let Some(goals) = &bearing.frontmatter.goals
+        && !goals.is_empty()
+    {
+        metadata.push_row("Goals:", goals.join(", "));
+    }
 
     let mut skipped_date_keys = BTreeSet::from(["created_at".to_string()]);
     if bearing.frontmatter.laid_at.is_some() {
@@ -715,5 +728,110 @@ mod tests {
         assert!(rendered.contains("keel bearing file BRG-01 BRIEF"));
         assert!(rendered.contains("keel bearing file BRG-01 EVIDENCE"));
         assert!(rendered.contains("keel bearing file BRG-01 ASSESSMENT"));
+    }
+
+    #[test]
+    fn bearing_show_renders_lineage_fields_when_present() {
+        let bearing = BearingFactory::new("BRG-01")
+            .status(crate::domain::model::BearingStatus::Laid)
+            .has_evidence(true)
+            .has_assessment(true)
+            .epic("BRG-01")
+            .goals(vec!["GOAL-01", "GOAL-02"])
+            .build();
+
+        let mut metadata = ShowKeyValues::new().with_min_label_width(9);
+        metadata.push_row("Title:", bearing.frontmatter.title.clone());
+        metadata.push_row("Status:", bearing.frontmatter.status.to_string());
+        metadata.push_optional_row(
+            "Epic:",
+            bearing.frontmatter.epic.as_ref().map(|e| e.to_string()),
+        );
+        if let Some(goals) = &bearing.frontmatter.goals
+            && !goals.is_empty()
+        {
+            metadata.push_row("Goals:", goals.join(", "));
+        }
+
+        let mut document = ShowDocument::new();
+        document.push_header(metadata, None);
+        let rendered = document.render();
+
+        assert!(rendered.contains("Epic:"), "should render Epic field");
+        assert!(
+            rendered.contains("BRG-01"),
+            "should contain the epic ID value"
+        );
+        assert!(rendered.contains("Goals:"), "should render Goals field");
+        assert!(
+            rendered.contains("GOAL-01") && rendered.contains("GOAL-02"),
+            "should render all goal references"
+        );
+    }
+
+    #[test]
+    fn bearing_show_omits_lineage_fields_when_absent() {
+        let bearing = BearingFactory::new("BRG-02")
+            .status(crate::domain::model::BearingStatus::Exploring)
+            .build();
+
+        let mut metadata = ShowKeyValues::new().with_min_label_width(9);
+        metadata.push_row("Title:", bearing.frontmatter.title.clone());
+        metadata.push_row("Status:", bearing.frontmatter.status.to_string());
+        metadata.push_optional_row(
+            "Epic:",
+            bearing.frontmatter.epic.as_ref().map(|e| e.to_string()),
+        );
+        if let Some(goals) = &bearing.frontmatter.goals
+            && !goals.is_empty()
+        {
+            metadata.push_row("Goals:", goals.join(", "));
+        }
+
+        let mut document = ShowDocument::new();
+        document.push_header(metadata, None);
+        let rendered = document.render();
+
+        assert!(
+            !rendered.contains("Epic:"),
+            "should not render Epic when absent"
+        );
+        assert!(
+            !rendered.contains("Goals:"),
+            "should not render Goals when absent"
+        );
+    }
+
+    #[test]
+    fn bearing_show_renders_unknown_lineage_values_without_truncation() {
+        let bearing = BearingFactory::new("BRG-03")
+            .status(crate::domain::model::BearingStatus::Laid)
+            .epic("some-unexpected-legacy-epic-id-that-is-very-long")
+            .goals(vec!["UNKNOWN-GOAL-REF", "LEGACY-01"])
+            .build();
+
+        let mut metadata = ShowKeyValues::new().with_min_label_width(9);
+        metadata.push_optional_row(
+            "Epic:",
+            bearing.frontmatter.epic.as_ref().map(|e| e.to_string()),
+        );
+        if let Some(goals) = &bearing.frontmatter.goals
+            && !goals.is_empty()
+        {
+            metadata.push_row("Goals:", goals.join(", "));
+        }
+
+        let mut document = ShowDocument::new();
+        document.push_header(metadata, None);
+        let rendered = document.render();
+
+        assert!(
+            rendered.contains("some-unexpected-legacy-epic-id-that-is-very-long"),
+            "should render full epic value without truncation"
+        );
+        assert!(
+            rendered.contains("UNKNOWN-GOAL-REF, LEGACY-01"),
+            "should render unknown goal references without truncation"
+        );
     }
 }

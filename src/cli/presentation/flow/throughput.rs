@@ -225,6 +225,8 @@ mod tests {
                 created_at: None,
                 decline_reason: None,
                 laid_at: Some(laid_at.and_hms_opt(0, 0, 0).unwrap()),
+                epic: None,
+                goals: None,
             },
             path: PathBuf::from(format!("{}.md", id)),
             has_evidence: true,

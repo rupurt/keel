@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-09T09:06:17.520654259-07:00
+mode: manual
+---
+bearing lay output now includes 'Lineage: epic={id}' line; bearing show renders Epic: and Goals: fields from frontmatter; update_bearing_status persists epic field during lay transition

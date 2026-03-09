@@ -81,6 +81,12 @@ pub struct BearingFrontmatter {
     /// Date bearing was laid (graduated to epic)
     #[serde(default, deserialize_with = "deserialize_strict_datetime")]
     pub laid_at: Option<NaiveDateTime>,
+    /// Epic ID this bearing graduated to (set during lay)
+    #[serde(default)]
+    pub epic: Option<String>,
+    /// Goal references from BRIEF.md Success Criteria linked to the target epic
+    #[serde(default)]
+    pub goals: Option<Vec<String>>,
 }
 
 /// A bearing with its frontmatter and file location
@@ -246,6 +252,27 @@ laid_at: 2026-01-28T12:00:00
     }
 
     #[test]
+    fn bearing_frontmatter_deserializes_lineage_fields() {
+        let yaml = r#"
+id: ai-search
+title: AI Search
+status: laid
+laid_at: 2026-01-28T12:00:00
+epic: ai-search
+goals:
+  - GOAL-01
+  - GOAL-02
+"#;
+        let fm: BearingFrontmatter = serde_yaml::from_str(yaml).unwrap();
+
+        assert_eq!(fm.epic.as_deref(), Some("ai-search"));
+        assert_eq!(
+            fm.goals.as_deref(),
+            Some(vec!["GOAL-01".to_string(), "GOAL-02".to_string()].as_slice())
+        );
+    }
+
+    #[test]
     fn bearing_frontmatter_handles_defaults() {
         let yaml = r#"
 id: test
@@ -256,6 +283,8 @@ title: Test Bearing
         assert_eq!(fm.status, BearingStatus::Exploring);
         assert!(fm.created_at.is_none());
         assert!(fm.decline_reason.is_none());
+        assert!(fm.epic.is_none());
+        assert!(fm.goals.is_none());
     }
 
     #[test]
@@ -309,6 +338,8 @@ title: Test Bearing
                 created_at: None,
                 decline_reason: None,
                 laid_at: None,
+                epic: None,
+                goals: None,
             },
             path: PathBuf::from("test"),
             has_evidence: evidence,

@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-09T09:06:38.097328227-07:00
+mode: manual
+---
+bearing_show_renders_unknown_lineage_values_without_truncation test verifies long/legacy epic IDs and non-GOAL-* references render in full; ShowKeyValues passes values through styled_inline_markdown without truncation
