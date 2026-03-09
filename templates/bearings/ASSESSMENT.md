@@ -22,20 +22,24 @@ id: {{id}}
 
 ## Analysis
 
+### Findings
+
+- Key finding with canonical support [SRC-01]
+
 ### Opportunity Cost
 
-What are we not doing by pursuing this?
+What are we not doing by pursuing this? Cite the tradeoff, for example [SRC-01].
 
 ### Dependencies
 
-What must be true for this to succeed?
+- Dependency or prerequisite with support [SRC-01]
 
 ### Alternatives Considered
 
-What other approaches did we evaluate?
+- Alternative path with support [SRC-01]
 
 ## Recommendation
 
-[ ] Proceed → convert to epic
-[ ] Park → revisit later
-[ ] Decline → document learnings
+[ ] Proceed → convert to epic [SRC-01]
+[ ] Park → revisit later [SRC-01]
+[ ] Decline → document learnings [SRC-01]

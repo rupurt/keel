@@ -119,7 +119,7 @@ use crate::infrastructure::config::{find_board_dir, load_config};
 use crate::infrastructure::frontmatter_mutation::{Mutation, apply};
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::markdown_sections::extract_section;
-use crate::infrastructure::scoring::{calculate_score, load_assessment};
+use crate::infrastructure::scoring::load_bearing_score;
 use crate::infrastructure::template_rendering;
 use crate::infrastructure::templates;
 use guidance::{
@@ -857,13 +857,12 @@ fn get_bearing_score(
         .join("bearings")
         .join(bearing.id())
         .join("ASSESSMENT.md");
+    let evidence_path = board_dir
+        .join("bearings")
+        .join(bearing.id())
+        .join("EVIDENCE.md");
 
-    let factors = load_assessment(&assessment_path).ok()?;
-    if !factors.is_complete() {
-        return None;
-    }
-
-    calculate_score(&factors, weights)
+    load_bearing_score(&assessment_path, &evidence_path, weights)
         .ok()
         .map(|s| s.weighted_score)
 }

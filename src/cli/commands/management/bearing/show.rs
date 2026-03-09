@@ -11,7 +11,7 @@ use crate::cli::style;
 use crate::domain::model::BearingStatus;
 use crate::infrastructure::config::{find_board_dir, load_config};
 use crate::infrastructure::loader::load_board;
-use crate::infrastructure::scoring::{calculate_score, load_assessment};
+use crate::infrastructure::scoring::{load_assessment, load_bearing_score};
 use crate::read_model::bearing_show::{
     self, BearingAssessmentSummary, BearingBriefSummary, BearingEvidenceSummary,
 };
@@ -105,6 +105,7 @@ pub fn run(pattern: &str) -> Result<()> {
         render_brief_section(&projection.brief),
         render_evidence_section(projection.evidence.as_ref()),
         render_assessment_section(
+            &evidence_path,
             &assessment_path,
             projection.assessment.as_ref(),
             config.mode(),
@@ -221,6 +222,7 @@ fn render_evidence_section(summary: Option<&BearingEvidenceSummary>) -> ShowSect
 }
 
 fn render_assessment_section(
+    evidence_path: &Path,
     assessment_path: &Path,
     summary: Option<&BearingAssessmentSummary>,
     mode: &str,
@@ -236,17 +238,27 @@ fn render_assessment_section(
     fields.push_row("Status:", format!("{}", "authored".green()));
     fields.push_row("Mode:", mode.to_string());
 
-    if let Ok(factors) = load_assessment(assessment_path) {
-        fields.push_row("Impact:", format_factor(factors.impact));
-        fields.push_row("Confidence:", format_factor(factors.confidence));
-        fields.push_row("Effort:", format_factor(factors.effort));
-        fields.push_row("Risk:", format_factor(factors.risk));
-        if factors.is_complete() {
-            if let Ok(score) = calculate_score(&factors, weights) {
-                fields.push_row("EV Score:", format!("{:.2}", score.weighted_score));
+    if let Ok(analysis) = load_assessment(assessment_path) {
+        fields.push_row("Impact:", format_factor(analysis.factors.impact));
+        fields.push_row("Confidence:", format_factor(analysis.factors.confidence));
+        fields.push_row("Effort:", format_factor(analysis.factors.effort));
+        fields.push_row("Risk:", format_factor(analysis.factors.risk));
+        if analysis.factors.is_complete() {
+            match load_bearing_score(assessment_path, evidence_path, weights) {
+                Ok(score) => {
+                    fields.push_row("EV Score:", score.display());
+                    fields.push_row(
+                        "Evidence Multiplier:",
+                        format!("{:.2}", score.evidence_multiplier),
+                    );
+                }
+                Err(err) => fields.push_row("Evidence Support:", err.to_string()),
             }
         } else {
-            fields.push_row("Missing Factors:", factors.missing_factors().join(", "));
+            fields.push_row(
+                "Missing Factors:",
+                analysis.factors.missing_factors().join(", "),
+            );
         }
     }
 
@@ -257,6 +269,11 @@ fn render_assessment_section(
 
     section.push_key_values(fields);
 
+    section.push_labeled_bullets(
+        counted_label("Findings", summary.findings.len()),
+        summary.findings.iter().cloned(),
+        Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
+    );
     section.push_labeled_excerpt(
         "Opportunity Cost:",
         summary.opportunity_cost.as_ref(),
@@ -388,9 +405,11 @@ mod tests {
     #[test]
     fn bearing_assessment_renders_inline_list_counts() {
         let section = render_assessment_section(
+            Path::new("/tmp/EVIDENCE.md"),
             Path::new("/tmp/ASSESSMENT.md"),
             Some(&BearingAssessmentSummary {
                 recommendation: Some("Proceed".to_string()),
+                findings: vec!["Finding one [SRC-01]".to_string()],
                 opportunity_cost: Some(SectionExcerpt {
                     paragraphs: vec!["A roadmap delay".to_string()],
                     list_items: Vec::new(),
@@ -404,6 +423,7 @@ mod tests {
 
         let lines = render_lines(section);
 
+        assert!(lines.contains(&"  Findings(1):".to_string()));
         assert!(lines.contains(&"  Dependencies(1):".to_string()));
         assert!(lines.contains(&"  Alternatives(2):".to_string()));
         assert!(

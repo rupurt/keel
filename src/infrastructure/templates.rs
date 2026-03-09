@@ -469,6 +469,8 @@ mod tests {
         assert!(bearing::ASSESSMENT.contains("| Confidence |"));
         assert!(bearing::ASSESSMENT.contains("| Effort |"));
         assert!(bearing::ASSESSMENT.contains("| Risk |"));
+        assert!(bearing::ASSESSMENT.contains("### Findings"));
+        assert!(bearing::ASSESSMENT.contains("[SRC-01]"));
     }
 
     #[test]

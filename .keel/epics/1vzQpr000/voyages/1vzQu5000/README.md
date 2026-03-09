@@ -1,11 +1,12 @@
 ---
 id: 1vzQu5000
 title: Evidence-Backed Assessment and Surfaces
-status: planned
+status: in-progress
 epic: 1vzQpr000
 created_at: 2026-03-08T20:03:33
 index: 3
 updated_at: 2026-03-08T20:10:04
+started_at: 2026-03-08T21:09:02
 ---
 
 # Evidence-Backed Assessment and Surfaces
@@ -24,11 +25,11 @@ updated_at: 2026-03-08T20:10:04
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/3 stories complete
+**Progress:** 1/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Make Bearing Assessment Evidence-Aware And Compute EV Scores](../../../../stories/1vzQwq000/README.md) | feat | backlog |
+| [Make Bearing Assessment Evidence-Aware And Compute EV Scores](../../../../stories/1vzQwq000/README.md) | feat | done |
 | [Render Evidence-Backed Bearing Show And File Surfaces](../../../../stories/1vzQwr000/README.md) | feat | backlog |
 | [Gate Readiness And Board Projections On Evidence Quality](../../../../stories/1vzQws000/README.md) | feat | backlog |
 <!-- END GENERATED -->

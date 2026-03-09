@@ -32,6 +32,7 @@ pub struct BearingEvidenceSummary {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct BearingAssessmentSummary {
     pub recommendation: Option<String>,
+    pub findings: Vec<String>,
     pub opportunity_cost: Option<SectionExcerpt>,
     pub dependencies: Vec<String>,
     pub alternatives: Vec<String>,
@@ -84,6 +85,7 @@ pub fn build_bearing_show_projection(
         let recommendation_section = section_text(content, "## Recommendation");
         BearingAssessmentSummary {
             recommendation: extract_checked_recommendation(&recommendation_section),
+            findings: parse_markdown_list_items(&section_text(content, "### Findings")),
             opportunity_cost: extract_section_excerpt(&section_text(
                 content,
                 "### Opportunity Cost",
@@ -281,6 +283,9 @@ Looks practical.
 "#;
         let assessment = r#"
 ## Analysis
+### Findings
+- Finding supported by evidence [SRC-01]
+
 ### Opportunity Cost
 Delayed roadmap item.
 
@@ -340,6 +345,10 @@ Delayed roadmap item.
 
         let assessment = projection.assessment.unwrap();
         assert_eq!(assessment.recommendation.as_deref(), Some("Proceed"));
+        assert_eq!(
+            assessment.findings,
+            vec!["Finding supported by evidence [SRC-01]"]
+        );
         assert_eq!(
             assessment
                 .opportunity_cost
