@@ -108,6 +108,22 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
 8. **Graduate**: If research is conclusive, graduate the bearing to a strategic Epic with `just keel bearing lay <id>`.
 9. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this bearing research package after the final lifecycle transition you take for it (for example `research`, `assess`, or `lay`) so generated `.keel` artifacts are included.
 
+## Mission Workflow (Autonomous Harness)
+
+1. **Initialize Mission**: For long-running objectives that span multiple epics, create a Mission:
+   - `just keel mission new "<Title>"`
+2. **Refine Charter**: Iteratively define goals and constraints until the charter is ready:
+   - `just keel mission refine <id>` (to see next question)
+   - `just keel mission refine <id> --answer "<text>"` (to record answer)
+3. **Activate**: Once the charter has at least one authored `board:` goal, activate the mission:
+   - `just keel mission activate <id>`
+4. **Autonomous Execution**:
+   - `just keel next --agent` will recommend the next work unit (bearing or epic) when the queue is empty but mission goals are unmet.
+   - Use `just keel mission log <id> --entry "<text>"` to record session decisions and session progress.
+5. **Achieve and Verify**:
+   - Transition to `achieved` when board goals are met: `just keel mission achieve <id>`
+   - Final human sign-off: `just keel mission verify <id>`
+
 ## Global Hygiene Checklist
 
 Apply these checks to **every change** before finalizing work:

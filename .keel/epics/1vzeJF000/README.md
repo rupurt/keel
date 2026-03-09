@@ -18,11 +18,11 @@ created_at: 2026-03-09T10:24:55
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/4 voyages complete, 3/16 stories done
+**Progress:** 4/4 voyages complete, 16/16 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Domain Foundation](voyages/1vzeMk000/) | in-progress | 3/3 |
-| [CLI Commands](voyages/1vzeMq000/) | draft | 0/5 |
-| [Lineage And Doctor](voyages/1vzeMv000/) | draft | 0/4 |
-| [Flow Integration](voyages/1vzeMz000/) | draft | 0/4 |
+| [Domain Foundation](voyages/1vzeMk000/) | done | 3/3 |
+| [CLI Commands](voyages/1vzeMq000/) | done | 5/5 |
+| [Lineage And Doctor](voyages/1vzeMv000/) | done | 4/4 |
+| [Flow Integration](voyages/1vzeMz000/) | done | 4/4 |
 <!-- END GENERATED -->

@@ -1,7 +1,7 @@
 ---
 id: 1vzeMv000
 title: Lineage And Doctor
-status: draft
+status: done
 epic: 1vzeJF000
 created_at: 2026-03-09T10:26:13
 index: 3
@@ -23,12 +23,12 @@ index: 3
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/4 stories complete
+**Progress:** 4/4 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Charter Goal Parser](../../../../stories/1vzeUZ000/README.md) | feat | icebox |
-| [Mission Achievement Gate Logic](../../../../stories/1vzeUa000/README.md) | feat | icebox |
-| [Mission Lineage Field And Loader](../../../../stories/1vzeVf000/README.md) | feat | icebox |
-| [Mission Doctor Checks](../../../../stories/1vzeVj000/README.md) | feat | icebox |
+| [Charter Goal Parser](../../../../stories/1vzeUZ000/README.md) | feat | done |
+| [Mission Achievement Gate Logic](../../../../stories/1vzeUa000/README.md) | feat | done |
+| [Mission Lineage Field And Loader](../../../../stories/1vzeVf000/README.md) | feat | done |
+| [Mission Doctor Checks](../../../../stories/1vzeVj000/README.md) | feat | done |
 <!-- END GENERATED -->

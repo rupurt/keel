@@ -1,10 +1,12 @@
 ---
 id: 1vzeMq000
 title: CLI Commands
-status: draft
+status: done
 epic: 1vzeJF000
 created_at: 2026-03-09T10:26:08
 index: 2
+updated_at: 2026-03-09T13:41:44
+started_at: 2026-03-09T13:41:46
 ---
 
 # CLI Commands
@@ -23,13 +25,13 @@ index: 2
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/5 stories complete
+**Progress:** 5/5 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Mission Transition Commands](../../../../stories/1vzeUT000/README.md) | feat | icebox |
-| [Mission Log And Digest](../../../../stories/1vzeUU000/README.md) | feat | icebox |
-| [Mission New Command](../../../../stories/1vzeVP000/README.md) | feat | icebox |
-| [Mission Show And List Commands](../../../../stories/1vzeVT000/README.md) | feat | icebox |
-| [Mission Refine And Activate](../../../../stories/1vzeVa000/README.md) | feat | icebox |
+| [Mission Transition Commands](../../../../stories/1vzeUT000/README.md) | feat | done |
+| [Mission Log And Digest](../../../../stories/1vzeUU000/README.md) | feat | done |
+| [Mission New Command](../../../../stories/1vzeVP000/README.md) | feat | done |
+| [Mission Show And List Commands](../../../../stories/1vzeVT000/README.md) | feat | done |
+| [Mission Refine And Activate](../../../../stories/1vzeVa000/README.md) | feat | done |
 <!-- END GENERATED -->
