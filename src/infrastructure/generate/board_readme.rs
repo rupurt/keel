@@ -61,8 +61,16 @@ fn write_bearings_section(output: &mut String, board: &Board) {
         .collect();
 
     if !visible.is_empty() {
-        writeln!(output, "| Bearing | Status | Survey | Assessment | Laid |").unwrap();
-        writeln!(output, "|---------|--------|--------|------------|------|").unwrap();
+        writeln!(
+            output,
+            "| Bearing | Status | Evidence | Assessment | Laid |"
+        )
+        .unwrap();
+        writeln!(
+            output,
+            "|---------|--------|----------|------------|------|"
+        )
+        .unwrap();
 
         let mut sorted = visible;
         sort_indexed(
@@ -72,7 +80,7 @@ fn write_bearings_section(output: &mut String, board: &Board) {
         );
 
         for bearing in sorted {
-            let survey = if bearing.has_survey { "✓" } else { "-" };
+            let evidence = if bearing.has_evidence { "✓" } else { "-" };
             let assessment = if bearing.has_assessment { "✓" } else { "-" };
             let laid = if bearing.frontmatter.status == BearingStatus::Laid {
                 "✓"
@@ -85,7 +93,7 @@ fn write_bearings_section(output: &mut String, board: &Board) {
                 bearing.title(),
                 bearing.id(),
                 bearing.frontmatter.status,
-                survey,
+                evidence,
                 assessment,
                 laid
             )
@@ -270,7 +278,7 @@ mod tests {
             .bearing(
                 TestBearing::new("test-research")
                     .status("exploring")
-                    .has_survey(true),
+                    .has_evidence(true),
             )
             .build();
 
@@ -279,7 +287,7 @@ mod tests {
 
         assert!(readme.contains("## Bearings"));
         assert!(readme.contains("test-research"));
-        assert!(readme.contains("| Bearing | Status | Survey | Assessment | Laid |"));
+        assert!(readme.contains("| Bearing | Status | Evidence | Assessment | Laid |"));
     }
 
     #[test]
@@ -289,7 +297,7 @@ mod tests {
             .bearing(
                 TestBearing::new("laid-bearing")
                     .status("laid")
-                    .has_survey(true)
+                    .has_evidence(true)
                     .has_assessment(true),
             )
             .build();

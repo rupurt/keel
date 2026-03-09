@@ -24,8 +24,7 @@ static EPIC_PRD_DEFAULT_ROW_MARKERS: &[&str] = &[
 ];
 static BEARING_REQUIRED_DOCUMENT_LINKS: &[&str] =
     &["[BRIEF.md](BRIEF.md)", "[ASSESSMENT.md](ASSESSMENT.md)"];
-static BEARING_RESEARCH_DOCUMENT_LINKS: &[&str] =
-    &["[EVIDENCE.md](EVIDENCE.md)", "[SURVEY.md](SURVEY.md)"];
+static BEARING_EVIDENCE_DOCUMENT_LINKS: &[&str] = &["[EVIDENCE.md](EVIDENCE.md)"];
 
 /// Check for date field naming and type consistency.
 ///
@@ -595,7 +594,7 @@ pub fn check_bearing_readme_structure(path: &Path) -> Vec<Problem> {
     ));
 
     if let Some(documents_block) = extract_marker_block(&content, "DOCUMENTS")
-        && !BEARING_RESEARCH_DOCUMENT_LINKS.iter().any(|document_link| {
+        && !BEARING_EVIDENCE_DOCUMENT_LINKS.iter().any(|document_link| {
             documents_block_has_authored_document_row(&documents_block, document_link)
         })
     {
@@ -604,6 +603,17 @@ pub fn check_bearing_readme_structure(path: &Path) -> Vec<Problem> {
             Severity::Error,
             CheckId::BearingReadmeStructure,
             "README Documents section must include authored row for [EVIDENCE.md](EVIDENCE.md)",
+        ));
+    }
+
+    if let Some(documents_block) = extract_marker_block(&content, "DOCUMENTS")
+        && documents_block_has_authored_document_row(&documents_block, "[SURVEY.md](SURVEY.md)")
+    {
+        problems.push(contract_problem(
+            path,
+            Severity::Error,
+            CheckId::BearingReadmeStructure,
+            "README Documents section still references legacy [SURVEY.md](SURVEY.md); replace it with [EVIDENCE.md](EVIDENCE.md)",
         ));
     }
 

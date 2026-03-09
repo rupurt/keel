@@ -69,7 +69,7 @@ pub struct TestBearing {
     pub id: String,
     pub title: String,
     pub status: String,
-    pub has_survey: bool,
+    pub has_evidence: bool,
     pub has_assessment: bool,
     pub index: Option<u32>,
 }
@@ -340,7 +340,7 @@ impl Default for TestBearing {
             id: "BRG-01".to_string(),
             title: "Test Bearing".to_string(),
             status: "exploring".to_string(),
-            has_survey: false,
+            has_evidence: false,
             has_assessment: false,
             index: None,
         }
@@ -365,8 +365,8 @@ impl TestBearing {
         self
     }
 
-    pub fn has_survey(mut self, has_survey: bool) -> Self {
-        self.has_survey = has_survey;
+    pub fn has_evidence(mut self, has_evidence: bool) -> Self {
+        self.has_evidence = has_evidence;
         self
     }
 
@@ -652,9 +652,9 @@ Test harness epic problem statement.
                 )
                 .unwrap();
 
-                // SURVEY.md
-                if bearing.has_survey {
-                    fs::write(bearing_dir.join("SURVEY.md"), "# SURVEY\n").unwrap();
+                // EVIDENCE.md
+                if bearing.has_evidence {
+                    fs::write(bearing_dir.join("EVIDENCE.md"), "# EVIDENCE\n").unwrap();
                 }
                 // ASSESSMENT.md
                 if bearing.has_assessment {
@@ -815,7 +815,7 @@ pub struct BearingFactory {
     id: String,
     title: String,
     status: BearingStatus,
-    has_survey: bool,
+    has_evidence: bool,
     has_assessment: bool,
 }
 
@@ -825,7 +825,7 @@ impl Default for BearingFactory {
             id: "test".to_string(),
             title: "Test Bearing".to_string(),
             status: BearingStatus::Exploring,
-            has_survey: false,
+            has_evidence: false,
             has_assessment: false,
         }
     }
@@ -853,9 +853,9 @@ impl BearingFactory {
         self
     }
 
-    /// Set whether the bearing has a survey.
-    pub fn has_survey(mut self, has_survey: bool) -> Self {
-        self.has_survey = has_survey;
+    /// Set whether the bearing has evidence.
+    pub fn has_evidence(mut self, has_evidence: bool) -> Self {
+        self.has_evidence = has_evidence;
         self
     }
 
@@ -878,7 +878,7 @@ impl BearingFactory {
                 laid_at: None,
             },
             path: PathBuf::from(format!("{}.md", self.id)),
-            has_survey: self.has_survey,
+            has_evidence: self.has_evidence,
             has_assessment: self.has_assessment,
         }
     }
@@ -1055,5 +1055,24 @@ mod tests {
         assert!(content.contains("type: bug"));
         assert!(content.contains("status: in-progress"));
         assert!(content.contains("scope: my-epic/01-voyage"));
+    }
+
+    #[test]
+    fn bearing_fixture_boards_use_evidence_contract() {
+        let temp = TestBoardBuilder::new()
+            .bearing(
+                TestBearing::new("BRG-01")
+                    .has_evidence(true)
+                    .has_assessment(true),
+            )
+            .build();
+
+        let bearing_dir = temp.path().join("bearings/BRG-01");
+        let readme = fs::read_to_string(bearing_dir.join("README.md")).unwrap();
+
+        assert!(readme.contains("[EVIDENCE.md](EVIDENCE.md)"));
+        assert!(!readme.contains("[SURVEY.md](SURVEY.md)"));
+        assert!(bearing_dir.join("EVIDENCE.md").exists());
+        assert!(!bearing_dir.join("SURVEY.md").exists());
     }
 }

@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-08T20:39:23.500019183-07:00
+mode: manual
+---
+Fixtures and generated bearing artifacts now scaffold EVIDENCE.md only; supported boards no longer emit SURVEY.md.

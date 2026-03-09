@@ -43,8 +43,6 @@ pub mod bearing {
     pub const BRIEF: &str = include_str!("../../templates/bearings/BRIEF.md");
     /// Bearing EVIDENCE template
     pub const EVIDENCE: &str = include_str!("../../templates/bearings/EVIDENCE.md");
-    /// Bearing SURVEY template
-    pub const SURVEY: &str = include_str!("../../templates/bearings/SURVEY.md");
     /// Bearing ASSESSMENT template
     pub const ASSESSMENT: &str = include_str!("../../templates/bearings/ASSESSMENT.md");
 }
@@ -496,7 +494,6 @@ mod tests {
             ("bearing README", bearing::README),
             ("bearing BRIEF", bearing::BRIEF),
             ("bearing EVIDENCE", bearing::EVIDENCE),
-            ("bearing SURVEY", bearing::SURVEY),
             ("bearing ASSESSMENT", bearing::ASSESSMENT),
             ("adr", adr::ADR),
         ];
@@ -530,7 +527,6 @@ mod tests {
             ("bearing README", bearing::README),
             ("bearing BRIEF", bearing::BRIEF),
             ("bearing EVIDENCE", bearing::EVIDENCE),
-            ("bearing SURVEY", bearing::SURVEY),
             ("bearing ASSESSMENT", bearing::ASSESSMENT),
             ("adr", adr::ADR),
         ];

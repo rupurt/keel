@@ -18,7 +18,7 @@ pub enum BearingStatus {
     /// Initial research phase
     #[default]
     Exploring,
-    /// Actively gathering data (has SURVEY.md)
+    /// Actively gathering data (has EVIDENCE.md)
     Evaluating,
     /// Ready for decision (has ASSESSMENT.md)
     Ready,
@@ -91,8 +91,8 @@ pub struct Bearing {
     /// Path to the bearing BRIEF.md
     #[allow(dead_code)] // Available for file operations
     pub path: PathBuf,
-    /// Whether SURVEY.md exists
-    pub has_survey: bool,
+    /// Whether EVIDENCE.md exists
+    pub has_evidence: bool,
     /// Whether ASSESSMENT.md exists
     pub has_assessment: bool,
 }
@@ -129,7 +129,7 @@ impl Bearing {
             // Terminal states sort last (shouldn't appear in active lists)
             _ => 3,
         };
-        let progress_rank = match (self.has_survey, self.has_assessment) {
+        let progress_rank = match (self.has_evidence, self.has_assessment) {
             (true, true) => 0,
             (true, false) => 1,
             _ => 2,
@@ -299,7 +299,7 @@ title: Test Bearing
         assert!("invalid".parse::<BearingStatus>().is_err());
     }
 
-    fn make_bearing(id: &str, status: BearingStatus, survey: bool, assessment: bool) -> Bearing {
+    fn make_bearing(id: &str, status: BearingStatus, evidence: bool, assessment: bool) -> Bearing {
         Bearing {
             frontmatter: BearingFrontmatter {
                 id: id.to_string(),
@@ -311,7 +311,7 @@ title: Test Bearing
                 laid_at: None,
             },
             path: PathBuf::from("test"),
-            has_survey: survey,
+            has_evidence: evidence,
             has_assessment: assessment,
         }
     }
@@ -329,11 +329,11 @@ title: Test Bearing
     #[test]
     fn priority_key_progress_within_same_status() {
         let both = make_bearing("a", BearingStatus::Evaluating, true, true);
-        let survey_only = make_bearing("a", BearingStatus::Evaluating, true, false);
+        let evidence_only = make_bearing("a", BearingStatus::Evaluating, true, false);
         let neither = make_bearing("a", BearingStatus::Evaluating, false, false);
 
-        assert!(both.priority_key() < survey_only.priority_key());
-        assert!(survey_only.priority_key() < neither.priority_key());
+        assert!(both.priority_key() < evidence_only.priority_key());
+        assert!(evidence_only.priority_key() < neither.priority_key());
     }
 
     #[test]

@@ -227,7 +227,7 @@ mod tests {
                 laid_at: Some(laid_at.and_hms_opt(0, 0, 0).unwrap()),
             },
             path: PathBuf::from(format!("{}.md", id)),
-            has_survey: true,
+            has_evidence: true,
             has_assessment: true,
         }
     }

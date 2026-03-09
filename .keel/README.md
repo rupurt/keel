@@ -5,8 +5,8 @@
 
 ## Bearings
 
-| Bearing | Status | Survey | Assessment | Laid |
-|---------|--------|--------|------------|------|
+| Bearing | Status | Evidence | Assessment | Laid |
+|---------|--------|----------|------------|------|
 | [Semantic Search and Ranking in Keel](bearings/1w5H2Bq9L/) | evaluating | ✓ | ✓ | - |
 
 ## Epics

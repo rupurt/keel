@@ -2,7 +2,7 @@
 id: 1w5H2Bq9L
 ---
 
-# Semantic Search and Ranking in Keel — Survey
+# Semantic Search and Ranking in Keel — Evidence
 
 ## Technical Research
 

@@ -273,9 +273,9 @@ pub fn run_list(status_filters: &[String]) -> Result<()> {
         return Ok(());
     }
 
-    let mut table = Table::new(&["ID", "TITLE", "STATUS", "SURVEY", "ASSESS", "EV"]);
+    let mut table = Table::new(&["ID", "TITLE", "STATUS", "EVIDENCE", "ASSESS", "EV"]);
     for (bearing, score) in bearings_with_scores {
-        let survey = if bearing.has_survey { "✓" } else { "-" };
+        let evidence = if bearing.has_evidence { "✓" } else { "-" };
         let assessment = if bearing.has_assessment { "✓" } else { "-" };
         let score_str = score
             .map(|s| format!("{:.2}", s))
@@ -285,7 +285,7 @@ pub fn run_list(status_filters: &[String]) -> Result<()> {
             bearing.id(),
             &bearing.frontmatter.title,
             &bearing.frontmatter.status.to_string(),
-            survey,
+            evidence,
             assessment,
             &score_str,
         ]);
@@ -639,7 +639,7 @@ fn get_bearing_score(
 
 /// Classify a bearing's exploration fog state.
 fn classify_fog(board_dir: &Path, bearing: &Bearing) -> FogType {
-    if bearing.has_survey && bearing.has_assessment {
+    if bearing.has_evidence && bearing.has_assessment {
         return FogType::Clear;
     }
 
@@ -662,7 +662,7 @@ fn classify_fog(board_dir: &Path, bearing: &Bearing) -> FogType {
         .count();
 
     if bearing.frontmatter.status == BearingStatus::Exploring {
-        if !bearing.has_survey && open_question_count > 0 {
+        if !bearing.has_evidence && open_question_count > 0 {
             return FogType::Blocking;
         }
 
@@ -721,7 +721,7 @@ status: {}
     fn create_fog_test_bearing(
         temp: &TempDir,
         status: &str,
-        has_survey: bool,
+        has_evidence: bool,
         has_assessment: bool,
         open_questions: usize,
         unchecked_criteria: usize,
@@ -769,8 +769,8 @@ status: {}
         )
         .unwrap();
 
-        if has_survey {
-            fs::write(bearing_dir.join("SURVEY.md"), "# Survey").unwrap();
+        if has_evidence {
+            fs::write(bearing_dir.join("EVIDENCE.md"), "# Evidence").unwrap();
         }
         if has_assessment {
             fs::write(bearing_dir.join("ASSESSMENT.md"), "# Assessment").unwrap();

@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-08T20:39:23.646459933-07:00
+mode: manual
+---
+Legacy survey aliases fail hard in bearing file resolution and loaders no longer count SURVEY.md as valid evidence.

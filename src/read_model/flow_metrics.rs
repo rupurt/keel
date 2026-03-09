@@ -107,14 +107,16 @@ pub fn calculate_metrics(board: &Board) -> FlowMetrics {
         .bearings
         .values()
         .filter(|b| {
-            b.frontmatter.status == crate::domain::model::BearingStatus::Evaluating && b.has_survey
+            b.frontmatter.status == crate::domain::model::BearingStatus::Evaluating
+                && b.has_evidence
         })
         .count();
     metrics.research.assessing_count = board
         .bearings
         .values()
         .filter(|b| {
-            b.frontmatter.status == crate::domain::model::BearingStatus::Evaluating && !b.has_survey
+            b.frontmatter.status == crate::domain::model::BearingStatus::Evaluating
+                && !b.has_evidence
         })
         .count();
     metrics.research.laid_count = board

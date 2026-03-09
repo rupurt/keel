@@ -28,6 +28,8 @@ pub fn scan_bearing_files(board_dir: &Path) -> Result<(Vec<Problem>, usize)> {
         bearing_count += 1;
         let readme_path = entry.path().join("README.md");
         let brief_path = entry.path().join("BRIEF.md");
+        let evidence_path = entry.path().join("EVIDENCE.md");
+        let legacy_survey_path = entry.path().join("SURVEY.md");
 
         if readme_path.exists() {
             // Check frontmatter and required fields
@@ -56,6 +58,32 @@ pub fn scan_bearing_files(board_dir: &Path) -> Result<(Vec<Problem>, usize)> {
                 severity: Severity::Warning,
                 path: brief_path,
                 message: "missing BRIEF.md (bearing research content)".to_string(),
+                fix: None,
+                scope: None,
+                category: None,
+                check_id: CheckId::Unknown,
+            });
+        }
+
+        if legacy_survey_path.exists() {
+            problems.push(Problem {
+                severity: Severity::Error,
+                path: legacy_survey_path,
+                message:
+                    "legacy SURVEY.md is not supported; migrate the bearing to EVIDENCE.md and rerun `keel bearing research <id>` if needed"
+                        .to_string(),
+                fix: None,
+                scope: None,
+                category: None,
+                check_id: CheckId::Unknown,
+            });
+        }
+
+        if !evidence_path.exists() && entry.path().join("ASSESSMENT.md").exists() {
+            problems.push(Problem {
+                severity: Severity::Warning,
+                path: evidence_path,
+                message: "missing EVIDENCE.md (required before ASSESSMENT.md)".to_string(),
                 fix: None,
                 scope: None,
                 category: None,
@@ -149,7 +177,7 @@ pub fn check_bearing_state_coherence(board: &Board) -> Vec<Problem> {
 
     for bearing in board.bearings.values() {
         let status = bearing.status();
-        let has_survey = bearing.has_survey;
+        let has_evidence = bearing.has_evidence;
         let has_assessment = bearing.has_assessment;
 
         // Check state transitions are valid based on document presence
@@ -158,13 +186,13 @@ pub fn check_bearing_state_coherence(board: &Board) -> Vec<Problem> {
                 // Exploring is the initial state, no documents required
             }
             BearingStatus::Evaluating => {
-                // Evaluating requires SURVEY.md
-                if !has_survey {
+                // Evaluating requires EVIDENCE.md
+                if !has_evidence {
                     problems.push(Problem {
                         severity: Severity::Warning,
                         path: bearing.path.clone(),
                         message: format!(
-                            "bearing '{}' is in evaluating state but missing SURVEY.md",
+                            "bearing '{}' is in evaluating state but missing EVIDENCE.md",
                             bearing.id()
                         ),
                         fix: None,
@@ -175,13 +203,13 @@ pub fn check_bearing_state_coherence(board: &Board) -> Vec<Problem> {
                 }
             }
             BearingStatus::Ready => {
-                // Ready requires both SURVEY.md and ASSESSMENT.md
-                if !has_survey {
+                // Ready requires both EVIDENCE.md and ASSESSMENT.md
+                if !has_evidence {
                     problems.push(Problem {
                         severity: Severity::Warning,
                         path: bearing.path.clone(),
                         message: format!(
-                            "bearing '{}' is in ready state but missing SURVEY.md",
+                            "bearing '{}' is in ready state but missing EVIDENCE.md",
                             bearing.id()
                         ),
                         fix: None,
@@ -513,7 +541,7 @@ pub fn generate_bearing_insight(board: &Board, board_dir: &Path) -> Option<Strin
     let mut needs_voyages: Vec<&str> = Vec::new();
     let mut ready_to_lay: Vec<&str> = Vec::new();
     let mut needs_recommendation: Vec<&str> = Vec::new();
-    let mut needs_survey: Vec<&str> = Vec::new();
+    let mut needs_research: Vec<&str> = Vec::new();
 
     for bearing in board.bearings.values() {
         match bearing.status() {
@@ -552,13 +580,13 @@ pub fn generate_bearing_insight(board: &Board, board_dir: &Path) -> Option<Strin
                 }
             }
             BearingStatus::Exploring => {
-                needs_survey.push(bearing.id());
+                needs_research.push(bearing.id());
             }
             _ => {}
         }
     }
 
-    // Generate insight message (priority order: needs voyages > ready to lay > needs recommendation > needs survey)
+    // Generate insight message (priority order: needs voyages > ready to lay > needs recommendation > needs research)
     if !needs_voyages.is_empty() {
         Some(format!("  → {} needs voyages", needs_voyages.join(", ")))
     } else if !ready_to_lay.is_empty() {
@@ -568,8 +596,8 @@ pub fn generate_bearing_insight(board: &Board, board_dir: &Path) -> Option<Strin
             "  → {} awaiting recommendation",
             needs_recommendation.join(", ")
         ))
-    } else if !needs_survey.is_empty() && needs_survey.len() <= 3 {
-        Some(format!("  → {} need survey", needs_survey.join(", ")))
+    } else if !needs_research.is_empty() && needs_research.len() <= 3 {
+        Some(format!("  → {} need research", needs_research.join(", ")))
     } else {
         None
     }
@@ -631,19 +659,44 @@ mod tests {
     }
 
     #[test]
-    fn test_check_bearing_state_coherence_missing_survey() {
+    fn test_check_bearing_state_coherence_missing_evidence() {
         let temp = TestBoardBuilder::new()
             .bearing(
                 TestBearing::new("BRG-01")
                     .status("evaluating")
-                    .has_survey(false),
+                    .has_evidence(false),
             )
             .build();
 
         let board = load_board(temp.path()).unwrap();
         let problems = check_bearing_state_coherence(&board);
         assert!(!problems.is_empty());
-        assert!(problems[0].message.contains("missing SURVEY.md"));
+        assert!(problems[0].message.contains("missing EVIDENCE.md"));
+    }
+
+    #[test]
+    fn bearing_doctor_rejects_legacy_survey_contract() {
+        let temp = TestBoardBuilder::new()
+            .bearing(TestBearing::new("BRG-01").status("evaluating"))
+            .build();
+
+        let bearing_dir = temp.path().join("bearings/BRG-01");
+        fs::write(bearing_dir.join("SURVEY.md"), "# Survey\n").unwrap();
+
+        let (problems, _count) = scan_bearing_files(temp.path()).unwrap();
+        let board = load_board(temp.path()).unwrap();
+        let coherence = check_bearing_state_coherence(&board);
+
+        assert!(problems.iter().any(|problem| {
+            problem
+                .message
+                .contains("legacy SURVEY.md is not supported")
+        }));
+        assert!(
+            coherence
+                .iter()
+                .any(|problem| problem.message.contains("missing EVIDENCE.md"))
+        );
     }
 
     #[test]

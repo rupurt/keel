@@ -302,12 +302,12 @@ fn find_next_bearing_action(board: &Board) -> Option<(&Bearing, String)> {
         // Determine what action is needed
         let action = if bearing.status() == BearingStatus::Ready {
             "lay".to_string()
-        } else if !bearing.has_survey {
+        } else if !bearing.has_evidence {
             "research".to_string()
         } else if !bearing.has_assessment {
             "assess".to_string()
         } else {
-            // Has survey and assessment but still exploring - might need review
+            // Has evidence and assessment but still exploring - might need review
             "review".to_string()
         };
 
@@ -561,7 +561,7 @@ mod tests {
         assert_eq!(next_up.human_items[2].category, "plan");
     }
 
-    fn make_bearing(id: &str, title: &str, has_survey: bool, has_assessment: bool) -> Bearing {
+    fn make_bearing(id: &str, title: &str, has_evidence: bool, has_assessment: bool) -> Bearing {
         Bearing {
             frontmatter: BearingFrontmatter {
                 id: id.to_string(),
@@ -573,13 +573,13 @@ mod tests {
                 laid_at: None,
             },
             path: PathBuf::from(format!("bearings/{}/BRIEF.md", id)),
-            has_survey,
+            has_evidence,
             has_assessment,
         }
     }
 
     #[test]
-    fn next_up_includes_bearing_needing_survey() {
+    fn next_up_includes_bearing_needing_research() {
         let mut board = Board::new(PathBuf::from("test"));
         let bearing = make_bearing("test-bearing", "Test Bearing", false, false);
         board.bearings.insert("test-bearing".to_string(), bearing);
@@ -613,7 +613,7 @@ mod tests {
     fn make_bearing_with_status(
         id: &str,
         status: BearingStatus,
-        has_survey: bool,
+        has_evidence: bool,
         has_assessment: bool,
     ) -> Bearing {
         Bearing {
@@ -627,7 +627,7 @@ mod tests {
                 laid_at: None,
             },
             path: PathBuf::from(format!("bearings/{}/BRIEF.md", id)),
-            has_survey,
+            has_evidence,
             has_assessment,
         }
     }
@@ -641,7 +641,7 @@ mod tests {
             "alpha".to_string(),
             make_bearing_with_status("alpha", BearingStatus::Exploring, false, false),
         );
-        // "zulu" is alphabetically last but is Evaluating with a survey (most mature)
+        // "zulu" is alphabetically last but is Evaluating with evidence (most mature)
         board.bearings.insert(
             "zulu".to_string(),
             make_bearing_with_status("zulu", BearingStatus::Evaluating, true, false),

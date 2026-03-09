@@ -13,14 +13,14 @@ use crate::infrastructure::config::{find_board_dir, load_config};
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::scoring::{calculate_score, load_assessment};
 use crate::read_model::bearing_show::{
-    self, BearingAssessmentSummary, BearingBriefSummary, BearingSurveySummary,
+    self, BearingAssessmentSummary, BearingBriefSummary, BearingEvidenceSummary,
 };
 
 use super::guidance::{informational_for_show, print_human};
 use super::{classify_fog, format_factor};
 
 const BRIEF_PLACEHOLDER: &str = "(not authored in BRIEF.md yet)";
-const SURVEY_PLACEHOLDER: &str = "(not authored in SURVEY.md yet)";
+const EVIDENCE_PLACEHOLDER: &str = "(not authored in EVIDENCE.md yet)";
 const ASSESSMENT_PLACEHOLDER: &str = "(not authored in ASSESSMENT.md yet)";
 const NONE_PLACEHOLDER: &str = "(none)";
 const SECTION_EXCERPT_LIMITS: ShowExcerptLimits = ShowExcerptLimits {
@@ -39,16 +39,16 @@ pub fn run(pattern: &str) -> Result<()> {
 
     let readme_content = fs::read_to_string(&bearing.path).unwrap_or_default();
     let brief_path = bearing_dir.join("BRIEF.md");
-    let survey_path = bearing_dir.join("SURVEY.md");
+    let evidence_path = bearing_dir.join("EVIDENCE.md");
     let assessment_path = bearing_dir.join("ASSESSMENT.md");
     let brief_content = fs::read_to_string(&brief_path).unwrap_or_default();
-    let survey_content = fs::read_to_string(&survey_path).ok();
+    let evidence_content = fs::read_to_string(&evidence_path).ok();
     let assessment_content = fs::read_to_string(&assessment_path).ok();
 
     let projection = bearing_show::build_bearing_show_projection(
         &readme_content,
         &brief_content,
-        survey_content.as_deref(),
+        evidence_content.as_deref(),
         assessment_content.as_deref(),
     );
 
@@ -98,12 +98,12 @@ pub fn run(pattern: &str) -> Result<()> {
     }
 
     metadata.push_row("Path:", format!("{}", bearing.path.display().dimmed()));
-    push_document_path_rows(&mut metadata, &brief_path, &survey_path, &assessment_path);
+    push_document_path_rows(&mut metadata, &brief_path, &evidence_path, &assessment_path);
 
     let mut sections = vec![
         render_documents_section(bearing),
         render_brief_section(&projection.brief),
-        render_survey_section(projection.survey.as_ref()),
+        render_evidence_section(projection.evidence.as_ref()),
         render_assessment_section(
             &assessment_path,
             projection.assessment.as_ref(),
@@ -133,8 +133,8 @@ fn render_documents_section(bearing: &crate::domain::model::Bearing) -> ShowSect
     fields.push_row("README.md:", format!("{}", "authored".green()));
     fields.push_row("BRIEF.md:", format!("{}", "authored".green()));
     fields.push_row(
-        "SURVEY.md:",
-        if bearing.has_survey {
+        "EVIDENCE.md:",
+        if bearing.has_evidence {
             format!("{}", "authored".green())
         } else {
             format!("{}", "not created".dimmed())
@@ -192,10 +192,10 @@ fn render_brief_section(summary: &BearingBriefSummary) -> ShowSection {
     section
 }
 
-fn render_survey_section(summary: Option<&BearingSurveySummary>) -> ShowSection {
-    let mut section = ShowSection::new("Survey");
+fn render_evidence_section(summary: Option<&BearingEvidenceSummary>) -> ShowSection {
+    let mut section = ShowSection::new("Evidence");
     let Some(summary) = summary else {
-        section.push_lines([format!("  {}", SURVEY_PLACEHOLDER.dimmed())]);
+        section.push_lines([format!("  {}", EVIDENCE_PLACEHOLDER.dimmed())]);
         return section;
     };
 
@@ -203,7 +203,7 @@ fn render_survey_section(summary: Option<&BearingSurveySummary>) -> ShowSection 
         "Feasibility:",
         summary.feasibility.as_ref(),
         SECTION_EXCERPT_LIMITS,
-        Some(SURVEY_PLACEHOLDER),
+        Some(EVIDENCE_PLACEHOLDER),
     );
 
     section.push_labeled_bullets(
@@ -281,11 +281,14 @@ fn render_assessment_section(
 fn push_document_path_rows(
     metadata: &mut ShowKeyValues,
     brief_path: &Path,
-    survey_path: &Path,
+    evidence_path: &Path,
     assessment_path: &Path,
 ) {
     metadata.push_row("BRIEF.md:", format!("{}", brief_path.display().dimmed()));
-    metadata.push_row("SURVEY.md:", format!("{}", survey_path.display().dimmed()));
+    metadata.push_row(
+        "EVIDENCE.md:",
+        format!("{}", evidence_path.display().dimmed()),
+    );
     metadata.push_row(
         "ASSESSMENT.md:",
         format!("{}", assessment_path.display().dimmed()),
@@ -303,9 +306,9 @@ fn success_criteria_label(checked: usize, total: usize) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        BearingAssessmentSummary, BearingBriefSummary, BearingSurveySummary,
+        BearingAssessmentSummary, BearingBriefSummary, BearingEvidenceSummary,
         push_document_path_rows, render_assessment_section, render_brief_section,
-        render_survey_section,
+        render_evidence_section,
     };
     use crate::cli::presentation::show::{ShowDocument, ShowKeyValues};
     use crate::infrastructure::config::ModeWeights;
@@ -360,8 +363,8 @@ mod tests {
     }
 
     #[test]
-    fn bearing_survey_renders_inline_list_counts() {
-        let section = render_survey_section(Some(&BearingSurveySummary {
+    fn bearing_evidence_renders_inline_list_counts() {
+        let section = render_evidence_section(Some(&BearingEvidenceSummary {
             feasibility: Some(SectionExcerpt {
                 paragraphs: vec!["Looks feasible".to_string()],
                 list_items: Vec::new(),
@@ -425,7 +428,7 @@ mod tests {
         push_document_path_rows(
             &mut metadata,
             Path::new("/tmp/BRIEF.md"),
-            Path::new("/tmp/SURVEY.md"),
+            Path::new("/tmp/EVIDENCE.md"),
             Path::new("/tmp/ASSESSMENT.md"),
         );
 
@@ -435,20 +438,20 @@ mod tests {
 
         let path_idx = rendered.find("Path:").unwrap();
         let brief_idx = rendered.find("BRIEF.md:").unwrap();
-        let survey_idx = rendered.find("SURVEY.md:").unwrap();
+        let evidence_idx = rendered.find("EVIDENCE.md:").unwrap();
         let assessment_idx = rendered.find("ASSESSMENT.md:").unwrap();
 
         assert!(path_idx < brief_idx);
-        assert!(brief_idx < survey_idx);
-        assert!(survey_idx < assessment_idx);
+        assert!(brief_idx < evidence_idx);
+        assert!(evidence_idx < assessment_idx);
         assert!(rendered.contains("/tmp/BRIEF.md"));
-        assert!(rendered.contains("/tmp/SURVEY.md"));
+        assert!(rendered.contains("/tmp/EVIDENCE.md"));
         assert!(rendered.contains("/tmp/ASSESSMENT.md"));
     }
 
     #[test]
     fn bearing_section_excerpt_renders_list_items_below_paragraph() {
-        let section = render_survey_section(Some(&BearingSurveySummary {
+        let section = render_evidence_section(Some(&BearingEvidenceSummary {
             feasibility: Some(SectionExcerpt {
                 paragraphs: vec!["Looks feasible".to_string()],
                 list_items: vec![

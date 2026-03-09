@@ -15,6 +15,6 @@ Improve the knowledge system of Keel by implementing semantic search and ranking
 | Document | Description |
 |----------|-------------|
 | [BRIEF.md](BRIEF.md) | Core research brief covering the hypothesis, problem space, success criteria, and open questions |
-| [SURVEY.md](SURVEY.md) | Survey findings, market and technical research, and discovered constraints |
+| [EVIDENCE.md](EVIDENCE.md) | Cited research sources, synthesized findings, and unresolved unknowns |
 | [ASSESSMENT.md](ASSESSMENT.md) | Impact scoring, tradeoff analysis, and the final recommendation |
 <!-- END DOCUMENTS -->

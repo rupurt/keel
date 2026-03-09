@@ -29,7 +29,7 @@ use super::{InvalidTransition, StateMachine};
 pub enum BearingState {
     /// Initial research phase
     Exploring,
-    /// Actively gathering data (has SURVEY.md)
+    /// Actively gathering data (has EVIDENCE.md)
     Evaluating,
     /// Ready for decision (has ASSESSMENT.md)
     Ready,
@@ -44,8 +44,8 @@ pub enum BearingState {
 /// Named transitions for bearings
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BearingTransition {
-    /// Move from exploring to evaluating (add SURVEY.md)
-    Survey,
+    /// Move from exploring to evaluating (add EVIDENCE.md)
+    Research,
     /// Move from evaluating to ready (add ASSESSMENT.md)
     Assess,
     /// Graduate to epic
@@ -62,7 +62,7 @@ impl BearingTransition {
     /// Get the target state for this transition
     pub fn target_state(&self) -> BearingState {
         match self {
-            BearingTransition::Survey => BearingState::Evaluating,
+            BearingTransition::Research => BearingState::Evaluating,
             BearingTransition::Assess => BearingState::Ready,
             BearingTransition::Lay => BearingState::Laid,
             BearingTransition::Decline => BearingState::Declined,
@@ -74,7 +74,7 @@ impl BearingTransition {
     /// Get valid source states for this transition
     pub fn valid_from(&self) -> &'static [BearingState] {
         match self {
-            BearingTransition::Survey => &[BearingState::Exploring],
+            BearingTransition::Research => &[BearingState::Exploring],
             BearingTransition::Assess => &[BearingState::Evaluating],
             BearingTransition::Lay => &[BearingState::Ready],
             BearingTransition::Decline => &[BearingState::Ready],
@@ -141,7 +141,7 @@ impl StateMachine for BearingStateMachine {
 
     fn valid_transitions(&self) -> Vec<BearingTransition> {
         [
-            BearingTransition::Survey,
+            BearingTransition::Research,
             BearingTransition::Assess,
             BearingTransition::Lay,
             BearingTransition::Decline,
@@ -191,7 +191,7 @@ mod tests {
         let mut sm = BearingStateMachine::new();
 
         // Exploring -> Evaluating -> Ready -> Laid
-        sm.apply(BearingTransition::Survey).unwrap();
+        sm.apply(BearingTransition::Research).unwrap();
         assert_eq!(sm.state(), BearingState::Evaluating);
 
         sm.apply(BearingTransition::Assess).unwrap();
@@ -248,6 +248,6 @@ mod tests {
         assert!(valid.contains(&BearingTransition::Lay));
         assert!(valid.contains(&BearingTransition::Decline));
         assert!(valid.contains(&BearingTransition::Park));
-        assert!(!valid.contains(&BearingTransition::Survey));
+        assert!(!valid.contains(&BearingTransition::Research));
     }
 }

@@ -271,14 +271,13 @@ impl FromPath for Bearing {
         frontmatter.id = bearing_id;
 
         let bearing_dir = path.parent().unwrap();
-        let has_survey =
-            bearing_dir.join("EVIDENCE.md").exists() || bearing_dir.join("SURVEY.md").exists();
+        let has_evidence = bearing_dir.join("EVIDENCE.md").exists();
         let has_assessment = bearing_dir.join("ASSESSMENT.md").exists();
 
         Ok(Bearing {
             frontmatter,
             path: path.to_path_buf(),
-            has_survey,
+            has_evidence,
             has_assessment,
         })
     }
@@ -672,7 +671,7 @@ created_at: 2026-01-29T12:00:00
 
         let bearing = board.bearings.get("test-research").unwrap();
         assert_eq!(bearing.frontmatter.title, "Test Research");
-        assert!(!bearing.has_survey);
+        assert!(!bearing.has_evidence);
         assert!(!bearing.has_assessment);
     }
 
@@ -695,8 +694,8 @@ status: evaluating
         )
         .unwrap();
         fs::write(
-            root.join("bearings/documented-research/SURVEY.md"),
-            "# Survey\nResearch notes...",
+            root.join("bearings/documented-research/EVIDENCE.md"),
+            "# Evidence\nResearch notes...",
         )
         .unwrap();
         fs::write(
@@ -708,7 +707,7 @@ status: evaluating
         let board = load_board(root).unwrap();
 
         let bearing = board.bearings.get("documented-research").unwrap();
-        assert!(bearing.has_survey);
+        assert!(bearing.has_evidence);
         assert!(bearing.has_assessment);
     }
 }

@@ -14,7 +14,6 @@ const BEARING_DOCUMENTS: &[KnownDocument] = &[
     KnownDocument::new("README", "README.md"),
     KnownDocument::new("BRIEF", "BRIEF.md"),
     KnownDocument::new("EVIDENCE", "EVIDENCE.md"),
-    KnownDocument::new("SURVEY", "SURVEY.md"),
     KnownDocument::new("ASSESSMENT", "ASSESSMENT.md"),
 ];
 
@@ -38,4 +37,31 @@ fn resolve_path(board_dir: &Path, id: &str, file: &str) -> Result<PathBuf> {
         file,
         BEARING_DOCUMENTS,
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::resolve_path;
+    use crate::infrastructure::loader::load_board;
+    use crate::test_helpers::{TestBearing, TestBoardBuilder};
+    use std::fs;
+
+    #[test]
+    fn bearing_hard_cutover_rejects_legacy_survey_paths() {
+        let temp = TestBoardBuilder::new()
+            .bearing(TestBearing::new("BRG-01"))
+            .build();
+
+        fs::write(temp.path().join("bearings/BRG-01/SURVEY.md"), "# Survey\n").unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        assert!(!board.bearings["BRG-01"].has_evidence);
+
+        let err = resolve_path(temp.path(), "BRG-01", "SURVEY")
+            .unwrap_err()
+            .to_string();
+
+        assert!(err.contains("Unknown Bearing document 'SURVEY'"));
+        assert!(err.contains("Available files: README, BRIEF, EVIDENCE, ASSESSMENT"));
+    }
 }

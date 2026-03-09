@@ -7,7 +7,7 @@ use crate::infrastructure::markdown_sections::{
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct BearingShowProjection {
     pub brief: BearingBriefSummary,
-    pub survey: Option<BearingSurveySummary>,
+    pub evidence: Option<BearingEvidenceSummary>,
     pub assessment: Option<BearingAssessmentSummary>,
     pub frontmatter_datetimes: Vec<FrontmatterDatetimeField>,
 }
@@ -23,7 +23,7 @@ pub struct BearingBriefSummary {
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct BearingSurveySummary {
+pub struct BearingEvidenceSummary {
     pub feasibility: Option<SectionExcerpt>,
     pub key_findings: Vec<String>,
     pub unknowns: Vec<String>,
@@ -47,7 +47,7 @@ pub struct FrontmatterDatetimeField {
 pub fn build_bearing_show_projection(
     readme_content: &str,
     brief_content: &str,
-    survey_content: Option<&str>,
+    evidence_content: Option<&str>,
     assessment_content: Option<&str>,
 ) -> BearingShowProjection {
     let success_criteria =
@@ -74,7 +74,7 @@ pub fn build_bearing_show_projection(
         )),
     };
 
-    let survey = survey_content.map(|content| BearingSurveySummary {
+    let evidence = evidence_content.map(|content| BearingEvidenceSummary {
         feasibility: extract_section_excerpt(&section_text(content, "### Feasibility")),
         key_findings: parse_markdown_list_items(&section_text(content, "## Key Findings")),
         unknowns: parse_markdown_list_items(&section_text(content, "## Unknowns")),
@@ -98,7 +98,7 @@ pub fn build_bearing_show_projection(
 
     BearingShowProjection {
         brief,
-        survey,
+        evidence,
         assessment,
         frontmatter_datetimes: extract_frontmatter_datetime_fields(readme_content),
     }
@@ -269,7 +269,7 @@ reviewed_at: 2026-03-06T12:00:00
 ## Open Questions
 - What is the team capacity?
 "#;
-        let survey = r#"
+        let evidence = r#"
 ### Feasibility
 Looks practical.
 
@@ -296,7 +296,7 @@ Delayed roadmap item.
 "#;
 
         let projection =
-            build_bearing_show_projection(readme, brief, Some(survey), Some(assessment));
+            build_bearing_show_projection(readme, brief, Some(evidence), Some(assessment));
 
         assert_eq!(
             projection
@@ -327,16 +327,16 @@ Delayed roadmap item.
             vec!["What is the team capacity?"]
         );
 
-        let survey = projection.survey.unwrap();
+        let evidence = projection.evidence.unwrap();
         assert_eq!(
-            survey
+            evidence
                 .feasibility
                 .as_ref()
                 .map(|excerpt| excerpt.paragraphs.clone()),
             Some(vec!["Looks practical.".to_string()])
         );
-        assert_eq!(survey.key_findings, vec!["Existing tools are close."]);
-        assert_eq!(survey.unknowns, vec!["Long-tail migration effort"]);
+        assert_eq!(evidence.key_findings, vec!["Existing tools are close."]);
+        assert_eq!(evidence.unknowns, vec!["Long-tail migration effort"]);
 
         let assessment = projection.assessment.unwrap();
         assert_eq!(assessment.recommendation.as_deref(), Some("Proceed"));
