@@ -24,13 +24,13 @@ The voyage intentionally does not implement the full evidence model. Instead, it
 └──────────────────────────────────────────────────────────────┘
 ```
 
-In scope:
+### In Scope
 - Rename and re-describe the bearing artifact contract.
 - Replace survey-era command and guidance language.
 - Enforce the new contract in doctor and read surfaces.
 - Update docs and fixtures so tests and user guidance stay aligned.
 
-Out of scope:
+### Out of Scope
 - Provider orchestration or evidence ingestion logic.
 - Evidence ranking or EV-scoring changes.
 - Backward-compatible support for legacy survey-era behavior.

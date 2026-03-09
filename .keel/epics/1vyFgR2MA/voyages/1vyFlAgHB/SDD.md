@@ -12,13 +12,13 @@ The goal is not to fully solve goal lineage yet. This slice only ensures that ne
 
 ## Context & Boundaries
 
-In scope:
+### In Scope
 - `epic new` CLI inputs
 - Epic README/PRD template rendering
 - Template token inventory
 - Doctor cleanliness for freshly scaffolded epics
 
-Out of scope:
+### Out of Scope
 - Canonical `GOAL-*` linkage
 - Scope IDs and scope drift
 - PRD-to-SRS parent requirement validation

@@ -6,13 +6,13 @@
 
 ## Scope
 
-In scope:
+### In Scope
 - Define a canonical bank of automated verification techniques with metadata and command templates.
 - Support project-level configuration/overrides in `keel.toml`.
 - Autodetect project signals (for example Rust CLI, browser test stacks) and generate ranked technique recommendations.
 - Surface recommendations in planning read commands so underused techniques like `vhs` and `llm-judge` become visible and adoptable.
 
-Out of scope:
+### Out of Scope
 - Automatically executing recommended techniques without explicit user action.
 - Replacing existing `verify`/`record` execution semantics in this voyage.
 

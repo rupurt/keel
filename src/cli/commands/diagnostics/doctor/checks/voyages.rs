@@ -123,6 +123,66 @@ pub fn check_scope_authored_content(board: &Board) -> Vec<Problem> {
     problems
 }
 
+pub fn check_srs_authored_requirements(board: &Board) -> Vec<Problem> {
+    let mut voyages: Vec<_> = board.voyages.values().collect();
+    voyages.sort_by(|a, b| a.index().cmp(&b.index()).then_with(|| a.id().cmp(b.id())));
+
+    let mut problems = Vec::new();
+    for voyage in voyages {
+        if voyage.status() == VoyageState::Done {
+            continue;
+        }
+
+        let srs_path = voyage.path.parent().unwrap_or(&voyage.path).join("SRS.md");
+        problems.extend(
+            structural::check_voyage_srs_authored_requirements(&srs_path)
+                .into_iter()
+                .map(|problem| problem.with_scope(voyage.scope_path())),
+        );
+    }
+
+    problems
+}
+
+pub fn check_sdd_authored_content(board: &Board) -> Vec<Problem> {
+    let mut voyages: Vec<_> = board.voyages.values().collect();
+    voyages.sort_by(|a, b| a.index().cmp(&b.index()).then_with(|| a.id().cmp(b.id())));
+
+    let mut problems = Vec::new();
+    for voyage in voyages {
+        if voyage.status() == VoyageState::Done {
+            continue;
+        }
+
+        let sdd_path = voyage.path.parent().unwrap_or(&voyage.path).join("SDD.md");
+        problems.extend(
+            structural::check_voyage_sdd_authored_content(&sdd_path)
+                .into_iter()
+                .map(|problem| problem.with_scope(voyage.scope_path())),
+        );
+    }
+
+    problems
+}
+
+pub fn check_legacy_scope_headings(board: &Board) -> Vec<Problem> {
+    let mut problems = Vec::new();
+
+    for voyage in board.voyages.values() {
+        let voyage_dir = voyage.path.parent().unwrap_or(&voyage.path);
+        for filename in &["SRS.md", "SDD.md"] {
+            let path = voyage_dir.join(filename);
+            problems.extend(
+                structural::check_legacy_scope_headings(&path)
+                    .into_iter()
+                    .map(|problem| problem.with_scope(voyage.scope_path())),
+            );
+        }
+    }
+
+    problems
+}
+
 /// Check voyage title case
 pub fn check_voyage_title_case(board: &Board) -> Vec<Problem> {
     let mut problems = Vec::new();
@@ -386,11 +446,11 @@ mod tests {
 
 ## Scope
 
-In scope:
+### In Scope
 - [SCOPE-03] Illegally pull an out-of-scope item into this voyage.
 - [SCOPE-99] Reference a missing parent scope item.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-02] Defer a valid in-scope item for a later voyage.
 "#,
             ))
@@ -442,11 +502,11 @@ Out of scope:
 
 ## Scope
 
-In scope:
+### In Scope
 - [SCOPE-03] Pull a forbidden item into scope.
 - [SCOPE-99] Reference a missing parent.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-02] Defer a valid in-scope item.
 "#,
             ))
@@ -493,10 +553,10 @@ Out of scope:
 
 ## Scope
 
-In scope:
+### In Scope
 - [SCOPE-01] Ship the scoped slice.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-02] Defer follow-on work.
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
@@ -556,10 +616,10 @@ Out of scope:
 
 ## Scope
 
-In scope:
+### In Scope
 - Parse canonical scope IDs without a parent tag.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-02] Leave a valid item out of this slice.
 "#,
             ))
@@ -614,10 +674,10 @@ Out of scope:
 
 ## Scope
 
-In scope:
+### In Scope
 - Describe the planned slice in prose only.
 
-Out of scope:
+### Out of Scope
 - Leave follow-on hardening for later.
 "#,
             ))
@@ -652,10 +712,10 @@ Out of scope:
 
 ## Scope
 
-In scope:
+### In Scope
 - Describe the planned slice in prose only.
 
-Out of scope:
+### Out of Scope
 - Leave follow-on hardening for later.
 "#,
             ))
@@ -680,7 +740,7 @@ Out of scope:
 
 ## Scope
 
-In scope:
+### In Scope
 - [SCOPE-01] Ship the planned slice.
 "#,
             ))
@@ -778,6 +838,102 @@ In scope:
 
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_voyage_press_release_artifacts(&board);
+        assert!(problems.is_empty());
+    }
+
+    #[test]
+    fn doctor_srs_authored_requirements_catches_scaffold() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").status("planned").srs_content(
+                r#"# SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+| SRS-01 | Implement the core voyage capability needed to satisfy this epic goal. | SCOPE-01 | FR-01 | automated test + demo |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+            ))
+            .build();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_srs_authored_requirements(&board);
+        assert_eq!(problems.len(), 1);
+        assert!(problems[0].message.contains("Functional Requirements"));
+    }
+
+    #[test]
+    fn doctor_srs_authored_requirements_skips_done_voyages() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").status("done").srs_content(
+                r#"# SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+| SRS-01 | Implement the core voyage capability needed to satisfy this epic goal. | SCOPE-01 | FR-01 | automated test + demo |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+            ))
+            .build();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_srs_authored_requirements(&board);
+        assert!(problems.is_empty());
+    }
+
+    #[test]
+    fn doctor_sdd_authored_content_catches_empty_scaffold() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").status("planned"))
+            .build();
+        // Overwrite the default SDD with empty scaffold
+        let sdd_path = temp.path().join("epics/e1/voyages/v1/SDD.md");
+        std::fs::write(
+            &sdd_path,
+            r#"# SDD
+
+## Overview
+
+<!-- How this voyage achieves its requirements; the big picture -->
+
+## Architecture
+
+<!-- Component relationships, layers, modules -->
+"#,
+        )
+        .unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_sdd_authored_content(&board);
+        assert_eq!(problems.len(), 1);
+        assert!(problems[0].message.contains("authored design content"));
+    }
+
+    #[test]
+    fn doctor_sdd_authored_content_skips_done_voyages() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").status("done"))
+            .build();
+        // Overwrite the default SDD with empty scaffold
+        let sdd_path = temp.path().join("epics/e1/voyages/v1/SDD.md");
+        std::fs::write(
+            &sdd_path,
+            r#"# SDD
+
+## Overview
+
+<!-- empty -->
+"#,
+        )
+        .unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_sdd_authored_content(&board);
         assert!(problems.is_empty());
     }
 }

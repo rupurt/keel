@@ -16,13 +16,13 @@ The result is a configurable, deterministic bank of verification techniques that
 
 ## Context & Boundaries
 
-In scope:
+### In Scope
 - Catalog/read-model modules for verification techniques.
 - Configuration load/merge path from `keel.toml`.
 - Project signal detection and recommendation ranking.
 - Planning-read command presentation (`epic show`, `voyage show`, `story show`).
 
-Out of scope:
+### Out of Scope
 - Automatic execution scheduling of recommendations.
 - Rewriting current verification executor contracts.
 

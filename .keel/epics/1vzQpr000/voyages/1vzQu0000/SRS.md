@@ -6,12 +6,12 @@
 
 ## Scope
 
-In scope:
+### In Scope
 - [SCOPE-03] Add a canonical evidence contract with source IDs, source classes, provenance, dates, and evidence-quality metadata.
 - [SCOPE-04] Support research capture for web, academic/prior-art, social/trend, and manual or internal signals.
 - [SCOPE-05] Add configuration for research provider enablement and weighting heuristics that influence evidence ranking and downstream scoring.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-01] Redefine bearing artifacts around `BRIEF.md` for framing, `EVIDENCE.md` for cited research capture, and `ASSESSMENT.md` for synthesis and recommendation.
 - [SCOPE-02] Hard-cut bearing command and lifecycle language from `survey` semantics to `research` semantics wherever the new workflow applies.
 - [SCOPE-06] Update bearing show, file, doctor, and readiness rules to validate and surface the new evidence-backed workflow.

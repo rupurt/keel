@@ -246,8 +246,9 @@ mod tests {
             })
         );
 
-        let readme = std::fs::read_to_string("README.md").unwrap();
-        let agents = std::fs::read_to_string("AGENTS.md").unwrap();
+        let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let readme = std::fs::read_to_string(crate_root.join("README.md")).unwrap();
+        let agents = std::fs::read_to_string(crate_root.join("AGENTS.md")).unwrap();
         assert!(readme.contains("bearing new/research/lay"));
         assert!(agents.contains("just keel bearing research <id>"));
         assert!(!readme.contains("bearing new/survey/lay"));

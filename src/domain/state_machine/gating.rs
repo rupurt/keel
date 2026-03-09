@@ -454,6 +454,23 @@ fn evaluate_voyage_plan(
     // Check for unfilled placeholders in planning documents
     problems.extend(check_voyage_documents_complete(voyage));
 
+    // Reject scaffold-only SRS requirements and empty SDD content
+    let voyage_dir = voyage.path.parent().unwrap_or(&voyage.path);
+    problems.extend(
+        crate::infrastructure::validation::structural::check_voyage_srs_authored_requirements(
+            &voyage_dir.join("SRS.md"),
+        )
+        .into_iter()
+        .map(|p| p.with_scope(voyage.scope_path())),
+    );
+    problems.extend(
+        crate::infrastructure::validation::structural::check_voyage_sdd_authored_content(
+            &voyage_dir.join("SDD.md"),
+        )
+        .into_iter()
+        .map(|p| p.with_scope(voyage.scope_path())),
+    );
+
     // Stories thawed to backlog by `voyage plan` must be actionable.
     // Reject scaffold/default story content before allowing the transition.
     for story in stories {
@@ -973,6 +990,15 @@ mod tests {
     use std::fs;
     use std::path::PathBuf;
 
+    const AUTHORED_SRS: &str = r#"# SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-01 | Authored functional requirement. | FR-01 | automated test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#;
+
     fn has_message(problems: &[Problem], needle: &str) -> bool {
         problems
             .iter()
@@ -998,10 +1024,10 @@ mod tests {
 
 ## Scope
 
-In scope:
+### In Scope
 - [SCOPE-01] Ship the planned slice.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-02] Leave follow-on hardening for later.
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
@@ -1210,7 +1236,11 @@ Out of scope:
     fn evaluate_voyage_transition_plan_rejects_story_scaffold_text() {
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
-            .voyage(TestVoyage::new("01-draft", "test-epic").status("draft"))
+            .voyage(
+                TestVoyage::new("01-draft", "test-epic")
+                    .status("draft")
+                    .srs_content(AUTHORED_SRS),
+            )
             .story(
                 TestStory::new("PLAN01")
                     .scope("test-epic/01-draft")
@@ -1236,15 +1266,72 @@ Out of scope:
     }
 
     #[test]
+    fn evaluate_voyage_transition_plan_rejects_scaffold_srs_requirements() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("test-epic"))
+            .voyage(TestVoyage::new("01-draft", "test-epic").status("draft"))
+            .story(
+                TestStory::new("PLAN01")
+                    .scope("test-epic/01-draft")
+                    .status(StoryState::Backlog)
+                    .body("## Summary\n\nReady.\n\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Valid criterion"),
+            )
+            .build();
+        // Default SRS has no authored content — gate should catch it
+
+        let board = load_board(temp.path()).unwrap();
+        let voyage = board.require_voyage("01-draft").unwrap();
+
+        let problems = evaluate_voyage_transition(&board, voyage, VoyageTransition::Plan, false);
+
+        assert!(
+            problems
+                .iter()
+                .any(|p| p.check_id == CheckId::VoyageSrsAuthoredRequirements),
+            "should reject scaffold SRS requirements: {problems:#?}"
+        );
+    }
+
+    #[test]
+    fn evaluate_voyage_transition_plan_accepts_authored_srs_requirements() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("test-epic"))
+            .voyage(
+                TestVoyage::new("01-draft", "test-epic")
+                    .status("draft")
+                    .srs_content(AUTHORED_SRS),
+            )
+            .story(
+                TestStory::new("PLAN01")
+                    .scope("test-epic/01-draft")
+                    .status(StoryState::Backlog)
+                    .body("## Summary\n\nReady.\n\n## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] Valid criterion"),
+            )
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+        let voyage = board.require_voyage("01-draft").unwrap();
+
+        let problems = evaluate_voyage_transition(&board, voyage, VoyageTransition::Plan, false);
+
+        assert!(
+            !problems
+                .iter()
+                .any(|p| p.check_id == CheckId::VoyageSrsAuthoredRequirements),
+            "should accept authored SRS requirements: {problems:#?}"
+        );
+    }
+
+    #[test]
     fn evaluate_voyage_transition_plan_rejects_scope_lineage_drift() {
         let srs = r#"# Test SRS
 
 ## Scope
 
-In scope:
+### In Scope
 - [SCOPE-99] Pull an unknown parent scope item into this slice.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-02] Leave follow-on hardening for later.
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
@@ -1306,7 +1393,11 @@ Out of scope:
     fn evaluate_voyage_transition_plan_requires_acceptance_criteria_items() {
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
-            .voyage(TestVoyage::new("01-draft", "test-epic").status("draft"))
+            .voyage(
+                TestVoyage::new("01-draft", "test-epic")
+                    .status("draft")
+                    .srs_content(AUTHORED_SRS),
+            )
             .story(
                 TestStory::new("PLAN01")
                     .scope("test-epic/01-draft")

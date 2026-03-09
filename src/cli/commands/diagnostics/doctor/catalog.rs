@@ -122,6 +122,16 @@ pub const ALL_DOCTOR_CHECKS: &[DoctorCheckDefinition] = &[
         name: "Scope authored content",
     },
     DoctorCheckDefinition {
+        id: "voyage-srs-authored-requirements",
+        section: "Voyages",
+        name: "SRS authored requirements",
+    },
+    DoctorCheckDefinition {
+        id: "voyage-sdd-authored-content",
+        section: "Voyages",
+        name: "SDD authored content",
+    },
+    DoctorCheckDefinition {
         id: "voyage-prd-lineage-coherence",
         section: "Voyages",
         name: "PRD lineage coherence",
@@ -130,6 +140,11 @@ pub const ALL_DOCTOR_CHECKS: &[DoctorCheckDefinition] = &[
         id: "voyage-scope-lineage-coherence",
         section: "Voyages",
         name: "Scope lineage coherence",
+    },
+    DoctorCheckDefinition {
+        id: "voyage-legacy-scope-headings",
+        section: "Voyages",
+        name: "Legacy scope headings",
     },
     DoctorCheckDefinition {
         id: "voyage-artifact-contract",

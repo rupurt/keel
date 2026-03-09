@@ -10,13 +10,13 @@ This voyage changes story intake semantics so `story new` always creates plannin
 
 ## Context & Boundaries
 
-In scope:
+### In Scope
 - `src/cli/commands/management/story/new.rs`
 - Story template/frontmatter generation path
 - Story creation guidance text
 - Regression tests covering doctor coherence after creation/linking
 
-Out of scope:
+### Out of Scope
 - Existing story migration
 - Stage-machine transition contract changes beyond creation defaults
 

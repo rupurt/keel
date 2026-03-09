@@ -6,13 +6,13 @@
 
 ## Scope
 
-In scope:
+### In Scope
 - [SCOPE-05] Introduce canonical `GOAL-*` identifiers in PRD Goals & Objectives rows.
 - [SCOPE-05] Link PRD FR/NFR requirement rows to one or more goal IDs.
 - [SCOPE-05] Detect orphaned goals, invalid goal refs, and requirements with missing goal linkage.
 - [SCOPE-05] Surface goal-to-requirement lineage in epic planning diagnostics and read views.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-04] CLI hydration of problem/goal seed content during `epic new`.
 - [SCOPE-02] PRD-to-SRS FR/NFR lineage blocking.
 - [SCOPE-06] Scope linkage and scope-drift rules.

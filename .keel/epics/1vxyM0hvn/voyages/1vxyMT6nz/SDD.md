@@ -10,13 +10,13 @@ This voyage extends `keel next --parallel` with a semantic conflict engine that 
 
 ## Context & Boundaries
 
-In scope:
+### In Scope
 - Pairwise risk model for stories already considered ready by queue policy.
 - Explanation payloads for blocked and allowed decisions.
 - Optional metadata override (`blocked_by`) for explicit constraints.
 - Doctor checks for metadata and coherence.
 
-Out of scope:
+### Out of Scope
 - Repository-wide static analysis graph indexing.
 - User-configured risk profile tuning.
 - Historical conflict mining from git.

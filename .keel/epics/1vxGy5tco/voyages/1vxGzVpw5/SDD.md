@@ -12,12 +12,12 @@ Generated report artifacts are intentionally excluded in this iteration.
 
 ## Context & Boundaries
 
-In scope:
+### In Scope
 - Doctor check modules and structural validation helpers for scaffold/default text classification.
 - Story-stage-aware coherency checks for story and reflection artifacts.
 - Transition gate enforcement for submit and accept.
 
-Out of scope:
+### Out of Scope
 - Generated report artifact placeholder enforcement.
 - Migration/fixing legacy board artifacts.
 - Additional lifecycle stages.

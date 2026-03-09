@@ -6,14 +6,14 @@
 
 ## Scope
 
-In scope:
+### In Scope
 - [SCOPE-01] Parse canonical parent `FR-*` / `NFR-*` rows from epic `PRD.md` files.
 - [SCOPE-02] Validate voyage SRS `Source` references against the parent epic PRD.
 - [SCOPE-02] Hard-block `voyage plan` on missing, invalid, or non-canonical PRD lineage.
 - [SCOPE-02] Reuse the same lineage coherence logic in doctor diagnostics.
 - [SCOPE-03] Aggregate epic requirement coverage across all voyages for planning read surfaces.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-04] Adding new `epic new` CLI inputs or PRD section hydration behavior.
 - [SCOPE-05] Goal/objective linkage between PRD goals and PRD requirements.
 - [SCOPE-06] Scope linkage and scope-drift enforcement between PRD and SRS.

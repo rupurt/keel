@@ -21,13 +21,13 @@ Introduce a migration-first cutover. A dedicated migration command upgrades boar
             commands + doctor + docs/tests
 ```
 
-In scope:
+### In Scope
 - Migration command and mappings.
 - Removal of compatibility aliases/deserializers.
 - Canonical field and terminology normalization.
 - Scaffold hygiene for freshly generated epic/voyage planning artifacts.
 
-Out of scope:
+### Out of Scope
 - Queue policy semantics.
 - Transition-enforcement service architecture.
 

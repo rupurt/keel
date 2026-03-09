@@ -14,13 +14,13 @@ This voyage extends keel's existing SRS/story traceability seam upward into the 
 
 ## Context & Boundaries
 
-In scope:
+### In Scope
 - Epic PRD requirement parsing
 - Voyage SRS parent-source validation
 - Transition and doctor coherence parity
 - Epic-wide coverage aggregation for FR/NFR lineage
 
-Out of scope:
+### Out of Scope
 - Goal/objective IDs
 - Scope IDs and scope drift
 - CLI scaffolding changes for `epic new`

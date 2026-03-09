@@ -100,10 +100,10 @@ Need an epic topology view.
     const SRS: &str = r#"# SRS
 
 ## Scope
-In scope:
+### In Scope
 - [SCOPE-01] Render projection rows.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-02] Rendering polish.
 
 ## Requirements
@@ -168,11 +168,11 @@ Need topology hotspot review.
     const HOTSPOT_SRS: &str = r#"# SRS
 
 ## Scope
-In scope:
+### In Scope
 - [SCOPE-01] Render active scope.
 - [SCOPE-99] Reference an unknown parent scope item.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-03] Pull a deferred item into this slice.
 
 ## Requirements
@@ -239,11 +239,11 @@ Need topology knowledge and horizon review.
     const KNOWLEDGE_SRS: &str = r#"# SRS
 
 ## Scope
-In scope:
+### In Scope
 - [SCOPE-01] Render topology flow.
 - [SCOPE-02] Surface scoped knowledge and horizon commentary.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-03] Whole-board aggregation.
 
 ## Requirements

@@ -27,12 +27,12 @@ The design keeps one canonical scoring path and one canonical read-model path. A
 └──────────────────────────────────────────────────────────────┘
 ```
 
-In scope:
+### In Scope
 - Citation-aware assessment parsing and validation.
 - Evidence-quality-aware scoring.
 - Evidence-backed rendering for `bearing show`, `bearing file`, and board-level projections that surface EV or readiness.
 
-Out of scope:
+### Out of Scope
 - Provider ingestion internals.
 - Artifact renaming and command cutover mechanics.
 - Non-bearing consumers of the evidence model.

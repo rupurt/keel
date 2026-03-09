@@ -34,12 +34,12 @@ The design favors one canonical projection plus a thin renderer so drift logic r
 └────────────────────────────────────────────────────────────┘
 ```
 
-In scope:
+### In Scope
 - Composing one epic-scoped topology projection from existing board artifacts and read models.
 - Rendering an operator-friendly terminal surface with drift and horizon overlays.
 - Supporting a focused default view plus an include-done option.
 
-Out of scope:
+### Out of Scope
 - Whole-board aggregation across epics.
 - Export or machine-facing formats.
 - Any mutation of story, voyage, or epic lifecycle state from topology output.

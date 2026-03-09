@@ -524,15 +524,10 @@ pub fn parse_prd_scope_entries(prd_content: &str) -> Vec<PrdScopeEntry> {
 
     for line in section.lines() {
         let trimmed = line.trim();
-        if trimmed.eq_ignore_ascii_case("### In Scope") {
-            disposition = Some(ScopeDisposition::In);
+        if let Some(next_disposition) = parse_scope_disposition(trimmed) {
+            disposition = Some(next_disposition);
             continue;
         }
-        if trimmed.eq_ignore_ascii_case("### Out of Scope") {
-            disposition = Some(ScopeDisposition::Out);
-            continue;
-        }
-
         let Some((id, description)) = parse_canonical_scope_bullet(trimmed) else {
             continue;
         };
@@ -565,12 +560,8 @@ pub fn parse_srs_scope_links(srs_content: &str) -> Vec<SrsScopeLink> {
 
     for line in section.lines() {
         let trimmed = line.trim();
-        if trimmed.eq_ignore_ascii_case("In scope:") {
-            disposition = Some(ScopeDisposition::In);
-            continue;
-        }
-        if trimmed.eq_ignore_ascii_case("Out of scope:") {
-            disposition = Some(ScopeDisposition::Out);
+        if let Some(next_disposition) = parse_scope_disposition(trimmed) {
+            disposition = Some(next_disposition);
             continue;
         }
 
@@ -595,6 +586,16 @@ pub fn parse_srs_scope_links(srs_content: &str) -> Vec<SrsScopeLink> {
             .then_with(|| a.description.cmp(&b.description))
     });
     links
+}
+
+pub fn parse_scope_disposition(line: &str) -> Option<ScopeDisposition> {
+    if line.eq_ignore_ascii_case("### In Scope") {
+        Some(ScopeDisposition::In)
+    } else if line.eq_ignore_ascii_case("### Out of Scope") {
+        Some(ScopeDisposition::Out)
+    } else {
+        None
+    }
 }
 
 pub fn parse_prd_requirement_lineage(epic_id: &str, prd_path: &Path) -> PrdRequirementLineage {
@@ -712,16 +713,8 @@ pub fn evaluate_voyage_scope_lineage(voyage: &Voyage, board: &Board) -> Vec<Scop
     }
 
     let mut issues = Vec::new();
-    issues.extend(find_legacy_untagged_scope_lines(
-        &prd_content,
-        &prd_path,
-        ScopeSectionStyle::Prd,
-    ));
-    issues.extend(find_legacy_untagged_scope_lines(
-        &srs_content,
-        &srs_path,
-        ScopeSectionStyle::Srs,
-    ));
+    issues.extend(find_legacy_untagged_scope_lines(&prd_content, &prd_path));
+    issues.extend(find_legacy_untagged_scope_lines(&srs_content, &srs_path));
 
     let known_scope: BTreeMap<_, _> = prd_scope_entries
         .iter()
@@ -1253,17 +1246,7 @@ fn scope_ref_tokens(raw: &str) -> Vec<String> {
         .collect()
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum ScopeSectionStyle {
-    Prd,
-    Srs,
-}
-
-fn find_legacy_untagged_scope_lines(
-    content: &str,
-    artifact_path: &Path,
-    style: ScopeSectionStyle,
-) -> Vec<ScopeLineageIssue> {
+fn find_legacy_untagged_scope_lines(content: &str, artifact_path: &Path) -> Vec<ScopeLineageIssue> {
     let Some(section) = extract_markdown_section(content, "## Scope") else {
         return Vec::new();
     };
@@ -1273,23 +1256,9 @@ fn find_legacy_untagged_scope_lines(
 
     for line in section.lines() {
         let trimmed = line.trim();
-        match style {
-            ScopeSectionStyle::Prd => {
-                if trimmed.eq_ignore_ascii_case("### In Scope")
-                    || trimmed.eq_ignore_ascii_case("### Out of Scope")
-                {
-                    in_scope_context = true;
-                    continue;
-                }
-            }
-            ScopeSectionStyle::Srs => {
-                if trimmed.eq_ignore_ascii_case("In scope:")
-                    || trimmed.eq_ignore_ascii_case("Out of scope:")
-                {
-                    in_scope_context = true;
-                    continue;
-                }
-            }
+        if parse_scope_disposition(trimmed).is_some() {
+            in_scope_context = true;
+            continue;
         }
 
         if !in_scope_context
@@ -1744,10 +1713,10 @@ mod tests {
 
 ## Scope
 
-In scope:
+### In Scope
 - [SCOPE-01] Ship the scoped slice.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-02] Defer follow-on work.
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
@@ -2223,11 +2192,11 @@ Out of scope:
 
 ## Scope
 
-In scope:
+### In Scope
 - [SCOPE-02] Parse only the approved planning scope for this voyage.
 - This untagged scope line should be ignored.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-03] Runtime story enforcement remains outside this slice.
 - [IN-01] Legacy aliases should not parse.
 "#;
@@ -2245,6 +2214,42 @@ Out of scope:
                     parent_id: "SCOPE-03".to_string(),
                     description: "Runtime story enforcement remains outside this slice."
                         .to_string(),
+                    disposition: ScopeDisposition::Out,
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn srs_scope_links_parse_markdown_headers() {
+        let srs = r#"# SRS
+
+## Scope
+
+### In Scope
+- [SCOPE-01] Render scope links for PRD-style headers.
+- [SCOPE-02] Keep compatibility for existing docs.
+
+### Out of Scope
+- [SCOPE-03] Keep strict enforcement out of this voyage.
+"#;
+
+        assert_eq!(
+            parse_srs_scope_links(srs),
+            vec![
+                SrsScopeLink {
+                    parent_id: "SCOPE-01".to_string(),
+                    description: "Render scope links for PRD-style headers.".to_string(),
+                    disposition: ScopeDisposition::In,
+                },
+                SrsScopeLink {
+                    parent_id: "SCOPE-02".to_string(),
+                    description: "Keep compatibility for existing docs.".to_string(),
+                    disposition: ScopeDisposition::In,
+                },
+                SrsScopeLink {
+                    parent_id: "SCOPE-03".to_string(),
+                    description: "Keep strict enforcement out of this voyage.".to_string(),
                     disposition: ScopeDisposition::Out,
                 },
             ]
@@ -2281,11 +2286,11 @@ Out of scope:
 
 ## Scope
 
-In scope:
+### In Scope
 - [SCOPE-02] Detect contradictions in voyage scope.
 - [SCOPE-01] Parse canonical scope IDs.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-03] Story runtime enforcement.
 "#;
 
@@ -2293,10 +2298,10 @@ Out of scope:
 
 ## Scope
 
-Out of scope:
+### Out of Scope
 - [SCOPE-03] Story runtime enforcement.
 
-In scope:
+### In Scope
 - [SCOPE-01] Parse canonical scope IDs.
 - [SCOPE-02] Detect contradictions in voyage scope.
 "#;

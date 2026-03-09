@@ -16,14 +16,14 @@ The design keeps one technique-resolution pipeline from the existing catalog/det
 
 ## Context & Boundaries
 
-In scope:
+### In Scope
 - `config show` rendering and command options for technique matrix + machine-readable output.
 - `verify` command tree hard cutover (`run`, `recommend`) and legacy root error path.
 - Recommendation filtering contract (`detected && active`) and advisory-only behavior.
 - Removal of recommendation sections from planning read commands.
 - Planning guidance updates in `AGENTS.md`.
 
-Out of scope:
+### Out of Scope
 - `config mode` behavior and scoring policy surfaces.
 - Changes to underlying technique detection algorithms beyond what is needed to expose current state.
 - Automatic invocation of recommended verification techniques.

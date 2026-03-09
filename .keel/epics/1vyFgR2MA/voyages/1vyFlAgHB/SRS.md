@@ -6,7 +6,7 @@
 
 ## Scope
 
-In scope:
+### In Scope
 - [SCOPE-04] Add explicit CLI support for authored epic problem input during `epic new`.
 - [SCOPE-04] Replace CLI-owned goal hydration with a problem-only strategic input contract for `epic new`.
 - [SCOPE-04] Hydrate authored problem content into fresh epic scaffold surfaces that currently depend on CLI strategic input.
@@ -14,7 +14,7 @@ In scope:
 - [SCOPE-04] Keep fresh epic scaffolds doctor-clean after the new authored inputs are applied.
 - [SCOPE-04] Extend template-token contracts to support the new problem-only strategic-input hydration path.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-05] Canonical `GOAL-*` IDs and goal-to-requirement linkage validation.
 - [SCOPE-06] Scope linkage and scope-drift detection.
 - [SCOPE-02] PRD-to-SRS FR/NFR lineage enforcement.

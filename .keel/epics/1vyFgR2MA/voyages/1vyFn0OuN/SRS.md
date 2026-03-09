@@ -6,13 +6,13 @@
 
 ## Scope
 
-In scope:
+### In Scope
 - [SCOPE-06] Introduce canonical IDs for PRD in-scope and out-of-scope items.
 - [SCOPE-06] Require voyage SRS scope statements to reference parent PRD scope IDs.
 - [SCOPE-06] Detect scope drift and contradictions between PRD scope and SRS scope.
 - [SCOPE-06] Surface scope-linkage and drift results in doctor and planning views.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-04] CLI hydration of problem/goal seed content.
 - [SCOPE-02] PRD FR/NFR parent lineage enforcement.
 - [SCOPE-05] Goal-to-requirement linkage.

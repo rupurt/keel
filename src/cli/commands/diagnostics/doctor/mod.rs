@@ -283,6 +283,24 @@ pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
         voyage_scope_content_problems,
     ));
 
+    let voyage_srs_requirements_problems = checks::voyages::check_srs_authored_requirements(&board);
+    voyage_checks.push(configured_check(
+        doctor_config,
+        "voyage-srs-authored-requirements",
+        "SRS authored requirements",
+        board.voyages.len(),
+        voyage_srs_requirements_problems,
+    ));
+
+    let voyage_sdd_content_problems = checks::voyages::check_sdd_authored_content(&board);
+    voyage_checks.push(configured_check(
+        doctor_config,
+        "voyage-sdd-authored-content",
+        "SDD authored content",
+        board.voyages.len(),
+        voyage_sdd_content_problems,
+    ));
+
     let voyage_prd_lineage_problems = checks::voyages::check_prd_lineage_coherence(&board);
     voyage_checks.push(configured_check(
         doctor_config,
@@ -299,6 +317,15 @@ pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
         "Scope lineage coherence",
         board.voyages.len(),
         voyage_scope_lineage_problems,
+    ));
+
+    let voyage_legacy_scope_problems = checks::voyages::check_legacy_scope_headings(&board);
+    voyage_checks.push(configured_check(
+        doctor_config,
+        "voyage-legacy-scope-headings",
+        "Legacy scope headings",
+        board.voyages.len(),
+        voyage_legacy_scope_problems,
     ));
 
     let voyage_artifact_problems = checks::voyages::check_voyage_press_release_artifacts(&board);

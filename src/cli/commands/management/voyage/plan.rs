@@ -137,10 +137,10 @@ mod tests {
 
 ## Scope
 
-In scope:
+### In Scope
 - [SCOPE-01] Ship the planned slice.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-02] Leave follow-on hardening for later.
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->

@@ -6,7 +6,7 @@
 
 ## Scope
 
-In scope:
+### In Scope
 - [SCOPE-01] Add a human-oriented terminal `keel topology` command for one epic at a time.
 - [SCOPE-02] Show epic, voyage, and story topology together with planning and execution relationships.
 - [SCOPE-03] Annotate topology nodes with drift signals from lineage, requirement coverage, dependency blockage, and verification or proof gaps.
@@ -14,7 +14,7 @@ In scope:
 - [SCOPE-05] Add horizon and recommendation commentary for approaching risks such as verification debt, throughput or ETA risk, and tech or process debt signals.
 - [SCOPE-06] Support a focused default view for planned and in-progress work plus an option to include done entities.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-07] Whole-board topology across multiple epics.
 - [SCOPE-08] JSON, Mermaid, DOT, or other export formats.
 - [SCOPE-09] Automatic remediation, replanning, or lifecycle state changes.

@@ -12,12 +12,12 @@ No compatibility aliases are retained.
 
 ## Context & Boundaries
 
-In scope:
+### In Scope
 - `templates/**` token normalization and content updates where tokens are used.
 - Creation command interfaces in `src/cli/command_tree.rs` and management command adapters.
 - Rendering replacements in creation paths and template contract tests.
 
-Out of scope:
+### Out of Scope
 - Doctor severity/escalation logic.
 - Story submit/accept gate enforcement.
 - Generated report artifact validation.

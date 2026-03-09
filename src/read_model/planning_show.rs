@@ -763,13 +763,16 @@ pub fn parse_scope_summary(srs: &str) -> ScopeSummary {
     let mut mode = Mode::None;
     for line in section.lines() {
         let trimmed = line.trim();
-        if trimmed.eq_ignore_ascii_case("In scope:") {
-            mode = Mode::In;
-            continue;
-        }
-        if trimmed.eq_ignore_ascii_case("Out of scope:") {
-            mode = Mode::Out;
-            continue;
+        match invariants::parse_scope_disposition(trimmed) {
+            Some(invariants::ScopeDisposition::In) => {
+                mode = Mode::In;
+                continue;
+            }
+            Some(invariants::ScopeDisposition::Out) => {
+                mode = Mode::Out;
+                continue;
+            }
+            None => {}
         }
 
         let Some(item) = trimmed.strip_prefix("- ") else {
@@ -1299,10 +1302,10 @@ mod tests {
 > Improve show output quality.
 
 ## Scope
-In scope:
+### In Scope
 - Goal and scope summaries.
 
-Out of scope:
+### Out of Scope
 - Lifecycle changes.
 
 ## Requirements
@@ -1969,11 +1972,11 @@ Operators need reliable planning summaries.
 > Surface scope lineage for review.
 
 ## Scope
-In scope:
+### In Scope
 - [SCOPE-03] Pull a forbidden item into this voyage.
 - [SCOPE-99] Reference a missing parent scope item.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-02] Defer a valid in-scope item for a later slice.
 "#,
             ))
@@ -2046,10 +2049,10 @@ Out of scope:
 > Review scope drift without opening multiple planning docs.
 
 ## Scope
-In scope:
+### In Scope
 - [SCOPE-03] Pull runtime enforcement into this voyage.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-02] Defer drift rendering until later.
 "#,
             ))
@@ -2123,10 +2126,10 @@ Out of scope:
 > Preserve authored scope prose.
 
 ## Scope
-In scope:
+### In Scope
 - [SCOPE-01] Render scope lineage inside the voyage summary.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-02] Leave contradiction repair for a later slice.
 "#,
             ))
@@ -2174,6 +2177,29 @@ Out of scope:
         assert_eq!(
             out_of_scope_lineage.description,
             "Leave contradiction repair for a later slice."
+        );
+    }
+
+    #[test]
+    fn planning_show_supports_markdown_srs_scope_headers() {
+        let srs = r#"# SRS
+> Ensure SRS scope headings can use canonical markdown markers.
+
+## Scope
+### In Scope
+- [SCOPE-01] Render voyage scope when authored as canonical headings.
+### Out of Scope
+- [SCOPE-02] Keep compatibility notes in this slice.
+"#;
+        let summary = parse_scope_summary(srs);
+
+        assert_eq!(
+            summary.in_scope,
+            vec!["[SCOPE-01] Render voyage scope when authored as canonical headings.".to_string()]
+        );
+        assert_eq!(
+            summary.out_of_scope,
+            vec!["[SCOPE-02] Keep compatibility notes in this slice.".to_string()]
         );
     }
 
@@ -2271,10 +2297,10 @@ Out of scope:
 > Preserve planning section content.
 
 ## Scope
-In scope:
+### In Scope
 - Render goal/scope/progress.
 
-Out of scope:
+### Out of Scope
 - Lifecycle transition changes.
 
 ## Requirements

@@ -6,7 +6,7 @@
 
 ## Scope
 
-In scope:
+### In Scope
 - Move verification-technique state surfacing to `keel config show` as a per-technique flag matrix.
 - Represent each technique row with a hyphenated-id `label` and flags: `detected`, `disabled`, `active`.
 - Ensure `keel config show` lists all techniques (built-in + custom), even when inactive.
@@ -16,7 +16,7 @@ In scope:
 - Remove recommendation sections from `keel epic show`, `keel voyage show`, and `keel story show`.
 - Update planning guidance in `AGENTS.md` to use `keel config show` and `keel verify recommend`.
 
-Out of scope:
+### Out of Scope
 - Reworking scoring mode behavior (`keel config mode` remains as-is).
 - Automatic execution of recommended techniques.
 - Backward-compatibility aliases for legacy `keel verify` invocation.

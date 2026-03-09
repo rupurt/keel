@@ -6,13 +6,13 @@
 
 ## Scope
 
-In scope:
+### In Scope
 - Upgrade `keel epic show`, `keel voyage show`, and `keel story show` to surface authored planning and verification evidence (not only metadata or lineage labels).
 - Add deterministic progress and requirement coverage views so planning status is actionable from the terminal.
 - Surface proof artifacts (including media such as `.gif`) in human-review friendly output.
 - Add project-aware automated verification recommendations so planning views suggest stronger proof strategies.
 
-Out of scope:
+### Out of Scope
 - Changes to lifecycle transitions (`start`, `submit`, `accept`, etc.).
 - New artifact capture workflows beyond existing `verify`/`record` behavior.
 - Schema migrations for historical board artifacts.

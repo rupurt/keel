@@ -20,12 +20,12 @@ Introduce a dedicated `queue_policy` domain module that owns threshold constants
          src/next/algorithm.rs   src/flow/{metrics,bottleneck}
 ```
 
-In scope:
+### In Scope
 - Policy extraction and integration in `next` and `flow`.
 - Human-mode queue boundary enforcement.
 - Tests and docs alignment.
 
-Out of scope:
+### Out of Scope
 - Schema migrations and compatibility removal.
 - Transition-engine redesign (handled in voyage `1vuz8dYT5`).
 

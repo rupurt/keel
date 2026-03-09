@@ -12,13 +12,13 @@ The initial rollout is diagnostic and read-model focused. It gives planners an o
 
 ## Context & Boundaries
 
-In scope:
+### In Scope
 - PRD scope-ID parsing
 - SRS scope-reference parsing
 - Scope drift/coherence diagnostics
 - Planning read-surface summaries
 
-Out of scope:
+### Out of Scope
 - Problem/goal CLI hydration
 - PRD FR/NFR lineage blocking
 - Goal-to-requirement linkage

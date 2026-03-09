@@ -195,11 +195,11 @@ mod tests {
 > Ship planning-grade voyage summaries.
 
 ## Scope
-In scope:
+### In Scope
 - Render goal and scope summaries.
 - Render requirement progress.
 
-Out of scope:
+### Out of Scope
 - Lifecycle transition changes.
 "#,
             ))

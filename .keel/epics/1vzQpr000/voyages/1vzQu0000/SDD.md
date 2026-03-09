@@ -29,12 +29,12 @@ The design separates three concerns:
 └──────────────────────────────────────────────────────────────┘
 ```
 
-In scope:
+### In Scope
 - Structured evidence records and parser/renderer support.
 - Provider registry, status reporting, and deterministic fixture-backed adapters.
 - Configurable weighting metadata for evidence ordering and downstream scoring.
 
-Out of scope:
+### Out of Scope
 - Hard cutover naming and lifecycle migration.
 - Assessment/read-surface scoring logic.
 - Broad paid-provider auth flows for every external service.

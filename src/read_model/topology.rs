@@ -514,10 +514,10 @@ mod tests {
 > Ship a topology projection.
 
 ## Scope
-In scope:
+### In Scope
 - [SCOPE-01] Render projection rows.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-02] Rendering polish.
 
 ## Requirements
@@ -612,10 +612,10 @@ Need an epic topology view.
 > Ship a topology projection.
 
 ## Scope
-In scope:
+### In Scope
 - [SCOPE-01] Render projection rows.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-02] Rendering polish.
 
 ## Requirements
@@ -736,10 +736,10 @@ Need an epic topology view.
         let srs = r#"# SRS
 
 ## Scope
-In scope:
+### In Scope
 - [SCOPE-01] Render projection rows.
 
-Out of scope:
+### Out of Scope
 - [SCOPE-02] Rendering polish.
 
 ## Requirements

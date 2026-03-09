@@ -6,7 +6,13 @@
 
 ## Scope
 
-<!-- What this voyage delivers and what it explicitly does NOT deliver -->
+### In Scope
+
+<!-- What this voyage delivers -->
+
+### Out of Scope
+
+<!-- What this voyage explicitly does NOT deliver -->
 
 ## Assumptions & Dependencies
 

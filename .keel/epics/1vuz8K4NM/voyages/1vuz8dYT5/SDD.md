@@ -21,12 +21,12 @@ Create an enforcement service layer that wraps transition specs plus gate evalua
          transitions/spec     state_machine/gating
 ```
 
-In scope:
+### In Scope
 - Shared enforcement orchestration.
 - Command migration to enforcer.
 - Doctor migration to enforcer-compatible gate outputs.
 
-Out of scope:
+### Out of Scope
 - Queue policy unification (voyage `1vuz8VYmc`).
 - Schema migrations (voyage `1vuz8jNo3`).
 

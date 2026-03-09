@@ -12,13 +12,13 @@ The result is a direct strategic seam inside the PRD itself: reviewers can see w
 
 ## Context & Boundaries
 
-In scope:
+### In Scope
 - Goal ID parsing in PRD goals table
 - Goal-link parsing in PRD requirement rows
 - Doctor diagnostics for invalid or missing goal links
 - Planning read-surface summaries
 
-Out of scope:
+### Out of Scope
 - `epic new` scaffolding inputs
 - PRD-to-SRS parent requirement enforcement
 - Scope linkage between PRD and SRS

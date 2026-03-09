@@ -7,6 +7,7 @@ use std::sync::LazyLock;
 use anyhow::Result;
 
 use crate::domain::model::{EpicFrontmatter, StoryFrontmatter};
+use crate::domain::state_machine::invariants;
 use crate::infrastructure::parser::parse_frontmatter;
 use crate::infrastructure::validation::types::{CheckId, Fix, Problem, Severity};
 
@@ -21,6 +22,10 @@ static EPIC_PRD_DEFAULT_ROW_MARKERS: &[&str] = &[
     "Deliver the primary user workflow for this epic end-to-end.",
     "Maintain reliability and observability for all new workflow paths introduced by this epic.",
     "Users can complete the primary workflow described in this PRD without manual intervention.",
+];
+static VOYAGE_SRS_DEFAULT_ROW_MARKERS: &[&str] = &[
+    "Implement the core voyage capability needed to satisfy this epic goal.",
+    "Ensure operational reliability for the voyage capability under expected load and failure conditions.",
 ];
 static BEARING_REQUIRED_DOCUMENT_LINKS: &[&str] =
     &["[BRIEF.md](BRIEF.md)", "[ASSESSMENT.md](ASSESSMENT.md)"];
@@ -700,6 +705,127 @@ pub fn check_voyage_srs_authored_content(path: &Path) -> Vec<Problem> {
     problems
 }
 
+/// Check for legacy scope heading format in a voyage artifact.
+///
+/// Detects `In scope:` / `Out of scope:` (the pre-cutover format) and reports
+/// an error requiring migration to canonical `### In Scope` / `### Out of Scope`.
+pub fn check_legacy_scope_headings(path: &Path) -> Vec<Problem> {
+    let content = match fs::read_to_string(path) {
+        Ok(c) => c,
+        Err(_) => return Vec::new(),
+    };
+
+    let mut problems = Vec::new();
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.eq_ignore_ascii_case("In scope:")
+            || trimmed.eq_ignore_ascii_case("Out of scope:")
+        {
+            problems.push(
+                Problem::error(
+                    path.to_path_buf(),
+                    format!(
+                        "legacy scope heading '{}' must be migrated to canonical '### In Scope' / '### Out of Scope'",
+                        trimmed
+                    ),
+                )
+                .with_check_id(CheckId::VoyageLegacyScopeHeadings),
+            );
+        }
+    }
+    problems
+}
+
+/// Check voyage SRS authored requirements content.
+///
+/// Ensures both FUNCTIONAL_REQUIREMENTS and NON_FUNCTIONAL_REQUIREMENTS marker
+/// blocks contain at least one authored (non-scaffold) requirement row.
+pub fn check_voyage_srs_authored_requirements(path: &Path) -> Vec<Problem> {
+    let mut problems = Vec::new();
+    let content = match fs::read_to_string(path) {
+        Ok(c) => c,
+        Err(_) => return problems,
+    };
+
+    let functional_block = extract_marker_block(&content, "FUNCTIONAL_REQUIREMENTS");
+    if functional_block
+        .as_deref()
+        .is_none_or(|section| !srs_section_has_authored_table_row(section))
+    {
+        problems.push(
+            Problem::error(
+                path.to_path_buf(),
+                "SRS 'Functional Requirements' must include at least one authored requirement row (not scaffold defaults)",
+            )
+            .with_check_id(CheckId::VoyageSrsAuthoredRequirements),
+        );
+    }
+
+    // NFR markers are optional, but if present they must not contain only scaffold rows.
+    let non_functional_block = extract_marker_block(&content, "NON_FUNCTIONAL_REQUIREMENTS");
+    if let Some(ref block) = non_functional_block {
+        let has_any_data_row = block.lines().any(|line| {
+            let trimmed = line.trim();
+            trimmed.starts_with('|') && {
+                let cells: Vec<&str> = trimmed
+                    .split('|')
+                    .map(str::trim)
+                    .filter(|cell| !cell.is_empty())
+                    .collect();
+                !cells.is_empty() && !is_table_separator_row(&cells) && !is_table_header_row(&cells)
+            }
+        });
+        if has_any_data_row && !srs_section_has_authored_table_row(block) {
+            problems.push(
+                Problem::error(
+                    path.to_path_buf(),
+                    "SRS 'Non-Functional Requirements' contains only scaffold defaults; replace with authored requirements or remove the rows",
+                )
+                .with_check_id(CheckId::VoyageSrsAuthoredRequirements),
+            );
+        }
+    }
+
+    problems
+}
+
+/// Check voyage SDD authored content.
+///
+/// Ensures the SDD contains at least one section with authored design content
+/// beyond the empty scaffold template.
+pub fn check_voyage_sdd_authored_content(path: &Path) -> Vec<Problem> {
+    let mut problems = Vec::new();
+    let content = match fs::read_to_string(path) {
+        Ok(c) => c,
+        Err(_) => return problems,
+    };
+
+    let authored_sections = [
+        "## Overview",
+        "## Architecture",
+        "## Components",
+        "## Data Flow",
+    ];
+
+    let has_authored_content = authored_sections.iter().any(|heading| {
+        extract_markdown_section(&content, heading)
+            .as_deref()
+            .is_some_and(section_has_authored_text_or_list_or_table)
+    });
+
+    if !has_authored_content {
+        problems.push(
+            Problem::error(
+                path.to_path_buf(),
+                "SDD must include authored design content in at least one of: Overview, Architecture, Components, or Data Flow",
+            )
+            .with_check_id(CheckId::VoyageSddAuthoredContent),
+        );
+    }
+
+    problems
+}
+
 /// Check voyage SDD structure.
 pub fn check_voyage_sdd_structure(path: &Path) -> Vec<Problem> {
     let mut problems = Vec::new();
@@ -1186,27 +1312,15 @@ fn section_has_canonical_goal_rows(section: &str) -> bool {
 }
 
 fn parse_canonical_scope_bullets(scope_section: &str) -> (usize, usize) {
-    enum Mode {
-        None,
-        InScope,
-        OutScope,
-    }
+    let mut mode: Option<invariants::ScopeDisposition> = None;
 
-    let mut mode = Mode::None;
     let mut in_scope_count = 0;
     let mut out_scope_count = 0;
 
     for line in scope_section.lines() {
         let trimmed = line.trim();
-        if trimmed.eq_ignore_ascii_case("### In Scope") || trimmed.eq_ignore_ascii_case("In scope:")
-        {
-            mode = Mode::InScope;
-            continue;
-        }
-        if trimmed.eq_ignore_ascii_case("### Out of Scope")
-            || trimmed.eq_ignore_ascii_case("Out of scope:")
-        {
-            mode = Mode::OutScope;
+        if let Some(disposition) = invariants::parse_scope_disposition(trimmed) {
+            mode = Some(disposition);
             continue;
         }
 
@@ -1222,9 +1336,9 @@ fn parse_canonical_scope_bullets(scope_section: &str) -> (usize, usize) {
         }
 
         match mode {
-            Mode::InScope => in_scope_count += 1,
-            Mode::OutScope => out_scope_count += 1,
-            Mode::None => {}
+            Some(invariants::ScopeDisposition::In) => in_scope_count += 1,
+            Some(invariants::ScopeDisposition::Out) => out_scope_count += 1,
+            None => {}
         }
     }
 
@@ -1261,6 +1375,9 @@ fn is_table_header_row(cells: &[&str]) -> bool {
                 | "question/risk"
                 | "owner"
                 | "status"
+                | "scope"
+                | "source"
+                | "verification"
         )
     })
 }
@@ -1269,6 +1386,33 @@ fn is_default_prd_scaffold_row(value: &str) -> bool {
     EPIC_PRD_DEFAULT_ROW_MARKERS
         .iter()
         .any(|marker| value.contains(marker))
+}
+
+fn is_default_srs_scaffold_row(value: &str) -> bool {
+    VOYAGE_SRS_DEFAULT_ROW_MARKERS
+        .iter()
+        .any(|marker| value.contains(marker))
+}
+
+fn srs_section_has_authored_table_row(section: &str) -> bool {
+    section.lines().any(|line| {
+        let trimmed = line.trim();
+        if !trimmed.starts_with('|') {
+            return false;
+        }
+
+        let cells: Vec<&str> = trimmed
+            .split('|')
+            .map(str::trim)
+            .filter(|cell| !cell.is_empty())
+            .collect();
+        if cells.is_empty() || is_table_separator_row(&cells) || is_table_header_row(&cells) {
+            return false;
+        }
+
+        let row_text = cells.join(" ");
+        !is_default_srs_scaffold_row(&row_text)
+    })
 }
 
 #[cfg(test)]
@@ -1749,10 +1893,10 @@ TODO: fill product requirements
 
 ## Scope
 
-In scope:
+### In Scope
 - Describe the planned slice in prose only.
 
-Out of scope:
+### Out of Scope
 - Leave follow-on hardening for later.
 "#,
         )
@@ -1765,5 +1909,151 @@ Out of scope:
             problem.check_id == CheckId::VoyageSrsAuthoredContent
                 && problem.message.contains("SRS section 'Scope'")
         }));
+    }
+
+    #[test]
+    fn voyage_srs_scaffold_fr_rows_are_rejected() {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("SRS.md");
+        fs::write(
+            &path,
+            r#"# SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+| SRS-01 | Implement the core voyage capability needed to satisfy this epic goal. | SCOPE-01 | FR-01 | automated test + demo |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let problems = check_voyage_srs_authored_requirements(&path);
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].check_id, CheckId::VoyageSrsAuthoredRequirements);
+        assert!(problems[0].message.contains("Functional Requirements"));
+    }
+
+    #[test]
+    fn voyage_srs_authored_fr_rows_are_accepted() {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("SRS.md");
+        fs::write(
+            &path,
+            r#"# SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+| SRS-01 | Persist epic lineage token on laid bearings. | SCOPE-01 | FR-01 | automated test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let problems = check_voyage_srs_authored_requirements(&path);
+        assert!(problems.is_empty());
+    }
+
+    #[test]
+    fn voyage_srs_scaffold_nfr_rows_are_rejected() {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("SRS.md");
+        fs::write(
+            &path,
+            r#"# SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-01 | Real requirement. | FR-01 | automated test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+
+<!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-NFR-01 | Ensure operational reliability for the voyage capability under expected load and failure conditions. | NFR-01 | automated test + inspection |
+<!-- END NON_FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let problems = check_voyage_srs_authored_requirements(&path);
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].check_id, CheckId::VoyageSrsAuthoredRequirements);
+        assert!(problems[0].message.contains("Non-Functional Requirements"));
+    }
+
+    #[test]
+    fn voyage_srs_missing_nfr_markers_is_accepted() {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("SRS.md");
+        fs::write(
+            &path,
+            r#"# SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Source | Verification |
+|----|-------------|--------|--------------|
+| SRS-01 | Real requirement. | FR-01 | automated test |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#,
+        )
+        .unwrap();
+
+        let problems = check_voyage_srs_authored_requirements(&path);
+        assert!(problems.is_empty());
+    }
+
+    #[test]
+    fn voyage_sdd_empty_scaffold_is_rejected() {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("SDD.md");
+        fs::write(
+            &path,
+            r#"# SDD
+
+## Overview
+
+<!-- How this voyage achieves its requirements; the big picture -->
+
+## Architecture
+
+<!-- Component relationships, layers, modules -->
+
+## Components
+
+<!-- For each major component: purpose, interface, behavior -->
+"#,
+        )
+        .unwrap();
+
+        let problems = check_voyage_sdd_authored_content(&path);
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].check_id, CheckId::VoyageSddAuthoredContent);
+        assert!(problems[0].message.contains("authored design content"));
+    }
+
+    #[test]
+    fn voyage_sdd_with_authored_content_is_accepted() {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("SDD.md");
+        fs::write(
+            &path,
+            r#"# SDD
+
+## Overview
+
+This voyage adds lineage persistence to the bearing lay transition.
+
+## Architecture
+
+<!-- Component relationships, layers, modules -->
+"#,
+        )
+        .unwrap();
+
+        let problems = check_voyage_sdd_authored_content(&path);
+        assert!(problems.is_empty());
     }
 }

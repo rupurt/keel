@@ -6,12 +6,12 @@
 
 ## Scope
 
-In scope:
+### In Scope
 - Make `keel story new` create stories in `icebox` stage by default.
 - Ensure generated story frontmatter/status reflects `icebox` immediately.
 - Preserve clear transition path from `icebox` to execution (`thaw`/`start`) without doctor regressions.
 
-Out of scope:
+### Out of Scope
 - Bulk migration of historical story stages.
 - Changes to acceptance criteria verification behavior.
 

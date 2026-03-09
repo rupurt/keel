@@ -6,14 +6,14 @@
 
 ## Scope
 
-In scope:
+### In Scope
 - Semantic pairwise conflict detection for `keel next --parallel`.
 - Conservative conflict scoring with confidence and global thresholding.
 - Pairwise blocker explanations in terminal and JSON output.
 - Optional `blocked_by` metadata override.
 - Doctor validation for parallel conflict coherence.
 
-Out of scope:
+### Out of Scope
 - Git history or co-change heuristics.
 - `keel.toml` profile tuning for this algorithm.
 - Automatic code graph generation from external services.
