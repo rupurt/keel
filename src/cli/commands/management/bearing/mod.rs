@@ -450,6 +450,7 @@ fn update_bearing_status(
     board_dir: &std::path::Path,
     bearing: &Bearing,
     new_status: BearingStatus,
+    goals: &[String],
 ) -> Result<()> {
     let readme_path = board_dir
         .join("bearings")
@@ -465,6 +466,10 @@ fn update_bearing_status(
         mutations.push(Mutation::set("laid_at", today));
         // Persist the epic lineage token — the bearing ID is the epic ID
         mutations.push(Mutation::set("epic", bearing.id()));
+        if !goals.is_empty() {
+            let yaml_array = format!("[{}]", goals.join(", "));
+            mutations.push(Mutation::set("goals", yaml_array));
+        }
     }
     let updated = apply(&content, &mutations);
 
@@ -723,6 +728,39 @@ fn run_lay_at(board_dir: &Path, pattern: &str) -> Result<()> {
         ));
     }
 
+    // Generate PRD content and validate goal references before any writes
+    let prd_content = create_prd_from_bearing(board_dir, bearing)?;
+    let brief_path = board_dir
+        .join("bearings")
+        .join(bearing.id())
+        .join("BRIEF.md");
+    let brief_content = fs::read_to_string(&brief_path)
+        .with_context(|| format!("Failed to read BRIEF.md: {}", brief_path.display()))?;
+    let success_criteria =
+        extract_section(&brief_content, "## Success Criteria").unwrap_or_default();
+    let goal_refs = parse_goal_references(&success_criteria);
+    if !goal_refs.is_empty() {
+        let valid_goals = extract_prd_goal_ids(&prd_content);
+        let invalid: Vec<_> = goal_refs
+            .iter()
+            .filter(|r| !valid_goals.contains(r))
+            .collect();
+        if !invalid.is_empty() {
+            return Err(anyhow!(
+                "Unknown goal reference(s) in BRIEF.md Success Criteria: {}. \
+                 Valid goals in PRD: {}. \
+                 Fix the references in bearings/{}/BRIEF.md before laying.",
+                invalid
+                    .iter()
+                    .map(|s| s.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", "),
+                valid_goals.join(", "),
+                bearing.id()
+            ));
+        }
+    }
+
     fs::create_dir_all(&epic_dir)
         .with_context(|| format!("Failed to create epic directory: {}", epic_dir.display()))?;
 
@@ -746,19 +784,21 @@ fn run_lay_at(board_dir: &Path, pattern: &str) -> Result<()> {
     fs::write(&readme_path, readme_with_bearing)
         .with_context(|| format!("Failed to write epic README: {}", readme_path.display()))?;
 
-    // Create PRD.md seeded with bearing content
-    let prd_content = create_prd_from_bearing(board_dir, bearing)?;
+    // Write PRD.md (content already generated and validated above)
     let prd_path = epic_dir.join("PRD.md");
-    fs::write(&prd_path, prd_content)
+    fs::write(&prd_path, &prd_content)
         .with_context(|| format!("Failed to write PRD: {}", prd_path.display()))?;
 
-    // Update bearing status to laid
-    update_bearing_status(board_dir, bearing, BearingStatus::Laid)?;
+    // Update bearing status to laid with validated goal references
+    update_bearing_status(board_dir, bearing, BearingStatus::Laid, &goal_refs)?;
 
     println!("Laid: {} → epics/{}/", bearing.id(), epic_id);
     println!("  Epic created with PRD.md seeded from bearing documents");
     println!("  Bearing status: {} → laid", old_status);
     println!("  Lineage: epic={}", epic_id);
+    if !goal_refs.is_empty() {
+        println!("  Goals: {}", goal_refs.join(", "));
+    }
     let guidance = guidance_for_action(BearingLifecycleAction::Lay, bearing.id());
     print_human(guidance.as_ref());
 
@@ -907,6 +947,59 @@ fn create_prd_from_bearing(board_dir: &Path, bearing: &Bearing) -> Result<String
     ));
 
     Ok(prd)
+}
+
+/// Extract `GOAL-*` references from BRIEF.md Success Criteria text.
+fn parse_goal_references(success_criteria: &str) -> Vec<String> {
+    use std::collections::BTreeSet;
+    static GOAL_REF_RE: std::sync::LazyLock<regex::Regex> =
+        std::sync::LazyLock::new(|| regex::Regex::new(r"GOAL-\d+").unwrap());
+
+    let mut seen = BTreeSet::new();
+    for mat in GOAL_REF_RE.find_iter(success_criteria) {
+        seen.insert(mat.as_str().to_string());
+    }
+    seen.into_iter().collect()
+}
+
+/// Extract valid goal IDs from a PRD's Goals & Objectives table.
+fn extract_prd_goal_ids(prd_content: &str) -> Vec<String> {
+    static GOAL_ID_RE: std::sync::LazyLock<regex::Regex> =
+        std::sync::LazyLock::new(|| regex::Regex::new(r"^GOAL-\d+$").unwrap());
+
+    let goals_section = extract_section(prd_content, "## Goals & Objectives").unwrap_or_default();
+    let mut ids = Vec::new();
+    let mut has_header = false;
+
+    for line in goals_section.lines() {
+        let trimmed = line.trim();
+        if !trimmed.starts_with('|') {
+            continue;
+        }
+
+        let cells: Vec<_> = trimmed
+            .trim_matches('|')
+            .split('|')
+            .map(|c| c.trim())
+            .collect();
+        if cells.is_empty()
+            || cells
+                .iter()
+                .all(|c| c.chars().all(|ch| ch == '-' || ch == ' '))
+        {
+            continue;
+        }
+
+        if cells.iter().any(|c| c.eq_ignore_ascii_case("ID")) {
+            has_header = true;
+            continue;
+        }
+
+        if has_header && !cells.is_empty() && GOAL_ID_RE.is_match(cells[0]) {
+            ids.push(cells[0].to_string());
+        }
+    }
+    ids
 }
 
 /// Get the EV score for a bearing, if assessment exists and is complete
@@ -1424,7 +1517,7 @@ Deferring this leaves roadmap work underspecified [SRC-01]
         let board = load_board(&board_dir).unwrap();
         let bearing = board.bearings.get("test-research").unwrap();
 
-        update_bearing_status(&board_dir, bearing, BearingStatus::Parked).unwrap();
+        update_bearing_status(&board_dir, bearing, BearingStatus::Parked, &[]).unwrap();
 
         let readme =
             fs::read_to_string(board_dir.join("bearings/test-research/README.md")).unwrap();
@@ -1677,5 +1770,107 @@ Different section content.
             .unwrap_err()
             .to_string();
         assert!(citation_error.contains("keel bearing file test-research ASSESSMENT"));
+    }
+
+    #[test]
+    fn parse_goal_references_extracts_goal_ids() {
+        let criteria = r#"
+- [ ] GOAL-01: First criterion
+- [ ] Second criterion (no goal ref)
+- [ ] GOAL-02: Third criterion references GOAL-01 again
+"#;
+        let refs = parse_goal_references(criteria);
+        assert_eq!(refs, vec!["GOAL-01", "GOAL-02"]);
+    }
+
+    #[test]
+    fn parse_goal_references_returns_empty_for_no_goals() {
+        let criteria = "- [ ] Plain criterion\n- [ ] Another one\n";
+        assert!(parse_goal_references(criteria).is_empty());
+    }
+
+    #[test]
+    fn extract_prd_goal_ids_parses_goals_table() {
+        let prd = r#"## Goals & Objectives
+
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | First goal | Metric | Target |
+| GOAL-02 | Second goal | Metric | Target |
+"#;
+        let ids = extract_prd_goal_ids(prd);
+        assert_eq!(ids, vec!["GOAL-01", "GOAL-02"]);
+    }
+
+    #[test]
+    fn bearing_lay_rejects_unknown_goal_references() {
+        let temp = TempDir::new().unwrap();
+        let board_dir = create_test_bearing_with_status(&temp, "ready");
+        seed_readiness_docs(
+            &board_dir,
+            "test-research",
+            strong_evidence_fixture(),
+            cited_assessment_fixture(),
+        );
+        // Write BRIEF.md with an invalid goal reference
+        fs::write(
+            board_dir.join("bearings/test-research/BRIEF.md"),
+            r#"# Test Research — Brief
+
+## Success Criteria
+
+- [ ] GOAL-99: This goal does not exist in the PRD
+"#,
+        )
+        .unwrap();
+
+        let error = run_lay_at(&board_dir, "test-research")
+            .unwrap_err()
+            .to_string();
+        assert!(
+            error.contains("GOAL-99"),
+            "error must name the offending goal reference"
+        );
+        assert!(
+            error.contains("Unknown goal reference"),
+            "error must describe the validation failure"
+        );
+        // Verify no writes occurred — epic directory must not exist
+        assert!(
+            !board_dir.join("epics/test-research").exists(),
+            "no writes should occur before validation"
+        );
+    }
+
+    #[test]
+    fn bearing_lay_persists_valid_goal_references() {
+        let temp = TempDir::new().unwrap();
+        let board_dir = create_test_bearing_with_status(&temp, "ready");
+        seed_readiness_docs(
+            &board_dir,
+            "test-research",
+            strong_evidence_fixture(),
+            cited_assessment_fixture(),
+        );
+        // Write BRIEF.md with a valid goal reference
+        fs::write(
+            board_dir.join("bearings/test-research/BRIEF.md"),
+            r#"# Test Research — Brief
+
+## Success Criteria
+
+- [ ] GOAL-01: Valid criterion matching PRD goal
+"#,
+        )
+        .unwrap();
+
+        run_lay_at(&board_dir, "test-research").unwrap();
+
+        let readme =
+            fs::read_to_string(board_dir.join("bearings/test-research/README.md")).unwrap();
+        assert!(
+            readme.contains("goals: [GOAL-01]"),
+            "valid goal references must be persisted in bearing frontmatter"
+        );
     }
 }

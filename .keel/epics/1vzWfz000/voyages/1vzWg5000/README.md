@@ -25,10 +25,10 @@ started_at: 2026-03-09T09:07:38
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/2 stories complete
+**Progress:** 2/2 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Epic Lineage Field](../../../../stories/1vzWgT000/README.md) | feat | done |
-| [Goal Link Persistence](../../../../stories/1vzWgV000/README.md) | feat | backlog |
+| [Goal Link Persistence](../../../../stories/1vzWgV000/README.md) | feat | done |
 <!-- END GENERATED -->
