@@ -611,6 +611,144 @@ pub fn generate_bearing_insight(board: &Board, board_dir: &Path) -> Option<Strin
     }
 }
 
+/// Check bearing lineage: laid bearings must have `epic` field
+pub fn check_bearing_lineage_epic(board: &Board) -> Vec<Problem> {
+    use crate::domain::model::BearingStatus;
+
+    let mut problems = Vec::new();
+
+    for bearing in board.bearings.values() {
+        if bearing.status() == BearingStatus::Laid && bearing.frontmatter.epic.is_none() {
+            problems.push(
+                Problem::error(
+                    bearing.path.clone(),
+                    format!(
+                        "laid bearing '{}' is missing required `epic` lineage field. \
+                         Fix: re-lay the bearing or manually add `epic: <epic-id>` to {}",
+                        bearing.id(),
+                        bearing.path.display()
+                    ),
+                )
+                .with_check_id(CheckId::BearingMissingEpicLineage),
+            );
+        }
+    }
+
+    problems
+}
+
+/// Check bearing lineage: goal references must be valid GOAL-* tokens
+pub fn check_bearing_lineage_goals(board: &Board, board_dir: &Path) -> Vec<Problem> {
+    use crate::domain::model::BearingStatus;
+    use crate::infrastructure::markdown_sections::extract_section;
+
+    static GOAL_ID_RE: std::sync::LazyLock<regex::Regex> =
+        std::sync::LazyLock::new(|| regex::Regex::new(r"^GOAL-\d+$").unwrap());
+
+    let mut problems = Vec::new();
+
+    for bearing in board.bearings.values() {
+        if bearing.status() != BearingStatus::Laid {
+            continue;
+        }
+
+        let goals = match &bearing.frontmatter.goals {
+            Some(goals) if !goals.is_empty() => goals,
+            _ => continue,
+        };
+
+        // Validate each goal matches GOAL-\d+ format
+        for goal in goals {
+            if !GOAL_ID_RE.is_match(goal) {
+                problems.push(
+                    Problem::error(
+                        bearing.path.clone(),
+                        format!(
+                            "laid bearing '{}' has invalid goal reference '{}'; \
+                             expected format GOAL-NN. Fix: update goals in {}",
+                            bearing.id(),
+                            goal,
+                            bearing.path.display()
+                        ),
+                    )
+                    .with_check_id(CheckId::BearingInvalidGoalLineage),
+                );
+                continue;
+            }
+        }
+
+        // Validate goals exist in the target epic's PRD
+        let epic_id = match &bearing.frontmatter.epic {
+            Some(id) => id,
+            None => continue, // Missing epic handled by check_bearing_lineage_epic
+        };
+
+        let prd_path = board_dir.join("epics").join(epic_id).join("PRD.md");
+        let prd_content = match fs::read_to_string(&prd_path) {
+            Ok(c) => c,
+            Err(_) => continue, // PRD missing handled elsewhere
+        };
+
+        let goals_section =
+            extract_section(&prd_content, "## Goals & Objectives").unwrap_or_default();
+        let valid_ids: Vec<String> = {
+            let mut ids = Vec::new();
+            let mut has_header = false;
+            for line in goals_section.lines() {
+                let trimmed = line.trim();
+                if !trimmed.starts_with('|') {
+                    continue;
+                }
+                let cells: Vec<_> = trimmed
+                    .trim_matches('|')
+                    .split('|')
+                    .map(|c| c.trim())
+                    .collect();
+                if cells.is_empty()
+                    || cells
+                        .iter()
+                        .all(|c| c.chars().all(|ch| ch == '-' || ch == ' '))
+                {
+                    continue;
+                }
+                if cells.iter().any(|c| c.eq_ignore_ascii_case("ID")) {
+                    has_header = true;
+                    continue;
+                }
+                if has_header && !cells.is_empty() && GOAL_ID_RE.is_match(cells[0]) {
+                    ids.push(cells[0].to_string());
+                }
+            }
+            ids
+        };
+
+        for goal in goals {
+            if GOAL_ID_RE.is_match(goal) && !valid_ids.contains(goal) {
+                problems.push(
+                    Problem::error(
+                        bearing.path.clone(),
+                        format!(
+                            "laid bearing '{}' references '{}' but it does not exist in {}. \
+                             Valid goals: {}",
+                            bearing.id(),
+                            goal,
+                            prd_path.display(),
+                            if valid_ids.is_empty() {
+                                "(none)".to_string()
+                            } else {
+                                valid_ids.join(", ")
+                            }
+                        ),
+                    )
+                    .with_check_id(CheckId::BearingInvalidGoalLineage),
+                );
+            }
+        }
+    }
+
+    problems
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -742,5 +880,51 @@ mod tests {
         assert!(!is_title_case("my bearing title"));
         assert!(!is_title_case("My bearing Title"));
         assert!(!is_title_case("kebab-case-title"));
+    }
+
+    #[test]
+    fn check_bearing_lineage_epic_flags_laid_without_epic() {
+        let temp = TestBoardBuilder::new()
+            .bearing(TestBearing::new("1w5H2Bq9L").status("laid"))
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_bearing_lineage_epic(&board);
+        assert_eq!(problems.len(), 1);
+        assert!(problems[0].message.contains("missing required `epic`"));
+        assert_eq!(problems[0].check_id, CheckId::BearingMissingEpicLineage);
+    }
+
+    #[test]
+    fn check_bearing_lineage_epic_passes_with_epic() {
+        let temp = TestBoardBuilder::new()
+            .bearing(
+                TestBearing::new("1w5H2Bq9L")
+                    .status("laid")
+                    .epic("1w5H2Bq9L"),
+            )
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_bearing_lineage_epic(&board);
+        assert!(problems.is_empty());
+    }
+
+    #[test]
+    fn check_bearing_lineage_goals_flags_invalid_format() {
+        let temp = TestBoardBuilder::new()
+            .bearing(
+                TestBearing::new("1w5H2Bq9L")
+                    .status("laid")
+                    .epic("1w5H2Bq9L")
+                    .goals(vec!["NOT-A-GOAL"]),
+            )
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_bearing_lineage_goals(&board, temp.path());
+        assert_eq!(problems.len(), 1);
+        assert!(problems[0].message.contains("invalid goal reference"));
+        assert_eq!(problems[0].check_id, CheckId::BearingInvalidGoalLineage);
     }
 }

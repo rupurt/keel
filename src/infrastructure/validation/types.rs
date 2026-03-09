@@ -225,4 +225,6 @@ pub enum CheckId {
     AdrDateConsistency,
     TitleCaseViolation,
     IdInconsistency,
+    BearingMissingEpicLineage,
+    BearingInvalidGoalLineage,
 }

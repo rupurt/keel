@@ -257,6 +257,16 @@ pub const ALL_DOCTOR_CHECKS: &[DoctorCheckDefinition] = &[
         name: "Bearing decision readiness",
     },
     DoctorCheckDefinition {
+        id: "bearing-lineage-epic",
+        section: "Bearings",
+        name: "Bearing lineage epic",
+    },
+    DoctorCheckDefinition {
+        id: "bearing-lineage-goals",
+        section: "Bearings",
+        name: "Bearing lineage goals",
+    },
+    DoctorCheckDefinition {
         id: "adr-structure",
         section: "ADRs",
         name: "ADR structure",

@@ -72,6 +72,8 @@ pub struct TestBearing {
     pub has_evidence: bool,
     pub has_assessment: bool,
     pub index: Option<u32>,
+    pub epic: Option<String>,
+    pub goals: Option<Vec<String>>,
 }
 
 impl Default for TestStory {
@@ -343,6 +345,8 @@ impl Default for TestBearing {
             has_evidence: false,
             has_assessment: false,
             index: None,
+            epic: None,
+            goals: None,
         }
     }
 }
@@ -372,6 +376,16 @@ impl TestBearing {
 
     pub fn has_assessment(mut self, has_assessment: bool) -> Self {
         self.has_assessment = has_assessment;
+        self
+    }
+
+    pub fn epic(mut self, epic: &str) -> Self {
+        self.epic = Some(epic.to_string());
+        self
+    }
+
+    pub fn goals(mut self, goals: Vec<&str>) -> Self {
+        self.goals = Some(goals.into_iter().map(|g| g.to_string()).collect());
         self
     }
 }
@@ -418,6 +432,14 @@ fn render_fixture_bearing_readme(bearing: &TestBearing) -> String {
     let mut mutations = Vec::new();
     if let Some(index) = bearing.index {
         mutations.push(Mutation::set("index", index.to_string()));
+    }
+    if let Some(epic) = &bearing.epic {
+        mutations.push(Mutation::set("epic", epic.clone()));
+    }
+    if let Some(goals) = &bearing.goals
+        && !goals.is_empty()
+    {
+        mutations.push(Mutation::set("goals", format!("[{}]", goals.join(", "))));
     }
 
     template_rendering::render_with_mutations(

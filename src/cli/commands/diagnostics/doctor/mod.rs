@@ -529,6 +529,25 @@ pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
         bearing_recommendation_problems,
     ));
 
+    let bearing_lineage_epic_problems = checks::bearings::check_bearing_lineage_epic(&board);
+    bearing_checks.push(configured_check(
+        doctor_config,
+        "bearing-lineage-epic",
+        "Bearing lineage epic",
+        board.bearings.len(),
+        bearing_lineage_epic_problems,
+    ));
+
+    let bearing_lineage_goals_problems =
+        checks::bearings::check_bearing_lineage_goals(&board, board_dir);
+    bearing_checks.push(configured_check(
+        doctor_config,
+        "bearing-lineage-goals",
+        "Bearing lineage goals",
+        board.bearings.len(),
+        bearing_lineage_goals_problems,
+    ));
+
     // 5. ADR Checks
     let (adr_file_problems, adr_count) = checks::adrs::scan_adr_files(board_dir)?;
     adr_checks.push(configured_check(
