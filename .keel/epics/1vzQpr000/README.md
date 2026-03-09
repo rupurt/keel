@@ -19,10 +19,10 @@ index: 12
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/3 voyages complete, 5/9 stories done
+**Progress:** 1/3 voyages complete, 6/9 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
 | [Bearing Contract Cutover and Migration](voyages/1vzQtq000/) | done | 3/3 |
-| [Evidence Capture and Provider Signals](voyages/1vzQu0000/) | in-progress | 2/3 |
+| [Evidence Capture and Provider Signals](voyages/1vzQu0000/) | in-progress | 3/3 |
 | [Evidence-Backed Assessment and Surfaces](voyages/1vzQu5000/) | planned | 0/3 |
 <!-- END GENERATED -->

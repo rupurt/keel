@@ -10,6 +10,19 @@ use crate::infrastructure::bearing_evidence::{
     EvidenceRecord, EvidenceSourceClass, EvidenceStrength, parse_evidence_records,
     render_evidence_records_table,
 };
+use crate::infrastructure::config::Config;
+
+const MANUAL_PROVIDER_ID: &str = "manual";
+const WEB_PROVIDER_ID: &str = "web";
+const ACADEMIC_PROVIDER_ID: &str = "academic";
+const SOCIAL_PROVIDER_ID: &str = "social";
+
+pub const KNOWN_RESEARCH_PROVIDERS: &[&str] = &[
+    MANUAL_PROVIDER_ID,
+    WEB_PROVIDER_ID,
+    ACADEMIC_PROVIDER_ID,
+    SOCIAL_PROVIDER_ID,
+];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResearchCaptureRequest {
@@ -27,6 +40,60 @@ pub struct ResearchCaptureRequest {
 pub struct ResearchCaptureResult {
     pub appended_records: Vec<EvidenceRecord>,
     pub all_records: Vec<EvidenceRecord>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ResearchProviderStatus {
+    pub id: String,
+    pub disabled: bool,
+    pub supported: bool,
+    pub available: bool,
+    pub active: bool,
+    pub weight: f64,
+    pub status: String,
+    pub detail: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ProviderSelection {
+    provider_id: String,
+    provenance: String,
+}
+
+/// Resolve all canonical provider rows for config/read surfaces.
+pub fn resolve_provider_statuses(config: &Config) -> Vec<ResearchProviderStatus> {
+    KNOWN_RESEARCH_PROVIDERS
+        .iter()
+        .map(|provider_id| resolve_known_provider_status(config, provider_id))
+        .collect()
+}
+
+/// Resolve the provenance string that should be persisted for a capture request.
+pub fn resolve_capture_provenance(
+    config: &Config,
+    requested_provider: Option<&str>,
+    class: &EvidenceSourceClass,
+) -> Result<String> {
+    let selection = parse_provider_selection(requested_provider, class)?;
+    let status = resolve_known_provider_status(config, &selection.provider_id);
+
+    if status.disabled {
+        return Err(anyhow!(
+            "Research provider '{}' is disabled in keel.toml ([research.providers.{}]).",
+            status.id,
+            status.id
+        ));
+    }
+
+    if !status.available {
+        return Err(anyhow!(
+            "Research provider '{}' is unavailable: {}",
+            status.id,
+            status.detail
+        ));
+    }
+
+    Ok(selection.provenance)
 }
 
 /// Capture one or more evidence sources into an `EVIDENCE.md` file.
@@ -104,6 +171,123 @@ fn normalize_provenance(provider: Option<&str>, class: &EvidenceSourceClass) -> 
         provider.to_string()
     } else {
         format!("provider:{provider}")
+    }
+}
+
+fn parse_provider_selection(
+    requested_provider: Option<&str>,
+    class: &EvidenceSourceClass,
+) -> Result<ProviderSelection> {
+    let Some(requested_provider) = requested_provider
+        .map(str::trim)
+        .filter(|provider| !provider.is_empty())
+    else {
+        return Ok(ProviderSelection {
+            provider_id: MANUAL_PROVIDER_ID.to_string(),
+            provenance: format!("manual:{class}"),
+        });
+    };
+
+    if let Some((prefix, suffix)) = requested_provider.split_once(':') {
+        if prefix.eq_ignore_ascii_case(MANUAL_PROVIDER_ID) {
+            let label = if suffix.trim().is_empty() {
+                class.to_string()
+            } else {
+                suffix.trim().to_string()
+            };
+            return Ok(ProviderSelection {
+                provider_id: MANUAL_PROVIDER_ID.to_string(),
+                provenance: format!("manual:{label}"),
+            });
+        }
+
+        return Err(anyhow!(
+            "Research provider '{}' is unsupported. Supported providers: {}",
+            requested_provider,
+            KNOWN_RESEARCH_PROVIDERS.join(", ")
+        ));
+    }
+
+    let normalized = requested_provider.to_ascii_lowercase();
+    if !KNOWN_RESEARCH_PROVIDERS.contains(&normalized.as_str()) {
+        return Err(anyhow!(
+            "Research provider '{}' is unsupported. Supported providers: {}",
+            requested_provider,
+            KNOWN_RESEARCH_PROVIDERS.join(", ")
+        ));
+    }
+
+    let provenance = if normalized == MANUAL_PROVIDER_ID {
+        format!("manual:{class}")
+    } else {
+        format!("provider:{normalized}")
+    };
+
+    Ok(ProviderSelection {
+        provider_id: normalized,
+        provenance,
+    })
+}
+
+fn resolve_known_provider_status(config: &Config, provider_id: &str) -> ResearchProviderStatus {
+    let override_ = config.research.providers.get(provider_id);
+    let disabled = override_.is_some_and(|provider| provider.disabled);
+    let weight = override_
+        .map(|provider| provider.weight)
+        .unwrap_or_else(|| default_provider_weight(provider_id));
+
+    let (supported, available, detail) = provider_runtime(provider_id);
+    let status = if disabled {
+        "disabled"
+    } else if !available {
+        "unavailable"
+    } else {
+        "active"
+    };
+
+    ResearchProviderStatus {
+        id: provider_id.to_string(),
+        disabled,
+        supported,
+        available,
+        active: supported && available && !disabled,
+        weight,
+        status: status.to_string(),
+        detail: detail.to_string(),
+    }
+}
+
+fn default_provider_weight(provider_id: &str) -> f64 {
+    match provider_id {
+        ACADEMIC_PROVIDER_ID => 1.25,
+        SOCIAL_PROVIDER_ID => 0.75,
+        _ => 1.0,
+    }
+}
+
+fn provider_runtime(provider_id: &str) -> (bool, bool, &'static str) {
+    match provider_id {
+        MANUAL_PROVIDER_ID => (
+            true,
+            true,
+            "manual and internal evidence capture is available",
+        ),
+        WEB_PROVIDER_ID => (
+            true,
+            false,
+            "live web-provider capture is not configured in this environment; use manual:web-* provenance instead",
+        ),
+        ACADEMIC_PROVIDER_ID => (
+            true,
+            false,
+            "live academic-provider capture is not configured in this environment; use manual:arxiv or another manual academic provenance instead",
+        ),
+        SOCIAL_PROVIDER_ID => (
+            true,
+            false,
+            "live social-provider capture is not configured in this environment; use manual:social-* provenance instead",
+        ),
+        _ => (false, false, "unsupported provider"),
     }
 }
 

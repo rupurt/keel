@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-08T21:02:18.004234252-07:00
+mode: manual
+---
+Research providers are now configurable in keel.toml with explicit disabled flags and deterministic weights that flow into config show.

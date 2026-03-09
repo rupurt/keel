@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-08T21:02:18.031300839-07:00
+mode: manual
+---
+Config and bearing research now render provider states explicitly so disabled, unavailable, and unsupported providers fail with actionable status instead of disappearing.

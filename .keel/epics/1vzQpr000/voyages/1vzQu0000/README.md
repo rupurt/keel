@@ -25,11 +25,11 @@ started_at: 2026-03-08T20:40:16
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 2/3 stories complete
+**Progress:** 3/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Model Canonical Evidence Records And Parsing Rules](../../../../stories/1vzQwm000/README.md) | feat | done |
-| [Add Research Provider Configuration And Weighting Controls](../../../../stories/1vzQwn000/README.md) | feat | backlog |
+| [Add Research Provider Configuration And Weighting Controls](../../../../stories/1vzQwn000/README.md) | feat | done |
 | [Capture Web Academic Social And Manual Evidence Through One Workflow](../../../../stories/1vzQwp000/README.md) | feat | done |
 <!-- END GENERATED -->

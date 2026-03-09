@@ -331,10 +331,25 @@ fn run_research_capture(
     pattern: &str,
     request: ResearchCaptureRequest,
 ) -> Result<ResearchCaptureRunResult> {
+    let (config, _) = load_config();
+    run_research_capture_with_config(board_dir, pattern, request, &config)
+}
+
+fn run_research_capture_with_config(
+    board_dir: &Path,
+    pattern: &str,
+    mut request: ResearchCaptureRequest,
+    config: &crate::infrastructure::config::Config,
+) -> Result<ResearchCaptureRunResult> {
     use crate::domain::transitions::bearing::{bearing_transitions, execute};
 
     let board = load_board(board_dir)?;
     let bearing = board.require_bearing(pattern)?;
+    request.provider = Some(bearing_research::resolve_capture_provenance(
+        config,
+        request.provider.as_deref(),
+        &request.class,
+    )?);
     let evidence_path = board_dir
         .join("bearings")
         .join(bearing.id())
@@ -1027,7 +1042,7 @@ status: {}
             "test-research",
             capture_request(
                 EvidenceSourceClass::Web,
-                "web-search",
+                "manual:web-search",
                 "https://example.com/web",
                 "Web evidence",
             ),
@@ -1047,7 +1062,7 @@ status: {}
             "test-research",
             capture_request(
                 EvidenceSourceClass::Academic,
-                "arxiv",
+                "manual:arxiv",
                 "https://arxiv.org/abs/1234.5678",
                 "Academic evidence",
             ),
@@ -1058,7 +1073,7 @@ status: {}
             "test-research",
             capture_request(
                 EvidenceSourceClass::Social,
-                "social-trends",
+                "manual:social-trends",
                 "https://news.ycombinator.com/item?id=42",
                 "Social evidence",
             ),
@@ -1094,6 +1109,98 @@ status: {}
                 &EvidenceSourceClass::Social,
                 &EvidenceSourceClass::Manual,
             ]
+        );
+    }
+
+    #[test]
+    fn research_provider_status_is_explicit() {
+        let temp = TempDir::new().unwrap();
+        let board_dir = create_test_bearing(&temp);
+        let mut config = crate::infrastructure::config::Config::default();
+        config.research.providers.insert(
+            "manual".to_string(),
+            crate::infrastructure::config::ResearchProviderOverride {
+                disabled: true,
+                weight: 0.5,
+            },
+        );
+
+        let disabled = run_research_capture_with_config(
+            &board_dir,
+            "test-research",
+            capture_request(
+                EvidenceSourceClass::Web,
+                "manual:web-search",
+                "https://example.com/web",
+                "Web evidence",
+            ),
+            &config,
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(disabled.contains("disabled"));
+        assert!(disabled.contains("[research.providers.manual]"));
+
+        let unavailable = run_research_capture_with_config(
+            &board_dir,
+            "test-research",
+            capture_request(
+                EvidenceSourceClass::Academic,
+                "academic",
+                "https://arxiv.org/abs/1234.5678",
+                "Academic evidence",
+            ),
+            &crate::infrastructure::config::Config::default(),
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(unavailable.contains("unavailable"));
+        assert!(unavailable.contains("academic"));
+
+        let unsupported = run_research_capture_with_config(
+            &board_dir,
+            "test-research",
+            capture_request(
+                EvidenceSourceClass::Social,
+                "trend-scout",
+                "https://news.ycombinator.com/item?id=42",
+                "Social evidence",
+            ),
+            &crate::infrastructure::config::Config::default(),
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(unsupported.contains("unsupported"));
+        assert!(unsupported.contains("manual, web, academic, social"));
+    }
+
+    #[test]
+    fn research_provider_failures_do_not_fabricate_evidence() {
+        let temp = TempDir::new().unwrap();
+        let board_dir = create_test_bearing(&temp);
+
+        let err = run_research_capture_with_config(
+            &board_dir,
+            "test-research",
+            capture_request(
+                EvidenceSourceClass::Web,
+                "web",
+                "https://example.com/web",
+                "Web evidence",
+            ),
+            &crate::infrastructure::config::Config::default(),
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(err.contains("unavailable"));
+
+        let board = load_board(&board_dir).unwrap();
+        let bearing = board.bearings.get("test-research").unwrap();
+        assert_eq!(bearing.status(), BearingStatus::Exploring);
+        assert!(
+            !board_dir
+                .join("bearings/test-research/EVIDENCE.md")
+                .exists()
         );
     }
 

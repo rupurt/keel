@@ -129,6 +129,29 @@ impl DoctorConfig {
     }
 }
 
+/// Per-provider research override.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct ResearchProviderOverride {
+    /// Disable this provider when true.
+    #[serde(default)]
+    pub disabled: bool,
+    /// Relative ranking or weighting used for downstream evidence ordering.
+    #[serde(default = "default_research_weight")]
+    pub weight: f64,
+}
+
+fn default_research_weight() -> f64 {
+    1.0
+}
+
+/// Research provider configuration.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct ResearchConfig {
+    /// Per-provider overrides keyed by stable research provider id.
+    #[serde(default)]
+    pub providers: std::collections::HashMap<String, ResearchProviderOverride>,
+}
+
 /// Default board directory
 fn default_board_dir() -> String {
     ".keel".to_string()
@@ -149,6 +172,10 @@ pub struct Config {
     /// Doctor diagnostics configuration.
     #[serde(default)]
     pub doctor: DoctorConfig,
+
+    /// Research provider configuration.
+    #[serde(default)]
+    pub research: ResearchConfig,
 }
 
 impl Default for Config {
@@ -157,6 +184,7 @@ impl Default for Config {
             board_dir: default_board_dir(),
             scoring: ScoringConfig::default(),
             doctor: DoctorConfig::default(),
+            research: ResearchConfig::default(),
         }
     }
 }
@@ -344,6 +372,41 @@ disabled = true
         let config = load_from_file(&path).unwrap();
         assert!(config.doctor.is_disabled("voyage-scope-authored-content"));
         assert!(!config.doctor.is_disabled("story-id-uniqueness"));
+    }
+
+    #[test]
+    fn load_from_file_parses_research_provider_overrides() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let path = temp.path().join("keel.toml");
+        fs::write(
+            &path,
+            r#"
+[research.providers.manual]
+disabled = true
+weight = 0.5
+
+[research.providers.academic]
+weight = 1.4
+"#,
+        )
+        .unwrap();
+
+        let config = load_from_file(&path).unwrap();
+
+        assert!(
+            config
+                .research
+                .providers
+                .get("manual")
+                .is_some_and(|provider| provider.disabled && provider.weight == 0.5)
+        );
+        assert!(
+            config
+                .research
+                .providers
+                .get("academic")
+                .is_some_and(|provider| !provider.disabled && provider.weight == 1.4)
+        );
     }
 
     #[test]

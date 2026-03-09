@@ -12,6 +12,7 @@ use crate::cli::commands::diagnostics::doctor::catalog::ALL_DOCTOR_CHECKS;
 use crate::infrastructure::config::{self, Config};
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::verification::parser::parse_verify_annotations;
+use crate::infrastructure::{bearing_research, config::ConfigSource};
 use crate::read_model::verification_techniques;
 
 #[derive(Subcommand, Debug)]
@@ -100,22 +101,53 @@ struct ConfigShowScoringPayload {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
+struct ResearchProviderStatusRow {
+    id: String,
+    disabled: bool,
+    supported: bool,
+    available: bool,
+    active: bool,
+    weight: f64,
+    status: String,
+    detail: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+struct ConfigShowResearchPayload {
+    providers: Vec<ResearchProviderStatusRow>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
 struct ConfigShowPayload {
     source: String,
     project_root: String,
     board_dir: String,
     scoring: ConfigShowScoringPayload,
+    research: ConfigShowResearchPayload,
     verification: ConfigShowVerificationPayload,
     doctor: ConfigShowDoctorPayload,
 }
 
 fn build_show_payload(
     config: &Config,
-    source: &config::ConfigSource,
+    source: &ConfigSource,
     project_root: &Path,
 ) -> ConfigShowPayload {
     let projection = build_verification_technique_projection(config, project_root);
     let weights = config.current_weights();
+    let research_provider_rows = bearing_research::resolve_provider_statuses(config)
+        .into_iter()
+        .map(|provider| ResearchProviderStatusRow {
+            id: provider.id,
+            disabled: provider.disabled,
+            supported: provider.supported,
+            available: provider.available,
+            active: provider.active,
+            weight: provider.weight,
+            status: provider.status,
+            detail: provider.detail,
+        })
+        .collect();
 
     ConfigShowPayload {
         source: source.to_string(),
@@ -127,6 +159,9 @@ fn build_show_payload(
             confidence_weight: weights.confidence_weight,
             effort_weight: weights.effort_weight,
             risk_weight: weights.risk_weight,
+        },
+        research: ConfigShowResearchPayload {
+            providers: research_provider_rows,
         },
         verification: ConfigShowVerificationPayload {
             techniques: projection.rows,
@@ -167,6 +202,24 @@ fn render_show_payload(payload: &ConfigShowPayload) -> Vec<String> {
     lines.push(format!("effort_weight = {}", payload.scoring.effort_weight));
     lines.push(format!("risk_weight = {}", payload.scoring.risk_weight));
     lines.push(String::new());
+
+    lines
+        .push("# Research provider status (`disabled` and `weight` are configurable):".to_string());
+    if payload.research.providers.is_empty() {
+        lines.push("  (none)".to_string());
+    } else {
+        for provider in &payload.research.providers {
+            lines.push(format!("[research.providers.{}]", provider.id));
+            lines.push(format!("status = \"{}\"", provider.status));
+            lines.push(format!("disabled = {}", provider.disabled));
+            lines.push(format!("supported = {}", provider.supported));
+            lines.push(format!("available = {}", provider.available));
+            lines.push(format!("active = {}", provider.active));
+            lines.push(format!("weight = {}", provider.weight));
+            lines.push(format!("detail = \"{}\"", provider.detail));
+            lines.push(String::new());
+        }
+    }
 
     lines.push(
         "# Verification technique status (`disabled` and `command` are configurable):".to_string(),
@@ -402,6 +455,14 @@ disable = ["rust-coverage"]
         assert!(rendered.contains("effort_weight = 2"));
         assert!(rendered.contains("risk_weight = 1.5"));
         assert!(!rendered.contains("total = "));
+        assert!(
+            rendered
+                .contains("# Research provider status (`disabled` and `weight` are configurable):")
+        );
+        assert!(rendered.contains("[research.providers.manual]"));
+        assert!(rendered.contains("status = \"active\""));
+        assert!(rendered.contains("[research.providers.web]"));
+        assert!(rendered.contains("status = \"unavailable\""));
         assert!(!rendered.contains("[verification.techniques]"));
         assert!(rendered.contains(
             "# Verification technique status (`disabled` and `command` are configurable):"
@@ -508,6 +569,13 @@ enable = ["llm-judge"]
             serde_json::Value::String("constrained".to_string())
         );
         assert!(json["scoring"]["impact_weight"].as_f64().unwrap() > 0.0);
+        let research_providers = json["research"]["providers"].as_array().unwrap().clone();
+        assert!(!research_providers.is_empty());
+        let first_research_provider = &research_providers[0];
+        assert!(first_research_provider.get("id").is_some());
+        assert!(first_research_provider.get("status").is_some());
+        assert!(first_research_provider.get("disabled").is_some());
+        assert!(first_research_provider.get("weight").is_some());
         assert!(json["verification"]["summary"].is_null());
         let doctor_checks = json["doctor"]["checks"].as_array().unwrap().clone();
         assert!(!doctor_checks.is_empty());
@@ -550,6 +618,38 @@ enable = ["llm-judge"]
                 .checks
                 .iter()
                 .any(|check| { check.id == "voyage-scope-authored-content" && check.disabled })
+        );
+    }
+
+    #[test]
+    fn research_provider_config_parses_enablement_and_weights() {
+        let temp = TempDir::new().unwrap();
+        fs::write(
+            temp.path().join("keel.toml"),
+            r#"
+[research.providers.manual]
+disabled = true
+weight = 0.5
+
+[research.providers.social]
+weight = 0.75
+"#,
+        )
+        .unwrap();
+
+        let config = config::load_from_file(&temp.path().join("keel.toml")).unwrap();
+        let providers = bearing_research::resolve_provider_statuses(&config);
+
+        assert!(providers.iter().any(|provider| provider.id == "manual"
+            && provider.disabled
+            && provider.weight == 0.5));
+        assert!(providers.iter().any(|provider| provider.id == "social"
+            && !provider.disabled
+            && provider.weight == 0.75));
+        assert!(
+            providers
+                .iter()
+                .any(|provider| provider.id == "academic" && provider.weight == 1.25)
         );
     }
 }

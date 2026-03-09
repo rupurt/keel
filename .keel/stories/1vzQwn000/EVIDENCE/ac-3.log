@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-08T21:02:18.164349094-07:00
+mode: manual
+---
+Provider resolution now aborts before mutating a bearing when capture cannot proceed, so no uncited evidence rows are fabricated on failure.
