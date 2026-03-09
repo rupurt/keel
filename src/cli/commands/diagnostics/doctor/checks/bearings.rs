@@ -927,4 +927,35 @@ mod tests {
         assert!(problems[0].message.contains("invalid goal reference"));
         assert_eq!(problems[0].check_id, CheckId::BearingInvalidGoalLineage);
     }
+
+    #[test]
+    fn lineage_validation_is_deterministic_across_repeated_cycles() {
+        let temp = TestBoardBuilder::new()
+            .bearing(TestBearing::new("1w5H2Bq9L").status("laid"))
+            .bearing(
+                TestBearing::new("1w5H2Bq9M")
+                    .status("laid")
+                    .epic("1w5H2Bq9M")
+                    .goals(vec!["GOAL-01"]),
+            )
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+
+        let epic_run1 = check_bearing_lineage_epic(&board);
+        let epic_run2 = check_bearing_lineage_epic(&board);
+        assert_eq!(epic_run1.len(), epic_run2.len());
+        for (a, b) in epic_run1.iter().zip(epic_run2.iter()) {
+            assert_eq!(a.message, b.message);
+            assert_eq!(a.check_id, b.check_id);
+        }
+
+        let goals_run1 = check_bearing_lineage_goals(&board, temp.path());
+        let goals_run2 = check_bearing_lineage_goals(&board, temp.path());
+        assert_eq!(goals_run1.len(), goals_run2.len());
+        for (a, b) in goals_run1.iter().zip(goals_run2.iter()) {
+            assert_eq!(a.message, b.message);
+            assert_eq!(a.check_id, b.check_id);
+        }
+    }
 }

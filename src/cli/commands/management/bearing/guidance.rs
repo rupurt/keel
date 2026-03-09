@@ -121,6 +121,10 @@ fn recovery_command_for_error(
         return Some(format!("keel epic show {epic_id}"));
     }
 
+    if lower.contains("unknown goal reference") {
+        return Some(format!("keel bearing file {bearing_ref} BRIEF"));
+    }
+
     if lower.contains("cannot ")
         || lower.contains("already exists for bearing")
         || lower.contains("already declined")
@@ -370,6 +374,23 @@ mod tests {
         let rendered = render_human(Some(&guidance));
         assert!(rendered.contains("Recovery step:"));
         assert!(rendered.contains("keel bearing show B5"));
+    }
+
+    #[test]
+    fn lay_unknown_goal_recovery_maps_to_brief() {
+        let guidance = recovery_for_error(
+            BearingLifecycleAction::Lay,
+            "B8",
+            "Unknown goal reference(s) in BRIEF.md Success Criteria: GOAL-99",
+        )
+        .unwrap();
+        let json = serde_json::to_value(guidance).unwrap();
+        assert_eq!(
+            json,
+            json!({
+                "recovery_step": { "command": "keel bearing file B8 BRIEF" }
+            })
+        );
     }
 
     #[test]
