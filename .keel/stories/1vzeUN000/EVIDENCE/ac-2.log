@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-09T13:40:14.511883373-07:00
+mode: manual
+---
+load_missions() discovers .keel/missions/*/README.md files and parses frontmatter, verified by load_board_finds_missions test

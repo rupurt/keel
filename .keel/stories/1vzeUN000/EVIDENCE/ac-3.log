@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-09T13:40:15.410027523-07:00
+mode: manual
+---
+load_board() calls load_missions() and populates Board.missions HashMap, verified by load_board_populates_missions test

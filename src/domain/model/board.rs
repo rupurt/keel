@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use anyhow::{Result, anyhow};
 
-use super::{Adr, Bearing, Entity, Epic, Story, StoryState, Voyage};
+use super::{Adr, Bearing, Entity, Epic, Mission, Story, StoryState, Voyage};
 
 /// The board contains all stories, voyages, epics, bearings, and ADRs
 #[derive(Debug, Clone)]
@@ -25,6 +25,8 @@ pub struct Board {
     /// All ADRs indexed by ID
     #[allow(dead_code)] // Used by future doctor checks (SRS-05)
     pub adrs: HashMap<String, Adr>,
+    /// All missions indexed by ID
+    pub missions: HashMap<String, Mission>,
 }
 
 impl Default for Board {
@@ -44,6 +46,7 @@ impl Board {
             epics: HashMap::new(),
             bearings: HashMap::new(),
             adrs: HashMap::new(),
+            missions: HashMap::new(),
         }
     }
 
@@ -71,6 +74,12 @@ impl Board {
     #[allow(dead_code)] // Used by future doctor checks (SRS-05)
     pub fn find_adr(&self, id: &str) -> Option<&Adr> {
         self.adrs.get(id)
+    }
+
+    /// Find a mission by exact ID.
+    #[allow(dead_code)]
+    pub fn find_mission(&self, id: &str) -> Option<&Mission> {
+        self.missions.get(id)
     }
 
     /// Require a story by exact ID, returning an error with nearby ID suggestions if not found.
@@ -101,6 +110,13 @@ impl Board {
     pub fn require_adr(&self, id: &str) -> Result<&Adr> {
         self.find_adr(id)
             .ok_or_else(|| not_found_error("ADR", id, self.adrs.values()))
+    }
+
+    /// Require a mission by exact ID, returning an error with nearby ID suggestions if not found.
+    #[allow(dead_code)]
+    pub fn require_mission(&self, id: &str) -> Result<&Mission> {
+        self.find_mission(id)
+            .ok_or_else(|| not_found_error("Mission", id, self.missions.values()))
     }
 
     /// Get stories for a voyage (by scope)

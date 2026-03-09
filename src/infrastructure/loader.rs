@@ -11,8 +11,8 @@ use rayon::prelude::*;
 use walkdir::WalkDir;
 
 use crate::domain::model::{
-    Adr, AdrFrontmatter, Bearing, BearingFrontmatter, Board, Epic, EpicFrontmatter, Story,
-    StoryFrontmatter, Voyage, VoyageFrontmatter,
+    Adr, AdrFrontmatter, Bearing, BearingFrontmatter, Board, Epic, EpicFrontmatter, Mission,
+    MissionFrontmatter, Story, StoryFrontmatter, Voyage, VoyageFrontmatter,
 };
 use crate::infrastructure::parser::parse_frontmatter;
 
@@ -62,6 +62,7 @@ pub fn load_board(board_dir: &Path) -> Result<Board> {
     derive_epic_statuses(&mut epics, &voyages);
     let bearings = load_bearings(board_dir)?;
     let adrs = load_adrs(board_dir)?;
+    let missions = load_missions(board_dir)?;
 
     Ok(Board {
         root: board_dir.to_path_buf(),
@@ -70,6 +71,7 @@ pub fn load_board(board_dir: &Path) -> Result<Board> {
         epics,
         bearings,
         adrs,
+        missions,
     })
 }
 
@@ -322,6 +324,55 @@ impl FromPath for Adr {
     }
     fn entity_name() -> &'static str {
         "ADR"
+    }
+}
+
+/// Load all missions from missions/*/README.md
+fn load_missions(board_dir: &Path) -> Result<HashMap<String, Mission>> {
+    let missions_dir = board_dir.join("missions");
+    if !missions_dir.exists() {
+        return Ok(HashMap::new());
+    }
+
+    let paths: Vec<_> = fs::read_dir(&missions_dir)?
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().is_dir())
+        .map(|e| e.path().join("README.md"))
+        .filter(|p| p.exists())
+        .collect();
+
+    Ok(load_entities(&paths))
+}
+
+impl FromPath for Mission {
+    fn from_path(path: &Path) -> Result<Self> {
+        let content = fs::read_to_string(path)
+            .with_context(|| format!("Failed to read mission file: {}", path.display()))?;
+        let (mut frontmatter, _body): (MissionFrontmatter, _) = parse_frontmatter(&content)
+            .with_context(|| format!("Failed to parse mission frontmatter: {}", path.display()))?;
+
+        // Extract ID from path: missions/{mission_id}/README.md
+        let mission_id = path
+            .parent()
+            .and_then(|p| p.file_name())
+            .and_then(|n| n.to_str())
+            .unwrap_or("")
+            .to_string();
+
+        // Override frontmatter id with directory name (source of truth)
+        frontmatter.id = mission_id;
+
+        let mission_dir = path.parent().unwrap();
+        let has_charter = mission_dir.join("CHARTER.md").exists();
+        let has_log = mission_dir.join("LOG.md").exists();
+
+        Ok(Mission::new(frontmatter, path, has_charter, has_log))
+    }
+    fn entity_id(&self) -> &str {
+        self.id()
+    }
+    fn entity_name() -> &'static str {
+        "mission"
     }
 }
 
@@ -709,5 +760,161 @@ status: evaluating
         let bearing = board.bearings.get("documented-research").unwrap();
         assert!(bearing.has_evidence);
         assert!(bearing.has_assessment);
+    }
+
+    // ========== Mission loader tests (SRS-06, SRS-07) ==========
+
+    #[test]
+    fn load_board_has_missions_field() {
+        // SRS-06/AC-01: Board struct has missions: HashMap<String, Mission> field
+        let temp = TempDir::new().unwrap();
+        let board = load_board(temp.path()).unwrap();
+        assert!(board.missions.is_empty());
+    }
+
+    #[test]
+    fn load_board_finds_missions() {
+        // SRS-07/AC-01: load_missions() discovers all .keel/missions/*/README.md files
+        let temp = TempDir::new().unwrap();
+        let root = temp.path();
+
+        fs::create_dir_all(root.join("missions/test-mission")).unwrap();
+        fs::write(
+            root.join("missions/test-mission/README.md"),
+            r#"---
+id: test-mission
+title: Test Mission
+status: defining
+created_at: 2026-03-01T10:00:00
+updated_at: 2026-03-01T10:00:00
+---
+# Test Mission
+"#,
+        )
+        .unwrap();
+
+        let board = load_board(root).unwrap();
+
+        assert_eq!(board.missions.len(), 1);
+        assert!(board.missions.contains_key("test-mission"));
+
+        let mission = board.missions.get("test-mission").unwrap();
+        assert_eq!(mission.title(), "Test Mission");
+        assert_eq!(
+            mission.status(),
+            crate::domain::model::MissionStatus::Defining
+        );
+    }
+
+    #[test]
+    fn load_board_populates_missions() {
+        // SRS-07/AC-02: load_board() calls load_missions() and populates Board.missions
+        let temp = TempDir::new().unwrap();
+        let root = temp.path();
+
+        // Create two missions
+        for (id, title, status) in [
+            ("mission-a", "Alpha Mission", "defining"),
+            ("mission-b", "Beta Mission", "active"),
+        ] {
+            fs::create_dir_all(root.join(format!("missions/{id}"))).unwrap();
+            fs::write(
+                root.join(format!("missions/{id}/README.md")),
+                format!(
+                    "---\nid: {id}\ntitle: {title}\nstatus: {status}\ncreated_at: 2026-03-01T10:00:00\nupdated_at: 2026-03-01T10:00:00\n---\n"
+                ),
+            )
+            .unwrap();
+        }
+
+        let board = load_board(root).unwrap();
+        assert_eq!(board.missions.len(), 2);
+        assert!(board.missions.contains_key("mission-a"));
+        assert!(board.missions.contains_key("mission-b"));
+    }
+
+    #[test]
+    fn load_board_skips_malformed_missions() {
+        // SRS-07/AC-03: Malformed mission files are skipped with warning, not fatal
+        let temp = TempDir::new().unwrap();
+        let root = temp.path();
+
+        // Valid mission
+        fs::create_dir_all(root.join("missions/valid-mission")).unwrap();
+        fs::write(
+            root.join("missions/valid-mission/README.md"),
+            "---\nid: valid-mission\ntitle: Valid\nstatus: defining\ncreated_at: 2026-03-01T10:00:00\nupdated_at: 2026-03-01T10:00:00\n---\n",
+        )
+        .unwrap();
+
+        // Malformed mission (no frontmatter)
+        fs::create_dir_all(root.join("missions/bad-mission")).unwrap();
+        fs::write(
+            root.join("missions/bad-mission/README.md"),
+            "This has no frontmatter at all",
+        )
+        .unwrap();
+
+        let board = load_board(root).unwrap();
+
+        // Should load the valid mission and skip the bad one
+        assert_eq!(board.missions.len(), 1);
+        assert!(board.missions.contains_key("valid-mission"));
+    }
+
+    #[test]
+    fn load_board_detects_mission_documents() {
+        let temp = TempDir::new().unwrap();
+        let root = temp.path();
+
+        fs::create_dir_all(root.join("missions/full-mission")).unwrap();
+        fs::write(
+            root.join("missions/full-mission/README.md"),
+            "---\nid: full-mission\ntitle: Full Mission\nstatus: active\ncreated_at: 2026-03-01T10:00:00\nupdated_at: 2026-03-01T10:00:00\n---\n",
+        )
+        .unwrap();
+        fs::write(root.join("missions/full-mission/CHARTER.md"), "# Charter\n").unwrap();
+        fs::write(root.join("missions/full-mission/LOG.md"), "# Log\n").unwrap();
+
+        let board = load_board(root).unwrap();
+        let mission = board.missions.get("full-mission").unwrap();
+        assert!(mission.has_charter);
+        assert!(mission.has_log);
+    }
+
+    #[test]
+    fn load_board_detects_missing_mission_documents() {
+        let temp = TempDir::new().unwrap();
+        let root = temp.path();
+
+        fs::create_dir_all(root.join("missions/bare-mission")).unwrap();
+        fs::write(
+            root.join("missions/bare-mission/README.md"),
+            "---\nid: bare-mission\ntitle: Bare Mission\nstatus: defining\ncreated_at: 2026-03-01T10:00:00\nupdated_at: 2026-03-01T10:00:00\n---\n",
+        )
+        .unwrap();
+
+        let board = load_board(root).unwrap();
+        let mission = board.missions.get("bare-mission").unwrap();
+        assert!(!mission.has_charter);
+        assert!(!mission.has_log);
+    }
+
+    #[test]
+    fn load_board_derives_mission_id_from_directory() {
+        let temp = TempDir::new().unwrap();
+        let root = temp.path();
+
+        fs::create_dir_all(root.join("missions/dir-name")).unwrap();
+        fs::write(
+            root.join("missions/dir-name/README.md"),
+            "---\nid: wrong-id\ntitle: Directory ID Test\nstatus: defining\ncreated_at: 2026-03-01T10:00:00\nupdated_at: 2026-03-01T10:00:00\n---\n",
+        )
+        .unwrap();
+
+        let board = load_board(root).unwrap();
+        // Should use directory name, not frontmatter id
+        assert!(board.missions.contains_key("dir-name"));
+        assert_eq!(board.missions.get("dir-name").unwrap().id(), "dir-name");
     }
 }

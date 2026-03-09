@@ -62,6 +62,7 @@ mod tests {
             voyages: HashMap::new(),
             bearings: HashMap::new(),
             adrs: HashMap::new(),
+            missions: HashMap::new(),
         }
     }
 

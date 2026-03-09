@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-09T13:40:18.611464952-07:00
+mode: manual
+---
+CHARTER.md template has Goals table with MG-XX ID, Description, Verification columns, verified by mission_charter_has_goals_table test

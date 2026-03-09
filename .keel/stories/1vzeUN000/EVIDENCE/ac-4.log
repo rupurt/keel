@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-09T13:40:16.746131958-07:00
+mode: manual
+---
+Malformed mission files are skipped with warning instead of fatal error, verified by load_board_skips_malformed_missions test

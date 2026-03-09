@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-09T13:40:11.550247184-07:00
+mode: manual
+---
+Board struct includes missions: HashMap<String, Mission> field, verified by load_board_has_missions_field test

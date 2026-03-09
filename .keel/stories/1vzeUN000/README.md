@@ -2,11 +2,13 @@
 id: 1vzeUN000
 title: Board Loader Mission Integration
 type: feat
-status: backlog
+status: done
 created_at: 2026-03-09T10:33:55
-updated_at: 2026-03-09T13:22:51
+updated_at: 2026-03-09T13:40:40
 scope: 1vzeJF000/1vzeMk000
 index: 3
+started_at: 2026-03-09T13:34:48
+completed_at: 2026-03-09T13:40:40
 ---
 
 # Board Loader Mission Integration
@@ -19,10 +21,10 @@ and wire it into load_board().
 
 ## Acceptance Criteria
 
-- [ ] [SRS-06/AC-01] Board struct has `missions: HashMap<String, Mission>` field <!-- verify: test --> <!-- SRS-06:start:end -->
-- [ ] [SRS-07/AC-01] load_missions() discovers all .keel/missions/*/README.md files and parses them <!-- verify: test --> <!-- SRS-07:start:end -->
-- [ ] [SRS-07/AC-02] load_board() calls load_missions() and populates Board.missions <!-- verify: test --> <!-- SRS-07:start:end -->
-- [ ] [SRS-07/AC-03] Malformed mission files are skipped with warning, not fatal <!-- verify: test --> <!-- SRS-07:start:end -->
-- [ ] [SRS-08/AC-01] CHARTER.md scaffold has Goals table with MG-XX ID, Description, Verification columns <!-- verify: test --> <!-- SRS-08:start:end -->
-- [ ] [SRS-08/AC-02] CHARTER.md scaffold has Constraints section <!-- verify: test --> <!-- SRS-08:start:end -->
-- [ ] [SRS-08/AC-03] CHARTER.md scaffold has Halting Rules section <!-- verify: test --> <!-- SRS-08:start:end -->
+- [x] [SRS-06/AC-01] Board struct has `missions: HashMap<String, Mission>` field <!-- verify: cargo test --lib infrastructure::loader::tests::load_board_has_missions_field, SRS-06:start:end, proof: ac-1.log-->
+- [x] [SRS-07/AC-01] load_missions() discovers all .keel/missions/*/README.md files and parses them <!-- verify: cargo test --lib infrastructure::loader::tests::load_board_finds_missions, SRS-07:start, proof: ac-2.log-->
+- [x] [SRS-07/AC-02] load_board() calls load_missions() and populates Board.missions <!-- verify: cargo test --lib infrastructure::loader::tests::load_board_populates_missions, proof: ac-3.log-->
+- [x] [SRS-07/AC-03] Malformed mission files are skipped with warning, not fatal <!-- verify: cargo test --lib infrastructure::loader::tests::load_board_skips_malformed_missions, SRS-07:end, proof: ac-4.log-->
+- [x] [SRS-08/AC-01] CHARTER.md scaffold has Goals table with MG-XX ID, Description, Verification columns <!-- verify: cargo test --lib infrastructure::templates::tests::mission_charter_has_goals_table, SRS-08:start, proof: ac-5.log-->
+- [x] [SRS-08/AC-02] CHARTER.md scaffold has Constraints section <!-- verify: cargo test --lib infrastructure::templates::tests::mission_charter_has_constraints_section, proof: ac-6.log-->
+- [x] [SRS-08/AC-03] CHARTER.md scaffold has Halting Rules section <!-- verify: cargo test --lib infrastructure::templates::tests::mission_charter_has_halting_rules_section, SRS-08:end, proof: ac-7.log-->
