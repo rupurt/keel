@@ -575,11 +575,6 @@ pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
     })
 }
 
-/// Print a summary of coverage gaps (used by `keel gaps`)
-pub fn print_gap_summary(report: &DoctorReport) {
-    render::print_gap_summary(report);
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

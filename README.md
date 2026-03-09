@@ -141,11 +141,8 @@ Management
 
 Diagnostics
   doctor      Validate board health and optionally fix issues
-  status      Show board status summary
   flow        Show two-actor flow dashboard (human queue vs agent queue)
   throughput  Show weekly throughput and timing sparklines
-  capacity    Show per-epic capacity breakdown with parallel potential
-  gaps        Show gap classification summary (runs doctor, shows only gap counts)
 ```
 
 ### Command Groups
@@ -189,11 +186,8 @@ Story creation flags:
 | Command | Purpose |
 |---------|---------|
 | `doctor` | Validate board health and fix consistency issues |
-| `status` | High-level summary of entity counts and blockers |
 | `flow` | Real-time dashboard of Human vs. Agent queues |
 | `throughput` | Show recent weekly throughput and timing sparklines |
-| `capacity` | Analyze epic-level bandwidth and parallel potential |
-| `gaps` | Identify missing requirements or design coverage |
 
 ### Harness Guidance Contract
 

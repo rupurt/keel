@@ -73,7 +73,7 @@ fn recovery_for_audit_error(entity_ref: Option<&str>, message: &str) -> Option<C
     let command = if lower.contains("not found") {
         Some("keel story list".to_string())
     } else if entity_ref.is_some() {
-        Some("keel status".to_string())
+        Some("keel flow".to_string())
     } else {
         Some("keel doctor".to_string())
     };

@@ -36,7 +36,6 @@ pub fn run() -> Result<()> {
                 }
             }
         }
-        Some(("status", _)) => super::commands::diagnostics::status::run(&resolve_board_dir()?),
         Some(("flow", m)) => {
             let no_color = *m.get_one::<bool>("no_color").unwrap_or(&false);
             super::commands::diagnostics::flow::run(&resolve_board_dir()?, no_color)
@@ -66,8 +65,6 @@ pub fn run() -> Result<()> {
             let include_done = *m.get_one::<bool>("include_done").unwrap_or(&false);
             super::commands::management::topology::run(epic_id, include_done)
         }
-        Some(("capacity", _)) => super::commands::diagnostics::capacity::run(&resolve_board_dir()?),
-        Some(("gaps", _)) => super::commands::diagnostics::gaps::run(&resolve_board_dir()?),
         Some(("play", m)) => {
             let bearing = m.get_one::<String>("bearing").cloned();
             let prop = m.get_one::<String>("prop").cloned();

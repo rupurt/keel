@@ -39,8 +39,6 @@ enum DiagnosticsCommands {
         #[arg(long)]
         quick: bool,
     },
-    /// Show board status summary
-    Status {},
     /// Show two-actor flow dashboard (human queue vs agent queue)
     Flow {
         /// Disable color output (also respects NO_COLOR env var)
@@ -71,17 +69,6 @@ enum DiagnosticsCommands {
         #[arg(long)]
         parallel: bool,
     },
-    /// Show per-epic capacity breakdown with parallel potential
-    Capacity {
-        /// Show all epics including those with zero capacity
-        #[arg(long)]
-        all: bool,
-        /// Output as JSON for scripting
-        #[arg(long)]
-        json: bool,
-    },
-    /// Show gap classification summary (runs doctor, shows only gap counts)
-    Gaps,
     /// Invite play-driven discovery
     Play {
         /// Bearing ID to generate a play scenario from
@@ -157,7 +144,6 @@ fn cli_help_displays_top_level_commands() {
     // Verify top-level commands
     assert!(help_str.contains("doctor"), "Missing doctor command");
     assert!(help_str.contains("generate"), "Missing generate command");
-    assert!(help_str.contains("status"), "Missing status command");
     assert!(help_str.contains("story"), "Missing story subcommand");
     assert!(help_str.contains("epic"), "Missing epic subcommand");
     assert!(help_str.contains("voyage"), "Missing voyage subcommand");
@@ -186,6 +172,24 @@ fn cli_parses_generate_command() {
 #[test]
 fn cli_rejects_removed_migrate_command() {
     let result = crate::build_cli().try_get_matches_from(["keel", "migrate"]);
+    assert!(result.is_err());
+}
+
+#[test]
+fn cli_rejects_removed_status_command() {
+    let result = crate::build_cli().try_get_matches_from(["keel", "status"]);
+    assert!(result.is_err());
+}
+
+#[test]
+fn cli_rejects_removed_capacity_command() {
+    let result = crate::build_cli().try_get_matches_from(["keel", "capacity"]);
+    assert!(result.is_err());
+}
+
+#[test]
+fn cli_rejects_removed_gaps_command() {
+    let result = crate::build_cli().try_get_matches_from(["keel", "gaps"]);
     assert!(result.is_err());
 }
 
@@ -266,16 +270,6 @@ fn cli_rejects_verify_without_subcommand() {
     let err = result.unwrap_err().to_string();
     assert!(err.contains("verify"));
     assert!(err.contains("COMMAND"));
-}
-
-#[test]
-fn cli_parses_status_command() {
-    let cli = Cli::try_parse_from(["board", "status"]).unwrap();
-    if let Commands::Diagnostics(DiagnosticsCommands::Status {}) = cli.command {
-        // OK
-    } else {
-        panic!("Expected Status command");
-    }
 }
 
 #[test]

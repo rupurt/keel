@@ -237,7 +237,7 @@ mod tests {
         let err = result.unwrap_err().to_string();
         assert!(err.contains("Board state has changed"));
         assert!(err.contains("Recovery step:"));
-        assert!(err.contains("keel status"));
+        assert!(err.contains("keel flow"));
     }
 
     #[test]

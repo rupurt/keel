@@ -10,10 +10,10 @@ use crate::read_model::flow_status;
 /// Run the flow command
 pub fn run(board_dir: &std::path::Path, no_color: bool) -> Result<()> {
     let board = load_board(board_dir)?;
-    let projection = flow_status::project(&board);
     let width = get_terminal_width();
 
-    let output = render_annotated_flow(&board, &projection.flow, width, no_color);
+    let metrics = flow_status::project(&board);
+    let output = render_annotated_flow(&board, &metrics, width, no_color);
     println!("{}", output);
 
     Ok(())

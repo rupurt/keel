@@ -49,33 +49,6 @@ fn print_section(name: &str, checks: &[super::types::CheckResult]) {
     println!();
 }
 
-/// Print a summary of coverage gaps
-pub fn print_gap_summary(report: &DoctorReport) {
-    let mut total_errors = 0;
-    let mut total_warnings = 0;
-
-    for check in report
-        .story_checks
-        .iter()
-        .chain(&report.voyage_checks)
-        .chain(&report.epic_checks)
-        .chain(&report.adr_checks)
-        .chain(&report.bearing_checks)
-    {
-        for prob in &check.problems {
-            match prob.severity {
-                Severity::Error => total_errors += 1,
-                Severity::Warning => total_warnings += 1,
-                _ => {}
-            }
-        }
-    }
-
-    println!("Board Health Summary:");
-    println!("  Errors:   {}", total_errors.red());
-    println!("  Warnings: {}", total_warnings.yellow());
-}
-
 /// Calculate total duration of checks
 pub fn sum_check_durations(checks: &[super::types::CheckResult]) -> Duration {
     checks.iter().map(|c| c.duration).sum()

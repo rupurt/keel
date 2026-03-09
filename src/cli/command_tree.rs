@@ -25,11 +25,8 @@ Management
 
 Diagnostics
   doctor      Validate board health and optionally fix issues
-  status      Show board status summary
   flow        Show two-actor flow dashboard (human queue vs agent queue)
   throughput  Show weekly throughput and timing sparklines
-  capacity    Show per-epic capacity breakdown with parallel potential
-  gaps        Show gap classification summary (runs doctor, shows only gap counts)
 "#;
 
 fn hidden_subcommand_group<T>(name: &'static str, about: &'static str) -> Command
@@ -73,11 +70,6 @@ pub fn build_cli() -> Command {
                         .help("Quick mode: run fast structural checks only (SRS-08, SRS-09)")
                         .action(ArgAction::SetTrue),
                 ),
-        )
-        .subcommand(
-            Command::new("status")
-                .about("Show board status summary")
-                .hide(true),
         )
         .subcommand(
             Command::new("flow")
@@ -157,28 +149,6 @@ pub fn build_cli() -> Command {
                         .help("Include done voyages and stories")
                         .action(ArgAction::SetTrue),
                 ),
-        )
-        .subcommand(
-            Command::new("capacity")
-                .about("Show per-epic capacity breakdown with parallel potential")
-                .hide(true)
-                .arg(
-                    Arg::new("all")
-                        .long("all")
-                        .help("Show all epics including those with zero capacity")
-                        .action(ArgAction::SetTrue),
-                )
-                .arg(
-                    Arg::new("json")
-                        .long("json")
-                        .help("Output as JSON for scripting")
-                        .action(ArgAction::SetTrue),
-                ),
-        )
-        .subcommand(
-            Command::new("gaps")
-                .about("Show gap classification summary (runs doctor, shows only gap counts)")
-                .hide(true),
         )
         .subcommand(
             Command::new("play")

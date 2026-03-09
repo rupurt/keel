@@ -136,6 +136,9 @@ fn source_tree_removes_legacy_root_module_families() {
         "src/cli/commands/next.rs",
         "src/cli/commands/play.rs",
         "src/cli/commands/verify.rs",
+        "src/cli/commands/diagnostics/status.rs",
+        "src/cli/commands/diagnostics/capacity.rs",
+        "src/cli/commands/diagnostics/gaps.rs",
         "src/cli/next",
         "src/cli/flow",
         "src/model",
@@ -204,51 +207,20 @@ fn next_algorithm_avoids_interface_or_transition_edges() {
 }
 
 #[test]
-fn flow_and_status_adapters_use_canonical_projection_service() {
+fn flow_adapter_uses_canonical_projection_service() {
     let flow = read_production_source("src/cli/commands/diagnostics/flow.rs");
-    let status = read_production_source("src/cli/commands/diagnostics/status.rs");
 
     assert!(
         flow.contains("flow_status::project"),
         "flow adapter should use canonical projection service"
     );
     assert!(
-        status.contains("flow_status::project"),
-        "status adapter should use canonical projection service"
-    );
-    assert!(
         !flow.contains("flow::metrics::calculate_metrics"),
         "flow adapter should not use legacy flow metrics path directly"
     );
     assert!(
-        !status.contains("flow::metrics::calculate_metrics"),
-        "status adapter should not use legacy flow metrics path directly"
-    );
-    assert!(
         !flow.contains("read_model::flow_metrics::calculate_metrics"),
         "flow adapter should use canonical projection service instead of direct flow metrics"
-    );
-    assert!(
-        !status.contains("read_model::flow_metrics::calculate_metrics"),
-        "status adapter should use canonical projection service instead of direct flow metrics"
-    );
-}
-
-#[test]
-fn capacity_diagnostics_adapter_delegates_to_shared_capacity_interface() {
-    let capacity = read_production_source("src/cli/commands/diagnostics/capacity.rs");
-
-    assert!(
-        capacity.contains("flow::capacity"),
-        "capacity diagnostics adapter should delegate to shared flow capacity interface"
-    );
-    assert!(
-        !capacity.contains("read_model::capacity"),
-        "capacity diagnostics adapter should not wire read model directly"
-    );
-    assert!(
-        !capacity.contains("load_board"),
-        "capacity diagnostics adapter should not duplicate board loading logic"
     );
 }
 
@@ -303,8 +275,7 @@ fn diagnostics_adapters_avoid_cross_context_orchestration_edges() {
 
     for path in [
         "src/cli/commands/diagnostics/flow.rs",
-        "src/cli/commands/diagnostics/status.rs",
-        "src/cli/commands/diagnostics/capacity.rs",
+        "src/cli/commands/diagnostics/throughput.rs",
     ] {
         assert_no_forbidden_edges_in_production(path, &forbidden);
     }

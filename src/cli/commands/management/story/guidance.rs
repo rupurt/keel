@@ -102,7 +102,7 @@ fn recovery_command_for_error(
     match action {
         StoryLifecycleAction::Start => {
             if lower.contains("board state has changed") {
-                Some("keel status".to_string())
+                Some("keel flow".to_string())
             } else if lower.contains("cannot start") {
                 Some(format!("keel story show {story_id}"))
             } else {

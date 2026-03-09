@@ -77,9 +77,8 @@ pub fn calculate_next(
 ) -> Result<NextDecision> {
     let mut agent_backlog_blocked_by_dependencies = false;
 
-    let projection = crate::read_model::flow_status::project(board);
-    let metrics = &projection.flow;
-    let queue_policy_snapshot = queue_policy::project(metrics);
+    let metrics = crate::read_model::flow_status::project(board);
+    let queue_policy_snapshot = queue_policy::project(&metrics);
 
     // 1. Check for blocking verification backlog (human only)
     // If we've reached or exceeded capacity, we MUST stop and clear the queue
@@ -336,7 +335,7 @@ mod tests {
     }
 
     fn flow_action_summary(board: &Board) -> String {
-        let metrics = crate::read_model::flow_status::project(board).flow;
+        let metrics = crate::read_model::flow_status::project(board);
         crate::cli::presentation::flow::bottleneck::analyze_two_actor_health(&metrics)
             .action_summary
     }
