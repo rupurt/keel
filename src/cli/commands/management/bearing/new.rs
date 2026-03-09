@@ -95,6 +95,32 @@ fn new_bearing(board_dir: &Path, name: &str) -> Result<String> {
     fs::write(&brief_path, brief_body)
         .with_context(|| format!("Failed to write bearing BRIEF: {}", brief_path.display()))?;
 
+    // Render and write EVIDENCE.md
+    let evidence_content = template_rendering::render(
+        templates::bearing::EVIDENCE,
+        &[("id", &bearing_id), ("title", name)],
+    );
+    let evidence_path = bearing_dir.join("EVIDENCE.md");
+    fs::write(&evidence_path, evidence_content).with_context(|| {
+        format!(
+            "Failed to write bearing EVIDENCE: {}",
+            evidence_path.display()
+        )
+    })?;
+
+    // Render and write ASSESSMENT.md
+    let assessment_content = template_rendering::render(
+        templates::bearing::ASSESSMENT,
+        &[("id", &bearing_id), ("title", name)],
+    );
+    let assessment_path = bearing_dir.join("ASSESSMENT.md");
+    fs::write(&assessment_path, assessment_content).with_context(|| {
+        format!(
+            "Failed to write bearing ASSESSMENT: {}",
+            assessment_path.display()
+        )
+    })?;
+
     println!("Created: bearings/{}/", bearing_id);
 
     // Regenerate board
@@ -109,7 +135,7 @@ mod tests {
     use crate::test_helpers::TestBoardBuilder;
 
     #[test]
-    fn test_new_bearing_success() {
+    fn bearing_scaffold_uses_evidence_document_contract() {
         let temp = TestBoardBuilder::new().build();
         let board_dir = temp.path();
 
@@ -129,10 +155,37 @@ mod tests {
         assert!(bearing_dir.is_dir());
         assert!(bearing_dir.join("README.md").exists());
         assert!(bearing_dir.join("BRIEF.md").exists());
+        assert!(bearing_dir.join("EVIDENCE.md").exists());
+        assert!(bearing_dir.join("ASSESSMENT.md").exists());
+        assert!(!bearing_dir.join("SURVEY.md").exists());
 
         let readme = fs::read_to_string(bearing_dir.join("README.md")).unwrap();
         assert!(readme.contains("title: My New Research"));
         assert!(readme.contains("index: 1"));
+        assert!(readme.contains("[EVIDENCE.md](EVIDENCE.md)"));
+        assert!(!readme.contains("[SURVEY.md](SURVEY.md)"));
+    }
+
+    #[test]
+    fn bearing_scaffold_contract_has_no_survey_aliases() {
+        let temp = TestBoardBuilder::new().build();
+        let board_dir = temp.path();
+
+        let _bearing_id = new_bearing(board_dir, "Canonical Evidence Research").unwrap();
+
+        let bearings_dir = board_dir.join("bearings");
+        let bearing_dir = fs::read_dir(bearings_dir)
+            .unwrap()
+            .map(|e| e.unwrap().path())
+            .find(|p| {
+                let content = fs::read_to_string(p.join("README.md")).unwrap();
+                content.contains("title: Canonical Evidence Research")
+            })
+            .expect("Bearing not found");
+
+        let readme = fs::read_to_string(bearing_dir.join("README.md")).unwrap();
+        assert!(!readme.contains("SURVEY.md"));
+        assert!(!bearing_dir.join("SURVEY.md").exists());
     }
 
     #[test]

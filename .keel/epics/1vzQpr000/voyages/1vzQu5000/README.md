@@ -28,7 +28,7 @@ updated_at: 2026-03-08T20:10:04
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Compute Evidence-Aware Assessment And EV Scores](../../../../stories/1vzQwq000/README.md) | feat | backlog |
+| [Make Bearing Assessment Evidence-Aware And Compute EV Scores](../../../../stories/1vzQwq000/README.md) | feat | backlog |
 | [Render Evidence-Backed Bearing Show And File Surfaces](../../../../stories/1vzQwr000/README.md) | feat | backlog |
 | [Gate Readiness And Board Projections On Evidence Quality](../../../../stories/1vzQws000/README.md) | feat | backlog |
 <!-- END GENERATED -->

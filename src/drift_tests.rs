@@ -702,6 +702,10 @@ mod token_bucket_contract {
                 crate::infrastructure::templates::bearing::BRIEF,
             ),
             (
+                "bearing EVIDENCE",
+                crate::infrastructure::templates::bearing::EVIDENCE,
+            ),
+            (
                 "bearing SURVEY",
                 crate::infrastructure::templates::bearing::SURVEY,
             ),

@@ -12,7 +12,7 @@ created_at: {{created_at}}
 <!-- BEGIN DOCUMENTS -->
 | Document | Description |
 |----------|-------------|
-| [BRIEF.md](BRIEF.md) | Core research brief covering the hypothesis, problem space, success criteria, and open questions |
-| [SURVEY.md](SURVEY.md) | Survey findings, market and technical research, and discovered constraints |
+| [BRIEF.md](BRIEF.md) | Framing brief covering the hypothesis, problem space, success criteria, and open questions |
+| [EVIDENCE.md](EVIDENCE.md) | Cited research sources, synthesized findings, and unresolved unknowns |
 | [ASSESSMENT.md](ASSESSMENT.md) | Impact scoring, tradeoff analysis, and the final recommendation |
 <!-- END DOCUMENTS -->

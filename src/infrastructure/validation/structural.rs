@@ -22,11 +22,10 @@ static EPIC_PRD_DEFAULT_ROW_MARKERS: &[&str] = &[
     "Maintain reliability and observability for all new workflow paths introduced by this epic.",
     "Users can complete the primary workflow described in this PRD without manual intervention.",
 ];
-static BEARING_REQUIRED_DOCUMENT_LINKS: &[&str] = &[
-    "[BRIEF.md](BRIEF.md)",
-    "[SURVEY.md](SURVEY.md)",
-    "[ASSESSMENT.md](ASSESSMENT.md)",
-];
+static BEARING_REQUIRED_DOCUMENT_LINKS: &[&str] =
+    &["[BRIEF.md](BRIEF.md)", "[ASSESSMENT.md](ASSESSMENT.md)"];
+static BEARING_RESEARCH_DOCUMENT_LINKS: &[&str] =
+    &["[EVIDENCE.md](EVIDENCE.md)", "[SURVEY.md](SURVEY.md)"];
 
 /// Check for date field naming and type consistency.
 ///
@@ -594,6 +593,19 @@ pub fn check_bearing_readme_structure(path: &Path) -> Vec<Problem> {
         Severity::Error,
         BEARING_REQUIRED_DOCUMENT_LINKS,
     ));
+
+    if let Some(documents_block) = extract_marker_block(&content, "DOCUMENTS")
+        && !BEARING_RESEARCH_DOCUMENT_LINKS.iter().any(|document_link| {
+            documents_block_has_authored_document_row(&documents_block, document_link)
+        })
+    {
+        problems.push(contract_problem(
+            path,
+            Severity::Error,
+            CheckId::BearingReadmeStructure,
+            "README Documents section must include authored row for [EVIDENCE.md](EVIDENCE.md)",
+        ));
+    }
 
     problems
 }
@@ -1386,7 +1398,7 @@ created_at: 2026-01-01T00:00:00
         assert!(
             problems
                 .iter()
-                .any(|p| p.message.contains("[SURVEY.md](SURVEY.md)"))
+                .any(|p| p.message.contains("[EVIDENCE.md](EVIDENCE.md)"))
         );
         assert!(
             problems
@@ -1416,7 +1428,7 @@ created_at: 2026-01-01T00:00:00
 | Document | Description |
 |----------|-------------|
 | [BRIEF.md](BRIEF.md) | Core research brief covering the hypothesis and open questions |
-| [SURVEY.md](SURVEY.md) | Survey findings, market research, and technical constraints |
+| [EVIDENCE.md](EVIDENCE.md) | Cited research sources, synthesized findings, and unresolved unknowns |
 | [ASSESSMENT.md](ASSESSMENT.md) | Tradeoff analysis and recommendation |
 <!-- END DOCUMENTS -->
 "#,

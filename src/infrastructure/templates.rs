@@ -41,6 +41,8 @@ pub mod bearing {
     pub const README: &str = include_str!("../../templates/bearings/README.md");
     /// Bearing BRIEF template
     pub const BRIEF: &str = include_str!("../../templates/bearings/BRIEF.md");
+    /// Bearing EVIDENCE template
+    pub const EVIDENCE: &str = include_str!("../../templates/bearings/EVIDENCE.md");
     /// Bearing SURVEY template
     pub const SURVEY: &str = include_str!("../../templates/bearings/SURVEY.md");
     /// Bearing ASSESSMENT template
@@ -398,8 +400,9 @@ mod tests {
         assert!(bearing::README.contains("## Documents"));
         assert!(bearing::README.contains("<!-- BEGIN DOCUMENTS -->"));
         assert!(bearing::README.contains("[BRIEF.md](BRIEF.md)"));
-        assert!(bearing::README.contains("[SURVEY.md](SURVEY.md)"));
+        assert!(bearing::README.contains("[EVIDENCE.md](EVIDENCE.md)"));
         assert!(bearing::README.contains("[ASSESSMENT.md](ASSESSMENT.md)"));
+        assert!(!bearing::README.contains("[SURVEY.md](SURVEY.md)"));
     }
 
     #[test]
@@ -441,9 +444,18 @@ mod tests {
     }
 
     #[test]
-    fn bearing_survey_contains_placeholders() {
-        assert!(bearing::SURVEY.contains("{{id}}"));
-        assert!(bearing::SURVEY.contains("{{title}}"));
+    fn bearing_brief_and_evidence_templates_have_distinct_responsibilities() {
+        assert!(bearing::BRIEF.contains("## Hypothesis"));
+        assert!(bearing::BRIEF.contains("## Problem Space"));
+        assert!(bearing::BRIEF.contains("## Success Criteria"));
+        assert!(bearing::BRIEF.contains("## Open Questions"));
+        assert!(!bearing::BRIEF.contains("## Key Findings"));
+
+        assert!(bearing::EVIDENCE.contains("{{id}}"));
+        assert!(bearing::EVIDENCE.contains("{{title}}"));
+        assert!(bearing::EVIDENCE.contains("## Sources"));
+        assert!(bearing::EVIDENCE.contains("## Key Findings"));
+        assert!(bearing::EVIDENCE.contains("## Unknowns"));
     }
 
     #[test]
@@ -483,6 +495,7 @@ mod tests {
             ("story REFLECT", story::REFLECT),
             ("bearing README", bearing::README),
             ("bearing BRIEF", bearing::BRIEF),
+            ("bearing EVIDENCE", bearing::EVIDENCE),
             ("bearing SURVEY", bearing::SURVEY),
             ("bearing ASSESSMENT", bearing::ASSESSMENT),
             ("adr", adr::ADR),
@@ -516,6 +529,7 @@ mod tests {
             ("story REFLECT", story::REFLECT),
             ("bearing README", bearing::README),
             ("bearing BRIEF", bearing::BRIEF),
+            ("bearing EVIDENCE", bearing::EVIDENCE),
             ("bearing SURVEY", bearing::SURVEY),
             ("bearing ASSESSMENT", bearing::ASSESSMENT),
             ("adr", adr::ADR),
