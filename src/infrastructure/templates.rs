@@ -47,6 +47,16 @@ pub mod bearing {
     pub const ASSESSMENT: &str = include_str!("../../templates/bearings/ASSESSMENT.md");
 }
 
+/// Mission templates
+pub mod mission {
+    /// Mission README template
+    pub const README: &str = include_str!("../../templates/missions/README.md");
+    /// Mission CHARTER template
+    pub const CHARTER: &str = include_str!("../../templates/missions/CHARTER.md");
+    /// Mission LOG template
+    pub const LOG: &str = include_str!("../../templates/missions/LOG.md");
+}
+
 /// ADR templates
 pub mod adr {
     /// ADR template
@@ -411,6 +421,7 @@ mod tests {
             story::STORY,
             bearing::README,
             adr::ADR,
+            mission::README,
         ];
 
         for template in planning_templates {
@@ -423,6 +434,53 @@ mod tests {
                 "planning template must not use legacy {{datetime}} token"
             );
         }
+    }
+
+    // ============ Mission Template Tests (SRS-05) ============
+
+    #[test]
+    fn mission_readme_contains_placeholders() {
+        assert!(mission::README.contains("{{id}}"));
+        assert!(mission::README.contains("{{title}}"));
+        assert!(mission::README.contains("{{created_at}}"));
+        assert!(mission::README.contains("{{status}}"));
+    }
+
+    #[test]
+    fn mission_readme_has_frontmatter() {
+        assert!(mission::README.starts_with("---\n"));
+        assert!(mission::README.contains("\n---\n"));
+    }
+
+    #[test]
+    fn mission_readme_links_charter_and_log() {
+        assert!(mission::README.contains("[CHARTER.md](CHARTER.md)"));
+        assert!(mission::README.contains("[LOG.md](LOG.md)"));
+    }
+
+    #[test]
+    fn mission_charter_has_goals_table() {
+        // SRS-05/AC-02: CHARTER.md scaffold has Goals table with ID, Description, Verification columns
+        assert!(mission::CHARTER.contains("## Goals"));
+        assert!(mission::CHARTER.contains("| ID | Description | Verification |"));
+        assert!(mission::CHARTER.contains("MG-01"));
+    }
+
+    #[test]
+    fn mission_charter_has_constraints_section() {
+        // SRS-05/AC-03: CHARTER.md scaffold has Constraints section
+        assert!(mission::CHARTER.contains("## Constraints"));
+    }
+
+    #[test]
+    fn mission_charter_has_halting_rules_section() {
+        // SRS-05/AC-04: CHARTER.md scaffold has Halting Rules section
+        assert!(mission::CHARTER.contains("## Halting Rules"));
+    }
+
+    #[test]
+    fn mission_log_has_header() {
+        assert!(mission::LOG.contains("# {{title}} - Decision Log"));
     }
 
     #[test]
@@ -498,6 +556,9 @@ mod tests {
             ("bearing EVIDENCE", bearing::EVIDENCE),
             ("bearing ASSESSMENT", bearing::ASSESSMENT),
             ("adr", adr::ADR),
+            ("mission README", mission::README),
+            ("mission CHARTER", mission::CHARTER),
+            ("mission LOG", mission::LOG),
         ];
 
         for (label, template) in templates {
@@ -531,6 +592,9 @@ mod tests {
             ("bearing EVIDENCE", bearing::EVIDENCE),
             ("bearing ASSESSMENT", bearing::ASSESSMENT),
             ("adr", adr::ADR),
+            ("mission README", mission::README),
+            ("mission CHARTER", mission::CHARTER),
+            ("mission LOG", mission::LOG),
         ];
 
         for (label, template) in planning_templates {

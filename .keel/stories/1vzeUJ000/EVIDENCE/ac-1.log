@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-09T13:34:21.729351180-07:00
+mode: manual
+---
+Templates at templates/missions/ with README.md, CHARTER.md, LOG.md; wired into templates.rs
