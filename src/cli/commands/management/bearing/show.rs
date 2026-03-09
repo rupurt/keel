@@ -335,12 +335,15 @@ fn render_assessment_section(
 }
 
 fn bearing_file_commands(bearing_id: &str) -> Vec<String> {
-    vec![
+    let mut commands = vec![
         format!("keel bearing file {bearing_id} README"),
         format!("keel bearing file {bearing_id} BRIEF"),
         format!("keel bearing file {bearing_id} EVIDENCE"),
         format!("keel bearing file {bearing_id} ASSESSMENT"),
-    ]
+    ];
+
+    commands.dedup();
+    commands
 }
 
 fn format_source_summary(source: &BearingEvidenceSourceSummary) -> String {
