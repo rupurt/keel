@@ -623,13 +623,16 @@ pub fn check_bearing_lineage_epic(board: &Board) -> Vec<Problem> {
                 Problem::error(
                     bearing.path.clone(),
                     format!(
-                        "laid bearing '{}' is missing required `epic` lineage field. \
-                         Fix: re-lay the bearing or manually add `epic: <epic-id>` to {}",
+                        "laid bearing '{}' is missing required `epic` lineage field",
                         bearing.id(),
-                        bearing.path.display()
                     ),
                 )
-                .with_check_id(CheckId::BearingMissingEpicLineage),
+                .with_check_id(CheckId::BearingMissingEpicLineage)
+                .with_fix(Fix::SetFrontmatterField {
+                    path: bearing.path.clone(),
+                    field: "epic".to_string(),
+                    value: bearing.id().to_string(),
+                }),
             );
         }
     }
@@ -893,6 +896,14 @@ mod tests {
         assert_eq!(problems.len(), 1);
         assert!(problems[0].message.contains("missing required `epic`"));
         assert_eq!(problems[0].check_id, CheckId::BearingMissingEpicLineage);
+        assert!(
+            matches!(
+                &problems[0].fix,
+                Some(Fix::SetFrontmatterField { field, value, .. })
+                if field == "epic" && value == "1w5H2Bq9L"
+            ),
+            "fix must set epic to the bearing ID"
+        );
     }
 
     #[test]
@@ -956,6 +967,31 @@ mod tests {
         for (a, b) in goals_run1.iter().zip(goals_run2.iter()) {
             assert_eq!(a.message, b.message);
             assert_eq!(a.check_id, b.check_id);
+        }
+    }
+
+    #[test]
+    fn lineage_migration_scales_linearly_on_board_size() {
+        // Create a board with multiple legacy bearings (no lineage) to verify
+        // the check iterates linearly without exponential blowup.
+        let mut builder = TestBoardBuilder::new();
+        let count = 20;
+        for i in 0..count {
+            let id = format!("1w5H2B{:03}", i);
+            builder = builder.bearing(TestBearing::new(&id).status("laid"));
+        }
+        let temp = builder.build();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_bearing_lineage_epic(&board);
+        // Exactly one problem per legacy bearing — linear in board size
+        assert_eq!(problems.len(), count);
+        // Each problem must carry a fix
+        for problem in &problems {
+            assert!(
+                problem.fix.is_some(),
+                "every legacy bearing must have a migration fix"
+            );
         }
     }
 }

@@ -1,7 +1,7 @@
 ---
 id: 1vzWg8000
 title: Lineage Validation
-status: in-progress
+status: done
 epic: 1vzWfz000
 created_at: 2026-03-09T02:13:32
 index: 2
@@ -25,12 +25,12 @@ started_at: 2026-03-09T02:18:25
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 3/4 stories complete
+**Progress:** 4/4 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Lineage CLI Output](../../../../stories/1vzWgD000/README.md) | feat | done |
 | [Lineage Doctor Checks](../../../../stories/1vzWgW000/README.md) | feat | done |
 | [Correction Documentation](../../../../stories/1vzWgX000/README.md) | feat | done |
-| [Legacy Bearing Migration](../../../../stories/1vzWgY000/README.md) | feat | backlog |
+| [Legacy Bearing Migration](../../../../stories/1vzWgY000/README.md) | feat | done |
 <!-- END GENERATED -->

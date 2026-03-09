@@ -1,7 +1,7 @@
 ---
 id: 1vzWg5000
 title: Lineage Persistence
-status: in-progress
+status: done
 epic: 1vzWfz000
 created_at: 2026-03-09T02:13:29
 index: 1

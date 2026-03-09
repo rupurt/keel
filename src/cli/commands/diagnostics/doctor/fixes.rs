@@ -74,6 +74,10 @@ fn apply_fix(fix: &Fix) -> Result<()> {
                 path.display()
             );
         }
+        Fix::SetFrontmatterField { path, field, value } => {
+            update_frontmatter_field(path, field, value)?;
+            println!("  FIX: Set {}: {} in {}", field, value, path.display());
+        }
         _ => {
             // Other fixes can be implemented as needed
         }

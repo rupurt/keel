@@ -149,6 +149,11 @@ pub enum Fix {
         path: PathBuf,
         pattern: String,
     },
+    SetFrontmatterField {
+        path: PathBuf,
+        field: String,
+        value: String,
+    },
 }
 
 #[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq, Hash)]
