@@ -132,32 +132,26 @@ pub fn run(pattern: &str) -> Result<()> {
 
 fn render_documents_section(bearing: &crate::domain::model::Bearing) -> ShowSection {
     let mut section = ShowSection::new("Documents");
-    let mut authored_documents: Vec<&str> = vec!["README.md", "BRIEF.md"];
     let mut unauthored_documents: Vec<&str> = Vec::new();
 
     if bearing.has_evidence {
-        authored_documents.push("EVIDENCE.md");
+        // documented in inspect commands
     } else {
         unauthored_documents.push("EVIDENCE.md");
     }
 
     if bearing.has_assessment {
-        authored_documents.push("ASSESSMENT.md");
+        // documented in inspect commands
     } else {
         unauthored_documents.push("ASSESSMENT.md");
     }
 
-    section.push_lines([
-        format!("  authored: {}", authored_documents.join(", ")),
-        format!(
+    if !unauthored_documents.is_empty() {
+        section.push_lines([format!(
             "  unauthored: {}",
-            if unauthored_documents.is_empty() {
-                format!("{}", "(none)".dimmed())
-            } else {
-                unauthored_documents.join(", ")
-            }
-        ),
-    ]);
+            unauthored_documents.join(", ")
+        )]);
+    }
     section.push_labeled_bullets(
         "Inspect:",
         bearing_file_commands(bearing.id()),
@@ -487,6 +481,28 @@ mod tests {
                 .all(|line| !line.starts_with("  Key Findings:"))
         );
         assert!(lines.iter().all(|line| !line.starts_with("  Unknowns:")));
+    }
+
+    #[test]
+    fn bearing_documents_section_shows_unauthed_row_only_when_needed() {
+        let bearing_with_all_documents = BearingFactory::new("BRG-01")
+            .has_evidence(true)
+            .has_assessment(true)
+            .build();
+        let all_lines = render_lines(render_documents_section(&bearing_with_all_documents));
+
+        assert!(
+            all_lines.iter().all(|line| !line.contains("unauthored")),
+            "should not show unauthored when all docs are present: {all_lines:?}"
+        );
+
+        let bearing_with_missing_documents = BearingFactory::new("BRG-01")
+            .has_evidence(false)
+            .has_assessment(false)
+            .build();
+        let missing_lines = render_lines(render_documents_section(&bearing_with_missing_documents));
+
+        assert!(missing_lines.contains(&"  unauthored: EVIDENCE.md, ASSESSMENT.md".to_string()));
     }
 
     #[test]
