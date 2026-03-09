@@ -28,7 +28,6 @@ const SECTION_EXCERPT_LIMITS: ShowExcerptLimits = ShowExcerptLimits {
     max_paragraphs: 1,
     max_list_items: 3,
 };
-const SOURCE_SUMMARY_LIMIT: usize = 3;
 
 /// Show detailed bearing information.
 pub fn run(pattern: &str) -> Result<()> {
@@ -228,10 +227,9 @@ fn render_evidence_section(
         summary.unknowns.iter().cloned(),
         Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
     );
-    section.push_labeled_bullets_limited(
+    section.push_labeled_bullets(
         counted_label("Sources", summary.sources.len()),
         summary.sources.iter().map(format_source_summary),
-        SOURCE_SUMMARY_LIMIT,
         Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
     );
     section.push_labeled_bullets(
@@ -681,7 +679,13 @@ mod tests {
             rendered
                 .contains("SRC-02 web via manual:official-doc | authority high | freshness high")
         );
-        assert!(rendered.contains("... 1 more"));
+        assert!(rendered.contains(
+            "SRC-03 social via manual:community-signal | authority low | freshness high"
+        ));
+        assert!(rendered.contains(
+            "SRC-04 manual via manual:internal-notes | authority medium | freshness medium"
+        ));
+        assert!(!rendered.contains("... 1 more"));
         assert!(rendered.contains("Cited Sources:"));
         assert!(rendered.contains("SRC-01, SRC-02, SRC-03, SRC-04"));
         assert!(rendered.contains("keel bearing file BRG-01 BRIEF"));
