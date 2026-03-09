@@ -96,13 +96,14 @@ fn render_planning_sections(report: &EpicShowProjection) -> Vec<ShowSection> {
 
 fn render_problem_section(report: &EpicShowProjection) -> ShowSection {
     let mut section = ShowSection::new("Problem");
-    section.push_text_block_limited(
+    section.push_text_block_limited_with_indent(
         report
             .doc
             .problem_statement
             .as_deref()
             .unwrap_or(PROBLEM_PLACEHOLDER),
         PROBLEM_MAX_PARAGRAPHS,
+        2,
     );
     section
 }
@@ -686,7 +687,7 @@ More details.
         let rendered = document.render();
 
         assert!(rendered.contains("Problem"));
-        assert!(rendered.contains("    Inline "));
+        assert!(rendered.contains("  Inline "));
         assert!(rendered.contains("problem"));
         assert!(!rendered.contains("Planning Summary"));
     }
@@ -723,10 +724,10 @@ More details.
         document.push_sections_spaced([section]);
         let rendered = document.render();
 
-        assert!(rendered.contains("    Paragraph one."));
-        assert!(rendered.contains("    Still paragraph one."));
-        assert!(rendered.contains("    ..."));
-        assert!(!rendered.contains("    Paragraph two."));
+        assert!(rendered.contains("  Paragraph one."));
+        assert!(rendered.contains("  Still paragraph one."));
+        assert!(rendered.contains("  ..."));
+        assert!(!rendered.contains("  Paragraph two."));
     }
 
     #[test]

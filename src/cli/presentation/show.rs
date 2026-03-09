@@ -354,6 +354,20 @@ impl ShowSection {
         self.push_lines(rendered);
     }
 
+    pub fn push_text_block_limited_with_indent(
+        &mut self,
+        value: impl AsRef<str>,
+        max_paragraphs: usize,
+        indent: usize,
+    ) {
+        let rendered = limited_text_block_lines_with_indent(value.as_ref(), max_paragraphs, indent);
+        if rendered.is_empty() {
+            return;
+        }
+
+        self.push_lines(rendered);
+    }
+
     fn render_into(&self, output: &mut Vec<String>) {
         output.push(self.title.bold().to_string());
         for block in &self.blocks {
@@ -462,9 +476,10 @@ impl ShowKeyValues {
     }
 }
 
-fn text_block_paragraphs(value: &str) -> Vec<Vec<String>> {
+fn text_block_paragraphs_with_indent(value: &str, indent: usize) -> Vec<Vec<String>> {
     let mut paragraphs = Vec::new();
     let mut current = Vec::new();
+    let indent = " ".repeat(indent);
 
     for line in value.lines() {
         let trimmed = line.trim();
@@ -476,7 +491,10 @@ fn text_block_paragraphs(value: &str) -> Vec<Vec<String>> {
             continue;
         }
 
-        current.push(format!("    {}", style::styled_inline_markdown(trimmed)));
+        current.push(format!(
+            "{indent}{}",
+            style::styled_inline_markdown(trimmed)
+        ));
     }
 
     if !current.is_empty() {
@@ -487,12 +505,20 @@ fn text_block_paragraphs(value: &str) -> Vec<Vec<String>> {
 }
 
 fn text_block_lines(value: &str) -> Vec<String> {
-    render_text_block_paragraphs(&text_block_paragraphs(value), None)
+    render_text_block_paragraphs(&text_block_paragraphs_with_indent(value, 4), None, 4)
 }
 
 fn limited_text_block_lines(value: &str, max_paragraphs: usize) -> Vec<String> {
-    let paragraphs = text_block_paragraphs(value);
-    render_text_block_paragraphs(&paragraphs, Some(max_paragraphs.max(1)))
+    limited_text_block_lines_with_indent(value, max_paragraphs, 4)
+}
+
+fn limited_text_block_lines_with_indent(
+    value: &str,
+    max_paragraphs: usize,
+    indent: usize,
+) -> Vec<String> {
+    let paragraphs = text_block_paragraphs_with_indent(value, indent);
+    render_text_block_paragraphs(&paragraphs, Some(max_paragraphs.max(1)), indent)
 }
 
 fn render_excerpt_lines(excerpt: &SectionExcerpt, limits: ShowExcerptLimits) -> Vec<String> {
@@ -525,6 +551,7 @@ fn render_excerpt_lines(excerpt: &SectionExcerpt, limits: ShowExcerptLimits) -> 
 fn render_text_block_paragraphs(
     paragraphs: &[Vec<String>],
     max_paragraphs: Option<usize>,
+    indent: usize,
 ) -> Vec<String> {
     let Some(limit) = max_paragraphs else {
         return paragraphs
@@ -538,6 +565,7 @@ fn render_text_block_paragraphs(
     };
 
     let mut lines = Vec::new();
+    let indent = " ".repeat(indent);
     for (idx, paragraph) in paragraphs.iter().take(limit).enumerate() {
         if idx > 0 {
             lines.push(String::new());
@@ -545,7 +573,7 @@ fn render_text_block_paragraphs(
         lines.extend(paragraph.iter().cloned());
     }
     if paragraphs.len() > limit {
-        lines.push("    ...".to_string());
+        lines.push(format!("{indent}..."));
     }
     lines
 }
@@ -703,6 +731,20 @@ mod tests {
         assert_eq!(lines[1], "    One.");
         assert_eq!(lines[2], "    Still one.");
         assert_eq!(lines[3], "    ...");
+    }
+
+    #[test]
+    fn show_section_push_text_block_limited_with_indent_uses_requested_padding() {
+        let mut section = ShowSection::new("Problem");
+        section.push_text_block_limited_with_indent("One.\nStill one.\n\nTwo.", 1, 2);
+
+        let mut lines = Vec::new();
+        section.render_into(&mut lines);
+
+        assert!(lines[0].contains("Problem"));
+        assert_eq!(lines[1], "  One.");
+        assert_eq!(lines[2], "  Still one.");
+        assert_eq!(lines[3], "  ...");
     }
 
     #[test]
