@@ -63,6 +63,12 @@ enum JsonDetails {
     NeedsPlanning {
         voyages: Vec<String>,
     },
+    Mission {
+        id: String,
+        title: String,
+        unmet_goals: Vec<crate::infrastructure::validation::charter::ParsedMissionGoal>,
+        suggestion: String,
+    },
     Empty {
         suggestions: Vec<String>,
     },
@@ -224,6 +230,12 @@ fn decision_to_json(decision: &NextDecision) -> JsonResult {
         NextDecision::NeedsPlanning(d) => JsonDetails::NeedsPlanning {
             voyages: d.voyages.iter().map(|v| v.id().to_string()).collect(),
         },
+        NextDecision::Mission(d) => JsonDetails::Mission {
+            id: d.mission.id().to_string(),
+            title: d.mission.title().to_string(),
+            unmet_goals: d.unmet_goals.clone(),
+            suggestion: d.suggestion.clone(),
+        },
         NextDecision::Empty(d) => JsonDetails::Empty {
             suggestions: d.suggestions.clone(),
         },
@@ -245,6 +257,7 @@ fn decision_kind(decision: &NextDecision) -> &'static str {
         NextDecision::Blocked(_) => "blocked",
         NextDecision::NeedsStories(_) => "needs_stories",
         NextDecision::NeedsPlanning(_) => "needs_planning",
+        NextDecision::Mission(_) => "mission",
         NextDecision::Empty(_) => "empty",
     }
 }
@@ -283,6 +296,10 @@ fn guidance_for_decision(decision: &NextDecision) -> Option<CanonicalGuidance> {
             .voyages
             .first()
             .map(|voyage| CommandGuidance::next(format!("keel voyage plan {}", voyage.id()))),
+        NextDecision::Mission(d) => Some(CommandGuidance::next(format!(
+            "keel mission show {}",
+            d.mission.id()
+        ))),
         NextDecision::Empty(_) => None,
     };
 

@@ -35,6 +35,7 @@ pub fn format_decision(decision: &NextDecision) -> String {
         NextDecision::Blocked(d) => format_blocked(d),
         NextDecision::NeedsStories(d) => format_needs_stories(d),
         NextDecision::NeedsPlanning(d) => format_needs_planning(d),
+        NextDecision::Mission(d) => format_mission(d),
     }
 }
 
@@ -203,6 +204,30 @@ fn format_needs_planning(d: &DecomposeDecision) -> String {
     }
 
     out.push_str("\nReview these voyages and move one into planned state.");
+    out
+}
+
+fn format_mission(d: &super::MissionDecision) -> String {
+    let mut out = String::new();
+    out.push_str(&format!(
+        "{}\n",
+        "Active mission requires next work unit:".bold()
+    ));
+    out.push_str(&format!(
+        "  Mission: {} {}\n",
+        crate::cli::style::styled_story_id(d.mission.id()),
+        d.mission.title()
+    ));
+    out.push_str("\nUnmet board goals:\n");
+    for goal in &d.unmet_goals {
+        out.push_str(&format!(
+            "  - {}: {} ({})\n",
+            crate::cli::style::styled_goal_id(&goal.id),
+            goal.description,
+            goal.verification.raw().dimmed()
+        ));
+    }
+    out.push_str(&format!("\nSuggestion: {}\n", d.suggestion.yellow()));
     out
 }
 

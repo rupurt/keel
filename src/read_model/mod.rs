@@ -7,6 +7,7 @@ pub mod execution_queue;
 pub mod flow_metrics;
 pub mod flow_status;
 pub mod knowledge;
+pub mod mission_show;
 pub mod planning_show;
 pub mod queue_policy;
 pub mod throughput_history;

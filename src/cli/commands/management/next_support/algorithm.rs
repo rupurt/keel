@@ -27,6 +27,15 @@ pub enum NextDecision {
     NeedsStories(DecomposeDecision),
     /// Strategic gap (voyage needs planning)
     NeedsPlanning(DecomposeDecision),
+    /// Active mission needs work created
+    Mission(MissionDecision),
+}
+
+#[derive(Debug)]
+pub struct MissionDecision {
+    pub mission: crate::domain::model::Mission,
+    pub unmet_goals: Vec<crate::infrastructure::validation::charter::ParsedMissionGoal>,
+    pub suggestion: String,
 }
 
 #[derive(Debug)]
@@ -252,6 +261,57 @@ pub fn calculate_next(
         if !workable_backlog.is_empty() {
             agent_backlog_blocked_by_dependencies = true;
         }
+
+        // 6c. Check for active missions if queue is empty
+        for mission in board.missions.values() {
+            if mission.status() == crate::domain::model::MissionStatus::Active {
+                let charter_path = mission.path.parent().unwrap().join("CHARTER.md");
+                let content = std::fs::read_to_string(&charter_path).unwrap_or_default();
+                let goals =
+                    crate::infrastructure::validation::charter::parse_mission_goals(&content);
+
+                let unmet_goals: Vec<_> = goals
+                    .iter()
+                    .filter(|g| {
+                        matches!(
+                            g.verification,
+                            crate::infrastructure::validation::charter::GoalVerification::Board(_)
+                        ) && !is_goal_met(board, g.verification.raw())
+                    })
+                    .cloned()
+                    .collect();
+
+                if !unmet_goals.is_empty() {
+                    let epics = board.epics_for_mission(mission.id());
+                    let bearings = board.bearings_for_mission(mission.id());
+
+                    let suggestion = if bearings.iter().any(|b| {
+                        matches!(
+                            b.frontmatter.status,
+                            crate::domain::model::BearingStatus::Exploring
+                                | crate::domain::model::BearingStatus::Evaluating
+                        )
+                    }) {
+                        "Complete active research bearings".to_string()
+                    } else if epics
+                        .iter()
+                        .any(|e| e.status() != crate::domain::model::EpicState::Done)
+                    {
+                        "Progress existing mission-scoped epics".to_string()
+                    } else if bearings.is_empty() && epics.is_empty() {
+                        "Create first bearing or epic for mission".to_string()
+                    } else {
+                        "Create next bearing or epic to address unmet goals".to_string()
+                    };
+
+                    return Ok(NextDecision::Mission(MissionDecision {
+                        mission: mission.clone(),
+                        unmet_goals,
+                        suggestion,
+                    }));
+                }
+            }
+        }
     }
 
     let mut suggestions = Vec::new();
@@ -282,6 +342,30 @@ pub fn calculate_next(
     Ok(NextDecision::Empty(EmptyDecision { suggestions }))
 }
 
+fn is_goal_met(board: &Board, target: &str) -> bool {
+    let target = target.trim();
+    if target.is_empty() || target == "..." {
+        return false;
+    }
+
+    // Check if it's an epic
+    if let Some(epic) = board.epics.get(target) {
+        return epic.status() == crate::domain::model::EpicState::Done;
+    }
+
+    // Check if it's a voyage
+    if let Some(voyage) = board.voyages.get(target) {
+        return voyage.status() == crate::domain::state_machine::voyage::VoyageState::Done;
+    }
+
+    // Check if it's a story
+    if let Some(story) = board.stories.get(target) {
+        return story.status == StoryState::Done;
+    }
+
+    false
+}
+
 /// Helper to select which mode calculate_next should run in.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
@@ -295,7 +379,7 @@ mod tests {
     use crate::domain::policy::queue::{
         FLOW_VERIFY_BLOCK_THRESHOLD, HUMAN_NEXT_VERIFY_BLOCK_THRESHOLD,
     };
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestMission, TestStory, TestVoyage};
 
     fn assert_human_queue_decision(next: NextDecision) {
         match next {
@@ -310,6 +394,7 @@ mod tests {
                 "human mode must not return implementation work (got story {})",
                 d.story.id()
             ),
+            NextDecision::Mission(_) => panic!("human mode must not return mission work"),
         }
     }
 
@@ -571,6 +656,33 @@ mod tests {
                 );
             }
             _ => panic!("Expected Empty decision with dependency-blocked suggestions"),
+        }
+    }
+
+    #[test]
+    fn agent_mode_reports_mission_when_queue_empty_but_goals_unmet() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .build();
+
+        let charter_path = temp.path().join("missions/M1/CHARTER.md");
+        let charter = r#"
+## Goals
+| ID | Description | Verification |
+|----|-------------|--------------|
+| MG-01 | Test goal | board: E1 |
+"#;
+        std::fs::write(charter_path, charter).unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let next = calculate_next(&board, temp.path(), true, None).unwrap();
+
+        if let NextDecision::Mission(d) = next {
+            assert_eq!(d.mission.id(), "M1");
+            assert_eq!(d.unmet_goals.len(), 1);
+            assert_eq!(d.unmet_goals[0].id, "MG-01");
+        } else {
+            panic!("Expected Mission decision, got {:?}", next);
         }
     }
 }

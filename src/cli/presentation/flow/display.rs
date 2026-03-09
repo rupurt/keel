@@ -60,6 +60,17 @@ pub fn render_annotated_flow(
     );
     writeln!(output, "{}", counts).unwrap();
     writeln!(output).unwrap();
+
+    // 1b. Mission Summary (Long-running Objectives)
+    let mission_summary = render_mission_summary(board, width, &theme);
+    if !mission_summary.is_empty() {
+        writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
+        writeln!(output, "  Active Missions").unwrap();
+        writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
+        writeln!(output).unwrap();
+        writeln!(output, "{}", mission_summary).unwrap();
+    }
+
     writeln!(output, "{}", style::heavy_rule(width, Some(&theme))).unwrap();
     writeln!(output).unwrap();
 
@@ -193,6 +204,100 @@ pub fn render_annotated_flow(
     }
 
     output
+}
+
+fn render_mission_summary(board: &Board, _width: usize, _theme: &Theme) -> String {
+    let mut out = String::new();
+    let mut active_missions: Vec<_> = board
+        .missions
+        .values()
+        .filter(|m| m.status() == crate::domain::model::MissionStatus::Active)
+        .collect();
+    active_missions.sort_by_key(|m| m.id());
+
+    for mission in active_missions {
+        let charter_path = mission.path.parent().unwrap().join("CHARTER.md");
+        let charter_content = std::fs::read_to_string(&charter_path).unwrap_or_default();
+        let goals =
+            crate::infrastructure::validation::charter::parse_mission_goals(&charter_content);
+
+        let board_goals: Vec<_> = goals
+            .iter()
+            .filter(|g| {
+                matches!(
+                    g.verification,
+                    crate::infrastructure::validation::charter::GoalVerification::Board(_)
+                )
+            })
+            .collect();
+        let board_met = board_goals
+            .iter()
+            .filter(|g| is_board_goal_met(board, g.verification.raw()))
+            .count();
+
+        let epics = board.epics_for_mission(mission.id());
+        let epics_done = epics
+            .iter()
+            .filter(|e| e.status() == crate::domain::model::EpicState::Done)
+            .count();
+        let bearings = board.bearings_for_mission(mission.id());
+        let bearings_terminal = bearings
+            .iter()
+            .filter(|b| {
+                matches!(
+                    b.frontmatter.status,
+                    crate::domain::model::BearingStatus::Laid
+                        | crate::domain::model::BearingStatus::Declined
+                )
+            })
+            .count();
+
+        writeln!(
+            out,
+            "  Mission: {} {} ({})",
+            style::styled_story_id(mission.id()).bold(),
+            mission.title().bold(),
+            style::styled_mission_status(&mission.status())
+        )
+        .unwrap();
+        writeln!(
+            out,
+            "    Goals: {}/{} board goals met",
+            board_met,
+            board_goals.len()
+        )
+        .unwrap();
+        writeln!(
+            out,
+            "    Child entities: {}/{} epics done, {}/{} bearings terminal",
+            epics_done,
+            epics.len(),
+            bearings_terminal,
+            bearings.len()
+        )
+        .unwrap();
+        writeln!(out).unwrap();
+    }
+
+    out
+}
+
+fn is_board_goal_met(board: &Board, target: &str) -> bool {
+    let target = target.trim();
+    if target.is_empty() || target == "..." {
+        return false;
+    }
+
+    if let Some(epic) = board.epics.get(target) {
+        return epic.status() == crate::domain::model::EpicState::Done;
+    }
+    if let Some(voyage) = board.voyages.get(target) {
+        return voyage.status() == crate::domain::state_machine::voyage::VoyageState::Done;
+    }
+    if let Some(story) = board.stories.get(target) {
+        return story.status == crate::domain::model::StoryState::Done;
+    }
+    false
 }
 
 /// Render side-by-side or stacked queue boxes for human/agent handoff.
