@@ -432,6 +432,37 @@ fn render_fixture_bearing_readme(bearing: &TestBearing) -> String {
     )
 }
 
+fn render_fixture_bearing_evidence(bearing: &TestBearing) -> String {
+    format!(
+        r#"---
+id: {}
+---
+
+# {} — Evidence
+
+## Sources
+
+| ID | Class | Provenance | Location | Observed / Published | Retrieved | Authority | Freshness | Notes |
+|----|-------|------------|----------|----------------------|-----------|-----------|-----------|-------|
+| SRC-01 | web | manual:test-fixture | https://example.test/{}/source-1 | 2026-01-01 | 2026-01-02 | medium | medium | Fixture source one supports the bearing summary. |
+
+## Technical Research
+
+### Feasibility
+Fixture evidence indicates the direction is feasible enough for tests.
+
+## Key Findings
+
+1. Fixture finding supported by [SRC-01]
+
+## Unknowns
+
+- Fixture unknown to preserve the canonical section shape
+"#,
+        bearing.id, bearing.title, bearing.id
+    )
+}
+
 impl TestBoardBuilder {
     /// Create a new test board builder.
     pub fn new() -> Self {
@@ -654,7 +685,11 @@ Test harness epic problem statement.
 
                 // EVIDENCE.md
                 if bearing.has_evidence {
-                    fs::write(bearing_dir.join("EVIDENCE.md"), "# EVIDENCE\n").unwrap();
+                    fs::write(
+                        bearing_dir.join("EVIDENCE.md"),
+                        render_fixture_bearing_evidence(bearing),
+                    )
+                    .unwrap();
                 }
                 // ASSESSMENT.md
                 if bearing.has_assessment {

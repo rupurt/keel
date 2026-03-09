@@ -4,6 +4,15 @@ id: 1w5H2Bq9L
 
 # Semantic Search and Ranking in Keel — Evidence
 
+## Sources
+
+| ID | Class | Provenance | Location | Observed / Published | Retrieved | Authority | Freshness | Notes |
+|----|-------|------------|----------|----------------------|-----------|-----------|-----------|-------|
+| SRC-01 | academic | manual:prior-art-review | https://arxiv.org/abs/1706.03762 | 2017-06-12 | 2026-03-04 | high | medium | Transformer-era embedding approaches make local semantic ranking viable without external services. |
+| SRC-02 | web | manual:github-review | https://github.com/Anush008/fastembed-rs | 2026-03-04 | 2026-03-04 | high | high | `fastembed-rs` provides a pure Rust path for local embedding generation through Candle-backed execution. |
+| SRC-03 | web | manual:github-review | https://github.com/v0-capital/vectorlite | 2026-03-04 | 2026-03-04 | medium | high | `vectorlite` demonstrates an in-process vector store that keeps indexing and retrieval local to the CLI runtime. |
+| SRC-04 | social | manual:community-signal | https://news.ycombinator.com/ | 2026-03-04 | 2026-03-04 | low | high | Practitioner discussion trends still emphasize lightweight local-first search and ranking workflows for developer tooling. |
+
 ## Technical Research
 
 ### Feasibility

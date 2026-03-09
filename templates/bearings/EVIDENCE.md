@@ -6,9 +6,14 @@ id: {{id}}
 
 ## Sources
 
-| ID | Type | Source | Observed / Published | Authority | Notes |
-|----|------|--------|----------------------|-----------|-------|
-| SRC-01 | web | https://example.com | 2026-01-01 | Medium | What this source contributes to the bearing |
+| ID | Class | Provenance | Location | Observed / Published | Retrieved | Authority | Freshness | Notes |
+|----|-------|------------|----------|----------------------|-----------|-----------|-----------|-------|
+| SRC-01 | web | manual:web-search | https://example.com | 2026-01-01 | 2026-01-02 | medium | medium | Replace with the concrete claim this source supports |
+
+## Technical Research
+
+### Feasibility
+Summarize whether the current evidence supports feasibility and why.
 
 ## Key Findings
 

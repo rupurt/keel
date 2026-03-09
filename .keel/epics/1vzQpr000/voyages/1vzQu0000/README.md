@@ -1,11 +1,12 @@
 ---
 id: 1vzQu0000
 title: Evidence Capture and Provider Signals
-status: planned
+status: in-progress
 epic: 1vzQpr000
 created_at: 2026-03-08T20:03:28
 index: 2
 updated_at: 2026-03-08T20:10:04
+started_at: 2026-03-08T20:40:16
 ---
 
 # Evidence Capture and Provider Signals
@@ -24,11 +25,11 @@ updated_at: 2026-03-08T20:10:04
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/3 stories complete
+**Progress:** 1/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Model Canonical Evidence Records And Parsing Rules](../../../../stories/1vzQwm000/README.md) | feat | backlog |
+| [Model Canonical Evidence Records And Parsing Rules](../../../../stories/1vzQwm000/README.md) | feat | done |
 | [Add Research Provider Configuration And Weighting Controls](../../../../stories/1vzQwn000/README.md) | feat | backlog |
 | [Capture Web Academic Social And Manual Evidence Through One Workflow](../../../../stories/1vzQwp000/README.md) | feat | backlog |
 <!-- END GENERATED -->
