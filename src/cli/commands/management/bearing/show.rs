@@ -168,31 +168,24 @@ fn render_brief_section(summary: &BearingBriefSummary) -> ShowSection {
         Some(BRIEF_PLACEHOLDER),
     );
 
-    let mut fields = ShowKeyValues::new().with_indent(2).with_min_label_width(18);
-    if summary.total_success_criteria == 0 {
-        fields.push_row(
-            "Success Criteria:",
-            format!("{}", BRIEF_PLACEHOLDER.dimmed()),
-        );
+    let success_criteria_placeholder = if summary.total_success_criteria == 0 {
+        format!("{}", BRIEF_PLACEHOLDER.dimmed())
+    } else if summary.unchecked_success_criteria.is_empty() {
+        format!("{}", "all checked".green())
     } else {
-        fields.push_row(
-            "Success Criteria:",
-            format!(
-                "{}/{} checked",
-                summary.checked_success_criteria, summary.total_success_criteria
-            ),
-        );
-    }
-    section.push_key_values(fields);
-
+        format!("{}", NONE_PLACEHOLDER.dimmed())
+    };
+    section.push_labeled_bullets(
+        success_criteria_label(
+            summary.checked_success_criteria,
+            summary.total_success_criteria,
+        ),
+        summary.unchecked_success_criteria.iter().cloned(),
+        Some(success_criteria_placeholder),
+    );
     section.push_labeled_bullets(
         counted_label("Open Questions", summary.open_questions.len()),
         summary.open_questions.iter().cloned(),
-        Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
-    );
-    section.push_labeled_bullets(
-        "Unchecked Criteria:",
-        summary.unchecked_success_criteria.iter().cloned(),
         Some(format!("{}", NONE_PLACEHOLDER.dimmed())),
     );
 
@@ -303,6 +296,10 @@ fn counted_label(label: &str, count: usize) -> String {
     format!("{label}({count}):")
 }
 
+fn success_criteria_label(checked: usize, total: usize) -> String {
+    format!("Success Criteria({checked}/{total}):")
+}
+
 #[cfg(test)]
 mod tests {
     use super::{
@@ -340,6 +337,18 @@ mod tests {
 
         let lines = render_lines(section);
 
+        assert!(lines.contains(&"  Success Criteria(1/2):".to_string()));
+        assert!(lines.contains(&"    - Criterion two".to_string()));
+        assert!(
+            lines
+                .iter()
+                .all(|line| !line.starts_with("  Success Criteria:"))
+        );
+        assert!(
+            lines
+                .iter()
+                .all(|line| !line.starts_with("  Unchecked Criteria:"))
+        );
         assert!(lines.contains(&"  Open Questions(2):".to_string()));
         assert!(lines.contains(&"    - Question one".to_string()));
         assert!(lines.contains(&"    - Question two".to_string()));
@@ -486,5 +495,29 @@ mod tests {
         assert!(lines.contains(&"    ...".to_string()));
         assert!(!lines.contains(&"    Paragraph two".to_string()));
         assert!(!lines.contains(&"    - Item four".to_string()));
+    }
+
+    #[test]
+    fn bearing_brief_renders_all_checked_success_criteria_without_none_placeholder() {
+        let section = render_brief_section(&BearingBriefSummary {
+            hypothesis: None,
+            problem_space: None,
+            checked_success_criteria: 2,
+            total_success_criteria: 2,
+            unchecked_success_criteria: Vec::new(),
+            open_questions: Vec::new(),
+        });
+
+        let lines = render_lines(section);
+
+        let success_criteria_line = lines
+            .iter()
+            .find(|line| line.contains("Success Criteria(2/2):"))
+            .expect("success criteria line should be rendered");
+        assert!(success_criteria_line.contains("all checked"));
+        assert!(
+            !success_criteria_line.contains("(none)"),
+            "all checked state should not render the none placeholder: {lines:?}"
+        );
     }
 }
