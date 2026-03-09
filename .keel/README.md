@@ -100,11 +100,18 @@
 |--------|--------|
 | [Epic Topology Terminal View](epics/1vyWIF000/voyages/1vyWIM000/) | done |
 
-### [Evidence-Backed Bearing Research Workflow](epics/1vzQpr000/) (active)
+### [Evidence-Backed Bearing Research Workflow](epics/1vzQpr000/) (done)
 
 | Voyage | Status |
 |--------|--------|
 | [Bearing Contract Cutover and Migration](epics/1vzQpr000/voyages/1vzQtq000/) | done |
 | [Evidence Capture and Provider Signals](epics/1vzQpr000/voyages/1vzQu0000/) | done |
-| [Evidence-Backed Assessment and Surfaces](epics/1vzQpr000/voyages/1vzQu5000/) | in-progress |
+| [Evidence-Backed Assessment and Surfaces](epics/1vzQpr000/voyages/1vzQu5000/) | done |
+
+### [Bearing Lineage at Lay](epics/1vzWfz000/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Lineage](epics/1vzWfz000/voyages/1vzWg5000/) | planned |
+| [Validation](epics/1vzWfz000/voyages/1vzWg8000/) | in-progress |
 
