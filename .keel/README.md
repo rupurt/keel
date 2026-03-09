@@ -5,9 +5,9 @@
 
 ## Bearings
 
-| Bearing | Status | Survey | Assessment |
-|---------|--------|--------|------------|
-| [Semantic Search and Ranking in Keel](bearings/1w5H2Bq9L/) | evaluating | ✓ | ✓ |
+| Bearing | Status | Survey | Assessment | Laid |
+|---------|--------|--------|------------|------|
+| [Semantic Search and Ranking in Keel](bearings/1w5H2Bq9L/) | evaluating | ✓ | ✓ | - |
 
 ## Epics
 
@@ -94,9 +94,17 @@
 | [Goal-to-Requirement Lineage](epics/1vyFgR2MA/voyages/1vyFmfjA9/) | done |
 | [Scope Lineage and Drift Detection](epics/1vyFgR2MA/voyages/1vyFn0OuN/) | done |
 
-### [Topology Maps for Planning Drift](epics/1vyWIF000/) (active)
+### [Topology Maps for Planning Drift](epics/1vyWIF000/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Epic Topology Terminal View](epics/1vyWIF000/voyages/1vyWIM000/) | in-progress |
+| [Epic Topology Terminal View](epics/1vyWIF000/voyages/1vyWIM000/) | done |
+
+### [Evidence-Backed Bearing Research Workflow](epics/1vzQpr000/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Bearing Contract Cutover and Migration](epics/1vzQpr000/voyages/1vzQtq000/) | planned |
+| [Evidence Capture and Provider Signals](epics/1vzQpr000/voyages/1vzQu0000/) | planned |
+| [Evidence-Backed Assessment and Surfaces](epics/1vzQpr000/voyages/1vzQu5000/) | planned |
 
