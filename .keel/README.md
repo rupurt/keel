@@ -105,6 +105,6 @@
 | Voyage | Status |
 |--------|--------|
 | [Bearing Contract Cutover and Migration](epics/1vzQpr000/voyages/1vzQtq000/) | in-progress |
-| [Evidence Capture and Provider Signals](epics/1vzQpr000/voyages/1vzQu0000/) | planned |
+| [Evidence Capture and Provider Signals](epics/1vzQpr000/voyages/1vzQu0000/) | in-progress |
 | [Evidence-Backed Assessment and Surfaces](epics/1vzQpr000/voyages/1vzQu5000/) | planned |
 
