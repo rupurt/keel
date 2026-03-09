@@ -32,10 +32,6 @@ pub fn run_fixes(_board_dir: &Path, report: &DoctorReport) -> Result<()> {
 /// Apply a single fix
 fn apply_fix(fix: &Fix) -> Result<()> {
     match fix {
-        Fix::UpdateTitle { path, new_title } => {
-            update_frontmatter_field(path, "title", new_title)?;
-            println!("  FIX: Updated title in {}", path.display());
-        }
         Fix::RemoveFile { path } => {
             if path.exists() {
                 fs::remove_file(path)?;
@@ -51,18 +47,6 @@ fn apply_fix(fix: &Fix) -> Result<()> {
                     new_path.display()
                 );
             }
-        }
-        Fix::UpdateFrontmatterId { path, new_id } => {
-            update_frontmatter_field(path, "id", new_id)?;
-            println!("  FIX: Updated id in {}", path.display());
-        }
-        Fix::UpdateVoyageStatus { path, new_status } => {
-            update_frontmatter_field(path, "status", new_status)?;
-            println!(
-                "  FIX: Updated voyage status to '{}' in {}",
-                new_status,
-                path.display()
-            );
         }
         Fix::ClearPlaceholder { path, pattern } => {
             let content = fs::read_to_string(path)?;
@@ -174,9 +158,10 @@ mod tests {
         )
         .unwrap();
 
-        apply_fix(&Fix::UpdateVoyageStatus {
+        apply_fix(&Fix::SetFrontmatterField {
             path: readme.clone(),
-            new_status: "done".to_string(),
+            field: "status".to_string(),
+            value: "done".to_string(),
         })
         .unwrap();
 

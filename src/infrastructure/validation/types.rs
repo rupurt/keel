@@ -113,11 +113,6 @@ pub enum Fix {
         path: PathBuf,
     },
     #[allow(dead_code)]
-    UpdateVoyageStatus {
-        path: PathBuf,
-        new_status: String,
-    },
-    #[allow(dead_code)]
     StartVoyage {
         path: PathBuf,
         voyage_id: String,
@@ -129,21 +124,12 @@ pub enum Fix {
         new_voyage_id: String,
         voyage_dir: PathBuf,
     },
-    UpdateTitle {
-        path: PathBuf,
-        new_title: String,
-    },
     RemoveFile {
         path: PathBuf,
     },
     RenameFile {
         old_path: PathBuf,
         new_path: PathBuf,
-    },
-    #[allow(dead_code)]
-    UpdateFrontmatterId {
-        path: PathBuf,
-        new_id: String,
     },
     ClearPlaceholder {
         path: PathBuf,

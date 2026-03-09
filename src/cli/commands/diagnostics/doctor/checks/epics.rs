@@ -40,9 +40,10 @@ pub fn check_epic_title_case(board: &Board) -> Vec<Problem> {
                 severity: Severity::Warning,
                 path: epic.path.clone(),
                 message: format!("title '{}' should use Title Case", title),
-                fix: Some(Fix::UpdateTitle {
+                fix: Some(Fix::SetFrontmatterField {
                     path: epic.path.clone(),
-                    new_title,
+                    field: "title".to_string(),
+                    value: new_title,
                 }),
                 scope: None,
                 category: Some(GapCategory::Convention),

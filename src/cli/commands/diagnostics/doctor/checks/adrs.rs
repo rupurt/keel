@@ -193,9 +193,10 @@ pub fn check_adr_title_case(board: &Board) -> Vec<Problem> {
                 severity: Severity::Warning,
                 path: adr.path.clone(),
                 message: format!("title '{}' should use Title Case", title),
-                fix: Some(Fix::UpdateTitle {
+                fix: Some(Fix::SetFrontmatterField {
                     path: adr.path.clone(),
-                    new_title,
+                    field: "title".to_string(),
+                    value: new_title,
                 }),
                 scope: adr.frontmatter.context.clone(),
                 category: Some(GapCategory::Convention),

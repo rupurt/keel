@@ -36,9 +36,10 @@ pub fn check_voyage_status_drift(board: &Board) -> Vec<Problem> {
         for violation in violations {
             let fix = match violation.suggested_fix() {
                 Some(invariants::SuggestedFix::UpdateVoyageStatus { new_status }) => {
-                    Some(Fix::UpdateVoyageStatus {
+                    Some(Fix::SetFrontmatterField {
                         path: voyage.path.clone(),
-                        new_status: new_status.to_string(),
+                        field: "status".to_string(),
+                        value: new_status.to_string(),
                     })
                 }
                 _ => None,
@@ -195,9 +196,10 @@ pub fn check_voyage_title_case(board: &Board) -> Vec<Problem> {
                 severity: Severity::Warning,
                 path: voyage.path.clone(),
                 message: format!("title '{}' should use Title Case", title),
-                fix: Some(Fix::UpdateTitle {
+                fix: Some(Fix::SetFrontmatterField {
                     path: voyage.path.clone(),
-                    new_title,
+                    field: "title".to_string(),
+                    value: new_title,
                 }),
                 scope: None,
                 category: Some(GapCategory::Convention),
@@ -341,9 +343,9 @@ mod tests {
         assert!(problems[0].message.contains("all 1 stories done"));
         assert!(matches!(
             problems[0].fix,
-            Some(Fix::UpdateVoyageStatus {
-                ref new_status, ..
-            }) if new_status == "done"
+            Some(Fix::SetFrontmatterField {
+                ref field, ref value, ..
+            }) if field == "status" && value == "done"
         ));
     }
 
@@ -802,9 +804,9 @@ mod tests {
         assert!(problems[0].message.contains("all 2 stories done"));
         assert!(matches!(
             problems[0].fix,
-            Some(Fix::UpdateVoyageStatus {
-                ref new_status, ..
-            }) if new_status == "done"
+            Some(Fix::SetFrontmatterField {
+                ref field, ref value, ..
+            }) if field == "status" && value == "done"
         ));
     }
 

@@ -949,58 +949,7 @@ fn create_prd_from_bearing(board_dir: &Path, bearing: &Bearing) -> Result<String
     Ok(prd)
 }
 
-/// Extract `GOAL-*` references from BRIEF.md Success Criteria text.
-fn parse_goal_references(success_criteria: &str) -> Vec<String> {
-    use std::collections::BTreeSet;
-    static GOAL_REF_RE: std::sync::LazyLock<regex::Regex> =
-        std::sync::LazyLock::new(|| regex::Regex::new(r"GOAL-\d+").unwrap());
-
-    let mut seen = BTreeSet::new();
-    for mat in GOAL_REF_RE.find_iter(success_criteria) {
-        seen.insert(mat.as_str().to_string());
-    }
-    seen.into_iter().collect()
-}
-
-/// Extract valid goal IDs from a PRD's Goals & Objectives table.
-fn extract_prd_goal_ids(prd_content: &str) -> Vec<String> {
-    static GOAL_ID_RE: std::sync::LazyLock<regex::Regex> =
-        std::sync::LazyLock::new(|| regex::Regex::new(r"^GOAL-\d+$").unwrap());
-
-    let goals_section = extract_section(prd_content, "## Goals & Objectives").unwrap_or_default();
-    let mut ids = Vec::new();
-    let mut has_header = false;
-
-    for line in goals_section.lines() {
-        let trimmed = line.trim();
-        if !trimmed.starts_with('|') {
-            continue;
-        }
-
-        let cells: Vec<_> = trimmed
-            .trim_matches('|')
-            .split('|')
-            .map(|c| c.trim())
-            .collect();
-        if cells.is_empty()
-            || cells
-                .iter()
-                .all(|c| c.chars().all(|ch| ch == '-' || ch == ' '))
-        {
-            continue;
-        }
-
-        if cells.iter().any(|c| c.eq_ignore_ascii_case("ID")) {
-            has_header = true;
-            continue;
-        }
-
-        if has_header && !cells.is_empty() && GOAL_ID_RE.is_match(cells[0]) {
-            ids.push(cells[0].to_string());
-        }
-    }
-    ids
-}
+use crate::infrastructure::validation::goals::{extract_prd_goal_ids, parse_goal_references};
 
 /// Get the EV score for a bearing, if assessment exists and is complete
 fn get_bearing_score(

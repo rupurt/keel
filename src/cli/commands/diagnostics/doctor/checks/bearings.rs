@@ -359,9 +359,10 @@ pub fn check_bearing_title_case(board: &Board) -> Vec<Problem> {
                 severity: Severity::Warning,
                 path: bearing.path.clone(),
                 message: format!("title '{}' should use Title Case", title),
-                fix: Some(Fix::UpdateTitle {
+                fix: Some(Fix::SetFrontmatterField {
                     path: bearing.path.clone(),
-                    new_title,
+                    field: "title".to_string(),
+                    value: new_title,
                 }),
                 scope: None,
                 category: Some(GapCategory::Convention),
@@ -643,10 +644,7 @@ pub fn check_bearing_lineage_epic(board: &Board) -> Vec<Problem> {
 /// Check bearing lineage: goal references must be valid GOAL-* tokens
 pub fn check_bearing_lineage_goals(board: &Board, board_dir: &Path) -> Vec<Problem> {
     use crate::domain::model::BearingStatus;
-    use crate::infrastructure::markdown_sections::extract_section;
-
-    static GOAL_ID_RE: std::sync::LazyLock<regex::Regex> =
-        std::sync::LazyLock::new(|| regex::Regex::new(r"^GOAL-\d+$").unwrap());
+    use crate::infrastructure::validation::goals::{extract_prd_goal_ids, is_valid_goal_id};
 
     let mut problems = Vec::new();
 
@@ -662,7 +660,7 @@ pub fn check_bearing_lineage_goals(board: &Board, board_dir: &Path) -> Vec<Probl
 
         // Validate each goal matches GOAL-\d+ format
         for goal in goals {
-            if !GOAL_ID_RE.is_match(goal) {
+            if !is_valid_goal_id(goal) {
                 problems.push(
                     Problem::error(
                         bearing.path.clone(),
@@ -692,41 +690,10 @@ pub fn check_bearing_lineage_goals(board: &Board, board_dir: &Path) -> Vec<Probl
             Err(_) => continue, // PRD missing handled elsewhere
         };
 
-        let goals_section =
-            extract_section(&prd_content, "## Goals & Objectives").unwrap_or_default();
-        let valid_ids: Vec<String> = {
-            let mut ids = Vec::new();
-            let mut has_header = false;
-            for line in goals_section.lines() {
-                let trimmed = line.trim();
-                if !trimmed.starts_with('|') {
-                    continue;
-                }
-                let cells: Vec<_> = trimmed
-                    .trim_matches('|')
-                    .split('|')
-                    .map(|c| c.trim())
-                    .collect();
-                if cells.is_empty()
-                    || cells
-                        .iter()
-                        .all(|c| c.chars().all(|ch| ch == '-' || ch == ' '))
-                {
-                    continue;
-                }
-                if cells.iter().any(|c| c.eq_ignore_ascii_case("ID")) {
-                    has_header = true;
-                    continue;
-                }
-                if has_header && !cells.is_empty() && GOAL_ID_RE.is_match(cells[0]) {
-                    ids.push(cells[0].to_string());
-                }
-            }
-            ids
-        };
+        let valid_ids = extract_prd_goal_ids(&prd_content);
 
         for goal in goals {
-            if GOAL_ID_RE.is_match(goal) && !valid_ids.contains(goal) {
+            if is_valid_goal_id(goal) && !valid_ids.contains(goal) {
                 problems.push(
                     Problem::error(
                         bearing.path.clone(),

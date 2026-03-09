@@ -463,9 +463,10 @@ pub fn check_story_title_case(board: &Board) -> Vec<Problem> {
                 .with_check_id(CheckId::TitleCaseViolation)
                 .with_category(GapCategory::Convention)
                 .with_scope(story.scope().unwrap_or_default())
-                .with_fix(Fix::UpdateTitle {
+                .with_fix(Fix::SetFrontmatterField {
                     path: story.path.clone(),
-                    new_title,
+                    field: "title".to_string(),
+                    value: new_title,
                 }),
             );
         }
