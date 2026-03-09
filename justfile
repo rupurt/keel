@@ -28,6 +28,10 @@ build-release:
 test *args:
   cargo nextest run {{args}}
 
+# Run doc tests (nextest does not support these)
+doctest:
+  cargo test --doc
+
 # Check formatting and run clippy
 quality:
   cargo fmt --all -- --check
@@ -43,5 +47,5 @@ keel *args:
   cargo run {{args}}
 
 # Run quality checks and tests
-pre-commit: quality test
+pre-commit: quality test doctest
   @echo "✓ All pre-commit checks passed"

@@ -114,7 +114,7 @@ Apply these checks to **every change** before finalizing work:
 
 1. **Doctor Check**: `just keel doctor` must pass with zero warnings or errors.
 2. **Quality Check**: `just quality` must be clean (formatting and linting).
-3. **Verification**: `just test` must pass 100%.
+3. **Verification**: `just test` and `just doctest` must pass 100%.
 4. **Lifecycle Before Commit**: Run board-mutating lifecycle commands before the atomic commit when they generate or rewrite `.keel` artifacts (for example `story submit`, `voyage plan`, `voyage done`, `bearing assess`, `bearing lay`). After the transition, inspect `git status` and include the resulting `.keel` churn in the same commit.
 5. **Atomic Commits**: Commit once per logical unit of work. Use [Conventional Commits](https://www.conventionalcommits.org/):
    - `feat:` (new feature)
@@ -190,6 +190,7 @@ Use one path for each concern:
 | `just build-release` | Build release artifact and copy to `target/release/keel` |
 | `just run` | Run the CLI |
 | `just test` | Run test suite (uses nextest if available) |
+| `just doctest` | Run doc tests (nextest does not support these) |
 | `just quality` | Run formatting and clippy checks |
 | `just coverage` | Produce `coverage/lcov.info` |
 | `just pre-commit` | Run quality + tests |
