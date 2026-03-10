@@ -4,7 +4,8 @@
 //! bottleneck analysis, and flow state decisions consume identical policy data.
 
 pub use crate::domain::policy::queue::{
-    AgentQueueCategory, DraftVoyageQueueCategory, VerificationQueueCategory,
+    ActorQueueLane, AgentQueueCategory, DraftVoyageQueueCategory, VerificationQueueCategory,
+    classify_actor_queue_lane,
 };
 use crate::read_model::flow_metrics::FlowMetrics;
 

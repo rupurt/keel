@@ -11,7 +11,7 @@ Setup
   generate    Regenerate all README files
 
 Management
-  next        Pull from human queue (default) or agent queue (--agent)
+  next        Pull the next item using role-based queue routing
   topology    Show an epic-scoped topology map
   play        Invite play-driven discovery
   audit       Rich evidence/traceability report
@@ -96,29 +96,14 @@ pub fn build_cli() -> Command {
         )
         .subcommand(
             Command::new("next")
-                .about("Pull the next item from the selected queue (human by default, --agent for implementation queue)")
+                .about("Pull the next item for the role-selected queue")
                 .hide(true)
                 .arg(
                     Arg::new("role")
                         .long("role")
                         .value_name("TAXONOMY")
-                        .help("Filter by role taxonomy (e.g., \"engineer/software:infrastructure\")")
-                        .num_args(1)
-                        .conflicts_with_all(["agent", "human"]),
-                )
-                .arg(
-                    Arg::new("agent")
-                        .long("agent")
-                        .help("Pull from the agent implementation queue (in-progress/backlog)")
-                        .action(ArgAction::SetTrue)
-                        .conflicts_with_all(["role", "human"]),
-                )
-                .arg(
-                    Arg::new("human")
-                        .long("human")
-                        .help("Pull from the human queue only (never returns implementation work)")
-                        .action(ArgAction::SetTrue)
-                        .conflicts_with_all(["role", "agent"]),
+                        .help("Role taxonomy controlling queue selection (e.g., \"manager/product\" or \"engineer/software:infrastructure\")")
+                        .num_args(1),
                 )
                 .arg(
                     Arg::new("json")

@@ -55,8 +55,8 @@ Keel coordinates work between humans and agents using a **pull-based** model. Ea
 └───────────────────────────────────────┴──────────────────────────────────────┘
 ```
 
-- `keel next` (human mode) only returns human-queue decisions and never returns implementation `Work`.
-- `keel next --agent` returns implementation work from the agent queue (`in-progress` then `backlog`).
+- `keel next` defaults to management-queue decisions and never returns implementation `Work`.
+- `keel next --role engineer/software` returns implementation work from the execution queue (`in-progress` then `backlog`).
 - `keel flow` uses the same queue policy categories and thresholds as `next` (`>= 5` human block, `> 20` flow block).
 
 ### Lineage and Proof Chain
@@ -160,7 +160,7 @@ Diagnostics
 
 | Command | Purpose |
 |---------|---------|
-| `next` | Pull from the human queue by default; use `--agent` to pull implementation work |
+| `next` | Pull from the default management queue or route to execution work with `--role engineer/software` |
 | `play` | Trigger play-driven discovery for a bearing |
 | `audit` | Generate a detailed traceability report for a story |
 | `verify run/recommend/detect` | Execute proofs, inspect detection signals, and review detected+active verification guidance |

@@ -25,12 +25,12 @@ started_at: 2026-03-10T13:29:46
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/4 stories complete
+**Progress:** 2/4 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Role Taxonomy Parser](../../../../stories/VDUGfT2IV/README.md) | feat | done |
 | [Update Flow Terminology](../../../../stories/VDUGfcLQB/README.md) | feat | backlog |
-| [Update Next Role Routing](../../../../stories/VDUGflIUh/README.md) | feat | backlog |
+| [Update Next Role Routing](../../../../stories/VDUGflIUh/README.md) | feat | done |
 | [Update Accept Role Authorization](../../../../stories/VDUGfu8bf/README.md) | feat | backlog |
 <!-- END GENERATED -->

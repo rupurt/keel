@@ -5,6 +5,8 @@
 
 use std::cmp::Ordering;
 
+use crate::domain::model::taxonomy::RoleTaxonomy;
+
 /// Verification items threshold where human-mode `next` stops new work and
 /// requires clearing acceptance backlog first.
 pub const HUMAN_NEXT_VERIFY_BLOCK_THRESHOLD: usize = 5;
@@ -121,9 +123,26 @@ pub fn compare_work_item_ids(a: &str, b: &str) -> Ordering {
     a.cmp(b)
 }
 
+/// Canonical next-queue lane for a role family.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ActorQueueLane {
+    Management,
+    Execution,
+}
+
+/// Route a parsed role taxonomy to the canonical next-queue lane.
+pub fn classify_actor_queue_lane(role: &RoleTaxonomy) -> Option<ActorQueueLane> {
+    match role.role.as_str() {
+        "manager" => Some(ActorQueueLane::Management),
+        "engineer" => Some(ActorQueueLane::Execution),
+        _ => None,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::domain::model::taxonomy;
 
     #[test]
     fn policy_threshold_defaults_are_stable() {
@@ -208,5 +227,22 @@ mod tests {
         assert_eq!(compare_work_item_ids("A", "B"), Ordering::Less);
         assert_eq!(compare_work_item_ids("B", "A"), Ordering::Greater);
         assert_eq!(compare_work_item_ids("A", "A"), Ordering::Equal);
+    }
+
+    #[test]
+    fn actor_queue_lane_classification_is_role_family_based() {
+        let manager = taxonomy::parse("manager/product").unwrap();
+        let engineer = taxonomy::parse("engineer/software").unwrap();
+        let analyst = taxonomy::parse("analyst/research").unwrap();
+
+        assert_eq!(
+            classify_actor_queue_lane(&manager),
+            Some(ActorQueueLane::Management)
+        );
+        assert_eq!(
+            classify_actor_queue_lane(&engineer),
+            Some(ActorQueueLane::Execution)
+        );
+        assert_eq!(classify_actor_queue_lane(&analyst), None);
     }
 }

@@ -8,14 +8,14 @@ use crate::cli::commands::management::capability_map::{
 use crate::cli::commands::management::guidance::{CanonicalGuidance, CommandGuidance};
 
 fn success_command() -> CommandGuidance {
-    CommandGuidance::next("keel next --human")
+    CommandGuidance::next("keel next --role manager/product")
 }
 
 /// Informational list command guidance: intentionally non-prescriptive.
 pub fn informational_for_list() -> Option<CanonicalGuidance> {
     render_guidance_for_command(
         ManagementCommand::AdrList,
-        Some(CommandGuidance::next("keel next --human")),
+        Some(CommandGuidance::next("keel next --role manager/product")),
     )
 }
 
@@ -23,7 +23,7 @@ pub fn informational_for_list() -> Option<CanonicalGuidance> {
 pub fn informational_for_show() -> Option<CanonicalGuidance> {
     render_guidance_for_command(
         ManagementCommand::AdrShow,
-        Some(CommandGuidance::next("keel next --human")),
+        Some(CommandGuidance::next("keel next --role manager/product")),
     )
 }
 
@@ -106,7 +106,7 @@ mod tests {
         let supersede_json = serde_json::to_value(success_for_supersede().unwrap()).unwrap();
 
         let expected = json!({
-            "next_step": { "command": "keel next --human" }
+                    "next_step": { "command": "keel next --role manager/product" }
         });
 
         assert_eq!(accept_json, expected);
@@ -141,7 +141,7 @@ mod tests {
     fn render_human_supports_next_and_recovery_blocks() {
         let next = render_human(success_for_accept().as_ref());
         assert!(next.contains("Next step:"));
-        assert!(next.contains("keel next --human"));
+        assert!(next.contains("keel next --role manager/product"));
 
         let recovery = render_human(Some(&recovery_for_status_mismatch("ADR1")));
         assert!(recovery.contains("Recovery step:"));

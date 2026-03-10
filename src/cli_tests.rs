@@ -53,15 +53,9 @@ enum DiagnosticsCommands {
     },
     /// Surface the single most important thing to work on
     Next {
-        /// Filter by role taxonomy (e.g., "engineer/software:infrastructure")
-        #[arg(long, conflicts_with_all = ["agent", "human"])]
+        /// Role taxonomy controlling queue selection (e.g., "manager/product" or "engineer/software:infrastructure")
+        #[arg(long)]
         role: Option<String>,
-        /// Shorthand for --role agent (bypass verification block)
-        #[arg(long, conflicts_with_all = ["role", "human"])]
-        agent: bool,
-        /// Shorthand for --role human (default behavior)
-        #[arg(long, conflicts_with_all = ["role", "agent"])]
-        human: bool,
         /// Output as JSON for scripting
         #[arg(long)]
         json: bool,
@@ -1199,14 +1193,7 @@ fn cli_help_displays_entity_subcommands() {
 #[test]
 fn cli_parses_next_with_parallel() {
     let cli = Cli::try_parse_from(["board", "next", "--parallel"]).unwrap();
-    if let Commands::Diagnostics(DiagnosticsCommands::Next {
-        agent,
-        json,
-        parallel,
-        ..
-    }) = cli.command
-    {
-        assert!(!agent);
+    if let Commands::Diagnostics(DiagnosticsCommands::Next { json, parallel, .. }) = cli.command {
         assert!(!json);
         assert!(parallel);
     } else {
@@ -1217,14 +1204,7 @@ fn cli_parses_next_with_parallel() {
 #[test]
 fn cli_parses_next_without_parallel() {
     let cli = Cli::try_parse_from(["board", "next"]).unwrap();
-    if let Commands::Diagnostics(DiagnosticsCommands::Next {
-        agent,
-        json,
-        parallel,
-        ..
-    }) = cli.command
-    {
-        assert!(!agent);
+    if let Commands::Diagnostics(DiagnosticsCommands::Next { json, parallel, .. }) = cli.command {
         assert!(!json);
         assert!(!parallel);
     } else {
@@ -1235,14 +1215,7 @@ fn cli_parses_next_without_parallel() {
 #[test]
 fn cli_parses_next_parallel_with_json() {
     let cli = Cli::try_parse_from(["board", "next", "--parallel", "--json"]).unwrap();
-    if let Commands::Diagnostics(DiagnosticsCommands::Next {
-        agent,
-        json,
-        parallel,
-        ..
-    }) = cli.command
-    {
-        assert!(!agent);
+    if let Commands::Diagnostics(DiagnosticsCommands::Next { json, parallel, .. }) = cli.command {
         assert!(json);
         assert!(parallel);
     } else {
@@ -1255,13 +1228,8 @@ fn cli_parses_next_parallel_with_json() {
 #[test]
 fn cli_parses_next_with_role() {
     let cli = Cli::try_parse_from(["board", "next", "--role", "engineer"]).unwrap();
-    if let Commands::Diagnostics(DiagnosticsCommands::Next {
-        role, agent, human, ..
-    }) = cli.command
-    {
+    if let Commands::Diagnostics(DiagnosticsCommands::Next { role, .. }) = cli.command {
         assert_eq!(role, Some("engineer".to_string()));
-        assert!(!agent);
-        assert!(!human);
     } else {
         panic!("Expected Next command");
     }
@@ -1278,34 +1246,42 @@ fn cli_parses_next_with_full_taxonomy_role() {
 }
 
 #[test]
-fn cli_parses_next_with_human_flag() {
-    let cli = Cli::try_parse_from(["board", "next", "--human"]).unwrap();
-    if let Commands::Diagnostics(DiagnosticsCommands::Next {
-        role, agent, human, ..
-    }) = cli.command
-    {
-        assert!(role.is_none());
-        assert!(!agent);
-        assert!(human);
-    } else {
-        panic!("Expected Next command");
-    }
+fn cli_rejects_legacy_next_agent_flag_with_migration_guidance() {
+    let message = crate::cli::commands::management::next::legacy_next_flag_guidance(&[
+        "keel".to_string(),
+        "next".to_string(),
+        "--agent".to_string(),
+    ])
+    .expect("legacy flag should produce migration guidance");
+
+    assert!(message.contains("--agent"));
+    assert!(message.contains("--role engineer/"));
 }
 
 #[test]
-fn cli_rejects_role_with_agent() {
-    let result = Cli::try_parse_from(["board", "next", "--role", "engineer", "--agent"]);
-    assert!(result.is_err(), "--role and --agent should conflict");
+fn cli_rejects_legacy_next_human_flag_with_migration_guidance() {
+    let message = crate::cli::commands::management::next::legacy_next_flag_guidance(&[
+        "keel".to_string(),
+        "next".to_string(),
+        "--human".to_string(),
+    ])
+    .expect("legacy flag should produce migration guidance");
+
+    assert!(message.contains("--human"));
+    assert!(message.contains("--role manager/"));
 }
 
 #[test]
-fn cli_rejects_role_with_human() {
-    let result = Cli::try_parse_from(["board", "next", "--role", "engineer", "--human"]);
-    assert!(result.is_err(), "--role and --human should conflict");
-}
+fn cli_rejects_legacy_next_flags_when_role_is_already_present() {
+    let message = crate::cli::commands::management::next::legacy_next_flag_guidance(&[
+        "keel".to_string(),
+        "next".to_string(),
+        "--role".to_string(),
+        "engineer/software".to_string(),
+        "--agent".to_string(),
+    ])
+    .expect("legacy flag should conflict with --role guidance");
 
-#[test]
-fn cli_rejects_agent_with_human() {
-    let result = Cli::try_parse_from(["board", "next", "--agent", "--human"]);
-    assert!(result.is_err(), "--agent and --human should conflict");
+    assert!(message.contains("Do not combine"));
+    assert!(message.contains("--role"));
 }

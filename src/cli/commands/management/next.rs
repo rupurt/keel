@@ -4,7 +4,7 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
-use anyhow::Result;
+use anyhow::{Result, bail};
 use owo_colors::OwoColorize;
 use serde::Serialize;
 
@@ -110,25 +110,99 @@ struct ParallelProjection<'a> {
 /// Parse optional actor role taxonomy string for `next` filtering.
 pub fn parse_actor_role(
     role: Option<&str>,
-) -> Option<crate::domain::model::taxonomy::RoleTaxonomy> {
-    role.and_then(|s| crate::domain::model::taxonomy::parse(s).ok())
+) -> Result<Option<crate::domain::model::taxonomy::RoleTaxonomy>> {
+    Ok(role
+        .map(crate::domain::model::taxonomy::parse)
+        .transpose()?)
+}
+
+pub(crate) fn legacy_next_flag_guidance(args: &[String]) -> Option<String> {
+    let next_pos = args.iter().position(|arg| arg == "next")?;
+    let next_args = &args[next_pos + 1..];
+    let has_agent = next_args.iter().any(|arg| arg == "--agent");
+    let has_human = next_args.iter().any(|arg| arg == "--human");
+
+    if !has_agent && !has_human {
+        return None;
+    }
+
+    let mut message = String::from(
+        "`keel next` no longer accepts `--agent` or `--human`. Use `--role engineer/software` for execution work or `--role manager/product` for management decisions.",
+    );
+    if next_args.iter().any(|arg| arg == "--role") {
+        message.push_str(" Do not combine legacy queue flags with `--role`.");
+    }
+    Some(message)
+}
+
+fn resolve_next_queue_lane(
+    actor_role: Option<&crate::domain::model::taxonomy::RoleTaxonomy>,
+    parallel: bool,
+) -> Result<crate::read_model::queue_policy::ActorQueueLane> {
+    if parallel {
+        return match actor_role {
+            None => Ok(crate::read_model::queue_policy::ActorQueueLane::Execution),
+            Some(role) => match crate::read_model::queue_policy::classify_actor_queue_lane(role) {
+                Some(crate::read_model::queue_policy::ActorQueueLane::Execution) => {
+                    Ok(crate::read_model::queue_policy::ActorQueueLane::Execution)
+                }
+                Some(crate::read_model::queue_policy::ActorQueueLane::Management) => bail!(
+                    "`keel next --parallel` only supports execution roles. Use `keel next --role engineer/software --parallel` or omit `--parallel` for management decisions."
+                ),
+                None => bail!(
+                    "Unsupported `keel next --role` family `{}`. Supported families: manager/* and engineer/*.",
+                    role.role
+                ),
+            },
+        };
+    }
+
+    match actor_role {
+        None => Ok(crate::read_model::queue_policy::ActorQueueLane::Management),
+        Some(role) => crate::read_model::queue_policy::classify_actor_queue_lane(role).ok_or_else(
+            || {
+                anyhow::anyhow!(
+                    "Unsupported `keel next --role` family `{}`. Supported families: manager/* and engineer/*.",
+                    role.role
+                )
+            },
+        ),
+    }
+}
+
+pub(crate) fn calculate_next_for_role(
+    board: &crate::domain::model::Board,
+    board_dir: &Path,
+    parallel: bool,
+    actor_role: Option<&crate::domain::model::taxonomy::RoleTaxonomy>,
+) -> Result<NextDecision> {
+    let queue_lane = resolve_next_queue_lane(actor_role, parallel)?;
+    let execution_mode = matches!(
+        queue_lane,
+        crate::read_model::queue_policy::ActorQueueLane::Execution
+    );
+    calculate_next(board, board_dir, execution_mode, actor_role)
 }
 
 /// Run the next command
 pub fn run(
     board_dir: &Path,
-    agent_mode: bool,
     json: bool,
     parallel: bool,
     actor_role: Option<&crate::domain::model::taxonomy::RoleTaxonomy>,
 ) -> Result<()> {
     let board = load_board(board_dir)?;
+    let queue_lane = resolve_next_queue_lane(actor_role, parallel)?;
 
     if parallel {
+        debug_assert!(matches!(
+            queue_lane,
+            crate::read_model::queue_policy::ActorQueueLane::Execution
+        ));
         return run_parallel(&board, board_dir, json, actor_role);
     }
 
-    let decision = calculate_next(&board, board_dir, agent_mode, actor_role)?;
+    let decision = calculate_next_for_role(&board, board_dir, false, actor_role)?;
 
     if json {
         let result = decision_to_json(&decision);
@@ -574,7 +648,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .story(TestStory::new("S1").status(StoryState::Backlog))
             .build();
-        let result = run(temp.path(), true, false, false, None);
+        let result = run(temp.path(), false, false, None);
         assert!(result.is_ok());
     }
 

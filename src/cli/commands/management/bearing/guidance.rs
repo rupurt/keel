@@ -21,7 +21,7 @@ pub enum BearingLifecycleAction {
 pub fn informational_for_list() -> Option<CanonicalGuidance> {
     render_guidance_for_command(
         ManagementCommand::BearingList,
-        Some(CommandGuidance::next("keel next --human")),
+        Some(CommandGuidance::next("keel next --role manager/product")),
     )
 }
 
@@ -29,7 +29,7 @@ pub fn informational_for_list() -> Option<CanonicalGuidance> {
 pub fn informational_for_show() -> Option<CanonicalGuidance> {
     render_guidance_for_command(
         ManagementCommand::BearingShow,
-        Some(CommandGuidance::next("keel next --human")),
+        Some(CommandGuidance::next("keel next --role manager/product")),
     )
 }
 
@@ -53,15 +53,15 @@ pub fn guidance_for_action(
         ),
         BearingLifecycleAction::Park => (
             ManagementCommand::BearingPark,
-            Some("keel next --human".to_string()),
+            Some("keel next --role manager/product".to_string()),
         ),
         BearingLifecycleAction::Decline => (
             ManagementCommand::BearingDecline,
-            Some("keel next --human".to_string()),
+            Some("keel next --role manager/product".to_string()),
         ),
         BearingLifecycleAction::Lay => (
             ManagementCommand::BearingLay,
-            Some("keel next --human".to_string()),
+            Some("keel next --role manager/product".to_string()),
         ),
     };
 
@@ -300,7 +300,7 @@ mod tests {
             assert_eq!(
                 json,
                 json!({
-                    "next_step": { "command": "keel next --human" }
+                    "next_step": { "command": "keel next --role manager/product" }
                 })
             );
         }

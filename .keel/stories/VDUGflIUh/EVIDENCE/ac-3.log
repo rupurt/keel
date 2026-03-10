@@ -1,0 +1,23 @@
+---
+recorded_at: 2026-03-10T13:52:30.135886417-07:00
+command: cargo test cli::commands::management::next_support::algorithm::tests::manager_roles_route_to_management_queue_decisions -- --nocapture
+---
+
+running 1 test
+test cli::commands::management::next_support::algorithm::tests::manager_roles_route_to_management_queue_decisions ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1456 filtered out; finished in 0.01s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+--- stderr ---
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running unittests src/lib.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-bec18a36668a42b8)
+     Running unittests src/main.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-47d592d61f9cdeea)

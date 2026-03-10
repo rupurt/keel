@@ -8,7 +8,11 @@ use anyhow::Result;
 use clap::{ArgMatches, FromArgMatches};
 
 pub fn run() -> Result<()> {
-    let matches = build_cli().get_matches();
+    let raw_args: Vec<String> = std::env::args().collect();
+    if let Some(message) = super::commands::management::next::legacy_next_flag_guidance(&raw_args) {
+        anyhow::bail!(message);
+    }
+    let matches = build_cli().get_matches_from(raw_args);
 
     match matches.subcommand() {
         Some(("doctor", m)) => {
@@ -45,16 +49,14 @@ pub fn run() -> Result<()> {
             super::commands::diagnostics::throughput::run(&resolve_board_dir()?, no_color)
         }
         Some(("next", m)) => {
-            let agent = *m.get_one::<bool>("agent").unwrap_or(&false);
             let json = *m.get_one::<bool>("json").unwrap_or(&false);
             let parallel = *m.get_one::<bool>("parallel").unwrap_or(&false);
             let role_str = m.get_one::<String>("role");
             let role =
-                super::commands::management::next::parse_actor_role(role_str.map(String::as_str));
+                super::commands::management::next::parse_actor_role(role_str.map(String::as_str))?;
 
             super::commands::management::next::run(
                 &resolve_board_dir()?,
-                agent,
                 json,
                 parallel,
                 role.as_ref(),

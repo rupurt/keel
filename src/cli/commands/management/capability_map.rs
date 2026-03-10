@@ -124,7 +124,7 @@ mod tests {
         ] {
             let guidance = render_guidance_for_command(
                 command,
-                Some(CommandGuidance::next("keel next --human")),
+                Some(CommandGuidance::next("keel next --role manager/product")),
             );
             assert!(
                 guidance.is_none(),
@@ -137,10 +137,13 @@ mod tests {
     fn actionable_commands_emit_canonical_next_or_recovery_payload() {
         let next = render_guidance_for_command(
             ManagementCommand::AdrAccept,
-            Some(CommandGuidance::next("keel next --human")),
+            Some(CommandGuidance::next("keel next --role manager/product")),
         )
         .unwrap();
-        assert_eq!(next.next_step.unwrap().command, "keel next --human");
+        assert_eq!(
+            next.next_step.unwrap().command,
+            "keel next --role manager/product"
+        );
         assert!(next.recovery_step.is_none());
 
         let recovery = render_guidance_for_command(

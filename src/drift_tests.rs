@@ -911,23 +911,23 @@ mod queue_policy_docs {
     }
 
     #[test]
-    fn command_help_docs_describe_next_queue_modes() {
+    fn command_help_docs_describe_next_role_routing() {
         assert!(
             README_DOC.contains(
-                "`keel next` (human mode) only returns human-queue decisions and never returns implementation `Work`."
+                "`keel next` defaults to management-queue decisions and never returns implementation `Work`."
             ),
-            "README.md should document the human-mode queue boundary for `keel next`"
+            "README.md should document the default management queue boundary for `keel next`"
         );
         assert!(
             README_DOC.contains(
-                "`keel next --agent` returns implementation work from the agent queue (`in-progress` then `backlog`)."
+                "`keel next --role engineer/software` returns implementation work from the execution queue (`in-progress` then `backlog`)."
             ),
-            "README.md should document `--agent` implementation queue behavior"
+            "README.md should document `--role engineer/*` execution queue behavior"
         );
         assert!(
             COMMAND_TREE_RS
-                .contains("next        Pull from human queue (default) or agent queue (--agent)"),
-            "CLI help text should describe human/agent queue mode behavior for `next`"
+                .contains("next        Pull the next item using role-based queue routing"),
+            "CLI help text should describe role-based queue routing for `next`"
         );
     }
 
