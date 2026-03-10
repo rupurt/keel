@@ -12,6 +12,7 @@ use crate::cli::style;
 use crate::domain::model::Board;
 use crate::infrastructure::loader::load_board;
 use crate::read_model::evidence::{self, EvidenceEntry};
+use crate::read_model::planning_show;
 
 /// Run the audit command
 pub fn run(board_dir: &Path, id: Option<&str>) -> Result<()> {
@@ -78,7 +79,6 @@ pub fn run(board_dir: &Path, id: Option<&str>) -> Result<()> {
 
 fn audit_story(story: &crate::domain::model::Story, indent_level: usize) -> Result<()> {
     let indent = " ".repeat(indent_level);
-    let sub_indent = " ".repeat(indent_level + 2);
 
     let status_indicator = if story.status == crate::domain::model::StoryState::Done {
         "✓ ".green().bold().to_string()
@@ -96,20 +96,20 @@ fn audit_story(story: &crate::domain::model::Story, indent_level: usize) -> Resu
     );
 
     let content = std::fs::read_to_string(&story.path)?;
-    let entries = evidence::collect_story_evidence(story.id(), story.title(), &content);
+    let evidence_report = planning_show::build_story_evidence_projection(&story.path, &content);
 
-    let mut linked_artifacts = std::collections::HashSet::new();
-
-    if entries.is_empty() {
-        println!("{}  {}", indent, "No evidence chain found".dimmed());
+    if evidence_report.items.is_empty() {
+        println!("{}  {}", indent, "(no verify annotations found)".dimmed());
     } else {
-        // Group by requirement even in story view for consistency
-        let mut by_req: HashMap<String, Vec<EvidenceEntry>> = HashMap::new();
-        for entry in entries {
-            by_req
-                .entry(entry.requirement_id.clone())
-                .or_default()
-                .push(entry);
+        // Group evidence items by requirement for audit view
+        let mut by_req: HashMap<String, Vec<&planning_show::EvidenceItem>> = HashMap::new();
+        for item in &evidence_report.items {
+            for req_id in &item.requirements {
+                by_req
+                    .entry(req_id.clone())
+                    .or_default()
+                    .push(item);
+            }
         }
 
         let mut req_ids: Vec<_> = by_req.keys().collect();
@@ -117,44 +117,87 @@ fn audit_story(story: &crate::domain::model::Story, indent_level: usize) -> Resu
 
         for req_id in req_ids {
             println!("{}  Requirement: {}", indent, req_id.cyan());
-            for entry in &by_req[req_id] {
-                let phase_indent = if entry.phase == "continues" {
-                    "      "
-                } else {
-                    "    "
-                };
+            for item in &by_req[req_id] {
+                let ac_label = item
+                    .ac_label
+                    .clone()
+                    .unwrap_or_else(|| "AC-??".to_string());
+
                 println!(
-                    "{}{}{}",
+                    "{}    {}: {}",
                     indent,
-                    phase_indent,
-                    style::styled_evidence_entry(entry)
+                    ac_label.cyan(),
+                    style::styled_inline_markdown(&item.criterion)
                 );
-                if let Some(proof) = &entry.proof {
-                    println!("{}        ↳ Proof: {}", indent, proof.dimmed());
-                    linked_artifacts.insert(proof.clone());
+                println!(
+                    "{}      Mode: {}",
+                    indent,
+                    style::styled_inline_markdown(&item.mode)
+                );
+
+                if let Some(proof) = &item.proof_filename {
+                    println!(
+                        "{}      Proof: {}",
+                        indent,
+                        style::styled_inline_markdown(proof)
+                    );
+                    if let Some(recorded_at) = &item.proof_metadata.recorded_at {
+                        println!(
+                            "{}        recorded_at: {}",
+                            indent,
+                            style::styled_inline_markdown(recorded_at)
+                        );
+                    }
+                    if let Some(command) = &item.proof_metadata.command {
+                        println!(
+                            "{}        proof command: {}",
+                            indent,
+                            style::styled_inline_markdown(command)
+                        );
+                    }
+                    if !item.excerpt_lines.is_empty() {
+                        println!(
+                            "{}        Excerpt ({} lines):",
+                            indent,
+                            item.excerpt_lines.len()
+                        );
+                        for line in &item.excerpt_lines {
+                            println!("{}          {}", indent, style::styled_inline_markdown(line));
+                        }
+                    }
+                    if item.missing_proof {
+                        println!(
+                            "{}        {} linked proof file is missing",
+                            indent,
+                            "Warning:".yellow()
+                        );
+                    }
+                } else {
+                    println!("{}      Proof: (none linked)", indent);
                 }
             }
         }
     }
 
-    let bundle_dir = story.path.parent().unwrap();
-    let evidence_dir = bundle_dir.join("EVIDENCE");
-    if evidence_dir.exists() {
-        let artifacts: Vec<_> = std::fs::read_dir(&evidence_dir)?
-            .filter_map(|e| e.ok())
-            .map(|e| e.file_name().to_string_lossy().to_string())
-            .filter(|name| !linked_artifacts.contains(name))
-            .collect();
+    if evidence_report.evidence_dir_missing {
+        println!("{}  {}", indent, "(EVIDENCE directory not found)".dimmed());
+    }
 
-        if !artifacts.is_empty() {
-            println!("{}Supplementary Evidence:", sub_indent);
-
-            for art in artifacts {
-                println!("{}  - {}", sub_indent, art.dimmed());
-            }
+    if !evidence_report.supplementary_artifacts.is_empty() {
+        println!("{}  Supplementary artifacts:", indent);
+        for artifact in &evidence_report.supplementary_artifacts {
+            println!("{}    - {}", indent, style::styled_inline_markdown(artifact));
         }
     }
 
+    if !evidence_report.media_artifacts.is_empty() {
+        println!("{}  Media artifacts:", indent);
+        for media in &evidence_report.media_artifacts {
+            println!("{}    - {}", indent, style::styled_inline_markdown(media));
+        }
+    }
+
+    let bundle_dir = story.path.parent().unwrap();
     let reflect_path = bundle_dir.join("REFLECT.md");
     if reflect_path.exists() {
         let board_dir = bundle_dir
@@ -288,7 +331,7 @@ fn audit_epic(board: &Board, epic: &crate::domain::model::Epic) -> Result<()> {
 
     if !epic_evidence.is_empty() {
         println!("  Epic Evidence Chains:");
-        render_requirement_groups(&epic_evidence, 4);
+        render_requirement_groups(board, &epic_evidence, 4);
         println!();
     }
 
@@ -298,7 +341,7 @@ fn audit_epic(board: &Board, epic: &crate::domain::model::Epic) -> Result<()> {
     Ok(())
 }
 
-fn render_requirement_groups(entries: &[EvidenceEntry], indent_level: usize) {
+fn render_requirement_groups(board: &Board, entries: &[EvidenceEntry], indent_level: usize) {
     let indent = " ".repeat(indent_level);
 
     let mut by_req: HashMap<String, Vec<EvidenceEntry>> = HashMap::new();
@@ -314,16 +357,104 @@ fn render_requirement_groups(entries: &[EvidenceEntry], indent_level: usize) {
 
     for req_id in req_ids {
         println!("{}Requirement: {}", indent, req_id.cyan());
+
+        // Group by story within requirement
+        let mut by_story: HashMap<String, Vec<EvidenceEntry>> = HashMap::new();
         for entry in &by_req[req_id] {
-            let phase_indent = if entry.phase == "continues" { "  " } else { "" };
+            by_story
+                .entry(entry.story_id.clone())
+                .or_default()
+                .push(entry.clone());
+        }
+
+        let mut story_ids: Vec<_> = by_story.keys().collect();
+        story_ids.sort();
+
+        for story_id in story_ids {
+            let story = if let Some(s) = board.stories.get(story_id) {
+                s
+            } else {
+                continue;
+            };
+
+            let content = match std::fs::read_to_string(&story.path) {
+                Ok(c) => c,
+                Err(_) => continue,
+            };
+
+            let evidence_report =
+                planning_show::build_story_evidence_projection(&story.path, &content);
+
             println!(
-                "{}  {}{}",
+                "{}  Story: {} - {} ({})",
                 indent,
-                phase_indent,
-                style::styled_evidence_entry(entry)
+                style::styled_story_id(story.id()),
+                story.frontmatter.title,
+                style::styled_story_status(&story.status)
             );
-            if let Some(proof) = &entry.proof {
-                println!("{}      ↳ Proof: {}", indent, proof.dimmed());
+
+            // Filter evidence report items to only those matching this requirement
+            for item in &evidence_report.items {
+                if item.requirements.contains(req_id) {
+                    let ac_label = item.ac_label.clone().unwrap_or_else(|| "AC-??".to_string());
+
+                    println!(
+                        "{}    {}: {}",
+                        indent,
+                        ac_label.cyan(),
+                        style::styled_inline_markdown(&item.criterion)
+                    );
+                    println!(
+                        "{}      Mode: {}",
+                        indent,
+                        style::styled_inline_markdown(&item.mode)
+                    );
+
+                    if let Some(proof) = &item.proof_filename {
+                        println!(
+                            "{}      Proof: {}",
+                            indent,
+                            style::styled_inline_markdown(proof)
+                        );
+                        if let Some(recorded_at) = &item.proof_metadata.recorded_at {
+                            println!(
+                                "{}        recorded_at: {}",
+                                indent,
+                                style::styled_inline_markdown(recorded_at)
+                            );
+                        }
+                        if let Some(command) = &item.proof_metadata.command {
+                            println!(
+                                "{}        proof command: {}",
+                                indent,
+                                style::styled_inline_markdown(command)
+                            );
+                        }
+                        if !item.excerpt_lines.is_empty() {
+                            println!(
+                                "{}        Excerpt ({} lines):",
+                                indent,
+                                item.excerpt_lines.len()
+                            );
+                            for line in &item.excerpt_lines {
+                                println!(
+                                    "{}          {}",
+                                    indent,
+                                    style::styled_inline_markdown(line)
+                                );
+                            }
+                        }
+                        if item.missing_proof {
+                            println!(
+                                "{}        {} linked proof file is missing",
+                                indent,
+                                "Warning:".yellow()
+                            );
+                        }
+                    } else {
+                        println!("{}      Proof: (none linked)", indent);
+                    }
+                }
             }
         }
     }
