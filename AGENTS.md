@@ -10,7 +10,7 @@ If your harness supports subagents, worker sessions, or fresh task-local context
 use them to preserve workflow-specific focus instead of carrying one mixed context
 across planning, research, and execution.
 
-1. **Keep One Mission Steward**: The top-level harness/session owns mission scope, charter integrity, `just keel mission show <id>`, `just keel flow`, `just keel next --agent`, mission logging, phase switching, and final mission lifecycle transitions.
+1. **Keep One Mission Steward**: The top-level harness/session owns mission scope, charter integrity, `just keel mission show <id>`, `just keel flow`, `just keel next --role engineer/software`, mission logging, phase switching, and final mission lifecycle transitions.
 2. **Delegate By Workflow Type**: Hand one concrete work unit to a dedicated worker context:
    - Implementer: one primary implementation slice at a time, usually one story plus any directly coupled lifecycle work required to finish that slice cleanly (for example `story submit`, evidence capture, or `voyage done` when closing the final scoped story).
    - Architect: one planning unit at a time (epic or voyage), including the authored artifacts and downstream story decomposition needed to seal that unit cleanly.
@@ -27,7 +27,7 @@ this workflow, along with any directly coupled parent context or closure work
 needed to finish that slice cleanly.
 
 1. **Pull Context**: Read current board health and identify bottlenecks with `just keel flow`.
-2. **Claim Work**: Pull the highest-priority implementation item with `just keel next --agent`. Use `--parallel` to identify safe concurrent tasks.
+2. **Claim Work**: Pull the highest-priority implementation item with `just keel next --role engineer/software`. Use `just keel next --role engineer/software --parallel` to identify safe concurrent tasks.
    - If no story is ready and the active mission still has unmet goals, hand off immediately to the Planning or Research workflow instead of waiting or stopping.
 3. **Open the Show Surfaces First**: Use the CLI read views as the default entry points for implementation context and clarification:
    - `just keel story show <story-id>` for the active work item, acceptance criteria, status, evidence, and story path.
@@ -111,7 +111,7 @@ requirements, design, or decomposition.
      - Canonical next step command
 11. **Seal Planning**: Promote the voyage from `draft` to `planned` with `just keel voyage plan <id>`. This validates requirement coverage and thaws stories into the agent backlog.
 12. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this planning unit after sealing so the resulting `.keel` state is captured in the same commit. Do not batch unrelated planning units into one commit.
-13. **Return To Execution**: After `just keel voyage plan <id>` or equivalent planning completion, immediately rerun `just keel next --agent` and hand the ready story to an implementer context unless a real blocker remains.
+13. **Return To Execution**: After `just keel voyage plan <id>` or equivalent planning completion, immediately rerun `just keel next --role engineer/software` and hand the ready story to an implementer context unless a real blocker remains.
 
 ## Research Workflow (Explorer)
 
@@ -165,7 +165,7 @@ the request is broad and no mission covers it yet, create one first.
    - If a story is ready or the next step is a concrete implementation slice, use the **Execution Workflow** in a dedicated implementer context.
    - If no story is ready and the next step is decomposition, scoping, or requirements/design authoring, use the **Planning Workflow** in a dedicated architect context.
    - If planning or execution is blocked by ambiguity, missing evidence, or external research, use the **Research Workflow** in a dedicated explorer context.
-   - If `just keel next --agent` reports no ready work but mission goals remain unmet, create the next bearing, epic, voyage, or story instead of stopping.
+   - If `just keel next --role engineer/software` reports no ready work but mission goals remain unmet, create the next bearing, epic, voyage, or story instead of stopping.
 6. **Rejoin The Mission Loop After Every Worker Result**:
    - Review the resulting board state and changed artifacts.
    - Record the decision, evidence, blocker, and next phase with `just keel mission log <id> --entry "<text>"`.
@@ -279,7 +279,7 @@ Run `just keel --help` for the full command tree. The core commands you should r
 | Discovery | `just keel bearing new <name>` `just keel bearing research <id>` `just keel bearing assess <id>` `just keel bearing list` |
 | Planning | `just keel epic new <name> --problem <problem>` `just keel voyage new <name> --epic <epic-id> --goal <goal>` |
 | Execution | `just keel story new "<title>" [--type <type>] [--epic <epic-id> [--voyage <voyage-id>]]` |
-| Board Ops | `just keel next --agent` `just keel next` `just keel flow` `just keel doctor` `just keel generate` `just keel config show` `just keel mission show <id>` |
+| Board Ops | `just keel next --role engineer/software` `just keel next` `just keel flow` `just keel doctor` `just keel generate` `just keel config show` `just keel mission show <id>` |
 | Lifecycle | Story/voyage/epic transitions in the table below |
 
 ## Story and Milestone State Changes
