@@ -98,7 +98,10 @@ pub fn check_mission_completion_evidence(board: &Board) -> Vec<Problem> {
 
     for mission in board.missions.values() {
         // Only check terminal or near-terminal states
-        if !matches!(mission.status(), MissionStatus::Achieved | MissionStatus::Verified) {
+        if !matches!(
+            mission.status(),
+            MissionStatus::Achieved | MissionStatus::Verified
+        ) {
             continue;
         }
 
@@ -213,62 +216,62 @@ pub fn check_mission_orphans(board: &Board) -> Vec<Problem> {
     let mut problems = Vec::new();
 
     for epic in board.epics.values() {
-        if let Some(mission_id) = &epic.frontmatter.mission {
-            if !board.missions.contains_key(mission_id) {
-                problems.push(Problem {
-                    severity: Severity::Error,
-                    path: epic.path.clone(),
-                    message: format!(
-                        "Epic {} references nonexistent mission '{}'",
-                        epic.id(),
-                        mission_id
-                    ),
-                    fix: None,
-                    scope: Some(epic.id().to_string()),
-                    category: Some(GapCategory::Coherence),
-                    check_id: CheckId::MissionOrphanedLineage,
-                });
-            }
+        if let Some(mission_id) = &epic.frontmatter.mission
+            && !board.missions.contains_key(mission_id)
+        {
+            problems.push(Problem {
+                severity: Severity::Error,
+                path: epic.path.clone(),
+                message: format!(
+                    "Epic {} references nonexistent mission '{}'",
+                    epic.id(),
+                    mission_id
+                ),
+                fix: None,
+                scope: Some(epic.id().to_string()),
+                category: Some(GapCategory::Coherence),
+                check_id: CheckId::MissionOrphanedLineage,
+            });
         }
     }
 
     for bearing in board.bearings.values() {
-        if let Some(mission_id) = &bearing.frontmatter.mission {
-            if !board.missions.contains_key(mission_id) {
-                problems.push(Problem {
-                    severity: Severity::Error,
-                    path: bearing.path.clone(),
-                    message: format!(
-                        "Bearing {} references nonexistent mission '{}'",
-                        bearing.id(),
-                        mission_id
-                    ),
-                    fix: None,
-                    scope: Some(bearing.id().to_string()),
-                    category: Some(GapCategory::Coherence),
-                    check_id: CheckId::MissionOrphanedLineage,
-                });
-            }
+        if let Some(mission_id) = &bearing.frontmatter.mission
+            && !board.missions.contains_key(mission_id)
+        {
+            problems.push(Problem {
+                severity: Severity::Error,
+                path: bearing.path.clone(),
+                message: format!(
+                    "Bearing {} references nonexistent mission '{}'",
+                    bearing.id(),
+                    mission_id
+                ),
+                fix: None,
+                scope: Some(bearing.id().to_string()),
+                category: Some(GapCategory::Coherence),
+                check_id: CheckId::MissionOrphanedLineage,
+            });
         }
     }
 
     for adr in board.adrs.values() {
-        if let Some(mission_id) = &adr.frontmatter.mission {
-            if !board.missions.contains_key(mission_id) {
-                problems.push(Problem {
-                    severity: Severity::Error,
-                    path: adr.path.clone(),
-                    message: format!(
-                        "ADR {} references nonexistent mission '{}'",
-                        adr.id(),
-                        mission_id
-                    ),
-                    fix: None,
-                    scope: Some(adr.id().to_string()),
-                    category: Some(GapCategory::Coherence),
-                    check_id: CheckId::MissionOrphanedLineage,
-                });
-            }
+        if let Some(mission_id) = &adr.frontmatter.mission
+            && !board.missions.contains_key(mission_id)
+        {
+            problems.push(Problem {
+                severity: Severity::Error,
+                path: adr.path.clone(),
+                message: format!(
+                    "ADR {} references nonexistent mission '{}'",
+                    adr.id(),
+                    mission_id
+                ),
+                fix: None,
+                scope: Some(adr.id().to_string()),
+                category: Some(GapCategory::Coherence),
+                check_id: CheckId::MissionOrphanedLineage,
+            });
         }
     }
 
@@ -359,14 +362,22 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .mission(TestMission::new("M1").status("achieved"))
             .build();
-        
+
         let board = load_board(temp.path()).unwrap();
         let problems = check_mission_completion_evidence(&board);
-        
+
         // Should have 2 problems: missing log and missing children
         assert_eq!(problems.len(), 2);
-        assert!(problems.iter().any(|p| p.check_id == CheckId::MissionMissingLogEntries));
-        assert!(problems.iter().any(|p| p.check_id == CheckId::MissionMissingChildren));
+        assert!(
+            problems
+                .iter()
+                .any(|p| p.check_id == CheckId::MissionMissingLogEntries)
+        );
+        assert!(
+            problems
+                .iter()
+                .any(|p| p.check_id == CheckId::MissionMissingChildren)
+        );
 
         // Fix children
         let temp = TestBoardBuilder::new()

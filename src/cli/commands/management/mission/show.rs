@@ -104,7 +104,7 @@ fn render_human_output(projection: &MissionShowProjection) {
     // LOG Summary Section
     let mut log_section = ShowSection::new("Latest Log Entry");
     if let Some(log_summary) = &projection.log_summary {
-        log_section.push_text_block(&format!("  {}", log_summary));
+        log_section.push_text_block(format!("  {}", log_summary));
     } else {
         log_section.push_text_block("  (no log entries found)");
     }

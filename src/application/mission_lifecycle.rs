@@ -314,22 +314,22 @@ fn get_next_question(content: &str) -> Option<String> {
 }
 
 fn process_answer(content: &str, answer: &str) -> Result<String> {
-    if let Some(goals_section) = extract_section(content, "## Goals") {
-        if goals_section.contains("{{goal}}") {
-            let updated_goals = goals_section.replace("{{goal}}", answer);
-            return Ok(replace_section(content, "## Goals", &updated_goals));
-        }
+    if let Some(goals_section) = extract_section(content, "## Goals")
+        && goals_section.contains("{{goal}}")
+    {
+        let updated_goals = goals_section.replace("{{goal}}", answer);
+        return Ok(replace_section(content, "## Goals", &updated_goals));
     }
 
-    if let Some(constraints_section) = extract_section(content, "## Constraints") {
-        if constraints_section.contains("(none yet)") {
-            let updated_constraints = format!("- {}\n", answer);
-            return Ok(replace_section(
-                content,
-                "## Constraints",
-                &updated_constraints,
-            ));
-        }
+    if let Some(constraints_section) = extract_section(content, "## Constraints")
+        && constraints_section.contains("(none yet)")
+    {
+        let updated_constraints = format!("- {}\n", answer);
+        return Ok(replace_section(
+            content,
+            "## Constraints",
+            &updated_constraints,
+        ));
     }
 
     Err(anyhow!(

@@ -34,7 +34,7 @@ pub fn execute(
         ));
     }
 
-    let mut mutations = vec![Mutation::set("status", &spec.to.to_string())];
+    let mut mutations = vec![Mutation::set("status", spec.to.to_string())];
     let now = Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
 
     if spec.timestamps.updated_at {
