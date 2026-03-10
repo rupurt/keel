@@ -360,6 +360,38 @@ fn cli_parses_story_reflect() {
 }
 
 #[test]
+fn cli_parses_story_accept_with_role() {
+    let cli = Cli::try_parse_from([
+        "board",
+        "story",
+        "accept",
+        "FEAT0238",
+        "--role",
+        "manager/product",
+    ])
+    .unwrap();
+    if let Commands::Management(ManagementCommands::Story {
+        action: StoryAction::Accept { id, role, reflect },
+    }) = cli.command
+    {
+        assert_eq!(id, "FEAT0238");
+        assert_eq!(role, "manager/product");
+        assert!(reflect.is_none());
+    } else {
+        panic!("Expected Story Accept command");
+    }
+}
+
+#[test]
+fn cli_rejects_story_accept_without_role() {
+    let result = Cli::try_parse_from(["board", "story", "accept", "FEAT0238"]);
+    assert!(
+        result.is_err(),
+        "Expected parse error when --role is missing"
+    );
+}
+
+#[test]
 fn cli_parses_story_ice() {
     let cli = Cli::try_parse_from(["board", "story", "ice", "FEAT0001"]).unwrap();
     if let Commands::Management(ManagementCommands::Story {
@@ -1281,6 +1313,40 @@ fn cli_rejects_legacy_next_flags_when_role_is_already_present() {
         "--agent".to_string(),
     ])
     .expect("legacy flag should conflict with --role guidance");
+
+    assert!(message.contains("Do not combine"));
+    assert!(message.contains("--role"));
+}
+
+#[test]
+fn cli_rejects_legacy_story_accept_human_flag_with_migration_guidance() {
+    let message =
+        crate::cli::commands::management::story::accept::legacy_story_accept_flag_guidance(&[
+            "keel".to_string(),
+            "story".to_string(),
+            "accept".to_string(),
+            "S1".to_string(),
+            "--human".to_string(),
+        ])
+        .expect("legacy accept flag should produce migration guidance");
+
+    assert!(message.contains("--human"));
+    assert!(message.contains("--role manager/product"));
+}
+
+#[test]
+fn cli_rejects_legacy_story_accept_human_flag_when_role_is_also_present() {
+    let message =
+        crate::cli::commands::management::story::accept::legacy_story_accept_flag_guidance(&[
+            "keel".to_string(),
+            "story".to_string(),
+            "accept".to_string(),
+            "S1".to_string(),
+            "--role".to_string(),
+            "manager/product".to_string(),
+            "--human".to_string(),
+        ])
+        .expect("legacy accept flag should conflict with --role guidance");
 
     assert!(message.contains("Do not combine"));
     assert!(message.contains("--role"));

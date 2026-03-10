@@ -7,6 +7,8 @@ use crate::cli::commands::management::guidance::{
 };
 use crate::domain::model::StoryState;
 
+const DEFAULT_ACCEPT_ROLE: &str = "manager/product";
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StoryLifecycleAction {
     Start,
@@ -34,6 +36,11 @@ pub fn creation_command(title: &str, epic_id: Option<&str>, voyage_id: Option<&s
     command
 }
 
+/// Render the canonical `story accept` example for management-lane acceptance.
+pub fn accept_command(story_id: &str) -> String {
+    format!("keel story accept {story_id} --role {DEFAULT_ACCEPT_ROLE}")
+}
+
 /// Build canonical guidance for a lifecycle action after it succeeds.
 pub fn guidance_for_action(
     action: StoryLifecycleAction,
@@ -55,7 +62,7 @@ pub fn next_command_for_state(state: StoryState, story_id: &str) -> Option<Strin
     match state {
         StoryState::Backlog | StoryState::Rejected => Some(format!("keel story start {story_id}")),
         StoryState::InProgress => Some(format!("keel story submit {story_id}")),
-        StoryState::NeedsHumanVerification => Some(format!("keel story accept {story_id}")),
+        StoryState::NeedsHumanVerification => Some(accept_command(story_id)),
         StoryState::Icebox => Some(format!("keel story thaw {story_id}")),
         StoryState::Done => None,
     }
@@ -128,8 +135,11 @@ fn recovery_command_for_error(
             }
         }
         StoryLifecycleAction::Accept => {
-            if lower.contains("manual acceptance criteria") || lower.contains("use --human") {
-                Some(format!("keel story accept {story_id} --human"))
+            if lower.contains("manual acceptance criteria")
+                || lower.contains("manager/* role")
+                || lower.contains("--role manager/")
+            {
+                Some(accept_command(story_id))
             } else if lower.contains("reflect.md missing in bundle") {
                 Some(format!("keel story reflect {story_id}"))
             } else if lower.contains("evidence directory missing in bundle")
@@ -242,7 +252,7 @@ mod tests {
         .unwrap();
         assert_eq!(
             guidance.next_step.unwrap().command,
-            "keel story accept S2".to_string()
+            "keel story accept S2 --role manager/product".to_string()
         );
     }
 
@@ -323,18 +333,18 @@ mod tests {
     }
 
     #[test]
-    fn recovery_accept_manual_maps_to_human_flag() {
+    fn recovery_accept_manual_maps_to_manager_role() {
         let guidance = recovery_for_error(
             StoryLifecycleAction::Accept,
             "S6",
-            "Story S6 has manual acceptance criteria. Please use --human to confirm manual verification.",
+            "Story S6 has manual acceptance criteria. Manual verification must be accepted with a manager/* role.",
         )
         .unwrap();
         let json = serde_json::to_value(guidance).unwrap();
         assert_eq!(
             json,
             json!({
-                "recovery_step": { "command": "keel story accept S6 --human" }
+                "recovery_step": { "command": "keel story accept S6 --role manager/product" }
             })
         );
     }
@@ -353,7 +363,7 @@ mod tests {
     }
 
     #[test]
-    fn error_with_recovery_embeds_human_recovery_block() {
+    fn error_with_recovery_embeds_manager_role_recovery_block() {
         let err = error_with_recovery(
             StoryLifecycleAction::Accept,
             "S8",
@@ -363,6 +373,6 @@ mod tests {
 
         assert!(err.contains("Cannot accept story S8"));
         assert!(err.contains("Recovery step:"));
-        assert!(err.contains("keel story accept S8 --human"));
+        assert!(err.contains("keel story accept S8 --role manager/product"));
     }
 }

@@ -292,7 +292,7 @@ Use CLI commands only; do not move `.keel` files manually.
 | Reflect | `just keel story reflect <id>` |
 | Submit | `just keel story submit <id>` |
 | Reject | `just keel story reject <id> "reason"` |
-| Accept | `just keel story accept <id>` |
+| Accept | `just keel story accept <id> --role manager/product` |
 | Ice | `just keel story ice <id>` |
 | Thaw | `just keel story thaw <id>` |
 | Voyage done | `just keel voyage done <id>` |

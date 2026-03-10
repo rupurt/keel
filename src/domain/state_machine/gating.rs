@@ -66,14 +66,14 @@ pub fn evaluate_story_transition(
     board: &Board,
     story: &Story,
     transition: StoryTransition,
-    require_human_review_for_manual_acceptance: bool,
+    manual_acceptance_manager_role_authorized: bool,
 ) -> Vec<Problem> {
     match transition {
         StoryTransition::Start => evaluate_story_start(board, story),
         StoryTransition::Thaw => evaluate_story_thaw(story),
         StoryTransition::Submit => evaluate_story_submit(board, story),
         StoryTransition::Accept => {
-            evaluate_story_accept(board, story, require_human_review_for_manual_acceptance)
+            evaluate_story_accept(board, story, manual_acceptance_manager_role_authorized)
         }
         _ => Vec::new(),
     }
@@ -298,11 +298,11 @@ fn evaluate_story_submit(_board: &Board, story: &Story) -> Vec<Problem> {
 fn evaluate_story_accept(
     _board: &Board,
     story: &Story,
-    require_human_review_for_manual_acceptance: bool,
+    manual_acceptance_manager_role_authorized: bool,
 ) -> Vec<Problem> {
     let mut problems = Vec::new();
 
-    if require_human_review_for_manual_acceptance
+    if !manual_acceptance_manager_role_authorized
         && let Ok(content) = fs::read_to_string(&story.path)
         && crate::infrastructure::validation::parse_acceptance_criteria(&content).requires_manual()
     {
@@ -311,7 +311,7 @@ fn evaluate_story_accept(
             path: story.path.clone(),
             scope: story.scope().map(String::from),
             message: format!(
-                "Story {} has manual acceptance criteria. Please use --human to confirm manual verification.",
+                "Story {} has manual acceptance criteria. Manual verification must be accepted with a manager/* role.",
                 story.id()
             ),
             fix: None,
@@ -1791,7 +1791,7 @@ mod tests {
     }
 
     #[test]
-    fn evaluate_story_accept_requires_human_override_for_manual_checks() {
+    fn evaluate_story_accept_requires_manager_role_for_manual_checks() {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S-ACCEPT")
@@ -1804,13 +1804,13 @@ mod tests {
         let board = load_board(temp.path()).unwrap();
         let story = board.require_story("S-ACCEPT").unwrap();
 
-        let problems = evaluate_story_transition(&board, story, StoryTransition::Accept, true);
+        let problems = evaluate_story_transition(&board, story, StoryTransition::Accept, false);
         assert!(has_message(&problems, "manual acceptance criteria"));
         assert!(problems.iter().any(|p| p.severity == Severity::Error));
     }
 
     #[test]
-    fn evaluate_story_accept_allows_manual_checks_when_human_override_is_set() {
+    fn evaluate_story_accept_allows_manual_checks_when_manager_role_is_set() {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("S-ACCEPT2")
@@ -1823,10 +1823,10 @@ mod tests {
         let board = load_board(temp.path()).unwrap();
         let story = board.require_story("S-ACCEPT2").unwrap();
 
-        let problems = evaluate_story_transition(&board, story, StoryTransition::Accept, false);
+        let problems = evaluate_story_transition(&board, story, StoryTransition::Accept, true);
         assert!(
             !has_message(&problems, "manual acceptance criteria"),
-            "manual requirement should be bypassed when human override is set"
+            "manual requirement should be bypassed when manager authorization is set"
         );
     }
 

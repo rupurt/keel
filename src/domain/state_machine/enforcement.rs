@@ -30,8 +30,8 @@ pub struct EnforcementPolicy {
     pub blocking_mode: BlockingMode,
     /// Whether voyage transition checks should enforce requirement coverage.
     pub require_requirements_coverage: bool,
-    /// Whether story acceptance should block manual verification criteria unless human override is used.
-    pub require_human_review_for_manual_acceptance: bool,
+    /// Whether the current actor is authorized to accept stories with manual verification criteria.
+    pub manual_acceptance_manager_role_authorized: bool,
     /// Completion-gate behavior for voyage completion transitions.
     pub completion_policy: VoyageCompletionPolicy,
 }
@@ -41,7 +41,7 @@ impl EnforcementPolicy {
     pub const STRICT: EnforcementPolicy = EnforcementPolicy {
         blocking_mode: BlockingMode::Strict,
         require_requirements_coverage: true,
-        require_human_review_for_manual_acceptance: true,
+        manual_acceptance_manager_role_authorized: false,
         completion_policy: VoyageCompletionPolicy::RUNTIME,
     };
 
@@ -49,7 +49,7 @@ impl EnforcementPolicy {
     pub const RUNTIME: EnforcementPolicy = EnforcementPolicy {
         blocking_mode: BlockingMode::Runtime,
         require_requirements_coverage: true,
-        require_human_review_for_manual_acceptance: true,
+        manual_acceptance_manager_role_authorized: false,
         completion_policy: VoyageCompletionPolicy::RUNTIME,
     };
 
@@ -57,7 +57,7 @@ impl EnforcementPolicy {
     pub const REPORTING: EnforcementPolicy = EnforcementPolicy {
         blocking_mode: BlockingMode::Reporting,
         require_requirements_coverage: false,
-        require_human_review_for_manual_acceptance: false,
+        manual_acceptance_manager_role_authorized: false,
         completion_policy: VoyageCompletionPolicy::REPORTING,
     };
 
@@ -211,7 +211,7 @@ fn enforce_story_transition(
         board,
         story,
         transition,
-        policy.require_human_review_for_manual_acceptance,
+        policy.manual_acceptance_manager_role_authorized,
     );
 
     if transition == StoryTransition::Accept

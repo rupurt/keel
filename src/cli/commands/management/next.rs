@@ -15,7 +15,9 @@ pub use super::next_support::{
 use crate::cli::commands::management::guidance::{
     CanonicalGuidance, CommandGuidance, render_command_guidance,
 };
-use crate::cli::commands::management::story::guidance::creation_command as story_creation_command;
+use crate::cli::commands::management::story::guidance::{
+    accept_command as story_accept_command, creation_command as story_creation_command,
+};
 use crate::domain::model::Story;
 use crate::infrastructure::loader::load_board;
 
@@ -350,14 +352,13 @@ fn guidance_for_decision(decision: &NextDecision) -> Option<CanonicalGuidance> {
         NextDecision::Accept(d) => d
             .stories
             .first()
-            .map(|story| CommandGuidance::next(format!("keel story accept {}", story.id()))),
+            .map(|story| CommandGuidance::next(story_accept_command(story.id()))),
         NextDecision::Research(d) => d
             .bearings
             .first()
             .map(|bearing| CommandGuidance::next(format!("keel play {}", bearing.id()))),
-        NextDecision::Blocked(d) => Some(CommandGuidance::recovery(format!(
-            "keel story accept {}",
-            d.story.id()
+        NextDecision::Blocked(d) => Some(CommandGuidance::recovery(story_accept_command(
+            d.story.id(),
         ))),
         NextDecision::NeedsStories(d) => d.voyages.first().map(|voyage| {
             CommandGuidance::next(story_creation_command(
@@ -771,7 +772,7 @@ mod tests {
         assert_eq!(json["decision"], "accept");
         assert_eq!(
             json["guidance"]["next_step"]["command"],
-            "keel story accept S2"
+            "keel story accept S2 --role manager/product"
         );
         assert!(json["guidance"]["recovery_step"].is_null());
     }
@@ -789,7 +790,7 @@ mod tests {
         assert_eq!(json["decision"], "blocked");
         assert_eq!(
             json["guidance"]["recovery_step"]["command"],
-            "keel story accept S9"
+            "keel story accept S9 --role manager/product"
         );
         assert!(json["guidance"]["next_step"].is_null());
     }

@@ -68,9 +68,9 @@ pub enum StoryAction {
     Accept {
         /// Story ID
         id: String,
-        /// Acknowledge manual verification steps have been verified by a human
+        /// Role taxonomy authorizing acceptance (e.g., "manager/product")
         #[arg(long)]
-        human: bool,
+        role: String,
         /// Optional reflection observation to capture at acceptance time
         #[arg(long)]
         reflect: Option<String>,
@@ -173,8 +173,8 @@ pub fn run(action: StoryAction) -> Result<()> {
             start::run(&find_board_dir()?, &id, expect_version)
         }
         StoryAction::Submit { id } => submit::run(&find_board_dir()?, &id),
-        StoryAction::Accept { id, human, reflect } => {
-            accept::run(&find_board_dir()?, &id, human, reflect.as_deref())
+        StoryAction::Accept { id, role, reflect } => {
+            accept::run(&find_board_dir()?, &id, &role, reflect.as_deref())
         }
         StoryAction::Reflect { id } => reflect::run(&find_board_dir()?, &id),
         StoryAction::Reject { id, reason } => reject::run(&find_board_dir()?, &id, &reason),

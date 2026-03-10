@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-10T14:38:17.179830450-07:00
+mode: manual
+---
+Verified with cargo test --lib manager_role and full gates: just quality, just test, just doctest, just keel doctor.

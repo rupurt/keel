@@ -10,10 +10,11 @@ use std::path::Path;
 use crate::application::domain_events::DomainEvent;
 use crate::application::knowledge_context;
 use crate::application::process_manager::DomainProcessManager;
+use crate::domain::model::taxonomy::RoleTaxonomy;
 use crate::domain::model::{Story, StoryState};
 use crate::domain::state_machine::{
-    BlockingMode, EnforcementPolicy, StoryTransition, TransitionEntity, TransitionIntent,
-    enforce_transition, format_enforcement_error,
+    EnforcementPolicy, StoryTransition, TransitionEntity, TransitionIntent, enforce_transition,
+    format_enforcement_error,
 };
 use crate::domain::transitions::{execute, transitions};
 use crate::infrastructure::frontmatter_mutation::{Mutation, apply};
@@ -171,18 +172,18 @@ impl StoryLifecycleService {
     }
 
     /// Accept a story (needs-human-verification -> done).
-    pub fn accept(board_dir: &Path, id: &str, human: bool, reflect: Option<&str>) -> Result<()> {
+    pub fn accept(
+        board_dir: &Path,
+        id: &str,
+        actor_role: &RoleTaxonomy,
+        reflect: Option<&str>,
+    ) -> Result<()> {
         let board = load_board(board_dir)?;
         let story = board.require_story(id)?;
 
-        let policy = if human {
-            EnforcementPolicy {
-                blocking_mode: BlockingMode::Strict,
-                require_human_review_for_manual_acceptance: false,
-                ..EnforcementPolicy::RUNTIME
-            }
-        } else {
-            EnforcementPolicy::RUNTIME
+        let policy = EnforcementPolicy {
+            manual_acceptance_manager_role_authorized: actor_role.role == "manager",
+            ..EnforcementPolicy::RUNTIME
         };
 
         let intent = TransitionIntent::Story(StoryTransition::Accept);
@@ -196,8 +197,14 @@ impl StoryLifecycleService {
                 &enforcement.blocking_problems,
             );
 
-            if !human {
-                msg.push_str("\nHint: Some checks require human oversight. Use --human if you have manually verified this.");
+            if enforcement
+                .blocking_problems
+                .iter()
+                .any(|problem| problem.message.contains("manual acceptance criteria"))
+            {
+                msg.push_str(
+                    "\nHint: Stories with manual verification must be accepted with `--role manager/product` after review.",
+                );
             }
 
             return Err(anyhow!(msg));
@@ -491,7 +498,7 @@ mod tests {
     use std::fs;
 
     #[test]
-    fn accept_requires_human_flag_for_manual_verification_stories() {
+    fn accept_requires_manager_role_for_manual_verification_stories() {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("MANUAL01")
@@ -501,17 +508,22 @@ mod tests {
             )
             .build();
 
-        let err = StoryLifecycleService::accept(temp.path(), "MANUAL01", false, None)
-            .unwrap_err()
-            .to_string();
+        let err = StoryLifecycleService::accept(
+            temp.path(),
+            "MANUAL01",
+            &crate::domain::model::taxonomy::parse("engineer/software").unwrap(),
+            None,
+        )
+        .unwrap_err()
+        .to_string();
         assert!(
-            err.contains("--human"),
-            "manual verification enforcement should require --human flag: {err}"
+            err.contains("--role manager/product"),
+            "manual verification enforcement should require a manager role: {err}"
         );
     }
 
     #[test]
-    fn accept_allows_manual_verification_stories_with_human_flag() {
+    fn accept_allows_manual_verification_stories_with_manager_role() {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("MANUAL02")
@@ -521,7 +533,13 @@ mod tests {
             )
             .build();
 
-        StoryLifecycleService::accept(temp.path(), "MANUAL02", true, None).unwrap();
+        StoryLifecycleService::accept(
+            temp.path(),
+            "MANUAL02",
+            &crate::domain::model::taxonomy::parse("manager/product").unwrap(),
+            None,
+        )
+        .unwrap();
 
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
         let story = board.require_story("MANUAL02").unwrap();
@@ -626,7 +644,13 @@ The guard should run before acceptance completes.
         )
         .unwrap();
 
-        StoryLifecycleService::accept(temp.path(), "DONE00001", true, None).unwrap();
+        StoryLifecycleService::accept(
+            temp.path(),
+            "DONE00001",
+            &crate::domain::model::taxonomy::parse("manager/product").unwrap(),
+            None,
+        )
+        .unwrap();
 
         let knowledge_path = temp.path().join("knowledge/1AbCdE241.md");
         assert!(knowledge_path.exists());

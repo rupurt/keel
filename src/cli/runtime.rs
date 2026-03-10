@@ -12,6 +12,11 @@ pub fn run() -> Result<()> {
     if let Some(message) = super::commands::management::next::legacy_next_flag_guidance(&raw_args) {
         anyhow::bail!(message);
     }
+    if let Some(message) =
+        super::commands::management::story::accept::legacy_story_accept_flag_guidance(&raw_args)
+    {
+        anyhow::bail!(message);
+    }
     let matches = build_cli().get_matches_from(raw_args);
 
     match matches.subcommand() {

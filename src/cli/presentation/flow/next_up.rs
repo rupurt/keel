@@ -2,6 +2,7 @@
 //!
 //! Shows priority items for both human and agent queues below the flow boxes.
 
+use crate::cli::commands::management::story::guidance::accept_command as story_accept_command;
 use crate::domain::model::{Bearing, BearingStatus, Board, Story, StoryState, Voyage, VoyageState};
 use crate::infrastructure::bearing_readiness::evaluate_bearing_readiness;
 
@@ -187,7 +188,7 @@ fn build_human_next_up(board: &Board) -> Vec<NextUpItem> {
             id: story.id().to_string(),
             title: story.title().to_string(),
             category: "accept".to_string(),
-            command: Some(format!("keel story accept {}", story.id().to_uppercase())),
+            command: Some(story_accept_command(&story.id().to_uppercase())),
         });
     }
 
@@ -585,6 +586,10 @@ mod tests {
         assert_eq!(next_up.human_items[0].category, "accept");
         assert_eq!(next_up.human_items[1].category, "start");
         assert_eq!(next_up.human_items[2].category, "plan");
+        assert_eq!(
+            next_up.human_items[0].command.as_deref(),
+            Some("keel story accept S1 --role manager/product")
+        );
     }
 
     fn make_bearing(id: &str, title: &str, has_evidence: bool, has_assessment: bool) -> Bearing {

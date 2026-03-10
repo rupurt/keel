@@ -2,7 +2,7 @@
 
 use std::path::Path;
 
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 
 use crate::application::story_lifecycle::StoryLifecycleService;
 use crate::infrastructure::loader::load_board;
@@ -11,9 +11,34 @@ use super::guidance::{
     StoryLifecycleAction, error_with_recovery, guidance_for_action, print_human,
 };
 
+pub(crate) fn legacy_story_accept_flag_guidance(args: &[String]) -> Option<String> {
+    let story_pos = args.iter().position(|arg| arg == "story")?;
+    let accept_pos = args[story_pos + 1..]
+        .iter()
+        .position(|arg| arg == "accept")?
+        + story_pos
+        + 1;
+    let accept_args = &args[accept_pos + 1..];
+
+    if !accept_args.iter().any(|arg| arg == "--human") {
+        return None;
+    }
+
+    let mut message = String::from(
+        "`keel story accept` no longer accepts `--human`. Use `--role manager/product` to authorize acceptance.",
+    );
+    if accept_args.iter().any(|arg| arg == "--role") {
+        message.push_str(" Do not combine `--human` with `--role`.");
+    }
+    Some(message)
+}
+
 /// Run the accept command
-pub fn run(board_dir: &Path, id: &str, human: bool, reflect: Option<&str>) -> Result<()> {
-    StoryLifecycleService::accept(board_dir, id, human, reflect)
+pub fn run(board_dir: &Path, id: &str, role: &str, reflect: Option<&str>) -> Result<()> {
+    let actor_role = crate::domain::model::taxonomy::parse(role)
+        .map_err(|err| anyhow!("Invalid role taxonomy `{role}`: {err}"))?;
+
+    StoryLifecycleService::accept(board_dir, id, &actor_role, reflect)
         .map_err(|err| error_with_recovery(StoryLifecycleAction::Accept, id, err))?;
 
     let board = load_board(board_dir)?;
@@ -46,7 +71,7 @@ mod tests {
             )
             .build();
 
-        run(temp.path(), "READY1", false, None).unwrap();
+        run(temp.path(), "READY1", "engineer/software", None).unwrap();
 
         // Status should be updated to done
         let story_path = temp.path().join("stories/READY1/README.md");
@@ -67,7 +92,7 @@ mod tests {
             )
             .build();
 
-        run(temp.path(), "UPDATE1", false, None).unwrap();
+        run(temp.path(), "UPDATE1", "engineer/software", None).unwrap();
 
         let content = fs::read_to_string(temp.path().join("stories/UPDATE1/README.md")).unwrap();
 
@@ -91,7 +116,7 @@ mod tests {
     }
 
     #[test]
-    fn accept_errors_on_manual_verification_without_human_flag() {
+    fn accept_errors_on_manual_verification_without_manager_role() {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("1vkqtsHH1")
@@ -100,7 +125,7 @@ mod tests {
             )
             .build();
 
-        let result = run(temp.path(), "1vkqtsHH1", false, None);
+        let result = run(temp.path(), "1vkqtsHH1", "engineer/software", None);
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
         assert!(
@@ -109,11 +134,11 @@ mod tests {
             err
         );
         assert!(err.contains("Recovery step:"));
-        assert!(err.contains("keel story accept 1vkqtsHH1 --human"));
+        assert!(err.contains("keel story accept 1vkqtsHH1 --role manager/product"));
     }
 
     #[test]
-    fn accept_with_human_flag_succeeds_for_manual_stories() {
+    fn accept_with_manager_role_succeeds_for_manual_stories() {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("1vkqtsHH2")
@@ -122,10 +147,10 @@ mod tests {
             )
             .build();
 
-        let result = run(temp.path(), "1vkqtsHH2", true, None);
+        let result = run(temp.path(), "1vkqtsHH2", "manager/product", None);
         assert!(
             result.is_ok(),
-            "Should succeed with --human flag: {:?}",
+            "Should succeed with manager role: {:?}",
             result
         );
     }
@@ -140,10 +165,10 @@ mod tests {
             )
             .build();
 
-        let result = run(temp.path(), "1vkqtsHH3", false, None);
+        let result = run(temp.path(), "1vkqtsHH3", "engineer/software", None);
         assert!(
             result.is_ok(),
-            "Should succeed without --human for non-manual stories: {:?}",
+            "Should succeed for non-manual stories with any valid role: {:?}",
             result
         );
     }
@@ -158,7 +183,7 @@ mod tests {
             )
             .build();
 
-        let result = run(temp.path(), "1vkqtsHH4", false, None);
+        let result = run(temp.path(), "1vkqtsHH4", "engineer/software", None);
         assert!(
             result.is_ok(),
             "Should succeed for stories without verify annotations: {:?}",
@@ -179,7 +204,7 @@ mod tests {
             )
             .build();
 
-        run(temp.path(), "1vkqtsAAA", false, None).unwrap();
+        run(temp.path(), "1vkqtsAAA", "engineer/software", None).unwrap();
 
         // Story bundle README should still exist
         let story_path = temp.path().join("stories/1vkqtsAAA/README.md");
@@ -204,7 +229,7 @@ mod tests {
         run(
             temp.path(),
             "1vqNrfl01",
-            false,
+            "engineer/software",
             Some("Caching surprised us"),
         )
         .unwrap();
@@ -229,7 +254,13 @@ mod tests {
             )
             .build();
 
-        run(temp.path(), "1vqNrfl02", false, Some("Latency was key")).unwrap();
+        run(
+            temp.path(),
+            "1vqNrfl02",
+            "engineer/software",
+            Some("Latency was key"),
+        )
+        .unwrap();
 
         let content = fs::read_to_string(temp.path().join("stories/1vqNrfl02/REFLECT.md")).unwrap();
         assert!(
@@ -245,7 +276,7 @@ mod tests {
             .story(TestStory::new("1vqNrfl03").status(StoryState::NeedsHumanVerification))
             .build();
 
-        run(temp.path(), "1vqNrfl03", false, None).unwrap();
+        run(temp.path(), "1vqNrfl03", "engineer/software", None).unwrap();
 
         let reflect_path = temp.path().join("stories/1vqNrfl03/REFLECT.md");
         // It now exists by default because of TestBoardBuilder
@@ -268,7 +299,7 @@ mod tests {
         run(
             temp.path(),
             "1vqNrfl04",
-            false,
+            "engineer/software",
             Some("### L-02: Second observation"),
         )
         .unwrap();

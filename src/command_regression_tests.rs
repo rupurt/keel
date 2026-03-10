@@ -92,8 +92,13 @@ fn regression_story_lifecycle_command_chain_reaches_done() {
     .unwrap();
 
     crate::cli::commands::management::story::submit::run(temp.path(), "REGCHAIN1").unwrap();
-    crate::cli::commands::management::story::accept::run(temp.path(), "REGCHAIN1", true, None)
-        .unwrap();
+    crate::cli::commands::management::story::accept::run(
+        temp.path(),
+        "REGCHAIN1",
+        "manager/product",
+        None,
+    )
+    .unwrap();
 
     let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
     let story = board.require_story("REGCHAIN1").unwrap();
