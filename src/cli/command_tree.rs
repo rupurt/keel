@@ -26,7 +26,7 @@ Management
 
 Diagnostics
   doctor      Validate board health and optionally fix issues
-  flow        Show two-actor flow dashboard (management queue vs execution queue)
+  flow        Show workflow lane dashboard from configured topology
   throughput  Show weekly throughput and timing sparklines
 "#;
 
@@ -74,7 +74,7 @@ pub fn build_cli() -> Command {
         )
         .subcommand(
             Command::new("flow")
-                .about("Show two-actor flow dashboard (management queue vs execution queue)")
+                .about("Show workflow lane dashboard from configured topology")
                 .hide(true)
                 .arg(
                     Arg::new("no_color")

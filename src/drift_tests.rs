@@ -914,15 +914,15 @@ mod queue_policy_docs {
     fn command_help_docs_describe_role_based_queue_terms() {
         assert!(
             README_DOC.contains(
-                "`keel next` defaults to management-queue decisions and never returns implementation `Work`."
+                "`keel next` defaults to management-lane decisions and never returns implementation `Work`."
             ),
-            "README.md should document the default management queue boundary for `keel next`"
+            "README.md should document the default management lane boundary for `keel next`"
         );
         assert!(
             README_DOC.contains(
-                "`keel next --role engineer/software` returns implementation work from the execution queue (`in-progress` then `backlog`)."
+                "`keel next --role operator` returns implementation work from the delivery lane (`in-progress` then `backlog`)."
             ),
-            "README.md should document `--role engineer/*` execution queue behavior"
+            "README.md should document `--role operator` delivery-lane behavior"
         );
         assert!(
             COMMAND_TREE_RS
@@ -930,20 +930,18 @@ mod queue_policy_docs {
             "CLI help text should describe role-based queue routing for `next`"
         );
         assert!(
-            README_DOC.contains("MANAGEMENT QUEUE               │          EXECUTION QUEUE"),
-            "README.md should document the management/execution flow queue labels"
+            README_DOC.contains("MANAGEMENT LANE") && README_DOC.contains("DELIVERY LANE"),
+            "README.md should document the seeded management/delivery lane example"
         );
         assert!(
-            README_DOC.contains(
-                "flow        Show two-actor flow dashboard (management queue vs execution queue)"
-            ),
-            "README.md should document the management/execution flow help text"
+            README_DOC
+                .contains("flow        Show workflow lane dashboard from configured topology"),
+            "README.md should document the workflow lane flow help text"
         );
         assert!(
-            COMMAND_TREE_RS.contains(
-                "flow        Show two-actor flow dashboard (management queue vs execution queue)"
-            ),
-            "CLI help text should describe management/execution flow queue terms"
+            COMMAND_TREE_RS
+                .contains("flow        Show workflow lane dashboard from configured topology"),
+            "CLI help text should describe workflow lane flow terms"
         );
     }
 

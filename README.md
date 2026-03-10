@@ -40,24 +40,23 @@ Use this order when authoring or reviewing decisions:
 
 Keel's architecture is built on formal state machines and a pull-based coordination model. See [ARCHITECTURE.md](ARCHITECTURE.md) for full details and onboarding diagrams (layer dependencies, command execution, queue lifecycle).
 
-### The 2-Queue Pull System
+### Workflow Lane Dashboard
 
-Keel coordinates work between humans and agents using a **pull-based** model. Each actor pulls when ready — no push coordination needed.
+Keel routes work through configurable workflow lanes using a **pull-based** model. Each role family resolves to a lane, and `keel flow` renders the effective topology in priority order. With no overrides, Keel seeds `management` and `delivery` lanes.
 
 ```
 ┌───────────────────────────────────────┬──────────────────────────────────────┐
-│        MANAGEMENT QUEUE               │          EXECUTION QUEUE             │
+│         MANAGEMENT LANE               │           DELIVERY LANE              │
 ├───────────────────────────────────────┼──────────────────────────────────────┤
-│  accept    → stories to review        │  backlog     → ready to start        │
-│  start     → voyages to begin         │  in-progress → being worked          │
-│  decompose → drafts need stories      │                                      │
-│  research  → bearings to explore      │                                      │
+│  bearing.*                     ...    │  story.backlog                ...    │
+│  story.needs-human-verification ...   │  story.in-progress            ...    │
+│  voyage.draft                  ...    │                                      │
 └───────────────────────────────────────┴──────────────────────────────────────┘
 ```
 
-- `keel next` defaults to management-queue decisions and never returns implementation `Work`.
-- `keel next --role engineer/software` returns implementation work from the execution queue (`in-progress` then `backlog`).
-- `keel flow` uses the same queue policy categories and thresholds as `next` (`>= 5` management block, `> 20` flow block).
+- `keel next` defaults to management-lane decisions and never returns implementation `Work`.
+- `keel next --role operator` returns implementation work from the delivery lane (`in-progress` then `backlog`).
+- `keel flow` uses the same queue policy categories and thresholds as `next` while rendering lane cards from the resolved topology.
 
 ### Lineage and Proof Chain
 
@@ -141,7 +140,7 @@ Management
 
 Diagnostics
   doctor      Validate board health and optionally fix issues
-  flow        Show two-actor flow dashboard (management queue vs execution queue)
+  flow        Show workflow lane dashboard from configured topology
   throughput  Show weekly throughput and timing sparklines
 ```
 
@@ -160,7 +159,7 @@ Diagnostics
 
 | Command | Purpose |
 |---------|---------|
-| `next` | Pull from the default management queue or route to execution work with `--role engineer/software` |
+| `next` | Pull from the default management lane or route to delivery work with `--role operator` |
 | `play` | Trigger play-driven discovery for a bearing |
 | `audit` | Generate a detailed traceability report for a story |
 | `verify run/recommend/detect` | Execute proofs, inspect detection signals, and review detected+active verification guidance |

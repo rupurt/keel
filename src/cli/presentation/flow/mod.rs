@@ -21,7 +21,7 @@ pub use bottleneck::{
     analyze_health, analyze_two_actor_health,
 };
 pub use box_component::BoxComponent;
-pub use display::{render_annotated_flow, render_queue_boxes};
+pub use display::{render_annotated_flow, render_lane_boxes};
 pub use format::{
     QueueItemDisplay, VoyageDepSummary, classify_stories, render_dependency_chains,
     render_epic_capacities,

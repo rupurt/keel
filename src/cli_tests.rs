@@ -39,7 +39,7 @@ enum DiagnosticsCommands {
         #[arg(long)]
         quick: bool,
     },
-    /// Show two-actor flow dashboard (management queue vs execution queue)
+    /// Show workflow lane dashboard from configured topology
     Flow {
         /// Disable color output (also respects NO_COLOR env var)
         #[arg(long)]

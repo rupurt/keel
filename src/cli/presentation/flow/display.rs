@@ -3,21 +3,20 @@
 use owo_colors::OwoColorize;
 use std::fmt::Write;
 
-use super::bottleneck::{ActorQueue, TwoActorHealth};
 use super::box_component::BoxComponent;
-use super::format::{
-    QueueItemDisplay, classify_stories, render_dependency_chains, render_epic_capacities,
-};
+use super::format::render_epic_capacities;
 use crate::cli::presentation::flow::layout::LayoutConfig;
 use crate::cli::presentation::theme::Theme;
 use crate::cli::style;
 use crate::domain::model::Board;
 use crate::read_model::flow_metrics::FlowMetrics;
+use crate::read_model::workflow_lane_flow::{LaneFlowCard, LaneFlowProjection, LaneSourceCount};
 
 /// Render an annotated pipeline flow diagram.
 pub fn render_annotated_flow(
     board: &Board,
     metrics: &FlowMetrics,
+    lane_flow: &LaneFlowProjection,
     width: usize,
     no_color: bool,
 ) -> String {
@@ -74,10 +73,9 @@ pub fn render_annotated_flow(
     writeln!(output, "{}", style::heavy_rule(width, Some(&theme))).unwrap();
     writeln!(output).unwrap();
 
-    // 2. Queue Handoff (Pull System Health)
-    let two_actor = crate::cli::presentation::flow::bottleneck::analyze_two_actor_health(metrics);
-    let queue_boxes = render_queue_boxes(&two_actor, width, &theme);
-    writeln!(output, "{}", queue_boxes).unwrap();
+    // 2. Queue Handoff (Configured Workflow Lanes)
+    let lane_boxes = render_lane_boxes(lane_flow, width, &theme);
+    writeln!(output, "{}", lane_boxes).unwrap();
 
     // 2b. Bottleneck Analysis
     let throughput = crate::cli::presentation::flow::throughput::calculate_throughput(board, 4);
@@ -300,78 +298,146 @@ fn is_board_goal_met(board: &Board, target: &str) -> bool {
     false
 }
 
-/// Render side-by-side or stacked queue boxes for management/execution handoff.
-pub fn render_queue_boxes(health: &TwoActorHealth, width: usize, theme: &Theme) -> String {
+/// Render configured workflow lanes as queue cards.
+pub fn render_lane_boxes(lane_flow: &LaneFlowProjection, width: usize, theme: &Theme) -> String {
+    if lane_flow.lanes.is_empty() {
+        return String::new();
+    }
+
     if width >= 80 {
-        render_side_by_side_queue_boxes(health, width, theme)
+        render_lane_boxes_grid(lane_flow, width, theme)
     } else {
-        render_stacked_queue_boxes(health, width, theme)
+        render_lane_boxes_stacked(lane_flow, width, theme)
     }
 }
 
-fn render_side_by_side_queue_boxes(health: &TwoActorHealth, width: usize, theme: &Theme) -> String {
+fn render_lane_boxes_grid(lane_flow: &LaneFlowProjection, width: usize, theme: &Theme) -> String {
     let mut output = String::new();
-    let col_width = (width - 4) / 2;
+    let col_width = (width - 2) / 2;
 
-    let mut human_box = BoxComponent::new("MANAGEMENT QUEUE (To Start/Accept)", col_width);
-    let mut agent_box = BoxComponent::new("EXECUTION QUEUE (To Implement)", col_width);
+    for (index, chunk) in lane_flow.lanes.chunks(2).enumerate() {
+        let rendered: Vec<_> = chunk
+            .iter()
+            .map(|lane| render_lane_box(lane, col_width, theme))
+            .collect();
+        let height = rendered.iter().map(Vec::len).max().unwrap_or(0);
 
-    // Populate Human box
-    render_queue_into_box(&mut human_box, &health.human_queue, theme);
+        for row in 0..height {
+            let left = rendered
+                .first()
+                .and_then(|lines| lines.get(row))
+                .cloned()
+                .unwrap_or_else(|| " ".repeat(col_width));
 
-    // Populate Agent box
-    render_queue_into_box(&mut agent_box, &health.agent_queue, theme);
+            if let Some(right_lines) = rendered.get(1) {
+                let right = right_lines
+                    .get(row)
+                    .cloned()
+                    .unwrap_or_else(|| " ".repeat(col_width));
+                writeln!(output, "{}  {}", left, right).unwrap();
+            } else {
+                writeln!(output, "{}", left).unwrap();
+            }
+        }
 
-    // Ensure both boxes have the same height
-    let height = human_box.lines.len().max(agent_box.lines.len()) + 2;
-    let human_lines = human_box.render_with_height(height);
-    let agent_lines = agent_box.render_with_height(height);
+        if index + 1 < lane_flow.lanes.len().div_ceil(2) {
+            writeln!(output).unwrap();
+        }
+    }
 
-    for i in 0..height {
-        let left = human_lines[i].clone();
-        let right = agent_lines[i].clone();
-        writeln!(output, "{}  {}", left, right).unwrap();
+    output.trim_end().to_string()
+}
+
+fn render_lane_boxes_stacked(
+    lane_flow: &LaneFlowProjection,
+    width: usize,
+    theme: &Theme,
+) -> String {
+    let mut output = String::new();
+
+    for (index, lane) in lane_flow.lanes.iter().enumerate() {
+        for line in render_lane_box(lane, width, theme) {
+            writeln!(output, "{}", line).unwrap();
+        }
+
+        if index + 1 < lane_flow.lanes.len() {
+            writeln!(output).unwrap();
+        }
     }
 
     output
 }
 
-fn render_queue_into_box(box_comp: &mut BoxComponent, queue: &ActorQueue, theme: &Theme) {
-    if queue.items.is_empty() {
-        box_comp.push_line(format!("  {}", "No items in queue".dimmed()));
+fn render_lane_box(lane: &LaneFlowCard, width: usize, theme: &Theme) -> Vec<String> {
+    let mut lane_box = BoxComponent::new(&format!("{} [p{}]", lane.name, lane.priority), width);
+
+    lane_box.push_line(render_lane_summary_line(lane, width - 2));
+
+    let non_zero_sources: Vec<_> = lane
+        .source_counts
+        .iter()
+        .filter(|source| source.count > 0)
+        .collect();
+
+    if non_zero_sources.is_empty() {
+        lane_box.push_line(format!("  {}", "No items in lane".dimmed()));
     } else {
-        for item in &queue.items {
-            let display_item = QueueItemDisplay::from_item(item.clone());
-            box_comp.push_line(display_item.render_to_string(box_comp.width() - 4, theme));
+        for source in non_zero_sources {
+            lane_box.push_line(render_lane_source_line(source, width - 2, theme));
         }
     }
 
-    if queue.is_starved {
-        box_comp.push_rule();
-        if let Some(ref msg) = queue.starvation_message {
-            box_comp.push_line(format!("  {}", msg));
-        }
-    }
+    lane_box.push_rule();
+    lane_box.push_line(render_lane_capabilities_line(lane, width - 2));
+
+    lane_box.render()
 }
 
-fn render_stacked_queue_boxes(health: &TwoActorHealth, width: usize, theme: &Theme) -> String {
-    let mut output = String::new();
+fn render_lane_summary_line(lane: &LaneFlowCard, width: usize) -> String {
+    let prefix = format!("  items {:>3}  ", lane.total_count);
+    let summary = format!(
+        "{}{}",
+        prefix,
+        truncate_plain_text(&lane.description, width.saturating_sub(prefix.len()))
+    );
+    crate::cli::presentation::flow::format::pad_to_width(&summary, width)
+}
 
-    let mut human_box = BoxComponent::new("MANAGEMENT QUEUE (To Start/Accept)", width);
-    render_queue_into_box(&mut human_box, &health.human_queue, theme);
-    for line in human_box.render() {
-        writeln!(output, "{}", line).unwrap();
+fn render_lane_source_line(source: &LaneSourceCount, width: usize, theme: &Theme) -> String {
+    let count = if source.source.starts_with("story.") {
+        format!("{}{}{}", theme.agent, source.count, theme.reset)
+    } else {
+        format!("{}{}{}", theme.human, source.count, theme.reset)
+    };
+    let line = format!("  {:<28} {:>3}", source.source, count);
+    crate::cli::presentation::flow::format::pad_to_width(&line, width)
+}
+
+fn render_lane_capabilities_line(lane: &LaneFlowCard, width: usize) -> String {
+    let mode = if lane.parallel { "parallel" } else { "serial" };
+    let accept = if lane.manual_accept {
+        "manual-accept"
+    } else {
+        "no-manual-accept"
+    };
+    let line = format!("  mode: {mode}, {accept}");
+    crate::cli::presentation::flow::format::pad_to_width(&line, width)
+}
+
+fn truncate_plain_text(value: &str, max_chars: usize) -> String {
+    let chars: Vec<_> = value.chars().collect();
+    if chars.len() <= max_chars {
+        return value.to_string();
     }
-
-    writeln!(output).unwrap();
-
-    let mut agent_box = BoxComponent::new("EXECUTION QUEUE (To Implement)", width);
-    render_queue_into_box(&mut agent_box, &health.agent_queue, theme);
-    for line in agent_box.render() {
-        writeln!(output, "{}", line).unwrap();
+    if max_chars <= 3 {
+        return ".".repeat(max_chars);
     }
-
-    output
+    format!(
+        "{}...",
+        chars[..max_chars.saturating_sub(3)]
+            .iter()
+            .collect::<String>()
+    )
 }
 
 fn strategic_capacity_available(
@@ -401,10 +467,11 @@ fn strategic_capacity_guidance(board: &Board, metrics: &FlowMetrics) -> &'static
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cli::presentation::flow::bottleneck::TwoActorHealth;
+    use crate::infrastructure::config::Config;
     use crate::read_model::flow_metrics::{
         ExecutionMetrics, GovernanceMetrics, PlanningMetrics, ResearchMetrics, VerificationMetrics,
     };
+    use crate::read_model::{workflow_lane_flow, workflow_topology};
 
     fn make_test_metrics() -> FlowMetrics {
         FlowMetrics {
@@ -441,38 +508,40 @@ mod tests {
         }
     }
 
-    fn make_test_two_actor_health() -> TwoActorHealth {
-        crate::cli::presentation::flow::bottleneck::analyze_two_actor_health(&make_test_metrics())
+    fn make_test_lane_flow() -> LaneFlowProjection {
+        let topology = workflow_topology::resolve(&Config::default()).unwrap();
+        workflow_lane_flow::project(&Board::default(), &topology)
     }
 
     #[test]
-    fn render_queue_boxes_contains_management_header() {
-        let health = make_test_two_actor_health();
+    fn render_lane_boxes_contains_management_header() {
+        let lane_flow = make_test_lane_flow();
         let theme = Theme::default();
-        let rendered = render_queue_boxes(&health, 100, &theme);
-        assert!(rendered.contains("MANAGEMENT QUEUE"));
+        let rendered = render_lane_boxes(&lane_flow, 100, &theme);
+        assert!(rendered.contains("management [p100]"));
     }
 
     #[test]
-    fn render_queue_boxes_contains_execution_header() {
-        let health = make_test_two_actor_health();
+    fn render_lane_boxes_contains_delivery_header() {
+        let lane_flow = make_test_lane_flow();
         let theme = Theme::default();
-        let rendered = render_queue_boxes(&health, 100, &theme);
-        assert!(rendered.contains("EXECUTION QUEUE"));
+        let rendered = render_lane_boxes(&lane_flow, 100, &theme);
+        assert!(rendered.contains("delivery [p50]"));
     }
 
     #[test]
     fn test_render_annotated_flow() {
         let board = Board::default();
         let metrics = make_test_metrics();
-        let rendered = render_annotated_flow(&board, &metrics, 100, false);
+        let lane_flow = make_test_lane_flow();
+        let rendered = render_annotated_flow(&board, &metrics, &lane_flow, 100, false);
         assert!(rendered.contains("Governance"));
         assert!(rendered.contains("Research"));
         assert!(rendered.contains("Planning"));
         assert!(rendered.contains("Execution"));
         assert!(rendered.contains("Verification"));
-        assert!(rendered.contains("MANAGEMENT QUEUE"));
-        assert!(rendered.contains("EXECUTION QUEUE"));
+        assert!(rendered.contains("management [p100]"));
+        assert!(rendered.contains("delivery [p50]"));
         assert!(rendered.contains("No executable epic capacity"));
     }
 }

@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-10T16:54:51.674245897-07:00
+mode: manual
+---
+cargo test build_output_renders_configured_lanes_in_priority_order --lib proved deterministic lane ordering and selector-scoped counts; bash .keel/stories/VDVRaTB5z/scripts/render-workflow-topology-flow.sh rendered review, delivery, and research cards in priority order with only the selected sources visible.

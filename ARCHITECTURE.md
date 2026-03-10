@@ -147,23 +147,21 @@ Boundary rules:
 
 These tests are the executable architecture specification.
 
-## The 2-Queue Pull System
+## Workflow Lane Pull System
 
-Keel coordinates work between humans and agents with a pull model.
+Keel coordinates work through configurable workflow lanes with a pull model.
 
-| Queue | Stage | Contents | Actor Action |
-|-------|-------|----------|--------------|
-| Human | `accept` | Stories in `needs-human-verification` | Review and accept/reject |
-| Human | `start` | Voyages in `planned` | Begin execution |
-| Human | `decompose` | Voyages in `draft` | Add SRS/SDD/stories |
-| Human | `research` | Bearings in research workflow | Survey/assess/lay |
-| Agent | `backlog` | Ready stories | Start implementation |
-| Agent | `in-progress` | Active stories | Continue implementation |
+The zero-config topology seeds:
+
+| Lane | Selected Sources | Default Role | Purpose |
+|------|------------------|--------------|---------|
+| `management` | `bearing.*`, `voyage.draft`, `story.needs-human-verification` | `manager` | Planning, triage, calibration, acceptance |
+| `delivery` | `story.backlog`, `story.in-progress` | `operator` | Active delivery work |
 
 Pull commands:
-- `keel next`: human queue only (never returns implementation `Work`).
-- `keel next --agent`: implementation queue (`in-progress` then `backlog`).
-- `keel flow`: visual dashboard using the same queue policy semantics.
+- `keel next`: management lane only (never returns implementation `Work`).
+- `keel next --role operator`: delivery lane (`in-progress` then `backlog`).
+- `keel flow`: visual dashboard using the same queue policy semantics plus topology-resolved lane cards.
 
 Canonical queue policy location:
 - Core thresholds and categories: `src/domain/policy/queue.rs`.
@@ -253,7 +251,7 @@ Doctor/reporting paths reuse the same underlying domain rules for coherence diag
 Implementation dependency ordering is derived from SRS traceability:
 - Stories annotate acceptance criteria with `[SRS-XX/AC-YY]`.
 - Dependencies are inferred from SRS requirement order within a voyage scope.
-- This enables automatic parallel-safe selection in `keel next --agent --parallel`.
+- This enables automatic parallel-safe selection in `keel next --role operator --parallel`.
 
 Implementation location:
 - `src/read_model/traceability.rs`
