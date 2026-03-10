@@ -326,4 +326,9 @@ pub const ALL_DOCTOR_CHECKS: &[DoctorCheckDefinition] = &[
         section: "Missions",
         name: "Mission date consistency",
     },
+    DoctorCheckDefinition {
+        id: "mission-completion-evidence",
+        section: "Missions",
+        name: "Mission completion evidence",
+    },
 ];

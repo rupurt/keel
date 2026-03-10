@@ -224,4 +224,6 @@ pub enum CheckId {
     MissionActiveNoWork,
     MissionOrphanedLineage,
     MissionStale,
+    MissionMissingLogEntries,
+    MissionMissingChildren,
 }

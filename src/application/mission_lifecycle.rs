@@ -68,12 +68,54 @@ impl MissionLifecycleService {
             return Err(anyhow!("Mission has unmet board goals"));
         }
 
+        // Verify child entities
+        if board.mission_child_count(id) == 0 {
+            return Err(anyhow!(
+                "Cannot achieve mission {}. At least one child entity (epic, bearing, or ADR) is required.",
+                id
+            ));
+        }
+
+        // Verify log entries
+        let log_path = mission.path.parent().unwrap().join("LOG.md");
+        let log_content = std::fs::read_to_string(&log_path).unwrap_or_default();
+        let (_, entries) = parse_log_entries(&log_content);
+        if entries.is_empty() {
+            return Err(anyhow!(
+                "Cannot achieve mission {}. At least one entry in LOG.md is required to document the session.",
+                id
+            ));
+        }
+
         execute(board_dir, id, &mission_transitions::ACHIEVE)?;
         println!("Achieved mission: {}", id);
         Ok(())
     }
 
     pub fn verify(board_dir: &Path, id: &str) -> Result<()> {
+        let board = load_board(board_dir)?;
+        let _mission = board.require_mission(id)?;
+
+        // Verify child entities
+        if board.mission_child_count(id) == 0 {
+            return Err(anyhow!(
+                "Cannot verify mission {}. At least one child entity (epic, bearing, or ADR) is required.",
+                id
+            ));
+        }
+
+        // Verify log entries
+        let mission = board.require_mission(id)?;
+        let log_path = mission.path.parent().unwrap().join("LOG.md");
+        let log_content = std::fs::read_to_string(&log_path).unwrap_or_default();
+        let (_, entries) = parse_log_entries(&log_content);
+        if entries.is_empty() {
+            return Err(anyhow!(
+                "Cannot verify mission {}. At least one entry in LOG.md is required to document the session.",
+                id
+            ));
+        }
+
         execute(board_dir, id, &mission_transitions::VERIFY)?;
         println!("Verified mission: {}", id);
         Ok(())
@@ -367,6 +409,41 @@ mod tests {
         let res = MissionLifecycleService::achieve(temp.path(), "M1");
         assert!(res.is_err());
         assert!(res.unwrap_err().to_string().contains("unmet board goals"));
+    }
+
+    #[test]
+    fn test_mission_achieve_requires_log_and_children() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .build();
+
+        let charter_path = temp.path().join("missions/M1/CHARTER.md");
+        fs::write(charter_path, "## Goals\n| ID | Description | Verification |\n|----|-------------|--------------|\n| MG-01 | G1 | manual: test |\n").unwrap();
+
+        // Should fail because no children
+        let res = MissionLifecycleService::achieve(temp.path(), "M1");
+        assert!(res.is_err());
+        assert!(res.unwrap_err().to_string().contains("one child entity"));
+
+        // Add a child (epic)
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .build();
+        let charter_path = temp.path().join("missions/M1/CHARTER.md");
+        fs::write(charter_path, "## Goals\n| ID | Description | Verification |\n|----|-------------|--------------|\n| MG-01 | G1 | manual: test |\n").unwrap();
+
+        // Should fail because no log entries
+        let res = MissionLifecycleService::achieve(temp.path(), "M1");
+        assert!(res.is_err());
+        assert!(res.unwrap_err().to_string().contains("one entry in LOG.md"));
+
+        // Add a log entry
+        MissionLifecycleService::log(temp.path(), "M1", "Did some work").unwrap();
+
+        // Should now succeed (no board goals, manual goal doesn't block)
+        let res = MissionLifecycleService::achieve(temp.path(), "M1");
+        assert!(res.is_ok());
     }
 
     #[test]

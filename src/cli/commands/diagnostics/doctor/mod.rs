@@ -674,6 +674,15 @@ pub fn validate_with_config(
         mission_date_problems,
     ));
 
+    let mission_evidence_problems = checks::missions::check_mission_completion_evidence(&board);
+    mission_checks.push(configured_check(
+        doctor_config,
+        "mission-completion-evidence",
+        "Mission completion evidence",
+        board.missions.len(),
+        mission_evidence_problems,
+    ));
+
     Ok(DoctorReport {
         story_checks,
         voyage_checks,
