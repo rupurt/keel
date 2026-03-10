@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-10T14:56:09.008752128-07:00
+mode: manual
+---
+Verified JSON guidance injection with cargo test --lib decision_to_json_with_role_context_includes_resolved_template_payload and full gates: just quality, just test, just doctest, just keel doctor.

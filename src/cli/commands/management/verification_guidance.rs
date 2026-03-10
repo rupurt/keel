@@ -146,6 +146,7 @@ mod tests {
             Some(CanonicalGuidance {
                 next_step: Some(step),
                 recovery_step: None,
+                ..
             }) => {
                 assert!(rendered.contains("Next step:"));
                 assert!(rendered.contains(step.command.as_str()));
@@ -155,6 +156,7 @@ mod tests {
             Some(CanonicalGuidance {
                 next_step: None,
                 recovery_step: Some(step),
+                ..
             }) => {
                 assert!(rendered.contains("Recovery step:"));
                 assert!(rendered.contains(step.command.as_str()));

@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-10T14:56:09.043033463-07:00
+mode: manual
+---
+Verified unsupported-role failure guidance with cargo test --lib unsupported_role_families_fail_with_supported_template_list and full gates: just quality, just test, just doctest, just keel doctor.

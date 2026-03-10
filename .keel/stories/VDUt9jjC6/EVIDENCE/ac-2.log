@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-10T14:56:09.029779440-07:00
+mode: manual
+---
+Verified human guidance rendering with cargo test --lib render_human_guidance_surfaces_role_context_and_queue_lane and full gates: just quality, just test, just doctest, just keel doctor.
