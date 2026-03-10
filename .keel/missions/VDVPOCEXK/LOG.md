@@ -18,3 +18,7 @@ Completed story VDVRaRR5x. Routed keel next through configured role-to-lane topo
 ## 2026-03-10T16:34:56
 
 Completed story VDVRaSs5w. Manual story acceptance now validates configured lane manual_accept capability, role context resolves template ids from topology with exact override precedence, and next guidance emits configured lane metadata plus top-level manager accept commands. Verification passed via just quality, just test, just doctest, and just keel doctor. Next ready slice: VDVRaTB5z, Render Dynamic Lanes In Flow.
+
+## 2026-03-10T16:56:22
+
+Completed story VDVRaTB5z. Flow now renders topology-defined lane cards in deterministic priority order using selector-scoped source counts; help/docs were aligned to workflow lanes and the story proof now uses a board-root-relative fixture script. Post-submit gates passed: just quality, just test, just doctest, just keel doctor. Next ready slice: verify selector overlap and topology validation in VDVRaSf5y.
