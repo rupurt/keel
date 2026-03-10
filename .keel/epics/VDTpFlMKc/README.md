@@ -20,9 +20,9 @@ index: 15
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/2 voyages complete, 0/6 stories done
+**Progress:** 0/2 voyages complete, 1/6 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Core Changes](voyages/VDUG60pcX/) | planned | 0/4 |
+| [Core Changes](voyages/VDUG60pcX/) | in-progress | 1/4 |
 | [Role Template Injection](voyages/VDUsc8KXy/) | planned | 0/2 |
 <!-- END GENERATED -->
