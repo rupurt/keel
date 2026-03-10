@@ -22,3 +22,7 @@ Story VDUGfcLQB completed: keel flow now renders management and execution queue 
 ## 2026-03-10T14:40:45
 
 Completed VDUGfu8bf: story accept now requires --role, manual acceptance is restricted to manager/*, acceptance guidance surfaces use --role manager/product, AGENTS.md was updated, VDUG60pcX is done, and full gates passed (just quality, just test, just doctest, just keel doctor). Next ready execution slice: VDUt9jSC7.
+
+## 2026-03-10T14:48:42
+
+Completed VDUt9jSC7: added the canonical role-context registry in src/read_model/role_context.rs, recorded evidence, and auto-completed the story after full gates passed (just quality, just test, just doctest, just keel doctor). Next ready execution slice: VDUt9jjC6.

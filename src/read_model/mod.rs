@@ -10,6 +10,7 @@ pub mod knowledge;
 pub mod mission_show;
 pub mod planning_show;
 pub mod queue_policy;
+pub mod role_context;
 pub mod throughput_history;
 pub mod topology;
 pub mod traceability;

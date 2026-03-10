@@ -120,8 +120,8 @@
 
 | Voyage | Status |
 |--------|--------|
-| [Core Changes](epics/VDTpFlMKc/voyages/VDUG60pcX/) | in-progress |
-| [Role Template Injection](epics/VDTpFlMKc/voyages/VDUsc8KXy/) | planned |
+| [Core Changes](epics/VDTpFlMKc/voyages/VDUG60pcX/) | done |
+| [Role Template Injection](epics/VDTpFlMKc/voyages/VDUsc8KXy/) | in-progress |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

@@ -1,11 +1,12 @@
 ---
 id: VDUsc8KXy
 title: Role Template Injection
-status: planned
+status: in-progress
 epic: VDTpFlMKc
 created_at: 2026-03-10T13:08:56
 index: 2
 updated_at: 2026-03-10T13:16:40
+started_at: 2026-03-10T14:41:18
 ---
 
 # Role Template Injection
@@ -24,10 +25,10 @@ updated_at: 2026-03-10T13:16:40
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/2 stories complete
+**Progress:** 1/2 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Define Core Role Templates](../../../../stories/VDUt9jSC7/README.md) | feat | backlog |
+| [Define Core Role Templates](../../../../stories/VDUt9jSC7/README.md) | feat | done |
 | [Inject Role Context Into Next Guidance](../../../../stories/VDUt9jjC6/README.md) | feat | backlog |
 <!-- END GENERATED -->
