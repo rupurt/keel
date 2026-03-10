@@ -15,3 +15,4 @@ pub mod throughput_history;
 pub mod topology;
 pub mod traceability;
 pub mod verification_techniques;
+pub mod workflow_topology;

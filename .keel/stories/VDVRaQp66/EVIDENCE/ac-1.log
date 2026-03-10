@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-10T16:03:28.814738655-07:00
+mode: manual
+---
+Seeded workflow defaults resolve manager/operator roles and management/delivery lanes by default, covered by cargo test -p keel workflow_topology_ and validated in just quality, just test, just doctest, and just keel doctor.

@@ -127,7 +127,7 @@
 
 | Voyage | Status |
 |--------|--------|
-| [Role and Lane Config Contract](epics/VDVPODBXF/voyages/VDVPUCtqS/) | planned |
+| [Role and Lane Config Contract](epics/VDVPODBXF/voyages/VDVPUCtqS/) | in-progress |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

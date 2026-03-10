@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-10T16:03:28.891868121-07:00
+mode: manual
+---
+Lane config now captures description, ordered include/exclude selectors, parallel/manual_accept/priority flags, and compiles selectors against the canonical source catalog, covered by cargo test -p keel workflow_topology_lane_config_.

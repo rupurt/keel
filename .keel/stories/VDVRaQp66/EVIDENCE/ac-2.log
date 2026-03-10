@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-10T16:03:28.877470799-07:00
+mode: manual
+---
+keel config show now renders effective workflow defaults, role families, lane definitions, compiled lane sources, and exact role overrides, covered by cargo test -p keel config_show_workflow_topology_.

@@ -5,6 +5,7 @@
 //! 2. `~/.config/keel.toml` (user global)
 //! 3. Built-in defaults
 
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -152,6 +153,89 @@ pub struct ResearchConfig {
     pub providers: std::collections::HashMap<String, ResearchProviderOverride>,
 }
 
+/// Workflow defaults controlling the canonical management and delivery examples.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct WorkflowDefaultsConfig {
+    #[serde(default = "default_management_role")]
+    pub management_role: String,
+    #[serde(default = "default_delivery_role")]
+    pub delivery_role: String,
+    #[serde(default = "default_management_lane")]
+    pub management_lane: String,
+    #[serde(default = "default_delivery_lane")]
+    pub delivery_lane: String,
+}
+
+fn default_management_role() -> String {
+    "manager".to_string()
+}
+
+fn default_delivery_role() -> String {
+    "operator".to_string()
+}
+
+fn default_management_lane() -> String {
+    "management".to_string()
+}
+
+fn default_delivery_lane() -> String {
+    "delivery".to_string()
+}
+
+impl Default for WorkflowDefaultsConfig {
+    fn default() -> Self {
+        Self {
+            management_role: default_management_role(),
+            delivery_role: default_delivery_role(),
+            management_lane: default_management_lane(),
+            delivery_lane: default_delivery_lane(),
+        }
+    }
+}
+
+/// Workflow-level configuration.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub struct WorkflowConfig {
+    #[serde(default)]
+    pub defaults: WorkflowDefaultsConfig,
+}
+
+impl WorkflowConfig {
+    fn is_default(&self) -> bool {
+        self == &Self::default()
+    }
+}
+
+/// Configured role family.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RoleFamilyConfig {
+    pub default_lane: String,
+    pub template: String,
+}
+
+/// Configured lane definition.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct LaneConfig {
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub include: Vec<String>,
+    #[serde(default)]
+    pub exclude: Vec<String>,
+    #[serde(default)]
+    pub parallel: bool,
+    #[serde(default)]
+    pub manual_accept: bool,
+    #[serde(default)]
+    pub priority: i32,
+}
+
+/// Exact taxonomy override for template selection.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RoleOverrideConfig {
+    pub template: String,
+}
+
 /// Default board directory
 fn default_board_dir() -> String {
     ".keel".to_string()
@@ -164,6 +248,22 @@ pub struct Config {
     /// Defaults to ".keel" if not specified
     #[serde(default = "default_board_dir")]
     pub board_dir: String,
+
+    /// Workflow defaults and topology controls.
+    #[serde(default, skip_serializing_if = "WorkflowConfig::is_default")]
+    pub workflow: WorkflowConfig,
+
+    /// Configured role families keyed by base role.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub roles: BTreeMap<String, RoleFamilyConfig>,
+
+    /// Configured lanes keyed by lane id.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub lanes: BTreeMap<String, LaneConfig>,
+
+    /// Exact taxonomy overrides keyed by the full role taxonomy string.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub role_overrides: BTreeMap<String, RoleOverrideConfig>,
 
     /// Scoring configuration
     #[serde(default)]
@@ -182,6 +282,10 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             board_dir: default_board_dir(),
+            workflow: WorkflowConfig::default(),
+            roles: BTreeMap::new(),
+            lanes: BTreeMap::new(),
+            role_overrides: BTreeMap::new(),
             scoring: ScoringConfig::default(),
             doctor: DoctorConfig::default(),
             research: ResearchConfig::default(),
@@ -530,6 +634,72 @@ mode = "growth"
         let config = load_from_file(&path).unwrap();
         assert_eq!(config.board_dir(), ".keel");
         assert_eq!(config.scoring.mode, "growth");
+    }
+
+    #[test]
+    fn workflow_topology_config_uses_seed_defaults_when_omitted() {
+        let config = Config::default();
+
+        assert_eq!(config.workflow.defaults.management_role, "manager");
+        assert_eq!(config.workflow.defaults.delivery_role, "operator");
+        assert_eq!(config.workflow.defaults.management_lane, "management");
+        assert_eq!(config.workflow.defaults.delivery_lane, "delivery");
+        assert!(config.roles.is_empty());
+        assert!(config.lanes.is_empty());
+        assert!(config.role_overrides.is_empty());
+    }
+
+    #[test]
+    fn workflow_topology_config_parses_sections() {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("keel.toml");
+
+        let content = r#"
+[workflow.defaults]
+management_role = "director"
+delivery_role = "operator"
+management_lane = "review"
+delivery_lane = "delivery"
+
+[roles.director]
+default_lane = "review"
+template = "director-core"
+
+[roles.operator]
+default_lane = "delivery"
+template = "operator-core"
+
+[lanes.review]
+description = "Review lane"
+include = ["story.needs-human-verification", "voyage.draft"]
+exclude = []
+parallel = false
+manual_accept = true
+priority = 100
+
+[lanes.delivery]
+description = "Delivery lane"
+include = ["story.*"]
+exclude = ["story.done"]
+parallel = true
+manual_accept = false
+priority = 50
+
+[role_overrides."operator/software"]
+template = "software-operator-core"
+"#;
+        fs::write(&path, content).unwrap();
+
+        let config = load_from_file(&path).unwrap();
+        assert_eq!(config.workflow.defaults.management_role, "director");
+        assert_eq!(config.workflow.defaults.management_lane, "review");
+        assert_eq!(config.roles["director"].template, "director-core");
+        assert_eq!(config.lanes["review"].priority, 100);
+        assert!(config.lanes["review"].manual_accept);
+        assert_eq!(
+            config.role_overrides["operator/software"].template,
+            "software-operator-core"
+        );
     }
 
     // Note: find_board_dir() is tested via integration tests since it

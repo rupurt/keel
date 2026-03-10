@@ -13,7 +13,7 @@ use crate::infrastructure::config::{self, Config};
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::verification::parser::parse_verify_annotations;
 use crate::infrastructure::{bearing_research, config::ConfigSource};
-use crate::read_model::verification_techniques;
+use crate::read_model::{verification_techniques, workflow_topology};
 
 #[derive(Subcommand, Debug)]
 pub enum ConfigAction {
@@ -42,7 +42,7 @@ pub fn run(action: ConfigAction) -> Result<()> {
 pub fn run_show(json: bool) -> Result<()> {
     let (config, source) = config::load_config();
     let project_root = resolve_project_root(&config);
-    let payload = build_show_payload(&config, &source, &project_root);
+    let payload = build_show_payload(&config, &source, &project_root)?;
 
     if json {
         println!("{}", serde_json::to_string_pretty(&payload)?);
@@ -61,6 +61,47 @@ pub fn run_show(json: bool) -> Result<()> {
 struct TechniqueStatusProjection {
     rows: Vec<TechniqueStatusRow>,
     diagnostics: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+struct ConfigShowWorkflowDefaultsPayload {
+    management_role: String,
+    delivery_role: String,
+    management_lane: String,
+    delivery_lane: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+struct ConfigShowRoleFamilyPayload {
+    name: String,
+    default_lane: String,
+    template: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+struct ConfigShowLanePayload {
+    name: String,
+    description: String,
+    include: Vec<String>,
+    exclude: Vec<String>,
+    sources: Vec<String>,
+    parallel: bool,
+    manual_accept: bool,
+    priority: i32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+struct ConfigShowRoleOverridePayload {
+    taxonomy: String,
+    template: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+struct ConfigShowWorkflowPayload {
+    defaults: ConfigShowWorkflowDefaultsPayload,
+    roles: Vec<ConfigShowRoleFamilyPayload>,
+    lanes: Vec<ConfigShowLanePayload>,
+    role_overrides: Vec<ConfigShowRoleOverridePayload>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -122,6 +163,7 @@ struct ConfigShowPayload {
     source: String,
     project_root: String,
     board_dir: String,
+    workflow: ConfigShowWorkflowPayload,
     scoring: ConfigShowScoringPayload,
     research: ConfigShowResearchPayload,
     verification: ConfigShowVerificationPayload,
@@ -132,9 +174,22 @@ fn build_show_payload(
     config: &Config,
     source: &ConfigSource,
     project_root: &Path,
-) -> ConfigShowPayload {
+) -> Result<ConfigShowPayload> {
     let projection = build_verification_technique_projection(config, project_root);
     let weights = config.current_weights();
+    let topology = workflow_topology::resolve(config)?;
+    let workflow_topology::ResolvedWorkflowTopology {
+        defaults,
+        roles,
+        lanes,
+        role_overrides,
+    } = topology;
+    let mut ordered_lanes: Vec<_> = lanes.into_values().collect();
+    ordered_lanes.sort_by(|a, b| {
+        b.priority
+            .cmp(&a.priority)
+            .then_with(|| a.name.cmp(&b.name))
+    });
     let research_provider_rows = bearing_research::resolve_provider_statuses(config)
         .into_iter()
         .map(|provider| ResearchProviderStatusRow {
@@ -149,10 +204,46 @@ fn build_show_payload(
         })
         .collect();
 
-    ConfigShowPayload {
+    Ok(ConfigShowPayload {
         source: source.to_string(),
         project_root: project_root.display().to_string(),
         board_dir: config.board_dir().to_string(),
+        workflow: ConfigShowWorkflowPayload {
+            defaults: ConfigShowWorkflowDefaultsPayload {
+                management_role: defaults.management_role,
+                delivery_role: defaults.delivery_role,
+                management_lane: defaults.management_lane,
+                delivery_lane: defaults.delivery_lane,
+            },
+            roles: roles
+                .into_values()
+                .map(|role| ConfigShowRoleFamilyPayload {
+                    name: role.name,
+                    default_lane: role.default_lane,
+                    template: role.template,
+                })
+                .collect(),
+            lanes: ordered_lanes
+                .into_iter()
+                .map(|lane| ConfigShowLanePayload {
+                    name: lane.name,
+                    description: lane.description,
+                    include: lane.include,
+                    exclude: lane.exclude,
+                    sources: lane.sources,
+                    parallel: lane.parallel,
+                    manual_accept: lane.manual_accept,
+                    priority: lane.priority,
+                })
+                .collect(),
+            role_overrides: role_overrides
+                .into_values()
+                .map(|override_| ConfigShowRoleOverridePayload {
+                    taxonomy: override_.taxonomy,
+                    template: override_.template,
+                })
+                .collect(),
+        },
         scoring: ConfigShowScoringPayload {
             mode: config.mode().to_string(),
             impact_weight: weights.impact_weight,
@@ -170,7 +261,7 @@ fn build_show_payload(
         doctor: ConfigShowDoctorPayload {
             checks: build_doctor_check_rows(config),
         },
-    }
+    })
 }
 
 fn build_doctor_check_rows(config: &Config) -> Vec<DoctorCheckStatusRow> {
@@ -192,6 +283,50 @@ fn render_show_payload(payload: &ConfigShowPayload) -> Vec<String> {
     lines.push(String::new());
     lines.push(format!("board_dir = \"{}\"", payload.board_dir));
     lines.push(String::new());
+    lines.push("[workflow.defaults]".to_string());
+    lines.push(format!(
+        "management_role = \"{}\"",
+        payload.workflow.defaults.management_role
+    ));
+    lines.push(format!(
+        "delivery_role = \"{}\"",
+        payload.workflow.defaults.delivery_role
+    ));
+    lines.push(format!(
+        "management_lane = \"{}\"",
+        payload.workflow.defaults.management_lane
+    ));
+    lines.push(format!(
+        "delivery_lane = \"{}\"",
+        payload.workflow.defaults.delivery_lane
+    ));
+    lines.push(String::new());
+
+    for role in &payload.workflow.roles {
+        lines.push(format!("[roles.{}]", role.name));
+        lines.push(format!("default_lane = \"{}\"", role.default_lane));
+        lines.push(format!("template = \"{}\"", role.template));
+        lines.push(String::new());
+    }
+
+    for lane in &payload.workflow.lanes {
+        lines.push(format!("[lanes.{}]", lane.name));
+        lines.push(format!("description = \"{}\"", lane.description));
+        lines.push(format!("include = {}", render_string_list(&lane.include)));
+        lines.push(format!("exclude = {}", render_string_list(&lane.exclude)));
+        lines.push(format!("sources = {}", render_string_list(&lane.sources)));
+        lines.push(format!("parallel = {}", lane.parallel));
+        lines.push(format!("manual_accept = {}", lane.manual_accept));
+        lines.push(format!("priority = {}", lane.priority));
+        lines.push(String::new());
+    }
+
+    for override_ in &payload.workflow.role_overrides {
+        lines.push(format!("[role_overrides.\"{}\"]", override_.taxonomy));
+        lines.push(format!("template = \"{}\"", override_.template));
+        lines.push(String::new());
+    }
+
     lines.push("[scoring]".to_string());
     lines.push(format!("mode = \"{}\"", payload.scoring.mode));
     lines.push(format!("impact_weight = {}", payload.scoring.impact_weight));
@@ -260,6 +395,11 @@ fn render_show_payload(payload: &ConfigShowPayload) -> Vec<String> {
     }
 
     lines
+}
+
+fn render_string_list(values: &[String]) -> String {
+    let quoted: Vec<_> = values.iter().map(|value| format!("\"{value}\"")).collect();
+    format!("[{}]", quoted.join(", "))
 }
 
 fn render_show_output(payload: &ConfigShowPayload) -> String {
@@ -391,6 +531,7 @@ pub fn run_mode(name: Option<String>) -> Result<()> {
 mod tests {
     use super::*;
     use crate::domain::model::StoryState;
+    use crate::infrastructure::config::{LaneConfig, RoleFamilyConfig, RoleOverrideConfig};
     use crate::test_helpers::{TestBoardBuilder, TestStory};
     use std::fs;
     use tempfile::TempDir;
@@ -418,7 +559,7 @@ mod tests {
     }
 
     #[test]
-    fn config_show_renders_technique_flag_matrix() {
+    fn config_show_workflow_topology_renders_effective_defaults_and_status_sections() {
         let temp = TempDir::new().unwrap();
         fs::create_dir_all(temp.path().join(".keel")).unwrap();
         fs::write(
@@ -440,7 +581,8 @@ disable = ["rust-coverage"]
         .unwrap();
 
         let config = Config::default();
-        let payload = build_show_payload(&config, &config::ConfigSource::Defaults, temp.path());
+        let payload =
+            build_show_payload(&config, &config::ConfigSource::Defaults, temp.path()).unwrap();
         let lines = render_show_payload(&payload);
         let rendered = lines.join("\n");
 
@@ -448,6 +590,17 @@ disable = ["rust-coverage"]
             "# Configuration source: {}",
             config::ConfigSource::Defaults
         )));
+        assert!(rendered.contains("[workflow.defaults]"));
+        assert!(rendered.contains("management_role = \"manager\""));
+        assert!(rendered.contains("delivery_role = \"operator\""));
+        assert!(rendered.contains("[roles.manager]"));
+        assert!(rendered.contains("template = \"manager-core\""));
+        assert!(rendered.contains("[roles.operator]"));
+        assert!(rendered.contains("template = \"operator-core\""));
+        assert!(rendered.contains("[lanes.management]"));
+        assert!(rendered.contains("[lanes.delivery]"));
+        assert!(rendered.contains("include = [\"story.*\"]"));
+        assert!(rendered.contains("sources = [\"story.backlog\", \"story.in-progress\"]"));
         assert!(rendered.contains("[scoring]"));
         assert!(rendered.contains("mode = \"constrained\""));
         assert!(rendered.contains("impact_weight = 1"));
@@ -486,7 +639,8 @@ disable = ["rust-coverage"]
             &Config::default(),
             &config::ConfigSource::Defaults,
             Path::new("."),
-        );
+        )
+        .unwrap();
 
         let rendered = render_show_output(&payload);
 
@@ -520,7 +674,8 @@ enable = ["llm-judge"]
             board_dir: ".".to_string(),
             ..Config::default()
         };
-        let payload = build_show_payload(&config, &config::ConfigSource::Defaults, temp.path());
+        let payload =
+            build_show_payload(&config, &config::ConfigSource::Defaults, temp.path()).unwrap();
         let labels: Vec<&str> = payload
             .verification
             .techniques
@@ -548,7 +703,53 @@ enable = ["llm-judge"]
     }
 
     #[test]
-    fn config_show_json_contract_contains_required_flags() {
+    fn config_show_workflow_topology_renders_configured_roles_lanes_and_overrides() {
+        let mut config = Config::default();
+        config.roles.insert(
+            "copywriter".to_string(),
+            RoleFamilyConfig {
+                default_lane: "delivery".to_string(),
+                template: "copywriter-core".to_string(),
+            },
+        );
+        config.lanes.insert(
+            "review".to_string(),
+            LaneConfig {
+                description: "Approval and editorial review".to_string(),
+                include: vec!["bearing.*".to_string(), "voyage.draft".to_string()],
+                exclude: vec!["bearing.declined".to_string()],
+                parallel: false,
+                manual_accept: true,
+                priority: 90,
+            },
+        );
+        config.role_overrides.insert(
+            "copywriter/ads".to_string(),
+            RoleOverrideConfig {
+                template: "copywriter-ads-core".to_string(),
+            },
+        );
+
+        let payload =
+            build_show_payload(&config, &config::ConfigSource::Defaults, Path::new(".")).unwrap();
+        let rendered = render_show_payload(&payload).join("\n");
+
+        assert!(rendered.contains("[roles.copywriter]"));
+        assert!(rendered.contains("default_lane = \"delivery\""));
+        assert!(rendered.contains("template = \"copywriter-core\""));
+        assert!(rendered.contains("[lanes.review]"));
+        assert!(rendered.contains("description = \"Approval and editorial review\""));
+        assert!(rendered.contains("include = [\"bearing.*\", \"voyage.draft\"]"));
+        assert!(rendered.contains("exclude = [\"bearing.declined\"]"));
+        assert!(rendered.contains(
+            "sources = [\"bearing.evaluating\", \"bearing.exploring\", \"bearing.laid\", \"bearing.parked\", \"bearing.ready\", \"voyage.draft\"]"
+        ));
+        assert!(rendered.contains("[role_overrides.\"copywriter/ads\"]"));
+        assert!(rendered.contains("template = \"copywriter-ads-core\""));
+    }
+
+    #[test]
+    fn config_show_workflow_topology_json_contract_contains_required_fields() {
         let temp = TempDir::new().unwrap();
         fs::create_dir_all(temp.path().join(".keel")).unwrap();
         fs::write(
@@ -557,13 +758,39 @@ enable = ["llm-judge"]
         )
         .unwrap();
         let config = Config::default();
-        let payload = build_show_payload(&config, &config::ConfigSource::Defaults, temp.path());
+        let payload =
+            build_show_payload(&config, &config::ConfigSource::Defaults, temp.path()).unwrap();
         let json = serde_json::to_value(payload).unwrap();
 
         assert_eq!(
             json["source"],
             serde_json::Value::String(config::ConfigSource::Defaults.to_string())
         );
+        assert_eq!(
+            json["workflow"]["defaults"]["management_role"],
+            serde_json::Value::String("manager".to_string())
+        );
+        assert_eq!(
+            json["workflow"]["defaults"]["delivery_lane"],
+            serde_json::Value::String("delivery".to_string())
+        );
+        let roles = json["workflow"]["roles"].as_array().unwrap().clone();
+        assert!(!roles.is_empty());
+        let first_role = &roles[0];
+        assert!(first_role.get("name").is_some());
+        assert!(first_role.get("default_lane").is_some());
+        assert!(first_role.get("template").is_some());
+        let lanes = json["workflow"]["lanes"].as_array().unwrap().clone();
+        assert!(!lanes.is_empty());
+        let first_lane = &lanes[0];
+        assert!(first_lane.get("name").is_some());
+        assert!(first_lane.get("include").is_some());
+        assert!(first_lane.get("exclude").is_some());
+        assert!(first_lane.get("sources").is_some());
+        assert!(first_lane.get("parallel").is_some());
+        assert!(first_lane.get("manual_accept").is_some());
+        assert!(first_lane.get("priority").is_some());
+        assert!(json["workflow"]["role_overrides"].is_array());
         assert_eq!(
             json["scoring"]["mode"],
             serde_json::Value::String("constrained".to_string())
@@ -611,7 +838,8 @@ enable = ["llm-judge"]
             ..Config::default()
         };
 
-        let payload = build_show_payload(&config, &config::ConfigSource::Defaults, Path::new("."));
+        let payload =
+            build_show_payload(&config, &config::ConfigSource::Defaults, Path::new(".")).unwrap();
         assert!(
             payload
                 .doctor
