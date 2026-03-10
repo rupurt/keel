@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-10T16:15:04.625497585-07:00
+mode: manual
+---
+keel next now resolves configured base role families through workflow topology, accepts subtype-free roles such as operator, and rejects unknown families with default-role guidance. Covered by cargo test -p keel next_role_topology_ and validated by cargo run -- next --role operator --json plus cargo run -- next --role analyst/research --json.

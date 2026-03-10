@@ -2,7 +2,9 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use crate::domain::model::taxonomy::RoleTaxonomy;
 use crate::infrastructure::config::{Config, LaneConfig, RoleFamilyConfig, WorkflowDefaultsConfig};
+use crate::read_model::queue_policy::ActorQueueLane;
 
 const SEEDED_MANAGEMENT_TEMPLATE: &str = "manager-core";
 const SEEDED_DELIVERY_TEMPLATE: &str = "operator-core";
@@ -62,6 +64,11 @@ pub struct ResolvedRoleOverride {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UnknownRoleFamily {
+    pub base_role: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum WorkflowTopologyError {
     MissingDefaultRole { role: String },
     MissingDefaultLane { lane: String },
@@ -90,6 +97,14 @@ impl std::fmt::Display for WorkflowTopologyError {
 
 impl std::error::Error for WorkflowTopologyError {}
 
+impl std::fmt::Display for UnknownRoleFamily {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "unknown workflow role family `{}`", self.base_role)
+    }
+}
+
+impl std::error::Error for UnknownRoleFamily {}
+
 impl ResolvedWorkflowTopology {
     pub fn ordered_lanes(&self) -> Vec<&ResolvedLane> {
         let mut lanes: Vec<_> = self.lanes.values().collect();
@@ -99,6 +114,62 @@ impl ResolvedWorkflowTopology {
                 .then_with(|| a.name.cmp(&b.name))
         });
         lanes
+    }
+
+    pub fn management_role_example(&self) -> &str {
+        &self.defaults.management_role
+    }
+
+    pub fn delivery_role_example(&self) -> &str {
+        &self.defaults.delivery_role
+    }
+
+    pub fn resolve_actor_lane(
+        &self,
+        role: &RoleTaxonomy,
+    ) -> Result<&ResolvedLane, UnknownRoleFamily> {
+        let role_family = self
+            .roles
+            .get(role.role.as_str())
+            .ok_or_else(|| UnknownRoleFamily {
+                base_role: role.role.clone(),
+            })?;
+
+        Ok(self
+            .lanes
+            .get(role_family.default_lane.as_str())
+            .expect("validated workflow topology must resolve role lanes"))
+    }
+
+    pub fn default_management_lane(&self) -> &ResolvedLane {
+        self.lanes
+            .get(self.defaults.management_lane.as_str())
+            .expect("validated workflow topology must contain the management lane")
+    }
+
+    pub fn default_delivery_lane(&self) -> &ResolvedLane {
+        self.lanes
+            .get(self.defaults.delivery_lane.as_str())
+            .expect("validated workflow topology must contain the delivery lane")
+    }
+
+    pub fn default_management_queue_lane(&self) -> ActorQueueLane {
+        classify_next_queue_lane(self.default_management_lane())
+    }
+
+    pub fn default_delivery_queue_lane(&self) -> ActorQueueLane {
+        classify_next_queue_lane(self.default_delivery_lane())
+    }
+
+    pub fn queue_lane_for_actor(
+        &self,
+        role: &RoleTaxonomy,
+    ) -> Result<ActorQueueLane, UnknownRoleFamily> {
+        Ok(classify_next_queue_lane(self.resolve_actor_lane(role)?))
+    }
+
+    pub fn supports_parallel(&self, role: &RoleTaxonomy) -> Result<bool, UnknownRoleFamily> {
+        Ok(self.resolve_actor_lane(role)?.parallel)
     }
 }
 
@@ -215,6 +286,18 @@ pub fn resolve(config: &Config) -> Result<ResolvedWorkflowTopology, WorkflowTopo
 
 pub fn queue_source_catalog() -> &'static [&'static str] {
     QUEUE_SOURCE_CATALOG
+}
+
+fn classify_next_queue_lane(lane: &ResolvedLane) -> ActorQueueLane {
+    if lane
+        .sources
+        .iter()
+        .any(|source| matches!(source.as_str(), "story.backlog" | "story.in-progress"))
+    {
+        ActorQueueLane::Execution
+    } else {
+        ActorQueueLane::Management
+    }
 }
 
 fn compile_lane_sources(

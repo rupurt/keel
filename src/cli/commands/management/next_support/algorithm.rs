@@ -322,7 +322,7 @@ pub fn calculate_next(
                     .to_string(),
             );
             suggestions.push(
-                "Run `keel next --role engineer/software --parallel` to inspect sequential chains."
+                "Run `keel next --role operator --parallel` to inspect sequential chains."
                     .to_string(),
             );
         }
@@ -688,17 +688,13 @@ mod tests {
     }
 
     #[test]
-    fn manager_roles_route_to_management_queue_decisions() {
+    fn next_role_topology_manager_roles_route_to_management_queue_decisions() {
         let temp = TestBoardBuilder::new()
             .story(TestStory::new("VERIFY1").status(StoryState::NeedsHumanVerification))
-            .story(
-                TestStory::new("IMPL1")
-                    .status(StoryState::Backlog)
-                    .role("engineer/software"),
-            )
+            .story(TestStory::new("IMPL1").status(StoryState::Backlog))
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
-        let manager = crate::domain::model::taxonomy::parse("manager/product").unwrap();
+        let manager = crate::domain::model::taxonomy::parse("manager").unwrap();
 
         let next = crate::cli::commands::management::next::calculate_next_for_role(
             &board,
@@ -715,29 +711,25 @@ mod tests {
     }
 
     #[test]
-    fn engineer_roles_route_to_execution_queue_work() {
+    fn next_role_topology_operator_roles_route_to_execution_queue_work() {
         let temp = TestBoardBuilder::new()
             .story(TestStory::new("VERIFY1").status(StoryState::NeedsHumanVerification))
-            .story(
-                TestStory::new("IMPL1")
-                    .status(StoryState::Backlog)
-                    .role("engineer/software"),
-            )
+            .story(TestStory::new("IMPL1").status(StoryState::Backlog))
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
-        let engineer = crate::domain::model::taxonomy::parse("engineer/software").unwrap();
+        let operator = crate::domain::model::taxonomy::parse("operator").unwrap();
 
         let next = crate::cli::commands::management::next::calculate_next_for_role(
             &board,
             temp.path(),
             false,
-            Some(&engineer),
+            Some(&operator),
         )
         .unwrap();
 
         match next {
             NextDecision::Work(d) => assert_eq!(d.story.id(), "IMPL1"),
-            other => panic!("engineer roles should route to execution work, got {other:?}"),
+            other => panic!("operator roles should route to execution work, got {other:?}"),
         }
     }
 }

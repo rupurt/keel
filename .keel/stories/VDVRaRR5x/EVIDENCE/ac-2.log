@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-10T16:15:04.670463479-07:00
+mode: manual
+---
+Parallel next now honors the resolved lane capability instead of hardcoded execution families, and repeated role/config resolution is deterministic. Covered by cargo test -p keel next_parallel_topology_ and validated in just quality, just test, just doctest, and just keel doctor.

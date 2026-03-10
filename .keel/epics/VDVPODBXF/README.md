@@ -20,8 +20,8 @@ index: 16
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 1/5 stories done
+**Progress:** 0/1 voyages complete, 2/5 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Role and Lane Config Contract](voyages/VDVPUCtqS/) | in-progress | 1/5 |
+| [Role and Lane Config Contract](voyages/VDVPUCtqS/) | in-progress | 2/5 |
 <!-- END GENERATED -->

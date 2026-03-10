@@ -1287,7 +1287,7 @@ fn cli_rejects_legacy_next_agent_flag_with_migration_guidance() {
     .expect("legacy flag should produce migration guidance");
 
     assert!(message.contains("--agent"));
-    assert!(message.contains("--role engineer/"));
+    assert!(message.contains("--role operator"));
 }
 
 #[test]
@@ -1300,7 +1300,7 @@ fn cli_rejects_legacy_next_human_flag_with_migration_guidance() {
     .expect("legacy flag should produce migration guidance");
 
     assert!(message.contains("--human"));
-    assert!(message.contains("--role manager/"));
+    assert!(message.contains("--role manager"));
 }
 
 #[test]

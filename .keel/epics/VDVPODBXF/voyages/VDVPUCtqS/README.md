@@ -25,12 +25,12 @@ started_at: 2026-03-10T15:51:55
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/5 stories complete
+**Progress:** 2/5 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Add Workflow Topology Config Model](../../../../stories/VDVRaQp66/README.md) | feat | done |
-| [Route Next Through Configured Lanes](../../../../stories/VDVRaRR5x/README.md) | feat | backlog |
+| [Route Next Through Configured Lanes](../../../../stories/VDVRaRR5x/README.md) | feat | done |
 | [Validate Topology Selectors And Overlap](../../../../stories/VDVRaSf5y/README.md) | feat | backlog |
 | [Authorize Acceptance And Templates Through Topology](../../../../stories/VDVRaSs5w/README.md) | feat | backlog |
 | [Render Dynamic Lanes In Flow](../../../../stories/VDVRaTB5z/README.md) | feat | backlog |
