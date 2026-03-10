@@ -46,7 +46,7 @@ Keel coordinates work between humans and agents using a **pull-based** model. Ea
 
 ```
 ┌───────────────────────────────────────┬──────────────────────────────────────┐
-│           HUMAN QUEUE                 │            AGENT QUEUE               │
+│        MANAGEMENT QUEUE               │          EXECUTION QUEUE             │
 ├───────────────────────────────────────┼──────────────────────────────────────┤
 │  accept    → stories to review        │  backlog     → ready to start        │
 │  start     → voyages to begin         │  in-progress → being worked          │
@@ -57,7 +57,7 @@ Keel coordinates work between humans and agents using a **pull-based** model. Ea
 
 - `keel next` defaults to management-queue decisions and never returns implementation `Work`.
 - `keel next --role engineer/software` returns implementation work from the execution queue (`in-progress` then `backlog`).
-- `keel flow` uses the same queue policy categories and thresholds as `next` (`>= 5` human block, `> 20` flow block).
+- `keel flow` uses the same queue policy categories and thresholds as `next` (`>= 5` management block, `> 20` flow block).
 
 ### Lineage and Proof Chain
 
@@ -141,7 +141,7 @@ Management
 
 Diagnostics
   doctor      Validate board health and optionally fix issues
-  flow        Show two-actor flow dashboard (human queue vs agent queue)
+  flow        Show two-actor flow dashboard (management queue vs execution queue)
   throughput  Show weekly throughput and timing sparklines
 ```
 

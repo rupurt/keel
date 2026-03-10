@@ -300,7 +300,7 @@ fn is_board_goal_met(board: &Board, target: &str) -> bool {
     false
 }
 
-/// Render side-by-side or stacked queue boxes for human/agent handoff.
+/// Render side-by-side or stacked queue boxes for management/execution handoff.
 pub fn render_queue_boxes(health: &TwoActorHealth, width: usize, theme: &Theme) -> String {
     if width >= 80 {
         render_side_by_side_queue_boxes(health, width, theme)
@@ -313,8 +313,8 @@ fn render_side_by_side_queue_boxes(health: &TwoActorHealth, width: usize, theme:
     let mut output = String::new();
     let col_width = (width - 4) / 2;
 
-    let mut human_box = BoxComponent::new("HUMAN QUEUE (To Start/Accept)", col_width);
-    let mut agent_box = BoxComponent::new("AGENT QUEUE (To Implement)", col_width);
+    let mut human_box = BoxComponent::new("MANAGEMENT QUEUE (To Start/Accept)", col_width);
+    let mut agent_box = BoxComponent::new("EXECUTION QUEUE (To Implement)", col_width);
 
     // Populate Human box
     render_queue_into_box(&mut human_box, &health.human_queue, theme);
@@ -357,7 +357,7 @@ fn render_queue_into_box(box_comp: &mut BoxComponent, queue: &ActorQueue, theme:
 fn render_stacked_queue_boxes(health: &TwoActorHealth, width: usize, theme: &Theme) -> String {
     let mut output = String::new();
 
-    let mut human_box = BoxComponent::new("HUMAN QUEUE (To Start/Accept)", width);
+    let mut human_box = BoxComponent::new("MANAGEMENT QUEUE (To Start/Accept)", width);
     render_queue_into_box(&mut human_box, &health.human_queue, theme);
     for line in human_box.render() {
         writeln!(output, "{}", line).unwrap();
@@ -365,7 +365,7 @@ fn render_stacked_queue_boxes(health: &TwoActorHealth, width: usize, theme: &The
 
     writeln!(output).unwrap();
 
-    let mut agent_box = BoxComponent::new("AGENT QUEUE (To Implement)", width);
+    let mut agent_box = BoxComponent::new("EXECUTION QUEUE (To Implement)", width);
     render_queue_into_box(&mut agent_box, &health.agent_queue, theme);
     for line in agent_box.render() {
         writeln!(output, "{}", line).unwrap();
@@ -446,19 +446,19 @@ mod tests {
     }
 
     #[test]
-    fn render_queue_boxes_contains_human_header() {
+    fn render_queue_boxes_contains_management_header() {
         let health = make_test_two_actor_health();
         let theme = Theme::default();
         let rendered = render_queue_boxes(&health, 100, &theme);
-        assert!(rendered.contains("HUMAN QUEUE"));
+        assert!(rendered.contains("MANAGEMENT QUEUE"));
     }
 
     #[test]
-    fn render_queue_boxes_contains_agent_header() {
+    fn render_queue_boxes_contains_execution_header() {
         let health = make_test_two_actor_health();
         let theme = Theme::default();
         let rendered = render_queue_boxes(&health, 100, &theme);
-        assert!(rendered.contains("AGENT QUEUE"));
+        assert!(rendered.contains("EXECUTION QUEUE"));
     }
 
     #[test]
@@ -471,8 +471,8 @@ mod tests {
         assert!(rendered.contains("Planning"));
         assert!(rendered.contains("Execution"));
         assert!(rendered.contains("Verification"));
-        assert!(rendered.contains("HUMAN QUEUE"));
-        assert!(rendered.contains("AGENT QUEUE"));
+        assert!(rendered.contains("MANAGEMENT QUEUE"));
+        assert!(rendered.contains("EXECUTION QUEUE"));
         assert!(rendered.contains("No executable epic capacity"));
     }
 }

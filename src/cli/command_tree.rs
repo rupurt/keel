@@ -26,7 +26,7 @@ Management
 
 Diagnostics
   doctor      Validate board health and optionally fix issues
-  flow        Show two-actor flow dashboard (human queue vs agent queue)
+  flow        Show two-actor flow dashboard (management queue vs execution queue)
   throughput  Show weekly throughput and timing sparklines
 "#;
 
@@ -74,7 +74,7 @@ pub fn build_cli() -> Command {
         )
         .subcommand(
             Command::new("flow")
-                .about("Show two-actor flow dashboard (human queue vs agent queue)")
+                .about("Show two-actor flow dashboard (management queue vs execution queue)")
                 .hide(true)
                 .arg(
                     Arg::new("no_color")

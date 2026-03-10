@@ -14,3 +14,7 @@ Completed story VDUGfT2IV by backfilling evidence onto the existing taxonomy par
 ## 2026-03-10T13:53:37
 
 Story VDUGflIUh completed: next now routes by role taxonomy, legacy next queue flags are rejected with migration guidance, management guidance text points at manager roles, and SRS-02/SRS-03 evidence is recorded. Next ready slice: VDUGfcLQB.
+
+## 2026-03-10T13:59:44
+
+Story VDUGfcLQB completed: keel flow now renders management and execution queue labels, flow help text uses the new terminology, and SRS-04 evidence is recorded. Next ready slice is VDUGfu8bf.

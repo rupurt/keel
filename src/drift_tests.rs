@@ -911,7 +911,7 @@ mod queue_policy_docs {
     }
 
     #[test]
-    fn command_help_docs_describe_next_role_routing() {
+    fn command_help_docs_describe_role_based_queue_terms() {
         assert!(
             README_DOC.contains(
                 "`keel next` defaults to management-queue decisions and never returns implementation `Work`."
@@ -928,6 +928,22 @@ mod queue_policy_docs {
             COMMAND_TREE_RS
                 .contains("next        Pull the next item using role-based queue routing"),
             "CLI help text should describe role-based queue routing for `next`"
+        );
+        assert!(
+            README_DOC.contains("MANAGEMENT QUEUE               │          EXECUTION QUEUE"),
+            "README.md should document the management/execution flow queue labels"
+        );
+        assert!(
+            README_DOC.contains(
+                "flow        Show two-actor flow dashboard (management queue vs execution queue)"
+            ),
+            "README.md should document the management/execution flow help text"
+        );
+        assert!(
+            COMMAND_TREE_RS.contains(
+                "flow        Show two-actor flow dashboard (management queue vs execution queue)"
+            ),
+            "CLI help text should describe management/execution flow queue terms"
         );
     }
 
