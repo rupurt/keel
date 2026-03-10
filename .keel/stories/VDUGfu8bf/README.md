@@ -2,9 +2,9 @@
 id: VDUGfu8bf
 title: Update Accept Role Authorization
 type: feat
-status: icebox
+status: backlog
 created_at: 2026-03-10T10:38:14
-updated_at: 2026-03-10T10:38:14
+updated_at: 2026-03-10T13:16:09
 scope: VDTpFlMKc/VDUG60pcX
 index: 4
 ---

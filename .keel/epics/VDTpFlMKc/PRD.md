@@ -40,11 +40,11 @@ The current system hardcodes 'human' and 'agent' roles into queues, limiting aut
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Goals | Priority | Rationale |
 |----|-------------|-------|----------|-----------|
-| FR-01 | `keel next` must accept `--role <TAXONOMY>` and conflict with legacy `--agent`/`--human` flags. | GOAL-02 | must | Core UX shift for work pull. |
+| FR-01 | `keel next` must accept `--role <TAXONOMY>` and reject legacy `--agent`/`--human` flags with explicit migration guidance. | GOAL-02 | must | Core UX shift for work pull under hard cutover. |
 | FR-02 | `keel flow` must display "Management Queue" and "Execution Queue". | GOAL-01 | must | Updates the dashboard terminology. |
 | FR-03 | The `accept` command must require a `manager/*` role taxonomy for stories with manual verification criteria. | GOAL-02 | must | Enforces authorization boundaries on subjective work. |
 | FR-04 | The system must map `engineer/*` roles to the Execution queue and `manager/*` roles to the Management queue. | GOAL-02 | must | Routes the correct work to the right persona. |
-| FR-05 | The system must inject role-specific personality and context templates. | GOAL-03 | must | Provides necessary context for autonomous completion. |
+| FR-05 | The system must inject role-specific personality and context templates into actionable harness guidance for core roles. | GOAL-03 | must | Provides necessary context for autonomous completion without a separate prompt-export surface. |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ### Non-Functional Requirements
@@ -52,7 +52,7 @@ The current system hardcodes 'human' and 'agent' roles into queues, limiting aut
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Goals | Priority | Rationale |
 |----|-------------|-------|----------|-----------|
-| NFR-01 | Legacy `--agent` and `--human` flags should fail gracefully or act as aliases temporarily if possible. | GOAL-02 | should | Prevents breaking existing CI scripts immediately. |
+| NFR-01 | Role parsing, queue routing, and template selection must be deterministic for the same taxonomy input. | GOAL-02, GOAL-03 | must | Prevents prompt drift and inconsistent queue assignment for identical role requests. |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
 
 ## Verification Strategy
@@ -62,6 +62,7 @@ The current system hardcodes 'human' and 'agent' roles into queues, limiting aut
 | CLI Interface | `cargo test` on clap command definitions | Automated tests |
 | Queue Routing | Unit tests for `next` algorithm | Automated tests |
 | Authorization | Unit tests for `accept` transition gates | Automated tests |
+| Role Templates | Unit tests for template resolution and guidance rendering | Automated tests |
 
 ## Assumptions
 
@@ -73,7 +74,7 @@ The current system hardcodes 'human' and 'agent' roles into queues, limiting aut
 
 | Question/Risk | Owner | Status |
 |---------------|-------|--------|
-| How exactly are personality templates integrated? Do we scaffold `AGENTS.md` differently? | Keel AI | Open |
+| How do harnesses receive role templates without adding another command surface? | Keel AI | Resolved: extend actionable guidance emitted from role-aware `keel next` responses. |
 
 ## Success Criteria
 
@@ -81,5 +82,6 @@ The current system hardcodes 'human' and 'agent' roles into queues, limiting aut
 - [ ] `keel flow` displays Management and Execution queues.
 - [ ] `keel next --role engineer/software` pulls from the Execution queue.
 - [ ] `keel next --role manager/product` pulls from the Management queue.
-- [ ] `keel story accept` respects the role authorization.
+- [ ] `keel story accept --role manager/product` respects manual-verification authorization.
+- [ ] `keel next --role engineer/software --json` and `keel next --role manager/product --json` emit the matching role context templates.
 <!-- END SUCCESS_CRITERIA -->

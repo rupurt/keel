@@ -2,9 +2,9 @@
 id: VDUGfT2IV
 title: Role Taxonomy Parser
 type: feat
-status: icebox
+status: backlog
 created_at: 2026-03-10T10:38:12
-updated_at: 2026-03-10T10:38:12
+updated_at: 2026-03-10T13:16:09
 scope: VDTpFlMKc/VDUG60pcX
 index: 1
 ---
