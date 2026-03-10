@@ -7,7 +7,7 @@ use crate::cli::commands::management::guidance::{
 };
 use crate::domain::model::StoryState;
 
-const DEFAULT_ACCEPT_ROLE: &str = "manager/product";
+const DEFAULT_ACCEPT_ROLE: &str = "manager";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StoryLifecycleAction {
@@ -38,7 +38,12 @@ pub fn creation_command(title: &str, epic_id: Option<&str>, voyage_id: Option<&s
 
 /// Render the canonical `story accept` example for management-lane acceptance.
 pub fn accept_command(story_id: &str) -> String {
-    format!("keel story accept {story_id} --role {DEFAULT_ACCEPT_ROLE}")
+    accept_command_for_role(story_id, DEFAULT_ACCEPT_ROLE)
+}
+
+/// Render the canonical `story accept` example for the provided management role example.
+pub fn accept_command_for_role(story_id: &str, accept_role: &str) -> String {
+    format!("keel story accept {story_id} --role {accept_role}")
 }
 
 /// Build canonical guidance for a lifecycle action after it succeeds.
@@ -74,8 +79,19 @@ pub fn recovery_for_error(
     story_id: &str,
     message: &str,
 ) -> Option<CanonicalGuidance> {
+    recovery_for_error_with_accept_role(action, story_id, message, DEFAULT_ACCEPT_ROLE)
+}
+
+/// Build canonical recovery guidance using a caller-provided management role example.
+pub fn recovery_for_error_with_accept_role(
+    action: StoryLifecycleAction,
+    story_id: &str,
+    message: &str,
+    accept_role: &str,
+) -> Option<CanonicalGuidance> {
     render_command_guidance(
-        recovery_command_for_error(action, story_id, message).map(CommandGuidance::recovery),
+        recovery_command_for_error(action, story_id, message, accept_role)
+            .map(CommandGuidance::recovery),
     )
 }
 
@@ -95,10 +111,28 @@ pub fn error_with_recovery(
     }
 }
 
+/// Wrap an error with deterministic recovery guidance using a caller-provided accept role.
+pub fn error_with_recovery_for_accept_role(
+    action: StoryLifecycleAction,
+    story_id: &str,
+    error: anyhow::Error,
+    accept_role: &str,
+) -> anyhow::Error {
+    let message = error.to_string();
+    let guidance = recovery_for_error_with_accept_role(action, story_id, &message, accept_role);
+    let rendered = render_human(guidance.as_ref());
+    if rendered.is_empty() {
+        anyhow::anyhow!(message)
+    } else {
+        anyhow::anyhow!("{message}{rendered}")
+    }
+}
+
 fn recovery_command_for_error(
     action: StoryLifecycleAction,
     story_id: &str,
     message: &str,
+    accept_role: &str,
 ) -> Option<String> {
     let lower = message.to_ascii_lowercase();
 
@@ -137,9 +171,9 @@ fn recovery_command_for_error(
         StoryLifecycleAction::Accept => {
             if lower.contains("manual acceptance criteria")
                 || lower.contains("manager/* role")
-                || lower.contains("--role manager/")
+                || lower.contains("manual verification must be accepted with")
             {
-                Some(accept_command(story_id))
+                Some(accept_command_for_role(story_id, accept_role))
             } else if lower.contains("reflect.md missing in bundle") {
                 Some(format!("keel story reflect {story_id}"))
             } else if lower.contains("evidence directory missing in bundle")
@@ -252,7 +286,7 @@ mod tests {
         .unwrap();
         assert_eq!(
             guidance.next_step.unwrap().command,
-            "keel story accept S2 --role manager/product".to_string()
+            "keel story accept S2 --role manager".to_string()
         );
     }
 
@@ -333,18 +367,36 @@ mod tests {
     }
 
     #[test]
-    fn recovery_accept_manual_maps_to_manager_role() {
+    fn recovery_accept_manual_maps_to_default_management_role() {
         let guidance = recovery_for_error(
             StoryLifecycleAction::Accept,
             "S6",
-            "Story S6 has manual acceptance criteria. Manual verification must be accepted with a manager/* role.",
+            "Story S6 has manual acceptance criteria. Manual verification must be accepted with a role whose lane has manual_accept = true.",
         )
         .unwrap();
         let json = serde_json::to_value(guidance).unwrap();
         assert_eq!(
             json,
             json!({
-                "recovery_step": { "command": "keel story accept S6 --role manager/product" }
+                "recovery_step": { "command": "keel story accept S6 --role manager" }
+            })
+        );
+    }
+
+    #[test]
+    fn recovery_accept_manual_maps_to_configured_management_role() {
+        let guidance = recovery_for_error_with_accept_role(
+            StoryLifecycleAction::Accept,
+            "S6",
+            "Story S6 has manual acceptance criteria. Manual verification must be accepted with a role whose lane has manual_accept = true.",
+            "director",
+        )
+        .unwrap();
+        let json = serde_json::to_value(guidance).unwrap();
+        assert_eq!(
+            json,
+            json!({
+                "recovery_step": { "command": "keel story accept S6 --role director" }
             })
         );
     }
@@ -363,7 +415,7 @@ mod tests {
     }
 
     #[test]
-    fn error_with_recovery_embeds_manager_role_recovery_block() {
+    fn error_with_recovery_embeds_default_management_role_recovery_block() {
         let err = error_with_recovery(
             StoryLifecycleAction::Accept,
             "S8",
@@ -373,6 +425,6 @@ mod tests {
 
         assert!(err.contains("Cannot accept story S8"));
         assert!(err.contains("Recovery step:"));
-        assert!(err.contains("keel story accept S8 --role manager/product"));
+        assert!(err.contains("keel story accept S8 --role manager"));
     }
 }

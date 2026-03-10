@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-10T16:33:54.446303255-07:00
+mode: manual
+---
+cargo test -p keel story_accept_topology_ passed; manual acceptance now validates configured lane manual_accept capability, rejects delivery-lane roles for manual review with configured management-role recovery guidance, and still allows non-manual stories for valid delivery roles.

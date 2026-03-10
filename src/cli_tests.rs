@@ -53,7 +53,7 @@ enum DiagnosticsCommands {
     },
     /// Surface the single most important thing to work on
     Next {
-        /// Role taxonomy controlling queue selection (e.g., "manager/product" or "engineer/software:infrastructure")
+        /// Role taxonomy controlling queue selection (e.g., "manager" or "operator/software:infrastructure")
         #[arg(long)]
         role: Option<String>,
         /// Output as JSON for scripting
@@ -361,21 +361,14 @@ fn cli_parses_story_reflect() {
 
 #[test]
 fn cli_parses_story_accept_with_role() {
-    let cli = Cli::try_parse_from([
-        "board",
-        "story",
-        "accept",
-        "FEAT0238",
-        "--role",
-        "manager/product",
-    ])
-    .unwrap();
+    let cli =
+        Cli::try_parse_from(["board", "story", "accept", "FEAT0238", "--role", "manager"]).unwrap();
     if let Commands::Management(ManagementCommands::Story {
         action: StoryAction::Accept { id, role, reflect },
     }) = cli.command
     {
         assert_eq!(id, "FEAT0238");
-        assert_eq!(role, "manager/product");
+        assert_eq!(role, "manager");
         assert!(reflect.is_none());
     } else {
         panic!("Expected Story Accept command");
@@ -1331,7 +1324,7 @@ fn cli_rejects_legacy_story_accept_human_flag_with_migration_guidance() {
         .expect("legacy accept flag should produce migration guidance");
 
     assert!(message.contains("--human"));
-    assert!(message.contains("--role manager/product"));
+    assert!(message.contains("--role manager"));
 }
 
 #[test]
@@ -1343,7 +1336,7 @@ fn cli_rejects_legacy_story_accept_human_flag_when_role_is_also_present() {
             "accept".to_string(),
             "S1".to_string(),
             "--role".to_string(),
-            "manager/product".to_string(),
+            "manager".to_string(),
             "--human".to_string(),
         ])
         .expect("legacy accept flag should conflict with --role guidance");

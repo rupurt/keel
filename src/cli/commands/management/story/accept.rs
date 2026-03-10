@@ -6,9 +6,10 @@ use anyhow::{Result, anyhow};
 
 use crate::application::story_lifecycle::StoryLifecycleService;
 use crate::infrastructure::loader::load_board;
+use crate::read_model::workflow_topology;
 
 use super::guidance::{
-    StoryLifecycleAction, error_with_recovery, guidance_for_action, print_human,
+    StoryLifecycleAction, error_with_recovery_for_accept_role, guidance_for_action, print_human,
 };
 
 pub(crate) fn legacy_story_accept_flag_guidance(args: &[String]) -> Option<String> {
@@ -24,8 +25,11 @@ pub(crate) fn legacy_story_accept_flag_guidance(args: &[String]) -> Option<Strin
         return None;
     }
 
-    let mut message = String::from(
-        "`keel story accept` no longer accepts `--human`. Use `--role manager/product` to authorize acceptance.",
+    let management_role = workflow_topology::current_default_role_examples()
+        .map(|(management_role, _)| management_role)
+        .unwrap_or_else(|| "manager".to_string());
+    let mut message = format!(
+        "`keel story accept` no longer accepts `--human`. Use `--role {management_role}` to authorize acceptance."
     );
     if accept_args.iter().any(|arg| arg == "--role") {
         message.push_str(" Do not combine `--human` with `--role`.");
@@ -37,9 +41,18 @@ pub(crate) fn legacy_story_accept_flag_guidance(args: &[String]) -> Option<Strin
 pub fn run(board_dir: &Path, id: &str, role: &str, reflect: Option<&str>) -> Result<()> {
     let actor_role = crate::domain::model::taxonomy::parse(role)
         .map_err(|err| anyhow!("Invalid role taxonomy `{role}`: {err}"))?;
+    let accept_role_example = workflow_topology::load_for_board(board_dir)
+        .map(|topology| topology.management_role_example().to_string())
+        .unwrap_or_else(|_| "manager".to_string());
 
-    StoryLifecycleService::accept(board_dir, id, &actor_role, reflect)
-        .map_err(|err| error_with_recovery(StoryLifecycleAction::Accept, id, err))?;
+    StoryLifecycleService::accept(board_dir, id, &actor_role, reflect).map_err(|err| {
+        error_with_recovery_for_accept_role(
+            StoryLifecycleAction::Accept,
+            id,
+            err,
+            &accept_role_example,
+        )
+    })?;
 
     let board = load_board(board_dir)?;
     let story = board.require_story(id)?;
@@ -58,6 +71,41 @@ mod tests {
     use regex::Regex;
     use std::fs;
 
+    fn write_custom_topology_config(path: &Path) {
+        fs::write(
+            path.join("keel.toml"),
+            r#"[workflow.defaults]
+management_role = "director"
+delivery_role = "maker"
+management_lane = "review"
+delivery_lane = "delivery"
+
+[roles.director]
+default_lane = "review"
+template = "director-core"
+
+[roles.maker]
+default_lane = "delivery"
+template = "maker-core"
+
+[lanes.review]
+description = "Review and approvals"
+include = ["story.needs-human-verification"]
+parallel = false
+manual_accept = true
+priority = 100
+
+[lanes.delivery]
+description = "Implementation work"
+include = ["story.backlog", "story.in-progress"]
+parallel = true
+manual_accept = false
+priority = 50
+"#,
+        )
+        .unwrap();
+    }
+
     #[test]
     fn accept_moves_story_to_done() {
         let temp = TestBoardBuilder::new()
@@ -71,7 +119,7 @@ mod tests {
             )
             .build();
 
-        run(temp.path(), "READY1", "engineer/software", None).unwrap();
+        run(temp.path(), "READY1", "manager", None).unwrap();
 
         // Status should be updated to done
         let story_path = temp.path().join("stories/READY1/README.md");
@@ -92,7 +140,7 @@ mod tests {
             )
             .build();
 
-        run(temp.path(), "UPDATE1", "engineer/software", None).unwrap();
+        run(temp.path(), "UPDATE1", "manager", None).unwrap();
 
         let content = fs::read_to_string(temp.path().join("stories/UPDATE1/README.md")).unwrap();
 
@@ -116,7 +164,7 @@ mod tests {
     }
 
     #[test]
-    fn accept_errors_on_manual_verification_without_manager_role() {
+    fn story_accept_topology_rejects_non_manual_accept_lane_with_configured_management_guidance() {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("1vkqtsHH1")
@@ -124,8 +172,9 @@ mod tests {
                     .body("## Acceptance Criteria\n\n- [x] Check this <!-- verify: manual -->"),
             )
             .build();
+        write_custom_topology_config(temp.path());
 
-        let result = run(temp.path(), "1vkqtsHH1", "engineer/software", None);
+        let result = run(temp.path(), "1vkqtsHH1", "maker", None);
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
         assert!(
@@ -134,11 +183,11 @@ mod tests {
             err
         );
         assert!(err.contains("Recovery step:"));
-        assert!(err.contains("keel story accept 1vkqtsHH1 --role manager/product"));
+        assert!(err.contains("keel story accept 1vkqtsHH1 --role director"));
     }
 
     #[test]
-    fn accept_with_manager_role_succeeds_for_manual_stories() {
+    fn story_accept_topology_allows_manual_accept_for_configured_management_role() {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("1vkqtsHH2")
@@ -146,17 +195,18 @@ mod tests {
                     .body("## Acceptance Criteria\n\n- [x] Check this <!-- verify: manual -->"),
             )
             .build();
+        write_custom_topology_config(temp.path());
 
-        let result = run(temp.path(), "1vkqtsHH2", "manager/product", None);
+        let result = run(temp.path(), "1vkqtsHH2", "director", None);
         assert!(
             result.is_ok(),
-            "Should succeed with manager role: {:?}",
+            "Should succeed with configured management role: {:?}",
             result
         );
     }
 
     #[test]
-    fn accept_without_manual_verification_succeeds_normally() {
+    fn story_accept_topology_allows_any_valid_delivery_role_for_non_manual_stories() {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("1vkqtsHH3")
@@ -164,8 +214,9 @@ mod tests {
                     .body("## Acceptance Criteria\n\n- [x] Check this <!-- verify: echo ok -->"),
             )
             .build();
+        write_custom_topology_config(temp.path());
 
-        let result = run(temp.path(), "1vkqtsHH3", "engineer/software", None);
+        let result = run(temp.path(), "1vkqtsHH3", "maker", None);
         assert!(
             result.is_ok(),
             "Should succeed for non-manual stories with any valid role: {:?}",
@@ -183,7 +234,7 @@ mod tests {
             )
             .build();
 
-        let result = run(temp.path(), "1vkqtsHH4", "engineer/software", None);
+        let result = run(temp.path(), "1vkqtsHH4", "operator", None);
         assert!(
             result.is_ok(),
             "Should succeed for stories without verify annotations: {:?}",
@@ -204,7 +255,7 @@ mod tests {
             )
             .build();
 
-        run(temp.path(), "1vkqtsAAA", "engineer/software", None).unwrap();
+        run(temp.path(), "1vkqtsAAA", "manager", None).unwrap();
 
         // Story bundle README should still exist
         let story_path = temp.path().join("stories/1vkqtsAAA/README.md");
@@ -229,7 +280,7 @@ mod tests {
         run(
             temp.path(),
             "1vqNrfl01",
-            "engineer/software",
+            "manager",
             Some("Caching surprised us"),
         )
         .unwrap();
@@ -254,13 +305,7 @@ mod tests {
             )
             .build();
 
-        run(
-            temp.path(),
-            "1vqNrfl02",
-            "engineer/software",
-            Some("Latency was key"),
-        )
-        .unwrap();
+        run(temp.path(), "1vqNrfl02", "manager", Some("Latency was key")).unwrap();
 
         let content = fs::read_to_string(temp.path().join("stories/1vqNrfl02/REFLECT.md")).unwrap();
         assert!(
@@ -276,7 +321,7 @@ mod tests {
             .story(TestStory::new("1vqNrfl03").status(StoryState::NeedsHumanVerification))
             .build();
 
-        run(temp.path(), "1vqNrfl03", "engineer/software", None).unwrap();
+        run(temp.path(), "1vqNrfl03", "manager", None).unwrap();
 
         let reflect_path = temp.path().join("stories/1vqNrfl03/REFLECT.md");
         // It now exists by default because of TestBoardBuilder
@@ -299,7 +344,7 @@ mod tests {
         run(
             temp.path(),
             "1vqNrfl04",
-            "engineer/software",
+            "manager",
             Some("### L-02: Second observation"),
         )
         .unwrap();

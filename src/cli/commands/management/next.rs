@@ -16,10 +16,10 @@ use crate::cli::commands::management::guidance::{
     CanonicalGuidance, CommandGuidance, RoleContextGuidance, render_command_guidance,
 };
 use crate::cli::commands::management::story::guidance::{
-    accept_command as story_accept_command, creation_command as story_creation_command,
+    accept_command_for_role as story_accept_command_for_role,
+    creation_command as story_creation_command,
 };
 use crate::domain::model::Story;
-use crate::infrastructure::config;
 use crate::infrastructure::loader::load_board;
 use crate::read_model::workflow_topology::{self, ResolvedWorkflowTopology};
 
@@ -138,7 +138,7 @@ pub(crate) fn legacy_next_flag_guidance(args: &[String]) -> Option<String> {
         return None;
     }
 
-    let (management_role, delivery_role) = load_current_default_role_examples()
+    let (management_role, delivery_role) = workflow_topology::current_default_role_examples()
         .unwrap_or_else(|| ("manager".to_string(), "operator".to_string()));
     let mut message = format!(
         "`keel next` no longer accepts `--agent` or `--human`. Use `--role {delivery_role}` for delivery work or `--role {management_role}` for management decisions."
@@ -147,29 +147,6 @@ pub(crate) fn legacy_next_flag_guidance(args: &[String]) -> Option<String> {
         message.push_str(" Do not combine legacy queue flags with `--role`.");
     }
     Some(message)
-}
-
-fn project_root_for_board(board_dir: &Path) -> &Path {
-    board_dir
-        .parent()
-        .filter(|parent| parent.join("keel.toml").exists())
-        .unwrap_or(board_dir)
-}
-
-fn load_workflow_topology_for_board(board_dir: &Path) -> Result<ResolvedWorkflowTopology> {
-    let project_root = project_root_for_board(board_dir);
-    let (config, _) = config::load_config_from(project_root);
-    Ok(workflow_topology::resolve(&config)?)
-}
-
-fn load_current_default_role_examples() -> Option<(String, String)> {
-    let (config, _) = config::load_config();
-    workflow_topology::resolve(&config).ok().map(|topology| {
-        (
-            topology.management_role_example().to_string(),
-            topology.delivery_role_example().to_string(),
-        )
-    })
 }
 
 fn default_actor_context(
@@ -258,9 +235,10 @@ fn resolve_actor_context(
             let supports_parallel = topology
                 .supports_parallel(role)
                 .map_err(|error| unsupported_role_error(error, topology))?;
-            let role_context = crate::read_model::role_context::resolve_role_context(role)
-                .ok()
-                .map(|template| RoleContextGuidance::from_template(role, template));
+            let role_context =
+                crate::read_model::role_context::resolve_role_context(topology, role)
+                    .ok()
+                    .map(|template| RoleContextGuidance::from_template(role, template));
 
             Ok(ResolvedActorContext {
                 lane_name: lane.name.clone(),
@@ -290,7 +268,7 @@ pub(crate) fn calculate_next_for_role(
     parallel: bool,
     actor_role: Option<&crate::domain::model::taxonomy::RoleTaxonomy>,
 ) -> Result<NextDecision> {
-    let topology = load_workflow_topology_for_board(board_dir)?;
+    let topology = workflow_topology::load_for_board(board_dir)?;
     let actor_context = resolve_actor_context(&topology, actor_role)?;
     let queue_lane = resolve_next_queue_lane(&topology, actor_context.as_ref(), parallel)?;
     let execution_mode = matches!(
@@ -308,16 +286,24 @@ pub fn run(
     actor_role: Option<&crate::domain::model::taxonomy::RoleTaxonomy>,
 ) -> Result<()> {
     let board = load_board(board_dir)?;
-    let topology = load_workflow_topology_for_board(board_dir)?;
+    let topology = workflow_topology::load_for_board(board_dir)?;
     let actor_context = resolve_actor_context(&topology, actor_role)?;
     let queue_lane = resolve_next_queue_lane(&topology, actor_context.as_ref(), parallel)?;
+    let management_role_example = topology.management_role_example().to_string();
 
     if parallel {
         debug_assert!(matches!(
             queue_lane,
             crate::read_model::queue_policy::ActorQueueLane::Execution
         ));
-        return run_parallel(&board, board_dir, json, actor_role, actor_context.as_ref());
+        return run_parallel(
+            &board,
+            board_dir,
+            json,
+            actor_role,
+            actor_context.as_ref(),
+            &management_role_example,
+        );
     }
 
     let decision = calculate_next_for_role(&board, board_dir, false, actor_role)?;
@@ -326,11 +312,13 @@ pub fn run(
         .and_then(|context| context.role_context.as_ref());
 
     if json {
-        let result = decision_to_json(&decision, role_context);
+        let result = decision_to_json(&decision, role_context, &management_role_example);
         println!("{}", serde_json::to_string_pretty(&result)?);
     } else {
         println!("{}", format_decision(&decision));
-        print_human_guidance(guidance_for_decision(&decision, role_context).as_ref());
+        print_human_guidance(
+            guidance_for_decision(&decision, role_context, &management_role_example).as_ref(),
+        );
 
         match &decision {
             NextDecision::Work(d) => {
@@ -397,6 +385,7 @@ fn surface_ranked_knowledge(
 fn decision_to_json(
     decision: &NextDecision,
     role_context: Option<&RoleContextGuidance>,
+    management_role_example: &str,
 ) -> JsonResult {
     let details = match decision {
         NextDecision::Work(d) => JsonDetails::Work {
@@ -442,7 +431,7 @@ fn decision_to_json(
     JsonResult {
         decision: decision_kind(decision).to_string(),
         details,
-        guidance: guidance_for_decision(decision, role_context),
+        guidance: guidance_for_decision(decision, role_context, management_role_example),
     }
 }
 
@@ -463,6 +452,7 @@ fn decision_kind(decision: &NextDecision) -> &'static str {
 fn guidance_for_decision(
     decision: &NextDecision,
     role_context: Option<&RoleContextGuidance>,
+    management_role_example: &str,
 ) -> Option<CanonicalGuidance> {
     let command_guidance = match decision {
         NextDecision::Work(d) => Some(if d.is_continuation {
@@ -474,16 +464,19 @@ fn guidance_for_decision(
             .adrs
             .first()
             .map(|adr| CommandGuidance::next(format!("keel adr accept {}", adr.id()))),
-        NextDecision::Accept(d) => d
-            .stories
-            .first()
-            .map(|story| CommandGuidance::next(story_accept_command(story.id()))),
+        NextDecision::Accept(d) => d.stories.first().map(|story| {
+            CommandGuidance::next(story_accept_command_for_role(
+                story.id(),
+                management_role_example,
+            ))
+        }),
         NextDecision::Research(d) => d
             .bearings
             .first()
             .map(|bearing| CommandGuidance::next(format!("keel play {}", bearing.id()))),
-        NextDecision::Blocked(d) => Some(CommandGuidance::recovery(story_accept_command(
+        NextDecision::Blocked(d) => Some(CommandGuidance::recovery(story_accept_command_for_role(
             d.story.id(),
+            management_role_example,
         ))),
         NextDecision::NeedsStories(d) => d.voyages.first().map(|voyage| {
             CommandGuidance::next(story_creation_command(
@@ -540,7 +533,7 @@ fn render_human_guidance(guidance: Option<&CanonicalGuidance>) -> String {
         rendered.push_str("\nRole context:\n");
         rendered.push_str(&format!("  Role: {}\n", role_context.role));
         rendered.push_str(&format!("  Template: {}\n", role_context.template_id));
-        rendered.push_str(&format!("  Queue lane: {}\n", role_context.queue_lane));
+        rendered.push_str(&format!("  Lane: {}\n", role_context.lane));
         rendered.push_str(&format!("  Persona: {}\n", role_context.persona));
         rendered.push_str("  Priorities:\n");
         for priority in &role_context.priorities {
@@ -683,6 +676,7 @@ fn json_pairwise_blockers(
 fn build_parallel_json_result(
     projection: &ParallelProjection<'_>,
     role_context: Option<&RoleContextGuidance>,
+    _management_role_example: &str,
 ) -> JsonResult {
     let mut ready_json: Vec<JsonStory> = projection
         .ready
@@ -735,12 +729,13 @@ fn run_parallel(
     json: bool,
     actor_role: Option<&crate::domain::model::taxonomy::RoleTaxonomy>,
     actor_context: Option<&ResolvedActorContext>,
+    management_role_example: &str,
 ) -> Result<()> {
     let projection = project_parallel_work(board, board_dir, actor_role);
     let role_context = actor_context.and_then(|context| context.role_context.as_ref());
 
     if json {
-        let result = build_parallel_json_result(&projection, role_context);
+        let result = build_parallel_json_result(&projection, role_context, management_role_example);
         println!("{}", serde_json::to_string_pretty(&result)?);
     } else {
         println!("Ready for Work (Parallel Safe):");
@@ -861,9 +856,15 @@ mod tests {
         StoryFactory::new(id).title("Story").build()
     }
 
+    fn default_topology() -> ResolvedWorkflowTopology {
+        workflow_topology::resolve(&crate::infrastructure::config::Config::default()).unwrap()
+    }
+
     fn make_role_context(role: &str) -> RoleContextGuidance {
         let taxonomy = crate::domain::model::taxonomy::parse(role).unwrap();
-        let template = crate::read_model::role_context::resolve_role_context(&taxonomy).unwrap();
+        let topology = default_topology();
+        let template =
+            crate::read_model::role_context::resolve_role_context(&topology, &taxonomy).unwrap();
         RoleContextGuidance::from_template(&taxonomy, template)
     }
 
@@ -904,9 +905,9 @@ priority = 50
     }
 
     fn assert_human_json_guidance_parity(decision: &NextDecision) {
-        let guidance = guidance_for_decision(decision, None);
+        let guidance = guidance_for_decision(decision, None, "manager");
         let rendered = render_human_guidance(guidance.as_ref());
-        let json = serde_json::to_value(decision_to_json(decision, None)).unwrap();
+        let json = serde_json::to_value(decision_to_json(decision, None, "manager")).unwrap();
 
         match guidance.as_ref() {
             Some(g) if g.next_step.is_some() => {
@@ -942,7 +943,7 @@ priority = 50
             warning: None,
         });
 
-        let payload = decision_to_json(&decision, None);
+        let payload = decision_to_json(&decision, None, "manager");
         let json = serde_json::to_value(payload).unwrap();
 
         assert_eq!(json["decision"], "work");
@@ -961,7 +962,7 @@ priority = 50
             warning: None,
         });
 
-        let payload = decision_to_json(&decision, None);
+        let payload = decision_to_json(&decision, None, "manager");
         let json = serde_json::to_value(payload).unwrap();
 
         assert_eq!(json["decision"], "work");
@@ -978,13 +979,13 @@ priority = 50
             stories: vec![make_story("S2")],
         });
 
-        let payload = decision_to_json(&decision, None);
+        let payload = decision_to_json(&decision, None, "manager");
         let json = serde_json::to_value(payload).unwrap();
 
         assert_eq!(json["decision"], "accept");
         assert_eq!(
             json["guidance"]["next_step"]["command"],
-            "keel story accept S2 --role manager/product"
+            "keel story accept S2 --role manager"
         );
         assert!(json["guidance"]["recovery_step"].is_null());
     }
@@ -996,13 +997,13 @@ priority = 50
             count: 9,
         });
 
-        let payload = decision_to_json(&decision, None);
+        let payload = decision_to_json(&decision, None, "manager");
         let json = serde_json::to_value(payload).unwrap();
 
         assert_eq!(json["decision"], "blocked");
         assert_eq!(
             json["guidance"]["recovery_step"]["command"],
-            "keel story accept S9 --role manager/product"
+            "keel story accept S9 --role manager"
         );
         assert!(json["guidance"]["next_step"].is_null());
     }
@@ -1013,7 +1014,7 @@ priority = 50
             suggestions: vec!["Refuel".to_string()],
         });
 
-        let payload = decision_to_json(&decision, None);
+        let payload = decision_to_json(&decision, None, "manager");
         let json = serde_json::to_value(payload).unwrap();
 
         assert!(json.get("guidance").is_none());
@@ -1026,20 +1027,20 @@ priority = 50
             is_continuation: false,
             warning: None,
         });
-        let role_context = make_role_context("engineer/software");
+        let role_context = make_role_context("operator/software");
 
-        let payload = decision_to_json(&decision, Some(&role_context));
+        let payload = decision_to_json(&decision, Some(&role_context), "manager");
         let json = serde_json::to_value(payload).unwrap();
 
         assert_eq!(
             json["guidance"]["role_context"]["role"],
-            "engineer/software"
+            "operator/software"
         );
         assert_eq!(
             json["guidance"]["role_context"]["template_id"],
-            "engineer-core"
+            "operator-core"
         );
-        assert_eq!(json["guidance"]["role_context"]["queue_lane"], "execution");
+        assert_eq!(json["guidance"]["role_context"]["lane"], "delivery");
         assert_eq!(
             json["guidance"]["next_step"]["command"],
             "keel story start SCTX"
@@ -1206,12 +1207,18 @@ priority = 50
         let first_projection = project_parallel_work(&board_first, temp.path(), None);
         let second_projection = project_parallel_work(&board_second, temp.path(), None);
 
-        let first_output =
-            serde_json::to_string_pretty(&build_parallel_json_result(&first_projection, None))
-                .unwrap();
-        let second_output =
-            serde_json::to_string_pretty(&build_parallel_json_result(&second_projection, None))
-                .unwrap();
+        let first_output = serde_json::to_string_pretty(&build_parallel_json_result(
+            &first_projection,
+            None,
+            "manager",
+        ))
+        .unwrap();
+        let second_output = serde_json::to_string_pretty(&build_parallel_json_result(
+            &second_projection,
+            None,
+            "manager",
+        ))
+        .unwrap();
 
         assert_eq!(first_output, second_output);
 
@@ -1260,7 +1267,7 @@ priority = 50
 
         let blocker = &projection.blocked_pairs[0];
         let human = render_parallel_blockers_human(&projection.blocked_pairs);
-        let json = serde_json::to_value(build_parallel_json_result(&projection, None))
+        let json = serde_json::to_value(build_parallel_json_result(&projection, None, "manager"))
             .expect("json payload");
         let json_blocker = &json["details"]["parallel_work"]["blocked_pairs"][0];
 
@@ -1277,16 +1284,16 @@ priority = 50
     }
 
     #[test]
-    fn render_human_guidance_surfaces_role_context_and_queue_lane() {
+    fn render_human_guidance_surfaces_role_context_and_lane() {
         let guidance = CanonicalGuidance::next("keel story start S1")
-            .with_role_context(make_role_context("manager/product"));
+            .with_role_context(make_role_context("manager"));
 
         let rendered = render_human_guidance(Some(&guidance));
 
         assert!(rendered.contains("Role context:"));
-        assert!(rendered.contains("Role: manager/product"));
+        assert!(rendered.contains("Role: manager"));
         assert!(rendered.contains("Template: manager-core"));
-        assert!(rendered.contains("Queue lane: management"));
+        assert!(rendered.contains("Lane: management"));
         assert!(
             rendered.contains("Persona: Mission steward for scope, approvals, and coordination.")
         );
@@ -1299,7 +1306,7 @@ priority = 50
     fn next_role_topology_rejects_unknown_family_with_configured_default_examples() {
         let temp = TestBoardBuilder::new().build();
         write_custom_topology_config(temp.path());
-        let topology = load_workflow_topology_for_board(temp.path()).unwrap();
+        let topology = workflow_topology::load_for_board(temp.path()).unwrap();
         let analyst = crate::domain::model::taxonomy::parse("analyst/research").unwrap();
 
         let error = resolve_actor_context(&topology, Some(&analyst))
@@ -1317,7 +1324,7 @@ priority = 50
         let temp = TestBoardBuilder::new()
             .story(TestStory::new("S1").status(StoryState::Backlog))
             .build();
-        let topology = load_workflow_topology_for_board(temp.path()).unwrap();
+        let topology = workflow_topology::load_for_board(temp.path()).unwrap();
         let manager = crate::domain::model::taxonomy::parse("manager").unwrap();
         let actor_context = resolve_actor_context(&topology, Some(&manager)).unwrap();
 
@@ -1335,7 +1342,7 @@ priority = 50
     fn next_parallel_topology_resolution_is_deterministic() {
         let temp = TestBoardBuilder::new().build();
         write_custom_topology_config(temp.path());
-        let topology = load_workflow_topology_for_board(temp.path()).unwrap();
+        let topology = workflow_topology::load_for_board(temp.path()).unwrap();
         let maker = crate::domain::model::taxonomy::parse("maker").unwrap();
 
         let first = resolve_actor_context(&topology, Some(&maker)).unwrap();

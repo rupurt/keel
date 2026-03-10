@@ -1,6 +1,7 @@
 //! Effective workflow-topology projection derived from config.
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::path::Path;
 
 use crate::domain::model::taxonomy::RoleTaxonomy;
 use crate::infrastructure::config::{Config, LaneConfig, RoleFamilyConfig, WorkflowDefaultsConfig};
@@ -168,9 +169,54 @@ impl ResolvedWorkflowTopology {
         Ok(classify_next_queue_lane(self.resolve_actor_lane(role)?))
     }
 
+    pub fn allows_manual_accept(&self, role: &RoleTaxonomy) -> Result<bool, UnknownRoleFamily> {
+        Ok(self.resolve_actor_lane(role)?.manual_accept)
+    }
+
     pub fn supports_parallel(&self, role: &RoleTaxonomy) -> Result<bool, UnknownRoleFamily> {
         Ok(self.resolve_actor_lane(role)?.parallel)
     }
+
+    pub fn resolve_template<'a>(
+        &'a self,
+        role: &RoleTaxonomy,
+    ) -> Result<&'a str, UnknownRoleFamily> {
+        let role_family = self
+            .roles
+            .get(role.role.as_str())
+            .ok_or_else(|| UnknownRoleFamily {
+                base_role: role.role.clone(),
+            })?;
+
+        Ok(self
+            .role_overrides
+            .get(role.to_string().as_str())
+            .map(|override_| override_.template.as_str())
+            .unwrap_or(role_family.template.as_str()))
+    }
+}
+
+pub fn project_root_for_board(board_dir: &Path) -> &Path {
+    board_dir
+        .parent()
+        .filter(|parent| parent.join("keel.toml").exists())
+        .unwrap_or(board_dir)
+}
+
+pub fn load_for_board(board_dir: &Path) -> Result<ResolvedWorkflowTopology, WorkflowTopologyError> {
+    let project_root = project_root_for_board(board_dir);
+    let (config, _) = crate::infrastructure::config::load_config_from(project_root);
+    resolve(&config)
+}
+
+pub fn current_default_role_examples() -> Option<(String, String)> {
+    let (config, _) = crate::infrastructure::config::load_config();
+    resolve(&config).ok().map(|topology| {
+        (
+            topology.management_role_example().to_string(),
+            topology.delivery_role_example().to_string(),
+        )
+    })
 }
 
 pub fn resolve(config: &Config) -> Result<ResolvedWorkflowTopology, WorkflowTopologyError> {

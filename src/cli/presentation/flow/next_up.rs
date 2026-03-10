@@ -588,7 +588,7 @@ mod tests {
         assert_eq!(next_up.human_items[2].category, "plan");
         assert_eq!(
             next_up.human_items[0].command.as_deref(),
-            Some("keel story accept S1 --role manager/product")
+            Some("keel story accept S1 --role manager")
         );
     }
 

@@ -44,6 +44,34 @@ impl std::fmt::Display for ParseError {
 
 impl std::error::Error for ParseError {}
 
+impl std::fmt::Display for RoleTaxonomy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.role)?;
+
+        if let Some(specialization) = &self.specialization {
+            write!(f, "/{specialization}")?;
+        }
+
+        if !self.tags.is_empty() {
+            write!(f, ":{}", self.tags.join(","))?;
+        }
+
+        if let Some(style) = &self.style {
+            write!(f, "~{style}")?;
+        }
+
+        if let Some(level) = &self.level {
+            write!(f, "@{level}")?;
+        }
+
+        if let Some(context) = &self.context {
+            write!(f, "#{context}")?;
+        }
+
+        Ok(())
+    }
+}
+
 impl RoleTaxonomy {
     /// Check if self (actor) can work on a story requiring `story_role`.
     ///

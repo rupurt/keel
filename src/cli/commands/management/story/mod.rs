@@ -68,7 +68,7 @@ pub enum StoryAction {
     Accept {
         /// Story ID
         id: String,
-        /// Role taxonomy authorizing acceptance (e.g., "manager/product")
+        /// Role taxonomy authorizing acceptance (e.g., "manager")
         #[arg(long)]
         role: String,
         /// Optional reflection observation to capture at acceptance time

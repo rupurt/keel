@@ -311,7 +311,7 @@ fn evaluate_story_accept(
             path: story.path.clone(),
             scope: story.scope().map(String::from),
             message: format!(
-                "Story {} has manual acceptance criteria. Manual verification must be accepted with a manager/* role.",
+                "Story {} has manual acceptance criteria. Manual verification must be accepted with a role whose lane has manual_accept = true.",
                 story.id()
             ),
             fix: None,

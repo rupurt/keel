@@ -20,6 +20,7 @@ use crate::domain::transitions::{execute, transitions};
 use crate::infrastructure::frontmatter_mutation::{Mutation, apply};
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::verification;
+use crate::read_model::workflow_topology;
 use anyhow::{Context, Result, anyhow, bail};
 use chrono::Local;
 use owo_colors::OwoColorize;
@@ -180,9 +181,13 @@ impl StoryLifecycleService {
     ) -> Result<()> {
         let board = load_board(board_dir)?;
         let story = board.require_story(id)?;
+        let topology = workflow_topology::load_for_board(board_dir)?;
+        let manual_accept_authorized = topology
+            .allows_manual_accept(actor_role)
+            .map_err(|error| unsupported_accept_role_error(error, &topology, story.id()))?;
 
         let policy = EnforcementPolicy {
-            manual_acceptance_manager_role_authorized: actor_role.role == "manager",
+            manual_acceptance_manager_role_authorized: manual_accept_authorized,
             ..EnforcementPolicy::RUNTIME
         };
 
@@ -202,9 +207,10 @@ impl StoryLifecycleService {
                 .iter()
                 .any(|problem| problem.message.contains("manual acceptance criteria"))
             {
-                msg.push_str(
-                    "\nHint: Stories with manual verification must be accepted with `--role manager/product` after review.",
-                );
+                msg.push_str(&format!(
+                    "\nHint: Stories with manual verification must be accepted with `--role {}` after review.",
+                    topology.management_role_example()
+                ));
             }
 
             return Err(anyhow!(msg));
@@ -325,6 +331,20 @@ impl StoryLifecycleService {
 
         Ok(())
     }
+}
+
+fn unsupported_accept_role_error(
+    error: workflow_topology::UnknownRoleFamily,
+    topology: &workflow_topology::ResolvedWorkflowTopology,
+    story_id: &str,
+) -> anyhow::Error {
+    anyhow!(
+        "Unsupported `keel story accept --role` family `{}`. Try `keel story accept {} --role {}` for manual review or use `keel next --role {}` for delivery work.",
+        error.base_role,
+        story_id,
+        topology.management_role_example(),
+        topology.delivery_role_example(),
+    )
 }
 
 fn set_started_at(path: &Path, datetime: &str) -> Result<()> {
@@ -498,7 +518,7 @@ mod tests {
     use std::fs;
 
     #[test]
-    fn accept_requires_manager_role_for_manual_verification_stories() {
+    fn accept_requires_manual_accept_lane_for_manual_verification_stories() {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("MANUAL01")
@@ -511,19 +531,19 @@ mod tests {
         let err = StoryLifecycleService::accept(
             temp.path(),
             "MANUAL01",
-            &crate::domain::model::taxonomy::parse("engineer/software").unwrap(),
+            &crate::domain::model::taxonomy::parse("operator").unwrap(),
             None,
         )
         .unwrap_err()
         .to_string();
         assert!(
-            err.contains("--role manager/product"),
-            "manual verification enforcement should require a manager role: {err}"
+            err.contains("--role manager"),
+            "manual verification enforcement should require the management lane: {err}"
         );
     }
 
     #[test]
-    fn accept_allows_manual_verification_stories_with_manager_role() {
+    fn accept_allows_manual_verification_stories_with_management_role() {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("MANUAL02")
@@ -536,7 +556,7 @@ mod tests {
         StoryLifecycleService::accept(
             temp.path(),
             "MANUAL02",
-            &crate::domain::model::taxonomy::parse("manager/product").unwrap(),
+            &crate::domain::model::taxonomy::parse("manager").unwrap(),
             None,
         )
         .unwrap();
@@ -647,7 +667,7 @@ The guard should run before acceptance completes.
         StoryLifecycleService::accept(
             temp.path(),
             "DONE00001",
-            &crate::domain::model::taxonomy::parse("manager/product").unwrap(),
+            &crate::domain::model::taxonomy::parse("manager").unwrap(),
             None,
         )
         .unwrap();

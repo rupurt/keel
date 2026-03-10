@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-10T16:34:00.670540768-07:00
+mode: manual
+---
+cargo test -p keel role_context_topology_ passed; role context now resolves template ids from configured base roles, exact role_overrides win on full-taxonomy matches, and the emitted guidance payload carries the resolved configured lane instead of a hardcoded management/execution family.

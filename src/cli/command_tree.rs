@@ -102,7 +102,7 @@ pub fn build_cli() -> Command {
                     Arg::new("role")
                         .long("role")
                         .value_name("TAXONOMY")
-                        .help("Role taxonomy controlling queue selection (e.g., \"manager/product\" or \"engineer/software:infrastructure\")")
+                        .help("Role taxonomy controlling queue selection (e.g., \"manager\" or \"operator/software:infrastructure\")")
                         .num_args(1),
                 )
                 .arg(

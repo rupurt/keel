@@ -14,3 +14,7 @@ Completed story VDVRaQp66 (Add Workflow Topology Config Model). Added workflow/r
 ## 2026-03-10T16:16:58
 
 Completed story VDVRaRR5x. Routed keel next through configured role-to-lane topology, made role context optional for next guidance, and rejected unknown families with configured manager/operator defaults. Verification passed via just quality, just test, just doctest, and just keel doctor. Next ready slice: VDVRaSs5w, Authorize Acceptance And Templates Through Topology.
+
+## 2026-03-10T16:34:56
+
+Completed story VDVRaSs5w. Manual story acceptance now validates configured lane manual_accept capability, role context resolves template ids from topology with exact override precedence, and next guidance emits configured lane metadata plus top-level manager accept commands. Verification passed via just quality, just test, just doctest, and just keel doctor. Next ready slice: VDVRaTB5z, Render Dynamic Lanes In Flow.

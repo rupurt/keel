@@ -1,7 +1,6 @@
 //! Canonical guidance output contract for actionable command responses.
 
 use crate::domain::model::taxonomy::RoleTaxonomy;
-use crate::read_model::queue_policy::ActorQueueLane;
 use crate::read_model::role_context::RoleContextTemplate;
 use serde::Serialize;
 
@@ -27,7 +26,7 @@ pub struct GuidanceStep {
 pub struct RoleContextGuidance {
     pub role: String,
     pub template_id: String,
-    pub queue_lane: String,
+    pub lane: String,
     pub persona: String,
     pub priorities: Vec<String>,
     pub workflow: Vec<String>,
@@ -91,9 +90,9 @@ impl RoleContextGuidance {
     /// Materialize the serialized guidance payload from a role taxonomy and template.
     pub fn from_template(role: &RoleTaxonomy, template: RoleContextTemplate) -> Self {
         Self {
-            role: format_role_taxonomy(role),
-            template_id: template.template_id.to_string(),
-            queue_lane: queue_lane_name(template.queue_lane).to_string(),
+            role: role.to_string(),
+            template_id: template.template_id,
+            lane: template.lane,
             persona: template.persona.to_string(),
             priorities: template
                 .priorities
@@ -114,47 +113,11 @@ pub fn render_command_guidance(guidance: Option<CommandGuidance>) -> Option<Cano
     guidance.map(CommandGuidance::into_payload)
 }
 
-fn queue_lane_name(queue_lane: ActorQueueLane) -> &'static str {
-    match queue_lane {
-        ActorQueueLane::Management => "management",
-        ActorQueueLane::Execution => "execution",
-    }
-}
-
-fn format_role_taxonomy(role: &RoleTaxonomy) -> String {
-    let mut rendered = role.role.clone();
-
-    if let Some(specialization) = &role.specialization {
-        rendered.push('/');
-        rendered.push_str(specialization);
-    }
-
-    if !role.tags.is_empty() {
-        rendered.push(':');
-        rendered.push_str(&role.tags.join(","));
-    }
-
-    if let Some(style) = &role.style {
-        rendered.push('~');
-        rendered.push_str(style);
-    }
-
-    if let Some(level) = &role.level {
-        rendered.push('@');
-        rendered.push_str(level);
-    }
-
-    if let Some(context) = &role.context {
-        rendered.push('#');
-        rendered.push_str(context);
-    }
-
-    rendered
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::infrastructure::config::Config;
+    use crate::read_model::{role_context, workflow_topology};
     use serde_json::json;
 
     #[test]
@@ -198,8 +161,9 @@ mod tests {
     #[test]
     fn serializes_role_context_when_present() {
         let role =
-            crate::domain::model::taxonomy::parse("engineer/software:infra~steady#oncall").unwrap();
-        let template = crate::read_model::role_context::resolve_role_context(&role).unwrap();
+            crate::domain::model::taxonomy::parse("operator/software:infra~steady#oncall").unwrap();
+        let topology = workflow_topology::resolve(&Config::default()).unwrap();
+        let template = role_context::resolve_role_context(&topology, &role).unwrap();
         let guidance = CanonicalGuidance::next("keel story start S1")
             .with_role_context(RoleContextGuidance::from_template(&role, template));
         let json = serde_json::to_value(guidance).unwrap();
@@ -207,19 +171,19 @@ mod tests {
         assert_eq!(
             json["role_context"],
             json!({
-                "role": "engineer/software:infra~steady#oncall",
-                "template_id": "engineer-core",
-                "queue_lane": "execution",
-                "persona": "Focused implementer for tested, evidence-backed delivery.",
+                "role": "operator/software:infra~steady#oncall",
+                "template_id": "operator-core",
+                "lane": "delivery",
+                "persona": "Focused operator for evidence-backed delivery.",
                 "priorities": [
-                    "Pull the next ready execution slice and keep the scope tight.",
-                    "Write failing tests first, then implement only enough to pass.",
+                    "Pull the next ready delivery slice and keep the scope tight.",
+                    "Use the active verification method to prove the slice before moving on.",
                     "Record evidence, submit the story, and commit one atomic slice."
                 ],
                 "workflow": [
-                    "Start from the story and voyage show surfaces before touching code.",
-                    "Keep edits confined to the active story and its directly coupled lifecycle work.",
-                    "Run quality, tests, doctests, and doctor before finalizing the slice."
+                    "Start from the story and voyage show surfaces before touching the work.",
+                    "Keep changes confined to the active story and its directly coupled lifecycle work.",
+                    "Run project quality checks, tests, doctests, and doctor before finalizing the slice."
                 ]
             })
         );
