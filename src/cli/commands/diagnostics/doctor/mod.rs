@@ -72,8 +72,23 @@ pub fn run(board_dir: &Path, fix: bool, _evidence: bool, _watch: bool, _quick: b
 
 /// Run all health checks and return a full report
 pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
+    // Prefer config from the board directory itself or its parent (project root)
+    let (config, source) = crate::infrastructure::config::load_config_from(board_dir);
+    if source != crate::infrastructure::config::ConfigSource::Defaults {
+        return validate_with_config(board_dir, &config);
+    }
+
+    let project_root = board_dir.parent().unwrap_or(board_dir);
+    let (config, _) = crate::infrastructure::config::load_config_from(project_root);
+    validate_with_config(board_dir, &config)
+}
+
+/// Run all health checks with a specific configuration
+pub fn validate_with_config(
+    board_dir: &Path,
+    config: &crate::infrastructure::config::Config,
+) -> Result<DoctorReport> {
     let board = load_board(board_dir)?;
-    let (config, _) = crate::infrastructure::config::load_config();
     let doctor_config = &config.doctor;
 
     let mut story_checks = Vec::new();
@@ -679,14 +694,6 @@ mod tests {
     use std::path::Path;
     use tempfile::TempDir;
 
-    fn with_current_dir<T>(path: &Path, f: impl FnOnce() -> T) -> T {
-        let original = std::env::current_dir().unwrap();
-        std::env::set_current_dir(path).unwrap();
-        let result = f();
-        std::env::set_current_dir(original).unwrap();
-        result
-    }
-
     fn write_prd(temp: &tempfile::TempDir, epic_id: &str, content: &str) {
         fs::write(temp.path().join(format!("epics/{epic_id}/PRD.md")), content).unwrap();
     }
@@ -902,7 +909,8 @@ disabled = true
         )
         .unwrap();
 
-        let report = with_current_dir(temp.path(), || validate(temp.path()).unwrap());
+        let config = crate::infrastructure::config::load_from_file(&temp.path().join("keel.toml")).unwrap();
+        let report = validate_with_config(temp.path(), &config).unwrap();
         let scope_check = report
             .voyage_checks
             .iter()

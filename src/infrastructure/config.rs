@@ -258,10 +258,10 @@ pub fn find_board_dir() -> Result<PathBuf> {
     }
 }
 
-/// Load configuration with layered resolution
-pub fn load_config() -> (Config, ConfigSource) {
-    // Try project-local first
-    let local_path = PathBuf::from("keel.toml");
+/// Load configuration with layered resolution, starting from a specific directory
+pub fn load_config_from(dir: &Path) -> (Config, ConfigSource) {
+    // Try project-local first in the specified directory
+    let local_path = dir.join("keel.toml");
     if let Some(config) = local_path
         .exists()
         .then(|| load_from_file(&local_path).ok())
@@ -284,6 +284,12 @@ pub fn load_config() -> (Config, ConfigSource) {
 
     // Fall back to defaults
     (Config::default(), ConfigSource::Defaults)
+}
+
+/// Load configuration with layered resolution
+pub fn load_config() -> (Config, ConfigSource) {
+    let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    load_config_from(&cwd)
 }
 
 /// Load configuration from a specific file
