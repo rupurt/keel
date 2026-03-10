@@ -105,10 +105,7 @@ fn audit_story(story: &crate::domain::model::Story, indent_level: usize) -> Resu
         let mut by_req: HashMap<String, Vec<&planning_show::EvidenceItem>> = HashMap::new();
         for item in &evidence_report.items {
             for req_id in &item.requirements {
-                by_req
-                    .entry(req_id.clone())
-                    .or_default()
-                    .push(item);
+                by_req.entry(req_id.clone()).or_default().push(item);
             }
         }
 
@@ -118,10 +115,7 @@ fn audit_story(story: &crate::domain::model::Story, indent_level: usize) -> Resu
         for req_id in req_ids {
             println!("{}  Requirement: {}", indent, req_id.cyan());
             for item in &by_req[req_id] {
-                let ac_label = item
-                    .ac_label
-                    .clone()
-                    .unwrap_or_else(|| "AC-??".to_string());
+                let ac_label = item.ac_label.clone().unwrap_or_else(|| "AC-??".to_string());
 
                 println!(
                     "{}    {}: {}",
@@ -162,7 +156,11 @@ fn audit_story(story: &crate::domain::model::Story, indent_level: usize) -> Resu
                             item.excerpt_lines.len()
                         );
                         for line in &item.excerpt_lines {
-                            println!("{}          {}", indent, style::styled_inline_markdown(line));
+                            println!(
+                                "{}          {}",
+                                indent,
+                                style::styled_inline_markdown(line)
+                            );
                         }
                     }
                     if item.missing_proof {
@@ -186,7 +184,11 @@ fn audit_story(story: &crate::domain::model::Story, indent_level: usize) -> Resu
     if !evidence_report.supplementary_artifacts.is_empty() {
         println!("{}  Supplementary artifacts:", indent);
         for artifact in &evidence_report.supplementary_artifacts {
-            println!("{}    - {}", indent, style::styled_inline_markdown(artifact));
+            println!(
+                "{}    - {}",
+                indent,
+                style::styled_inline_markdown(artifact)
+            );
         }
     }
 

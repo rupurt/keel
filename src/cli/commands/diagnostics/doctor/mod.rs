@@ -918,7 +918,8 @@ disabled = true
         )
         .unwrap();
 
-        let config = crate::infrastructure::config::load_from_file(&temp.path().join("keel.toml")).unwrap();
+        let config =
+            crate::infrastructure::config::load_from_file(&temp.path().join("keel.toml")).unwrap();
         let report = validate_with_config(temp.path(), &config).unwrap();
         let scope_check = report
             .voyage_checks
