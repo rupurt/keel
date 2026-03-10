@@ -3,10 +3,32 @@
 Shared guidance for AI agents working with this repository. This file can be imported
 by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
 
+## Subagent / Delegation
+
+Use missions as the long-lived steering context and keep delivery contexts narrow.
+If your harness supports subagents, worker sessions, or fresh task-local contexts,
+use them to preserve workflow-specific focus instead of carrying one mixed context
+across planning, research, and execution.
+
+1. **Keep One Mission Steward**: The top-level harness/session owns mission scope, charter integrity, `just keel mission show <id>`, `just keel flow`, `just keel next --agent`, mission logging, phase switching, and final mission lifecycle transitions.
+2. **Delegate By Workflow Type**: Hand one concrete work unit to a dedicated worker context:
+   - Implementer: one primary implementation slice at a time, usually one story plus any directly coupled lifecycle work required to finish that slice cleanly (for example `story submit`, evidence capture, or `voyage done` when closing the final scoped story).
+   - Architect: one planning unit at a time (epic or voyage), including the authored artifacts and downstream story decomposition needed to seal that unit cleanly.
+   - Explorer: exactly one bearing research package, one lifecycle transition chain, one atomic commit.
+3. **Pass Primary Sources, Not Just Summaries**: Give each worker the entity IDs, file ownership, verification expectations, lifecycle expectations, and the canonical `show` commands or document paths it must open first.
+4. **Return Control After Each Unit**: When a worker finishes, the mission steward reviews the result, records the outcome with `just keel mission log <id> --entry "<text>"`, optionally runs `just keel mission digest <id>` for long logs, then reruns board health commands before choosing the next phase.
+5. **Do Not Mix Phases In One Worker**: If the work changes from execution to planning or research, stop and hand off to the matching workflow context instead of continuing in the old one. Parent context reads and directly coupled closure steps are fine; silent mission re-scoping is not. Only parallelize workers when their artifacts and ownership do not overlap.
+
 ## Execution Workflow (Implementer)
+
+Use this workflow inside a dedicated implementer context. When operating under a
+mission, the mission steward should hand one primary story slice at a time to
+this workflow, along with any directly coupled parent context or closure work
+needed to finish that slice cleanly.
 
 1. **Pull Context**: Read current board health and identify bottlenecks with `just keel flow`.
 2. **Claim Work**: Pull the highest-priority implementation item with `just keel next --agent`. Use `--parallel` to identify safe concurrent tasks.
+   - If no story is ready and the active mission still has unmet goals, hand off immediately to the Planning or Research workflow instead of waiting or stopping.
 3. **Open the Show Surfaces First**: Use the CLI read views as the default entry points for implementation context and clarification:
    - `just keel story show <story-id>` for the active work item, acceptance criteria, status, evidence, and story path.
    - `just keel voyage show <voyage-id>` for parent requirements, scope, drift, progress, and the rendered `SRS.md` / `SDD.md` paths.
@@ -34,7 +56,11 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
 
 ## Planning Workflow (Architect)
 
-1. **Identify Gaps**: Use `just keel flow` or `just keel status` to find Epics needing tactical decomposition.
+Use this workflow inside a dedicated architect context. When operating under a
+mission, enter this workflow only for a concrete planning unit that is blocked on
+requirements, design, or decomposition.
+
+1. **Identify Gaps**: Use `just keel flow` to find Epics needing tactical decomposition and to detect when execution is starved by missing planning work.
 2. **Scaffold Planning Unit**:
    - For new strategic work, create an Epic: `just keel epic new "<Title>" --problem "<Problem>"`
    - For tactical decomposition, create a Voyage: `just keel voyage new "<Title>" --epic <epic-id> --goal "<The specific outcome>"`
@@ -85,8 +111,13 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
      - Canonical next step command
 11. **Seal Planning**: Promote the voyage from `draft` to `planned` with `just keel voyage plan <id>`. This validates requirement coverage and thaws stories into the agent backlog.
 12. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this planning unit after sealing so the resulting `.keel` state is captured in the same commit. Do not batch unrelated planning units into one commit.
+13. **Return To Execution**: After `just keel voyage plan <id>` or equivalent planning completion, immediately rerun `just keel next --agent` and hand the ready story to an implementer context unless a real blocker remains.
 
 ## Research Workflow (Explorer)
+
+Use this workflow inside a dedicated explorer context. When operating under a
+mission, enter this workflow only when ambiguity or missing evidence blocks
+planning or execution.
 
 1. **Identify Fog**: Create a new Bearing when the path forward is ambiguous or requires exploration:
    - `just keel bearing new "<Name>"`
@@ -107,22 +138,49 @@ by harness-specific files (CLAUDE.md, GEMINI.md, etc.).
 7. **Seal Assessment**: Transition to the assessing phase with `just keel bearing assess <id>`.
 8. **Graduate**: If research is conclusive, graduate the bearing to a strategic Epic with `just keel bearing lay <id>`.
 9. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this bearing research package after the final lifecycle transition you take for it (for example `research`, `assess`, or `lay`) so generated `.keel` artifacts are included.
+10. **Feed The Next Phase Immediately**: After `just keel bearing assess <id>` or `just keel bearing lay <id>`, immediately create or update the downstream epic, voyage, or stories, or hand control back to execution in the same mission loop.
 
-## Mission Workflow (Autonomous Harness)
+## Mission Workflow (Autonomous Harness / Mission Steward)
 
-1. **Initialize Mission**: For long-running objectives that span multiple epics, create a Mission:
+Missions are the top-level steering loop for broad objectives. Once a mission
+exists, the harness should keep working the mission until its halting rules are
+met or a real external blocker is reached.
+
+Broad product or feature goals should always run inside an active mission. If
+the request is broad and no mission covers it yet, create one first.
+
+1. **Bootstrap Mission**: If no active mission covers the current user request, create one:
    - `just keel mission new "<Title>"`
-2. **Refine Charter**: Iteratively define goals and constraints until the charter is ready:
-   - `just keel mission refine <id>` (to see next question)
-   - `just keel mission refine <id> --answer "<text>"` (to record answer)
-3. **Activate**: Once the charter has at least one authored `board:` goal, activate the mission:
+2. **Refine Charter**: Fill out `CHARTER.md` with specific goals, constraints, and halting rules before activation:
+   - Every mission goal should have a clear verification path (`board:`, `metric:`, or `manual:`).
+   - Use `just keel mission refine <id>` to see the next question.
+   - Use `just keel mission refine <id> --answer "<text>"` to record each answer.
+   - Do not activate the mission until refinement reports that the charter is ready and every authored goal has an explicit verification path.
+3. **Activate**: Once the charter is ready, constraints and halting rules are authored, and the mission has at least one actionable `board:` goal, activate the mission:
    - `just keel mission activate <id>`
-4. **Autonomous Execution**:
-   - `just keel next --agent` will recommend the next work unit (bearing or epic) when the queue is empty but mission goals are unmet.
-   - Use `just keel mission log <id> --entry "<text>"` to record session decisions and session progress.
-5. **Achieve and Verify**:
-   - Transition to `achieved` when board goals are met: `just keel mission achieve <id>`
-   - Final human sign-off: `just keel mission verify <id>`
+4. **Refresh State At The Start Of Every Cycle**: Re-open the mission and board before choosing work:
+   - `just keel mission show <id>`
+   - `just keel flow`
+5. **Choose The Correct Phase And Hand Off To The Matching Workflow**:
+   - If a story is ready or the next step is a concrete implementation slice, use the **Execution Workflow** in a dedicated implementer context.
+   - If no story is ready and the next step is decomposition, scoping, or requirements/design authoring, use the **Planning Workflow** in a dedicated architect context.
+   - If planning or execution is blocked by ambiguity, missing evidence, or external research, use the **Research Workflow** in a dedicated explorer context.
+   - If `just keel next --agent` reports no ready work but mission goals remain unmet, create the next bearing, epic, voyage, or story instead of stopping.
+6. **Rejoin The Mission Loop After Every Worker Result**:
+   - Review the resulting board state and changed artifacts.
+   - Record the decision, evidence, blocker, and next phase with `just keel mission log <id> --entry "<text>"`.
+   - Return to step 4 and choose the next phase again. Do not let one long-lived worker drift across multiple workflow types.
+7. **Digest Regularly**: When `LOG.md` grows large, compress older entries so the mission context remains readable:
+   - `just keel mission digest <id>`
+8. **Achieve**: Once all board-verifiable goals are satisfied, transition the mission to achieved:
+   - `just keel mission achieve <id>`
+9. **Final Verification**: After achievement, hand off to the human sign-off step:
+   - `just keel mission verify <id>`
+10. **Non-Stopping Conditions**: The following are never sufficient reasons to halt while mission goals remain unmet:
+   - no ready story
+   - clean tests
+   - a clean commit
+   - a submitted story
 
 ## Global Hygiene Checklist
 
@@ -139,7 +197,8 @@ Apply these checks to **every change** before finalizing work:
    - `refactor:` (code change, no behavior change)
    - `test:` (adding/updating tests)
    - `chore:` (build/tooling)
-6. **Knowledge Quality Bar**: Prefer no new knowledge over low-signal knowledge. A new knowledge entry should be novel, reusable across stories, and materially reduce future drift; otherwise link existing knowledge or omit capture entirely.
+6. **Mission Loop Discipline**: For mission-driven work, return to the mission steward loop after every completed story, planning unit, or bearing instead of continuing ad hoc from the last worker context.
+7. **Knowledge Quality Bar**: Prefer no new knowledge over low-signal knowledge. A new knowledge entry should be novel, reusable across stories, and materially reduce future drift; otherwise link existing knowledge or omit capture entirely.
 
 ## Compatibility Policy (Hard Cutover)
 
@@ -220,7 +279,7 @@ Run `just keel --help` for the full command tree. The core commands you should r
 | Discovery | `just keel bearing new <name>` `just keel bearing research <id>` `just keel bearing assess <id>` `just keel bearing list` |
 | Planning | `just keel epic new <name> --problem <problem>` `just keel voyage new <name> --epic <epic-id> --goal <goal>` |
 | Execution | `just keel story new "<title>" [--type <type>] [--epic <epic-id> [--voyage <voyage-id>]]` |
-| Board Ops | `just keel next --agent` `just keel next` `just keel status` `just keel flow` `just keel doctor` `just keel generate` `just keel config show` |
+| Board Ops | `just keel next --agent` `just keel next` `just keel flow` `just keel doctor` `just keel generate` `just keel config show` `just keel mission show <id>` |
 | Lifecycle | Story/voyage/epic transitions in the table below |
 
 ## Story and Milestone State Changes

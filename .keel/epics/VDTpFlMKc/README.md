@@ -1,0 +1,27 @@
+---
+id: VDTpFlMKc
+title: Role Based Architecture
+mission: VDTncWcFG
+created_at: 2026-03-10T08:49:18
+index: 15
+---
+
+# Role Based Architecture
+
+> The current system hardcodes 'human' and 'agent' roles into queues, limiting autonomy and extensibility for finer-grained AI or human permissions.
+
+## Documents
+
+| Document | Description |
+|----------|-------------|
+| [PRD.md](PRD.md) | Product requirements and success criteria |
+| `PRESS_RELEASE.md` (optional) | Working-backwards artifact for large user-facing launches; usually skip for incremental/refactor/architecture-only work |
+
+## Voyages
+
+<!-- BEGIN GENERATED -->
+**Progress:** 0/1 voyages complete, 0/4 stories done
+| Voyage | Status | Stories |
+|--------|--------|---------|
+| [Core Changes](voyages/VDUG60pcX/) | draft | 0/4 |
+<!-- END GENERATED -->

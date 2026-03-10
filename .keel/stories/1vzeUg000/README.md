@@ -5,6 +5,7 @@ type: docs
 status: done
 created_at: 2026-03-09T10:34:14
 updated_at: 2026-03-09T10:34:14
+started_at: 2026-03-09T10:34:14
 scope: 1vzeJF000/1vzeMz000
 index: 4
 ---
@@ -17,5 +18,5 @@ Update AGENTS.md template to document mission workflow for harnesses.
 
 ## Acceptance Criteria
 
-- [x] [SRS-06/AC-01] AGENTS.md template includes Mission workflow section documenting new/refine/activate loop <!-- verify: manual --> <!-- SRS-06:start:end -->
-- [x] [SRS-06/AC-02] Autonomous Delivery Policy updated to reference mission entity as authoritative objective <!-- verify: manual --> <!-- SRS-06:start:end -->
+- [x] [SRS-06/AC-01] AGENTS.md template includes Mission workflow section documenting new/refine/activate loop <!-- verify: manual, SRS-06:start:end -->
+- [x] [SRS-06/AC-02] Autonomous Delivery Policy updated to reference mission entity as authoritative objective <!-- verify: manual, SRS-06:start:end -->

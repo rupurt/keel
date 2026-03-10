@@ -5,6 +5,7 @@ type: feat
 status: done
 created_at: 2026-03-09T10:35:10
 updated_at: 2026-03-09T13:41:44
+started_at: 2026-03-09T10:35:10
 scope: 1vzeJF000/1vzeMq000
 index: 10
 ---
@@ -17,7 +18,7 @@ Implement `keel mission refine` for iterative CHARTER.md goal elicitation and `k
 
 ## Acceptance Criteria
 
-- [x] [SRS-02/AC-01] `keel mission refine <id>` returns next question when CHARTER.md is incomplete <!-- verify: test --> <!-- SRS-02:start:end -->
-- [x] [SRS-02/AC-02] `keel mission refine <id>` returns "ready" signal when CHARTER.md is complete <!-- verify: test --> <!-- SRS-02:start:end -->
-- [x] [SRS-03/AC-01] `keel mission refine <id> --answer "<text>"` records answer into CHARTER.md and returns next question or ready <!-- verify: test --> <!-- SRS-03:start:end -->
-- [x] [SRS-04/AC-01] `keel mission activate <id>` transitions Defining → Active, gated on CHARTER Goals having at least one authored MG-XX row <!-- verify: test --> <!-- SRS-04:start:end -->
+- [x] [SRS-02/AC-01] `keel mission refine <id>` returns next question when CHARTER.md is incomplete <!-- verify: test, SRS-02:start:end -->
+- [x] [SRS-02/AC-02] `keel mission refine <id>` returns "ready" signal when CHARTER.md is complete <!-- verify: test, SRS-02:start:end -->
+- [x] [SRS-03/AC-01] `keel mission refine <id> --answer "<text>"` records answer into CHARTER.md and returns next question or ready <!-- verify: test, SRS-03:start:end -->
+- [x] [SRS-04/AC-01] `keel mission activate <id>` transitions Defining → Active, gated on CHARTER Goals having at least one authored MG-XX row <!-- verify: test, SRS-04:start:end -->

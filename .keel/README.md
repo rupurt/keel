@@ -116,12 +116,18 @@
 | [Lineage Persistence](epics/1vzWfz000/voyages/1vzWg5000/) | done |
 | [Lineage Validation](epics/1vzWfz000/voyages/1vzWg8000/) | done |
 
-### [Mission Entity](epics/1vzeJF000/) (active)
+### [Role Based Architecture](epics/VDTpFlMKc/) (draft)
+
+| Voyage | Status |
+|--------|--------|
+| [Core Changes](epics/VDTpFlMKc/voyages/VDUG60pcX/) | draft |
+
+### [Mission Entity](epics/1vzeJF000/) (done)
 
 | Voyage | Status |
 |--------|--------|
 | [Domain Foundation](epics/1vzeJF000/voyages/1vzeMk000/) | done |
-| [CLI Commands](epics/1vzeJF000/voyages/1vzeMq000/) | in-progress |
-| [Lineage And Doctor](epics/1vzeJF000/voyages/1vzeMv000/) | draft |
-| [Flow Integration](epics/1vzeJF000/voyages/1vzeMz000/) | draft |
+| [CLI Commands](epics/1vzeJF000/voyages/1vzeMq000/) | done |
+| [Lineage And Doctor](epics/1vzeJF000/voyages/1vzeMv000/) | done |
+| [Flow Integration](epics/1vzeJF000/voyages/1vzeMz000/) | done |
 
