@@ -116,12 +116,18 @@
 | [Lineage Persistence](epics/1vzWfz000/voyages/1vzWg5000/) | done |
 | [Lineage Validation](epics/1vzWfz000/voyages/1vzWg8000/) | done |
 
-### [Role Based Architecture](epics/VDTpFlMKc/) (active)
+### [Role Based Architecture](epics/VDTpFlMKc/) (done)
 
 | Voyage | Status |
 |--------|--------|
 | [Core Changes](epics/VDTpFlMKc/voyages/VDUG60pcX/) | done |
-| [Role Template Injection](epics/VDTpFlMKc/voyages/VDUsc8KXy/) | in-progress |
+| [Role Template Injection](epics/VDTpFlMKc/voyages/VDUsc8KXy/) | done |
+
+### [Config-Driven Role and Lane Topology](epics/VDVPODBXF/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Role and Lane Config Contract](epics/VDVPODBXF/voyages/VDVPUCtqS/) | planned |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
