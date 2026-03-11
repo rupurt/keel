@@ -141,7 +141,11 @@
 |--------|--------|
 | [Dependency Injection for Services](epics/VDXBU7W4O/voyages/VDY6bQawh/) | planned |
 
-### [FileSystem Storage Adapter](epics/VDXBUAn7a/) (draft)
+### [FileSystem Storage Adapter](epics/VDXBUAn7a/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Filesystem Storage Implementation](epics/VDXBUAn7a/voyages/VDY8Js8As/) | planned |
 
 ### [Public Library API](epics/VDXBUEBAG/) (active)
 

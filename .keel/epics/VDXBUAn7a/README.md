@@ -20,7 +20,8 @@ index: 19
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/0 voyages complete, 0/0 stories done
+**Progress:** 0/1 voyages complete, 0/4 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
+| [Filesystem Storage Implementation](voyages/VDY8Js8As/) | planned | 0/4 |
 <!-- END GENERATED -->
