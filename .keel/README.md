@@ -135,7 +135,11 @@
 |--------|--------|
 | [Core Storage Traits](epics/VDXBSiFXW/voyages/VDXHyy82b/) | done |
 
-### [Application Service Refactor](epics/VDXBU7W4O/) (draft)
+### [Application Service Refactor](epics/VDXBU7W4O/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Dependency Injection for Services](epics/VDXBU7W4O/voyages/VDY6bQawh/) | planned |
 
 ### [FileSystem Storage Adapter](epics/VDXBUAn7a/) (draft)
 
