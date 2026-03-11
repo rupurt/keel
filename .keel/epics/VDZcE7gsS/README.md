@@ -20,8 +20,8 @@ index: 28
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 0/1 stories done
+**Progress:** 1/1 voyages complete, 1/1 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Structural Coherence](voyages/VDZsp7eAG/) | in-progress | 0/1 |
+| [Structural Coherence](voyages/VDZsp7eAG/) | done | 1/1 |
 <!-- END GENERATED -->

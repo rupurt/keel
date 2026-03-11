@@ -195,11 +195,11 @@
 |--------|--------|
 | [Diagnostics Mapping](epics/VDZcE46pb/voyages/VDZsp3w7A/) | done |
 
-### [Coherent Entity Orchestration](epics/VDZcE7gsS/) (active)
+### [Coherent Entity Orchestration](epics/VDZcE7gsS/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Structural Coherence](epics/VDZcE7gsS/voyages/VDZsp7eAG/) | in-progress |
+| [Structural Coherence](epics/VDZcE7gsS/voyages/VDZsp7eAG/) | done |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

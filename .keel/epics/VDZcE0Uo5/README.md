@@ -1,7 +1,7 @@
 ---
 id: VDZcE0Uo5
 title: Diagnostics-First Next Algorithm
-mission: VDZsowb2k
+mission: VDZcDwtlc
 created_at: 2026-03-11T08:35:11
 index: 26
 ---
