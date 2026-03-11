@@ -27,6 +27,7 @@ use chrono::Local;
 use owo_colors::OwoColorize;
 
 pub struct StoryLifecycleService {
+    process_manager: Arc<DomainProcessManager>,
     board_dir: std::path::PathBuf,
     board_store: Arc<dyn BoardStore>,
     story_store: Arc<dyn EntityStore<Story>>,
@@ -37,11 +38,13 @@ impl StoryLifecycleService {
         board_dir: std::path::PathBuf,
         board_store: Arc<dyn BoardStore>,
         story_store: Arc<dyn EntityStore<Story>>,
+        process_manager: Arc<DomainProcessManager>,
     ) -> Self {
         Self {
             board_dir,
             board_store,
             story_store,
+            process_manager,
         }
     }
     /// Start a story (backlog/rejected -> in-progress).
@@ -87,7 +90,7 @@ impl StoryLifecycleService {
             )));
         }
 
-        DomainProcessManager::default().handle(
+        self.process_manager.handle(
             board_dir,
             DomainEvent::StoryStarted {
                 story_id: story.id().to_string(),
@@ -264,7 +267,7 @@ impl StoryLifecycleService {
             );
         }
 
-        DomainProcessManager::default().handle(
+        self.process_manager.handle(
             board_dir,
             DomainEvent::StoryAccepted {
                 story_id: result.story.id().to_string(),
@@ -546,6 +549,8 @@ pub fn append_rejection(story_path: &Path, reason: &str) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
+    use crate::application::process_manager::{DomainProcessManager, LiveProcessActionExecutor};
+    use crate::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
     use super::StoryLifecycleService;
     use crate::domain::model::{Story, StoryState};
     use crate::infrastructure::storage::filesystem::FileSystemAdapter;
@@ -564,10 +569,20 @@ mod tests {
             )
             .build();
         let adapter = Arc::new(FileSystemAdapter::new(temp.path()));
+        let voyage_service = Arc::new(VoyageEpicLifecycleService::new(
+            temp.path().to_path_buf(),
+            adapter.clone(),
+            adapter.clone(),
+            adapter.clone(),
+            adapter.clone(),
+        ));
+        let executor = LiveProcessActionExecutor::new(voyage_service);
+        let process_manager = Arc::new(DomainProcessManager::new(executor));
         let service = StoryLifecycleService::new(
             temp.path().to_path_buf(),
             adapter.clone(),
             adapter,
+            process_manager,
         );
 
         let err = service.accept(
@@ -594,10 +609,20 @@ mod tests {
             )
             .build();
         let adapter = Arc::new(FileSystemAdapter::new(temp.path()));
+        let voyage_service = Arc::new(VoyageEpicLifecycleService::new(
+            temp.path().to_path_buf(),
+            adapter.clone(),
+            adapter.clone(),
+            adapter.clone(),
+            adapter.clone(),
+        ));
+        let executor = LiveProcessActionExecutor::new(voyage_service);
+        let process_manager = Arc::new(DomainProcessManager::new(executor));
         let service = StoryLifecycleService::new(
             temp.path().to_path_buf(),
             adapter.clone(),
             adapter,
+            process_manager,
         );
 
         service.accept(
@@ -633,10 +658,20 @@ mod tests {
             )
             .build();
         let adapter = Arc::new(FileSystemAdapter::new(temp.path()));
+        let voyage_service = Arc::new(VoyageEpicLifecycleService::new(
+            temp.path().to_path_buf(),
+            adapter.clone(),
+            adapter.clone(),
+            adapter.clone(),
+            adapter.clone(),
+        ));
+        let executor = LiveProcessActionExecutor::new(voyage_service);
+        let process_manager = Arc::new(DomainProcessManager::new(executor));
         let service = StoryLifecycleService::new(
             temp.path().to_path_buf(),
             adapter.clone(),
             adapter,
+            process_manager,
         );
 
         fs::write(
@@ -694,10 +729,20 @@ mod tests {
             )
             .build();
         let adapter = Arc::new(FileSystemAdapter::new(temp.path()));
+        let voyage_service = Arc::new(VoyageEpicLifecycleService::new(
+            temp.path().to_path_buf(),
+            adapter.clone(),
+            adapter.clone(),
+            adapter.clone(),
+            adapter.clone(),
+        ));
+        let executor = LiveProcessActionExecutor::new(voyage_service);
+        let process_manager = Arc::new(DomainProcessManager::new(executor));
         let service = StoryLifecycleService::new(
             temp.path().to_path_buf(),
             adapter.clone(),
             adapter,
+            process_manager,
         );
 
         fs::write(

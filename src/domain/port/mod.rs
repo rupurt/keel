@@ -8,7 +8,7 @@ use std::path::Path;
 use crate::domain::model::{Board, Entity, Story, Voyage, Epic, Bearing, Adr};
 
 /// Aggregate operations for the entire Board.
-pub trait BoardStore {
+pub trait BoardStore: Send + Sync {
     /// Load the complete board state.
     fn load(&self) -> Result<Board>;
     
@@ -17,7 +17,7 @@ pub trait BoardStore {
 }
 
 /// CRUD operations for individual entities.
-pub trait EntityStore<T: Entity> {
+pub trait EntityStore<T: Entity>: Send + Sync {
     /// Retrieve a single entity by its unique identifier.
     fn get(&self, id: &str) -> Result<T>;
     
@@ -98,7 +98,7 @@ mod tests {
         entities: Mutex<HashMap<String, T>>,
     }
 
-    impl<T: Entity + Clone> EntityStore<T> for MockEntityStore<T> {
+    impl<T: Entity + Clone + Send + Sync> EntityStore<T> for MockEntityStore<T> {
         fn get(&self, id: &str) -> Result<T> {
             self.entities.lock().unwrap().get(id).cloned().ok_or_else(|| anyhow::anyhow!("Not found"))
         }

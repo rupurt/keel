@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-11T04:37:04.592602742-07:00
+mode: manual
+---
+Verified by running 'cargo test' which includes all voyage/epic lifecycle tests.

@@ -1,6 +1,8 @@
-//! Submit story command - move from in-progress to needs-human-verification
-
 use std::path::Path;
+use keel::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
+use keel::application::process_manager::{DomainProcessManager, LiveProcessActionExecutor};
+/// Submit story command - move from in-progress to needs-human-verification
+
 use std::sync::Arc;
 
 use anyhow::Result;
@@ -16,11 +18,24 @@ use super::guidance::{
 /// Run the submit story command
 pub fn run(board_dir: &Path, id: &str) -> Result<()> {
     let adapter = Arc::new(FileSystemAdapter::new(board_dir));
+    let voyage_service = Arc::new(VoyageEpicLifecycleService::new(
+        board_dir.to_path_buf(),
+        adapter.clone(),
+        adapter.clone(),
+        adapter.clone(),
+        adapter.clone(),
+    ));
+    let executor = LiveProcessActionExecutor::new(voyage_service.clone());
+    let process_manager = Arc::new(DomainProcessManager::new(executor));
+    
     let service = StoryLifecycleService::new(
         board_dir.to_path_buf(),
         adapter.clone(),
         adapter,
+        process_manager,
     );
+
+    
 
     
 

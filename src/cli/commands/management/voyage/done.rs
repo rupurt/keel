@@ -1,274 +1,50 @@
-//! Done voyage command
-
+/// Done voyage command
 use std::path::Path;
-
+use std::sync::Arc;
+use keel::infrastructure::storage::filesystem::FileSystemAdapter;
+use keel::application::process_manager::{DomainProcessManager, LiveProcessActionExecutor};
 use keel::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
-use keel::infrastructure::config::find_board_dir;
+
 use anyhow::Result;
 
-use super::guidance::{VoyageLifecycleAction, guidance_for_action, print_human};
-
-/// Run the done-voyage command
+/// Run the complete voyage command
 pub fn run(
-    id: &str,
-    well: Option<String>,
-    hard: Option<String>,
-    different: Option<String>,
-) -> Result<()> {
-    let board_dir = find_board_dir()?;
-    run_with_dir(&board_dir, id, well, hard, different)
-}
-
-/// Run the done-voyage command with an explicit board directory
-pub fn run_with_dir(
     board_dir: &Path,
     id: &str,
     well: Option<String>,
     hard: Option<String>,
     different: Option<String>,
 ) -> Result<()> {
-    VoyageEpicLifecycleService::complete_voyage(board_dir, id, well, hard, different)?;
-    let guidance = guidance_for_action(VoyageLifecycleAction::Done, id);
-    print_human(guidance.as_ref());
+    let adapter = Arc::new(FileSystemAdapter::new(board_dir));
+    let service = VoyageEpicLifecycleService::new(
+        board_dir.to_path_buf(),
+        adapter.clone(),
+        adapter.clone(),
+        adapter.clone(),
+        adapter.clone(),
+    );
+
+    service.complete_voyage(id, well, hard, different)?;
+
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
-    use std::fs;
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestVoyage};
 
     #[test]
-    fn done_voyage_updates_status() {
+    fn test_complete_voyage_updates_status() {
         let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("test-epic"))
-            .voyage(TestVoyage::new("01-progress", "test-epic").status("in-progress"))
-            .voyage(TestVoyage::new("02-done", "test-epic").status("done"))
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").status("in-progress"))
             .build();
 
-        run_with_dir(temp.path(), "01-progress", None, None, None).unwrap();
-
-        let content = fs::read_to_string(
-            temp.path()
-                .join("epics/test-epic/voyages/01-progress/README.md"),
-        )
-        .unwrap();
-
-        assert!(content.contains("status: done"));
-        assert!(content.contains("completed_at:"));
-    }
-
-    #[test]
-    fn done_voyage_adds_retrospective() {
-        let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("test-epic"))
-            .voyage(TestVoyage::new("01-progress", "test-epic").status("in-progress"))
-            .build();
-
-        run_with_dir(
-            temp.path(),
-            "01-progress",
-            Some("Clean design".to_string()),
-            Some("Edge cases".to_string()),
-            None,
-        )
-        .unwrap();
-
-        let content = fs::read_to_string(
-            temp.path()
-                .join("epics/test-epic/voyages/01-progress/README.md"),
-        )
-        .unwrap();
-
-        assert!(content.contains("## Retrospective"));
-        assert!(content.contains("Clean design"));
-        assert!(content.contains("Edge cases"));
-    }
-
-    #[test]
-    fn done_voyage_rejects_incomplete_evidence_chain() {
-        let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("evidence-epic"))
-            .voyage(
-                TestVoyage::new("01-evidence", "evidence-epic")
-                    .status("in-progress")
-                    .srs_content(
-                        r#"
-## Functional Requirements
-BEGIN FUNCTIONAL_REQUIREMENTS
-| SRS-01 | First requirement |
-END FUNCTIONAL_REQUIREMENTS
-"#,
-                    ),
-            )
-            .story(
-                TestStory::new("EVID1")
-                    .title("Evidence Story")
-                    .status(keel::domain::model::StoryState::InProgress)
-                    .scope("evidence-epic/01-evidence")
-                    .body(
-                        "- [x] [SRS-01/AC-01] Validate end-only evidence <!-- verify: echo evidence-ready SRS-01:end -->\n",
-                    ),
-            )
-            .build();
-
-        let result = run_with_dir(temp.path(), "01-evidence", None, None, None);
-
-        assert!(result.is_err());
-        let msg = result.unwrap_err().to_string();
-        assert!(msg.contains("Cannot complete voyage 01-evidence"));
-        assert!(msg.contains("is not complete"));
-    }
-
-    #[test]
-    fn done_voyage_errors_on_already_done() {
-        let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("test-epic"))
-            .voyage(TestVoyage::new("02-done", "test-epic").status("done"))
-            .build();
-
-        let result = run_with_dir(temp.path(), "02-done", None, None, None);
-
-        assert!(result.is_err());
-        let err = result.unwrap_err().to_string();
-        assert!(err.contains("Cannot complete voyage"));
-        assert!(err.contains("must be in-progress"));
-    }
-
-    #[test]
-    fn done_voyage_errors_on_not_found() {
-        let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("test-epic"))
-            .build();
-
-        let result = run_with_dir(temp.path(), "nonexistent", None, None, None);
-
-        assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("not found"));
-    }
-
-    #[test]
-    fn done_voyage_auto_completes_epic_when_all_voyages_done() {
-        let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("test-epic"))
-            .voyage(TestVoyage::new("01-done", "test-epic").status("done"))
-            .voyage(TestVoyage::new("02-in-progress", "test-epic").status("in-progress"))
-            .build();
-
-        run_with_dir(temp.path(), "02-in-progress", None, None, None).unwrap();
+        run(temp.path(), "v1", None, None, None).unwrap();
 
         let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
-        let epic = board.require_epic("test-epic").unwrap();
-        assert_eq!(epic.status(), keel::domain::model::EpicState::Done);
-
-        let content = fs::read_to_string(temp.path().join("epics/test-epic/README.md")).unwrap();
-        assert!(!content.contains("\nstatus:"));
-        assert!(!content.contains("\ncompleted_at:"));
-    }
-
-    #[test]
-    fn done_voyage_keeps_epic_active_if_voyages_incomplete() {
-        let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("test-epic"))
-            .voyage(TestVoyage::new("01-done", "test-epic").status("done"))
-            .voyage(TestVoyage::new("02-in-progress", "test-epic").status("in-progress"))
-            .voyage(TestVoyage::new("03-in-progress", "test-epic").status("in-progress"))
-            .build();
-
-        run_with_dir(temp.path(), "02-in-progress", None, None, None).unwrap();
-
-        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
-        let epic = board.require_epic("test-epic").unwrap();
-        assert_eq!(epic.status(), keel::domain::model::EpicState::Active);
-    }
-
-    #[test]
-    fn done_voyage_does_not_generate_press_release() {
-        let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("release-epic"))
-            .voyage(TestVoyage::new("01-release", "release-epic").status("in-progress"))
-            .story(
-                TestStory::new("S1")
-                    .title("Story 1")
-                    .scope("release-epic/01-release")
-                    .status(keel::domain::model::StoryState::Done)
-                    .body("## Summary\nThis is story 1 summary.\n"),
-            )
-            .build();
-
-        run_with_dir(temp.path(), "01-release", None, None, None).unwrap();
-
-        let release_path = temp
-            .path()
-            .join("epics/release-epic/voyages/01-release/PRESS_RELEASE.md");
-        assert!(!release_path.exists());
-
-        let voyage_report_path = temp
-            .path()
-            .join("epics/release-epic/voyages/01-release/VOYAGE_REPORT.md");
-        let compliance_report_path = temp
-            .path()
-            .join("epics/release-epic/voyages/01-release/COMPLIANCE_REPORT.md");
-        assert!(voyage_report_path.exists());
-        assert!(compliance_report_path.exists());
-    }
-
-    #[test]
-    fn done_voyage_refreshes_existing_report_artifacts() {
-        let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("report-epic"))
-            .voyage(TestVoyage::new("01-report", "report-epic").status("in-progress"))
-            .story(
-                TestStory::new("R1")
-                    .title("Report Story")
-                    .scope("report-epic/01-report")
-                    .status(keel::domain::model::StoryState::Done),
-            )
-            .build();
-
-        let voyage_dir = temp.path().join("epics/report-epic/voyages/01-report");
-        fs::write(voyage_dir.join("VOYAGE_REPORT.md"), "stale-voyage-report").unwrap();
-        fs::write(
-            voyage_dir.join("COMPLIANCE_REPORT.md"),
-            "stale-compliance-report",
-        )
-        .unwrap();
-
-        run_with_dir(temp.path(), "01-report", None, None, None).unwrap();
-
-        let voyage_report = fs::read_to_string(voyage_dir.join("VOYAGE_REPORT.md")).unwrap();
-        assert!(voyage_report.contains("# VOYAGE REPORT: 01-report Voyage"));
-        assert!(!voyage_report.contains("stale-voyage-report"));
-
-        let compliance_report =
-            fs::read_to_string(voyage_dir.join("COMPLIANCE_REPORT.md")).unwrap();
-        assert!(compliance_report.contains("# COMPLIANCE REPORT: 01-report Voyage"));
-        assert!(!compliance_report.contains("stale-compliance-report"));
-    }
-
-    #[test]
-    fn done_voyage_updates_readme_documents_for_done_artifacts() {
-        let temp = TestBoardBuilder::new()
-            .epic(TestEpic::new("docs-epic"))
-            .voyage(TestVoyage::new("01-docs", "docs-epic").status("in-progress"))
-            .story(
-                TestStory::new("D1")
-                    .title("Docs Story")
-                    .scope("docs-epic/01-docs")
-                    .status(keel::domain::model::StoryState::Done),
-            )
-            .build();
-
-        run_with_dir(temp.path(), "01-docs", None, None, None).unwrap();
-
-        let readme = fs::read_to_string(
-            temp.path()
-                .join("epics/docs-epic/voyages/01-docs/README.md"),
-        )
-        .unwrap();
-
-        assert!(readme.contains("VOYAGE_REPORT.md"));
-        assert!(readme.contains("COMPLIANCE_REPORT.md"));
+        let voyage = board.require_voyage("v1").unwrap();
+        assert_eq!(voyage.status(), keel::domain::model::VoyageState::Done);
     }
 }

@@ -25,12 +25,12 @@ started_at: 2026-03-11T03:58:26
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/4 stories complete
+**Progress:** 3/4 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Consolidate Domain And Application Ports](../../../../stories/VDY6ryx89/README.md) | refactor | done |
-| [Refactor StoryLifecycleService For Dependency Injection](../../../../stories/VDY6s2c9T/README.md) | refactor | needs-human-verification |
-| [Refactor VoyageEpicLifecycleService For Dependency Injection](../../../../stories/VDY6s6EBp/README.md) | refactor | backlog |
-| [Update CLI Wiring To Inject Storage Adapters](../../../../stories/VDY6s9wEE/README.md) | refactor | backlog |
+| [Refactor StoryLifecycleService For Dependency Injection](../../../../stories/VDY6s2c9T/README.md) | refactor | done |
+| [Refactor VoyageEpicLifecycleService For Dependency Injection](../../../../stories/VDY6s6EBp/README.md) | refactor | done |
+| [Update CLI Wiring To Inject Storage Adapters](../../../../stories/VDY6s9wEE/README.md) | refactor | in-progress |
 <!-- END GENERATED -->

@@ -4,31 +4,54 @@
 //! CLI command handlers can remain thin interface adapters.
 
 use std::fs;
-use std::path::Path;
+use std::path::PathBuf;
 
 use anyhow::{Context, Result, anyhow, bail};
 use chrono::Local;
 
-use crate::domain::model::VoyageState;
+use crate::domain::model::{Voyage, Epic, Story, VoyageState};
+use crate::domain::port::{BoardStore, EntityStore};
+use std::sync::Arc;
 use crate::domain::state_machine::{
     EnforcementPolicy, TransitionEntity, TransitionIntent, VoyageTransition, enforce_transition,
     format_enforcement_error,
 };
 use crate::domain::transitions::{TimestampUpdates, update_frontmatter};
 use crate::infrastructure::frontmatter_mutation::{Mutation, apply};
-use crate::infrastructure::loader::load_board;
 
-pub struct VoyageEpicLifecycleService;
+pub struct VoyageEpicLifecycleService {
+    pub board_dir: PathBuf,
+    pub board_store: Arc<dyn BoardStore>,
+    pub voyage_store: Arc<dyn EntityStore<Voyage>>,
+    pub epic_store: Arc<dyn EntityStore<Epic>>,
+    pub story_store: Arc<dyn EntityStore<Story>>,
+}
 
 impl VoyageEpicLifecycleService {
+    pub fn new(
+        board_dir: PathBuf,
+        board_store: Arc<dyn BoardStore>,
+        voyage_store: Arc<dyn EntityStore<Voyage>>,
+        epic_store: Arc<dyn EntityStore<Epic>>,
+        story_store: Arc<dyn EntityStore<Story>>,
+    ) -> Self {
+        Self {
+            board_dir,
+            board_store,
+            voyage_store,
+            epic_store,
+            story_store,
+        }
+    }
+
     /// Start a voyage (draft/planned -> in-progress).
     pub fn start_voyage(
-        board_dir: &Path,
+        &self,
         id: &str,
         force: bool,
         expect_version: Option<u64>,
     ) -> Result<()> {
-        let board = load_board(board_dir)?;
+        let board = self.board_store.load()?;
 
         // Check version if provided (SRS-05: optimistic locking)
         if let Some(expected) = expect_version {
@@ -90,13 +113,13 @@ impl VoyageEpicLifecycleService {
 
     /// Complete a voyage (in-progress -> done).
     pub fn complete_voyage(
-        board_dir: &Path,
+        &self,
         id: &str,
         well: Option<String>,
         hard: Option<String>,
         different: Option<String>,
     ) -> Result<()> {
-        let board = load_board(board_dir)?;
+        let board = self.board_store.load()?;
         let voyage = board.require_voyage(id)?;
 
         let intent = TransitionIntent::Voyage(VoyageTransition::Complete);
@@ -128,7 +151,7 @@ impl VoyageEpicLifecycleService {
             .with_context(|| format!("Failed to write voyage: {}", voyage.path.display()))?;
 
         // Reload so follow-on artifacts use the persisted done state and latest story evidence.
-        let refreshed_board = load_board(board_dir)?;
+        let refreshed_board = self.board_store.load()?;
         let refreshed_voyage = refreshed_board.require_voyage(id)?;
 
         for issue in crate::infrastructure::generate::voyage_artifacts::sync(
@@ -192,7 +215,10 @@ fn add_retrospective(
 
 #[cfg(test)]
 mod tests {
+    use crate::application::process_manager::{DomainProcessManager, LiveProcessActionExecutor};
     use super::VoyageEpicLifecycleService;
+    use crate::infrastructure::storage::filesystem::FileSystemAdapter;
+    use std::sync::Arc;
     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use std::fs;
 
@@ -228,6 +254,15 @@ mod tests {
             )
             .build();
 
+        let adapter = Arc::new(FileSystemAdapter::new(temp.path()));
+        let service = VoyageEpicLifecycleService::new(
+            temp.path().to_path_buf(),
+            adapter.clone(),
+            adapter.clone(),
+            adapter.clone(),
+            adapter,
+        );
+
         write_prd(
             &temp,
             "test-epic",
@@ -242,7 +277,7 @@ mod tests {
 "#,
         );
 
-        let err = VoyageEpicLifecycleService::start_voyage(temp.path(), "01-draft", false, None)
+        let err = service.start_voyage("01-draft", false, None)
             .unwrap_err()
             .to_string();
         assert!(
@@ -279,6 +314,15 @@ mod tests {
             )
             .build();
 
+        let adapter = Arc::new(FileSystemAdapter::new(temp.path()));
+        let service = VoyageEpicLifecycleService::new(
+            temp.path().to_path_buf(),
+            adapter.clone(),
+            adapter.clone(),
+            adapter.clone(),
+            adapter,
+        );
+
         write_prd(
             &temp,
             "test-epic",
@@ -293,7 +337,7 @@ mod tests {
 "#,
         );
 
-        let result = VoyageEpicLifecycleService::start_voyage(temp.path(), "01-draft", true, None);
+        let result = service.start_voyage("01-draft", true, None);
         assert!(
             result.is_ok(),
             "forced start should bypass requirements coverage enforcement: {result:?}"
@@ -331,6 +375,15 @@ mod tests {
             )
             .build();
 
+        let adapter = Arc::new(FileSystemAdapter::new(temp.path()));
+        let service = VoyageEpicLifecycleService::new(
+            temp.path().to_path_buf(),
+            adapter.clone(),
+            adapter.clone(),
+            adapter.clone(),
+            adapter,
+        );
+
         write_prd(
             &temp,
             "test-epic",
@@ -345,7 +398,7 @@ mod tests {
         );
 
         let result =
-            VoyageEpicLifecycleService::start_voyage(temp.path(), "01-planned", false, None);
+            service.start_voyage("01-planned", false, None);
         assert!(
             result.is_ok(),
             "planned voyage with done siblings should start: {result:?}"

@@ -2,13 +2,14 @@
 id: VDY6s2c9T
 title: Refactor StoryLifecycleService For Dependency Injection
 type: refactor
-status: needs-human-verification
+status: done
 created_at: 2026-03-10T23:25:00
 scope: VDXBU7W4O/VDY6bQawh
 index: 2
-updated_at: 2026-03-11T04:06:05
+updated_at: 2026-03-11T04:30:52
 started_at: 2026-03-11T03:58:26
 submitted_at: 2026-03-11T04:06:05
+completed_at: 2026-03-11T04:30:52
 ---
 
 # Refactor StoryLifecycleService For Dependency Injection

@@ -9,6 +9,7 @@ pub mod plan;
 pub mod show;
 pub mod start;
 
+use std::path::Path;
 use anyhow::Result;
 use clap::Subcommand;
 
@@ -94,21 +95,21 @@ pub enum VoyageAction {
 }
 
 /// Run a voyage action through the voyage interface adapter.
-pub fn run(action: VoyageAction) -> Result<()> {
+pub fn run(board_dir: &Path, action: VoyageAction) -> Result<()> {
     match action {
         VoyageAction::New { name, epic, goal } => new::run(&name, &epic, &goal),
         VoyageAction::Start {
             id,
             force,
             expect_version,
-        } => start::run(&id, force, expect_version),
+        } => start::run(board_dir, &id, force, expect_version),
         VoyageAction::Plan { id, no_review } => plan::run(&id, no_review),
         VoyageAction::Done {
             id,
             well,
             hard,
             different,
-        } => done::run(&id, well, hard, different),
+        } => done::run(board_dir, &id, well, hard, different),
         VoyageAction::Show { id } => show::run(&id),
         VoyageAction::File { id, file, raw } => {
             crate::cli::commands::management::voyage::file::run(&id, &file, raw)

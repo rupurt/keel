@@ -1,6 +1,7 @@
 //! Process manager for cross-aggregate lifecycle coordination.
 
 use std::path::Path;
+use std::sync::Arc;
 
 use anyhow::Result;
 
@@ -15,31 +16,33 @@ enum ProcessAction {
     CompleteVoyage { voyage_id: String },
 }
 
-pub trait ProcessActionExecutor {
-    fn start_voyage(&self, board_dir: &Path, voyage_id: &str) -> Result<()>;
-    fn complete_voyage(&self, board_dir: &Path, voyage_id: &str) -> Result<()>;
+pub trait ProcessActionExecutor: Send + Sync {
+    fn start_voyage(&self, voyage_id: &str) -> Result<()>;
+    fn complete_voyage(&self, voyage_id: &str) -> Result<()>;
 }
 
-pub struct LiveProcessActionExecutor;
+pub struct LiveProcessActionExecutor {
+    service: Arc<VoyageEpicLifecycleService>,
+}
+
+impl LiveProcessActionExecutor {
+    pub fn new(service: Arc<VoyageEpicLifecycleService>) -> Self {
+        Self { service }
+    }
+}
 
 impl ProcessActionExecutor for LiveProcessActionExecutor {
-    fn start_voyage(&self, board_dir: &Path, voyage_id: &str) -> Result<()> {
-        VoyageEpicLifecycleService::start_voyage(board_dir, voyage_id, false, None)
+    fn start_voyage(&self, voyage_id: &str) -> Result<()> {
+        self.service.start_voyage(voyage_id, false, None)
     }
 
-    fn complete_voyage(&self, board_dir: &Path, voyage_id: &str) -> Result<()> {
-        VoyageEpicLifecycleService::complete_voyage(board_dir, voyage_id, None, None, None)
+    fn complete_voyage(&self, voyage_id: &str) -> Result<()> {
+        self.service.complete_voyage(voyage_id, None, None, None)
     }
 }
 
 pub struct DomainProcessManager<E = LiveProcessActionExecutor> {
     executor: E,
-}
-
-impl Default for DomainProcessManager<LiveProcessActionExecutor> {
-    fn default() -> Self {
-        Self::new(LiveProcessActionExecutor)
-    }
 }
 
 impl<E: ProcessActionExecutor> DomainProcessManager<E> {
@@ -53,27 +56,27 @@ impl<E: ProcessActionExecutor> DomainProcessManager<E> {
         let board = load_board(board_dir)?;
         let actions = Self::plan_actions(&board, &event);
         for action in actions {
-            self.execute_action(board_dir, action)?;
+            self.execute_action(action)?;
         }
 
         Ok(())
     }
 
-    fn execute_action(&self, board_dir: &Path, action: ProcessAction) -> Result<()> {
+    fn execute_action(&self, action: ProcessAction) -> Result<()> {
         match action {
             ProcessAction::StartVoyage { voyage_id } => {
                 println!(
                     "[process-manager] Auto-starting voyage {} after story activity.",
                     voyage_id
                 );
-                self.executor.start_voyage(board_dir, &voyage_id)
+                self.executor.start_voyage(&voyage_id)
             }
             ProcessAction::CompleteVoyage { voyage_id } => {
                 println!(
                     "[process-manager] Auto-completing voyage {} because all stories are done.",
                     voyage_id
                 );
-                self.executor.complete_voyage(board_dir, &voyage_id)
+                self.executor.complete_voyage(&voyage_id)
             }
         }
     }
@@ -168,7 +171,7 @@ mod tests {
     }
 
     impl ProcessActionExecutor for MockExecutor {
-        fn start_voyage(&self, _board_dir: &Path, voyage_id: &str) -> Result<()> {
+        fn start_voyage(&self, voyage_id: &str) -> Result<()> {
             self.calls
                 .lock()
                 .unwrap()
@@ -176,7 +179,7 @@ mod tests {
             Ok(())
         }
 
-        fn complete_voyage(&self, _board_dir: &Path, voyage_id: &str) -> Result<()> {
+        fn complete_voyage(&self, voyage_id: &str) -> Result<()> {
             self.calls
                 .lock()
                 .unwrap()

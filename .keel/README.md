@@ -147,11 +147,11 @@
 |--------|--------|
 | [Filesystem Storage Implementation](epics/VDXBUAn7a/voyages/VDY8Js8As/) | done |
 
-### [Public Library API](epics/VDXBUEBAG/) (active)
+### [Public Library API](epics/VDXBUEBAG/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Public Library Surface](epics/VDXBUEBAG/voyages/VDY7YBSFR/) | in-progress |
+| [Public Library Surface](epics/VDXBUEBAG/voyages/VDY7YBSFR/) | done |
 
 ### [Storage Configuration](epics/VDXBUHZB0/) (done)
 

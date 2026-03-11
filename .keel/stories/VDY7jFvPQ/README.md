@@ -2,13 +2,14 @@
 id: VDY7jFvPQ
 title: Export Domain Ports In Public API
 type: refactor
-status: needs-human-verification
+status: done
 created_at: 2026-03-10T23:35:00
 scope: VDXBUEBAG/VDY7YBSFR
 index: 2
-updated_at: 2026-03-11T04:30:27
+updated_at: 2026-03-11T04:30:53
 started_at: 2026-03-11T04:30:02
 submitted_at: 2026-03-11T04:30:27
+completed_at: 2026-03-11T04:30:53
 ---
 
 # Export Domain Ports In Public API

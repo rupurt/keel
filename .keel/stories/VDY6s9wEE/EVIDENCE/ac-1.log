@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-11T04:37:04.698545981-07:00
+mode: manual
+---
+All CLI command handlers for story and voyage now use dependency injection.

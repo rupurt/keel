@@ -135,7 +135,7 @@ fn handle_epic_command(matches: &ArgMatches) -> Result<()> {
 }
 
 fn handle_voyage_command(matches: &ArgMatches) -> Result<()> {
-    super::commands::management::voyage::run(parse_subcommand_action(matches)?)
+    super::commands::management::voyage::run(&resolve_board_dir()?, parse_subcommand_action(matches)?)
 }
 
 fn handle_story_command(matches: &ArgMatches) -> Result<()> {
