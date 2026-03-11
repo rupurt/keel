@@ -210,7 +210,7 @@ impl WorkflowConfig {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RoleFamilyConfig {
     pub default_lane: String,
-    pub template: String,
+    pub operational_contract: String,
 }
 
 /// Configured lane definition.
@@ -230,10 +230,10 @@ pub struct LaneConfig {
     pub priority: i32,
 }
 
-/// Exact taxonomy override for template selection.
+/// Exact taxonomy override for operational contract selection.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RoleOverrideConfig {
-    pub template: String,
+    pub operational_contract: String,
 }
 
 /// Default board directory
@@ -663,11 +663,11 @@ delivery_lane = "delivery"
 
 [roles.director]
 default_lane = "review"
-template = "director-core"
+operational_contract = "director-core"
 
 [roles.operator]
 default_lane = "delivery"
-template = "operator-core"
+operational_contract = "operator-core"
 
 [lanes.review]
 description = "Review lane"
@@ -686,18 +686,18 @@ manual_accept = false
 priority = 50
 
 [role_overrides."operator/software"]
-template = "software-operator-core"
+operational_contract = "software-operator-core"
 "#;
         fs::write(&path, content).unwrap();
 
         let config = load_from_file(&path).unwrap();
         assert_eq!(config.workflow.defaults.management_role, "director");
         assert_eq!(config.workflow.defaults.management_lane, "review");
-        assert_eq!(config.roles["director"].template, "director-core");
+        assert_eq!(config.roles["director"].operational_contract, "director-core");
         assert_eq!(config.lanes["review"].priority, 100);
         assert!(config.lanes["review"].manual_accept);
         assert_eq!(
-            config.role_overrides["operator/software"].template,
+            config.role_overrides["operator/software"].operational_contract,
             "software-operator-core"
         );
     }

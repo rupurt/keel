@@ -82,11 +82,11 @@ delivery_lane = "delivery"
 
 [roles.director]
 default_lane = "review"
-template = "director-core"
+operational_contract = "director-core"
 
 [roles.maker]
 default_lane = "delivery"
-template = "maker-core"
+operational_contract = "maker-core"
 
 [lanes.review]
 description = "Review and approvals"

@@ -60,15 +60,15 @@ delivery_lane = "delivery"
 
 [roles.reviewer]
 default_lane = "review"
-template = "reviewer-core"
+operational_contract = "reviewer-core"
 
 [roles.maker]
 default_lane = "delivery"
-template = "maker-core"
+operational_contract = "maker-core"
 
 [roles.researcher]
 default_lane = "research"
-template = "researcher-core"
+operational_contract = "researcher-core"
 
 [lanes.review]
 description = "Manual review work"

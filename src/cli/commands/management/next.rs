@@ -287,7 +287,7 @@ pub fn run(
         let role_context =
             crate::read_model::role_context::resolve_role_context(&topology, &effective_role)
                 .ok()
-                .map(|template| RoleContextGuidance::from_template(&effective_role, template));
+                .map(|contract| RoleContextGuidance::from_contract(&effective_role, contract));
 
         let resolved_context = ResolvedActorContext {
             lane_name: actor_topology.lane_name.clone(),
@@ -311,7 +311,7 @@ pub fn run(
     let role_context =
         crate::read_model::role_context::resolve_role_context(&topology, &effective_role)
             .ok()
-            .map(|template| RoleContextGuidance::from_template(&effective_role, template));
+            .map(|contract| RoleContextGuidance::from_contract(&effective_role, contract));
 
     if json {
         let result = decision_to_json(&decision, role_context.as_ref(), &management_role_example);
@@ -546,7 +546,10 @@ fn render_human_guidance(guidance: Option<&CanonicalGuidance>) -> String {
     if let Some(role_context) = guidance.role_context.as_ref() {
         rendered.push_str("\nRole context:\n");
         rendered.push_str(&format!("  Role: {}\n", role_context.role));
-        rendered.push_str(&format!("  Template: {}\n", role_context.template_id));
+        rendered.push_str(&format!(
+            "  Operational Contract: {}\n",
+            role_context.contract_id
+        ));
         rendered.push_str(&format!("  Lane: {}\n", role_context.lane));
         rendered.push_str(&format!("  Persona: {}\n", role_context.persona));
         rendered.push_str("  Priorities:\n");
@@ -879,7 +882,7 @@ mod tests {
         let topology = default_topology();
         let template =
             crate::read_model::role_context::resolve_role_context(&topology, &taxonomy).unwrap();
-        RoleContextGuidance::from_template(&taxonomy, template)
+        RoleContextGuidance::from_contract(&taxonomy, template)
     }
 
     fn write_custom_topology_config(path: &Path) {
@@ -893,11 +896,11 @@ delivery_lane = "delivery"
 
 [roles.director]
 default_lane = "review"
-template = "director-core"
+operational_contract = "director-core"
 
 [roles.maker]
 default_lane = "delivery"
-template = "maker-core"
+operational_contract = "maker-core"
 
 [lanes.review]
 description = "Review and approvals"
@@ -1035,7 +1038,7 @@ priority = 50
     }
 
     #[test]
-    fn decision_to_json_with_role_context_includes_resolved_template_payload() {
+    fn decision_to_json_with_role_context_includes_resolved_contract_payload() {
         let decision = NextDecision::Work(StoryDecision {
             story: make_story("SCTX"),
             is_continuation: false,
@@ -1051,7 +1054,7 @@ priority = 50
             "operator/software"
         );
         assert_eq!(
-            json["guidance"]["role_context"]["template_id"],
+            json["guidance"]["role_context"]["contract_id"],
             "operator-core"
         );
         assert_eq!(json["guidance"]["role_context"]["lane"], "delivery");
@@ -1306,7 +1309,7 @@ priority = 50
 
         assert!(rendered.contains("Role context:"));
         assert!(rendered.contains("Role: manager"));
-        assert!(rendered.contains("Template: manager-core"));
+        assert!(rendered.contains("Operational Contract: manager-core"));
         assert!(rendered.contains("Lane: management"));
         assert!(
             rendered.contains("Persona: Mission steward for scope, approvals, and coordination.")
@@ -1329,7 +1332,7 @@ priority = 50
 
         assert_eq!(
             error,
-            "Unsupported `keel next --role` family `analyst`. Try `keel next --role director` for management work or `keel next --role maker` for delivery work."
+            "unknown workflow role family `analyst`"
         );
     }
 

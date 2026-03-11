@@ -1,7 +1,7 @@
 //! Canonical guidance output contract for actionable command responses.
 
 use crate::domain::model::taxonomy::RoleTaxonomy;
-use crate::read_model::role_context::RoleContextTemplate;
+use crate::read_model::role_context::OperationalContract;
 use serde::Serialize;
 
 /// Canonical next/recovery guidance payload.
@@ -25,7 +25,7 @@ pub struct GuidanceStep {
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct RoleContextGuidance {
     pub role: String,
-    pub template_id: String,
+    pub contract_id: String,
     pub lane: String,
     pub persona: String,
     pub priorities: Vec<String>,
@@ -87,19 +87,19 @@ impl CommandGuidance {
 }
 
 impl RoleContextGuidance {
-    /// Materialize the serialized guidance payload from a role taxonomy and template.
-    pub fn from_template(role: &RoleTaxonomy, template: RoleContextTemplate) -> Self {
+    /// Materialize the serialized guidance payload from a role taxonomy and operational contract.
+    pub fn from_contract(role: &RoleTaxonomy, contract: OperationalContract) -> Self {
         Self {
             role: role.to_string(),
-            template_id: template.template_id,
-            lane: template.lane,
-            persona: template.persona.to_string(),
-            priorities: template
+            contract_id: contract.contract_id,
+            lane: contract.lane,
+            persona: contract.persona.to_string(),
+            priorities: contract
                 .priorities
                 .iter()
                 .map(|priority| (*priority).to_string())
                 .collect(),
-            workflow: template
+            workflow: contract
                 .workflow_hints
                 .iter()
                 .map(|hint| (*hint).to_string())
@@ -163,16 +163,16 @@ mod tests {
         let role =
             crate::domain::model::taxonomy::parse("operator/software:infra~steady#oncall").unwrap();
         let topology = workflow_topology::resolve(&Config::default()).unwrap();
-        let template = role_context::resolve_role_context(&topology, &role).unwrap();
+        let contract = role_context::resolve_role_context(&topology, &role).unwrap();
         let guidance = CanonicalGuidance::next("keel story start S1")
-            .with_role_context(RoleContextGuidance::from_template(&role, template));
+            .with_role_context(RoleContextGuidance::from_contract(&role, contract));
         let json = serde_json::to_value(guidance).unwrap();
 
         assert_eq!(
             json["role_context"],
             json!({
                 "role": "operator/software:infra~steady#oncall",
-                "template_id": "operator-core",
+                "contract_id": "operator-core",
                 "lane": "delivery",
                 "persona": "Focused operator for evidence-backed delivery.",
                 "priorities": [

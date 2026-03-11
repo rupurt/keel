@@ -57,17 +57,17 @@ priority = 50          # Rendering and selection priority (higher first)
 
 ### Roles
 
-Roles map a "role family" to a default lane and a guidance template.
+Roles map a "role family" to a default lane and an operational contract.
 
 ```toml
 [roles.operator]
 default_lane = "delivery"
-template = "operator-core"
+operational_contract = "operator-core"
 ```
 
-**Template**: Refers to a built-in guidance profile that defines the actor's persona, priorities, and workflow hints. This is used by commands like `keel next` to provide relevant context. It is **not** a file-based markdown template.
+**Operational Contract**: Refers to a built-in guidance profile that defines the actor's persona, priorities, and workflow hints. This is a binding agreement on how an actor must function when pulling work from the board. It is **not** a file-based markdown template.
 
-Built-in templates include:
+Built-in contracts include:
 - `manager-core`: Focused on planning, triage, and strategic alignment.
 - `operator-core`: Focused on evidence-backed delivery and TDD.
 
@@ -77,7 +77,7 @@ You can provide specific overrides for full role taxonomy strings.
 
 ```toml
 [role_overrides."operator/software:infrastructure"]
-template = "infrastructure-operator"
+operational_contract = "infrastructure-operator"
 ```
 
 ## Scoring Modes

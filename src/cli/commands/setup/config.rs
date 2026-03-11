@@ -75,7 +75,7 @@ struct ConfigShowWorkflowDefaultsPayload {
 struct ConfigShowRoleFamilyPayload {
     name: String,
     default_lane: String,
-    template: String,
+    operational_contract: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -93,7 +93,7 @@ struct ConfigShowLanePayload {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 struct ConfigShowRoleOverridePayload {
     taxonomy: String,
-    template: String,
+    operational_contract: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -220,7 +220,7 @@ fn build_show_payload(
                 .map(|role| ConfigShowRoleFamilyPayload {
                     name: role.name,
                     default_lane: role.default_lane,
-                    template: role.template,
+                    operational_contract: role.operational_contract,
                 })
                 .collect(),
             lanes: ordered_lanes
@@ -240,7 +240,7 @@ fn build_show_payload(
                 .into_values()
                 .map(|override_| ConfigShowRoleOverridePayload {
                     taxonomy: override_.taxonomy,
-                    template: override_.template,
+                    operational_contract: override_.operational_contract,
                 })
                 .collect(),
         },
@@ -304,7 +304,10 @@ fn render_show_payload(payload: &ConfigShowPayload) -> Vec<String> {
     for role in &payload.workflow.roles {
         lines.push(format!("[roles.{}]", role.name));
         lines.push(format!("default_lane = \"{}\"", role.default_lane));
-        lines.push(format!("template = \"{}\"", role.template));
+        lines.push(format!(
+            "operational_contract = \"{}\"",
+            role.operational_contract
+        ));
         lines.push(String::new());
     }
 
@@ -322,7 +325,10 @@ fn render_show_payload(payload: &ConfigShowPayload) -> Vec<String> {
 
     for override_ in &payload.workflow.role_overrides {
         lines.push(format!("[role_overrides.\"{}\"]", override_.taxonomy));
-        lines.push(format!("template = \"{}\"", override_.template));
+        lines.push(format!(
+            "operational_contract = \"{}\"",
+            override_.operational_contract
+        ));
         lines.push(String::new());
     }
 
@@ -593,9 +599,9 @@ disable = ["rust-coverage"]
         assert!(rendered.contains("management_role = \"manager\""));
         assert!(rendered.contains("delivery_role = \"operator\""));
         assert!(rendered.contains("[roles.manager]"));
-        assert!(rendered.contains("template = \"manager-core\""));
+        assert!(rendered.contains("operational_contract = \"manager-core\""));
         assert!(rendered.contains("[roles.operator]"));
-        assert!(rendered.contains("template = \"operator-core\""));
+        assert!(rendered.contains("operational_contract = \"operator-core\""));
         assert!(rendered.contains("[lanes.management]"));
         assert!(rendered.contains("[lanes.delivery]"));
         assert!(rendered.contains("include = [\"story.*\"]"));
@@ -709,7 +715,7 @@ enable = ["llm-judge"]
             "copywriter".to_string(),
             RoleFamilyConfig {
                 default_lane: "delivery".to_string(),
-                template: "copywriter-core".to_string(),
+                operational_contract: "copywriter-core".to_string(),
             },
         );
         config.lanes.insert(
@@ -726,7 +732,7 @@ enable = ["llm-judge"]
         config.role_overrides.insert(
             "copywriter/ads".to_string(),
             RoleOverrideConfig {
-                template: "copywriter-ads-core".to_string(),
+                operational_contract: "copywriter-ads-core".to_string(),
             },
         );
 
@@ -736,7 +742,7 @@ enable = ["llm-judge"]
 
         assert!(rendered.contains("[roles.copywriter]"));
         assert!(rendered.contains("default_lane = \"delivery\""));
-        assert!(rendered.contains("template = \"copywriter-core\""));
+        assert!(rendered.contains("operational_contract = \"copywriter-core\""));
         assert!(rendered.contains("[lanes.review]"));
         assert!(rendered.contains("description = \"Approval and editorial review\""));
         assert!(rendered.contains("include = [\"bearing.*\", \"voyage.draft\"]"));
@@ -745,7 +751,7 @@ enable = ["llm-judge"]
             "sources = [\"bearing.evaluating\", \"bearing.exploring\", \"bearing.laid\", \"bearing.parked\", \"bearing.ready\", \"voyage.draft\"]"
         ));
         assert!(rendered.contains("[role_overrides.\"copywriter/ads\"]"));
-        assert!(rendered.contains("template = \"copywriter-ads-core\""));
+        assert!(rendered.contains("operational_contract = \"copywriter-ads-core\""));
     }
 
     #[test]
@@ -779,7 +785,7 @@ enable = ["llm-judge"]
         let first_role = &roles[0];
         assert!(first_role.get("name").is_some());
         assert!(first_role.get("default_lane").is_some());
-        assert!(first_role.get("template").is_some());
+        assert!(first_role.get("operational_contract").is_some());
         let lanes = json["workflow"]["lanes"].as_array().unwrap().clone();
         assert!(!lanes.is_empty());
         let first_lane = &lanes[0];

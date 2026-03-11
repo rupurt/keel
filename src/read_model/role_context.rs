@@ -1,6 +1,6 @@
 //! Topology-driven role-context guidance profiles.
 //!
-//! Note: These "templates" are guidance profiles (persona, priorities, hints)
+//! Note: These "contracts" are guidance profiles (persona, priorities, hints)
 //! used for CLI guidance and should not be confused with the file-based
 //! markdown templates defined in `src/infrastructure/templates.rs`.
 
@@ -8,10 +8,10 @@ use crate::domain::model::taxonomy::RoleTaxonomy;
 use crate::read_model::queue_policy::ActorQueueLane;
 use crate::read_model::workflow_topology::{ResolvedWorkflowTopology, UnknownRoleFamily};
 
-/// Resolved role-context template guidance for a configured role taxonomy.
+/// Resolved role-context operational contract guidance for a configured role taxonomy.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RoleContextTemplate {
-    pub template_id: String,
+pub struct OperationalContract {
+    pub contract_id: String,
     pub lane: String,
     pub persona: &'static str,
     pub priorities: &'static [&'static str],
@@ -65,13 +65,13 @@ const DELIVERY_PROFILE: RoleContextProfile = RoleContextProfile {
 pub fn resolve_role_context(
     topology: &ResolvedWorkflowTopology,
     role: &RoleTaxonomy,
-) -> Result<RoleContextTemplate, UnknownRoleFamily> {
+) -> Result<OperationalContract, UnknownRoleFamily> {
     let lane = topology.resolve_actor_lane(role)?;
-    let template_id = topology.resolve_template(role)?.to_string();
+    let contract_id = topology.resolve_operational_contract(role)?.to_string();
     let profile = profile_for_lane(topology.queue_lane_for_actor(role)?);
 
-    Ok(RoleContextTemplate {
-        template_id,
+    Ok(OperationalContract {
+        contract_id,
         lane: lane.name.clone(),
         persona: profile.persona,
         priorities: profile.priorities,
@@ -105,14 +105,14 @@ mod tests {
                 "director".to_string(),
                 RoleFamilyConfig {
                     default_lane: "review".to_string(),
-                    template: "director-core".to_string(),
+                    operational_contract: "director-core".to_string(),
                 },
             ),
             (
                 "maker".to_string(),
                 RoleFamilyConfig {
                     default_lane: "delivery".to_string(),
-                    template: "maker-core".to_string(),
+                    operational_contract: "maker-core".to_string(),
                 },
             ),
         ]);
@@ -145,7 +145,7 @@ mod tests {
         let maker = taxonomy::parse("maker").unwrap();
         let template = resolve_role_context(&topology, &maker).unwrap();
 
-        assert_eq!(template.template_id, "maker-core");
+        assert_eq!(template.contract_id, "maker-core");
         assert_eq!(template.lane, "delivery");
         assert_eq!(
             template.persona,
@@ -161,7 +161,7 @@ mod tests {
         config.role_overrides.insert(
             "operator/software".to_string(),
             RoleOverrideConfig {
-                template: "software-operator-core".to_string(),
+                operational_contract: "software-operator-core".to_string(),
             },
         );
 
@@ -170,13 +170,13 @@ mod tests {
         let software = taxonomy::parse("operator/software").unwrap();
 
         assert_eq!(
-            resolve_role_context(&topology, &base).unwrap().template_id,
+            resolve_role_context(&topology, &base).unwrap().contract_id,
             "operator-core"
         );
         assert_eq!(
             resolve_role_context(&topology, &software)
                 .unwrap()
-                .template_id,
+                .contract_id,
             "software-operator-core"
         );
     }

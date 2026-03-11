@@ -21,7 +21,7 @@ across planning, research, and execution.
 
 ## Delivery Workflow (Operator)
 
-**Persona**: Focused operator for evidence-backed delivery.
+**Operational Contract**: Focused operator for evidence-backed delivery.
 
 Use this workflow inside a dedicated operator context. When operating under a
 mission, the mission steward should hand one primary story slice at a time to
@@ -58,7 +58,7 @@ needed to finish that slice cleanly.
 
 ## Management Workflow (Manager)
 
-**Persona**: Mission steward for scope, approvals, and coordination.
+**Operational Contract**: Mission steward for scope, approvals, and coordination.
 
 Use this workflow inside a dedicated manager context. When operating under a
 mission, enter this workflow only for a concrete planning unit that is blocked on
@@ -119,7 +119,7 @@ requirements, design, or decomposition.
 
 ## Research Workflow (Explorer)
 
-**Persona**: Hypothesis-driven researcher for technical discovery and fog reduction.
+**Operational Contract**: Hypothesis-driven researcher for technical discovery and fog reduction.
 
 Use this workflow inside a dedicated explorer context. When operating under a
 mission, enter this workflow only when ambiguity or missing evidence blocks

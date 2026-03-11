@@ -7,8 +7,8 @@ use crate::domain::model::taxonomy::RoleTaxonomy;
 use crate::infrastructure::config::{Config, LaneConfig, RoleFamilyConfig, WorkflowDefaultsConfig};
 use crate::read_model::queue_policy::ActorQueueLane;
 
-const SEEDED_MANAGEMENT_TEMPLATE: &str = "manager-core";
-const SEEDED_DELIVERY_TEMPLATE: &str = "operator-core";
+const SEEDED_MANAGEMENT_CONTRACT: &str = "manager-core";
+const SEEDED_DELIVERY_CONTRACT: &str = "operator-core";
 const SEEDED_MANAGEMENT_DESCRIPTION: &str = "Planning, triage, calibration, acceptance";
 const SEEDED_DELIVERY_DESCRIPTION: &str = "Work ready for execution";
 
@@ -43,7 +43,7 @@ pub struct ResolvedWorkflowTopology {
 pub struct ResolvedRoleFamily {
     pub name: String,
     pub default_lane: String,
-    pub template: String,
+    pub operational_contract: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -61,7 +61,7 @@ pub struct ResolvedLane {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResolvedRoleOverride {
     pub taxonomy: String,
-    pub template: String,
+    pub operational_contract: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -71,7 +71,7 @@ pub struct ActorTopologyContext {
     pub queue_lane: ActorQueueLane,
     pub parallel: bool,
     pub manual_accept: bool,
-    pub template: String,
+    pub operational_contract: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -195,7 +195,7 @@ impl ResolvedWorkflowTopology {
         Ok(self.resolve_actor_lane(role)?.parallel)
     }
 
-    pub fn resolve_template<'a>(
+    pub fn resolve_operational_contract<'a>(
         &'a self,
         role: &RoleTaxonomy,
     ) -> Result<&'a str, UnknownRoleFamily> {
@@ -209,8 +209,8 @@ impl ResolvedWorkflowTopology {
         Ok(self
             .role_overrides
             .get(role.to_string().as_str())
-            .map(|override_| override_.template.as_str())
-            .unwrap_or(role_family.template.as_str()))
+            .map(|override_| override_.operational_contract.as_str())
+            .unwrap_or(role_family.operational_contract.as_str()))
     }
 
     pub fn resolve_actor_context(
@@ -218,7 +218,7 @@ impl ResolvedWorkflowTopology {
         role: &RoleTaxonomy,
     ) -> Result<ActorTopologyContext, UnknownRoleFamily> {
         let lane = self.resolve_actor_lane(role)?;
-        let template = self.resolve_template(role)?;
+        let operational_contract = self.resolve_operational_contract(role)?;
 
         Ok(ActorTopologyContext {
             role: role.clone(),
@@ -226,7 +226,7 @@ impl ResolvedWorkflowTopology {
             queue_lane: classify_next_queue_lane(lane),
             parallel: lane.parallel,
             manual_accept: lane.manual_accept,
-            template: template.to_string(),
+            operational_contract: operational_contract.to_string(),
         })
     }
 }
@@ -317,7 +317,7 @@ pub fn resolve(config: &Config) -> Result<ResolvedWorkflowTopology, WorkflowTopo
                 ResolvedRoleFamily {
                     name,
                     default_lane: role.default_lane,
-                    template: role.template,
+                    operational_contract: role.operational_contract,
                 },
             ))
         })
@@ -351,7 +351,7 @@ pub fn resolve(config: &Config) -> Result<ResolvedWorkflowTopology, WorkflowTopo
                 taxonomy.clone(),
                 ResolvedRoleOverride {
                     taxonomy: taxonomy.clone(),
-                    template: override_.template.clone(),
+                    operational_contract: override_.operational_contract.clone(),
                 },
             )
         })
@@ -448,14 +448,14 @@ fn expand_selector_pattern(pattern: &str) -> Result<Vec<String>, WorkflowTopolog
 fn seeded_management_role(default_lane: &str) -> RoleFamilyConfig {
     RoleFamilyConfig {
         default_lane: default_lane.to_string(),
-        template: SEEDED_MANAGEMENT_TEMPLATE.to_string(),
+        operational_contract: SEEDED_MANAGEMENT_CONTRACT.to_string(),
     }
 }
 
 fn seeded_delivery_role(default_lane: &str) -> RoleFamilyConfig {
     RoleFamilyConfig {
         default_lane: default_lane.to_string(),
-        template: SEEDED_DELIVERY_TEMPLATE.to_string(),
+        operational_contract: SEEDED_DELIVERY_CONTRACT.to_string(),
     }
 }
 
@@ -505,8 +505,14 @@ mod tests {
         assert_eq!(topology.defaults.delivery_role, "operator");
         assert_eq!(topology.roles["manager"].default_lane, "management");
         assert_eq!(topology.roles["operator"].default_lane, "delivery");
-        assert_eq!(topology.roles["manager"].template, "manager-core");
-        assert_eq!(topology.roles["operator"].template, "operator-core");
+        assert_eq!(
+            topology.roles["manager"].operational_contract,
+            "manager-core"
+        );
+        assert_eq!(
+            topology.roles["operator"].operational_contract,
+            "operator-core"
+        );
         assert_eq!(topology.lanes["management"].priority, 100);
         assert_eq!(topology.lanes["delivery"].priority, 50);
         assert!(topology.lanes["management"].manual_accept);
@@ -519,7 +525,7 @@ mod tests {
         config.role_overrides.insert(
             "operator/software".to_string(),
             RoleOverrideConfig {
-                template: "software-operator-core".to_string(),
+                operational_contract: "software-operator-core".to_string(),
             },
         );
 

@@ -111,21 +111,21 @@ mod tests {
             "manager".to_string(),
             RoleFamilyConfig {
                 default_lane: "review".to_string(),
-                template: "manager-core".to_string(),
+                operational_contract: "manager-core".to_string(),
             },
         );
         config.roles.insert(
             "operator".to_string(),
             RoleFamilyConfig {
                 default_lane: "delivery".to_string(),
-                template: "operator-core".to_string(),
+                operational_contract: "operator-core".to_string(),
             },
         );
         config.roles.insert(
             "researcher".to_string(),
             RoleFamilyConfig {
                 default_lane: "research".to_string(),
-                template: "researcher-core".to_string(),
+                operational_contract: "researcher-core".to_string(),
             },
         );
 
