@@ -241,6 +241,27 @@ fn default_board_dir() -> String {
     ".keel".to_string()
 }
 
+/// Supported storage backends.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum StorageBackend {
+    Filesystem,
+    Server,
+}
+
+impl Default for StorageBackend {
+    fn default() -> Self {
+        Self::Filesystem
+    }
+}
+
+/// Storage-level configuration.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub struct StorageConfig {
+    #[serde(default)]
+    pub backend: StorageBackend,
+}
+
 /// Keel configuration
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Config {
@@ -248,6 +269,10 @@ pub struct Config {
     /// Defaults to ".keel" if not specified
     #[serde(default = "default_board_dir")]
     pub board_dir: String,
+
+    /// Storage configuration.
+    #[serde(default)]
+    pub storage: StorageConfig,
 
     /// Workflow defaults and topology controls.
     #[serde(default, skip_serializing_if = "WorkflowConfig::is_default")]
@@ -282,6 +307,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             board_dir: default_board_dir(),
+            storage: StorageConfig::default(),
             workflow: WorkflowConfig::default(),
             roles: BTreeMap::new(),
             lanes: BTreeMap::new(),
@@ -366,28 +392,38 @@ pub fn find_board_dir() -> Result<PathBuf> {
 pub fn load_config_from(dir: &Path) -> (Config, ConfigSource) {
     // Try project-local first in the specified directory
     let local_path = dir.join("keel.toml");
-    if let Some(config) = local_path
+    let (mut config, source) = if let Some(config) = local_path
         .exists()
         .then(|| load_from_file(&local_path).ok())
         .flatten()
     {
-        return (config, ConfigSource::Local(local_path));
-    }
-
-    // Try user global
-    if let Some(config_dir) = dirs::config_dir() {
+        (config, ConfigSource::Local(local_path))
+    } else if let Some(config_dir) = dirs::config_dir() {
+        // Try user global
         let user_path = config_dir.join("keel.toml");
         if let Some(config) = user_path
             .exists()
             .then(|| load_from_file(&user_path).ok())
             .flatten()
         {
-            return (config, ConfigSource::User(user_path));
+            (config, ConfigSource::User(user_path))
+        } else {
+            (Config::default(), ConfigSource::Defaults)
+        }
+    } else {
+        (Config::default(), ConfigSource::Defaults)
+    };
+
+    // Layer 4: Environment Overrides
+    if let Ok(backend_str) = std::env::var("KEEL_STORAGE_BACKEND") {
+        match backend_str.to_lowercase().as_str() {
+            "filesystem" => config.storage.backend = StorageBackend::Filesystem,
+            "server" => config.storage.backend = StorageBackend::Server,
+            _ => {} // Ignore invalid env var values
         }
     }
 
-    // Fall back to defaults
-    (Config::default(), ConfigSource::Defaults)
+    (config, source)
 }
 
 /// Load configuration with layered resolution
@@ -634,6 +670,62 @@ mode = "growth"
         let config = load_from_file(&path).unwrap();
         assert_eq!(config.board_dir(), ".keel");
         assert_eq!(config.scoring.mode, "growth");
+    }
+
+    #[test]
+    fn config_storage_env_override() {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("keel.toml");
+
+        // Config has filesystem
+        let content = r#"
+[storage]
+backend = "filesystem"
+"#;
+        fs::write(&path, content).unwrap();
+
+        // Env overrides to server
+        unsafe { std::env::set_var("KEEL_STORAGE_BACKEND", "server") };
+        let (config, _) = load_config_from(temp.path());
+        unsafe { std::env::remove_var("KEEL_STORAGE_BACKEND") };
+
+        assert_eq!(config.storage.backend, StorageBackend::Server);
+    }
+
+    #[test]
+    fn config_storage_validation() {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("keel.toml");
+
+        let content = r#"
+[storage]
+backend = "unknown-backend"
+"#;
+        fs::write(&path, content).unwrap();
+
+        let result = load_from_file(&path);
+        assert!(result.is_err());
+        let err_msg = format!("{:?}", result.unwrap_err());
+        assert!(err_msg.contains("unknown variant `unknown-backend`"));
+    }
+
+    #[test]
+    fn load_from_file_parses_storage_section() {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("keel.toml");
+
+        let content = r#"
+[storage]
+backend = "server"
+"#;
+        fs::write(&path, content).unwrap();
+
+        let config = load_from_file(&path).unwrap();
+        assert_eq!(config.storage.backend, StorageBackend::Server);
+
+        // Default case
+        let config_default = Config::default();
+        assert_eq!(config_default.storage.backend, StorageBackend::Filesystem);
     }
 
     #[test]

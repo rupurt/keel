@@ -20,8 +20,8 @@ index: 21
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 0/3 stories done
+**Progress:** 0/1 voyages complete, 3/3 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Storage Backend Configuration](voyages/VDY7AlCLy/) | planned | 0/3 |
+| [Storage Backend Configuration](voyages/VDY7AlCLy/) | in-progress | 3/3 |
 <!-- END GENERATED -->

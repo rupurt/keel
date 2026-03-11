@@ -832,7 +832,6 @@ pub fn evaluate_voyage_completion(
     let _has_complete_chain = evidence_by_req
         .values()
         .any(|ev| ev.has_start_end || (ev.has_start && ev.has_end));
-    let enforce_completeness = policy.strict || policy.require_all_stories_done;
 
     for req_id in requirements {
         match evidence_by_req.get(&req_id) {
@@ -915,7 +914,7 @@ pub fn evaluate_voyage_completion(
                 }
             }
             None => {
-                if enforce_completeness {
+                if policy.require_all_stories_done {
                     problems.push(Problem {
                         severity: Severity::Error,
                         path: srs_path.clone(),

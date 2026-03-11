@@ -157,7 +157,7 @@
 
 | Voyage | Status |
 |--------|--------|
-| [Storage Backend Configuration](epics/VDXBUHZB0/voyages/VDY7AlCLy/) | planned |
+| [Storage Backend Configuration](epics/VDXBUHZB0/voyages/VDY7AlCLy/) | in-progress |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
