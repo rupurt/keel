@@ -1,7 +1,7 @@
 ---
 id: 1vzQtq000
-title: Bearing Contract Cutover and Migration
 status: done
+title: Bearing Contract Cutover and Migration
 epic: 1vzQpr000
 created_at: 2026-03-08T20:03:18
 index: 1

@@ -1,7 +1,7 @@
 ---
 id: VDUG60pcX
-title: Core Changes
 status: done
+title: Core Changes
 epic: VDTpFlMKc
 created_at: 2026-03-10T10:35:56
 index: 1

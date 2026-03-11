@@ -1,8 +1,8 @@
 ---
 id: 1vwq9RqCe
+status: done
 index: 2
 title: Extract Shared Infrastructure And Repositories
-status: done
 epic: 1vwq96cpt
 created_at: 2026-03-01T15:24:41
 updated_at: 2026-03-01T15:30:29

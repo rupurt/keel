@@ -1,7 +1,7 @@
 ---
 id: VDZb4JrIq
-title: Automation Logic
 status: done
+title: Automation Logic
 epic: VDZKYX7TX
 created_at: 2026-03-11T08:30:36
 index: 1

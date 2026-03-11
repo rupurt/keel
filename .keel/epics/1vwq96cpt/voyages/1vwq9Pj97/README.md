@@ -1,8 +1,8 @@
 ---
 id: 1vwq9Pj97
+status: done
 index: 1
 title: Define Bounded Contexts And Layering Contracts
-status: done
 epic: 1vwq96cpt
 created_at: 2026-03-01T15:24:39
 updated_at: 2026-03-01T15:30:29

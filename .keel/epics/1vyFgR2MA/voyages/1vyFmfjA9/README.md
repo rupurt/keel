@@ -1,8 +1,8 @@
 ---
 id: 1vyFmfjA9
+status: done
 index: 3
 title: Goal-to-Requirement Lineage
-status: done
 epic: 1vyFgR2MA
 created_at: 2026-03-05T12:59:01
 updated_at: 2026-03-05T14:10:01

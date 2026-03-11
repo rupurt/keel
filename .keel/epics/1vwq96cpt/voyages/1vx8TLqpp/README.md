@@ -1,8 +1,8 @@
 ---
 id: 1vx8TLqpp
+status: done
 index: 6
 title: Normalize Physical DDD Module Layout
-status: done
 epic: 1vwq96cpt
 created_at: 2026-03-02T10:58:27
 updated_at: 2026-03-02T11:02:58

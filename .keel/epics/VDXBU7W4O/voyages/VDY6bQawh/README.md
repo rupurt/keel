@@ -1,7 +1,7 @@
 ---
 id: VDY6bQawh
-title: Dependency Injection for Services
 status: done
+title: Dependency Injection for Services
 epic: VDXBU7W4O
 created_at: 2026-03-11T02:23:19
 index: 1

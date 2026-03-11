@@ -1,8 +1,8 @@
 ---
 id: 1vuz8VYmc
+status: done
 index: 1
 title: Policy Module and Queue Semantics
-status: done
 epic: 1vuz8K4NM
 created_at: 2026-02-24T12:36:00
 updated_at: 2026-02-24T13:08:07

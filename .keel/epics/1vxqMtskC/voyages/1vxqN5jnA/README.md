@@ -1,8 +1,8 @@
 ---
 id: 1vxqN5jnA
+status: done
 index: 1
 title: Technique Catalog Configuration And Autodetection
-status: done
 epic: 1vxqMtskC
 created_at: 2026-03-04T09:50:55
 updated_at: 2026-03-04T09:52:41

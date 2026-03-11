@@ -1,8 +1,8 @@
 ---
 id: 1vv7YYY0y
+status: done
 index: 1
 title: Unified Enforcement Wiring
-status: done
 epic: 1vv7YWzw2
 created_at: 2026-02-24T21:35:30
 updated_at: 2026-02-24T21:36:51

@@ -1,7 +1,7 @@
 ---
 id: 1vzQu0000
-title: Evidence Capture and Provider Signals
 status: done
+title: Evidence Capture and Provider Signals
 epic: 1vzQpr000
 created_at: 2026-03-08T20:03:28
 index: 2

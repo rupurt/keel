@@ -1,8 +1,8 @@
 ---
 id: 1vuM0BauX
+status: done
 index: 1
 title: Foundation Unification
-status: done
 epic: 1vuLyP3zx
 created_at: 2026-02-22T00:00:00
 updated_at: 2026-02-22T18:49:41

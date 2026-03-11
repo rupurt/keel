@@ -1,8 +1,8 @@
 ---
 id: 1vxpomgnN
+status: done
 index: 6
 title: Planning Read Surfaces And Evidence Visibility
-status: done
 epic: 1vxYzSury
 created_at: 2026-03-04T09:15:28
 updated_at: 2026-03-04T09:19:42

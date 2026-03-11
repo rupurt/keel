@@ -1,8 +1,8 @@
 ---
 id: 1vugyuhks
+status: done
 index: 2
 title: Rich Evidence Capture
-status: done
 epic: 1vugyr0OR
 created_at: 2026-02-23T00:00:00
 updated_at: 2026-02-24T10:56:19

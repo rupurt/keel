@@ -1,8 +1,8 @@
 ---
 id: 1vwq9rycE
+status: done
 index: 4
 title: Consolidate Read Models And Queue Policies
-status: done
 epic: 1vwq96cpt
 created_at: 2026-03-01T15:25:07
 updated_at: 2026-03-01T15:30:29

@@ -1,7 +1,7 @@
 ---
 id: VDZb4GDHO
-title: Signal Implementation
 status: done
+title: Signal Implementation
 epic: VDZKYTeQK
 created_at: 2026-03-11T08:30:36
 index: 1

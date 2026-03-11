@@ -1,8 +1,8 @@
 ---
 id: 1vxYzsAxT
+status: done
 index: 5
 title: Command Classification Drift Guards
-status: done
 epic: 1vxYzSury
 created_at: 2026-03-03T15:17:48
 updated_at: 2026-03-03T15:49:33

@@ -1,7 +1,7 @@
 ---
 id: 1vzeMk000
-title: Domain Foundation
 status: done
+title: Domain Foundation
 epic: 1vzeJF000
 created_at: 2026-03-09T10:26:02
 index: 1

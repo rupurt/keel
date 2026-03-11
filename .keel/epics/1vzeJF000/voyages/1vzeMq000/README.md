@@ -1,7 +1,7 @@
 ---
 id: 1vzeMq000
-title: CLI Commands
 status: done
+title: CLI Commands
 epic: 1vzeJF000
 created_at: 2026-03-09T10:26:08
 index: 2

@@ -1,8 +1,8 @@
 ---
 id: 1vwq9wpT7
+status: done
 index: 5
 title: Migrate CLI Interfaces And Verification Coverage
-status: done
 epic: 1vwq96cpt
 created_at: 2026-03-01T15:25:12
 updated_at: 2026-03-01T15:30:29

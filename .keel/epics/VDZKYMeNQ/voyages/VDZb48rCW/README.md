@@ -1,7 +1,7 @@
 ---
 id: VDZb48rCW
-title: Core Infrastructure
 status: done
+title: Core Infrastructure
 epic: VDZKYMeNQ
 created_at: 2026-03-11T08:30:35
 index: 1

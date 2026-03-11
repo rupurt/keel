@@ -1,8 +1,8 @@
 ---
 id: 1vuz8jNo3
+status: done
 index: 3
 title: Hard Schema Migration and Compatibility Cleanup
-status: done
 epic: 1vuz8K4NM
 created_at: 2026-02-24T12:38:00
 updated_at: 2026-02-24T13:08:23

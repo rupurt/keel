@@ -1,8 +1,8 @@
 ---
 id: 1vv7YcwBg
+status: done
 index: 3
 title: Enhanced Governance and Dependency Visibility
-status: done
 epic: 1vv7YWzw2
 created_at: 2026-02-24T21:35:34
 updated_at: 2026-02-24T21:41:33

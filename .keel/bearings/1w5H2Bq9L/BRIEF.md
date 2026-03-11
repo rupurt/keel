@@ -1,22 +1,25 @@
 # Semantic Search and Ranking in Keel — Brief
 
-## Hypothesis
-Implementing semantic search using a pure-Rust, in-process embedding and vector store will significantly improve knowledge discovery in Keel without sacrificing its standalone, statically-linked nature.
-
-## Problem Space
+## Context
 Current search in Keel is limited to simple case-insensitive substring matching on IDs and Titles. This misses semantic context (e.g., searching for "bug" doesn't find "crash") and doesn't rank results by relevance, making it difficult to navigate large boards as they grow.
 
-## Success Criteria
-- [ ] Sub-millisecond search performance for typical board sizes (hundreds of documents).
-- [ ] No external database or server required.
-- [ ] Statically linked binary for Linux, Mac, and Windows (no DLLs).
-- [ ] Results ranked by semantic relevance (cosine similarity).
-- [ ] Pure Rust implementation (via `Candle` backend).
+## Objectives
+Implementing semantic search using a pure-Rust, in-process embedding and vector store will significantly improve knowledge discovery in Keel without sacrificing its standalone, statically-linked nature.
 
-## Open Questions
+## Scope
+- Sub-millisecond search performance for typical board sizes (hundreds of documents).
+- No external database or server required.
+- Statically linked binary for Linux, Mac, and Windows (no DLLs).
+- Results ranked by semantic relevance (cosine similarity).
+- Pure Rust implementation (via `Candle` backend).
+
+## Research Questions
 - **Model Distribution**: Should we download weights on first run or embed a tiny model in the binary?
 - **Index Persistence**: Is an in-memory index sufficient, or should we cache embeddings on disk to speed up startup?
 - **Resource Usage**: What is the memory footprint of keeping several hundred high-dimensional embeddings in memory?
+
+## Open Questions
+- (none yet)
 
 ## Research Findings
 

@@ -1,8 +1,8 @@
 ---
 id: 1vv7YeGDR
+status: done
 index: 4
 title: Schema Hardening and Cleanup
-status: done
 epic: 1vv7YWzw2
 created_at: 2026-02-24T21:35:36
 updated_at: 2026-02-24T21:44:38

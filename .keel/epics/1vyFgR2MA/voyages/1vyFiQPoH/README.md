@@ -1,8 +1,8 @@
 ---
 id: 1vyFiQPoH
+status: done
 index: 1
 title: Canonical PRD Requirement Lineage
-status: done
 epic: 1vyFgR2MA
 created_at: 2026-03-05T12:54:38
 updated_at: 2026-03-05T14:09:05

@@ -1,8 +1,8 @@
 ---
 id: 1vv7Yags9
+status: done
 index: 2
 title: Observational Knowledge Synthesis
-status: done
 epic: 1vv7YWzw2
 created_at: 2026-02-24T21:35:32
 updated_at: 2026-02-24T21:39:09

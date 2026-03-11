@@ -1,7 +1,7 @@
 ---
 id: VDXHyy82b
-title: Core Storage Traits
 status: done
+title: Core Storage Traits
 epic: VDXBSiFXW
 created_at: 2026-03-10T23:02:14
 index: 1

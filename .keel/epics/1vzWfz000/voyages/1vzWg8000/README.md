@@ -1,7 +1,7 @@
 ---
 id: 1vzWg8000
-title: Lineage Validation
 status: done
+title: Lineage Validation
 epic: 1vzWfz000
 created_at: 2026-03-09T02:13:32
 index: 2

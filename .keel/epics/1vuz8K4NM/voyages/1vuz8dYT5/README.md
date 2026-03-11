@@ -1,8 +1,8 @@
 ---
 id: 1vuz8dYT5
+status: done
 index: 2
 title: Unified Transition Enforcement
-status: done
 epic: 1vuz8K4NM
 created_at: 2026-02-24T12:37:00
 updated_at: 2026-02-24T13:08:17
