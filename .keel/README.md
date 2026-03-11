@@ -145,7 +145,11 @@
 
 ### [Public Library API](epics/VDXBUEBAG/) (draft)
 
-### [Storage Configuration](epics/VDXBUHZB0/) (draft)
+### [Storage Configuration](epics/VDXBUHZB0/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Storage Backend Configuration](epics/VDXBUHZB0/voyages/VDY7AlCLy/) | planned |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
