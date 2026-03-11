@@ -183,6 +183,12 @@
 |--------|--------|
 | [Automation Logic](epics/VDZKYX7TX/voyages/VDZb4JrIq/) | done |
 
+### [Diagnostics-First Next Algorithm](epics/VDZcE0Uo5/) (draft)
+
+### [Actionable Health Recovery](epics/VDZcE46pb/) (draft)
+
+### [Coherent Entity Orchestration](epics/VDZcE7gsS/) (draft)
+
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
 | Voyage | Status |
