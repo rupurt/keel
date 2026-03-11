@@ -280,7 +280,6 @@ fn render_show_payload(payload: &ConfigShowPayload) -> Vec<String> {
     let mut lines = Vec::new();
     lines.push(format!("# Configuration source: {}", payload.source));
     lines.push(format!("project_root = \"{}\"", payload.project_root));
-    lines.push(String::new());
     lines.push(format!("board_dir = \"{}\"", payload.board_dir));
     lines.push(String::new());
     lines.push("[workflow.defaults]".to_string());
