@@ -20,7 +20,8 @@ index: 20
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/0 voyages complete, 0/0 stories done
+**Progress:** 0/1 voyages complete, 0/3 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
+| [Public Library Surface](voyages/VDY7YBSFR/) | planned | 0/3 |
 <!-- END GENERATED -->

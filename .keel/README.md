@@ -143,7 +143,11 @@
 
 ### [FileSystem Storage Adapter](epics/VDXBUAn7a/) (draft)
 
-### [Public Library API](epics/VDXBUEBAG/) (draft)
+### [Public Library API](epics/VDXBUEBAG/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Public Library Surface](epics/VDXBUEBAG/voyages/VDY7YBSFR/) | planned |
 
 ### [Storage Configuration](epics/VDXBUHZB0/) (active)
 
