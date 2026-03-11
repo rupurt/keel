@@ -1,4 +1,8 @@
 //! Topology-driven role-context guidance profiles.
+//!
+//! Note: These "templates" are guidance profiles (persona, priorities, hints)
+//! used for CLI guidance and should not be confused with the file-based
+//! markdown templates defined in `src/infrastructure/templates.rs`.
 
 use crate::domain::model::taxonomy::RoleTaxonomy;
 use crate::read_model::queue_policy::ActorQueueLane;

@@ -57,13 +57,19 @@ priority = 50          # Rendering and selection priority (higher first)
 
 ### Roles
 
-Roles map a "role family" to a default lane and a template.
+Roles map a "role family" to a default lane and a guidance template.
 
 ```toml
 [roles.operator]
 default_lane = "delivery"
 template = "operator-core"
 ```
+
+**Template**: Refers to a built-in guidance profile that defines the actor's persona, priorities, and workflow hints. This is used by commands like `keel next` to provide relevant context. It is **not** a file-based markdown template.
+
+Built-in templates include:
+- `manager-core`: Focused on planning, triage, and strategic alignment.
+- `operator-core`: Focused on evidence-backed delivery and TDD.
 
 ### Role Overrides
 
