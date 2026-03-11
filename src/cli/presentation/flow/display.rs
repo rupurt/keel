@@ -70,14 +70,7 @@ pub fn render_annotated_flow(
         writeln!(output, "{}", mission_summary).unwrap();
     }
 
-    writeln!(output, "{}", style::heavy_rule(width, Some(&theme))).unwrap();
-    writeln!(output).unwrap();
-
-    // 2. Queue Handoff (Configured Workflow Lanes)
-    let lane_boxes = render_lane_boxes(lane_flow, width, &theme);
-    writeln!(output, "{}", lane_boxes).unwrap();
-
-    // 2b. Bottleneck Analysis
+    // 2. Flow Assessment (Bottleneck Analysis)
     let throughput = crate::cli::presentation::flow::throughput::calculate_throughput(board, 4);
     let health = crate::cli::presentation::flow::bottleneck::analyze_health(metrics, &throughput);
 
@@ -99,7 +92,11 @@ pub fn render_annotated_flow(
     writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
     writeln!(output).unwrap();
 
-    // 3. Execution Capacity (Strategic Throughput)
+    // 3. Queue Handoff (Configured Workflow Lanes)
+    let lane_boxes = render_lane_boxes(lane_flow, width, &theme);
+    writeln!(output, "{}", lane_boxes).unwrap();
+
+    // 4. Execution Capacity (Strategic Throughput)
     let capacity = crate::cli::presentation::flow::capacity::calculate_system_capacity(board);
     let has_actionable_capacity = strategic_capacity_available(&capacity.epics);
     let cap_map = capacity
@@ -304,25 +301,47 @@ pub fn render_lane_boxes(lane_flow: &LaneFlowProjection, width: usize, theme: &T
         return String::new();
     }
 
+    let max_source_lines = lane_flow
+        .lanes
+        .iter()
+        .map(|l| {
+            let count = l.source_counts.iter().filter(|s| s.count > 0).count();
+            if count == 0 { 1 } else { count }
+        })
+        .max()
+        .unwrap_or(0);
+
     if width >= 80 {
-        render_lane_boxes_grid(lane_flow, width, theme)
+        render_lane_boxes_grid(lane_flow, width, theme, max_source_lines)
     } else {
-        render_lane_boxes_stacked(lane_flow, width, theme)
+        render_lane_boxes_stacked(lane_flow, width, theme, max_source_lines)
     }
 }
 
-fn render_lane_boxes_grid(lane_flow: &LaneFlowProjection, width: usize, theme: &Theme) -> String {
+fn render_lane_boxes_grid(
+    lane_flow: &LaneFlowProjection,
+    width: usize,
+    theme: &Theme,
+    max_source_lines: usize,
+) -> String {
     let mut output = String::new();
     let col_width = (width - 2) / 2;
 
-    for (index, chunk) in lane_flow.lanes.chunks(2).enumerate() {
+    let boxes: Vec<_> = lane_flow
+        .lanes
+        .iter()
+        .map(|lane| build_lane_box(lane, col_width, theme, max_source_lines))
+        .collect();
+
+    let max_height = boxes.iter().map(|b| b.lines.len() + 2).max().unwrap_or(0);
+
+    for (index, chunk) in boxes.chunks(2).enumerate() {
         let rendered: Vec<_> = chunk
             .iter()
-            .map(|lane| render_lane_box(lane, col_width, theme))
+            .map(|b| b.render_with_height(max_height))
             .collect();
-        let height = rendered.iter().map(Vec::len).max().unwrap_or(0);
 
-        for row in 0..height {
+        for row in 0..max_height {
             let left = rendered
                 .first()
                 .and_then(|lines| lines.get(row))
@@ -340,7 +359,7 @@ fn render_lane_boxes_grid(lane_flow: &LaneFlowProjection, width: usize, theme: &
             }
         }
 
-        if index + 1 < lane_flow.lanes.len().div_ceil(2) {
+        if index + 1 < boxes.len().div_ceil(2) {
             writeln!(output).unwrap();
         }
     }
@@ -352,15 +371,24 @@ fn render_lane_boxes_stacked(
     lane_flow: &LaneFlowProjection,
     width: usize,
     theme: &Theme,
+    max_source_lines: usize,
 ) -> String {
     let mut output = String::new();
 
-    for (index, lane) in lane_flow.lanes.iter().enumerate() {
-        for line in render_lane_box(lane, width, theme) {
+    let boxes: Vec<_> = lane_flow
+        .lanes
+        .iter()
+        .map(|lane| build_lane_box(lane, width, theme, max_source_lines))
+        .collect();
+
+    let max_height = boxes.iter().map(|b| b.lines.len() + 2).max().unwrap_or(0);
+
+    for (index, b) in boxes.iter().enumerate() {
+        for line in b.render_with_height(max_height) {
             writeln!(output, "{}", line).unwrap();
         }
 
-        if index + 1 < lane_flow.lanes.len() {
+        if index + 1 < boxes.len() {
             writeln!(output).unwrap();
         }
     }
@@ -368,10 +396,16 @@ fn render_lane_boxes_stacked(
     output
 }
 
-fn render_lane_box(lane: &LaneFlowCard, width: usize, theme: &Theme) -> Vec<String> {
-    let mut lane_box = BoxComponent::new(&format!("{} [p{}]", lane.name, lane.priority), width);
-
-    lane_box.push_line(render_lane_summary_line(lane, width - 2));
+fn build_lane_box(
+    lane: &LaneFlowCard,
+    width: usize,
+    theme: &Theme,
+    max_source_lines: usize,
+) -> BoxComponent {
+    let mut lane_box = BoxComponent::new(
+        &format!("{} ({}) [p{}]", lane.name, lane.total_count, lane.priority),
+        width,
+    );
 
     let non_zero_sources: Vec<_> = lane
         .source_counts
@@ -379,28 +413,27 @@ fn render_lane_box(lane: &LaneFlowCard, width: usize, theme: &Theme) -> Vec<Stri
         .filter(|source| source.count > 0)
         .collect();
 
+    let mut lines_pushed = 0;
     if non_zero_sources.is_empty() {
         lane_box.push_line(format!("  {}", "No items in lane".dimmed()));
+        lines_pushed += 1;
     } else {
         for source in non_zero_sources {
             lane_box.push_line(render_lane_source_line(source, width - 2, theme));
+            lines_pushed += 1;
         }
+    }
+
+    // Pad source section to match global max
+    while lines_pushed < max_source_lines {
+        lane_box.push_line(" ".to_string());
+        lines_pushed += 1;
     }
 
     lane_box.push_rule();
     lane_box.push_line(render_lane_capabilities_line(lane, width - 2));
 
-    lane_box.render()
-}
-
-fn render_lane_summary_line(lane: &LaneFlowCard, width: usize) -> String {
-    let prefix = format!("  items {:>3}  ", lane.total_count);
-    let summary = format!(
-        "{}{}",
-        prefix,
-        truncate_plain_text(&lane.description, width.saturating_sub(prefix.len()))
-    );
-    crate::cli::presentation::flow::format::pad_to_width(&summary, width)
+    lane_box
 }
 
 fn render_lane_source_line(source: &LaneSourceCount, width: usize, theme: &Theme) -> String {
@@ -422,22 +455,6 @@ fn render_lane_capabilities_line(lane: &LaneFlowCard, width: usize) -> String {
     };
     let line = format!("  mode: {mode}, {accept}");
     crate::cli::presentation::flow::format::pad_to_width(&line, width)
-}
-
-fn truncate_plain_text(value: &str, max_chars: usize) -> String {
-    let chars: Vec<_> = value.chars().collect();
-    if chars.len() <= max_chars {
-        return value.to_string();
-    }
-    if max_chars <= 3 {
-        return ".".repeat(max_chars);
-    }
-    format!(
-        "{}...",
-        chars[..max_chars.saturating_sub(3)]
-            .iter()
-            .collect::<String>()
-    )
 }
 
 fn strategic_capacity_available(
@@ -518,7 +535,7 @@ mod tests {
         let lane_flow = make_test_lane_flow();
         let theme = Theme::default();
         let rendered = render_lane_boxes(&lane_flow, 100, &theme);
-        assert!(rendered.contains("management [p100]"));
+        assert!(rendered.contains("management (0) [p100]"));
     }
 
     #[test]
@@ -526,7 +543,7 @@ mod tests {
         let lane_flow = make_test_lane_flow();
         let theme = Theme::default();
         let rendered = render_lane_boxes(&lane_flow, 100, &theme);
-        assert!(rendered.contains("delivery [p50]"));
+        assert!(rendered.contains("delivery (0) [p50]"));
     }
 
     #[test]
@@ -540,8 +557,8 @@ mod tests {
         assert!(rendered.contains("Planning"));
         assert!(rendered.contains("Execution"));
         assert!(rendered.contains("Verification"));
-        assert!(rendered.contains("management [p100]"));
-        assert!(rendered.contains("delivery [p50]"));
+        assert!(rendered.contains("management (0) [p100]"));
+        assert!(rendered.contains("delivery (0) [p50]"));
         assert!(rendered.contains("No executable epic capacity"));
     }
 }

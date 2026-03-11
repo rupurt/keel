@@ -98,9 +98,9 @@ priority = 100
         .unwrap();
 
         let output = build_output(temp.path(), true).unwrap();
-        let review = output.find("review [p300]").unwrap();
-        let delivery = output.find("delivery [p200]").unwrap();
-        let research = output.find("research [p100]").unwrap();
+        let review = output.find("review (1) [p300]").unwrap();
+        let delivery = output.find("delivery (1) [p200]").unwrap();
+        let research = output.find("research (1) [p100]").unwrap();
 
         assert!(review < delivery);
         assert!(delivery < research);
