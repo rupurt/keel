@@ -129,6 +129,16 @@
 |--------|--------|
 | [Role and Lane Config Contract](epics/VDVPODBXF/voyages/VDVPUCtqS/) | done |
 
+### [Storage Port Definitions](epics/VDXBSiFXW/) (draft)
+
+### [Application Service Refactor](epics/VDXBU7W4O/) (draft)
+
+### [FileSystem Storage Adapter](epics/VDXBUAn7a/) (draft)
+
+### [Public Library API](epics/VDXBUEBAG/) (draft)
+
+### [Storage Configuration](epics/VDXBUHZB0/) (draft)
+
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
 | Voyage | Status |

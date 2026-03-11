@@ -67,6 +67,9 @@ enum JsonDetails {
     NeedsPlanning {
         voyages: Vec<String>,
     },
+    NeedsPRD {
+        epics: Vec<String>,
+    },
     Mission {
         id: String,
         title: String,
@@ -419,6 +422,9 @@ fn decision_to_json(
         NextDecision::NeedsPlanning(d) => JsonDetails::NeedsPlanning {
             voyages: d.voyages.iter().map(|v| v.id().to_string()).collect(),
         },
+        NextDecision::NeedsPRD(_) => JsonDetails::NeedsPRD {
+            epics: Vec::new(), // Placeholder
+        },
         NextDecision::Mission(d) => JsonDetails::Mission {
             id: d.mission.id().to_string(),
             title: d.mission.title().to_string(),
@@ -456,6 +462,7 @@ fn decision_kind(decision: &NextDecision) -> &'static str {
         NextDecision::Blocked(_) => "blocked",
         NextDecision::NeedsStories(_) => "needs_stories",
         NextDecision::NeedsPlanning(_) => "needs_planning",
+        NextDecision::NeedsPRD(_) => "needs_prd",
         NextDecision::Mission(_) => "mission",
         NextDecision::Missions(_) => "missions",
         NextDecision::Empty(_) => "empty",
@@ -502,6 +509,7 @@ fn guidance_for_decision(
             .voyages
             .first()
             .map(|voyage| CommandGuidance::next(format!("keel voyage plan {}", voyage.id()))),
+        NextDecision::NeedsPRD(_) => Some(CommandGuidance::next("keel epic list".to_string())),
         NextDecision::Mission(d) => Some(CommandGuidance::next(format!(
             "keel mission show {}",
             d.mission.id()
