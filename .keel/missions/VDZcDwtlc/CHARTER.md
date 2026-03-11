@@ -4,9 +4,9 @@
 
 | ID | Description | Verification |
 |----|-------------|--------------|
-| MG-01 | Run doctor checks as the first phase of the `next` algorithm. | board: VDZcE0Uo5 |
-| MG-02 | Map doctor problems to actionable next steps in `keel next` output. | board: VDZcE46pb |
-| MG-03 | Orchestrate coherence of doctor checks in entity creation. | board: VDZcE7gsS |
+| MG-01 | Run doctor checks as the first phase of the `next` algorithm. | board: VDZb97pMO |
+| MG-02 | Map doctor problems to actionable next steps in `keel next` output. | board: VDZb9FeSU |
+| MG-03 | Orchestrate coherence of doctor checks in entity creation. | board: VDZb9NTVh |
 
 ## Constraints
 

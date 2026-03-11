@@ -1,10 +1,11 @@
 ---
 id: VDZcDwtlc
 title: Integrate Board Diagnostics into Pull-System Steering
-status: active
+status: achieved
 created_at: 2026-03-11T08:35:11
-updated_at: 2026-03-11T08:35:32
+updated_at: 2026-03-11T09:29:45
 activated_at: 2026-03-11T08:35:32
+achieved_at: 2026-03-11T09:29:45
 ---
 
 # Integrate Board Diagnostics into Pull-System Steering
