@@ -8,7 +8,7 @@ use keel::domain::model::{Board, Story, StoryState};
 use keel::domain::policy::queue::compare_work_item_ids;
 use keel::read_model::queue_policy::{self, DraftVoyageQueueCategory};
 
-use keel::read_model::diagnostics::{DoctorReport, validate};
+use keel::read_model::diagnostics::DoctorReport;
 
 #[derive(Debug, Clone)]
 pub struct ItemFilter<'a> {
@@ -166,7 +166,7 @@ pub fn calculate_next(
     // Disabled in tests to allow legacy mock boards to pass without heavy instrumentation.
     #[cfg(not(test))]
     {
-        let report = validate(board_dir)?;
+        let report = keel::read_model::diagnostics::validate(board_dir)?;
         let has_errors = report.total_errors() > 0;
 
         if has_errors {

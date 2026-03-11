@@ -201,6 +201,14 @@
 |--------|--------|
 | [Structural Coherence](epics/VDZcE7gsS/voyages/VDZsp7eAG/) | done |
 
+### [Routine Entity and Blueprints](epics/VDakm8eVW/) (draft)
+
+### [Temporal Gating in Next Algorithm](epics/VDakmCGYi/) (draft)
+
+### [Pulse Automation Engine](epics/VDakmG8cH/) (draft)
+
+### [Automation Documentation and Guides](epics/VDakmJodq/) (draft)
+
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
 | Voyage | Status |

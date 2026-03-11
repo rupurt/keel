@@ -312,6 +312,11 @@ pub const ALL_DOCTOR_CHECKS: &[DoctorCheckDefinition] = &[
         name: "Goal achievement",
     },
     DoctorCheckDefinition {
+        id: "mission-definition-readiness",
+        section: "Missions",
+        name: "Mission definition readiness",
+    },
+    DoctorCheckDefinition {
         id: "mission-active-work-coherence",
         section: "Missions",
         name: "Active mission work coherence",

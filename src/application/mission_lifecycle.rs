@@ -4,7 +4,7 @@ use anyhow::{Result, anyhow};
 use std::path::Path;
 
 use crate::domain::state_machine::{
-    evaluate_mission_transition, format_gate_error, MissionTransition,
+    MissionTransition, evaluate_mission_transition, format_gate_error,
 };
 use crate::domain::transitions::mission::{execute, mission_transitions};
 use crate::infrastructure::loader::load_board;
@@ -130,17 +130,6 @@ impl MissionLifecycleService {
         let problems = evaluate_mission_transition(&board, mission, MissionTransition::Activate);
         if !problems.is_empty() {
             return Err(anyhow!(format_gate_error("mission", "activate", &problems)));
-        }
-
-        let charter_path = mission.path.parent().unwrap().join("CHARTER.md");
-        let charter_content = std::fs::read_to_string(&charter_path).unwrap_or_default();
-        let goals = charter::parse_mission_goals(&charter_content);
-
-        if goals.is_empty() || goals.iter().any(|g| g.description.contains("{{goal}}")) {
-            return Err(anyhow!(
-                "Cannot activate mission {}. It has no goals defined in CHARTER.md",
-                id
-            ));
         }
 
         execute(board_dir, id, &mission_transitions::ACTIVATE)?;
@@ -281,34 +270,38 @@ fn get_next_question(content: &str) -> Option<String> {
         );
     }
 
-    if goals.iter().any(|g| g.description.contains("{{goal}}")) {
+    if goals.iter().any(charter::goal_needs_description) {
         return Some("Please provide a description for the primary objective (MG-01).".to_string());
+    }
+
+    if goals.iter().any(charter::goal_needs_verification) {
+        return Some("Please provide a concrete verification for MG-01 (for example `board: EPIC-1`, `metric: p95 < 1s`, or `manual: stakeholder review`).".to_string());
     }
 
     // 2. Check for board: goal
     if !goals
         .iter()
-        .any(|g| matches!(g.verification, GoalVerification::Board(_)))
+        .any(|g| matches!(&g.verification, GoalVerification::Board(target) if !target.trim().is_empty() && target.trim() != "..."))
     {
         return Some("Please add at least one goal with 'board:' verification (e.g. 'board: EPIC-1') so the system can track progress automatically.".to_string());
     }
 
     // 3. Check Constraints
-    if let Some(constraints_section) = extract_section(content, "## Constraints") {
-        if constraints_section.contains("(none yet)") || constraints_section.trim().is_empty() {
-            return Some("Are there any operational constraints or boundaries for this mission? (e.g. budget, timeframe, technology)".to_string());
-        }
-    } else {
+    if extract_section(content, "## Constraints").is_none() {
         return Some("Please add a ## Constraints section to the CHARTER.md".to_string());
+    }
+    if !charter::has_authored_constraints(content) {
+        return Some("Are there any operational constraints or boundaries for this mission? (e.g. budget, timeframe, technology)".to_string());
     }
 
     // 4. Check Halting Rules
-    if let Some(halting_section) = extract_section(content, "## Halting Rules") {
-        if halting_section.trim().is_empty() {
-            return Some("Please define Halting Rules for this mission.".to_string());
-        }
-    } else {
+    if extract_section(content, "## Halting Rules").is_none() {
         return Some("Please add a ## Halting Rules section to the CHARTER.md".to_string());
+    }
+    if !charter::has_authored_halting_rules(content) {
+        return Some(
+            "Please replace the default halting rules with mission-specific rules.".to_string(),
+        );
     }
 
     None
@@ -322,8 +315,15 @@ fn process_answer(content: &str, answer: &str) -> Result<String> {
         return Ok(replace_section(content, "## Goals", &updated_goals));
     }
 
-    if let Some(constraints_section) = extract_section(content, "## Constraints")
-        && constraints_section.contains("(none yet)")
+    if let Some(goals_section) = extract_section(content, "## Goals")
+        && goals_section.contains("board: ...")
+    {
+        let updated_goals = goals_section.replacen("board: ...", answer.trim(), 1);
+        return Ok(replace_section(content, "## Goals", &updated_goals));
+    }
+
+    if let Some(_constraints_section) = extract_section(content, "## Constraints")
+        && !charter::has_authored_constraints(content)
     {
         let updated_constraints = format!("- {}\n", answer);
         return Ok(replace_section(
@@ -331,6 +331,26 @@ fn process_answer(content: &str, answer: &str) -> Result<String> {
             "## Constraints",
             &updated_constraints,
         ));
+    }
+
+    if extract_section(content, "## Halting Rules").is_some()
+        && !charter::has_authored_halting_rules(content)
+    {
+        let updated_rules = answer
+            .lines()
+            .map(str::trim)
+            .filter(|line| !line.is_empty())
+            .map(|line| {
+                if line.starts_with("- ") {
+                    line.to_string()
+                } else {
+                    format!("- {}", line)
+                }
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+        let updated_rules = format!("{updated_rules}\n");
+        return Ok(replace_section(content, "## Halting Rules", &updated_rules));
     }
 
     Err(anyhow!(
@@ -343,6 +363,24 @@ mod tests {
     use super::*;
     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestMission};
     use std::fs;
+
+    fn authored_charter(board_target: &str) -> String {
+        format!(
+            r#"
+## Goals
+| ID | Description | Verification |
+|----|-------------|--------------|
+| MG-01 | Test goal | board: {board_target} |
+
+## Constraints
+- Keep the scope focused on one epic.
+
+## Halting Rules
+- Halt after the first epic is decomposed into ready voyages and stories.
+- Yield to human review before changing external workflow contracts.
+"#
+        )
+    }
 
     #[test]
     fn test_mission_activate() {
@@ -357,13 +395,7 @@ mod tests {
 
         // Add a goal to CHARTER.md manually
         let charter_path = temp.path().join("missions/M1/CHARTER.md");
-        let charter = r#"
-## Goals
-| ID | Description | Verification |
-|----|-------------|--------------|
-| MG-01 | Test goal | board: E1 |
-"#;
-        fs::write(charter_path, charter).unwrap();
+        fs::write(charter_path, authored_charter("E1")).unwrap();
 
         MissionLifecycleService::activate(temp.path(), "M1").unwrap();
 
@@ -384,13 +416,7 @@ mod tests {
 
         // Add a goal to CHARTER.md manually
         let charter_path = temp.path().join("missions/M1/CHARTER.md");
-        let charter = r#"
-## Goals
-| ID | Description | Verification |
-|----|-------------|--------------|
-| MG-01 | Test goal | board: E1 |
-"#;
-        fs::write(charter_path, charter).unwrap();
+        fs::write(charter_path, authored_charter("E1")).unwrap();
 
         let res = MissionLifecycleService::activate(temp.path(), "M1");
         assert!(res.is_err());
@@ -414,7 +440,47 @@ mod tests {
 
         let res = MissionLifecycleService::activate(temp.path(), "M1");
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("no goals"));
+        assert!(res.unwrap_err().to_string().contains("at least one goal"));
+    }
+
+    #[test]
+    fn test_mission_activate_fails_with_default_halting_rules() {
+        let temp = TestBoardBuilder::new()
+            .mission(
+                TestMission::new("M1")
+                    .title("Mission One")
+                    .status("defining"),
+            )
+            .epic(TestEpic::new("E1").mission("M1"))
+            .build();
+
+        let charter_path = temp.path().join("missions/M1/CHARTER.md");
+        fs::write(
+            charter_path,
+            r#"
+## Goals
+| ID | Description | Verification |
+|----|-------------|--------------|
+| MG-01 | Test goal | board: E1 |
+
+## Constraints
+- Keep the scope focused on one epic.
+
+## Halting Rules
+- DO NOT halt while any MG-* goal has unfinished board work.
+- HALT when all MG-* goals with `board:` verification are satisfied.
+- YIELD to human when only `metric:` or `manual:` goals remain.
+"#,
+        )
+        .unwrap();
+
+        let res = MissionLifecycleService::activate(temp.path(), "M1");
+        assert!(res.is_err());
+        assert!(
+            res.unwrap_err()
+                .to_string()
+                .contains("mission-specific rules")
+        );
     }
 
     #[test]
@@ -497,15 +563,35 @@ mod tests {
 
         // Second question
         let q2 = get_next_question(&content).unwrap();
-        assert!(q2.contains("operational constraints"));
+        assert!(q2.contains("concrete verification"));
 
         // Answer q2
+        let content = process_answer(&content, "board: E1").unwrap();
+        assert!(content.contains("board: E1"));
+
+        // Third question
+        let q3 = get_next_question(&content).unwrap();
+        assert!(q3.contains("operational constraints"));
+
+        // Answer q3
         let content = process_answer(&content, "My constraint").unwrap();
         assert!(content.contains("- My constraint"));
 
+        // Fourth question
+        let q4 = get_next_question(&content).unwrap();
+        assert!(q4.contains("halting rules"));
+
+        // Answer q4
+        let content = process_answer(
+            &content,
+            "- Halt after the first epic is decomposed into ready voyages.\n- Yield to human if the mission needs a new ADR.",
+        )
+        .unwrap();
+        assert!(content.contains("new ADR"));
+
         // No more questions
-        let q3 = get_next_question(&content);
-        assert!(q3.is_none());
+        let q5 = get_next_question(&content);
+        assert!(q5.is_none());
     }
 
     #[test]

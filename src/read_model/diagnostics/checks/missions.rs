@@ -56,6 +56,21 @@ pub fn check_mission_goals(board: &Board) -> Vec<Problem> {
     problems
 }
 
+/// Check that active missions still satisfy the activation charter contract.
+pub fn check_mission_definition_readiness(board: &Board) -> Vec<Problem> {
+    let mut problems = Vec::new();
+
+    for mission in board.missions.values() {
+        if mission.status() != MissionStatus::Active {
+            continue;
+        }
+
+        problems.extend(charter::check_mission_charter_readiness(board, mission));
+    }
+
+    problems
+}
+
 struct LogEntry {
     #[allow(dead_code)]
     pub raw: String,
@@ -346,6 +361,41 @@ mod tests {
         let board = load_board(temp.path()).unwrap();
         let problems = check_mission_goals(&board);
         assert!(problems.is_empty());
+    }
+
+    #[test]
+    fn test_check_mission_definition_readiness_flags_scaffold_halting_rules() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .build();
+
+        let charter_path = temp.path().join("missions/M1/CHARTER.md");
+        fs::write(
+            charter_path,
+            r#"
+## Goals
+| ID | Description | Verification |
+|----|-------------|--------------|
+| MG-01 | Test goal | board: E1 |
+
+## Constraints
+- Keep the work scoped to one epic at a time.
+
+## Halting Rules
+- DO NOT halt while any MG-* goal has unfinished board work.
+- HALT when all MG-* goals with `board:` verification are satisfied.
+- YIELD to human when only `metric:` or `manual:` goals remain.
+"#,
+        )
+        .unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_mission_definition_readiness(&board);
+
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].check_id, CheckId::MissionDefinitionReadiness);
+        assert!(problems[0].message.contains("mission-specific rules"));
     }
 
     #[test]

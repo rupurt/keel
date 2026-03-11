@@ -82,28 +82,16 @@ fn evaluate_mission_activation(
 ) -> Vec<Problem> {
     let mut problems = Vec::new();
 
-    let child_count = board
-        .epics
-        .values()
-        .filter(|e| e.frontmatter.mission.as_deref() == Some(mission.id()))
-        .count()
-        + board
-            .bearings
-            .values()
-            .filter(|b| b.frontmatter.mission.as_deref() == Some(mission.id()))
-            .count()
-        + board
-            .adrs
-            .values()
-            .filter(|a| a.frontmatter.mission.as_deref() == Some(mission.id()))
-            .count();
-
-    if child_count == 0 {
+    if board.mission_child_count(mission.id()) == 0 {
         problems.push(Problem::error(
             mission.path.clone(),
             format!("Mission {} cannot be activated: no child entities found. Link at least one epic, bearing, or ADR first.", mission.id())
         ));
     }
+
+    problems.extend(
+        crate::infrastructure::validation::charter::check_mission_charter_readiness(board, mission),
+    );
 
     problems
 }
@@ -168,7 +156,10 @@ fn evaluate_mission_verification(
     if child_count == 0 {
         problems.push(Problem::error(
             mission.path.clone(),
-            format!("Mission {} cannot be verified: no child entities found.", mission.id())
+            format!(
+                "Mission {} cannot be verified: no child entities found.",
+                mission.id()
+            ),
         ));
     }
 

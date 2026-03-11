@@ -220,6 +220,7 @@ pub enum CheckId {
     IdInconsistency,
     BearingMissingEpicLineage,
     BearingInvalidGoalLineage,
+    MissionDefinitionReadiness,
     MissionGoalAchieved,
     MissionActiveNoWork,
     MissionOrphanedLineage,

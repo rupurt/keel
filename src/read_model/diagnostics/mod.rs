@@ -618,6 +618,15 @@ pub fn validate_with_config(
         mission_goal_problems,
     ));
 
+    let mission_definition_problems = checks::missions::check_mission_definition_readiness(&board);
+    mission_checks.push(configured_check(
+        doctor_config,
+        "mission-definition-readiness",
+        "Mission definition readiness",
+        board.missions.len(),
+        mission_definition_problems,
+    ));
+
     let mission_work_problems = checks::missions::check_mission_active_no_work(&board);
     mission_checks.push(configured_check(
         doctor_config,
