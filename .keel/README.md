@@ -129,7 +129,11 @@
 |--------|--------|
 | [Role and Lane Config Contract](epics/VDVPODBXF/voyages/VDVPUCtqS/) | done |
 
-### [Storage Port Definitions](epics/VDXBSiFXW/) (draft)
+### [Storage Port Definitions](epics/VDXBSiFXW/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Core Storage Traits](epics/VDXBSiFXW/voyages/VDXHyy82b/) | planned |
 
 ### [Application Service Refactor](epics/VDXBU7W4O/) (draft)
 
