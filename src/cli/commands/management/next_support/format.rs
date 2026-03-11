@@ -241,12 +241,54 @@ fn format_mission(d: &super::MissionDecision) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::StoryState;
-    use crate::test_helpers::TestStory;
+    use crate::domain::model::{StoryState, Story, StoryFrontmatter, StoryType, Voyage, VoyageFrontmatter, VoyageState};
+    use std::path::PathBuf;
+
+    fn make_test_story(id: &str, title: &str, status: StoryState) -> Story {
+        Story {
+            frontmatter: StoryFrontmatter {
+                id: id.to_string(),
+                title: title.to_string(),
+                story_type: StoryType::Feat,
+                status,
+                scope: None,
+                milestone: None,
+                created_at: None,
+                updated_at: None,
+                started_at: None,
+                completed_at: None,
+                submitted_at: None,
+                index: None,
+                governed_by: Vec::new(),
+                blocked_by: Vec::new(),
+                role: None,
+            },
+            path: PathBuf::from("test.md"),
+        }
+    }
+
+    fn make_test_voyage(id: &str, title: &str, status: VoyageState) -> Voyage {
+        Voyage {
+            frontmatter: VoyageFrontmatter {
+                id: id.to_string(),
+                title: title.to_string(),
+                goal: None,
+                status,
+                epic: None,
+                index: None,
+                created_at: None,
+                updated_at: None,
+                started_at: None,
+                completed_at: None,
+            },
+            path: PathBuf::from("test.md"),
+            epic_id: "epic1".to_string(),
+        }
+    }
 
     #[test]
     fn test_format_work() {
-        let story = TestStory::new("S1").title("Story 1").build();
+        let story = make_test_story("S1", "Story 1", StoryState::Backlog);
         let decision = NextDecision::Work(StoryDecision {
             story,
             is_continuation: false,
@@ -260,7 +302,7 @@ mod tests {
 
     #[test]
     fn test_format_continuation() {
-        let story = TestStory::new("S1").title("Story 1").build();
+        let story = make_test_story("S1", "Story 1", StoryState::InProgress);
         let decision = NextDecision::Work(StoryDecision {
             story,
             is_continuation: true,
@@ -301,7 +343,7 @@ mod tests {
 
     #[test]
     fn test_format_accept() {
-        let story = TestStory::new("S1").status(StoryState::NeedsHumanVerification).build();
+        let story = make_test_story("S1", "Story 1", StoryState::NeedsHumanVerification);
         let decision = NextDecision::Accept(super::AcceptDecision {
             stories: vec![story],
         });
@@ -349,7 +391,7 @@ mod tests {
 
     #[test]
     fn test_format_blocked() {
-        let story = TestStory::new("S1").build();
+        let story = make_test_story("S1", "Story 1", StoryState::Backlog);
         let decision = NextDecision::Blocked(BlockedDecision {
             story,
             count: 5,
@@ -362,17 +404,7 @@ mod tests {
 
     #[test]
     fn test_format_needs_stories() {
-        let voyage = crate::domain::model::Voyage {
-            id: "V1".to_string(),
-            title: "Voyage 1".to_string(),
-            epic_id: "E1".to_string(),
-            status: crate::domain::state_machine::voyage::VoyageState::Draft,
-            path: std::path::PathBuf::from("path"),
-            created_at: None,
-            started_at: None,
-            updated_at: None,
-            completed_at: None,
-        };
+        let voyage = make_test_voyage("V1", "Voyage 1", VoyageState::Draft);
         let decision = NextDecision::NeedsStories(DecomposeDecision {
             voyages: vec![voyage],
         });
@@ -384,17 +416,7 @@ mod tests {
 
     #[test]
     fn test_format_needs_planning() {
-        let voyage = crate::domain::model::Voyage {
-            id: "V1".to_string(),
-            title: "Voyage 1".to_string(),
-            epic_id: "E1".to_string(),
-            status: crate::domain::state_machine::voyage::VoyageState::Draft,
-            path: std::path::PathBuf::from("path"),
-            created_at: None,
-            started_at: None,
-            updated_at: None,
-            completed_at: None,
-        };
+        let voyage = make_test_voyage("V1", "Voyage 1", VoyageState::Draft);
         let decision = NextDecision::NeedsPlanning(DecomposeDecision {
             voyages: vec![voyage],
         });

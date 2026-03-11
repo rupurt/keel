@@ -9,7 +9,7 @@ static AC_REF_STRIP_REGEX: LazyLock<Regex> =
 static COMMENT_AC_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<!--\s*\[(SRS-[A-Z0-9-]+)/AC-(\d+)\]\s*verify:").unwrap());
 static REQ_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(SRS-[A-Z0-9-]+):(start:end|start|continues|end)").unwrap());
+    LazyLock::new(|| Regex::new(r"(SRS-[A-Z0-9-]+):([a-z:]+)").unwrap());
 static CONTAINS_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r#"^(.+?)\s+(?:contains|~=)\s+(.+)$"#).unwrap());
 static EQUALS_REGEX: LazyLock<Regex> =
@@ -185,13 +185,23 @@ fn parse_verify_content(
         {
             let id = caps.get(1).unwrap().as_str().to_string();
             let phase_str = caps.get(2).unwrap().as_str();
-            let phase = match phase_str {
-                "start" => RequirementPhase::Start,
-                "continues" => RequirementPhase::Continues,
-                "end" => RequirementPhase::End,
-                "start:end" => RequirementPhase::StartEnd,
-                _ => unreachable!(),
+
+            let has_start = phase_str.contains("start");
+            let has_end = phase_str.contains("end");
+            let has_continues = phase_str.contains("continues");
+
+            let phase = if has_start && has_end {
+                RequirementPhase::StartEnd
+            } else if has_start {
+                RequirementPhase::Start
+            } else if has_end {
+                RequirementPhase::End
+            } else if has_continues {
+                RequirementPhase::Continues
+            } else {
+                continue; // Unknown phase pattern
             };
+
             requirements.push(RequirementRef { id, phase });
             continue;
         }

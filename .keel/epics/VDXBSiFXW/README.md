@@ -20,8 +20,8 @@ index: 17
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 0/3 stories done
+**Progress:** 1/1 voyages complete, 3/3 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Core Storage Traits](voyages/VDXHyy82b/) | planned | 0/3 |
+| [Core Storage Traits](voyages/VDXHyy82b/) | done | 3/3 |
 <!-- END GENERATED -->

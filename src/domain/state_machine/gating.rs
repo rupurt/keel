@@ -198,7 +198,7 @@ fn check_epic_documents_complete(epic: &crate::domain::model::Epic) -> Vec<Probl
     problems
 }
 
-fn evaluate_story_submit(_board: &Board, story: &Story) -> Vec<Problem> {
+fn evaluate_story_submit(board: &Board, story: &Story) -> Vec<Problem> {
     let mut problems = Vec::new();
 
     // 1. Check for evidence bundle structural requirements
@@ -282,13 +282,26 @@ fn evaluate_story_submit(_board: &Board, story: &Story) -> Vec<Problem> {
         });
     }
 
+    if let Some(voyage) = voyage_for_scope(board, story.scope().unwrap_or_default()) {
+        problems.extend(evaluate_voyage_completion(
+            board,
+            voyage,
+            Some(story.id()),
+            VoyageCompletionPolicy {
+                strict: true,
+                require_all_stories_done: false,
+                require_evidence: true,
+            },
+        ));
+    }
+
     problems.extend(check_story_bundle_coherence(story, bundle_dir));
 
     problems
 }
 
 fn evaluate_story_accept(
-    _board: &Board,
+    board: &Board,
     story: &Story,
     manual_acceptance_manager_role_authorized: bool,
 ) -> Vec<Problem> {
@@ -324,6 +337,19 @@ fn evaluate_story_accept(
             Problem::error(story.path.clone(), "EVIDENCE directory missing in bundle")
                 .with_check_id(CheckId::Unknown),
         );
+    }
+
+    if let Some(voyage) = voyage_for_scope(board, story.scope().unwrap_or_default()) {
+        problems.extend(evaluate_voyage_completion(
+            board,
+            voyage,
+            Some(story.id()),
+            VoyageCompletionPolicy {
+                strict: true,
+                require_all_stories_done: false,
+                require_evidence: true,
+            },
+        ));
     }
 
     problems.extend(check_story_bundle_coherence(story, bundle_dir));
@@ -759,6 +785,11 @@ pub fn evaluate_voyage_completion(
 
     let mut evidence_by_req: HashMap<String, RequirementEvidence> = HashMap::new();
     for story in &stories {
+        // Skip stories that aren't done yet, UNLESS they are the candidate being accepted/submitted
+        if story.status != StoryState::Done && Some(story.id()) != candidate_story_done {
+            continue;
+        }
+
         let content = match fs::read_to_string(&story.path) {
             Ok(c) => c,
             Err(_) => continue,

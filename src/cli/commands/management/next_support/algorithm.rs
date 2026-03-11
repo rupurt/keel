@@ -476,8 +476,9 @@ fn is_goal_met(board: &Board, target: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
     use crate::domain::model::StoryState;
-    use crate::test_helpers::{TestBearing, TestBoardBuilder, TestStory};
+    use crate::test_helpers::{TestBearing, TestBoardBuilder, TestStory, TestMission, TestAdr};
 
     fn assert_human_queue_decision(decision: &NextDecision) {
         match decision {
@@ -499,21 +500,7 @@ mod tests {
     fn human_mode_finds_adr_decisions() {
         let temp = TestBoardBuilder::new()
             .adr(
-                crate::domain::model::AdrFrontmatter {
-                    id: "ADR1".to_string(),
-                    title: "ADR 1".to_string(),
-                    status: crate::domain::model::AdrStatus::Proposed,
-                    context: None,
-                    applies_to: vec![],
-                    mission: None,
-                    supersedes: vec![],
-                    superseded_by: None,
-                    rejection_reason: None,
-                    deprecation_reason: None,
-                    decided_at: None,
-                    index: None,
-                },
-                "ADR1.md",
+                TestAdr::new("ADR1").title("ADR 1").status("proposed")
             )
             .build();
 
