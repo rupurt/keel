@@ -25,9 +25,9 @@ index: 1
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 stories complete
+**Progress:** 1/1 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Implement Auto-complete In Process Manager](../../../../stories/VDZb9RDYg/README.md) | refactor | icebox |
+| [Implement Auto-complete In Process Manager](../../../../stories/VDZb9RDYg/README.md) | refactor | done |
 <!-- END GENERATED -->

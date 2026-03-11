@@ -7,7 +7,7 @@ use anyhow::Result;
 use regex::Regex;
 use walkdir::WalkDir;
 
-use super::super::types::*;
+use crate::read_model::diagnostics::types::*;
 
 /// Known valid frontmatter field names for each entity type.
 /// These include both the canonical serde-serialized names and backwards-compatible aliases.

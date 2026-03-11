@@ -8,11 +8,11 @@ use anyhow::{Result, bail};
 use clap::Subcommand;
 use serde::Serialize;
 
-use crate::cli::commands::diagnostics::doctor::catalog::ALL_DOCTOR_CHECKS;
 use keel::infrastructure::config::{self, Config};
 use keel::infrastructure::loader::load_board;
 use keel::infrastructure::verification::parser::parse_verify_annotations;
 use keel::infrastructure::{bearing_research, config::ConfigSource};
+use keel::read_model::diagnostics::catalog::ALL_DOCTOR_CHECKS;
 use keel::read_model::{verification_techniques, workflow_topology};
 
 #[derive(Subcommand, Debug)]

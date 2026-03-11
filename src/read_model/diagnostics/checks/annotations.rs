@@ -1,9 +1,9 @@
 use std::fs;
 
 use super::super::fixes::{TestIndex, extract_grep_command};
-use super::super::types::*;
-use keel::domain::model::Board;
-use keel::infrastructure::verification::{Comparison, parse_verify_annotations};
+use crate::domain::model::Board;
+use crate::infrastructure::verification::{Comparison, parse_verify_annotations};
+use crate::read_model::diagnostics::types::*;
 
 /// Annotation coverage counts -- not a pass/fail check, just counts.
 pub struct AnnotationCoverage {

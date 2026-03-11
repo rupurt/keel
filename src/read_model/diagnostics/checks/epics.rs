@@ -2,10 +2,10 @@ use std::path::Path;
 
 use anyhow::Result;
 
-use super::super::types::*;
-use keel::domain::model::{Board, EpicState};
-use keel::domain::state_machine::invariants;
-use keel::infrastructure::validation::structural;
+use crate::domain::model::{Board, EpicState};
+use crate::domain::state_machine::invariants;
+use crate::infrastructure::validation::structural;
+use crate::read_model::diagnostics::types::*;
 
 /// Scan epic files for structural problems
 /// Returns (problems, epic_count)
@@ -34,8 +34,8 @@ pub fn check_epic_title_case(board: &Board) -> Vec<Problem> {
 
     for epic in board.epics.values() {
         let title = &epic.frontmatter.title;
-        if !keel::infrastructure::utils::is_title_case(title) {
-            let new_title = keel::infrastructure::utils::to_title_case(title);
+        if !crate::infrastructure::utils::is_title_case(title) {
+            let new_title = crate::infrastructure::utils::to_title_case(title);
             problems.push(Problem {
                 severity: Severity::Warning,
                 path: epic.path.clone(),
@@ -105,7 +105,9 @@ pub fn check_epic_done_gates(board: &Board) -> Vec<Problem> {
 
     for epic in board.epics.values() {
         if epic.status() == EpicState::Done {
-            problems.extend(keel::domain::state_machine::evaluate_epic_done(board, epic));
+            problems.extend(crate::domain::state_machine::evaluate_epic_done(
+                board, epic,
+            ));
         }
     }
 
@@ -166,9 +168,9 @@ pub fn check_epic_id_consistency(board: &Board) -> Vec<Problem> {
 
 /// Check for duplicate epic IDs
 pub fn check_epic_duplicates(board_dir: &Path) -> Vec<Problem> {
-    keel::infrastructure::duplicate_ids::duplicate_id_problems(
+    crate::infrastructure::duplicate_ids::duplicate_id_problems(
         board_dir,
-        keel::infrastructure::duplicate_ids::DuplicateEntity::Epic,
+        crate::infrastructure::duplicate_ids::DuplicateEntity::Epic,
     )
 }
 
@@ -209,7 +211,8 @@ pub fn check_epic_press_release(board: &Board) -> Vec<Problem> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestVoyage};
+    use crate::read_model::diagnostics::validate;
+    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestVoyage};
     use std::fs;
 
     #[test]
@@ -220,7 +223,7 @@ mod tests {
         let pr_path = temp.path().join("epics/epic-1/PRESS_RELEASE.md");
         fs::write(&pr_path, "# PRESS RELEASE\n\nTODO: finalize release copy").unwrap();
 
-        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_epic_press_release(&board);
 
         assert_eq!(problems.len(), 1);
@@ -240,7 +243,7 @@ mod tests {
             fs::remove_file(pr_path).unwrap();
         }
 
-        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_epic_press_release(&board);
         assert!(problems.is_empty());
     }
@@ -251,14 +254,14 @@ mod tests {
             .epic(TestEpic::new("epic-1"))
             .voyage(TestVoyage::new("v1", "epic-1").status("draft"))
             .build();
-        let mut board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
+        let mut board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
         // Simulate stale derived state drift to exercise coherence mapping.
         board
             .epics
             .get_mut("epic-1")
             .unwrap()
-            .set_status(keel::domain::model::EpicState::Active);
+            .set_status(crate::domain::model::EpicState::Active);
 
         let problems = check_epic_status_drift(&board);
         assert_eq!(problems.len(), 1);
@@ -291,7 +294,7 @@ mod tests {
         )
         .unwrap();
 
-        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_epic_goal_lineage_coherence(&board);
 
         assert!(
@@ -339,7 +342,7 @@ mod tests {
         )
         .unwrap();
 
-        let report = crate::cli::commands::diagnostics::doctor::validate(temp.path()).unwrap();
+        let report = validate(temp.path()).unwrap();
         let goal_check = report
             .epic_checks
             .iter()

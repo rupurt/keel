@@ -106,7 +106,6 @@ fn new_epic(board_dir: &Path, name: &str, problem: &str) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cli::commands::diagnostics::doctor;
     use keel::infrastructure::validation::{CheckId, structural};
     use keel::test_helpers::TestBoardBuilder;
     use regex::Regex;
@@ -314,7 +313,7 @@ mod tests {
         )
         .unwrap();
 
-        let report = doctor::validate(board_dir).unwrap();
+        let report = keel::read_model::diagnostics::validate(board_dir).unwrap();
         let failures: Vec<_> = report
             .epic_checks
             .iter()

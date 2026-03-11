@@ -1,5 +1,5 @@
-use super::super::types::*;
-use keel::read_model::workflow_topology;
+use crate::read_model::diagnostics::types::*;
+use crate::read_model::workflow_topology;
 use std::path::Path;
 
 /// Check workflow topology for integrity (missing defaults, bad references, overlap)

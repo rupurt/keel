@@ -25,9 +25,9 @@ index: 1
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 stories complete
+**Progress:** 1/1 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Add Operator Signal To Models And Views](../../../../stories/VDZb9NTVh/README.md) | feat | icebox |
+| [Add Operator Signal To Models And Views](../../../../stories/VDZb9NTVh/README.md) | feat | done |
 <!-- END GENERATED -->

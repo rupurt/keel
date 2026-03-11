@@ -20,8 +20,8 @@ index: 25
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/1 voyages complete, 0/1 stories done
+**Progress:** 1/1 voyages complete, 1/1 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Automation Logic](voyages/VDZb4JrIq/) | done | 0/1 |
+| [Automation Logic](voyages/VDZb4JrIq/) | done | 1/1 |
 <!-- END GENERATED -->

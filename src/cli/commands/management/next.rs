@@ -82,6 +82,10 @@ enum JsonDetails {
     Missions {
         missions: Vec<JsonMission>,
     },
+    Diagnostics {
+        errors: usize,
+        warnings: usize,
+    },
     Empty {
         suggestions: Vec<String>,
     },
@@ -445,6 +449,10 @@ fn decision_to_json(
                 })
                 .collect(),
         },
+        NextDecision::Diagnostics { report, .. } => JsonDetails::Diagnostics {
+            errors: report.total_errors(),
+            warnings: report.total_warnings(),
+        },
         NextDecision::VerifyMission(d) => JsonDetails::Missions {
             missions: d
                 .missions
@@ -480,6 +488,7 @@ fn decision_kind(decision: &NextDecision) -> &'static str {
         NextDecision::Mission(_) => "mission",
         NextDecision::Missions(_) => "missions",
         NextDecision::VerifyMission(_) => "verify_mission",
+        NextDecision::Diagnostics { .. } => "diagnostics",
         NextDecision::Empty(_) => "empty",
     }
 }
@@ -530,6 +539,9 @@ fn guidance_for_decision(
             d.mission.id()
         ))),
         NextDecision::Missions(_) => Some(CommandGuidance::next("keel mission list".to_string())),
+        NextDecision::Diagnostics {
+            suggested_command, ..
+        } => Some(CommandGuidance::next(suggested_command.clone())),
         NextDecision::VerifyMission(d) => d
             .missions
             .first()

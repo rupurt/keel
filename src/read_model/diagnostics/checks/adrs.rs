@@ -3,9 +3,9 @@ use std::path::Path;
 
 use anyhow::Result;
 
-use super::super::types::*;
-use keel::domain::model::{Adr, AdrStatus, Board, VoyageState};
-use keel::infrastructure::parser::parse_frontmatter;
+use crate::domain::model::{Adr, AdrStatus, Board, VoyageState};
+use crate::infrastructure::parser::parse_frontmatter;
+use crate::read_model::diagnostics::types::*;
 
 /// Scan ADR files for structural problems
 /// Returns (problems, file_count)
@@ -64,7 +64,7 @@ pub fn check_adr_file(path: &Path) -> Option<Problem> {
     }
 
     // Try to parse frontmatter
-    let result: Result<(keel::domain::model::AdrFrontmatter, &str), _> =
+    let result: Result<(crate::domain::model::AdrFrontmatter, &str), _> =
         parse_frontmatter(&content);
 
     match result {
@@ -112,7 +112,7 @@ pub fn check_adr_dates(board: &Board) -> Vec<Problem> {
 
     for adr in board.adrs.values() {
         problems.extend(
-            keel::infrastructure::validation::structural::check_date_consistency(
+            crate::infrastructure::validation::structural::check_date_consistency(
                 &adr.path,
                 CheckId::AdrDateConsistency,
             ),
@@ -187,8 +187,8 @@ pub fn check_adr_title_case(board: &Board) -> Vec<Problem> {
 
     for adr in board.adrs.values() {
         let title = &adr.frontmatter.title;
-        if !keel::infrastructure::utils::is_title_case(title) {
-            let new_title = keel::infrastructure::utils::to_title_case(title);
+        if !crate::infrastructure::utils::is_title_case(title) {
+            let new_title = crate::infrastructure::utils::to_title_case(title);
             problems.push(Problem {
                 severity: Severity::Warning,
                 path: adr.path.clone(),
@@ -275,7 +275,7 @@ pub fn check_adr_id_consistency(board: &Board) -> Vec<Problem> {
             } else {
                 // If it's totally different, just use ID + slugified title
                 new_filename.push('-');
-                new_filename.push_str(&keel::infrastructure::utils::slugify(adr.title()));
+                new_filename.push_str(&crate::infrastructure::utils::slugify(adr.title()));
                 new_filename.push_str(".md");
             }
 
@@ -301,17 +301,17 @@ pub fn check_adr_id_consistency(board: &Board) -> Vec<Problem> {
 
 /// Check for duplicate ADR IDs
 pub fn check_adr_duplicates(board_dir: &Path) -> Vec<Problem> {
-    keel::infrastructure::duplicate_ids::duplicate_id_problems(
+    crate::infrastructure::duplicate_ids::duplicate_id_problems(
         board_dir,
-        keel::infrastructure::duplicate_ids::DuplicateEntity::Adr,
+        crate::infrastructure::duplicate_ids::DuplicateEntity::Adr,
     )
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use keel::infrastructure::loader::load_board;
-    use keel::test_helpers::{TestAdr, TestBoardBuilder};
+    use crate::infrastructure::loader::load_board;
+    use crate::test_helpers::{TestAdr, TestBoardBuilder};
 
     #[test]
     fn test_scan_adr_files_empty() {
@@ -340,8 +340,8 @@ mod tests {
     #[test]
     fn test_check_proposed_adr_warning() {
         let temp = TestBoardBuilder::new()
-            .epic(keel::test_helpers::TestEpic::new("e1"))
-            .voyage(keel::test_helpers::TestVoyage::new("v1", "e1").status("in-progress"))
+            .epic(crate::test_helpers::TestEpic::new("e1"))
+            .voyage(crate::test_helpers::TestVoyage::new("v1", "e1").status("in-progress"))
             .adr(TestAdr::new("ADR-001").status("proposed").context("e1"))
             .build();
 

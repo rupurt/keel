@@ -18,6 +18,7 @@ use keel::domain::state_machine::mission::MissionStatus;
 use keel::domain::state_machine::voyage::VoyageState;
 
 /// Regex for SRS requirement references like [SRS-01/AC-01]
+#[allow(dead_code)]
 pub static AC_REQ_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\[(SRS-[A-Z0-9-]+)/AC-\d+\]").unwrap());
 static STRONG_EMPHASIS_RE: LazyLock<Regex> =

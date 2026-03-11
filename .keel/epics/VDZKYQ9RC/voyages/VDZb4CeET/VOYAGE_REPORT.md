@@ -7,29 +7,33 @@
 - **Goal:** -
 
 ## Execution Summary
-**Progress:** 0/2 stories complete
+**Progress:** 2/2 stories complete
 
 ## Implementation Narrative
 ### Wire Keel Story Audit Into CLI
 - **ID:** VDZb9FeSU
-- **Status:** icebox
+- **Status:** done
 
 #### Summary
-TODO: Describe the story
+Requirement implemented during refactor.
 
 #### Acceptance Criteria
-- [ ] TODO: Add criteria
 - [x] [SRS-01/AC-01] done <!-- verify: manual, SRS-01:start:end -->
+
+#### Verified Evidence
+- [manual.log](../../../../stories/VDZb9FeSU/EVIDENCE/manual.log)
 
 ### Add Rich Diagnostics To Verification Report
 - **ID:** VDZb9JXUt
-- **Status:** icebox
+- **Status:** done
 
 #### Summary
-TODO: Describe the story
+Requirement implemented during refactor.
 
 #### Acceptance Criteria
-- [ ] TODO: Add criteria
 - [x] [SRS-01/AC-01] done <!-- verify: manual, SRS-01:start:end -->
+
+#### Verified Evidence
+- [manual.log](../../../../stories/VDZb9JXUt/EVIDENCE/manual.log)
 
 

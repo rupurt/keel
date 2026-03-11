@@ -20,8 +20,8 @@ index: 23
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/1 voyages complete, 0/2 stories done
+**Progress:** 1/1 voyages complete, 2/2 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Audit Integration](voyages/VDZb4CeET/) | done | 0/2 |
+| [Audit Integration](voyages/VDZb4CeET/) | done | 2/2 |
 <!-- END GENERATED -->

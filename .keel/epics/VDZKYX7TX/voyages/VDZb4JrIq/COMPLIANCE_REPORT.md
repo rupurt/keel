@@ -4,4 +4,4 @@
 
 | Req ID | Status | Implemented By | Proof Artifacts |
 |--------|--------|----------------|-----------------|
-| SRS-01 | ✓ VERIFIED | [VDZb9RDYg](../../../../stories/VDZb9RDYg/README.md) |  |
+| SRS-01 | ✓ VERIFIED | [VDZb9RDYg](../../../../stories/VDZb9RDYg/README.md) | [manual.log](../../../../stories/VDZb9RDYg/EVIDENCE/manual.log) |

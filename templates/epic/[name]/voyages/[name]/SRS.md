@@ -1,44 +1,32 @@
-# {{title}} - Software Requirements Specification
+# {{title}} - SRS
 
-> {{goal}}
+## Summary
 
-**Epic:** [{{epic}}](../../README.md) | **SDD:** [SDD.md](SDD.md)
+Epic: {{epic}}
+Goal: {{goal}}
 
 ## Scope
 
 ### In Scope
 
-<!-- What this voyage delivers -->
+- (list in-scope items)
 
 ### Out of Scope
 
-<!-- What this voyage explicitly does NOT deliver -->
+- (list out-of-scope items)
 
-## Assumptions & Dependencies
-
-<!-- What we assume to be true; external systems, services, or conditions we depend on -->
-
-| Assumption/Dependency | Type | Impact if Invalid |
-|-----------------------|------|-------------------|
-
-## Constraints
-
-<!-- Technical, business, or regulatory limitations that shape the solution -->
-
-## Requirements
-
-### Functional Requirements
+## Functional Requirements
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Scope | Source | Verification |
 |----|-------------|-------|--------|--------------|
-| SRS-01 | Implement the core voyage capability needed to satisfy this epic goal. | SCOPE-01 | FR-01 | automated test + demo |
+| SRS-01 | Sample requirement | SCOPE-01 | FR-01 | manual |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
-### Non-Functional Requirements
+## Non-Functional Requirements
 
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Scope | Source | Verification |
 |----|-------------|-------|--------|--------------|
-| SRS-NFR-01 | Ensure operational reliability for the voyage capability under expected load and failure conditions. | SCOPE-01 | NFR-01 | automated test + inspection |
+| SRS-NFR-01 | Sample NFR | SCOPE-01 | NFR-01 | manual |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->

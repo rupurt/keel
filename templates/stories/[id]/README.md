@@ -5,14 +5,15 @@ type: {{type}}
 status: icebox
 created_at: {{created_at}}
 updated_at: {{updated_at}}
+operator-signal: 
 ---
 
 # {{title}}
 
 ## Summary
 
-TODO: Describe the story
+Describe the goal and context of this story.
 
 ## Acceptance Criteria
 
-- [ ] TODO: Add criteria
+- [ ] Item 1 <!-- verify: manual, SRS-XX:start:end -->

@@ -230,8 +230,8 @@ fn new_story(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cli::commands::diagnostics::doctor::checks::stories::check_index_validation;
     use keel::domain::model::StoryState;
+    use keel::read_model::diagnostics::checks::stories::check_index_validation;
     use keel::test_helpers::{TestAdr, TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use std::fs;
 

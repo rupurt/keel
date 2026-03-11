@@ -1,6 +1,6 @@
 //! Terminal rendering for doctor reports
 
-use super::types::{DoctorReport, Severity};
+use keel::read_model::diagnostics::types::{DoctorReport, Severity};
 use owo_colors::OwoColorize;
 use std::time::Duration;
 
@@ -18,7 +18,7 @@ pub fn print_report(report: &DoctorReport) {
     print_section("Workflow", &report.workflow_checks);
 }
 
-fn print_section(name: &str, checks: &[super::types::CheckResult]) {
+fn print_section(name: &str, checks: &[keel::read_model::diagnostics::CheckResult]) {
     println!("{}:", name.bold().cyan());
     for check in checks {
         if check.disabled {
@@ -52,6 +52,7 @@ fn print_section(name: &str, checks: &[super::types::CheckResult]) {
 }
 
 /// Calculate total duration of checks
-pub fn sum_check_durations(checks: &[super::types::CheckResult]) -> Duration {
+#[allow(dead_code)]
+pub fn sum_check_durations(checks: &[keel::read_model::diagnostics::CheckResult]) -> Duration {
     checks.iter().map(|c| c.duration).sum()
 }

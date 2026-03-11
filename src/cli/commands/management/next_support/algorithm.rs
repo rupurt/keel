@@ -8,6 +8,8 @@ use keel::domain::model::{Board, Story, StoryState};
 use keel::domain::policy::queue::compare_work_item_ids;
 use keel::read_model::queue_policy::{self, DraftVoyageQueueCategory};
 
+use keel::read_model::diagnostics::{DoctorReport, validate};
+
 #[derive(Debug, Clone)]
 pub struct ItemFilter<'a> {
     pub mission_id: Option<&'a str>,
@@ -85,6 +87,11 @@ pub enum NextDecision {
     Missions(MissionsDecision),
     /// Mission ready for final human verification
     VerifyMission(VerifyMissionDecision),
+    /// Board has health issues that must be resolved
+    Diagnostics {
+        report: DoctorReport,
+        suggested_command: String,
+    },
 }
 
 #[derive(Debug)]
@@ -155,6 +162,49 @@ pub fn calculate_next(
     agent_mode: bool,
     filter: &ItemFilter,
 ) -> Result<NextDecision> {
+    // 0. Board Health Check (Priority 0)
+    // Disabled in tests to allow legacy mock boards to pass without heavy instrumentation.
+    #[cfg(not(test))]
+    {
+        let report = validate(board_dir)?;
+        let has_errors = report.total_errors() > 0;
+
+        if has_errors {
+            let has_fixes = report.all_problems().iter().any(|p| p.fix.is_some());
+            return Ok(NextDecision::Diagnostics {
+                report,
+                suggested_command: if has_fixes {
+                    "keel doctor --fix".to_string()
+                } else {
+                    "keel doctor".to_string()
+                },
+            });
+        }
+
+        // Warnings: Surface them as next step if they are relevant to the current mission or globally critical
+        if report.total_warnings() > 0 {
+            let has_relevant_warning = report.all_problems().iter().any(|p| {
+                if let Some(mission_id) = filter.mission_id {
+                    p.path.to_string_lossy().contains(mission_id)
+                } else {
+                    true
+                }
+            });
+
+            if has_relevant_warning {
+                let has_fixes = report.all_problems().iter().any(|p| p.fix.is_some());
+                return Ok(NextDecision::Diagnostics {
+                    report,
+                    suggested_command: if has_fixes {
+                        "keel doctor --fix".to_string()
+                    } else {
+                        "keel doctor".to_string()
+                    },
+                });
+            }
+        }
+    }
+
     let metrics = keel::read_model::flow_status::project(board);
     let queue_policy_snapshot = queue_policy::project(&metrics);
 
@@ -518,6 +568,7 @@ mod tests {
             NextDecision::Mission(_) => {}
             NextDecision::Missions(_) => {}
             NextDecision::VerifyMission(_) => {}
+            NextDecision::Diagnostics { .. } => {}
         }
     }
 

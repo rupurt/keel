@@ -25,10 +25,10 @@ index: 1
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/2 stories complete
+**Progress:** 2/2 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Implement Structured Commands And YAML Parsing](../../../../stories/VDZb97pMO/README.md) | refactor | icebox |
-| [Refactor Executor For Structured Commands](../../../../stories/VDZb9BcPN/README.md) | refactor | icebox |
+| [Implement Structured Commands And YAML Parsing](../../../../stories/VDZb97pMO/README.md) | refactor | done |
+| [Refactor Executor For Structured Commands](../../../../stories/VDZb9BcPN/README.md) | refactor | done |
 <!-- END GENERATED -->

@@ -30,7 +30,66 @@ pub fn format_decision(decision: &NextDecision) -> String {
         NextDecision::Mission(d) => format_mission(d),
         NextDecision::Missions(d) => format_missions(d),
         NextDecision::VerifyMission(d) => format_verify_mission(d),
+        NextDecision::Diagnostics {
+            report,
+            suggested_command,
+        } => format_diagnostics(report, suggested_command),
     }
+}
+
+fn format_diagnostics(
+    report: &keel::read_model::diagnostics::DoctorReport,
+    suggested_command: &str,
+) -> String {
+    let mut out = String::new();
+    out.push_str(&format!(
+        "{}: Board has health issues that must be resolved\n",
+        "Diagnostics".bold().red()
+    ));
+
+    let errors = report.total_errors();
+    let warnings = report.total_warnings();
+
+    if errors > 0 {
+        out.push_str(&format!("  - {} error(s) detected\n", errors.red().bold()));
+
+        // Highlight the first error specifically
+        if let Some(first_error) = report
+            .all_problems()
+            .iter()
+            .find(|p| p.severity == keel::infrastructure::validation::Severity::Error)
+        {
+            out.push_str(&format!(
+                "\nCritical Issue: {}\nLocation: {}\n",
+                first_error.message.bold(),
+                first_error.path.display().italic().dimmed()
+            ));
+        }
+    }
+    if warnings > 0 {
+        out.push_str(&format!("  - {} warning(s) detected\n", warnings.yellow()));
+
+        if errors == 0 {
+            // If no errors, highlight the first warning
+            if let Some(first_warning) = report
+                .all_problems()
+                .iter()
+                .find(|p| p.severity == keel::infrastructure::validation::Severity::Warning)
+            {
+                out.push_str(&format!(
+                    "\nIssue: {}\nLocation: {}\n",
+                    first_warning.message.bold(),
+                    first_warning.path.display().italic().dimmed()
+                ));
+            }
+        }
+    }
+
+    out.push_str(&format!(
+        "\nRun `{}` to resolve.",
+        suggested_command.bold().white()
+    ));
+    out
 }
 
 fn format_verify_mission(d: &VerifyMissionDecision) -> String {

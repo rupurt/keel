@@ -25,10 +25,10 @@ index: 1
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/2 stories complete
+**Progress:** 2/2 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Wire Keel Story Audit Into CLI](../../../../stories/VDZb9FeSU/README.md) | feat | icebox |
-| [Add Rich Diagnostics To Verification Report](../../../../stories/VDZb9JXUt/README.md) | feat | icebox |
+| [Wire Keel Story Audit Into CLI](../../../../stories/VDZb9FeSU/README.md) | feat | done |
+| [Add Rich Diagnostics To Verification Report](../../../../stories/VDZb9JXUt/README.md) | feat | done |
 <!-- END GENERATED -->

@@ -3,7 +3,7 @@
 use serde::Serialize;
 use std::time::Duration;
 
-pub use keel::infrastructure::validation::{CheckId, Fix, GapCategory, Problem, Severity};
+pub use crate::infrastructure::validation::{CheckId, Fix, GapCategory, Problem, Severity};
 
 /// Full board health report
 #[derive(Debug, Serialize, Clone)]
@@ -29,20 +29,20 @@ impl DoctorReport {
     }
 
     pub fn total_errors(&self) -> usize {
-        self.story_checks
+        self.all_problems()
             .iter()
-            .chain(&self.voyage_checks)
-            .chain(&self.epic_checks)
-            .chain(&self.adr_checks)
-            .chain(&self.bearing_checks)
-            .chain(&self.mission_checks)
-            .chain(&self.workflow_checks)
-            .flat_map(|c| &c.problems)
             .filter(|p| p.severity == Severity::Error)
             .count()
     }
 
     pub fn total_warnings(&self) -> usize {
+        self.all_problems()
+            .iter()
+            .filter(|p| p.severity == Severity::Warning)
+            .count()
+    }
+
+    pub fn all_problems(&self) -> Vec<&Problem> {
         self.story_checks
             .iter()
             .chain(&self.voyage_checks)
@@ -52,8 +52,7 @@ impl DoctorReport {
             .chain(&self.mission_checks)
             .chain(&self.workflow_checks)
             .flat_map(|c| &c.problems)
-            .filter(|p| p.severity == Severity::Warning)
-            .count()
+            .collect()
     }
 }
 

@@ -2,6 +2,7 @@
 
 pub mod bearing_show;
 pub mod capacity;
+pub mod diagnostics;
 pub mod evidence;
 pub mod execution_queue;
 pub mod flow_metrics;

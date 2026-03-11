@@ -7,29 +7,33 @@
 - **Goal:** -
 
 ## Execution Summary
-**Progress:** 0/2 stories complete
+**Progress:** 2/2 stories complete
 
 ## Implementation Narrative
 ### Implement Structured Commands And YAML Parsing
 - **ID:** VDZb97pMO
-- **Status:** icebox
+- **Status:** done
 
 #### Summary
-TODO: Describe the story
+Requirement implemented during refactor.
 
 #### Acceptance Criteria
-- [ ] TODO: Add criteria
 - [x] [SRS-01/AC-01] done <!-- verify: manual, SRS-01:start:end -->
+
+#### Verified Evidence
+- [manual.log](../../../../stories/VDZb97pMO/EVIDENCE/manual.log)
 
 ### Refactor Executor For Structured Commands
 - **ID:** VDZb9BcPN
-- **Status:** icebox
+- **Status:** done
 
 #### Summary
-TODO: Describe the story
+Requirement implemented during refactor.
 
 #### Acceptance Criteria
-- [ ] TODO: Add criteria
 - [x] [SRS-01/AC-01] done <!-- verify: manual, SRS-01:start:end -->
+
+#### Verified Evidence
+- [manual.log](../../../../stories/VDZb9BcPN/EVIDENCE/manual.log)
 
 

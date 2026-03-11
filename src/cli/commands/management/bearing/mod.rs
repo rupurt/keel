@@ -1031,11 +1031,11 @@ fn format_factor(value: Option<u8>) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cli::commands::diagnostics::doctor::checks::bearings::check_bearing_assessment_recommendation;
     use crate::cli::presentation::flow::next_up::calculate_next_up;
     use keel::infrastructure::bearing_evidence::parse_evidence_records;
     use keel::infrastructure::config::ModeWeights;
     use keel::infrastructure::generate::board_readme::generate_board_readme;
+    use keel::read_model::diagnostics::checks::bearings::check_bearing_assessment_recommendation;
     use keel::test_helpers::{TestBearing, TestBoardBuilder};
     use std::path::{Path, PathBuf};
     use tempfile::TempDir;

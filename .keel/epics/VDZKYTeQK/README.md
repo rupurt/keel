@@ -20,8 +20,8 @@ index: 24
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/1 voyages complete, 0/1 stories done
+**Progress:** 1/1 voyages complete, 1/1 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Signal Implementation](voyages/VDZb4GDHO/) | done | 0/1 |
+| [Signal Implementation](voyages/VDZb4GDHO/) | done | 1/1 |
 <!-- END GENERATED -->

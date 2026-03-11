@@ -20,8 +20,8 @@ index: 22
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/1 voyages complete, 0/2 stories done
+**Progress:** 1/1 voyages complete, 2/2 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Core Infrastructure](voyages/VDZb48rCW/) | done | 0/2 |
+| [Core Infrastructure](voyages/VDZb48rCW/) | done | 2/2 |
 <!-- END GENERATED -->

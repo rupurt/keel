@@ -1,9 +1,9 @@
 use std::path::Path;
 
-use super::super::types::*;
-use keel::domain::model::{Board, MissionStatus};
-use keel::infrastructure::validation::charter::{self, GoalVerification};
-use keel::infrastructure::validation::structural;
+use crate::domain::model::{Board, MissionStatus};
+use crate::infrastructure::validation::charter::{self, GoalVerification};
+use crate::infrastructure::validation::structural;
+use crate::read_model::diagnostics::types::*;
 
 /// Check mission goal achievement
 pub fn check_mission_goals(board: &Board) -> Vec<Problem> {
@@ -57,6 +57,7 @@ pub fn check_mission_goals(board: &Board) -> Vec<Problem> {
 }
 
 struct LogEntry {
+    #[allow(dead_code)]
     pub raw: String,
 }
 
@@ -156,17 +157,17 @@ fn is_goal_met(board: &Board, target: &str) -> bool {
 
     // Check if it's an epic
     if let Some(epic) = board.epics.get(target) {
-        return epic.status() == keel::domain::model::EpicState::Done;
+        return epic.status() == crate::domain::model::EpicState::Done;
     }
 
     // Check if it's a voyage
     if let Some(voyage) = board.voyages.get(target) {
-        return voyage.status() == keel::domain::state_machine::voyage::VoyageState::Done;
+        return voyage.status() == crate::domain::state_machine::voyage::VoyageState::Done;
     }
 
     // Check if it's a story
     if let Some(story) = board.stories.get(target) {
-        return story.status == keel::domain::model::StoryState::Done;
+        return story.status == crate::domain::model::StoryState::Done;
     }
 
     false
@@ -204,10 +205,10 @@ pub fn check_mission_active_no_work(board: &Board) -> Vec<Problem> {
         // 2. Check for in-flight work
         let has_work = epics
             .iter()
-            .any(|e| e.status() != keel::domain::model::EpicState::Done)
+            .any(|e| e.status() != crate::domain::model::EpicState::Done)
             || bearings.iter().any(|b| {
-                b.status() != keel::domain::model::BearingStatus::Laid
-                    && b.status() != keel::domain::model::BearingStatus::Declined
+                b.status() != crate::domain::model::BearingStatus::Laid
+                    && b.status() != crate::domain::model::BearingStatus::Declined
             });
 
         if !has_work {
@@ -298,9 +299,9 @@ pub fn check_mission_orphans(board: &Board) -> Vec<Problem> {
 
 /// Check for duplicate mission IDs
 pub fn check_mission_duplicates(board_dir: &Path) -> Vec<Problem> {
-    keel::infrastructure::duplicate_ids::duplicate_id_problems(
+    crate::infrastructure::duplicate_ids::duplicate_id_problems(
         board_dir,
-        keel::infrastructure::duplicate_ids::DuplicateEntity::Mission,
+        crate::infrastructure::duplicate_ids::DuplicateEntity::Mission,
     )
 }
 
@@ -321,8 +322,8 @@ pub fn check_mission_dates(board: &Board) -> Vec<Problem> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use keel::infrastructure::loader::load_board;
-    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestMission, TestVoyage};
+    use crate::infrastructure::loader::load_board;
+    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestMission, TestVoyage};
     use std::fs;
 
     #[test]
