@@ -183,10 +183,19 @@ Gates are the key constraint. They're where human judgment is irreplaceable. Eve
 
 ## The Dashboard Model
 
-The `keel flow` dashboard surfaces work queues for each actor. Queue items fall into two categories:
+The `keel flow` dashboard surfaces work lanes for each actor. Keel uses a **configurable lane topology** to route work based on the roles pulling from the board.
 
-| Type | Role | Visibility |
-|------|------|------------|
+| Type | Role Family | Lane | Purpose |
+|------|-------------|------|---------|
+| **Management** | `manager` | `management` | Planning, triage, verification |
+| **Delivery** | `operator` | `delivery` | Active implementation |
+
+This topology is fully overridable in `keel.toml`. New lanes and roles can be added to customize the "high voltage" and "constant voltage" paths of the circuit.
+
+Queue items fall into two categories:
+
+| Type | Significance | Visibility |
+|------|--------------|------------|
 | **Flow generators** | Feed the pipeline | Always visible |
 | **Flow gates** | Block the pipeline | Visible when blocking |
 

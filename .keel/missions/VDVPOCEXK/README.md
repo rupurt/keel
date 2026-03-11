@@ -1,10 +1,12 @@
 ---
 id: VDVPOCEXK
 title: Configurable Role and Lane Topology
-status: active
+status: verified
 created_at: 2026-03-10T15:19:07
-updated_at: 2026-03-10T15:29:05
+updated_at: 2026-03-10T20:39:14
 activated_at: 2026-03-10T15:29:05
+achieved_at: 2026-03-10T20:39:10
+verified_at: 2026-03-10T20:39:14
 ---
 
 # Configurable Role and Lane Topology

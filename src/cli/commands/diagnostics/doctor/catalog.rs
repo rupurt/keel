@@ -331,4 +331,9 @@ pub const ALL_DOCTOR_CHECKS: &[DoctorCheckDefinition] = &[
         section: "Missions",
         name: "Mission completion evidence",
     },
+    DoctorCheckDefinition {
+        id: "workflow-topology",
+        section: "Workflow",
+        name: "Workflow topology",
+    },
 ];

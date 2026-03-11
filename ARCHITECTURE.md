@@ -149,7 +149,7 @@ These tests are the executable architecture specification.
 
 ## Workflow Lane Pull System
 
-Keel coordinates work through configurable workflow lanes with a pull model.
+Keel coordinates work through configurable workflow lanes with a pull model. The topology is fully defined and overridable in `keel.toml` using `[workflow.defaults]`, `[roles]`, and `[lanes]` sections.
 
 The zero-config topology seeds:
 
@@ -160,8 +160,15 @@ The zero-config topology seeds:
 
 Pull commands:
 - `keel next`: management lane only (never returns implementation `Work`).
+- `keel next --role <role>`: pull work from the lane associated with the role family.
 - `keel next --role operator`: delivery lane (`in-progress` then `backlog`).
 - `keel flow`: visual dashboard using the same queue policy semantics plus topology-resolved lane cards.
+
+Config-driven mapping:
+- Every role (e.g., `operator/software`) resolves to a **Role Family** (e.g., `operator`).
+- Each Role Family has a configured `default_lane` in `keel.toml`.
+- Lanes filter entities by status and source (e.g., `story.backlog`).
+- `keel flow` renders lanes in priority order.
 
 Canonical queue policy location:
 - Core thresholds and categories: `src/domain/policy/queue.rs`.

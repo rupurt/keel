@@ -34,7 +34,9 @@ Use this order when authoring or reviewing decisions:
 1. ADRs (`.keel/adrs/`) — binding architectural decisions
 2. [CONSTITUTION.md](CONSTITUTION.md) — collaboration philosophy and governance intent
 3. [ARCHITECTURE.md](ARCHITECTURE.md) — implementation structure and technical constraints
-4. Planning artifacts (`PRD.md` → `SRS.md`/`SDD.md` → story `README.md`) — scoped executable work
+4. [CONFIGURATION.md](CONFIGURATION.md) — role-based and config-driven topology
+5. [RELEASE.md](RELEASE.md) — release capabilities and overview
+6. Planning artifacts (`PRD.md` → `SRS.md`/`SDD.md` → story `README.md`) — scoped executable work
 
 ## Core Concepts & Architecture
 
@@ -42,7 +44,7 @@ Keel's architecture is built on formal state machines and a pull-based coordinat
 
 ### Workflow Lane Dashboard
 
-Keel routes work through configurable workflow lanes using a **pull-based** model. Each role family resolves to a lane, and `keel flow` renders the effective topology in priority order. With no overrides, Keel seeds `management` and `delivery` lanes.
+Keel routes work through configurable workflow lanes using a **pull-based** model. Each role family resolves to a lane based on the `keel.toml` topology, and `keel flow` renders the effective topology in priority order. With no overrides, Keel seeds `management` and `delivery` lanes.
 
 ```
 ┌───────────────────────────────────────┬──────────────────────────────────────┐
@@ -57,6 +59,7 @@ Keel routes work through configurable workflow lanes using a **pull-based** mode
 - `keel next` defaults to management-lane decisions and never returns implementation `Work`.
 - `keel next --role operator` returns implementation work from the delivery lane (`in-progress` then `backlog`).
 - `keel flow` uses the same queue policy categories and thresholds as `next` while rendering lane cards from the resolved topology.
+- Topology is fully configurable via `keel.toml`. See [CONFIGURATION.md](CONFIGURATION.md) for details.
 
 ### Lineage and Proof Chain
 

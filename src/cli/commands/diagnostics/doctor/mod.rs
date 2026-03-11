@@ -97,6 +97,7 @@ pub fn validate_with_config(
     let mut adr_checks = Vec::new();
     let mut bearing_checks = Vec::new();
     let mut mission_checks = Vec::new();
+    let mut workflow_checks = Vec::new();
 
     // 1. Story Checks
     let (story_file_problems, story_count) = checks::stories::scan_story_files(board_dir)?;
@@ -683,6 +684,16 @@ pub fn validate_with_config(
         mission_evidence_problems,
     ));
 
+    // 7. Workflow Checks
+    let topology_problems = checks::workflow::check_workflow_topology(board_dir);
+    workflow_checks.push(configured_check(
+        doctor_config,
+        "workflow-topology",
+        "Workflow topology",
+        1, // Single topology to check
+        topology_problems,
+    ));
+
     Ok(DoctorReport {
         story_checks,
         voyage_checks,
@@ -690,6 +701,7 @@ pub fn validate_with_config(
         adr_checks,
         bearing_checks,
         mission_checks,
+        workflow_checks,
     })
 }
 

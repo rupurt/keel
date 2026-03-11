@@ -705,6 +705,7 @@ enable = ["llm-judge"]
     #[test]
     fn config_show_workflow_topology_renders_configured_roles_lanes_and_overrides() {
         let mut config = Config::default();
+        config.workflow.defaults.management_lane = "review".to_string();
         config.roles.insert(
             "copywriter".to_string(),
             RoleFamilyConfig {

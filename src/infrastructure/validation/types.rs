@@ -226,4 +226,5 @@ pub enum CheckId {
     MissionStale,
     MissionMissingLogEntries,
     MissionMissingChildren,
+    WorkflowTopology,
 }

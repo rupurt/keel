@@ -75,6 +75,7 @@ pub enum WorkflowTopologyError {
     MissingDefaultLane { lane: String },
     UnknownDefaultLaneForRole { role: String, lane: String },
     UnknownSelectorPattern { pattern: String },
+    CrossLaneOverlap { lanes: Vec<String>, source: String },
 }
 
 impl std::fmt::Display for WorkflowTopologyError {
@@ -91,6 +92,13 @@ impl std::fmt::Display for WorkflowTopologyError {
             }
             Self::UnknownSelectorPattern { pattern } => {
                 write!(f, "unknown workflow selector pattern `{pattern}`")
+            }
+            Self::CrossLaneOverlap { lanes, source } => {
+                write!(
+                    f,
+                    "source `{source}` is included in multiple lanes: {}",
+                    lanes.join(", ")
+                )
             }
         }
     }
@@ -322,6 +330,26 @@ pub fn resolve(config: &Config) -> Result<ResolvedWorkflowTopology, WorkflowTopo
         })
         .collect();
 
+    // Check for cross-lane overlap
+    let mut source_to_lanes: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    for (name, lane) in &resolved_lanes {
+        for source in &lane.sources {
+            source_to_lanes
+                .entry(source.clone())
+                .or_default()
+                .push(name.clone());
+        }
+    }
+
+    for (source, lane_names) in source_to_lanes {
+        if lane_names.len() > 1 {
+            return Err(WorkflowTopologyError::CrossLaneOverlap {
+                lanes: lane_names,
+                source,
+            });
+        }
+    }
+
     Ok(ResolvedWorkflowTopology {
         defaults: config.workflow.defaults.clone(),
         roles: resolved_roles,
@@ -491,7 +519,48 @@ mod tests {
     }
 
     #[test]
-    fn workflow_topology_lane_config_rejects_unknown_selector_patterns() {
+    fn workflow_topology_resolve_requires_custom_defaults_to_be_declared() {
+        let mut config = Config::default();
+        config.workflow.defaults.management_role = "director".to_string();
+
+        let error = resolve(&config).unwrap_err().to_string();
+        assert!(error.contains("director"));
+    }
+
+    #[test]
+    fn doctor_topology_fails_on_overlap() {
+        let mut config = Config::default();
+        config.lanes.insert(
+            "lane-a".to_string(),
+            LaneConfig {
+                description: "A".to_string(),
+                include: vec!["story.backlog".to_string()],
+                exclude: Vec::new(),
+                parallel: true,
+                manual_accept: false,
+                priority: 50,
+            },
+        );
+        config.lanes.insert(
+            "lane-b".to_string(),
+            LaneConfig {
+                description: "B".to_string(),
+                include: vec!["story.backlog".to_string()],
+                exclude: Vec::new(),
+                parallel: true,
+                manual_accept: false,
+                priority: 40,
+            },
+        );
+
+        let error = resolve(&config).unwrap_err().to_string();
+        assert!(error.contains("story.backlog"));
+        assert!(error.contains("lane-a"));
+        assert!(error.contains("lane-b"));
+    }
+
+    #[test]
+    fn workflow_topology_selector_errors_fails_on_unknown() {
         let mut config = Config::default();
         config.lanes.insert(
             "delivery".to_string(),
@@ -507,14 +576,5 @@ mod tests {
 
         let error = resolve(&config).unwrap_err().to_string();
         assert!(error.contains("story.not-real"));
-    }
-
-    #[test]
-    fn workflow_topology_resolve_requires_custom_defaults_to_be_declared() {
-        let mut config = Config::default();
-        config.workflow.defaults.management_role = "director".to_string();
-
-        let error = resolve(&config).unwrap_err().to_string();
-        assert!(error.contains("director"));
     }
 }

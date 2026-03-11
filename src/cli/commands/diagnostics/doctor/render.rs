@@ -15,6 +15,7 @@ pub fn print_report(report: &DoctorReport) {
     print_section("Bearings", &report.bearing_checks);
     print_section("ADRs", &report.adr_checks);
     print_section("Missions", &report.mission_checks);
+    print_section("Workflow", &report.workflow_checks);
 }
 
 fn print_section(name: &str, checks: &[super::types::CheckResult]) {
