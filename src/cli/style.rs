@@ -302,6 +302,7 @@ pub fn capacity_progress_bar(
 /// Color an evidence chain entry by phase.
 /// Bookend phases (`:start`, `:end`, `:start:end`) get cyan.
 /// `:continues` phases get dimmed to visually nest under bookends.
+#[allow(dead_code)]
 pub fn styled_evidence_entry(entry: &keel::read_model::evidence::EvidenceEntry) -> String {
     let line = format!(
         ":{} [{}] - \"{}\"",
@@ -415,6 +416,7 @@ pub fn styled_goal_id(id: &str) -> String {
 }
 
 /// Color a source ID with a distinct highlight so evidence lineage stands out in read surfaces.
+#[allow(dead_code)]
 pub fn styled_source_id(id: &str) -> String {
     styled_token_id(id, source_token_spec())
 }
@@ -726,6 +728,7 @@ pub fn highlight_code_block(code: &str, lang: &str) -> Option<String> {
 }
 
 /// Styled header line
+#[allow(dead_code)]
 pub fn header(id: &str, title: &str, style_fn: fn(&str) -> String) -> String {
     format!("  {} {}", style_fn(id), title.bold(),)
 }

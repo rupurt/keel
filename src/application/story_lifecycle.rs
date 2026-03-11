@@ -552,7 +552,7 @@ mod tests {
     use crate::application::process_manager::{DomainProcessManager, LiveProcessActionExecutor};
     use crate::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
     use super::StoryLifecycleService;
-    use crate::domain::model::{Story, StoryState};
+    use crate::domain::model::StoryState;
     use crate::infrastructure::storage::filesystem::FileSystemAdapter;
     use std::sync::Arc;
     use crate::test_helpers::{TestBoardBuilder, TestStory};

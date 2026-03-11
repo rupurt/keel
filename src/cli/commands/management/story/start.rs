@@ -72,8 +72,6 @@ mod tests {
     use super::*;
     use keel::domain::model::StoryState;
     use keel::test_helpers::{TestBoardBuilder, TestStory};
-    use keel::infrastructure::storage::filesystem::FileSystemAdapter;
-    use std::sync::Arc;
     use std::fs;
 
     #[test]

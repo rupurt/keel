@@ -1,6 +1,6 @@
 //! Bearing-specific validation logic
 
-use crate::domain::model::{Board, Entity};
+use crate::domain::model::Board;
 use crate::infrastructure::validation::types::{Problem, CheckId, Severity};
 use std::fs;
 

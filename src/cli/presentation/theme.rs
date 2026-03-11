@@ -12,6 +12,7 @@ pub struct Theme {
     /// Color for muted/secondary text (gray)
     pub muted: &'static str,
     /// Bold text
+    #[allow(dead_code)]
     pub bold: &'static str,
     /// Reset all formatting
     pub reset: &'static str,

@@ -9,8 +9,13 @@ use owo_colors::OwoColorize;
 use serde::Serialize;
 
 pub use super::next_support::{
-    AcceptDecision, AdrDecision, BlockedDecision, DecomposeDecision, EmptyDecision, ItemFilter,
-    NextDecision, ResearchDecision, StoryDecision, calculate_next, format_decision,
+    ItemFilter, NextDecision, calculate_next, format_decision,
+};
+
+#[cfg(test)]
+use super::next_support::{
+    AcceptDecision, AdrDecision, BlockedDecision, DecomposeDecision, EmptyDecision, ResearchDecision,
+    StoryDecision,
 };
 use crate::cli::commands::management::guidance::{
     CanonicalGuidance, CommandGuidance, RoleContextGuidance, render_command_guidance,

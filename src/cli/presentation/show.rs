@@ -18,6 +18,7 @@ impl ShowDocument {
         Self::default()
     }
 
+    #[allow(dead_code)]
     pub fn with_block(mut self, block: ShowBlock) -> Self {
         self.push_block(block);
         self
@@ -147,6 +148,7 @@ impl ShowSection {
         }
     }
 
+    #[allow(dead_code)]
     pub fn with_block(mut self, block: ShowBlock) -> Self {
         self.push_block(block);
         self
@@ -235,6 +237,7 @@ impl ShowSection {
         );
     }
 
+    #[allow(dead_code)]
     pub fn push_labeled_bullets_limited<I, S, P>(
         &mut self,
         label: impl Into<String>,
@@ -278,6 +281,7 @@ impl ShowSection {
         }
     }
 
+    #[allow(dead_code)]
     pub fn push_labeled_text_block(&mut self, label: impl Into<String>, value: impl AsRef<str>) {
         let label = label.into();
         self.push_lines([format!("  {label}")]);
@@ -291,6 +295,7 @@ impl ShowSection {
         self.push_lines(value_lines);
     }
 
+    #[allow(dead_code)]
     pub fn push_labeled_text_block_limited(
         &mut self,
         label: impl Into<String>,
@@ -345,6 +350,7 @@ impl ShowSection {
         self.push_lines(value_lines);
     }
 
+    #[allow(dead_code)]
     pub fn push_text_block_limited(&mut self, value: impl AsRef<str>, max_paragraphs: usize) {
         let rendered = limited_text_block_lines(value.as_ref(), max_paragraphs);
         if rendered.is_empty() {
@@ -508,7 +514,8 @@ fn text_block_lines(value: &str) -> Vec<String> {
     render_text_block_paragraphs(&text_block_paragraphs_with_indent(value, 4), None, 4)
 }
 
-fn limited_text_block_lines(value: &str, max_paragraphs: usize) -> Vec<String> {
+#[allow(dead_code)]
+    fn limited_text_block_lines(value: &str, max_paragraphs: usize) -> Vec<String> {
     limited_text_block_lines_with_indent(value, max_paragraphs, 4)
 }
 

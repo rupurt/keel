@@ -7,6 +7,7 @@ use crate::cli::commands::management::guidance::{
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)]
 pub enum VoyageLifecycleAction {
     Plan,
     Start,

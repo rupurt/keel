@@ -56,8 +56,6 @@ mod tests {
     use keel::domain::model::StoryState;
     use keel::infrastructure::validation::{CheckId, structural};
     use keel::test_helpers::{TestBoardBuilder, TestStory};
-    use keel::infrastructure::storage::filesystem::FileSystemAdapter;
-    use std::sync::Arc;
     use regex::Regex;
     use std::fs;
 
