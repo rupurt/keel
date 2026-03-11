@@ -36,7 +36,28 @@ pub fn format_decision(decision: &NextDecision) -> String {
         NextDecision::NeedsStories(d) => format_needs_stories(d),
         NextDecision::NeedsPlanning(d) => format_needs_planning(d),
         NextDecision::Mission(d) => format_mission(d),
+        NextDecision::Missions(d) => format_missions(d),
     }
+}
+
+fn format_missions(d: &super::MissionsDecision) -> String {
+    let mut out = String::new();
+    out.push_str(&format!(
+        "{}\n",
+        "Multiple active missions require attention:".bold()
+    ));
+
+    for m in &d.missions {
+        out.push_str(&format!(
+            "  - {} {} ({})\n",
+            crate::cli::style::styled_story_id(m.mission.id()),
+            m.mission.title(),
+            m.suggestion.yellow()
+        ));
+    }
+
+    out.push_str("\nUse `keel mission show <ID>` to inspect goals.");
+    out
 }
 
 fn format_work(d: &StoryDecision) -> String {

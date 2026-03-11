@@ -5,6 +5,7 @@ use clap::Subcommand;
 
 pub mod list;
 pub mod new;
+pub mod next;
 pub mod show;
 
 #[derive(Subcommand, Debug)]
@@ -23,6 +24,11 @@ pub enum MissionAction {
         /// Output as JSON
         #[arg(long)]
         json: bool,
+    },
+    /// Show next steps across all roles for a mission
+    Next {
+        /// Mission ID
+        id: String,
     },
     /// Refine mission charter (elicitation)
     Refine {
@@ -79,6 +85,7 @@ pub fn run(action: MissionAction) -> Result<()> {
         MissionAction::New { title } => run_new(&title),
         MissionAction::List => list::run(),
         MissionAction::Show { id, json } => show::run(&id, json),
+        MissionAction::Next { id } => next::run(&id),
         MissionAction::Refine { id, answer } => {
             crate::application::mission_lifecycle::MissionLifecycleService::refine(
                 &board_dir,

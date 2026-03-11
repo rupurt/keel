@@ -123,11 +123,11 @@
 | [Core Changes](epics/VDTpFlMKc/voyages/VDUG60pcX/) | done |
 | [Role Template Injection](epics/VDTpFlMKc/voyages/VDUsc8KXy/) | done |
 
-### [Config-Driven Role and Lane Topology](epics/VDVPODBXF/) (active)
+### [Config-Driven Role and Lane Topology](epics/VDVPODBXF/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Role and Lane Config Contract](epics/VDVPODBXF/voyages/VDVPUCtqS/) | in-progress |
+| [Role and Lane Config Contract](epics/VDVPODBXF/voyages/VDVPUCtqS/) | done |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

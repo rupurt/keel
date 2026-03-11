@@ -73,6 +73,9 @@ enum JsonDetails {
         unmet_goals: Vec<crate::infrastructure::validation::charter::ParsedMissionGoal>,
         suggestion: String,
     },
+    Missions {
+        missions: Vec<JsonMission>,
+    },
     Empty {
         suggestions: Vec<String>,
     },
@@ -100,6 +103,12 @@ struct JsonBlockedByAdr {
 
 #[derive(Serialize)]
 struct JsonBearing {
+    id: String,
+    title: String,
+}
+
+#[derive(Serialize)]
+struct JsonMission {
     id: String,
     title: String,
 }
@@ -275,7 +284,7 @@ pub(crate) fn calculate_next_for_role(
         queue_lane,
         crate::read_model::queue_policy::ActorQueueLane::Execution
     );
-    calculate_next(board, board_dir, execution_mode, actor_role)
+    calculate_next(board, board_dir, execution_mode, actor_role, None)
 }
 
 /// Run the next command
@@ -423,6 +432,16 @@ fn decision_to_json(
             unmet_goals: d.unmet_goals.clone(),
             suggestion: d.suggestion.clone(),
         },
+        NextDecision::Missions(d) => JsonDetails::Missions {
+            missions: d
+                .missions
+                .iter()
+                .map(|m| JsonMission {
+                    id: m.mission.id().to_string(),
+                    title: m.mission.title().to_string(),
+                })
+                .collect(),
+        },
         NextDecision::Empty(d) => JsonDetails::Empty {
             suggestions: d.suggestions.clone(),
         },
@@ -445,6 +464,7 @@ fn decision_kind(decision: &NextDecision) -> &'static str {
         NextDecision::NeedsStories(_) => "needs_stories",
         NextDecision::NeedsPlanning(_) => "needs_planning",
         NextDecision::Mission(_) => "mission",
+        NextDecision::Missions(_) => "missions",
         NextDecision::Empty(_) => "empty",
     }
 }
@@ -493,6 +513,7 @@ fn guidance_for_decision(
             "keel mission show {}",
             d.mission.id()
         ))),
+        NextDecision::Missions(_) => Some(CommandGuidance::next("keel mission list".to_string())),
         NextDecision::Empty(_) => None,
     };
 

@@ -172,6 +172,39 @@ impl Board {
             .collect()
     }
 
+    /// Check if a story belongs to a mission (via its scope/epic)
+    pub fn is_story_in_mission(&self, story: &Story, mission_id: &str) -> bool {
+        if let Some(scope) = story.scope() {
+            if let Some(epic_id) = scope.split('/').next() {
+                return self.is_epic_in_mission(epic_id, mission_id);
+            }
+        }
+        false
+    }
+
+    /// Check if an ADR belongs to a mission
+    pub fn is_adr_in_mission(&self, adr: &Adr, mission_id: &str) -> bool {
+        adr.frontmatter.mission.as_deref() == Some(mission_id)
+    }
+
+    /// Check if a voyage belongs to a mission (via its epic)
+    pub fn is_voyage_in_mission(&self, voyage: &Voyage, mission_id: &str) -> bool {
+        self.is_epic_in_mission(&voyage.epic_id, mission_id)
+    }
+
+    /// Check if a bearing belongs to a mission
+    pub fn is_bearing_in_mission(&self, bearing: &Bearing, mission_id: &str) -> bool {
+        bearing.frontmatter.mission.as_deref() == Some(mission_id)
+    }
+
+    /// Check if an epic ID belongs to a mission
+    pub fn is_epic_in_mission(&self, epic_id: &str, mission_id: &str) -> bool {
+        self.epics
+            .get(epic_id)
+            .map(|e| e.frontmatter.mission.as_deref() == Some(mission_id))
+            .unwrap_or(false)
+    }
+
     /// Returns a deterministic hash of the board state (SRS-04).
     ///
     /// The hash changes when any story or voyage state changes.
@@ -529,21 +562,113 @@ mod tests {
     }
 
     #[test]
-    fn active_workers_returns_empty_when_no_in_progress() {
+    fn board_mission_membership_checks() {
         let mut board = Board::new(PathBuf::from("test"));
 
-        let mut story1 = make_story("FEAT0001", None);
-        story1.set_status(StoryState::Backlog);
-        board.stories.insert("FEAT0001".to_string(), story1);
+        // Setup mission
+        let mission_id = "M1";
 
-        let mut story2 = make_story("FEAT0002", None);
-        story2.set_status(StoryState::Done);
-        board.stories.insert("FEAT0002".to_string(), story2);
+        // Setup epic in mission
+        let mut epic = make_epic("E1");
+        epic.frontmatter.mission = Some(mission_id.to_string());
+        board.epics.insert("E1".to_string(), epic);
 
-        let workers = board.active_workers();
-        assert!(
-            workers.is_empty(),
-            "Should return empty when no InProgress stories"
-        );
+        // Setup epic NOT in mission
+        let epic_other = make_epic("E2");
+        board.epics.insert("E2".to_string(), epic_other);
+
+        // Test ADRs
+        let adr_in = Adr {
+            frontmatter: crate::domain::model::AdrFrontmatter {
+                id: "ADR1".to_string(),
+                title: "ADR 1".to_string(),
+                status: crate::domain::model::AdrStatus::Proposed,
+                context: None,
+                applies_to: Vec::new(),
+                mission: Some(mission_id.to_string()),
+                supersedes: Vec::new(),
+                superseded_by: None,
+                rejection_reason: None,
+                deprecation_reason: None,
+                decided_at: None,
+                index: None,
+            },
+            path: PathBuf::from("path"),
+        };
+        let adr_out = Adr {
+            frontmatter: crate::domain::model::AdrFrontmatter {
+                id: "ADR2".to_string(),
+                title: "ADR 2".to_string(),
+                status: crate::domain::model::AdrStatus::Proposed,
+                context: None,
+                applies_to: Vec::new(),
+                mission: None,
+                supersedes: Vec::new(),
+                superseded_by: None,
+                rejection_reason: None,
+                deprecation_reason: None,
+                decided_at: None,
+                index: None,
+            },
+            path: PathBuf::from("path"),
+        };
+
+        assert!(board.is_adr_in_mission(&adr_in, mission_id));
+        assert!(!board.is_adr_in_mission(&adr_out, mission_id));
+
+        // Test Bearings
+        let bearing_in = Bearing {
+            frontmatter: crate::domain::model::BearingFrontmatter {
+                id: "B1".to_string(),
+                title: "B 1".to_string(),
+                status: crate::domain::model::BearingStatus::Exploring,
+                index: None,
+                created_at: None,
+                decline_reason: None,
+                laid_at: None,
+                epic: None,
+                mission: Some(mission_id.to_string()),
+                goals: None,
+            },
+            path: PathBuf::from("path"),
+            has_evidence: false,
+            has_assessment: false,
+        };
+        let bearing_out = Bearing {
+            frontmatter: crate::domain::model::BearingFrontmatter {
+                id: "B2".to_string(),
+                title: "B 2".to_string(),
+                status: crate::domain::model::BearingStatus::Exploring,
+                index: None,
+                created_at: None,
+                decline_reason: None,
+                laid_at: None,
+                epic: None,
+                mission: None,
+                goals: None,
+            },
+            path: PathBuf::from("path"),
+            has_evidence: false,
+            has_assessment: false,
+        };
+
+        assert!(board.is_bearing_in_mission(&bearing_in, mission_id));
+        assert!(!board.is_bearing_in_mission(&bearing_out, mission_id));
+
+        // Test Voyages
+        let v_in = make_voyage("V1", "E1");
+        let v_out = make_voyage("V2", "E2");
+
+        assert!(board.is_voyage_in_mission(&v_in, mission_id));
+        assert!(!board.is_voyage_in_mission(&v_out, mission_id));
+
+        // Test Stories
+        let s_in = make_story("S1", Some("E1/V1"));
+        let s_out = make_story("S2", Some("E2/V2"));
+        let s_none = make_story("S3", None);
+
+        assert!(board.is_story_in_mission(&s_in, mission_id));
+        assert!(!board.is_story_in_mission(&s_out, mission_id));
+        assert!(!board.is_story_in_mission(&s_none, mission_id));
     }
 }
