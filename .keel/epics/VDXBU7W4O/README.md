@@ -23,5 +23,5 @@ index: 18
 **Progress:** 0/1 voyages complete, 1/4 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Dependency Injection for Services](voyages/VDY6bQawh/) | planned | 1/4 |
+| [Dependency Injection for Services](voyages/VDY6bQawh/) | in-progress | 1/4 |
 <!-- END GENERATED -->

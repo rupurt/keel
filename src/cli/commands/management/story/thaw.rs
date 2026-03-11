@@ -1,15 +1,26 @@
 //! Thaw command - move story from icebox to backlog
 
 use std::path::Path;
+use std::sync::Arc;
 
 use anyhow::Result;
+use crate::infrastructure::storage::filesystem::FileSystemAdapter;
 
 use super::guidance::{StoryLifecycleAction, error_with_recovery};
 use crate::application::story_lifecycle::StoryLifecycleService;
 
 /// Run the thaw command
 pub fn run(board_dir: &Path, id: &str) -> Result<()> {
-    StoryLifecycleService::thaw(board_dir, id)
+    let adapter = Arc::new(FileSystemAdapter::new(board_dir));
+    let service = StoryLifecycleService::new(
+        board_dir.to_path_buf(),
+        adapter.clone(),
+        adapter,
+    );
+
+    
+
+    service.thaw( id)
         .map_err(|err| error_with_recovery(StoryLifecycleAction::Thaw, id, err))
 }
 
@@ -18,6 +29,8 @@ mod tests {
     use super::*;
     use crate::domain::model::StoryState;
     use crate::test_helpers::{TestBoardBuilder, TestStory};
+    use crate::infrastructure::storage::filesystem::FileSystemAdapter;
+    use std::sync::Arc;
     use std::fs;
 
     #[test]

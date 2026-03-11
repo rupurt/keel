@@ -1,8 +1,10 @@
 //! Submit story command - move from in-progress to needs-human-verification
 
 use std::path::Path;
+use std::sync::Arc;
 
 use anyhow::Result;
+use crate::infrastructure::storage::filesystem::FileSystemAdapter;
 
 use crate::application::story_lifecycle::StoryLifecycleService;
 use crate::infrastructure::loader::load_board;
@@ -13,7 +15,16 @@ use super::guidance::{
 
 /// Run the submit story command
 pub fn run(board_dir: &Path, id: &str) -> Result<()> {
-    StoryLifecycleService::submit(board_dir, id)
+    let adapter = Arc::new(FileSystemAdapter::new(board_dir));
+    let service = StoryLifecycleService::new(
+        board_dir.to_path_buf(),
+        adapter.clone(),
+        adapter,
+    );
+
+    
+
+    service.submit( id)
         .map_err(|err| error_with_recovery(StoryLifecycleAction::Submit, id, err))?;
 
     let board = load_board(board_dir)?;
@@ -30,6 +41,8 @@ mod tests {
     use crate::domain::model::StoryState;
     use crate::infrastructure::validation::{CheckId, structural};
     use crate::test_helpers::{TestBoardBuilder, TestStory};
+    use crate::infrastructure::storage::filesystem::FileSystemAdapter;
+    use std::sync::Arc;
     use regex::Regex;
     use std::fs;
 

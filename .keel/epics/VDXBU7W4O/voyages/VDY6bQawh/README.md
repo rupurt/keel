@@ -1,11 +1,12 @@
 ---
 id: VDY6bQawh
 title: Dependency Injection for Services
-status: planned
+status: in-progress
 epic: VDXBU7W4O
 created_at: 2026-03-11T02:23:19
 index: 1
 updated_at: 2026-03-11T02:25:04
+started_at: 2026-03-11T03:58:26
 ---
 
 # Dependency Injection for Services
@@ -29,7 +30,7 @@ updated_at: 2026-03-11T02:25:04
 | Title | Type | Status |
 |-------|------|--------|
 | [Consolidate Domain And Application Ports](../../../../stories/VDY6ryx89/README.md) | refactor | done |
-| [Refactor StoryLifecycleService For Dependency Injection](../../../../stories/VDY6s2c9T/README.md) | refactor | backlog |
+| [Refactor StoryLifecycleService For Dependency Injection](../../../../stories/VDY6s2c9T/README.md) | refactor | needs-human-verification |
 | [Refactor VoyageEpicLifecycleService For Dependency Injection](../../../../stories/VDY6s6EBp/README.md) | refactor | backlog |
 | [Update CLI Wiring To Inject Storage Adapters](../../../../stories/VDY6s9wEE/README.md) | refactor | backlog |
 <!-- END GENERATED -->

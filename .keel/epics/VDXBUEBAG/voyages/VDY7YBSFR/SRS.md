@@ -21,8 +21,8 @@ Refactor `src/lib.rs` to provide a stable public API for Keel. This will allow o
 | ID | Description | Scope | Source | Verification |
 |----|-------------|-------|--------|--------------|
 | SRS-01 | `lib.rs` must export the core application and domain modules. | SCOPE-01 | FR-01 | Compilation |
-| SRS-02 | The library API must allow providing a custom `StoragePort` implementation. | SCOPE-01 | FR-02 | Compilation |
 | SRS-03 | Core types exported in `lib.rs` must be decoupled from CLI-specific dependencies. | SCOPE-02 | FR-01 | Inspection |
+| SRS-02 | The library API must allow providing a custom `StoragePort` implementation. | SCOPE-01 | FR-02 | Compilation |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ## Non-Functional Requirements

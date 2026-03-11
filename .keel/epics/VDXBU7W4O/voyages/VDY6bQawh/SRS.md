@@ -20,9 +20,9 @@ Refactor application services to use dependency injection for storage ports. Thi
 | ID | Description | Scope | Source | Verification |
 |----|-------------|-------|--------|--------------|
 | SRS-01 | `StoryLifecycleService` must accept `Arc<dyn BoardStore>` and `Arc<dyn EntityStore<Story>>` in its constructor or methods. | SCOPE-01 | FR-01 | Unit test (mock) |
+| SRS-04 | Service methods should no longer take `board_dir: &Path` as an argument if it's only used for I/O. | SCOPE-01, SCOPE-02 | FR-01 | Inspection |
 | SRS-02 | `VoyageEpicLifecycleService` must accept relevant stores as dependencies. | SCOPE-02 | FR-01 | Unit test (mock) |
 | SRS-03 | CLI command handlers must initialize and inject the `FileSystemAdapter` into services. | SCOPE-03 | FR-01 | CLI regression test |
-| SRS-04 | Service methods should no longer take `board_dir: &Path` as an argument if it's only used for I/O. | SCOPE-01, SCOPE-02 | FR-01 | Inspection |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ## Non-Functional Requirements

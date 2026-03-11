@@ -139,7 +139,7 @@
 
 | Voyage | Status |
 |--------|--------|
-| [Dependency Injection for Services](epics/VDXBU7W4O/voyages/VDY6bQawh/) | planned |
+| [Dependency Injection for Services](epics/VDXBU7W4O/voyages/VDY6bQawh/) | in-progress |
 
 ### [FileSystem Storage Adapter](epics/VDXBUAn7a/) (done)
 

@@ -1,6 +1,8 @@
 //! Accept command - accept a verified story and move to done
-
 use std::path::Path;
+use crate::infrastructure::storage::filesystem::FileSystemAdapter;
+
+use std::sync::Arc;
 
 use anyhow::{Result, anyhow};
 
@@ -39,13 +41,22 @@ pub(crate) fn legacy_story_accept_flag_guidance(args: &[String]) -> Option<Strin
 
 /// Run the accept command
 pub fn run(board_dir: &Path, id: &str, role: &str, reflect: Option<&str>) -> Result<()> {
+    let adapter = Arc::new(FileSystemAdapter::new(board_dir));
+    let service = StoryLifecycleService::new(
+        board_dir.to_path_buf(),
+        adapter.clone(),
+        adapter,
+    );
+
+    
+
     let actor_role = crate::domain::model::taxonomy::parse(role)
         .map_err(|err| anyhow!("Invalid role taxonomy `{role}`: {err}"))?;
     let accept_role_example = workflow_topology::load_for_board(board_dir)
         .map(|topology| topology.management_role_example().to_string())
         .unwrap_or_else(|_| "manager".to_string());
 
-    StoryLifecycleService::accept(board_dir, id, &actor_role, reflect).map_err(|err| {
+    service.accept( id, &actor_role, reflect).map_err(|err| {
         error_with_recovery_for_accept_role(
             StoryLifecycleAction::Accept,
             id,

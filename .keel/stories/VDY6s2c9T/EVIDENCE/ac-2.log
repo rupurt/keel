@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-11T04:05:38.593645976-07:00
+mode: manual
+---
+Service methods start, submit, accept, reject, ice, and thaw no longer take board_dir: &Path; they use the instance field.

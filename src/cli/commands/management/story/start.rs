@@ -1,8 +1,10 @@
 //! Start story command - pull story from backlog into execution
 
 use std::path::Path;
+use std::sync::Arc;
 
 use anyhow::Result;
+use crate::infrastructure::storage::filesystem::FileSystemAdapter;
 
 #[cfg(test)]
 use crate::application::story_lifecycle;
@@ -16,7 +18,16 @@ use super::guidance::{
 
 /// Run the start story command
 pub fn run(board_dir: &Path, id: &str, version: Option<u64>) -> Result<()> {
-    StoryLifecycleService::start(board_dir, id, version)
+    let adapter = Arc::new(FileSystemAdapter::new(board_dir));
+    let service = StoryLifecycleService::new(
+        board_dir.to_path_buf(),
+        adapter.clone(),
+        adapter,
+    );
+
+    
+
+    service.start( id, version)
         .map_err(|err| error_with_recovery(StoryLifecycleAction::Start, id, err))?;
 
     let board = load_board(board_dir)?;
@@ -46,6 +57,8 @@ mod tests {
     use super::*;
     use crate::domain::model::StoryState;
     use crate::test_helpers::{TestBoardBuilder, TestStory};
+    use crate::infrastructure::storage::filesystem::FileSystemAdapter;
+    use std::sync::Arc;
     use std::fs;
 
     #[test]

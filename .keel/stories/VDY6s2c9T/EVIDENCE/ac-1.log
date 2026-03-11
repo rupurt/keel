@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-11T04:05:38.490218496-07:00
+mode: manual
+---
+StoryLifecycleService now accepts Arc<dyn BoardStore> and Arc<dyn EntityStore<Story>> in its constructor.

@@ -12,28 +12,46 @@ use crate::application::knowledge_context;
 use crate::application::process_manager::DomainProcessManager;
 use crate::domain::model::taxonomy::RoleTaxonomy;
 use crate::domain::model::{Story, StoryState};
+use crate::domain::port::{BoardStore, EntityStore};
+use std::sync::Arc;
 use crate::domain::state_machine::{
     EnforcementPolicy, StoryTransition, TransitionEntity, TransitionIntent, enforce_transition,
     format_enforcement_error,
 };
 use crate::domain::transitions::{execute, transitions};
 use crate::infrastructure::frontmatter_mutation::{Mutation, apply};
-use crate::infrastructure::loader::load_board;
 use crate::infrastructure::verification;
 use crate::read_model::workflow_topology;
 use anyhow::{Context, Result, anyhow, bail};
 use chrono::Local;
 use owo_colors::OwoColorize;
 
-pub struct StoryLifecycleService;
+pub struct StoryLifecycleService {
+    board_dir: std::path::PathBuf,
+    board_store: Arc<dyn BoardStore>,
+    story_store: Arc<dyn EntityStore<Story>>,
+}
 
 impl StoryLifecycleService {
+    pub fn new(
+        board_dir: std::path::PathBuf,
+        board_store: Arc<dyn BoardStore>,
+        story_store: Arc<dyn EntityStore<Story>>,
+    ) -> Self {
+        Self {
+            board_dir,
+            board_store,
+            story_store,
+        }
+    }
     /// Start a story (backlog/rejected -> in-progress).
-    pub fn start(board_dir: &Path, id: &str, version: Option<u64>) -> Result<()> {
-        let board = load_board(board_dir)?;
+    pub fn start(&self, id: &str, version: Option<u64>) -> Result<()> {
+        let board_dir = &self.board_dir;
+        let board = self.board_store.load()?;
 
         // Early fetch story info for warnings.
-        let story = board.require_story(id)?;
+        let story = self.story_store.get(id)?;
+        let story = &story;
         let was_rejected = story.status == StoryState::Rejected;
         let scope = story.frontmatter.scope.clone();
         let epic = story.epic().map(String::from);
@@ -102,9 +120,11 @@ impl StoryLifecycleService {
     }
 
     /// Submit a story (in-progress -> needs-human-verification or done).
-    pub fn submit(board_dir: &Path, id: &str) -> Result<()> {
-        let board = load_board(board_dir)?;
-        let story = board.require_story(id)?;
+    pub fn submit(&self, id: &str) -> Result<()> {
+        let board_dir = &self.board_dir;
+        let board = self.board_store.load()?;
+        let story = self.story_store.get(id)?;
+        let story = &story;
 
         let intent = TransitionIntent::Story(StoryTransition::Submit);
         let enforcement = enforce_transition(
@@ -174,13 +194,15 @@ impl StoryLifecycleService {
 
     /// Accept a story (needs-human-verification -> done).
     pub fn accept(
-        board_dir: &Path,
+        &self,
         id: &str,
         actor_role: &RoleTaxonomy,
         reflect: Option<&str>,
     ) -> Result<()> {
-        let board = load_board(board_dir)?;
-        let story = board.require_story(id)?;
+        let board_dir = &self.board_dir;
+        let board = self.board_store.load()?;
+        let story = self.story_store.get(id)?;
+        let story = &story;
         let topology = workflow_topology::load_for_board(board_dir)?;
         let manual_accept_authorized = topology
             .allows_manual_accept(actor_role)
@@ -253,9 +275,11 @@ impl StoryLifecycleService {
     }
 
     /// Reject a story (needs-human-verification -> rejected).
-    pub fn reject(board_dir: &Path, id: &str, reason: &str) -> Result<()> {
-        let board = load_board(board_dir)?;
-        let story = board.require_story(id)?;
+    pub fn reject(&self, id: &str, reason: &str) -> Result<()> {
+        let board_dir = &self.board_dir;
+        let board = self.board_store.load()?;
+        let story = self.story_store.get(id)?;
+        let story = &story;
         let intent = TransitionIntent::Story(StoryTransition::Reject);
         let enforcement = enforce_transition(
             &board,
@@ -281,9 +305,11 @@ impl StoryLifecycleService {
     }
 
     /// Move a story to icebox.
-    pub fn ice(board_dir: &Path, id: &str) -> Result<()> {
-        let board = load_board(board_dir)?;
-        let story = board.require_story(id)?;
+    pub fn ice(&self, id: &str) -> Result<()> {
+        let board_dir = &self.board_dir;
+        let board = self.board_store.load()?;
+        let story = self.story_store.get(id)?;
+        let story = &story;
         let intent = TransitionIntent::Story(StoryTransition::Ice);
         let enforcement = enforce_transition(
             &board,
@@ -307,9 +333,11 @@ impl StoryLifecycleService {
     }
 
     /// Move a story from icebox to backlog.
-    pub fn thaw(board_dir: &Path, id: &str) -> Result<()> {
-        let board = load_board(board_dir)?;
-        let story = board.require_story(id)?;
+    pub fn thaw(&self, id: &str) -> Result<()> {
+        let board_dir = &self.board_dir;
+        let board = self.board_store.load()?;
+        let story = self.story_store.get(id)?;
+        let story = &story;
         let intent = TransitionIntent::Story(StoryTransition::Thaw);
         let enforcement = enforce_transition(
             &board,
@@ -513,7 +541,9 @@ pub(crate) fn append_rejection(story_path: &Path, reason: &str) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::StoryLifecycleService;
-    use crate::domain::model::StoryState;
+    use crate::domain::model::{Story, StoryState};
+    use crate::infrastructure::storage::filesystem::FileSystemAdapter;
+    use std::sync::Arc;
     use crate::test_helpers::{TestBoardBuilder, TestStory};
     use std::fs;
 
@@ -527,9 +557,14 @@ mod tests {
                     .body("## Acceptance Criteria\n\n- [x] Manual verification <!-- verify: manual -->"),
             )
             .build();
+        let adapter = Arc::new(FileSystemAdapter::new(temp.path()));
+        let service = StoryLifecycleService::new(
+            temp.path().to_path_buf(),
+            adapter.clone(),
+            adapter,
+        );
 
-        let err = StoryLifecycleService::accept(
-            temp.path(),
+        let err = service.accept(
             "MANUAL01",
             &crate::domain::model::taxonomy::parse("operator").unwrap(),
             None,
@@ -552,9 +587,14 @@ mod tests {
                     .body("## Acceptance Criteria\n\n- [x] Manual verification <!-- verify: manual -->"),
             )
             .build();
+        let adapter = Arc::new(FileSystemAdapter::new(temp.path()));
+        let service = StoryLifecycleService::new(
+            temp.path().to_path_buf(),
+            adapter.clone(),
+            adapter,
+        );
 
-        StoryLifecycleService::accept(
-            temp.path(),
+        service.accept(
             "MANUAL02",
             &crate::domain::model::taxonomy::parse("manager").unwrap(),
             None,
@@ -586,6 +626,12 @@ mod tests {
                     ),
             )
             .build();
+        let adapter = Arc::new(FileSystemAdapter::new(temp.path()));
+        let service = StoryLifecycleService::new(
+            temp.path().to_path_buf(),
+            adapter.clone(),
+            adapter,
+        );
 
         fs::write(
             temp.path().join("stories/OLD000001/REFLECT.md"),
@@ -622,7 +668,7 @@ mod tests {
         )
         .unwrap();
 
-        let err = StoryLifecycleService::submit(temp.path(), "NEW000001")
+        let err = service.submit("NEW000001")
             .unwrap_err()
             .to_string();
         assert!(err.contains("too similar to existing knowledge"));
@@ -641,6 +687,12 @@ mod tests {
                     ),
             )
             .build();
+        let adapter = Arc::new(FileSystemAdapter::new(temp.path()));
+        let service = StoryLifecycleService::new(
+            temp.path().to_path_buf(),
+            adapter.clone(),
+            adapter,
+        );
 
         fs::write(
             temp.path().join("stories/DONE00001/REFLECT.md"),
@@ -664,8 +716,7 @@ The guard should run before acceptance completes.
         )
         .unwrap();
 
-        StoryLifecycleService::accept(
-            temp.path(),
+        service.accept(
             "DONE00001",
             &crate::domain::model::taxonomy::parse("manager").unwrap(),
             None,
