@@ -8,7 +8,7 @@ pub mod parallel_threshold;
 pub mod staleness;
 
 pub use algorithm::{
-    AcceptDecision, AdrDecision, BlockedDecision, DecomposeDecision, EmptyDecision,
+    AcceptDecision, AdrDecision, BlockedDecision, DecomposeDecision, EmptyDecision, ItemFilter,
     MissionDecision, MissionsDecision, NextDecision, ResearchDecision, StoryDecision,
     calculate_next,
 };

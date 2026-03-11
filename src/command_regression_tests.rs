@@ -30,7 +30,7 @@ fn regression_next_and_flow_align_on_human_blocked_boundary() {
     let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
     let next =
-        crate::cli::commands::management::next::calculate_next(&board, temp.path(), false, None, None)
+        crate::cli::commands::management::next::calculate_next(&board, temp.path(), false, &crate::cli::commands::management::next_support::algorithm::ItemFilter::none())
             .unwrap();
     assert!(
         matches!(next, NextDecision::Blocked(_)),
@@ -51,7 +51,7 @@ fn regression_next_and_flow_align_on_flow_blocked_boundary() {
     let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
     let next =
-        crate::cli::commands::management::next::calculate_next(&board, temp.path(), false, None, None)
+        crate::cli::commands::management::next::calculate_next(&board, temp.path(), false, &crate::cli::commands::management::next_support::algorithm::ItemFilter::none())
             .unwrap();
     assert!(
         matches!(next, NextDecision::Blocked(_)),

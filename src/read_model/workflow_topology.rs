@@ -65,6 +65,16 @@ pub struct ResolvedRoleOverride {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ActorTopologyContext {
+    pub role: RoleTaxonomy,
+    pub lane_name: String,
+    pub queue_lane: ActorQueueLane,
+    pub parallel: bool,
+    pub manual_accept: bool,
+    pub template: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnknownRoleFamily {
     pub base_role: String,
 }
@@ -201,6 +211,23 @@ impl ResolvedWorkflowTopology {
             .get(role.to_string().as_str())
             .map(|override_| override_.template.as_str())
             .unwrap_or(role_family.template.as_str()))
+    }
+
+    pub fn resolve_actor_context(
+        &self,
+        role: &RoleTaxonomy,
+    ) -> Result<ActorTopologyContext, UnknownRoleFamily> {
+        let lane = self.resolve_actor_lane(role)?;
+        let template = self.resolve_template(role)?;
+
+        Ok(ActorTopologyContext {
+            role: role.clone(),
+            lane_name: lane.name.clone(),
+            queue_lane: classify_next_queue_lane(lane),
+            parallel: lane.parallel,
+            manual_accept: lane.manual_accept,
+            template: template.to_string(),
+        })
     }
 }
 

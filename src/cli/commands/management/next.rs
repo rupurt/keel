@@ -9,8 +9,8 @@ use owo_colors::OwoColorize;
 use serde::Serialize;
 
 pub use super::next_support::{
-    AcceptDecision, AdrDecision, BlockedDecision, DecomposeDecision, EmptyDecision, NextDecision,
-    ResearchDecision, StoryDecision, calculate_next, format_decision,
+    AcceptDecision, AdrDecision, BlockedDecision, DecomposeDecision, EmptyDecision, ItemFilter,
+    NextDecision, ResearchDecision, StoryDecision, calculate_next, format_decision,
 };
 use crate::cli::commands::management::guidance::{
     CanonicalGuidance, CommandGuidance, RoleContextGuidance, render_command_guidance,
@@ -206,59 +206,6 @@ fn parallel_queue_surface_error(
     )
 }
 
-fn resolve_next_queue_lane(
-    topology: &ResolvedWorkflowTopology,
-    actor_context: Option<&ResolvedActorContext>,
-    parallel: bool,
-) -> Result<crate::read_model::queue_policy::ActorQueueLane> {
-    let default_context = default_actor_context(topology, parallel);
-    let context = actor_context.unwrap_or(&default_context);
-
-    if parallel {
-        if !context.supports_parallel {
-            bail!(parallel_lane_error(topology, &context.lane_name));
-        }
-        if !matches!(
-            context.queue_lane,
-            crate::read_model::queue_policy::ActorQueueLane::Execution
-        ) {
-            bail!(parallel_queue_surface_error(topology, &context.lane_name));
-        }
-    }
-
-    Ok(context.queue_lane)
-}
-
-fn resolve_actor_context(
-    topology: &ResolvedWorkflowTopology,
-    actor_role: Option<&crate::domain::model::taxonomy::RoleTaxonomy>,
-) -> Result<Option<ResolvedActorContext>> {
-    actor_role
-        .map(|role| {
-            let lane = topology
-                .resolve_actor_lane(role)
-                .map_err(|error| unsupported_role_error(error, topology))?;
-            let queue_lane = topology
-                .queue_lane_for_actor(role)
-                .map_err(|error| unsupported_role_error(error, topology))?;
-            let supports_parallel = topology
-                .supports_parallel(role)
-                .map_err(|error| unsupported_role_error(error, topology))?;
-            let role_context =
-                crate::read_model::role_context::resolve_role_context(topology, role)
-                    .ok()
-                    .map(|template| RoleContextGuidance::from_template(role, template));
-
-            Ok(ResolvedActorContext {
-                lane_name: lane.name.clone(),
-                queue_lane,
-                supports_parallel,
-                role_context,
-            })
-        })
-        .transpose()
-}
-
 fn unsupported_role_error(
     error: workflow_topology::UnknownRoleFamily,
     topology: &ResolvedWorkflowTopology,
@@ -278,13 +225,34 @@ pub(crate) fn calculate_next_for_role(
     actor_role: Option<&crate::domain::model::taxonomy::RoleTaxonomy>,
 ) -> Result<NextDecision> {
     let topology = workflow_topology::load_for_board(board_dir)?;
-    let actor_context = resolve_actor_context(&topology, actor_role)?;
-    let queue_lane = resolve_next_queue_lane(&topology, actor_context.as_ref(), parallel)?;
+    
+    let effective_role = match actor_role {
+        Some(r) => r.clone(),
+        None => crate::domain::model::taxonomy::parse(&topology.defaults.management_role)?,
+    };
+    
+    let actor_topology = topology.resolve_actor_context(&effective_role)
+        .map_err(|error| unsupported_role_error(error, &topology))?;
+    
     let execution_mode = matches!(
-        queue_lane,
+        actor_topology.queue_lane,
         crate::read_model::queue_policy::ActorQueueLane::Execution
     );
-    calculate_next(board, board_dir, execution_mode, actor_role, None)
+
+    if parallel && !actor_topology.parallel {
+        bail!(
+            "`keel next --parallel` is not enabled for lane `{}`. Use `keel next --role {} --parallel` or omit `--parallel`.",
+            actor_topology.lane_name,
+            topology.delivery_role_example(),
+        );
+    }
+    
+    let filter = ItemFilter {
+        mission_id: None,
+        actor_role: Some(&effective_role),
+    };
+    
+    calculate_next(board, board_dir, execution_mode, &filter)
 }
 
 /// Run the next command
@@ -296,37 +264,62 @@ pub fn run(
 ) -> Result<()> {
     let board = load_board(board_dir)?;
     let topology = workflow_topology::load_for_board(board_dir)?;
-    let actor_context = resolve_actor_context(&topology, actor_role)?;
-    let queue_lane = resolve_next_queue_lane(&topology, actor_context.as_ref(), parallel)?;
+    
+    let effective_role = match actor_role {
+        Some(r) => r.clone(),
+        None => crate::domain::model::taxonomy::parse(&topology.defaults.management_role)?,
+    };
+    
+    let actor_topology = topology.resolve_actor_context(&effective_role)
+        .map_err(|error| unsupported_role_error(error, &topology))?;
+    
     let management_role_example = topology.management_role_example().to_string();
 
     if parallel {
-        debug_assert!(matches!(
-            queue_lane,
-            crate::read_model::queue_policy::ActorQueueLane::Execution
-        ));
+        if !actor_topology.parallel {
+            bail!(
+                "`keel next --parallel` is not enabled for lane `{}`. Use `keel next --role {} --parallel` or omit `--parallel`.",
+                actor_topology.lane_name,
+                topology.delivery_role_example(),
+            );
+        }
+        
+        let role_context =
+            crate::read_model::role_context::resolve_role_context(&topology, &effective_role)
+                .ok()
+                .map(|template| RoleContextGuidance::from_template(&effective_role, template));
+
+        let resolved_context = ResolvedActorContext {
+            lane_name: actor_topology.lane_name.clone(),
+            queue_lane: actor_topology.queue_lane,
+            supports_parallel: actor_topology.parallel,
+            role_context,
+        };
+
         return run_parallel(
             &board,
             board_dir,
             json,
-            actor_role,
-            actor_context.as_ref(),
+            Some(&effective_role),
+            Some(&resolved_context),
             &management_role_example,
         );
     }
 
-    let decision = calculate_next_for_role(&board, board_dir, false, actor_role)?;
-    let role_context = actor_context
-        .as_ref()
-        .and_then(|context| context.role_context.as_ref());
+    let decision = calculate_next_for_role(&board, board_dir, false, Some(&effective_role))?;
+    
+    let role_context =
+        crate::read_model::role_context::resolve_role_context(&topology, &effective_role)
+            .ok()
+            .map(|template| RoleContextGuidance::from_template(&effective_role, template));
 
     if json {
-        let result = decision_to_json(&decision, role_context, &management_role_example);
+        let result = decision_to_json(&decision, role_context.as_ref(), &management_role_example);
         println!("{}", serde_json::to_string_pretty(&result)?);
     } else {
         println!("{}", format_decision(&decision));
         print_human_guidance(
-            guidance_for_decision(&decision, role_context, &management_role_example).as_ref(),
+            guidance_for_decision(&decision, role_context.as_ref(), &management_role_example).as_ref(),
         );
 
         match &decision {
@@ -1330,7 +1323,7 @@ priority = 50
         let topology = workflow_topology::load_for_board(temp.path()).unwrap();
         let analyst = crate::domain::model::taxonomy::parse("analyst/research").unwrap();
 
-        let error = resolve_actor_context(&topology, Some(&analyst))
+        let error = topology.resolve_actor_context(&analyst)
             .unwrap_err()
             .to_string();
 
@@ -1347,16 +1340,9 @@ priority = 50
             .build();
         let topology = workflow_topology::load_for_board(temp.path()).unwrap();
         let manager = crate::domain::model::taxonomy::parse("manager").unwrap();
-        let actor_context = resolve_actor_context(&topology, Some(&manager)).unwrap();
+        let actor_context = topology.resolve_actor_context(&manager).unwrap();
 
-        let error = resolve_next_queue_lane(&topology, actor_context.as_ref(), true)
-            .unwrap_err()
-            .to_string();
-
-        assert_eq!(
-            error,
-            "`keel next --parallel` is not enabled for lane `management`. Use `keel next --role operator --parallel` or omit `--parallel`."
-        );
+        assert!(!actor_context.parallel);
     }
 
     #[test]
@@ -1366,13 +1352,10 @@ priority = 50
         let topology = workflow_topology::load_for_board(temp.path()).unwrap();
         let maker = crate::domain::model::taxonomy::parse("maker").unwrap();
 
-        let first = resolve_actor_context(&topology, Some(&maker)).unwrap();
-        let second = resolve_actor_context(&topology, Some(&maker)).unwrap();
+        let first = topology.resolve_actor_context(&maker).unwrap();
+        let second = topology.resolve_actor_context(&maker).unwrap();
 
         assert_eq!(first, second);
-        assert_eq!(
-            resolve_next_queue_lane(&topology, first.as_ref(), true).unwrap(),
-            resolve_next_queue_lane(&topology, second.as_ref(), true).unwrap()
-        );
+        assert_eq!(first.queue_lane, second.queue_lane);
     }
 }

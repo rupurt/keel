@@ -4,7 +4,7 @@ use owo_colors::OwoColorize;
 
 use crate::infrastructure::loader::load_board;
 use crate::read_model::workflow_topology;
-use crate::cli::commands::management::next_support::{calculate_next, format_decision};
+use crate::cli::commands::management::next_support::{calculate_next, format_decision, ItemFilter};
 use crate::domain::model::MissionStatus;
 
 /// Run the mission next command
@@ -34,14 +34,19 @@ pub fn run(mission_id: &str) -> Result<()> {
 
     for role_name in role_families {
         let role_taxonomy = crate::domain::model::taxonomy::parse(&role_name)?;
+        let actor_context = topology.resolve_actor_context(&role_taxonomy)?;
         
-        let queue_lane = topology.queue_lane_for_actor(&role_taxonomy)?;
         let agent_mode = matches!(
-            queue_lane,
+            actor_context.queue_lane,
             crate::read_model::queue_policy::ActorQueueLane::Execution
         );
 
-        let decision = calculate_next(&board, &board_dir, agent_mode, Some(&role_taxonomy), Some(mission_id))?;
+        let filter = ItemFilter {
+            mission_id: Some(mission_id),
+            actor_role: Some(&role_taxonomy),
+        };
+
+        let decision = calculate_next(&board, &board_dir, agent_mode, &filter)?;
         
         // Only show if it's not Empty or if we want to show everything?
         // The user said "shows the next step across all roles to resolve indecision points"

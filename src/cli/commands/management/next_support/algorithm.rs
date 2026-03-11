@@ -84,13 +84,62 @@ pub struct DecomposeDecision {
     pub voyages: Vec<crate::domain::model::Voyage>,
 }
 
+#[derive(Debug, Clone)]
+pub struct ItemFilter<'a> {
+    pub mission_id: Option<&'a str>,
+    pub actor_role: Option<&'a crate::domain::model::taxonomy::RoleTaxonomy>,
+}
+
+impl<'a> ItemFilter<'a> {
+    pub fn none() -> Self {
+        Self {
+            mission_id: None,
+            actor_role: None,
+        }
+    }
+
+    pub fn matches_story(&self, board: &Board, story: &Story) -> bool {
+        if let Some(id) = self.mission_id {
+            if !board.is_story_in_mission(story, id) {
+                return false;
+            }
+        }
+        if let Some(role) = self.actor_role {
+            if !crate::domain::model::taxonomy::actor_matches_story(role, story) {
+                return false;
+            }
+        }
+        true
+    }
+
+    pub fn matches_adr(&self, board: &Board, adr: &crate::domain::model::Adr) -> bool {
+        if let Some(id) = self.mission_id {
+            return board.is_adr_in_mission(adr, id);
+        }
+        true
+    }
+
+    pub fn matches_voyage(&self, board: &Board, voyage: &crate::domain::model::Voyage) -> bool {
+        if let Some(id) = self.mission_id {
+            return board.is_voyage_in_mission(voyage, id);
+        }
+        true
+    }
+
+    pub fn matches_bearing(&self, board: &Board, bearing: &crate::domain::model::Bearing) -> bool {
+        if let Some(id) = self.mission_id {
+            return board.is_bearing_in_mission(bearing, id);
+        }
+        true
+    }
+}
+
 /// Calculate the single most important next action.
 pub fn calculate_next(
     board: &Board,
     board_dir: &Path,
     agent_mode: bool,
-    actor_role: Option<&crate::domain::model::taxonomy::RoleTaxonomy>,
-    mission_id: Option<&str>,
+    filter: &ItemFilter,
 ) -> Result<NextDecision> {
     let mut agent_backlog_blocked_by_dependencies = false;
 
@@ -103,11 +152,7 @@ pub fn calculate_next(
         let ready = board
             .stories
             .values()
-            .filter(|s| {
-                mission_id
-                    .map(|id| board.is_story_in_mission(s, id))
-                    .unwrap_or(true)
-            })
+            .filter(|s| filter.matches_story(board, s))
             .find(|s| s.status == StoryState::NeedsHumanVerification)
             .cloned();
 
@@ -125,11 +170,7 @@ pub fn calculate_next(
             .adrs
             .values()
             .filter(|a| a.status() == crate::domain::model::AdrStatus::Proposed)
-            .filter(|a| {
-                mission_id
-                    .map(|id| board.is_adr_in_mission(a, id))
-                    .unwrap_or(true)
-            })
+            .filter(|a| filter.matches_adr(board, a))
             .cloned()
             .collect();
 
@@ -161,11 +202,7 @@ pub fn calculate_next(
             .stories
             .values()
             .filter(|s| s.status == StoryState::NeedsHumanVerification)
-            .filter(|s| {
-                mission_id
-                    .map(|id| board.is_story_in_mission(s, id))
-                    .unwrap_or(true)
-            })
+            .filter(|s| filter.matches_story(board, s))
             .cloned()
             .collect();
 
@@ -186,11 +223,7 @@ pub fn calculate_next(
                         | crate::domain::model::BearingStatus::Evaluating
                 )
             })
-            .filter(|b| {
-                mission_id
-                    .map(|id| board.is_bearing_in_mission(b, id))
-                    .unwrap_or(true)
-            })
+            .filter(|b| filter.matches_bearing(board, b))
             .cloned()
             .collect();
 
@@ -207,11 +240,7 @@ pub fn calculate_next(
             .voyages
             .values()
             .filter(|v| v.status() == crate::domain::state_machine::voyage::VoyageState::Draft)
-            .filter(|v| {
-                mission_id
-                    .map(|id| board.is_voyage_in_mission(v, id))
-                    .unwrap_or(true)
-            })
+            .filter(|v| filter.matches_voyage(board, v))
             .cloned()
         {
             let story_count = board.stories_for_voyage(&voyage).len();
@@ -241,16 +270,7 @@ pub fn calculate_next(
             .stories
             .values()
             .filter(|s| s.status == StoryState::InProgress)
-            .filter(|s| {
-                actor_role
-                    .map(|role| crate::domain::model::taxonomy::actor_matches_story(role, s))
-                    .unwrap_or(true)
-            })
-            .filter(|s| {
-                mission_id
-                    .map(|id| board.is_story_in_mission(s, id))
-                    .unwrap_or(true)
-            })
+            .filter(|s| filter.matches_story(board, s))
             .collect();
 
         if let Some(story) = in_progress.first() {
@@ -270,16 +290,7 @@ pub fn calculate_next(
             .filter(|s| {
                 crate::domain::state_machine::invariants::story_workable(s, board, board_dir)
             })
-            .filter(|s| {
-                actor_role
-                    .map(|role| crate::domain::model::taxonomy::actor_matches_story(role, s))
-                    .unwrap_or(true)
-            })
-            .filter(|s| {
-                mission_id
-                    .map(|id| board.is_story_in_mission(s, id))
-                    .unwrap_or(true)
-            })
+            .filter(|s| filter.matches_story(board, s))
             .collect();
 
         let mut candidates: Vec<_> = workable_backlog
@@ -318,7 +329,12 @@ pub fn calculate_next(
             .missions
             .values()
             .filter(|m| m.status() == crate::domain::model::MissionStatus::Active)
-            .filter(|m| mission_id.map(|id| m.id() == id).unwrap_or(true))
+            .filter(|m| {
+                filter
+                    .mission_id
+                    .map(|id| m.id() == id)
+                    .unwrap_or(true)
+            })
             .filter_map(|mission| {
                 let charter_path = mission.path.parent().unwrap().join("CHARTER.md");
                 let content = std::fs::read_to_string(&charter_path).unwrap_or_default();
@@ -372,9 +388,13 @@ pub fn calculate_next(
 
         if !actionable_missions.is_empty() {
             if actionable_missions.len() == 1 {
-                return Ok(NextDecision::Mission(actionable_missions.into_iter().next().unwrap()));
+                return Ok(NextDecision::Mission(
+                    actionable_missions.into_iter().next().unwrap(),
+                ));
             } else {
-                return Ok(NextDecision::Missions(MissionsDecision { missions: actionable_missions }));
+                return Ok(NextDecision::Missions(MissionsDecision {
+                    missions: actionable_missions,
+                }));
             }
         }
     }
@@ -499,7 +519,7 @@ mod tests {
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
-        let next = calculate_next(&board, temp.path(), true, None, None).unwrap();
+        let next = calculate_next(&board, temp.path(), true, &ItemFilter::none()).unwrap();
         if let NextDecision::Work(d) = next {
             assert_eq!(d.story.id(), "S1");
         } else {
@@ -515,7 +535,7 @@ mod tests {
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
-        let next = calculate_next(&board, temp.path(), true, None, None).unwrap();
+        let next = calculate_next(&board, temp.path(), true, &ItemFilter::none()).unwrap();
         if let NextDecision::Work(d) = next {
             assert_eq!(d.story.id(), "S2");
             assert!(d.is_continuation);
@@ -531,7 +551,7 @@ mod tests {
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
-        let next = calculate_next(&board, temp.path(), false, None, None).unwrap();
+        let next = calculate_next(&board, temp.path(), false, &ItemFilter::none()).unwrap();
         assert!(matches!(next, NextDecision::Decision(_)));
     }
 
@@ -543,7 +563,7 @@ mod tests {
             .build();
         board.bearings.insert(bearing.id().to_string(), bearing);
 
-        let next = calculate_next(&board, Path::new("test"), false, None, None).unwrap();
+        let next = calculate_next(&board, Path::new("test"), false, &ItemFilter::none()).unwrap();
         assert!(matches!(next, NextDecision::Research(_)));
     }
 
@@ -555,7 +575,7 @@ mod tests {
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
-        let next = calculate_next(&board, temp.path(), false, None, None).unwrap();
+        let next = calculate_next(&board, temp.path(), false, &ItemFilter::none()).unwrap();
         assert!(matches!(next, NextDecision::NeedsStories(_)));
     }
 
@@ -564,7 +584,7 @@ mod tests {
         let temp = TestBoardBuilder::new().build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
-        let next = calculate_next(&board, temp.path(), true, None, None).unwrap();
+        let next = calculate_next(&board, temp.path(), true, &ItemFilter::none()).unwrap();
         assert!(matches!(next, NextDecision::Empty(_)));
     }
 
@@ -578,7 +598,7 @@ mod tests {
         let temp = builder.build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
-        let next = calculate_next(&board, temp.path(), false, None, None).unwrap();
+        let next = calculate_next(&board, temp.path(), false, &ItemFilter::none()).unwrap();
         match next {
             NextDecision::Blocked(d) => assert_eq!(d.count, HUMAN_NEXT_VERIFY_BLOCK_THRESHOLD),
             _ => panic!("Expected Blocked decision"),
@@ -592,7 +612,7 @@ mod tests {
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
-        let next = calculate_next(&board, temp.path(), false, None, None).unwrap();
+        let next = calculate_next(&board, temp.path(), false, &ItemFilter::none()).unwrap();
         assert!(matches!(next, NextDecision::Accept(_)));
     }
 
@@ -604,7 +624,7 @@ mod tests {
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
-        let next = calculate_next(&board, temp.path(), true, None, None).unwrap();
+        let next = calculate_next(&board, temp.path(), true, &ItemFilter::none()).unwrap();
         match next {
             NextDecision::Work(d) => assert_eq!(d.story.id(), "S1"),
             _ => panic!("Expected Work decision"),
@@ -618,7 +638,7 @@ mod tests {
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
-        let next = calculate_next(&board, temp.path(), false, None, None).unwrap();
+        let next = calculate_next(&board, temp.path(), false, &ItemFilter::none()).unwrap();
         assert_human_queue_decision(next);
     }
 
@@ -629,7 +649,7 @@ mod tests {
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
-        let next = calculate_next(&board, temp.path(), false, None, None).unwrap();
+        let next = calculate_next(&board, temp.path(), false, &ItemFilter::none()).unwrap();
         assert_human_queue_decision(next);
     }
 
@@ -641,7 +661,7 @@ mod tests {
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
-        let next = calculate_next(&board, temp.path(), false, None, None).unwrap();
+        let next = calculate_next(&board, temp.path(), false, &ItemFilter::none()).unwrap();
         assert_human_queue_decision(next);
     }
 
@@ -650,7 +670,7 @@ mod tests {
         let (temp, board) =
             build_board_with_verification_and_ready(HUMAN_NEXT_VERIFY_BLOCK_THRESHOLD - 1, 1);
 
-        let next = calculate_next(&board, temp.path(), false, None, None).unwrap();
+        let next = calculate_next(&board, temp.path(), false, &ItemFilter::none()).unwrap();
         assert!(matches!(next, NextDecision::Accept(_)));
 
         let summary = flow_action_summary(&board).to_lowercase();
@@ -662,7 +682,7 @@ mod tests {
         let (temp, board) =
             build_board_with_verification_and_ready(HUMAN_NEXT_VERIFY_BLOCK_THRESHOLD, 1);
 
-        let next = calculate_next(&board, temp.path(), false, None, None).unwrap();
+        let next = calculate_next(&board, temp.path(), false, &ItemFilter::none()).unwrap();
         assert!(matches!(next, NextDecision::Blocked(_)));
 
         let summary = flow_action_summary(&board).to_lowercase();
@@ -675,7 +695,7 @@ mod tests {
         let (temp, board) =
             build_board_with_verification_and_ready(FLOW_VERIFY_BLOCK_THRESHOLD + 1, 1);
 
-        let next = calculate_next(&board, temp.path(), false, None, None).unwrap();
+        let next = calculate_next(&board, temp.path(), false, &ItemFilter::none()).unwrap();
         assert!(matches!(next, NextDecision::Blocked(_)));
 
         let summary = flow_action_summary(&board).to_lowercase();
@@ -706,7 +726,7 @@ mod tests {
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
-        let next = calculate_next(&board, temp.path(), true, None, None).unwrap();
+        let next = calculate_next(&board, temp.path(), true, &ItemFilter::none()).unwrap();
         match next {
             NextDecision::Empty(empty) => {
                 assert!(
@@ -742,7 +762,7 @@ mod tests {
         std::fs::write(charter_path, charter).unwrap();
 
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
-        let next = calculate_next(&board, temp.path(), true, None, None).unwrap();
+        let next = calculate_next(&board, temp.path(), true, &ItemFilter::none()).unwrap();
 
         if let NextDecision::Mission(d) = next {
             assert_eq!(d.mission.id(), "M1");
