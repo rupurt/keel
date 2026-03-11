@@ -21,6 +21,8 @@ across planning, research, and execution.
 
 ## Delivery Workflow (Operator)
 
+**Persona**: Focused operator for evidence-backed delivery.
+
 Use this workflow inside a dedicated operator context. When operating under a
 mission, the mission steward should hand one primary story slice at a time to
 this workflow, along with any directly coupled parent context or closure work
@@ -56,11 +58,13 @@ needed to finish that slice cleanly.
 
 ## Management Workflow (Manager)
 
+**Persona**: Mission steward for scope, approvals, and coordination.
+
 Use this workflow inside a dedicated manager context. When operating under a
 mission, enter this workflow only for a concrete planning unit that is blocked on
 requirements, design, or decomposition.
 
-1. **Identify Gaps**: Use `just keel flow` to find Epics needing tactical decomposition and to detect when delivery is starved by missing management work.
+1. **Identify Gaps & Maintain Architectural Integrity**: Use `just keel flow` to find Epics needing tactical decomposition and to detect when delivery is starved by missing management work. Ensure all planning maintains strategic alignment and adheres to active ADRs.
 2. **Scaffold Planning Unit**:
    - For new strategic work, create an Epic: `just keel epic new "<Title>" --problem "<Problem>"`
    - For tactical decomposition, create a Voyage: `just keel voyage new "<Title>" --epic <epic-id> --goal "<The specific outcome>"`
@@ -114,6 +118,8 @@ requirements, design, or decomposition.
 13. **Return To Delivery**: After `just keel voyage plan <id>` or equivalent planning completion, immediately rerun `just keel next --role operator` and hand the ready story to an operator context unless a real blocker remains.
 
 ## Research Workflow (Explorer)
+
+**Persona**: Hypothesis-driven researcher for technical discovery and fog reduction.
 
 Use this workflow inside a dedicated explorer context. When operating under a
 mission, enter this workflow only when ambiguity or missing evidence blocks
