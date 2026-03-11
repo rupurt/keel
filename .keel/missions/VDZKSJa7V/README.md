@@ -1,11 +1,12 @@
 ---
 id: VDZKSJa7V
 title: Formalize VSDD and Harden Verification Infrastructure
-status: achieved
+status: verified
 created_at: 2026-03-11T07:24:37
-updated_at: 2026-03-11T08:32:03
+updated_at: 2026-03-11T08:32:25
 activated_at: 2026-03-11T07:25:36
 achieved_at: 2026-03-11T08:32:03
+verified_at: 2026-03-11T08:32:25
 ---
 
 # Formalize VSDD and Harden Verification Infrastructure
