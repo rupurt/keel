@@ -111,37 +111,37 @@ pub fn check_mission_completion_evidence(board: &Board) -> Vec<Problem> {
         let (_, entries) = parse_log_entries(&content);
 
         if entries.is_empty() {
-            problems.push(Problem {
-                severity: Severity::Warning,
-                path: mission.path.clone(),
-                message: format!(
-                    "Mission {} is {} but has no log entries in LOG.md",
-                    mission.id(),
-                    mission.status()
-                ),
-                fix: None,
-                scope: Some(mission.id().to_string()),
-                category: Some(GapCategory::Coherence),
-                check_id: CheckId::MissionMissingLogEntries,
-            });
+            problems.push(
+                Problem::error(
+                    mission.path.clone(),
+                    format!(
+                        "Mission {} is {} but has no log entries in LOG.md",
+                        mission.id(),
+                        mission.status()
+                    ),
+                )
+                .with_scope(mission.id())
+                .with_category(GapCategory::Coherence)
+                .with_check_id(CheckId::MissionMissingLogEntries),
+            );
         }
 
         // 2. Check for child entities
         let child_count = board.mission_child_count(mission.id());
         if child_count == 0 {
-            problems.push(Problem {
-                severity: Severity::Warning,
-                path: mission.path.clone(),
-                message: format!(
-                    "Mission {} is {} but has no child entities (epics, bearings, or ADRs)",
-                    mission.id(),
-                    mission.status()
-                ),
-                fix: None,
-                scope: Some(mission.id().to_string()),
-                category: Some(GapCategory::Coherence),
-                check_id: CheckId::MissionMissingChildren,
-            });
+            problems.push(
+                Problem::error(
+                    mission.path.clone(),
+                    format!(
+                        "Mission {} is {} but has no child entities (epics, bearings, or ADRs)",
+                        mission.id(),
+                        mission.status()
+                    ),
+                )
+                .with_scope(mission.id())
+                .with_category(GapCategory::Coherence)
+                .with_check_id(CheckId::MissionMissingChildren),
+            );
         }
     }
 
@@ -184,6 +184,24 @@ pub fn check_mission_active_no_work(board: &Board) -> Vec<Problem> {
         let epics = board.epics_for_mission(mission.id());
         let bearings = board.bearings_for_mission(mission.id());
 
+        // 1. Check for child entities - active missions MUST have children to pull work from
+        if epics.is_empty() && bearings.is_empty() {
+            problems.push(
+                Problem::error(
+                    mission.path.clone(),
+                    format!(
+                        "Mission {} is Active but has no child entities (epics or bearings).",
+                        mission.id()
+                    ),
+                )
+                .with_scope(mission.id())
+                .with_category(GapCategory::Coherence)
+                .with_check_id(CheckId::MissionMissingChildren),
+            );
+            continue;
+        }
+
+        // 2. Check for in-flight work
         let has_work = epics
             .iter()
             .any(|e| e.status() != crate::domain::model::EpicState::Done)
@@ -193,18 +211,18 @@ pub fn check_mission_active_no_work(board: &Board) -> Vec<Problem> {
             });
 
         if !has_work {
-            problems.push(Problem {
-                severity: Severity::Warning,
-                path: mission.path.clone(),
-                message: format!(
-                    "Mission {} is Active but has no in-flight work (all epics/bearings terminal).",
-                    mission.id()
-                ),
-                fix: None,
-                scope: Some(mission.id().to_string()),
-                category: Some(GapCategory::Coherence),
-                check_id: CheckId::MissionActiveNoWork,
-            });
+            problems.push(
+                Problem::error(
+                    mission.path.clone(),
+                    format!(
+                        "Mission {} is Active but has no in-flight work (all epics/bearings terminal).",
+                        mission.id()
+                    ),
+                )
+                .with_scope(mission.id())
+                .with_category(GapCategory::Coherence)
+                .with_check_id(CheckId::MissionActiveNoWork),
+            );
         }
     }
 
@@ -304,7 +322,7 @@ pub fn check_mission_dates(board: &Board) -> Vec<Problem> {
 mod tests {
     use super::*;
     use crate::infrastructure::loader::load_board;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestMission};
+    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestMission, TestVoyage};
     use std::fs;
 
     #[test]
@@ -345,9 +363,23 @@ mod tests {
 
     #[test]
     fn test_check_mission_active_no_work() {
+        // Case 1: No children at all
         let temp = TestBoardBuilder::new()
             .mission(TestMission::new("M1").status("active"))
-            // No epics or bearings linked to M1
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_mission_active_no_work(&board);
+
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].check_id, CheckId::MissionMissingChildren);
+        assert_eq!(problems[0].severity, Severity::Error);
+
+        // Case 2: Children exist but are terminal
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "E1").status("done"))
             .build();
 
         let board = load_board(temp.path()).unwrap();
@@ -355,6 +387,7 @@ mod tests {
 
         assert_eq!(problems.len(), 1);
         assert_eq!(problems[0].check_id, CheckId::MissionActiveNoWork);
+        assert_eq!(problems[0].severity, Severity::Error);
     }
 
     #[test]
@@ -368,6 +401,11 @@ mod tests {
 
         // Should have 2 problems: missing log and missing children
         assert_eq!(problems.len(), 2);
+        assert!(
+            problems
+                .iter()
+                .all(|p| p.severity == Severity::Error)
+        );
         assert!(
             problems
                 .iter()

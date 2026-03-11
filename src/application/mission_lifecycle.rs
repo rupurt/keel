@@ -142,6 +142,14 @@ impl MissionLifecycleService {
             ));
         }
 
+        // Verify child entities - missions need at least one child to be actionable
+        if board.mission_child_count(id) == 0 {
+            return Err(anyhow!(
+                "Cannot activate mission {}. At least one child entity (epic, bearing, or ADR) is required before activation.",
+                id
+            ));
+        }
+
         execute(board_dir, id, &mission_transitions::ACTIVATE)?;
         println!("Activated mission: {}", id);
         Ok(())
@@ -351,6 +359,7 @@ mod tests {
                     .title("Mission One")
                     .status("defining"),
             )
+            .epic(TestEpic::new("E1").mission("M1"))
             .build();
 
         // Add a goal to CHARTER.md manually
@@ -368,6 +377,31 @@ mod tests {
         let readme = fs::read_to_string(temp.path().join("missions/M1/README.md")).unwrap();
         assert!(readme.contains("status: active"));
         assert!(readme.contains("activated_at:"));
+    }
+
+    #[test]
+    fn test_mission_activate_fails_without_children() {
+        let temp = TestBoardBuilder::new()
+            .mission(
+                TestMission::new("M1")
+                    .title("Mission One")
+                    .status("defining"),
+            )
+            .build();
+
+        // Add a goal to CHARTER.md manually
+        let charter_path = temp.path().join("missions/M1/CHARTER.md");
+        let charter = r#"
+## Goals
+| ID | Description | Verification |
+|----|-------------|--------------|
+| MG-01 | Test goal | board: E1 |
+"#;
+        fs::write(charter_path, charter).unwrap();
+
+        let res = MissionLifecycleService::activate(temp.path(), "M1");
+        assert!(res.is_err());
+        assert!(res.unwrap_err().to_string().contains("child entity"));
     }
 
     #[test]
