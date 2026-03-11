@@ -1,7 +1,7 @@
 ---
 id: VDZcE0Uo5
 title: Diagnostics-First Next Algorithm
-mission: VDZcDwtlc
+mission: VDZsowb2k
 created_at: 2026-03-11T08:35:11
 index: 26
 ---
@@ -20,7 +20,8 @@ index: 26
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/0 voyages complete, 0/0 stories done
+**Progress:** 1/1 voyages complete, 1/1 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
+| [Integration Logic](voyages/VDZsp0J3U/) | done | 1/1 |
 <!-- END GENERATED -->

@@ -183,11 +183,23 @@
 |--------|--------|
 | [Automation Logic](epics/VDZKYX7TX/voyages/VDZb4JrIq/) | done |
 
-### [Diagnostics-First Next Algorithm](epics/VDZcE0Uo5/) (draft)
+### [Diagnostics-First Next Algorithm](epics/VDZcE0Uo5/) (done)
 
-### [Actionable Health Recovery](epics/VDZcE46pb/) (draft)
+| Voyage | Status |
+|--------|--------|
+| [Integration Logic](epics/VDZcE0Uo5/voyages/VDZsp0J3U/) | done |
 
-### [Coherent Entity Orchestration](epics/VDZcE7gsS/) (draft)
+### [Actionable Health Recovery](epics/VDZcE46pb/) (done)
+
+| Voyage | Status |
+|--------|--------|
+| [Diagnostics Mapping](epics/VDZcE46pb/voyages/VDZsp3w7A/) | done |
+
+### [Coherent Entity Orchestration](epics/VDZcE7gsS/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Structural Coherence](epics/VDZcE7gsS/voyages/VDZsp7eAG/) | in-progress |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

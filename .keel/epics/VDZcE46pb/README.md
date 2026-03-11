@@ -1,7 +1,7 @@
 ---
 id: VDZcE46pb
 title: Actionable Health Recovery
-mission: VDZcDwtlc
+mission: VDZsowb2k
 created_at: 2026-03-11T08:35:12
 index: 27
 ---
@@ -20,7 +20,8 @@ index: 27
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/0 voyages complete, 0/0 stories done
+**Progress:** 1/1 voyages complete, 1/1 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
+| [Diagnostics Mapping](voyages/VDZsp3w7A/) | done | 1/1 |
 <!-- END GENERATED -->
