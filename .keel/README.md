@@ -141,23 +141,23 @@
 |--------|--------|
 | [Dependency Injection for Services](epics/VDXBU7W4O/voyages/VDY6bQawh/) | planned |
 
-### [FileSystem Storage Adapter](epics/VDXBUAn7a/) (active)
+### [FileSystem Storage Adapter](epics/VDXBUAn7a/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Filesystem Storage Implementation](epics/VDXBUAn7a/voyages/VDY8Js8As/) | planned |
+| [Filesystem Storage Implementation](epics/VDXBUAn7a/voyages/VDY8Js8As/) | done |
 
 ### [Public Library API](epics/VDXBUEBAG/) (active)
 
 | Voyage | Status |
 |--------|--------|
-| [Public Library Surface](epics/VDXBUEBAG/voyages/VDY7YBSFR/) | planned |
+| [Public Library Surface](epics/VDXBUEBAG/voyages/VDY7YBSFR/) | in-progress |
 
-### [Storage Configuration](epics/VDXBUHZB0/) (active)
+### [Storage Configuration](epics/VDXBUHZB0/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Storage Backend Configuration](epics/VDXBUHZB0/voyages/VDY7AlCLy/) | in-progress |
+| [Storage Backend Configuration](epics/VDXBUHZB0/voyages/VDY7AlCLy/) | done |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

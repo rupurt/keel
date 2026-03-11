@@ -20,8 +20,8 @@ index: 18
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 0/4 stories done
+**Progress:** 0/1 voyages complete, 1/4 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Dependency Injection for Services](voyages/VDY6bQawh/) | planned | 0/4 |
+| [Dependency Injection for Services](voyages/VDY6bQawh/) | planned | 1/4 |
 <!-- END GENERATED -->

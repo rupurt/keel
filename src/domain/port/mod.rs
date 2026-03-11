@@ -4,7 +4,8 @@
 //! underlying persistence implementation (e.g., FileSystem, Database, Server).
 
 use anyhow::Result;
-use crate::domain::model::{Board, Entity};
+use std::path::Path;
+use crate::domain::model::{Board, Entity, Story, Voyage, Epic, Bearing, Adr};
 
 /// Aggregate operations for the entire Board.
 pub trait BoardStore {
@@ -28,6 +29,48 @@ pub trait EntityStore<T: Entity> {
     
     /// Remove an entity by its unique identifier.
     fn delete(&self, id: &str) -> Result<()>;
+}
+
+// Legacy application-layer ports moved here for consolidation during hexagonal migration.
+
+pub trait BoardRepositoryPort {
+    fn load_board(&self) -> Result<Board>;
+    fn persist_board(&self, board: &Board) -> Result<()>;
+}
+
+pub trait StoryRepositoryPort {
+    fn load_story(&self, id: &str) -> Result<Option<Story>>;
+    fn list_stories(&self) -> Result<Vec<Story>>;
+    fn persist_story(&self, story: &Story) -> Result<()>;
+}
+
+pub trait VoyageRepositoryPort {
+    fn load_voyage(&self, id: &str) -> Result<Option<Voyage>>;
+    fn list_voyages(&self) -> Result<Vec<Voyage>>;
+    fn persist_voyage(&self, voyage: &Voyage) -> Result<()>;
+}
+
+pub trait EpicRepositoryPort {
+    fn load_epic(&self, id: &str) -> Result<Option<Epic>>;
+    fn list_epics(&self) -> Result<Vec<Epic>>;
+    fn persist_epic(&self, epic: &Epic) -> Result<()>;
+}
+
+pub trait BearingRepositoryPort {
+    fn load_bearing(&self, id: &str) -> Result<Option<Bearing>>;
+    fn list_bearings(&self) -> Result<Vec<Bearing>>;
+    fn persist_bearing(&self, bearing: &Bearing) -> Result<()>;
+}
+
+pub trait AdrRepositoryPort {
+    fn load_adr(&self, id: &str) -> Result<Option<Adr>>;
+    fn list_adrs(&self) -> Result<Vec<Adr>>;
+    fn persist_adr(&self, adr: &Adr) -> Result<()>;
+}
+
+pub trait DocumentServicePort {
+    fn read_document(&self, path: &Path) -> Result<String>;
+    fn write_document(&self, path: &Path, content: &str) -> Result<()>;
 }
 
 #[cfg(test)]

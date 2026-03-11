@@ -1,11 +1,12 @@
 ---
 id: VDY7YBSFR
 title: Public Library Surface
-status: planned
+status: in-progress
 epic: VDXBUEBAG
 created_at: 2026-03-11T02:27:05
 index: 1
 updated_at: 2026-03-11T02:28:55
+started_at: 2026-03-11T03:15:27
 ---
 
 # Public Library Surface
@@ -24,11 +25,11 @@ updated_at: 2026-03-11T02:28:55
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/3 stories complete
+**Progress:** 1/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Restructure Lib Rs For Layer Exports](../../../../stories/VDY7jCFN4/README.md) | refactor | backlog |
 | [Export Domain Ports In Public API](../../../../stories/VDY7jFvPQ/README.md) | refactor | backlog |
-| [Audit And Stabilize Public Visibility Of Domain Models](../../../../stories/VDY7jJaQk/README.md) | refactor | backlog |
+| [Audit And Stabilize Public Visibility Of Domain Models](../../../../stories/VDY7jJaQk/README.md) | refactor | done |
 <!-- END GENERATED -->

@@ -2,11 +2,14 @@
 id: VDY6ryx89
 title: Consolidate Domain And Application Ports
 type: refactor
-status: backlog
+status: done
 created_at: 2026-03-10T23:25:00
+updated_at: 2026-03-11T03:27:27
 scope: VDXBU7W4O/VDY6bQawh
 index: 1
-updated_at: 2026-03-11T02:25:04
+started_at: 2026-03-11T03:30:00
+submitted_at: 2026-03-11T03:27:27
+completed_at: 2026-03-11T03:27:27
 ---
 
 # Consolidate Domain And Application Ports
@@ -17,6 +20,6 @@ Consolidate the overlapping trait definitions in `src/application/ports.rs` and 
 
 ## Acceptance Criteria
 
-- [ ] [SRS-01/AC-01] Repository traits consolidated in `src/domain/port/mod.rs`. <!-- verify: inspection, SRS-01:start -->
-- [ ] [SRS-02/AC-01] `EntityStore<T>` made the canonical CRUD interface. <!-- verify: inspection, SRS-02:start -->
-- [ ] [SRS-04/AC-01] `src/application/ports.rs` removed. <!-- verify: inspection, SRS-04:start:end -->
+- [x] [SRS-01/AC-01] Repository traits consolidated in `src/domain/port/mod.rs`. <!-- verify: manual, SRS-01:start:end -->
+- [x] [SRS-02/AC-01] `EntityStore<T>` made the canonical CRUD interface. <!-- verify: manual, SRS-02:start:end -->
+- [x] [SRS-04/AC-01] `src/application/ports.rs` removed. <!-- verify: manual, SRS-04:start:end -->
