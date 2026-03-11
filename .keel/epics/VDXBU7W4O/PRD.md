@@ -1,69 +1,76 @@
-# Application Service Refactor - Product Requirements
+---
+id: VDXBU7W4O
+title: Application Service Refactor
+mission: VDXqZtRef
+created_at: 2026-03-10T22:36:20
+---
+
+# Application Service Refactor - PRD
 
 ## Problem Statement
 
-Services must depend on traits rather than concrete filesystem loaders to support the hexagonal architecture pattern.
+The current application services (e.g., `StoryLifecycleService`, `VoyageEpicLifecycleService`) are directly coupled to filesystem operations. This coupling makes it difficult to use Keel in contexts without a traditional local filesystem (like a web server with a database backend) and hinders unit testing of the service logic without hitting the disk.
 
 ## Goals & Objectives
 
 | ID | Goal | Success Metric | Target |
 |----|------|----------------|--------|
-| GOAL-01 | Resolve the problem described above for the primary user. | A measurable outcome is defined for this problem | Target agreed during planning |
+| GOAL-01 | Decouple application services from `std::fs` and concrete loader functions. | Services can be initialized with any implementation of the Storage Ports. | 100% |
+| GOAL-02 | Enable dependency injection for storage in all application services. | Unit tests use mock storage without disk access. | 100% |
 
 ## Users
 
 | Persona | Description | Primary Need |
 |---------|-------------|--------------|
-| Primary User | The person or team most affected by the problem above. | A clearer path to the outcome this epic should improve. |
+| Keel Maintainer | Developer working on the core logic. | Faster, more reliable unit tests for service logic. |
+| System Integrator | Developer embedding Keel into a server environment. | Ability to provide custom storage backends (SQL, Cloud Storage). |
 
 ## Scope
 
 ### In Scope
-
-- [SCOPE-01] The smallest end-to-end change needed to address the problem statement.
+- [SCOPE-01] Refactoring of `src/application/*.rs` services to use Storage Ports.
+- [SCOPE-02] Introduction of dependency injection patterns for service initialization.
+- [SCOPE-03] Updating service methods to operate on abstract stores rather than `board_dir` paths.
 
 ### Out of Scope
-
-- [SCOPE-02] Follow-on improvements or adjacent work that is not required for the first outcome.
+- [SCOPE-04] Implementing custom non-filesystem backends.
+- [SCOPE-05] Refactoring the CLI layer beyond what's needed to pass the new service dependencies.
 
 ## Requirements
 
-### Functional Requirements
-
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Goals | Priority | Rationale |
-|----|-------------|-------|----------|-----------|
-| FR-01 | Deliver the primary user workflow for this epic end-to-end. | GOAL-01 | must | Establishes the minimum functional capability needed to achieve the epic goal. |
+| ID | Description | Source | Goals |
+|----|-------------|--------|-------|
+| FR-01 | Services must accept store implementations as dependencies (likely via traits). | Strategic | GOAL-01, GOAL-02 |
+| FR-02 | Service logic must remain unchanged in terms of outcome while the underlying I/O is abstracted. | Strategic | GOAL-01 |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
-### Non-Functional Requirements
-
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
-| ID | Requirement | Goals | Priority | Rationale |
-|----|-------------|-------|----------|-----------|
-| NFR-01 | Maintain reliability and observability for all new workflow paths introduced by this epic. | GOAL-01 | must | Keeps operations stable and makes regressions detectable during rollout. |
+| ID | Description | Source | Goals |
+|----|-------------|--------|-------|
+| NFR-01 | Refactoring must not introduce significant performance overhead compared to direct disk access. | Strategic | GOAL-01 |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
 
 ## Verification Strategy
 
-| Area | Method | Evidence |
-|------|--------|----------|
-| Problem outcome | Tests, CLI proofs, or manual review chosen during planning | Story-level verification artifacts linked during execution |
+- Exhaustive unit testing of refactored services using mock stores.
+- Integration testing using the existing `FileSystem` adapter to ensure CLI parity.
 
 ## Assumptions
 
-| Assumption | Impact if Wrong | Validation |
-|------------|-----------------|------------|
-| The problem statement reflects a real user or operator need. | The epic may optimize the wrong outcome. | Revisit with planners during decomposition. |
+| ID | Assumption | Impact |
+|----|------------|--------|
+| AS-01 | A trait-based approach with `Box<dyn Store>` or generics will be suitable for the DI needs. | High |
 
 ## Open Questions & Risks
 
-| Question/Risk | Owner | Status |
-|---------------|-------|--------|
-| Which metric best proves the problem above is resolved? | Epic owner | Open |
+| ID | Risk / Question | Mitigation |
+|----|-----------------|------------|
+| R-01 | Complex lifetimes or ownership issues when passing stores to services. | Use `Arc` or carefully design service ownership. |
 
 ## Success Criteria
 
 <!-- BEGIN SUCCESS_CRITERIA -->
-- [ ] The team can state a measurable user outcome that resolves the problem above.
+- [ ] Application services no longer contain direct `fs::` calls or `loader::load_board` calls.
+- [ ] Existing integration tests pass using the refactored services.
 <!-- END SUCCESS_CRITERIA -->

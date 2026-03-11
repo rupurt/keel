@@ -78,7 +78,7 @@ pub enum NextDecision {
     /// Strategic gap (voyage needs planning)
     NeedsPlanning(DecomposeDecision),
     /// Strategic gap (epic needs PRD)
-    NeedsPRD(DecomposeDecision),
+    NeedsPRD(NeedsPRDDecision),
     /// Active mission needs work created
     Mission(MissionDecision),
     /// Multiple actionable missions
@@ -134,6 +134,11 @@ pub struct BlockedDecision {
 #[derive(Debug)]
 pub struct DecomposeDecision {
     pub voyages: Vec<crate::domain::model::Voyage>,
+}
+
+#[derive(Debug)]
+pub struct NeedsPRDDecision {
+    pub epics: Vec<crate::domain::model::Epic>,
 }
 
 /// Calculate the single most important next action.
@@ -260,8 +265,8 @@ pub fn calculate_next(
         }
 
         if !needs_prd.is_empty() {
-            return Ok(NextDecision::NeedsPRD(DecomposeDecision {
-                voyages: Vec::new(),
+            return Ok(NextDecision::NeedsPRD(NeedsPRDDecision {
+                epics: needs_prd,
             }));
         }
 
@@ -389,7 +394,16 @@ pub fn calculate_next(
                     .iter()
                     .find(|e| e.status() == crate::domain::model::EpicState::Draft)
                 {
-                    format!("Author PRD for Epic {}", epic.id())
+                    let prd_path = epic.path.parent().unwrap().join("PRD.md");
+                    if crate::infrastructure::validation::structural::check_epic_prd_authored_content(
+                        &prd_path,
+                    )
+                    .is_empty()
+                    {
+                        format!("Decompose Epic {} into voyages", epic.id())
+                    } else {
+                        format!("Author PRD for Epic {}", epic.id())
+                    }
                 } else if let Some(voyage) = board.voyages.values().find(|v| {
                     v.status() == crate::domain::state_machine::voyage::VoyageState::Draft
                         && epics.iter().any(|e| e.id() == v.epic_id)

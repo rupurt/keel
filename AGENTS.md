@@ -65,7 +65,7 @@ mission, enter this workflow only for a concrete planning unit that is blocked o
 requirements, design, or decomposition.
 
 1. **Identify Gaps & Maintain Architectural Integrity**: Use `just keel flow` to find Epics needing tactical decomposition and to detect when delivery is starved by missing management work. Ensure all planning maintains strategic alignment and adheres to active ADRs.
-2. **Scaffold Planning Unit**:
+2. **Scaffold Planning Unit (Atomic Planning)**: Focus on one strategic or tactical unit at a time. Do not batch-create epics or voyages. Ensure one unit is fully authored and coherent before scaffolding the next.
    - For new strategic work, create an Epic: `just keel epic new "<Title>" --problem "<Problem>"`
    - For tactical decomposition, create a Voyage: `just keel voyage new "<Title>" --epic <epic-id> --goal "<The specific outcome>"`
 3. **Author Epic PRD Immediately After Creation**: Before decomposing into voyages/stories, fill out `epics/<epic-id>/PRD.md` with authored content for every required section:

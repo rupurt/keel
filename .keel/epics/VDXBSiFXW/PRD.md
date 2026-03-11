@@ -13,11 +13,11 @@ Current application services are tightly coupled to filesystem paths and direct 
 
 ## Goals & Objectives
 
-| ID | Description |
-|----|-------------|
-| GOAL-01 | Define a `BoardStore` trait for aggregate board operations (load, save). |
-| GOAL-02 | Define an `EntityStore<T>` trait for specific entity operations (stories, voyages, epics). |
-| GOAL-03 | Ensure ports support both synchronous and asynchronous operations (if needed) or stay generic. |
+| ID | Goal | Success Metric | Target |
+|----|------|----------------|--------|
+| GOAL-01 | Define a `BoardStore` trait for aggregate board operations (load, save). | Unit tests for mock implementation pass. | 100% |
+| GOAL-02 | Define an `EntityStore<T>` trait for specific entity operations (stories, voyages, epics). | Unit tests for mock implementation pass. | 100% |
+| GOAL-03 | Ensure ports support both synchronous and asynchronous operations (if needed) or stay generic. | Code compiles without `std::fs` in core traits. | 100% |
 
 ## Users
 
@@ -29,13 +29,13 @@ Current application services are tightly coupled to filesystem paths and direct 
 ## Scope
 
 ### In Scope
-- Definition of `BoardStore` trait.
-- Definition of `EntityStore` traits for all entity types.
-- Migration of `src/domain/model/board.rs` to use these traits for high-level operations.
+- [SCOPE-01] Definition of `BoardStore` trait.
+- [SCOPE-02] Definition of `EntityStore` traits for all entity types.
+- [SCOPE-03] Migration of `src/domain/model/board.rs` to use these traits for high-level operations.
 
 ### Out of Scope
-- Implementation of the FileSystem adapter (handled in a separate epic).
-- Implementation of an HTTP/Server adapter.
+- [SCOPE-04] Implementation of the FileSystem adapter (handled in a separate epic).
+- [SCOPE-05] Implementation of an HTTP/Server adapter.
 
 ## Requirements
 
@@ -57,6 +57,18 @@ Current application services are tightly coupled to filesystem paths and direct 
 
 - Unit tests for the trait definitions (compilation checks).
 - Mock implementations to verify application service compatibility.
+
+## Assumptions
+
+| ID | Assumption | Impact |
+|----|------------|--------|
+| AS-01 | Synchronous traits are sufficient for the initial filesystem-backed CLI use cases. | High |
+
+## Open Questions & Risks
+
+| ID | Risk / Question | Mitigation |
+|----|-----------------|------------|
+| R-01 | Future async storage needs might require trait refactoring. | Use `async-trait` or keep them generic enough. |
 
 ## Success Criteria
 

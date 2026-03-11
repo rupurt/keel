@@ -51,13 +51,22 @@ fn format_missions(d: &super::MissionsDecision) -> String {
     out
 }
 
-fn format_needs_prd(_d: &super::DecomposeDecision) -> String {
+fn format_needs_prd(d: &super::NeedsPRDDecision) -> String {
     let mut out = String::new();
     out.push_str(&format!(
-        "{}: {}\n",
+        "{}: {} Epic(s) need authored PRD content\n",
         "Strategic Gap".bold().yellow(),
-        "Epics need authored PRD content"
+        d.epics.len()
     ));
+
+    for epic in &d.epics {
+        out.push_str(&format!(
+            "  - {} {}\n",
+            crate::cli::style::styled_story_id(epic.id()),
+            epic.title().bold()
+        ));
+    }
+
     out.push_str("\nUse `keel epic list --status draft` to identify epics needing authoring.");
     out
 }
