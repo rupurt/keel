@@ -133,7 +133,7 @@ mod tests {
     }
 
     #[test]
-    fn submit_errors_on_missing_reflect_with_recovery_guidance() {
+    fn submit_succeeds_without_reflect() {
         let temp = TestBoardBuilder::new()
             .story(
                 TestStory::new("1vkqtsREF")
@@ -149,11 +149,7 @@ mod tests {
         }
         let result = run(temp.path(), "1vkqtsREF");
 
-        assert!(result.is_err());
-        let err = result.unwrap_err().to_string();
-        assert!(err.contains("REFLECT.md missing in bundle"));
-        assert!(err.contains("Recovery step:"));
-        assert!(err.contains("keel story reflect 1vkqtsREF"));
+        assert!(result.is_ok(), "Should succeed without REFLECT.md: {:?}", result);
     }
 
     #[test]
@@ -166,13 +162,8 @@ mod tests {
             )
             .build();
 
-        // Create EVIDENCE dir and REFLECT.md
+        // Create EVIDENCE dir
         fs::create_dir_all(temp.path().join("stories/1vkqtsDDD/EVIDENCE")).unwrap();
-        fs::write(
-            temp.path().join("stories/1vkqtsDDD/REFLECT.md"),
-            REFLECT_NO_KNOWLEDGE,
-        )
-        .unwrap();
 
         let result = run(temp.path(), "1vkqtsDDD");
         assert!(result.is_ok(), "Should succeed: {:?}", result);
@@ -188,20 +179,11 @@ mod tests {
             )
             .build();
 
-        // Create EVIDENCE dir and REFLECT.md
+        // Create EVIDENCE dir
         fs::create_dir_all(temp.path().join("stories/1vkqtsEEE/EVIDENCE")).unwrap();
-        fs::write(
-            temp.path().join("stories/1vkqtsEEE/REFLECT.md"),
-            REFLECT_NO_KNOWLEDGE,
-        )
-        .unwrap();
 
         let result = run(temp.path(), "1vkqtsEEE");
-        assert!(
-            result.is_ok(),
-            "Should succeed without criteria: {:?}",
-            result
-        );
+        assert!(result.is_ok());
     }
 
     #[test]
@@ -215,13 +197,8 @@ mod tests {
             )
             .build();
 
-        // Create EVIDENCE dir and REFLECT.md
+        // Create EVIDENCE dir
         fs::create_dir_all(temp.path().join("stories/FLATACT/EVIDENCE")).unwrap();
-        fs::write(
-            temp.path().join("stories/FLATACT/REFLECT.md"),
-            REFLECT_NO_KNOWLEDGE,
-        )
-        .unwrap();
 
         run(temp.path(), "FLATACT").unwrap();
 

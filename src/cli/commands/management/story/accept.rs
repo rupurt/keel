@@ -321,11 +321,11 @@ priority = 50
             .story(TestStory::new("1vqNrfl03").status(StoryState::NeedsHumanVerification))
             .build();
 
+        let reflect_path = temp.path().join("stories/1vqNrfl03/REFLECT.md");
+
         run(temp.path(), "1vqNrfl03", "manager", None).unwrap();
 
-        let reflect_path = temp.path().join("stories/1vqNrfl03/REFLECT.md");
-        // It now exists by default because of TestBoardBuilder
-        assert!(reflect_path.exists(), "REFLECT.md should exist by default");
+        assert!(!reflect_path.exists(), "REFLECT.md should NOT be created if not provided");
     }
 
     #[test]

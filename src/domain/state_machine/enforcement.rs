@@ -380,7 +380,6 @@ mod tests {
             .story(TestStory::new("STORY-RUNTIME").status(StoryState::InProgress))
             .build();
 
-        fs::remove_file(temp.path().join("stories/STORY-RUNTIME/REFLECT.md")).unwrap();
         fs::remove_dir_all(temp.path().join("stories/STORY-RUNTIME/EVIDENCE")).unwrap();
 
         let board = load_board(temp.path()).unwrap();
@@ -422,7 +421,6 @@ mod tests {
             .story(TestStory::new("STORY1").status(StoryState::InProgress))
             .build();
 
-        fs::remove_file(temp.path().join("stories/STORY1/REFLECT.md")).unwrap();
         fs::remove_dir_all(temp.path().join("stories/STORY1/EVIDENCE")).unwrap();
 
         let board = load_board(temp.path()).unwrap();
@@ -441,13 +439,6 @@ mod tests {
             TransitionIntent::Story(StoryTransition::Submit)
         ));
         assert_eq!(result.policy.blocking_mode, BlockingMode::Strict);
-        assert!(
-            result
-                .gate_problems
-                .iter()
-                .any(|p| p.message.contains("REFLECT.md missing")),
-            "expected REFLECT gate problem"
-        );
         assert!(
             result
                 .gate_problems

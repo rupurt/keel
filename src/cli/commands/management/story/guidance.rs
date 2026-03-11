@@ -151,9 +151,7 @@ fn recovery_command_for_error(
             }
         }
         StoryLifecycleAction::Submit => {
-            if lower.contains("reflect.md missing in bundle") {
-                Some(format!("keel story reflect {story_id}"))
-            } else if lower.contains("unchecked acceptance criteria")
+            if lower.contains("unchecked acceptance criteria")
                 || lower.contains("missing verification annotations")
                 || lower.contains("missing srs refs")
                 || lower.contains("missing evidence chain phase markers")
@@ -174,8 +172,6 @@ fn recovery_command_for_error(
                 || lower.contains("manual verification must be accepted with")
             {
                 Some(accept_command_for_role(story_id, accept_role))
-            } else if lower.contains("reflect.md missing in bundle") {
-                Some(format!("keel story reflect {story_id}"))
             } else if lower.contains("evidence directory missing in bundle")
                 || lower.contains("unresolved scaffold/default text")
             {
@@ -399,19 +395,6 @@ mod tests {
                 "recovery_step": { "command": "keel story accept S6 --role director" }
             })
         );
-    }
-
-    #[test]
-    fn recovery_submit_missing_reflect_maps_to_reflect_command() {
-        let guidance = recovery_for_error(
-            StoryLifecycleAction::Submit,
-            "S7",
-            "Cannot submit story S7:\n- REFLECT.md missing in bundle",
-        )
-        .unwrap();
-        let rendered = render_human(Some(&guidance));
-        assert!(rendered.contains("Recovery step:"));
-        assert!(rendered.contains("keel story reflect S7"));
     }
 
     #[test]

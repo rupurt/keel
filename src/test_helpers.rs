@@ -758,16 +758,6 @@ Test harness epic problem statement.
             let story_path = story_bundle_dir.join("README.md");
             fs::write(story_path, story.content()).unwrap();
 
-            // Mandatory REFLECT.md with an empty knowledge section for hardened gates
-            fs::write(
-                story_bundle_dir.join("REFLECT.md"),
-                format!(
-                    "---\ncreated_at: 2026-01-01T00:00:00\n---\n\n# Reflection - {}\n\n## Knowledge\n\n## Observations\n\nNo reusable insight captured.\n",
-                    story.title
-                ),
-            )
-            .unwrap();
-
             // Mandatory EVIDENCE directory
             fs::create_dir_all(story_bundle_dir.join("EVIDENCE")).unwrap();
         }

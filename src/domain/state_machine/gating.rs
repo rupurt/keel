@@ -215,14 +215,6 @@ fn evaluate_story_submit(_board: &Board, story: &Story) -> Vec<Problem> {
         );
     }
 
-    let reflect_path = bundle_dir.join("REFLECT.md");
-    if !reflect_path.exists() {
-        problems.push(
-            Problem::error(story.path.clone(), "REFLECT.md missing in bundle")
-                .with_check_id(CheckId::Unknown),
-        );
-    }
-
     // 2. Check for SRS refs
     let content = match fs::read_to_string(&story.path) {
         Ok(c) => c,
@@ -325,16 +317,7 @@ fn evaluate_story_accept(
         None => return problems,
     };
 
-    // 1. Ensure REFLECT.md exists and has content
-    let reflect_path = bundle_dir.join("REFLECT.md");
-    if !reflect_path.exists() {
-        problems.push(
-            Problem::error(story.path.clone(), "REFLECT.md missing in bundle")
-                .with_check_id(CheckId::Unknown),
-        );
-    }
-
-    // 2. Ensure EVIDENCE/ directory exists
+    // 1. Ensure EVIDENCE/ directory exists
     let evidence_dir = bundle_dir.join("EVIDENCE");
     if !evidence_dir.exists() {
         problems.push(

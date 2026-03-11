@@ -97,8 +97,8 @@ mod tests {
                     .status(StoryState::InProgress),
             )
             .build();
+        fs::create_dir_all(temp.path().join("stories/SREF01/EVIDENCE")).unwrap();
         let reflect_path = temp.path().join("stories/SREF01/REFLECT.md");
-        fs::remove_file(&reflect_path).unwrap();
 
         run(temp.path(), "SREF01").unwrap();
 
