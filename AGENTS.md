@@ -47,12 +47,12 @@ needed to finish that slice cleanly.
 6. **Record Evidence**: Capture proof of requirement satisfaction for each acceptance criterion:
    - `just keel story record <ID> --ac <NUM> --msg "Description of the proof"`
    - For manual proofs, use the `--msg` flag or editor integration.
-7. **Reflect Selectively (Optional)**: Use `just keel story reflect <ID>` only when the work uncovered a novel, reusable insight that is likely to help future stories.
+7. **Reflect Selectively (Optional)**: Use `just keel story reflect <ID>` only when the work uncovered a novel, reusable insight that is likely to help future stories. **Reflection is optional and is no longer a mandatory gate for submission.**
    - Start from the similar knowledge surfaced by the command. Prefer linking an existing knowledge file over creating a new one when the insight is already covered.
    - Capture only durable guidance another agent can reuse: a decision rule, failure mode, parser/rendering trap, verification lesson, or workflow guardrail.
    - Include the trigger/context, the reusable takeaway, and where it applies. The bar should be: would this help a future agent avoid drift on a different story?
    - Do not record story recap, commit summary, obvious implementation steps, or one-off cleanup details already visible in the diff, proofs, or authored artifacts.
-   - If there is no reusable insight, skip reflection or leave the `## Knowledge` section empty.
+   - **If there is no novel, reusable insight, skip this step entirely.**
 8. **Submit**: Move to the human queue for review with `just keel story submit <ID>`. This triggers automated verification and generates the verification manifest. Resolve any failures and rerun `submit` until the story reaches its post-submit state.
 9. **Commit (Required)**: Create exactly one atomic [Conventional Commit](https://www.conventionalcommits.org/) for this story after `submit`, not before. Include the resulting `.keel` changes from submission in the same commit (for example story status updates, manifests, synthesized knowledge, and board projections). Do not batch multiple stories into one commit.
 
