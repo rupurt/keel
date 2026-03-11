@@ -23,15 +23,15 @@ impl<'a> ItemFilter<'a> {
     }
 
     pub fn matches_story(&self, board: &Board, story: &Story) -> bool {
-        if let Some(id) = self.mission_id {
-            if !board.is_story_in_mission(story, id) {
-                return false;
-            }
+        if let Some(id) = self.mission_id
+            && !board.is_story_in_mission(story, id)
+        {
+            return false;
         }
-        if let Some(role) = self.actor_role {
-            if !keel::domain::model::taxonomy::actor_matches_story(role, story) {
-                return false;
-            }
+        if let Some(role) = self.actor_role
+            && !keel::domain::model::taxonomy::actor_matches_story(role, story)
+        {
+            return false;
         }
         true
     }
@@ -476,9 +476,9 @@ fn is_goal_met(board: &Board, target: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs;
     use keel::domain::model::StoryState;
-    use keel::test_helpers::{TestBearing, TestBoardBuilder, TestStory, TestMission, TestAdr};
+    use keel::test_helpers::{TestAdr, TestBearing, TestBoardBuilder, TestMission, TestStory};
+    use std::fs;
 
     fn assert_human_queue_decision(decision: &NextDecision) {
         match decision {
@@ -499,9 +499,7 @@ mod tests {
     #[test]
     fn human_mode_finds_adr_decisions() {
         let temp = TestBoardBuilder::new()
-            .adr(
-                TestAdr::new("ADR1").title("ADR 1").status("proposed")
-            )
+            .adr(TestAdr::new("ADR1").title("ADR 1").status("proposed"))
             .build();
 
         let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();

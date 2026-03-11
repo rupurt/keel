@@ -9,9 +9,9 @@ pub mod plan;
 pub mod show;
 pub mod start;
 
-use std::path::Path;
 use anyhow::Result;
 use clap::Subcommand;
+use std::path::Path;
 
 const VOYAGE_STATUS_VALUES: &[&str] = &["draft", "planned", "in-progress", "done"];
 

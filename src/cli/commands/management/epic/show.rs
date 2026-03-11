@@ -349,11 +349,11 @@ fn render_voyages(board: &Board, epic: &Epic) -> Option<ShowSection> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::{Duration, Local, NaiveDate};
     use keel::domain::model::StoryState;
     use keel::domain::state_machine::invariants::{ScopeLineageIssue, ScopeLineageIssueKind};
     use keel::infrastructure::loader::load_board;
     use keel::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
-    use chrono::{Duration, Local, NaiveDate};
     use std::fs;
     use std::path::Path;
 

@@ -242,17 +242,12 @@ fn default_board_dir() -> String {
 }
 
 /// Supported storage backends.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum StorageBackend {
+    #[default]
     Filesystem,
     Server,
-}
-
-impl Default for StorageBackend {
-    fn default() -> Self {
-        Self::Filesystem
-    }
 }
 
 /// Storage-level configuration.
@@ -785,7 +780,10 @@ operational_contract = "software-operator-core"
         let config = load_from_file(&path).unwrap();
         assert_eq!(config.workflow.defaults.management_role, "director");
         assert_eq!(config.workflow.defaults.management_lane, "review");
-        assert_eq!(config.roles["director"].operational_contract, "director-core");
+        assert_eq!(
+            config.roles["director"].operational_contract,
+            "director-core"
+        );
         assert_eq!(config.lanes["review"].priority, 100);
         assert!(config.lanes["review"].manual_accept);
         assert_eq!(

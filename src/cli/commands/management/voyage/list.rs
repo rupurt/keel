@@ -1,9 +1,9 @@
 //! List voyages command
 
 use crate::cli::table::Table;
+use anyhow::Result;
 use keel::domain::model::{Board, Voyage};
 use keel::infrastructure::loader::load_board;
-use anyhow::Result;
 
 const DEFAULT_VOYAGE_STATUSES: &[&str] = &["draft", "planned", "in-progress"];
 const ALLOWED_VOYAGE_STATUSES: &[&str] = &["draft", "planned", "in-progress", "done"];

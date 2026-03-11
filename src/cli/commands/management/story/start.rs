@@ -1,8 +1,7 @@
-use std::path::Path;
-use keel::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
 use keel::application::process_manager::{DomainProcessManager, LiveProcessActionExecutor};
+use keel::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
+use std::path::Path;
 /// Start story command - pull story from backlog into execution
-
 use std::sync::Arc;
 
 use anyhow::Result;
@@ -30,7 +29,7 @@ pub fn run(board_dir: &Path, id: &str, version: Option<u64>) -> Result<()> {
     ));
     let executor = LiveProcessActionExecutor::new(voyage_service.clone());
     let process_manager = Arc::new(DomainProcessManager::new(executor));
-    
+
     let service = StoryLifecycleService::new(
         board_dir.to_path_buf(),
         adapter.clone(),
@@ -38,11 +37,8 @@ pub fn run(board_dir: &Path, id: &str, version: Option<u64>) -> Result<()> {
         process_manager,
     );
 
-    
-
-    
-
-    service.start( id, version)
+    service
+        .start(id, version)
         .map_err(|err| error_with_recovery(StoryLifecycleAction::Start, id, err))?;
 
     let board = load_board(board_dir)?;

@@ -43,10 +43,10 @@ fn build_topology_output_with_width(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::{Duration, Utc};
     use keel::domain::model::StoryState;
     use keel::infrastructure::loader::load_board;
     use keel::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
-    use chrono::{Duration, Utc};
     use std::fs;
     use std::path::Path;
 

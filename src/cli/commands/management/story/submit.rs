@@ -1,8 +1,7 @@
-use std::path::Path;
-use keel::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
 use keel::application::process_manager::{DomainProcessManager, LiveProcessActionExecutor};
+use keel::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
+use std::path::Path;
 /// Submit story command - move from in-progress to needs-human-verification
-
 use std::sync::Arc;
 
 use anyhow::Result;
@@ -27,7 +26,7 @@ pub fn run(board_dir: &Path, id: &str) -> Result<()> {
     ));
     let executor = LiveProcessActionExecutor::new(voyage_service.clone());
     let process_manager = Arc::new(DomainProcessManager::new(executor));
-    
+
     let service = StoryLifecycleService::new(
         board_dir.to_path_buf(),
         adapter.clone(),
@@ -35,11 +34,8 @@ pub fn run(board_dir: &Path, id: &str) -> Result<()> {
         process_manager,
     );
 
-    
-
-    
-
-    service.submit( id)
+    service
+        .submit(id)
         .map_err(|err| error_with_recovery(StoryLifecycleAction::Submit, id, err))?;
 
     let board = load_board(board_dir)?;
@@ -175,7 +171,11 @@ mod tests {
         }
         let result = run(temp.path(), "1vkqtsREF");
 
-        assert!(result.is_ok(), "Should succeed without REFLECT.md: {:?}", result);
+        assert!(
+            result.is_ok(),
+            "Should succeed without REFLECT.md: {:?}",
+            result
+        );
     }
 
     #[test]

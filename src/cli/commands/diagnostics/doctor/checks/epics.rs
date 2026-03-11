@@ -105,9 +105,7 @@ pub fn check_epic_done_gates(board: &Board) -> Vec<Problem> {
 
     for epic in board.epics.values() {
         if epic.status() == EpicState::Done {
-            problems.extend(keel::domain::state_machine::evaluate_epic_done(
-                board, epic,
-            ));
+            problems.extend(keel::domain::state_machine::evaluate_epic_done(board, epic));
         }
     }
 

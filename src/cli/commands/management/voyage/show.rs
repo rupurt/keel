@@ -155,13 +155,13 @@ fn requirement_matrix_lines(report: &VoyageShowProjection) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::NaiveDate;
     use keel::domain::model::StoryState;
     use keel::domain::state_machine::invariants::{ScopeLineageIssue, ScopeLineageIssueKind};
     use keel::read_model::planning_show::{
         RequirementCompletion, RequirementKind, RequirementRow, ScopeDriftRow, StoryRef,
     };
     use keel::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
-    use chrono::NaiveDate;
 
     #[test]
     fn voyage_duration_rendering_formats_elapsed_time() {

@@ -375,8 +375,7 @@ mod template_struct_fields {
 
     #[test]
     fn story_template_fields_match_struct() {
-        let template_keys =
-            extract_frontmatter_keys(keel::infrastructure::templates::story::STORY);
+        let template_keys = extract_frontmatter_keys(keel::infrastructure::templates::story::STORY);
         let struct_fields = serde_field_names(&populated_story());
         let missing: Vec<_> = template_keys
             .iter()
@@ -411,8 +410,7 @@ mod template_struct_fields {
 
     #[test]
     fn epic_template_fields_match_struct() {
-        let template_keys =
-            extract_frontmatter_keys(keel::infrastructure::templates::epic::README);
+        let template_keys = extract_frontmatter_keys(keel::infrastructure::templates::epic::README);
         let struct_fields = serde_field_names(&populated_epic());
         let missing: Vec<_> = template_keys
             .iter()
@@ -568,8 +566,7 @@ mod template_generator {
     #[test]
     fn generator_column_structure() {
         // Verify specific column expectations
-        let epic_section =
-            extract_generated_section(keel::infrastructure::templates::epic::README);
+        let epic_section = extract_generated_section(keel::infrastructure::templates::epic::README);
         let epic_cols = extract_table_columns(epic_section);
         assert_eq!(
             epic_cols,
@@ -672,10 +669,7 @@ mod token_bucket_contract {
         let generated_tokens = token_set(GENERATED_TOKENS);
 
         let templates = [
-            (
-                "epic README",
-                keel::infrastructure::templates::epic::README,
-            ),
+            ("epic README", keel::infrastructure::templates::epic::README),
             ("epic PRD", keel::infrastructure::templates::epic::PRD),
             (
                 "epic PRESS_RELEASE",
@@ -764,10 +758,7 @@ mod token_bucket_contract {
     #[test]
     fn epic_template_tokens_match_problem_only_contract() {
         for (label, template) in [
-            (
-                "epic README",
-                keel::infrastructure::templates::epic::README,
-            ),
+            ("epic README", keel::infrastructure::templates::epic::README),
             ("epic PRD", keel::infrastructure::templates::epic::PRD),
             (
                 "epic PRESS_RELEASE",
@@ -789,10 +780,7 @@ mod token_bucket_contract {
     #[test]
     fn epic_templates_drop_legacy_goal_token_usage() {
         for (label, template) in [
-            (
-                "epic README",
-                keel::infrastructure::templates::epic::README,
-            ),
+            ("epic README", keel::infrastructure::templates::epic::README),
             ("epic PRD", keel::infrastructure::templates::epic::PRD),
             (
                 "epic PRESS_RELEASE",

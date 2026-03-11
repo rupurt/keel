@@ -515,7 +515,7 @@ fn text_block_lines(value: &str) -> Vec<String> {
 }
 
 #[allow(dead_code)]
-    fn limited_text_block_lines(value: &str, max_paragraphs: usize) -> Vec<String> {
+fn limited_text_block_lines(value: &str, max_paragraphs: usize) -> Vec<String> {
     limited_text_block_lines_with_indent(value, max_paragraphs, 4)
 }
 

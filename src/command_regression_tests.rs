@@ -5,9 +5,7 @@
 
 use crate::cli::commands::management::next::NextDecision;
 use keel::domain::model::StoryState;
-use keel::domain::policy::queue::{
-    FLOW_VERIFY_BLOCK_THRESHOLD, HUMAN_NEXT_VERIFY_BLOCK_THRESHOLD,
-};
+use keel::domain::policy::queue::{FLOW_VERIFY_BLOCK_THRESHOLD, HUMAN_NEXT_VERIFY_BLOCK_THRESHOLD};
 use keel::test_helpers::{TestBoardBuilder, TestStory};
 use std::fs;
 
@@ -29,9 +27,13 @@ fn regression_next_and_flow_align_on_human_blocked_boundary() {
     let temp = board_with_verification_and_ready(HUMAN_NEXT_VERIFY_BLOCK_THRESHOLD, 1);
     let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
 
-    let next =
-        crate::cli::commands::management::next::calculate_next(&board, temp.path(), false, &crate::cli::commands::management::next::ItemFilter::none())
-            .unwrap();
+    let next = crate::cli::commands::management::next::calculate_next(
+        &board,
+        temp.path(),
+        false,
+        &crate::cli::commands::management::next::ItemFilter::none(),
+    )
+    .unwrap();
     assert!(
         matches!(next, NextDecision::Blocked(_)),
         "human next should be blocked at policy threshold"
@@ -50,9 +52,13 @@ fn regression_next_and_flow_align_on_flow_blocked_boundary() {
     let temp = board_with_verification_and_ready(FLOW_VERIFY_BLOCK_THRESHOLD + 1, 1);
     let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
 
-    let next =
-        crate::cli::commands::management::next::calculate_next(&board, temp.path(), false, &crate::cli::commands::management::next::ItemFilter::none())
-            .unwrap();
+    let next = crate::cli::commands::management::next::calculate_next(
+        &board,
+        temp.path(),
+        false,
+        &crate::cli::commands::management::next::ItemFilter::none(),
+    )
+    .unwrap();
     assert!(
         matches!(next, NextDecision::Blocked(_)),
         "human next should be blocked when flow is verify-blocked"

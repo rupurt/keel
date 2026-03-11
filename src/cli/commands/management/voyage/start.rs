@@ -1,18 +1,13 @@
+use keel::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
+use keel::infrastructure::storage::filesystem::FileSystemAdapter;
 /// Start voyage command
 use std::path::Path;
 use std::sync::Arc;
-use keel::infrastructure::storage::filesystem::FileSystemAdapter;
-use keel::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
 
 use anyhow::Result;
 
 /// Run the start voyage command
-pub fn run(
-    board_dir: &Path,
-    id: &str,
-    force: bool,
-    expect_version: Option<u64>,
-) -> Result<()> {
+pub fn run(board_dir: &Path, id: &str, force: bool, expect_version: Option<u64>) -> Result<()> {
     let adapter = Arc::new(FileSystemAdapter::new(board_dir));
     let service = VoyageEpicLifecycleService::new(
         board_dir.to_path_buf(),
@@ -43,6 +38,9 @@ mod tests {
 
         let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let voyage = board.require_voyage("v1").unwrap();
-        assert_eq!(voyage.status(), keel::domain::model::VoyageState::InProgress);
+        assert_eq!(
+            voyage.status(),
+            keel::domain::model::VoyageState::InProgress
+        );
     }
 }

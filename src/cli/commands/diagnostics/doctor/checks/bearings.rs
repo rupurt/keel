@@ -414,7 +414,9 @@ pub fn check_bearing_dates(board: &Board) -> Vec<Problem> {
 }
 
 /// Required sections in bearing BRIEF.md
-pub use keel::infrastructure::validation::bearings::{BEARING_REQUIRED_SECTIONS, check_bearing_content_sections};
+pub use keel::infrastructure::validation::bearings::{
+    BEARING_REQUIRED_SECTIONS, check_bearing_content_sections,
+};
 
 /// Check bearing-epic coherence
 /// Validates that laid bearings have corresponding epics

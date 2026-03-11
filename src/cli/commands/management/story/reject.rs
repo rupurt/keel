@@ -1,8 +1,7 @@
-use std::path::Path;
-use keel::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
 use keel::application::process_manager::{DomainProcessManager, LiveProcessActionExecutor};
+use keel::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
+use std::path::Path;
 /// Reject command - reject a story and move to rejected
-
 use std::sync::Arc;
 
 use anyhow::Result;
@@ -25,7 +24,7 @@ pub fn run(board_dir: &Path, id: &str, reason: &str) -> Result<()> {
     ));
     let executor = LiveProcessActionExecutor::new(voyage_service.clone());
     let process_manager = Arc::new(DomainProcessManager::new(executor));
-    
+
     let service = StoryLifecycleService::new(
         board_dir.to_path_buf(),
         adapter.clone(),
@@ -33,11 +32,8 @@ pub fn run(board_dir: &Path, id: &str, reason: &str) -> Result<()> {
         process_manager,
     );
 
-    
-
-    
-
-    service.reject( id, reason)
+    service
+        .reject(id, reason)
         .map_err(|err| error_with_recovery(StoryLifecycleAction::Reject, id, err))
 }
 

@@ -223,17 +223,17 @@ fn format_mission(d: &super::MissionDecision) -> String {
         "Mission Steering".bold().cyan(),
         d.mission.title()
     ));
-    out.push_str(&format!("  {}: {}\n", "Status".dimmed(), d.mission.status()));
+    out.push_str(&format!(
+        "  {}: {}\n",
+        "Status".dimmed(),
+        d.mission.status()
+    ));
     out.push_str(&format!(
         "  {}: {}\n",
         "Unmet Goals".dimmed(),
         d.unmet_goals.len()
     ));
-    out.push_str(&format!(
-        "  {}: {}\n",
-        "Next".bold().yellow(),
-        d.suggestion
-    ));
+    out.push_str(&format!("  {}: {}\n", "Next".bold().yellow(), d.suggestion));
 
     out
 }
@@ -241,7 +241,9 @@ fn format_mission(d: &super::MissionDecision) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use keel::domain::model::{StoryState, Story, StoryFrontmatter, StoryType, Voyage, VoyageFrontmatter, VoyageState};
+    use keel::domain::model::{
+        Story, StoryFrontmatter, StoryState, StoryType, Voyage, VoyageFrontmatter, VoyageState,
+    };
     use std::path::PathBuf;
 
     fn make_test_story(id: &str, title: &str, status: StoryState) -> Story {
@@ -393,10 +395,7 @@ mod tests {
     #[test]
     fn test_format_blocked() {
         let story = make_test_story("S1", "Story 1", StoryState::Backlog);
-        let decision = NextDecision::Blocked(BlockedDecision {
-            story,
-            count: 5,
-        });
+        let decision = NextDecision::Blocked(BlockedDecision { story, count: 5 });
         let formatted = format_decision(&decision);
         assert!(formatted.contains("System Blocked"));
         assert!(formatted.contains("5 items"));

@@ -174,10 +174,10 @@ impl Board {
 
     /// Check if a story belongs to a mission (via its scope/epic)
     pub fn is_story_in_mission(&self, story: &Story, mission_id: &str) -> bool {
-        if let Some(scope) = story.scope() {
-            if let Some(epic_id) = scope.split('/').next() {
-                return self.is_epic_in_mission(epic_id, mission_id);
-            }
+        if let Some(scope) = story.scope()
+            && let Some(epic_id) = scope.split('/').next()
+        {
+            return self.is_epic_in_mission(epic_id, mission_id);
         }
         false
     }

@@ -401,11 +401,7 @@ mod tests {
 
         // Should have 2 problems: missing log and missing children
         assert_eq!(problems.len(), 2);
-        assert!(
-            problems
-                .iter()
-                .all(|p| p.severity == Severity::Error)
-        );
+        assert!(problems.iter().all(|p| p.severity == Severity::Error));
         assert!(
             problems
                 .iter()

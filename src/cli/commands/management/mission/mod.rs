@@ -94,9 +94,7 @@ pub fn run(action: MissionAction) -> Result<()> {
             )
         }
         MissionAction::Activate { id } => {
-            keel::application::mission_lifecycle::MissionLifecycleService::activate(
-                &board_dir, &id,
-            )
+            keel::application::mission_lifecycle::MissionLifecycleService::activate(&board_dir, &id)
         }
         MissionAction::Pause { id } => {
             keel::application::mission_lifecycle::MissionLifecycleService::pause(&board_dir, &id)

@@ -330,9 +330,7 @@ fn render_assessment_section(
     section
 }
 
-fn bearing_document_inventory(
-    bearing: &keel::domain::model::Bearing,
-) -> Vec<(&'static str, bool)> {
+fn bearing_document_inventory(bearing: &keel::domain::model::Bearing) -> Vec<(&'static str, bool)> {
     BEARING_DOCUMENTS
         .into_iter()
         .map(|document| {

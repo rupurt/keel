@@ -465,9 +465,7 @@ mod tests {
         .unwrap();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
         let doctor_errors =
-            crate::infrastructure::validation::bearings::check_bearing_content_sections(
-                &board,
-            );
+            crate::infrastructure::validation::bearings::check_bearing_content_sections(&board);
 
         assert!(
             doctor_errors

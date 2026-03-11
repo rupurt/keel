@@ -13,7 +13,6 @@ use crate::application::process_manager::DomainProcessManager;
 use crate::domain::model::taxonomy::RoleTaxonomy;
 use crate::domain::model::{Story, StoryState};
 use crate::domain::port::{BoardStore, EntityStore};
-use std::sync::Arc;
 use crate::domain::state_machine::{
     EnforcementPolicy, StoryTransition, TransitionEntity, TransitionIntent, enforce_transition,
     format_enforcement_error,
@@ -25,6 +24,7 @@ use crate::read_model::workflow_topology;
 use anyhow::{Context, Result, anyhow, bail};
 use chrono::Local;
 use owo_colors::OwoColorize;
+use std::sync::Arc;
 
 pub struct StoryLifecycleService {
     process_manager: Arc<DomainProcessManager>,
@@ -199,12 +199,7 @@ impl StoryLifecycleService {
     }
 
     /// Accept a story (needs-human-verification -> done).
-    pub fn accept(
-        &self,
-        id: &str,
-        actor_role: &RoleTaxonomy,
-        reflect: Option<&str>,
-    ) -> Result<()> {
+    pub fn accept(&self, id: &str, actor_role: &RoleTaxonomy, reflect: Option<&str>) -> Result<()> {
         let board_dir = &self.board_dir;
         let board = self.board_store.load()?;
         let story = self.story_store.get(id)?;
@@ -549,14 +544,14 @@ pub fn append_rejection(story_path: &Path, reason: &str) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
+    use super::StoryLifecycleService;
     use crate::application::process_manager::{DomainProcessManager, LiveProcessActionExecutor};
     use crate::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
-    use super::StoryLifecycleService;
     use crate::domain::model::StoryState;
     use crate::infrastructure::storage::filesystem::FileSystemAdapter;
-    use std::sync::Arc;
     use crate::test_helpers::{TestBoardBuilder, TestStory};
     use std::fs;
+    use std::sync::Arc;
 
     #[test]
     fn accept_requires_manual_accept_lane_for_manual_verification_stories() {
@@ -585,13 +580,14 @@ mod tests {
             process_manager,
         );
 
-        let err = service.accept(
-            "MANUAL01",
-            &crate::domain::model::taxonomy::parse("operator").unwrap(),
-            None,
-        )
-        .unwrap_err()
-        .to_string();
+        let err = service
+            .accept(
+                "MANUAL01",
+                &crate::domain::model::taxonomy::parse("operator").unwrap(),
+                None,
+            )
+            .unwrap_err()
+            .to_string();
         assert!(
             err.contains("--role manager"),
             "manual verification enforcement should require the management lane: {err}"
@@ -625,12 +621,13 @@ mod tests {
             process_manager,
         );
 
-        service.accept(
-            "MANUAL02",
-            &crate::domain::model::taxonomy::parse("manager").unwrap(),
-            None,
-        )
-        .unwrap();
+        service
+            .accept(
+                "MANUAL02",
+                &crate::domain::model::taxonomy::parse("manager").unwrap(),
+                None,
+            )
+            .unwrap();
 
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
         let story = board.require_story("MANUAL02").unwrap();
@@ -709,9 +706,7 @@ mod tests {
         )
         .unwrap();
 
-        let err = service.submit("NEW000001")
-            .unwrap_err()
-            .to_string();
+        let err = service.submit("NEW000001").unwrap_err().to_string();
         assert!(err.contains("too similar to existing knowledge"));
         assert!(err.contains("1AbCdE239"));
     }
@@ -767,12 +762,13 @@ The guard should run before acceptance completes.
         )
         .unwrap();
 
-        service.accept(
-            "DONE00001",
-            &crate::domain::model::taxonomy::parse("manager").unwrap(),
-            None,
-        )
-        .unwrap();
+        service
+            .accept(
+                "DONE00001",
+                &crate::domain::model::taxonomy::parse("manager").unwrap(),
+                None,
+            )
+            .unwrap();
 
         let knowledge_path = temp.path().join("knowledge/1AbCdE241.md");
         assert!(knowledge_path.exists());

@@ -3,15 +3,15 @@
 //! These traits decouple the domain and application logic from the
 //! underlying persistence implementation (e.g., FileSystem, Database, Server).
 
+use crate::domain::model::{Adr, Bearing, Board, Entity, Epic, Story, Voyage};
 use anyhow::Result;
 use std::path::Path;
-use crate::domain::model::{Board, Entity, Story, Voyage, Epic, Bearing, Adr};
 
 /// Aggregate operations for the entire Board.
 pub trait BoardStore: Send + Sync {
     /// Load the complete board state.
     fn load(&self) -> Result<Board>;
-    
+
     /// Save the complete board state.
     fn save(&self, board: &Board) -> Result<()>;
 }
@@ -20,13 +20,13 @@ pub trait BoardStore: Send + Sync {
 pub trait EntityStore<T: Entity>: Send + Sync {
     /// Retrieve a single entity by its unique identifier.
     fn get(&self, id: &str) -> Result<T>;
-    
+
     /// Create or update an entity.
     fn put(&self, entity: &T) -> Result<()>;
-    
+
     /// List all entities of this type.
     fn list(&self) -> Result<Vec<T>>;
-    
+
     /// Remove an entity by its unique identifier.
     fn delete(&self, id: &str) -> Result<()>;
 }
@@ -76,9 +76,9 @@ pub trait DocumentServicePort {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Mutex;
-    use std::collections::HashMap;
     use crate::domain::model::Story;
+    use std::collections::HashMap;
+    use std::sync::Mutex;
 
     struct MockBoardStore {
         board: Mutex<Board>,
@@ -100,10 +100,18 @@ mod tests {
 
     impl<T: Entity + Clone + Send + Sync> EntityStore<T> for MockEntityStore<T> {
         fn get(&self, id: &str) -> Result<T> {
-            self.entities.lock().unwrap().get(id).cloned().ok_or_else(|| anyhow::anyhow!("Not found"))
+            self.entities
+                .lock()
+                .unwrap()
+                .get(id)
+                .cloned()
+                .ok_or_else(|| anyhow::anyhow!("Not found"))
         }
         fn put(&self, entity: &T) -> Result<()> {
-            self.entities.lock().unwrap().insert(entity.id().to_string(), entity.clone());
+            self.entities
+                .lock()
+                .unwrap()
+                .insert(entity.id().to_string(), entity.clone());
             Ok(())
         }
         fn list(&self) -> Result<Vec<T>> {
@@ -118,14 +126,18 @@ mod tests {
     #[test]
     fn board_store_mock_verified() {
         let board = Board::default();
-        let store = MockBoardStore { board: Mutex::new(board.clone()) };
+        let store = MockBoardStore {
+            board: Mutex::new(board.clone()),
+        };
         let loaded = store.load().unwrap();
         assert_eq!(loaded.snapshot_version(), board.snapshot_version());
     }
 
     #[test]
     fn entity_store_mock_verified() {
-        let store: MockEntityStore<Story> = MockEntityStore { entities: Mutex::new(HashMap::new()) };
+        let store: MockEntityStore<Story> = MockEntityStore {
+            entities: Mutex::new(HashMap::new()),
+        };
         assert!(store.list().unwrap().is_empty());
     }
 }

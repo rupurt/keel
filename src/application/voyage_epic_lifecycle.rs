@@ -9,15 +9,15 @@ use std::path::PathBuf;
 use anyhow::{Context, Result, anyhow, bail};
 use chrono::Local;
 
-use crate::domain::model::{Voyage, Epic, Story, VoyageState};
+use crate::domain::model::{Epic, Story, Voyage, VoyageState};
 use crate::domain::port::{BoardStore, EntityStore};
-use std::sync::Arc;
 use crate::domain::state_machine::{
     EnforcementPolicy, TransitionEntity, TransitionIntent, VoyageTransition, enforce_transition,
     format_enforcement_error,
 };
 use crate::domain::transitions::{TimestampUpdates, update_frontmatter};
 use crate::infrastructure::frontmatter_mutation::{Mutation, apply};
+use std::sync::Arc;
 
 pub struct VoyageEpicLifecycleService {
     pub board_dir: PathBuf,
@@ -45,12 +45,7 @@ impl VoyageEpicLifecycleService {
     }
 
     /// Start a voyage (draft/planned -> in-progress).
-    pub fn start_voyage(
-        &self,
-        id: &str,
-        force: bool,
-        expect_version: Option<u64>,
-    ) -> Result<()> {
+    pub fn start_voyage(&self, id: &str, force: bool, expect_version: Option<u64>) -> Result<()> {
         let board = self.board_store.load()?;
 
         // Check version if provided (SRS-05: optimistic locking)
@@ -215,12 +210,12 @@ fn add_retrospective(
 
 #[cfg(test)]
 mod tests {
-    
+
     use super::VoyageEpicLifecycleService;
     use crate::infrastructure::storage::filesystem::FileSystemAdapter;
-    use std::sync::Arc;
     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use std::fs;
+    use std::sync::Arc;
 
     fn write_prd(temp: &tempfile::TempDir, epic_id: &str, content: &str) {
         fs::write(temp.path().join(format!("epics/{epic_id}/PRD.md")), content).unwrap();
@@ -277,7 +272,8 @@ mod tests {
 "#,
         );
 
-        let err = service.start_voyage("01-draft", false, None)
+        let err = service
+            .start_voyage("01-draft", false, None)
             .unwrap_err()
             .to_string();
         assert!(
@@ -397,8 +393,7 @@ mod tests {
 "#,
         );
 
-        let result =
-            service.start_voyage("01-planned", false, None);
+        let result = service.start_voyage("01-planned", false, None);
         assert!(
             result.is_ok(),
             "planned voyage with done siblings should start: {result:?}"

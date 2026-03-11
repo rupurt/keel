@@ -1,8 +1,8 @@
-use std::path::Path;
-use keel::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
 use keel::application::process_manager::{DomainProcessManager, LiveProcessActionExecutor};
+use keel::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
 /// Accept command - accept a verified story and move to done
 use keel::infrastructure::storage::filesystem::FileSystemAdapter;
+use std::path::Path;
 
 use std::sync::Arc;
 
@@ -53,7 +53,7 @@ pub fn run(board_dir: &Path, id: &str, role: &str, reflect: Option<&str>) -> Res
     ));
     let executor = LiveProcessActionExecutor::new(voyage_service.clone());
     let process_manager = Arc::new(DomainProcessManager::new(executor));
-    
+
     let service = StoryLifecycleService::new(
         board_dir.to_path_buf(),
         adapter.clone(),
@@ -61,17 +61,13 @@ pub fn run(board_dir: &Path, id: &str, role: &str, reflect: Option<&str>) -> Res
         process_manager,
     );
 
-    
-
-    
-
     let actor_role = keel::domain::model::taxonomy::parse(role)
         .map_err(|err| anyhow!("Invalid role taxonomy `{role}`: {err}"))?;
     let accept_role_example = workflow_topology::load_for_board(board_dir)
         .map(|topology| topology.management_role_example().to_string())
         .unwrap_or_else(|_| "manager".to_string());
 
-    service.accept( id, &actor_role, reflect).map_err(|err| {
+    service.accept(id, &actor_role, reflect).map_err(|err| {
         error_with_recovery_for_accept_role(
             StoryLifecycleAction::Accept,
             id,
@@ -351,7 +347,10 @@ priority = 50
 
         run(temp.path(), "1vqNrfl03", "manager", None).unwrap();
 
-        assert!(!reflect_path.exists(), "REFLECT.md should NOT be created if not provided");
+        assert!(
+            !reflect_path.exists(),
+            "REFLECT.md should NOT be created if not provided"
+        );
     }
 
     #[test]

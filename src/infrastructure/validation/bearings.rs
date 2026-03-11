@@ -1,7 +1,7 @@
 //! Bearing-specific validation logic
 
 use crate::domain::model::Board;
-use crate::infrastructure::validation::types::{Problem, CheckId, Severity};
+use crate::infrastructure::validation::types::{CheckId, Problem, Severity};
 use std::fs;
 
 /// Required sections for a bearing's BRIEF.md

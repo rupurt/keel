@@ -112,6 +112,10 @@ pub enum BearingAction {
 pub mod new;
 
 use crate::cli::table::Table;
+use guidance::{
+    BearingLifecycleAction, error_with_recovery, guidance_for_action, informational_for_list,
+    print_human,
+};
 use keel::domain::model::{Bearing, BearingStatus, Board};
 use keel::infrastructure::bearing_evidence::{EvidenceSourceClass, EvidenceStrength};
 use keel::infrastructure::bearing_readiness::evaluate_bearing_readiness;
@@ -123,10 +127,6 @@ use keel::infrastructure::markdown_sections::extract_section;
 use keel::infrastructure::scoring::load_bearing_score;
 use keel::infrastructure::template_rendering;
 use keel::infrastructure::templates;
-use guidance::{
-    BearingLifecycleAction, error_with_recovery, guidance_for_action, informational_for_list,
-    print_human,
-};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum FogType {

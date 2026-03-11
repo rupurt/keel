@@ -8,14 +8,12 @@ use anyhow::{Result, bail};
 use owo_colors::OwoColorize;
 use serde::Serialize;
 
-pub use super::next_support::{
-    ItemFilter, NextDecision, calculate_next, format_decision,
-};
+pub use super::next_support::{ItemFilter, NextDecision, calculate_next, format_decision};
 
 #[cfg(test)]
 use super::next_support::{
-    AcceptDecision, AdrDecision, BlockedDecision, DecomposeDecision, EmptyDecision, ResearchDecision,
-    StoryDecision,
+    AcceptDecision, AdrDecision, BlockedDecision, DecomposeDecision, EmptyDecision,
+    ResearchDecision, StoryDecision,
 };
 use crate::cli::commands::management::guidance::{
     CanonicalGuidance, CommandGuidance, RoleContextGuidance, render_command_guidance,
@@ -140,9 +138,7 @@ struct ResolvedActorContext {
 pub fn parse_actor_role(
     role: Option<&str>,
 ) -> Result<Option<keel::domain::model::taxonomy::RoleTaxonomy>> {
-    Ok(role
-        .map(keel::domain::model::taxonomy::parse)
-        .transpose()?)
+    Ok(role.map(keel::domain::model::taxonomy::parse).transpose()?)
 }
 
 pub(crate) fn legacy_next_flag_guidance(args: &[String]) -> Option<String> {
@@ -233,15 +229,16 @@ pub(crate) fn calculate_next_for_role(
     actor_role: Option<&keel::domain::model::taxonomy::RoleTaxonomy>,
 ) -> Result<NextDecision> {
     let topology = workflow_topology::load_for_board(board_dir)?;
-    
+
     let effective_role = match actor_role {
         Some(r) => r.clone(),
         None => keel::domain::model::taxonomy::parse(&topology.defaults.management_role)?,
     };
-    
-    let actor_topology = topology.resolve_actor_context(&effective_role)
+
+    let actor_topology = topology
+        .resolve_actor_context(&effective_role)
         .map_err(|error| unsupported_role_error(error, &topology))?;
-    
+
     let execution_mode = matches!(
         actor_topology.queue_lane,
         keel::read_model::queue_policy::ActorQueueLane::Execution
@@ -254,12 +251,12 @@ pub(crate) fn calculate_next_for_role(
             topology.delivery_role_example(),
         );
     }
-    
+
     let filter = ItemFilter {
         mission_id: None,
         actor_role: Some(&effective_role),
     };
-    
+
     calculate_next(board, board_dir, execution_mode, &filter)
 }
 
@@ -272,15 +269,16 @@ pub fn run(
 ) -> Result<()> {
     let board = load_board(board_dir)?;
     let topology = workflow_topology::load_for_board(board_dir)?;
-    
+
     let effective_role = match actor_role {
         Some(r) => r.clone(),
         None => keel::domain::model::taxonomy::parse(&topology.defaults.management_role)?,
     };
-    
-    let actor_topology = topology.resolve_actor_context(&effective_role)
+
+    let actor_topology = topology
+        .resolve_actor_context(&effective_role)
         .map_err(|error| unsupported_role_error(error, &topology))?;
-    
+
     let management_role_example = topology.management_role_example().to_string();
 
     if parallel {
@@ -291,7 +289,7 @@ pub fn run(
                 topology.delivery_role_example(),
             );
         }
-        
+
         let role_context =
             keel::read_model::role_context::resolve_role_context(&topology, &effective_role)
                 .ok()
@@ -315,7 +313,7 @@ pub fn run(
     }
 
     let decision = calculate_next_for_role(&board, board_dir, false, Some(&effective_role))?;
-    
+
     let role_context =
         keel::read_model::role_context::resolve_role_context(&topology, &effective_role)
             .ok()
@@ -327,7 +325,8 @@ pub fn run(
     } else {
         println!("{}", format_decision(&decision));
         print_human_guidance(
-            guidance_for_decision(&decision, role_context.as_ref(), &management_role_example).as_ref(),
+            guidance_for_decision(&decision, role_context.as_ref(), &management_role_example)
+                .as_ref(),
         );
 
         match &decision {
@@ -1339,14 +1338,12 @@ priority = 50
         let topology = workflow_topology::load_for_board(temp.path()).unwrap();
         let analyst = keel::domain::model::taxonomy::parse("analyst/research").unwrap();
 
-        let error = topology.resolve_actor_context(&analyst)
+        let error = topology
+            .resolve_actor_context(&analyst)
             .unwrap_err()
             .to_string();
 
-        assert_eq!(
-            error,
-            "unknown workflow role family `analyst`"
-        );
+        assert_eq!(error, "unknown workflow role family `analyst`");
     }
 
     #[test]

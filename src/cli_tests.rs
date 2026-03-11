@@ -1190,15 +1190,20 @@ fn build_cli_collects_repeated_status_filters() {
 
 #[test]
 fn cli_rejects_legacy_epic_status_filter() {
-    let result =
-        crate::cli::build_cli().try_get_matches_from(["keel", "epic", "list", "--status", "strategic"]);
+    let result = crate::cli::build_cli().try_get_matches_from([
+        "keel",
+        "epic",
+        "list",
+        "--status",
+        "strategic",
+    ]);
     assert!(result.is_err());
 }
 
 #[test]
 fn cli_rejects_legacy_voyage_status_filter() {
-    let result =
-        crate::cli::build_cli().try_get_matches_from(["keel", "voyage", "list", "--status", "active"]);
+    let result = crate::cli::build_cli()
+        .try_get_matches_from(["keel", "voyage", "list", "--status", "active"]);
     assert!(result.is_err());
 }
 

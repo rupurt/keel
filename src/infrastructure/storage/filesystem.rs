@@ -1,15 +1,15 @@
 //! Concrete FileSystem storage adapter for Keel entities.
 
-use std::fs;
-use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use serde::Serialize;
+use std::fs;
+use std::path::{Path, PathBuf};
 
+use crate::domain::model::{Adr, Bearing, Board, Epic, Mission, Story, Voyage};
 use crate::domain::port::{
     AdrRepositoryPort, BearingRepositoryPort, BoardRepositoryPort, DocumentServicePort,
     EpicRepositoryPort, StoryRepositoryPort, VoyageRepositoryPort,
 };
-use crate::domain::model::{Board, Story, Voyage, Epic, Bearing, Adr, Mission};
 use crate::domain::port::{BoardStore, EntityStore};
 use crate::infrastructure::loader;
 use crate::infrastructure::parser::parse_frontmatter;
@@ -23,9 +23,7 @@ pub struct FileSystemAdapter {
 impl FileSystemAdapter {
     /// Create a new adapter for the given root directory.
     pub fn new(root: impl Into<PathBuf>) -> Self {
-        Self {
-            root: root.into(),
-        }
+        Self { root: root.into() }
     }
 
     fn resolve_path(&self, path: &Path) -> PathBuf {
@@ -89,7 +87,9 @@ impl EntityStore<Story> for FileSystemAdapter {
         let board = self.load()?;
         Ok(board.stories.into_values().collect())
     }
-    fn delete(&self, _id: &str) -> Result<()> { Ok(()) }
+    fn delete(&self, _id: &str) -> Result<()> {
+        Ok(())
+    }
 }
 
 impl EntityStore<Voyage> for FileSystemAdapter {
@@ -104,7 +104,9 @@ impl EntityStore<Voyage> for FileSystemAdapter {
         let board = self.load()?;
         Ok(board.voyages.into_values().collect())
     }
-    fn delete(&self, _id: &str) -> Result<()> { Ok(()) }
+    fn delete(&self, _id: &str) -> Result<()> {
+        Ok(())
+    }
 }
 
 impl EntityStore<Epic> for FileSystemAdapter {
@@ -119,7 +121,9 @@ impl EntityStore<Epic> for FileSystemAdapter {
         let board = self.load()?;
         Ok(board.epics.into_values().collect())
     }
-    fn delete(&self, _id: &str) -> Result<()> { Ok(()) }
+    fn delete(&self, _id: &str) -> Result<()> {
+        Ok(())
+    }
 }
 
 impl EntityStore<Bearing> for FileSystemAdapter {
@@ -134,7 +138,9 @@ impl EntityStore<Bearing> for FileSystemAdapter {
         let board = self.load()?;
         Ok(board.bearings.into_values().collect())
     }
-    fn delete(&self, _id: &str) -> Result<()> { Ok(()) }
+    fn delete(&self, _id: &str) -> Result<()> {
+        Ok(())
+    }
 }
 
 impl EntityStore<Adr> for FileSystemAdapter {
@@ -149,7 +155,9 @@ impl EntityStore<Adr> for FileSystemAdapter {
         let board = self.load()?;
         Ok(board.adrs.into_values().collect())
     }
-    fn delete(&self, _id: &str) -> Result<()> { Ok(()) }
+    fn delete(&self, _id: &str) -> Result<()> {
+        Ok(())
+    }
 }
 
 impl EntityStore<Mission> for FileSystemAdapter {
@@ -164,56 +172,95 @@ impl EntityStore<Mission> for FileSystemAdapter {
         let board = self.load()?;
         Ok(board.missions.into_values().collect())
     }
-    fn delete(&self, _id: &str) -> Result<()> { Ok(()) }
+    fn delete(&self, _id: &str) -> Result<()> {
+        Ok(())
+    }
 }
 
 // Implement legacy application-layer ports for backward compatibility during migration
 impl BoardRepositoryPort for FileSystemAdapter {
-    fn load_board(&self) -> Result<Board> { BoardStore::load(self) }
-    fn persist_board(&self, board: &Board) -> Result<()> { BoardStore::save(self, board) }
+    fn load_board(&self) -> Result<Board> {
+        BoardStore::load(self)
+    }
+    fn persist_board(&self, board: &Board) -> Result<()> {
+        BoardStore::save(self, board)
+    }
 }
 
 impl StoryRepositoryPort for FileSystemAdapter {
-    fn load_story(&self, id: &str) -> Result<Option<Story>> { Ok(EntityStore::<Story>::get(self, id).ok()) }
-    fn list_stories(&self) -> Result<Vec<Story>> { EntityStore::<Story>::list(self) }
-    fn persist_story(&self, story: &Story) -> Result<()> { EntityStore::<Story>::put(self, story) }
+    fn load_story(&self, id: &str) -> Result<Option<Story>> {
+        Ok(EntityStore::<Story>::get(self, id).ok())
+    }
+    fn list_stories(&self) -> Result<Vec<Story>> {
+        EntityStore::<Story>::list(self)
+    }
+    fn persist_story(&self, story: &Story) -> Result<()> {
+        EntityStore::<Story>::put(self, story)
+    }
 }
 
 impl VoyageRepositoryPort for FileSystemAdapter {
-    fn load_voyage(&self, id: &str) -> Result<Option<Voyage>> { Ok(EntityStore::<Voyage>::get(self, id).ok()) }
-    fn list_voyages(&self) -> Result<Vec<Voyage>> { EntityStore::<Voyage>::list(self) }
-    fn persist_voyage(&self, voyage: &Voyage) -> Result<()> { EntityStore::<Voyage>::put(self, voyage) }
+    fn load_voyage(&self, id: &str) -> Result<Option<Voyage>> {
+        Ok(EntityStore::<Voyage>::get(self, id).ok())
+    }
+    fn list_voyages(&self) -> Result<Vec<Voyage>> {
+        EntityStore::<Voyage>::list(self)
+    }
+    fn persist_voyage(&self, voyage: &Voyage) -> Result<()> {
+        EntityStore::<Voyage>::put(self, voyage)
+    }
 }
 
 impl EpicRepositoryPort for FileSystemAdapter {
-    fn load_epic(&self, id: &str) -> Result<Option<Epic>> { Ok(EntityStore::<Epic>::get(self, id).ok()) }
-    fn list_epics(&self) -> Result<Vec<Epic>> { EntityStore::<Epic>::list(self) }
-    fn persist_epic(&self, epic: &Epic) -> Result<()> { EntityStore::<Epic>::put(self, epic) }
+    fn load_epic(&self, id: &str) -> Result<Option<Epic>> {
+        Ok(EntityStore::<Epic>::get(self, id).ok())
+    }
+    fn list_epics(&self) -> Result<Vec<Epic>> {
+        EntityStore::<Epic>::list(self)
+    }
+    fn persist_epic(&self, epic: &Epic) -> Result<()> {
+        EntityStore::<Epic>::put(self, epic)
+    }
 }
 
 impl BearingRepositoryPort for FileSystemAdapter {
-    fn load_bearing(&self, id: &str) -> Result<Option<Bearing>> { Ok(EntityStore::<Bearing>::get(self, id).ok()) }
-    fn list_bearings(&self) -> Result<Vec<Bearing>> { EntityStore::<Bearing>::list(self) }
-    fn persist_bearing(&self, bearing: &Bearing) -> Result<()> { EntityStore::<Bearing>::put(self, bearing) }
+    fn load_bearing(&self, id: &str) -> Result<Option<Bearing>> {
+        Ok(EntityStore::<Bearing>::get(self, id).ok())
+    }
+    fn list_bearings(&self) -> Result<Vec<Bearing>> {
+        EntityStore::<Bearing>::list(self)
+    }
+    fn persist_bearing(&self, bearing: &Bearing) -> Result<()> {
+        EntityStore::<Bearing>::put(self, bearing)
+    }
 }
 
 impl AdrRepositoryPort for FileSystemAdapter {
-    fn load_adr(&self, id: &str) -> Result<Option<Adr>> { Ok(EntityStore::<Adr>::get(self, id).ok()) }
-    fn list_adrs(&self) -> Result<Vec<Adr>> { EntityStore::<Adr>::list(self) }
-    fn persist_adr(&self, adr: &Adr) -> Result<()> { EntityStore::<Adr>::put(self, adr) }
+    fn load_adr(&self, id: &str) -> Result<Option<Adr>> {
+        Ok(EntityStore::<Adr>::get(self, id).ok())
+    }
+    fn list_adrs(&self) -> Result<Vec<Adr>> {
+        EntityStore::<Adr>::list(self)
+    }
+    fn persist_adr(&self, adr: &Adr) -> Result<()> {
+        EntityStore::<Adr>::put(self, adr)
+    }
 }
 
 impl DocumentServicePort for FileSystemAdapter {
     fn read_document(&self, path: &Path) -> Result<String> {
         let resolved = self.resolve_path(path);
-        fs::read_to_string(&resolved).with_context(|| format!("read document at {}", resolved.display()))
+        fs::read_to_string(&resolved)
+            .with_context(|| format!("read document at {}", resolved.display()))
     }
     fn write_document(&self, path: &Path, content: &str) -> Result<()> {
         let resolved = self.resolve_path(path);
         if let Some(parent) = resolved.parent() {
-            fs::create_dir_all(parent).with_context(|| format!("create document parent {}", parent.display()))?;
+            fs::create_dir_all(parent)
+                .with_context(|| format!("create document parent {}", parent.display()))?;
         }
-        fs::write(&resolved, content).with_context(|| format!("write document at {}", resolved.display()))?;
+        fs::write(&resolved, content)
+            .with_context(|| format!("write document at {}", resolved.display()))?;
         Ok(())
     }
 }
@@ -237,10 +284,10 @@ mod tests {
             .story(crate::test_helpers::TestStory::new("S1"))
             .build();
         let adapter = FileSystemAdapter::new(temp.path());
-        
+
         let story: Story = adapter.get("S1").unwrap();
         assert_eq!(story.id(), "S1");
-        
+
         let stories: Vec<Story> = adapter.list().unwrap();
         assert_eq!(stories.len(), 1);
     }

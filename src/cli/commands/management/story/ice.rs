@@ -1,8 +1,7 @@
-use std::path::Path;
-use keel::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
 use keel::application::process_manager::{DomainProcessManager, LiveProcessActionExecutor};
+use keel::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
+use std::path::Path;
 /// Ice command - move story to icebox
-
 use std::sync::Arc;
 
 use anyhow::Result;
@@ -23,7 +22,7 @@ pub fn run(board_dir: &Path, id: &str) -> Result<()> {
     ));
     let executor = LiveProcessActionExecutor::new(voyage_service.clone());
     let process_manager = Arc::new(DomainProcessManager::new(executor));
-    
+
     let service = StoryLifecycleService::new(
         board_dir.to_path_buf(),
         adapter.clone(),
@@ -31,11 +30,8 @@ pub fn run(board_dir: &Path, id: &str) -> Result<()> {
         process_manager,
     );
 
-    
-
-    
-
-    service.ice( id)
+    service
+        .ice(id)
         .map_err(|err| error_with_recovery(StoryLifecycleAction::Ice, id, err))
 }
 
