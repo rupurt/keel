@@ -9,6 +9,7 @@ use std::fs;
 
 use crate::domain::model::{Board, Story, StoryState, Voyage};
 use crate::domain::state_machine::invariants;
+use crate::domain::state_machine::mission::MissionTransition;
 use crate::domain::state_machine::story::StoryTransition;
 use crate::domain::state_machine::voyage::VoyageTransition;
 use crate::infrastructure::validation::{CheckId, Problem, Severity};
@@ -59,6 +60,119 @@ pub fn voyage_for_scope<'a>(board: &'a Board, scope: &str) -> Option<&'a Voyage>
 /// Convert blocking policy for runtime paths.
 pub fn problem_blocks_runtime(problem: &Problem, strict: bool) -> bool {
     strict || matches!(problem.severity, Severity::Error)
+}
+
+/// Return gate problems for mission lifecycle transition checks.
+pub fn evaluate_mission_transition(
+    board: &Board,
+    mission: &crate::domain::model::Mission,
+    transition: MissionTransition,
+) -> Vec<Problem> {
+    match transition {
+        MissionTransition::Activate => evaluate_mission_activation(board, mission),
+        MissionTransition::Achieve => evaluate_mission_achieve(board, mission),
+        MissionTransition::Verify => evaluate_mission_verification(board, mission),
+        _ => Vec::new(),
+    }
+}
+
+fn evaluate_mission_activation(
+    board: &Board,
+    mission: &crate::domain::model::Mission,
+) -> Vec<Problem> {
+    let mut problems = Vec::new();
+
+    let child_count = board
+        .epics
+        .values()
+        .filter(|e| e.frontmatter.mission.as_deref() == Some(mission.id()))
+        .count()
+        + board
+            .bearings
+            .values()
+            .filter(|b| b.frontmatter.mission.as_deref() == Some(mission.id()))
+            .count()
+        + board
+            .adrs
+            .values()
+            .filter(|a| a.frontmatter.mission.as_deref() == Some(mission.id()))
+            .count();
+
+    if child_count == 0 {
+        problems.push(Problem::error(
+            mission.path.clone(),
+            format!("Mission {} cannot be activated: no child entities found. Link at least one epic, bearing, or ADR first.", mission.id())
+        ));
+    }
+
+    problems
+}
+
+fn evaluate_mission_achieve(
+    board: &Board,
+    mission: &crate::domain::model::Mission,
+) -> Vec<Problem> {
+    let mut problems = Vec::new();
+
+    let child_count = board
+        .epics
+        .values()
+        .filter(|e| e.frontmatter.mission.as_deref() == Some(mission.id()))
+        .count()
+        + board
+            .bearings
+            .values()
+            .filter(|b| b.frontmatter.mission.as_deref() == Some(mission.id()))
+            .count()
+        + board
+            .adrs
+            .values()
+            .filter(|a| a.frontmatter.mission.as_deref() == Some(mission.id()))
+            .count();
+
+    if child_count == 0 {
+        problems.push(Problem::error(
+            mission.path.clone(),
+            format!(
+                "Mission {} cannot be achieved: no child entities found.",
+                mission.id()
+            ),
+        ));
+    }
+
+    problems
+}
+
+fn evaluate_mission_verification(
+    board: &Board,
+    mission: &crate::domain::model::Mission,
+) -> Vec<Problem> {
+    let mut problems = Vec::new();
+
+    let child_count = board
+        .epics
+        .values()
+        .filter(|e| e.frontmatter.mission.as_deref() == Some(mission.id()))
+        .count()
+        + board
+            .bearings
+            .values()
+            .filter(|b| b.frontmatter.mission.as_deref() == Some(mission.id()))
+            .count()
+        + board
+            .adrs
+            .values()
+            .filter(|a| a.frontmatter.mission.as_deref() == Some(mission.id()))
+            .count();
+
+    if child_count == 0 {
+        problems.push(Problem::error(
+            mission.path.clone(),
+            format!("Mission {} cannot be verified: no child entities found.", mission.id())
+        ));
+    }
+
+    problems
 }
 
 /// Return runtime-blocking gate problems for a story transition.

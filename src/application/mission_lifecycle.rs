@@ -3,6 +3,9 @@
 use anyhow::{Result, anyhow};
 use std::path::Path;
 
+use crate::domain::state_machine::{
+    evaluate_mission_transition, format_gate_error, MissionTransition,
+};
 use crate::domain::transitions::mission::{execute, mission_transitions};
 use crate::infrastructure::loader::load_board;
 use crate::infrastructure::markdown_sections::{extract_section, replace_section};
@@ -44,6 +47,11 @@ impl MissionLifecycleService {
         let board = load_board(board_dir)?;
         let mission = board.require_mission(id)?;
 
+        let problems = evaluate_mission_transition(&board, mission, MissionTransition::Achieve);
+        if !problems.is_empty() {
+            return Err(anyhow!(format_gate_error("mission", "achieve", &problems)));
+        }
+
         // Verify goals before achievement
         let charter_path = mission.path.parent().unwrap().join("CHARTER.md");
         let charter_content = std::fs::read_to_string(&charter_path).unwrap_or_default();
@@ -68,14 +76,6 @@ impl MissionLifecycleService {
             return Err(anyhow!("Mission has unmet board goals"));
         }
 
-        // Verify child entities
-        if board.mission_child_count(id) == 0 {
-            return Err(anyhow!(
-                "Cannot achieve mission {}. At least one child entity (epic, bearing, or ADR) is required.",
-                id
-            ));
-        }
-
         // Verify log entries
         let log_path = mission.path.parent().unwrap().join("LOG.md");
         let log_content = std::fs::read_to_string(&log_path).unwrap_or_default();
@@ -94,18 +94,14 @@ impl MissionLifecycleService {
 
     pub fn verify(board_dir: &Path, id: &str) -> Result<()> {
         let board = load_board(board_dir)?;
-        let _mission = board.require_mission(id)?;
+        let mission = board.require_mission(id)?;
 
-        // Verify child entities
-        if board.mission_child_count(id) == 0 {
-            return Err(anyhow!(
-                "Cannot verify mission {}. At least one child entity (epic, bearing, or ADR) is required.",
-                id
-            ));
+        let problems = evaluate_mission_transition(&board, mission, MissionTransition::Verify);
+        if !problems.is_empty() {
+            return Err(anyhow!(format_gate_error("mission", "verify", &problems)));
         }
 
         // Verify log entries
-        let mission = board.require_mission(id)?;
         let log_path = mission.path.parent().unwrap().join("LOG.md");
         let log_content = std::fs::read_to_string(&log_path).unwrap_or_default();
         let (_, entries) = parse_log_entries(&log_content);
@@ -131,6 +127,11 @@ impl MissionLifecycleService {
         let board = load_board(board_dir)?;
         let mission = board.require_mission(id)?;
 
+        let problems = evaluate_mission_transition(&board, mission, MissionTransition::Activate);
+        if !problems.is_empty() {
+            return Err(anyhow!(format_gate_error("mission", "activate", &problems)));
+        }
+
         let charter_path = mission.path.parent().unwrap().join("CHARTER.md");
         let charter_content = std::fs::read_to_string(&charter_path).unwrap_or_default();
         let goals = charter::parse_mission_goals(&charter_content);
@@ -138,14 +139,6 @@ impl MissionLifecycleService {
         if goals.is_empty() || goals.iter().any(|g| g.description.contains("{{goal}}")) {
             return Err(anyhow!(
                 "Cannot activate mission {}. It has no goals defined in CHARTER.md",
-                id
-            ));
-        }
-
-        // Verify child entities - missions need at least one child to be actionable
-        if board.mission_child_count(id) == 0 {
-            return Err(anyhow!(
-                "Cannot activate mission {}. At least one child entity (epic, bearing, or ADR) is required before activation.",
                 id
             ));
         }
@@ -401,7 +394,7 @@ mod tests {
 
         let res = MissionLifecycleService::activate(temp.path(), "M1");
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("child entity"));
+        assert!(res.unwrap_err().to_string().contains("no child entities"));
     }
 
     #[test]
@@ -412,6 +405,7 @@ mod tests {
                     .title("Mission One")
                     .status("defining"),
             )
+            .epic(TestEpic::new("E1").mission("M1"))
             .build();
 
         // Empty CHARTER.md (no goals)
@@ -457,7 +451,7 @@ mod tests {
         // Should fail because no children
         let res = MissionLifecycleService::achieve(temp.path(), "M1");
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("one child entity"));
+        assert!(res.unwrap_err().to_string().contains("no child entities"));
 
         // Add a child (epic)
         let temp = TestBoardBuilder::new()

@@ -34,8 +34,9 @@ pub use flow::{FlowState, FlowStateMachine, QueueDepths};
 pub use formatting::format_transition_error;
 #[allow(unused_imports)]
 pub use gating::{
-    VoyageCompletionPolicy, evaluate_epic_done, evaluate_story_transition,
-    evaluate_voyage_completion, evaluate_voyage_transition, format_gate_error,
+    VoyageCompletionPolicy, evaluate_epic_done, evaluate_mission_transition,
+    evaluate_story_transition, evaluate_voyage_completion, evaluate_voyage_transition,
+    format_gate_error,
 };
 #[allow(unused_imports)]
 pub use mission::{MissionStateMachine, MissionStatus, MissionTransition};
