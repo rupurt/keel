@@ -77,6 +77,10 @@ fn count_queue_sources(board: &Board) -> BTreeMap<String, usize> {
         increment_source_count(&mut counts, &format!("voyage.{}", voyage.status()));
     }
 
+    for mission in board.missions.values() {
+        increment_source_count(&mut counts, &format!("mission.{}", mission.status()));
+    }
+
     counts
 }
 

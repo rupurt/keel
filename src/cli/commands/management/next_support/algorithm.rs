@@ -83,6 +83,13 @@ pub enum NextDecision {
     Mission(MissionDecision),
     /// Multiple actionable missions
     Missions(MissionsDecision),
+    /// Mission ready for final human verification
+    VerifyMission(VerifyMissionDecision),
+}
+
+#[derive(Debug)]
+pub struct VerifyMissionDecision {
+    pub missions: Vec<keel::domain::model::Mission>,
 }
 
 #[derive(Debug)]
@@ -211,6 +218,23 @@ pub fn calculate_next(
 
         if !stories.is_empty() {
             return Ok(NextDecision::Accept(AcceptDecision { stories }));
+        }
+    }
+
+    // 3b. Mission Verification (human only)
+    if !agent_mode {
+        let achieved_missions: Vec<_> = board
+            .missions
+            .values()
+            .filter(|m| m.status() == keel::domain::model::MissionStatus::Achieved)
+            .filter(|m| filter.mission_id.map(|id| m.id() == id).unwrap_or(true))
+            .cloned()
+            .collect();
+
+        if !achieved_missions.is_empty() {
+            return Ok(NextDecision::VerifyMission(VerifyMissionDecision {
+                missions: achieved_missions,
+            }));
         }
     }
 
@@ -493,6 +517,7 @@ mod tests {
             NextDecision::NeedsPRD(_) => {}
             NextDecision::Mission(_) => {}
             NextDecision::Missions(_) => {}
+            NextDecision::VerifyMission(_) => {}
         }
     }
 

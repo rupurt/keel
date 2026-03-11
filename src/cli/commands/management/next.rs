@@ -445,6 +445,16 @@ fn decision_to_json(
                 })
                 .collect(),
         },
+        NextDecision::VerifyMission(d) => JsonDetails::Missions {
+            missions: d
+                .missions
+                .iter()
+                .map(|m| JsonMission {
+                    id: m.id().to_string(),
+                    title: m.title().to_string(),
+                })
+                .collect(),
+        },
         NextDecision::Empty(d) => JsonDetails::Empty {
             suggestions: d.suggestions.clone(),
         },
@@ -469,6 +479,7 @@ fn decision_kind(decision: &NextDecision) -> &'static str {
         NextDecision::NeedsPRD(_) => "needs_prd",
         NextDecision::Mission(_) => "mission",
         NextDecision::Missions(_) => "missions",
+        NextDecision::VerifyMission(_) => "verify_mission",
         NextDecision::Empty(_) => "empty",
     }
 }
@@ -519,6 +530,10 @@ fn guidance_for_decision(
             d.mission.id()
         ))),
         NextDecision::Missions(_) => Some(CommandGuidance::next("keel mission list".to_string())),
+        NextDecision::VerifyMission(d) => d
+            .missions
+            .first()
+            .map(|m| CommandGuidance::next(format!("keel mission verify {}", m.id()))),
         NextDecision::Empty(_) => None,
     };
 

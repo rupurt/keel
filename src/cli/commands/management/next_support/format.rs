@@ -2,9 +2,10 @@
 
 use super::{
     AcceptDecision, AdrDecision, BlockedDecision, DecomposeDecision, EmptyDecision, NextDecision,
-    ResearchDecision, StoryDecision,
+    ResearchDecision, StoryDecision, VerifyMissionDecision,
 };
 use owo_colors::OwoColorize;
+use keel::domain::model::Entity;
 
 fn story_header(story: &keel::domain::model::Story) -> String {
     format!(
@@ -28,7 +29,28 @@ pub fn format_decision(decision: &NextDecision) -> String {
         NextDecision::NeedsPRD(d) => format_needs_prd(d),
         NextDecision::Mission(d) => format_mission(d),
         NextDecision::Missions(d) => format_missions(d),
+        NextDecision::VerifyMission(d) => format_verify_mission(d),
     }
+}
+
+fn format_verify_mission(d: &VerifyMissionDecision) -> String {
+    let mut out = String::new();
+    out.push_str(&format!(
+        "{}: {} mission(s) ready for final verification\n",
+        "Verification".bold().green(),
+        d.missions.len()
+    ));
+
+    for mission in &d.missions {
+        out.push_str(&format!(
+            "  - {} {}\n",
+            crate::cli::style::styled_story_id(Entity::id(mission)),
+            mission.title().bold()
+        ));
+    }
+
+    out.push_str("\nReview the log and reports, then run `keel mission verify <ID>`.");
+    out
 }
 
 fn format_missions(d: &super::MissionsDecision) -> String {
