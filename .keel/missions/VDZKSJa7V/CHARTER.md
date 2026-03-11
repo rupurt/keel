@@ -5,10 +5,10 @@
 | ID | Description | Verification |
 |----|-------------|--------------|
 | MG-01 | Formalize Verified Spec Driven Development (VSDD) in documentation. | manual |
-| MG-02 | Implement structured verification commands (argv + cwd). | board: VDZMNiZPR |
-| MG-03 | Implement failure diagnostics and story audit. | board: VDZMNZPFG |
-| MG-04 | Add first-class operator_signal fields. | board: VDZMNYPFG |
-| MG-05 | Automate lifecycle transitions for voyages and epics. | board: VDZMNXPFG |
+| MG-02 | Implement structured verification commands (argv + cwd). | board: VDZKYMeNQ |
+| MG-03 | Implement failure diagnostics and story audit. | board: VDZKYQ9RC |
+| MG-04 | Add first-class operator_signal fields. | board: VDZKYTeQK |
+| MG-05 | Automate lifecycle transitions for voyages and epics. | board: VDZKYX7TX |
 
 ## Constraints
 

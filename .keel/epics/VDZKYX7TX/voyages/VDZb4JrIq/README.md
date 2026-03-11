@@ -1,0 +1,33 @@
+---
+id: VDZb4JrIq
+title: Automation Logic
+status: done
+epic: VDZKYX7TX
+created_at: 2026-03-11T08:30:36
+index: 1
+---
+
+# Automation Logic
+
+> Automate voyage and epic completion
+
+## Documents
+
+<!-- BEGIN DOCUMENTS -->
+| Document | Description |
+|----------|-------------|
+| [SRS.md](SRS.md) | Requirements and verification criteria |
+| [SDD.md](SDD.md) | Architecture and implementation details |
+| [VOYAGE_REPORT.md](VOYAGE_REPORT.md) | Narrative summary of implementation and evidence |
+| [COMPLIANCE_REPORT.md](COMPLIANCE_REPORT.md) | Traceability matrix and verification proof |
+<!-- END DOCUMENTS -->
+
+## Stories
+
+<!-- BEGIN GENERATED -->
+**Progress:** 0/1 stories complete
+
+| Title | Type | Status |
+|-------|------|--------|
+| [Implement Auto-complete In Process Manager](../../../../stories/VDZb9RDYg/README.md) | refactor | icebox |
+<!-- END GENERATED -->

@@ -159,13 +159,29 @@
 |--------|--------|
 | [Storage Backend Configuration](epics/VDXBUHZB0/voyages/VDY7AlCLy/) | done |
 
-### [Structured Verification Infrastructure](epics/VDZKYMeNQ/) (draft)
+### [Structured Verification Infrastructure](epics/VDZKYMeNQ/) (done)
 
-### [Audit and Diagnostics](epics/VDZKYQ9RC/) (draft)
+| Voyage | Status |
+|--------|--------|
+| [Core Infrastructure](epics/VDZKYMeNQ/voyages/VDZb48rCW/) | done |
 
-### [Signal Fields](epics/VDZKYTeQK/) (draft)
+### [Audit and Diagnostics](epics/VDZKYQ9RC/) (done)
 
-### [Lifecycle Automation](epics/VDZKYX7TX/) (draft)
+| Voyage | Status |
+|--------|--------|
+| [Audit Integration](epics/VDZKYQ9RC/voyages/VDZb4CeET/) | done |
+
+### [Signal Fields](epics/VDZKYTeQK/) (done)
+
+| Voyage | Status |
+|--------|--------|
+| [Signal Implementation](epics/VDZKYTeQK/voyages/VDZb4GDHO/) | done |
+
+### [Lifecycle Automation](epics/VDZKYX7TX/) (done)
+
+| Voyage | Status |
+|--------|--------|
+| [Automation Logic](epics/VDZKYX7TX/voyages/VDZb4JrIq/) | done |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
