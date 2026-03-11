@@ -1,8 +1,8 @@
 //! Logic for identifying execution bottlenecks
 
 use super::throughput::Throughput;
-use crate::read_model::flow_metrics::FlowMetrics;
-use crate::read_model::queue_policy::{self, VerificationQueueCategory};
+use keel::read_model::flow_metrics::FlowMetrics;
+use keel::read_model::queue_policy::{self, VerificationQueueCategory};
 
 /// Pipeline stages for constraint identification
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -546,10 +546,10 @@ fn build_agent_queue(metrics: &FlowMetrics) -> ActorQueue {
 mod tests {
     use super::*;
     use crate::cli::presentation::flow::throughput::{MonthThroughput, WeekThroughput};
-    use crate::domain::policy::queue::{
+    use keel::domain::policy::queue::{
         FLOW_VERIFY_BLOCK_THRESHOLD, HUMAN_NEXT_VERIFY_BLOCK_THRESHOLD,
     };
-    use crate::read_model::flow_metrics::{
+    use keel::read_model::flow_metrics::{
         ExecutionMetrics, GovernanceMetrics, PlanningMetrics, ResearchMetrics, VerificationMetrics,
     };
 

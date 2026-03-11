@@ -1,7 +1,7 @@
 //! Logic for applying automated fixes
 
 use super::types::DoctorReport;
-use crate::infrastructure::validation::Fix;
+use keel::infrastructure::validation::Fix;
 use anyhow::{Result, anyhow};
 use std::fs;
 use std::path::{Path, PathBuf};

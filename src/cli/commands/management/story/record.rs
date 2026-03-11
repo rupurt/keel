@@ -6,10 +6,10 @@ use std::fs;
 use std::path::Path;
 use std::time::Duration;
 
-use crate::infrastructure::loader::load_board;
-use crate::infrastructure::utils::get_manual_input;
-use crate::infrastructure::verification::executor::execute;
-use crate::infrastructure::verification::parser::{Comparison, parse_verify_annotations};
+use keel::infrastructure::loader::load_board;
+use keel::infrastructure::utils::get_manual_input;
+use keel::infrastructure::verification::executor::execute;
+use keel::infrastructure::verification::parser::{Comparison, parse_verify_annotations};
 
 use super::guidance::{
     StoryLifecycleAction, error_with_recovery, guidance_for_action, print_human,
@@ -97,7 +97,7 @@ fn run_impl(
 
     if judge {
         println!("Triggering LLM-Judge verification...");
-        let res = crate::infrastructure::verification::executor::execute_llm_judge(
+        let res = keel::infrastructure::verification::executor::execute_llm_judge(
             board_dir,
             story.id(),
             &ann.criterion,
@@ -272,7 +272,7 @@ fn update_story_with_proof(story_path: &Path, ac_idx: usize, proof_filename: &st
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::{TestBoardBuilder, TestStory};
+    use keel::test_helpers::{TestBoardBuilder, TestStory};
     use tempfile::tempdir;
 
     #[test]

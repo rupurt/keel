@@ -3,15 +3,15 @@
 use anyhow::Result;
 
 use crate::cli::table::Table;
-use crate::domain::model::{Board, Epic};
-use crate::infrastructure::loader::load_board;
+use keel::domain::model::{Board, Epic};
+use keel::infrastructure::loader::load_board;
 
 const DEFAULT_EPIC_STATUSES: &[&str] = &["draft", "active"];
 const ALLOWED_EPIC_STATUSES: &[&str] = &["draft", "active", "done"];
 
 /// List epics with optional status filters.
 pub fn run(status_filters: &[String]) -> Result<()> {
-    let board_dir = crate::infrastructure::config::find_board_dir()?;
+    let board_dir = keel::infrastructure::config::find_board_dir()?;
     let board = load_board(&board_dir)?;
     let status_filter = crate::cli::commands::management::status_filter::resolve_status_filter(
         status_filters,
@@ -84,7 +84,7 @@ fn collect_epics<'a>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestVoyage};
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestVoyage};
 
     #[test]
     fn test_list_epics_filtering() {

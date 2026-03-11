@@ -58,7 +58,7 @@ fn main_dispatch_adapter_avoids_domain_and_infrastructure_internals() {
 fn main_bootstrap_depends_on_cli_surface() {
     let main_source = read_source("src/main.rs");
     assert!(
-        main_source.contains("keel::cli::run()"),
+        main_source.contains("cli::run()"),
         "main bootstrap should delegate to the cli runtime surface"
     );
     for forbidden in [
@@ -78,7 +78,6 @@ fn main_bootstrap_depends_on_cli_surface() {
 fn lib_declarations_expose_normalized_layer_roots() {
     let lib_source = read_source("src/lib.rs");
     for required in [
-        "pub mod cli;",
         "pub mod application;",
         "pub mod domain;",
         "pub mod infrastructure;",
@@ -91,6 +90,7 @@ fn lib_declarations_expose_normalized_layer_roots() {
     }
 
     for forbidden in [
+        "pub mod cli;",
         "mod commands;",
         "mod flow;",
         "mod next;",

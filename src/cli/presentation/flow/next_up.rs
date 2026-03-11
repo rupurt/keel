@@ -3,8 +3,8 @@
 //! Shows priority items for both human and agent queues below the flow boxes.
 
 use crate::cli::commands::management::story::guidance::accept_command as story_accept_command;
-use crate::domain::model::{Bearing, BearingStatus, Board, Story, StoryState, Voyage, VoyageState};
-use crate::infrastructure::bearing_readiness::evaluate_bearing_readiness;
+use keel::domain::model::{Bearing, BearingStatus, Board, Story, StoryState, Voyage, VoyageState};
+use keel::infrastructure::bearing_readiness::evaluate_bearing_readiness;
 
 /// Item to display in the NEXT UP section
 #[derive(Debug, Clone)]
@@ -419,7 +419,7 @@ fn build_agent_next_up(board: &Board) -> Vec<NextUpItem> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::{
+    use keel::domain::model::{
         BearingFrontmatter, StoryFrontmatter, StoryState, StoryType, VoyageFrontmatter,
     };
     use std::path::PathBuf;

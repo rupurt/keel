@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-11T04:29:58.943085490-07:00
+mode: manual
+---
+application, domain, infrastructure, and read_model are now exported as pub mod in lib.rs.

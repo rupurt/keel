@@ -71,14 +71,14 @@ pub enum AdrAction {
 }
 
 use crate::cli::table::Table;
-use crate::domain::model::{Adr, Board};
-use crate::infrastructure::config::find_board_dir;
-use crate::infrastructure::duplicate_ids::{self, DuplicateEntity};
-use crate::infrastructure::frontmatter_mutation::{Mutation, apply};
-use crate::infrastructure::loader::load_board;
-use crate::infrastructure::template_rendering;
-use crate::infrastructure::templates;
-use crate::infrastructure::utils::slugify;
+use keel::domain::model::{Adr, Board};
+use keel::infrastructure::config::find_board_dir;
+use keel::infrastructure::duplicate_ids::{self, DuplicateEntity};
+use keel::infrastructure::frontmatter_mutation::{Mutation, apply};
+use keel::infrastructure::loader::load_board;
+use keel::infrastructure::template_rendering;
+use keel::infrastructure::templates;
+use keel::infrastructure::utils::slugify;
 
 /// Run an ADR action through the ADR interface adapter.
 pub fn run(action: AdrAction) -> Result<()> {
@@ -150,7 +150,7 @@ fn new_adr(
     duplicate_ids::ensure_unique_ids(board_dir, DuplicateEntity::Adr, "keel adr new")?;
 
     // Enforce Title Case
-    if !crate::infrastructure::utils::is_title_case(title) {
+    if !keel::infrastructure::utils::is_title_case(title) {
         return Err(anyhow!(
             "ADR title '{}' must use Title Case (e.g. 'My ADR Title')",
             title
@@ -160,7 +160,7 @@ fn new_adr(
     let board = load_board(board_dir)?;
 
     // Generate random ID and calculate index
-    let id = crate::infrastructure::story_id::generate_story_id();
+    let id = keel::infrastructure::story_id::generate_story_id();
     let index = next_adr_index(&board);
     let slug = slugify(title);
     let date = Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
@@ -215,7 +215,7 @@ pub fn run_list(status_filter: Option<&str>) -> Result<()> {
     let board = load_board(&board_dir)?;
 
     // Parse status filter if provided
-    let filter_status: Option<crate::domain::model::AdrStatus> = status_filter
+    let filter_status: Option<keel::domain::model::AdrStatus> = status_filter
         .map(|s| {
             s.parse().map_err(|_| {
                 anyhow!(
@@ -264,7 +264,7 @@ pub fn run_list(status_filter: Option<&str>) -> Result<()> {
 /// Update ADR status in its file
 fn update_adr_status(
     adr: &Adr,
-    new_status: crate::domain::model::AdrStatus,
+    new_status: keel::domain::model::AdrStatus,
     rejection_reason: Option<&str>,
 ) -> Result<()> {
     let content = fs::read_to_string(&adr.path)
@@ -291,7 +291,7 @@ pub fn run_accept(pattern: &str) -> Result<()> {
     })?;
 
     // Check if ADR is in proposed status
-    if adr.frontmatter.status != crate::domain::model::AdrStatus::Proposed {
+    if adr.frontmatter.status != keel::domain::model::AdrStatus::Proposed {
         return Err(anyhow!(
             "{}",
             guidance::error_with_recovery(
@@ -305,7 +305,7 @@ pub fn run_accept(pattern: &str) -> Result<()> {
         ));
     }
 
-    update_adr_status(adr, crate::domain::model::AdrStatus::Accepted, None)?;
+    update_adr_status(adr, keel::domain::model::AdrStatus::Accepted, None)?;
 
     println!("Accepted: {}", adr.id());
     println!("  {} (proposed → accepted)", adr.frontmatter.title);
@@ -323,7 +323,7 @@ pub fn run_reject(pattern: &str, reason: &str) -> Result<()> {
     })?;
 
     // Check if ADR is in proposed status
-    if adr.frontmatter.status != crate::domain::model::AdrStatus::Proposed {
+    if adr.frontmatter.status != keel::domain::model::AdrStatus::Proposed {
         return Err(anyhow!(
             "{}",
             guidance::error_with_recovery(
@@ -337,7 +337,7 @@ pub fn run_reject(pattern: &str, reason: &str) -> Result<()> {
         ));
     }
 
-    update_adr_status(adr, crate::domain::model::AdrStatus::Rejected, Some(reason))?;
+    update_adr_status(adr, keel::domain::model::AdrStatus::Rejected, Some(reason))?;
 
     println!("Rejected: {}", adr.id());
     println!("  {} (proposed → rejected)", adr.frontmatter.title);
@@ -356,7 +356,7 @@ pub fn run_deprecate(pattern: &str, reason: &str) -> Result<()> {
     })?;
 
     // Check if ADR is in accepted status
-    if adr.frontmatter.status != crate::domain::model::AdrStatus::Accepted {
+    if adr.frontmatter.status != keel::domain::model::AdrStatus::Accepted {
         return Err(anyhow!(
             "{}",
             guidance::error_with_recovery(
@@ -379,7 +379,7 @@ pub fn run_deprecate(pattern: &str, reason: &str) -> Result<()> {
         &[
             Mutation::set(
                 "status",
-                crate::domain::model::AdrStatus::Deprecated.to_string(),
+                keel::domain::model::AdrStatus::Deprecated.to_string(),
             ),
             Mutation::set("deprecation-reason", format!("\"{}\"", reason)),
         ],
@@ -414,7 +414,7 @@ pub fn run_supersede(new_pattern: &str, old_pattern: &str) -> Result<()> {
     })?;
 
     // Validate: new ADR must be accepted
-    if new_adr.frontmatter.status != crate::domain::model::AdrStatus::Accepted {
+    if new_adr.frontmatter.status != keel::domain::model::AdrStatus::Accepted {
         return Err(anyhow!(
             "{}",
             guidance::error_with_recovery(
@@ -429,7 +429,7 @@ pub fn run_supersede(new_pattern: &str, old_pattern: &str) -> Result<()> {
     }
 
     // Validate: old ADR must be accepted (can't supersede something already superseded/deprecated)
-    if old_adr.frontmatter.status != crate::domain::model::AdrStatus::Accepted {
+    if old_adr.frontmatter.status != keel::domain::model::AdrStatus::Accepted {
         return Err(anyhow!(
             "{}",
             guidance::error_with_recovery(

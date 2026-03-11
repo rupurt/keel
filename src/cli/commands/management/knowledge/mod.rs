@@ -48,8 +48,8 @@ pub fn run(board_dir: &Path, action: KnowledgeAction) -> Result<()> {
             sort,
         } => {
             let sort = match sort.as_str() {
-                "id" => crate::read_model::knowledge::KnowledgeSort::Id,
-                "story" => crate::read_model::knowledge::KnowledgeSort::Story,
+                "id" => keel::read_model::knowledge::KnowledgeSort::Id,
+                "story" => keel::read_model::knowledge::KnowledgeSort::Story,
                 other => anyhow::bail!("invalid sort mode '{}'; expected 'id' or 'story'", other),
             };
             list::run(board_dir, category.as_deref(), pending, sort)

@@ -4,7 +4,7 @@ use std::fmt::Write;
 
 use crate::cli::presentation::theme::Theme;
 use crate::cli::style;
-use crate::read_model::throughput_history::{ThroughputHistory, WeeklyThroughputBucket};
+use keel::read_model::throughput_history::{ThroughputHistory, WeeklyThroughputBucket};
 
 struct CycleTimingSeries<'a> {
     min_hours: &'a [Option<f64>],

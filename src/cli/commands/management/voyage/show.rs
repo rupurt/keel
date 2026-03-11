@@ -11,9 +11,9 @@ use crate::cli::presentation::progress::render_count_bar;
 use crate::cli::presentation::requirements::grouped_requirement_lines;
 use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::style;
-use crate::domain::model::{Board, Voyage};
-use crate::infrastructure::loader::load_board;
-use crate::read_model::planning_show::{self, VoyageShowProjection};
+use keel::domain::model::{Board, Voyage};
+use keel::infrastructure::loader::load_board;
+use keel::read_model::planning_show::{self, VoyageShowProjection};
 
 const GOAL_PLACEHOLDER: &str = "(goal not authored yet)";
 const SCOPE_PLACEHOLDER: &str = "(scope not authored in SRS.md yet)";
@@ -22,7 +22,7 @@ const REQUIREMENTS_PLACEHOLDER: &str = "(no requirements found in SRS.md)";
 
 /// Show voyage details
 pub fn run(id: &str) -> Result<()> {
-    let board_dir = crate::infrastructure::config::find_board_dir()?;
+    let board_dir = keel::infrastructure::config::find_board_dir()?;
     run_with_dir(&board_dir, id)
 }
 
@@ -155,12 +155,12 @@ fn requirement_matrix_lines(report: &VoyageShowProjection) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::StoryState;
-    use crate::domain::state_machine::invariants::{ScopeLineageIssue, ScopeLineageIssueKind};
-    use crate::read_model::planning_show::{
+    use keel::domain::model::StoryState;
+    use keel::domain::state_machine::invariants::{ScopeLineageIssue, ScopeLineageIssueKind};
+    use keel::read_model::planning_show::{
         RequirementCompletion, RequirementKind, RequirementRow, ScopeDriftRow, StoryRef,
     };
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use chrono::NaiveDate;
 
     #[test]

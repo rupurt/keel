@@ -6,10 +6,10 @@ use anyhow::Result;
 
 /// Run the generate command
 pub fn run(board_dir: &Path) -> Result<()> {
-    let board = crate::infrastructure::loader::load_board(board_dir)?;
-    crate::infrastructure::generate::sync_board_artifacts(
+    let board = keel::infrastructure::loader::load_board(board_dir)?;
+    keel::infrastructure::generate::sync_board_artifacts(
         &board,
-        &crate::infrastructure::generate::BoardArtifactSyncOptions::default(),
+        &keel::infrastructure::generate::BoardArtifactSyncOptions::default(),
     )?;
 
     println!("Board updated");
@@ -20,7 +20,7 @@ pub fn run(board_dir: &Path) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use std::fs;
     use std::path::Path;
 
@@ -41,7 +41,7 @@ mod tests {
             .story(
                 TestStory::new("FEAT0001")
                     .title("Active Story")
-                    .status(crate::domain::model::StoryState::InProgress)
+                    .status(keel::domain::model::StoryState::InProgress)
                     .scope("test-epic/01-first"),
             )
             .build();
@@ -87,7 +87,7 @@ mod tests {
             .story(
                 TestStory::new("FEAT0001")
                     .title("Active Story")
-                    .status(crate::domain::model::StoryState::InProgress)
+                    .status(keel::domain::model::StoryState::InProgress)
                     .scope("test-epic/01-first"),
             )
             .build();

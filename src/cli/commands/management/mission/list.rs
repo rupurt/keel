@@ -3,12 +3,12 @@
 use anyhow::Result;
 
 use crate::cli::table::Table;
-use crate::domain::model::Mission;
-use crate::infrastructure::loader::load_board;
+use keel::domain::model::Mission;
+use keel::infrastructure::loader::load_board;
 
 /// List all missions
 pub fn run() -> Result<()> {
-    let board_dir = crate::infrastructure::config::find_board_dir()?;
+    let board_dir = keel::infrastructure::config::find_board_dir()?;
     let board = load_board(&board_dir)?;
 
     let mut missions: Vec<&Mission> = board.missions.values().collect();
@@ -37,7 +37,7 @@ pub fn run() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::{TestBearing, TestBoardBuilder, TestEpic, TestMission};
+    use keel::test_helpers::{TestBearing, TestBoardBuilder, TestEpic, TestMission};
 
     #[test]
     fn test_list_missions_displays_table() {

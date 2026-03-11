@@ -4,8 +4,8 @@ use std::fs;
 
 use super::super::types::*;
 use super::super::{CRITERIA_RE, EVIDENCE_PHASE_RE};
-use crate::domain::model::{Board, StoryState, VoyageState};
-use crate::domain::state_machine::{
+use keel::domain::model::{Board, StoryState, VoyageState};
+use keel::domain::state_machine::{
     EnforcementPolicy, TransitionEntity, TransitionIntent, VoyageCompletionPolicy,
     VoyageTransition, enforce_transition, evaluate_voyage_completion,
 };
@@ -158,11 +158,11 @@ fn normalize_evidence_summary_message(message: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::state_machine::{
+    use keel::domain::state_machine::{
         EnforcementPolicy, TransitionEntity, TransitionIntent, VoyageTransition, enforce_transition,
     };
-    use crate::infrastructure::loader::load_board;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use keel::infrastructure::loader::load_board;
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
 
     #[test]
     fn test_check_evidence_phase_syntax_valid() {

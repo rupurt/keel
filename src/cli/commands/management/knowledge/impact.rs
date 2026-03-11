@@ -5,7 +5,7 @@ use owo_colors::OwoColorize;
 use std::path::Path;
 
 use crate::cli::table::Table;
-use crate::read_model::knowledge::scanner;
+use keel::read_model::knowledge::scanner;
 
 /// Run the impact command to track knowledge institutionalization
 pub fn run(board_dir: &Path) -> Result<()> {
@@ -13,7 +13,7 @@ pub fn run(board_dir: &Path) -> Result<()> {
 
     let (applied, pending): (Vec<_>, Vec<_>) = knowledge_list
         .into_iter()
-        .partition(|k: &crate::read_model::knowledge::Knowledge| k.is_applied());
+        .partition(|k: &keel::read_model::knowledge::Knowledge| k.is_applied());
 
     println!("{}", "Knowledge Impact & Drift Analysis".bold().underline());
     println!();

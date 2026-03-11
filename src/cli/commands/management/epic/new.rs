@@ -6,16 +6,16 @@ use std::path::Path;
 use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 
-use crate::infrastructure::duplicate_ids::{self, DuplicateEntity};
-use crate::infrastructure::frontmatter_mutation::Mutation;
-use crate::infrastructure::loader::load_board;
-use crate::infrastructure::story_id::generate_story_id;
-use crate::infrastructure::template_rendering;
-use crate::infrastructure::templates;
+use keel::infrastructure::duplicate_ids::{self, DuplicateEntity};
+use keel::infrastructure::frontmatter_mutation::Mutation;
+use keel::infrastructure::loader::load_board;
+use keel::infrastructure::story_id::generate_story_id;
+use keel::infrastructure::template_rendering;
+use keel::infrastructure::templates;
 
 /// Create a new epic
 pub fn run(name: &str, problem: &str) -> Result<()> {
-    let board_dir = crate::infrastructure::config::find_board_dir()?;
+    let board_dir = keel::infrastructure::config::find_board_dir()?;
     new_epic(&board_dir, name, problem)
 }
 
@@ -33,7 +33,7 @@ fn new_epic(board_dir: &Path, name: &str, problem: &str) -> Result<()> {
     }
 
     // Enforce Title Case
-    if !crate::infrastructure::utils::is_title_case(name) {
+    if !keel::infrastructure::utils::is_title_case(name) {
         return Err(anyhow!(
             "Epic title '{}' must use Title Case (e.g. 'My Epic Title')",
             name
@@ -107,8 +107,8 @@ fn new_epic(board_dir: &Path, name: &str, problem: &str) -> Result<()> {
 mod tests {
     use super::*;
     use crate::cli::commands::diagnostics::doctor;
-    use crate::infrastructure::validation::{CheckId, structural};
-    use crate::test_helpers::TestBoardBuilder;
+    use keel::infrastructure::validation::{CheckId, structural};
+    use keel::test_helpers::TestBoardBuilder;
     use regex::Regex;
 
     fn find_epic_dir(board_dir: &std::path::Path, title: &str) -> std::path::PathBuf {

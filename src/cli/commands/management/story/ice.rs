@@ -4,10 +4,10 @@ use std::path::Path;
 use std::sync::Arc;
 
 use anyhow::Result;
-use crate::infrastructure::storage::filesystem::FileSystemAdapter;
+use keel::infrastructure::storage::filesystem::FileSystemAdapter;
 
 use super::guidance::{StoryLifecycleAction, error_with_recovery};
-use crate::application::story_lifecycle::StoryLifecycleService;
+use keel::application::story_lifecycle::StoryLifecycleService;
 
 /// Run the ice command
 pub fn run(board_dir: &Path, id: &str) -> Result<()> {
@@ -27,9 +27,9 @@ pub fn run(board_dir: &Path, id: &str) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::StoryState;
-    use crate::test_helpers::{TestBoardBuilder, TestStory};
-    use crate::infrastructure::storage::filesystem::FileSystemAdapter;
+    use keel::domain::model::StoryState;
+    use keel::test_helpers::{TestBoardBuilder, TestStory};
+    use keel::infrastructure::storage::filesystem::FileSystemAdapter;
     use std::sync::Arc;
     use std::fs;
 

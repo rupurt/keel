@@ -8,8 +8,8 @@ use owo_colors::OwoColorize;
 use crate::cli::presentation::duration::render_completed_with_length;
 use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::style;
-use crate::infrastructure::loader::load_board;
-use crate::read_model::planning_show::{self, EvidenceReport};
+use keel::infrastructure::loader::load_board;
+use keel::read_model::planning_show::{self, EvidenceReport};
 
 const NO_EVIDENCE_DIR_PLACEHOLDER: &str = "(EVIDENCE directory not found)";
 const NO_SUPPLEMENTARY_PLACEHOLDER: &str = "(no supplementary artifacts)";
@@ -23,7 +23,7 @@ struct StoryHeading<'a> {
 
 /// Run the show story command
 pub fn run(id: &str) -> Result<()> {
-    let board_dir = crate::infrastructure::config::find_board_dir()?;
+    let board_dir = keel::infrastructure::config::find_board_dir()?;
     run_with_dir(&board_dir, id)
 }
 
@@ -322,8 +322,8 @@ fn parse_story_body_heading(trimmed: &str) -> Option<StoryHeading<'_>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::StoryState;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use keel::domain::model::StoryState;
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use std::fs;
 
     #[test]

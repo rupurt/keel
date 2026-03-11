@@ -9,11 +9,11 @@ use super::guidance::CanonicalGuidance;
 use super::verification_guidance::{
     guidance_for_verify_story, print_human, verify_error_with_recovery,
 };
-use crate::infrastructure::config;
-use crate::infrastructure::loader::load_board;
-use crate::infrastructure::verification;
-use crate::infrastructure::verification::parse_verify_annotations;
-use crate::read_model::verification_techniques::{self, ProjectStack, TechniqueModality};
+use keel::infrastructure::config;
+use keel::infrastructure::loader::load_board;
+use keel::infrastructure::verification;
+use keel::infrastructure::verification::parse_verify_annotations;
+use keel::read_model::verification_techniques::{self, ProjectStack, TechniqueModality};
 
 const MAX_RECOMMENDATIONS: usize = 3;
 
@@ -157,7 +157,7 @@ pub fn detect(board_dir: &Path, json: bool) -> Result<()> {
 }
 
 fn build_payload(
-    board: &crate::domain::model::Board,
+    board: &keel::domain::model::Board,
     reports: Vec<verification::VerificationReport>,
     target: String,
     guidance: Option<CanonicalGuidance>,
@@ -390,7 +390,7 @@ fn stack_name(stack: ProjectStack) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::TestBoardBuilder;
+    use keel::test_helpers::TestBoardBuilder;
     use std::fs;
 
     #[test]
@@ -408,7 +408,7 @@ mod tests {
     #[test]
     fn verify_run_json_contract() {
         let temp = TestBoardBuilder::new().build();
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let payload = build_payload(&board, Vec::new(), "all".to_string(), None);
         let value = serde_json::to_value(payload).unwrap();
         assert_eq!(value["target"], "all");
@@ -458,7 +458,7 @@ disable = ["rust-unit-tests"]
     fn verify_recommend_has_no_execution_side_effects() {
         let temp = TestBoardBuilder::new()
             .story(
-                crate::test_helpers::TestStory::new("S1").body(
+                keel::test_helpers::TestStory::new("S1").body(
                     "## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] noop <!-- verify: sh -c 'touch SHOULD_NOT_EXIST', SRS-01:start:end -->",
                 ),
             )

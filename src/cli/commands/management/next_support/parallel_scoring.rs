@@ -3,7 +3,7 @@
 use std::cmp::Ordering;
 
 use crate::cli::commands::management::next_support::parallel_features::ParallelFeatureVector;
-use crate::domain::policy::queue::compare_work_item_ids;
+use keel::domain::policy::queue::compare_work_item_ids;
 
 /// Pairwise score used by the parallel conflict gate.
 #[derive(Debug, Clone, PartialEq)]
@@ -76,9 +76,9 @@ fn stable_pair_order(left: &PairwiseConflictScore, right: &PairwiseConflictScore
 mod tests {
     use super::*;
     use crate::cli::commands::management::next_support::parallel_features::extract_parallel_feature_vectors;
-    use crate::domain::model::StoryState;
-    use crate::infrastructure::loader::load_board;
-    use crate::test_helpers::{TestBoardBuilder, TestStory};
+    use keel::domain::model::StoryState;
+    use keel::infrastructure::loader::load_board;
+    use keel::test_helpers::{TestBoardBuilder, TestStory};
 
     fn score_for_pair<'a>(
         scores: &'a [PairwiseConflictScore],

@@ -4,9 +4,9 @@ use std::path::Path;
 use anyhow::Result;
 
 use super::super::types::*;
-use crate::domain::model::Board;
-use crate::infrastructure::bearing_readiness::evaluate_bearing_readiness;
-use crate::infrastructure::parser::parse_frontmatter;
+use keel::domain::model::Board;
+use keel::infrastructure::bearing_readiness::evaluate_bearing_readiness;
+use keel::infrastructure::parser::parse_frontmatter;
 
 /// Scan bearing files for structural problems
 /// Returns (problems, file_count)
@@ -38,7 +38,7 @@ pub fn scan_bearing_files(board_dir: &Path) -> Result<(Vec<Problem>, usize)> {
                 problems.push(problem);
             }
             problems.extend(
-                crate::infrastructure::validation::structural::check_bearing_readme_structure(
+                keel::infrastructure::validation::structural::check_bearing_readme_structure(
                     &readme_path,
                 ),
             );
@@ -127,7 +127,7 @@ pub fn check_bearing_file(path: &Path) -> Option<Problem> {
     }
 
     // Try to parse frontmatter
-    let result: Result<(crate::domain::model::BearingFrontmatter, &str), _> =
+    let result: Result<(keel::domain::model::BearingFrontmatter, &str), _> =
         parse_frontmatter(&content);
 
     match result {
@@ -172,7 +172,7 @@ pub fn check_bearing_file(path: &Path) -> Option<Problem> {
 /// Check bearing state coherence
 /// Validates that bearing state is consistent with documents present
 pub fn check_bearing_state_coherence(board: &Board) -> Vec<Problem> {
-    use crate::domain::model::BearingStatus;
+    use keel::domain::model::BearingStatus;
 
     let mut problems = Vec::new();
 
@@ -353,8 +353,8 @@ pub fn check_bearing_title_case(board: &Board) -> Vec<Problem> {
 
     for bearing in board.bearings.values() {
         let title = &bearing.frontmatter.title;
-        if !crate::infrastructure::utils::is_title_case(title) {
-            let new_title = crate::infrastructure::utils::to_title_case(title);
+        if !keel::infrastructure::utils::is_title_case(title) {
+            let new_title = keel::infrastructure::utils::to_title_case(title);
             problems.push(Problem {
                 severity: Severity::Warning,
                 path: bearing.path.clone(),
@@ -377,9 +377,9 @@ pub fn check_bearing_title_case(board: &Board) -> Vec<Problem> {
 /// Check for duplicate bearing IDs
 /// Scans bearing files for duplicate frontmatter IDs.
 pub fn check_bearing_duplicates(board_dir: &Path) -> Vec<Problem> {
-    crate::infrastructure::duplicate_ids::duplicate_id_problems(
+    keel::infrastructure::duplicate_ids::duplicate_id_problems(
         board_dir,
-        crate::infrastructure::duplicate_ids::DuplicateEntity::Bearing,
+        keel::infrastructure::duplicate_ids::DuplicateEntity::Bearing,
     )
 }
 
@@ -403,7 +403,7 @@ pub fn check_bearing_dates(board: &Board) -> Vec<Problem> {
 
         // Add structural consistency checks for date naming and datetime type
         problems.extend(
-            crate::infrastructure::validation::structural::check_date_consistency(
+            keel::infrastructure::validation::structural::check_date_consistency(
                 &bearing.path,
                 CheckId::BearingDateConsistency,
             ),
@@ -414,74 +414,12 @@ pub fn check_bearing_dates(board: &Board) -> Vec<Problem> {
 }
 
 /// Required sections in bearing BRIEF.md
-pub const BEARING_REQUIRED_SECTIONS: &[&str] = &[
-    "## Hypothesis",
-    "## Problem Space",
-    "## Success Criteria",
-    "## Open Questions",
-];
-
-/// Check bearing content sections
-/// Validates that BRIEF.md contains required markdown sections
-pub fn check_bearing_content_sections(board: &Board) -> Vec<Problem> {
-    let mut problems = Vec::new();
-
-    for bearing in board.bearings.values() {
-        // Read the BRIEF.md content
-        let brief_path = bearing.path.parent().unwrap().join("BRIEF.md");
-        let content = match fs::read_to_string(&brief_path) {
-            Ok(c) => c,
-            Err(_) => continue, // File read errors handled elsewhere
-        };
-
-        for section in BEARING_REQUIRED_SECTIONS {
-            if !content.contains(section) {
-                let section_name = section.trim_start_matches("## ");
-                problems.push(Problem {
-                    severity: Severity::Warning,
-                    path: brief_path.clone(),
-                    message: format!(
-                        "bearing '{}' is missing required section: {}",
-                        bearing.id(),
-                        section_name
-                    ),
-                    fix: None,
-                    scope: None,
-                    category: None,
-                    check_id: CheckId::Unknown,
-                });
-            }
-        }
-
-        let evidence_path = bearing.path.parent().unwrap().join("EVIDENCE.md");
-        if let Ok(content) = fs::read_to_string(&evidence_path) {
-            for message in
-                crate::infrastructure::bearing_evidence::validate_evidence_document(&content)
-            {
-                problems.push(Problem {
-                    severity: Severity::Error,
-                    path: evidence_path.clone(),
-                    message: format!(
-                        "bearing '{}' evidence contract error: {}",
-                        bearing.id(),
-                        message
-                    ),
-                    fix: None,
-                    scope: None,
-                    category: None,
-                    check_id: CheckId::Unknown,
-                });
-            }
-        }
-    }
-
-    problems
-}
+pub use keel::infrastructure::validation::bearings::{BEARING_REQUIRED_SECTIONS, check_bearing_content_sections};
 
 /// Check bearing-epic coherence
 /// Validates that laid bearings have corresponding epics
 pub fn check_bearing_epic_coherence(board: &Board) -> Vec<Problem> {
-    use crate::domain::model::BearingStatus;
+    use keel::domain::model::BearingStatus;
 
     let mut problems = Vec::new();
 
@@ -523,7 +461,7 @@ pub fn check_bearing_assessment_recommendation(board: &Board, board_dir: &Path) 
     for bearing in board.bearings.values() {
         if matches!(
             bearing.status(),
-            crate::domain::model::BearingStatus::Ready | crate::domain::model::BearingStatus::Laid
+            keel::domain::model::BearingStatus::Ready | keel::domain::model::BearingStatus::Laid
         ) {
             let readiness = evaluate_bearing_readiness(board_dir, bearing, None);
             for message in readiness.problem_messages(bearing.id()) {
@@ -545,7 +483,7 @@ pub fn check_bearing_assessment_recommendation(board: &Board, board_dir: &Path) 
 
 /// Generate insight summary for bearing readiness
 pub fn generate_bearing_insight(board: &Board, board_dir: &Path) -> Option<String> {
-    use crate::domain::model::BearingStatus;
+    use keel::domain::model::BearingStatus;
 
     let mut needs_voyages: Vec<&str> = Vec::new();
     let mut ready_to_lay: Vec<&str> = Vec::new();
@@ -614,7 +552,7 @@ pub fn generate_bearing_insight(board: &Board, board_dir: &Path) -> Option<Strin
 
 /// Check bearing lineage: laid bearings must have `epic` field
 pub fn check_bearing_lineage_epic(board: &Board) -> Vec<Problem> {
-    use crate::domain::model::BearingStatus;
+    use keel::domain::model::BearingStatus;
 
     let mut problems = Vec::new();
 
@@ -643,8 +581,8 @@ pub fn check_bearing_lineage_epic(board: &Board) -> Vec<Problem> {
 
 /// Check bearing lineage: goal references must be valid GOAL-* tokens
 pub fn check_bearing_lineage_goals(board: &Board, board_dir: &Path) -> Vec<Problem> {
-    use crate::domain::model::BearingStatus;
-    use crate::infrastructure::validation::goals::{extract_prd_goal_ids, is_valid_goal_id};
+    use keel::domain::model::BearingStatus;
+    use keel::infrastructure::validation::goals::{extract_prd_goal_ids, is_valid_goal_id};
 
     let mut problems = Vec::new();
 
@@ -722,8 +660,8 @@ pub fn check_bearing_lineage_goals(board: &Board, board_dir: &Path) -> Vec<Probl
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::infrastructure::loader::load_board;
-    use crate::test_helpers::{TestBearing, TestBoardBuilder};
+    use keel::infrastructure::loader::load_board;
+    use keel::test_helpers::{TestBearing, TestBoardBuilder};
 
     #[test]
     fn test_scan_bearing_files_empty() {
@@ -844,7 +782,7 @@ mod tests {
 
     #[test]
     fn test_is_title_case() {
-        use crate::infrastructure::utils::is_title_case;
+        use keel::infrastructure::utils::is_title_case;
         assert!(is_title_case("My Bearing Title"));
         assert!(is_title_case("A Bearing with a Small Word"));
         assert!(!is_title_case("my bearing title"));

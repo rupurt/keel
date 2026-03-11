@@ -2,8 +2,8 @@
 
 use std::collections::BTreeSet;
 
-use crate::domain::model::{Board, Story};
-use crate::domain::policy::queue::compare_work_item_ids;
+use keel::domain::model::{Board, Story};
+use keel::domain::policy::queue::compare_work_item_ids;
 
 /// Pairwise semantic features used by parallel conflict scoring.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -121,9 +121,9 @@ mod tests {
     use super::*;
     use std::collections::BTreeSet;
 
-    use crate::domain::model::StoryState;
-    use crate::infrastructure::loader::load_board;
-    use crate::test_helpers::{TestBoardBuilder, TestStory};
+    use keel::domain::model::StoryState;
+    use keel::infrastructure::loader::load_board;
+    use keel::test_helpers::{TestBoardBuilder, TestStory};
 
     #[test]
     fn next_parallel_feature_vectors_are_deterministic() {

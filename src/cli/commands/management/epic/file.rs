@@ -7,8 +7,8 @@ use anyhow::Result;
 use crate::cli::commands::management::file_support::{
     KnownDocument, print_markdown_file, resolve_bundle_document_path,
 };
-use crate::infrastructure::config::find_board_dir;
-use crate::infrastructure::loader::load_board;
+use keel::infrastructure::config::find_board_dir;
+use keel::infrastructure::loader::load_board;
 
 const EPIC_DOCUMENTS: &[KnownDocument] = &[
     KnownDocument::new("README", "README.md"),
@@ -35,7 +35,7 @@ fn resolve_path(board_dir: &Path, id: &str, file: &str) -> Result<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic};
+    use keel::test_helpers::{TestBoardBuilder, TestEpic};
     use std::fs;
 
     #[test]

@@ -4,8 +4,8 @@ use anyhow::Result;
 
 use crate::cli::presentation::flow::display::render_annotated_flow;
 use crate::cli::presentation::terminal::get_terminal_width;
-use crate::infrastructure::loader::load_board;
-use crate::read_model::{flow_status, workflow_lane_flow, workflow_topology};
+use keel::infrastructure::loader::load_board;
+use keel::read_model::{flow_status, workflow_lane_flow, workflow_topology};
 
 /// Run the flow command
 pub fn run(board_dir: &std::path::Path, no_color: bool) -> Result<()> {
@@ -31,8 +31,8 @@ fn build_output(board_dir: &std::path::Path, no_color: bool) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::StoryState;
-    use crate::test_helpers::{TestBearing, TestBoardBuilder, TestStory};
+    use keel::domain::model::StoryState;
+    use keel::test_helpers::{TestBearing, TestBoardBuilder, TestStory};
     use std::fs;
 
     #[test]

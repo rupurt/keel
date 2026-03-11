@@ -6,8 +6,8 @@ use owo_colors::OwoColorize;
 use std::path::Path;
 
 use crate::cli::table::Table;
-use crate::read_model::knowledge::navigator::{self, DetectionConfig};
-use crate::read_model::knowledge::scanner;
+use keel::read_model::knowledge::navigator::{self, DetectionConfig};
+use keel::read_model::knowledge::scanner;
 
 /// Run the explore command to surface rising patterns
 pub fn run(board_dir: &Path) -> Result<()> {
@@ -15,7 +15,7 @@ pub fn run(board_dir: &Path) -> Result<()> {
 
     let signals: Vec<_> = knowledge_list
         .iter()
-        .filter_map(|k: &crate::read_model::knowledge::Knowledge| k.to_signal())
+        .filter_map(|k: &keel::read_model::knowledge::Knowledge| k.to_signal())
         .collect();
 
     if signals.is_empty() {

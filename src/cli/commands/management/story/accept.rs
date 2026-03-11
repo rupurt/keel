@@ -1,14 +1,14 @@
 //! Accept command - accept a verified story and move to done
 use std::path::Path;
-use crate::infrastructure::storage::filesystem::FileSystemAdapter;
+use keel::infrastructure::storage::filesystem::FileSystemAdapter;
 
 use std::sync::Arc;
 
 use anyhow::{Result, anyhow};
 
-use crate::application::story_lifecycle::StoryLifecycleService;
-use crate::infrastructure::loader::load_board;
-use crate::read_model::workflow_topology;
+use keel::application::story_lifecycle::StoryLifecycleService;
+use keel::infrastructure::loader::load_board;
+use keel::read_model::workflow_topology;
 
 use super::guidance::{
     StoryLifecycleAction, error_with_recovery_for_accept_role, guidance_for_action, print_human,
@@ -50,7 +50,7 @@ pub fn run(board_dir: &Path, id: &str, role: &str, reflect: Option<&str>) -> Res
 
     
 
-    let actor_role = crate::domain::model::taxonomy::parse(role)
+    let actor_role = keel::domain::model::taxonomy::parse(role)
         .map_err(|err| anyhow!("Invalid role taxonomy `{role}`: {err}"))?;
     let accept_role_example = workflow_topology::load_for_board(board_dir)
         .map(|topology| topology.management_role_example().to_string())
@@ -76,9 +76,9 @@ pub fn run(board_dir: &Path, id: &str, role: &str, reflect: Option<&str>) -> Res
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::StoryState;
-    use crate::infrastructure::validation::{CheckId, structural};
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use keel::domain::model::StoryState;
+    use keel::infrastructure::validation::{CheckId, structural};
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use regex::Regex;
     use std::fs;
 

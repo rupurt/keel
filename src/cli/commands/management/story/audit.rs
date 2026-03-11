@@ -9,10 +9,10 @@ use crate::cli::commands::management::verification_guidance::{
     audit_error_with_recovery, guidance_for_audit_story, print_human,
 };
 use crate::cli::style;
-use crate::domain::model::Board;
-use crate::infrastructure::loader::load_board;
-use crate::read_model::evidence::{self, EvidenceEntry};
-use crate::read_model::planning_show;
+use keel::domain::model::Board;
+use keel::infrastructure::loader::load_board;
+use keel::read_model::evidence::{self, EvidenceEntry};
+use keel::read_model::planning_show;
 
 /// Run the audit command
 pub fn run(board_dir: &Path, id: Option<&str>) -> Result<()> {
@@ -77,10 +77,10 @@ pub fn run(board_dir: &Path, id: Option<&str>) -> Result<()> {
     }
 }
 
-fn audit_story(story: &crate::domain::model::Story, indent_level: usize) -> Result<()> {
+fn audit_story(story: &keel::domain::model::Story, indent_level: usize) -> Result<()> {
     let indent = " ".repeat(indent_level);
 
-    let status_indicator = if story.status == crate::domain::model::StoryState::Done {
+    let status_indicator = if story.status == keel::domain::model::StoryState::Done {
         "✓ ".green().bold().to_string()
     } else {
         "".to_string()
@@ -206,7 +206,7 @@ fn audit_story(story: &crate::domain::model::Story, indent_level: usize) -> Resu
             .parent()
             .and_then(|stories_dir| stories_dir.parent())
             .unwrap_or(bundle_dir);
-        if !crate::read_model::knowledge::load_reflection_knowledge(board_dir, &reflect_path)?
+        if !keel::read_model::knowledge::load_reflection_knowledge(board_dir, &reflect_path)?
             .is_empty()
         {
             println!("{}  {}", indent, "✓ Reflection recorded".green());
@@ -218,7 +218,7 @@ fn audit_story(story: &crate::domain::model::Story, indent_level: usize) -> Resu
 
 fn audit_voyage(
     board: &Board,
-    voyage: &crate::domain::model::Voyage,
+    voyage: &keel::domain::model::Voyage,
     indent_level: usize,
 ) -> Result<()> {
     let indent = " ".repeat(indent_level);
@@ -226,7 +226,7 @@ fn audit_voyage(
     let stories = board.stories_for_voyage(voyage);
     let done_count = stories
         .iter()
-        .filter(|s| s.status == crate::domain::model::StoryState::Done)
+        .filter(|s| s.status == keel::domain::model::StoryState::Done)
         .count();
     let total_count = stories.len();
 
@@ -281,7 +281,7 @@ fn audit_voyage(
     Ok(())
 }
 
-fn audit_epic(board: &Board, epic: &crate::domain::model::Epic) -> Result<()> {
+fn audit_epic(board: &Board, epic: &keel::domain::model::Epic) -> Result<()> {
     let voyages = board.voyages_for_epic_id(epic.id());
 
     let mut total_stories = 0;
@@ -292,7 +292,7 @@ fn audit_epic(board: &Board, epic: &crate::domain::model::Epic) -> Result<()> {
         total_stories += stories.len();
         done_stories += stories
             .iter()
-            .filter(|s| s.status == crate::domain::model::StoryState::Done)
+            .filter(|s| s.status == keel::domain::model::StoryState::Done)
             .count();
     }
 
@@ -465,7 +465,7 @@ fn render_requirement_groups(board: &Board, entries: &[EvidenceEntry], indent_le
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use std::fs;
 
     #[test]

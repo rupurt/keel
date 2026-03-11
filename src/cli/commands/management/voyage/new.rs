@@ -6,16 +6,16 @@ use std::path::Path;
 use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 
-use crate::infrastructure::duplicate_ids::{self, DuplicateEntity};
-use crate::infrastructure::frontmatter_mutation::Mutation;
-use crate::infrastructure::loader::load_board;
-use crate::infrastructure::story_id::generate_story_id;
-use crate::infrastructure::template_rendering;
-use crate::infrastructure::templates;
+use keel::infrastructure::duplicate_ids::{self, DuplicateEntity};
+use keel::infrastructure::frontmatter_mutation::Mutation;
+use keel::infrastructure::loader::load_board;
+use keel::infrastructure::story_id::generate_story_id;
+use keel::infrastructure::template_rendering;
+use keel::infrastructure::templates;
 
 /// Create a new voyage
 pub fn run(name: &str, epic_id: &str, goal: &str) -> Result<()> {
-    let board_dir = crate::infrastructure::config::find_board_dir()?;
+    let board_dir = keel::infrastructure::config::find_board_dir()?;
     new_voyage(&board_dir, name, epic_id, goal)?;
     Ok(())
 }
@@ -34,7 +34,7 @@ fn new_voyage(board_dir: &Path, name: &str, epic_id: &str, goal: &str) -> Result
     }
 
     // Enforce Title Case
-    if !crate::infrastructure::utils::is_title_case(name) {
+    if !keel::infrastructure::utils::is_title_case(name) {
         return Err(anyhow!(
             "Voyage title '{}' must use Title Case (e.g. 'My Voyage Title')",
             name
@@ -138,7 +138,7 @@ fn new_voyage(board_dir: &Path, name: &str, epic_id: &str, goal: &str) -> Result
 }
 
 /// Find the next voyage number for an epic
-fn find_next_voyage_num(board: &crate::domain::model::Board, epic_id: &str) -> u32 {
+fn find_next_voyage_num(board: &keel::domain::model::Board, epic_id: &str) -> u32 {
     let voyages = board.voyages_for_epic_id(epic_id);
     let max_num = voyages
         .iter()
@@ -152,8 +152,8 @@ fn find_next_voyage_num(board: &crate::domain::model::Board, epic_id: &str) -> u
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::infrastructure::validation::{CheckId, structural};
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestVoyage};
+    use keel::infrastructure::validation::{CheckId, structural};
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestVoyage};
     use regex::Regex;
 
     #[test]
@@ -222,7 +222,7 @@ mod tests {
             .voyage(TestVoyage::new("01-v1", "test-epic").index(1))
             .voyage(TestVoyage::new("02-v2", "test-epic").index(2))
             .build();
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
 
         assert_eq!(find_next_voyage_num(&board, "test-epic"), 3);
     }

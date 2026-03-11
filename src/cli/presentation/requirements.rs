@@ -3,7 +3,7 @@
 use owo_colors::OwoColorize;
 
 use crate::cli::style;
-use crate::read_model::planning_show::{RequirementCompletion, RequirementKind, RequirementRow};
+use keel::read_model::planning_show::{RequirementCompletion, RequirementKind, RequirementRow};
 
 pub fn grouped_requirement_lines(rows: &[RequirementRow], empty_placeholder: &str) -> Vec<String> {
     let mut lines = Vec::new();
@@ -93,8 +93,8 @@ fn requirement_completion_icon(completion: RequirementCompletion) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::StoryState;
-    use crate::read_model::planning_show::StoryRef;
+    use keel::domain::model::StoryState;
+    use keel::read_model::planning_show::StoryRef;
 
     #[test]
     fn grouped_requirements_render_functional_before_non_functional() {

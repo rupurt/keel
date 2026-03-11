@@ -5,7 +5,7 @@ use owo_colors::OwoColorize;
 use crate::cli::commands::management::guidance::{
     CanonicalGuidance, CommandGuidance, render_command_guidance,
 };
-use crate::domain::model::StoryState;
+use keel::domain::model::StoryState;
 
 const DEFAULT_ACCEPT_ROLE: &str = "manager";
 

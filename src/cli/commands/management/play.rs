@@ -7,7 +7,7 @@ use std::path::Path;
 use anyhow::{Context, Result, bail};
 
 use super::play_guidance::{guidance_for_suggest, informational_for_exploration, print_human};
-use crate::infrastructure::markdown_sections::extract_section;
+use keel::infrastructure::markdown_sections::extract_section;
 
 /// Run the play command
 pub fn run(

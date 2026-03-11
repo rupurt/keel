@@ -7,7 +7,7 @@ use owo_colors::OwoColorize;
 
 /// Run the prune command.
 pub fn run(board_dir: &Path) -> Result<()> {
-    let catalog = crate::read_model::knowledge::prune_knowledge_catalog(board_dir)?;
+    let catalog = keel::read_model::knowledge::prune_knowledge_catalog(board_dir)?;
 
     println!("{}", "Knowledge prune complete".green().bold());
     println!("  Active knowledge entries: {}", catalog.units.len());

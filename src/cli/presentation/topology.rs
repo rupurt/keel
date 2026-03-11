@@ -5,8 +5,8 @@ use owo_colors::OwoColorize;
 use crate::cli::presentation::planning_lineage;
 use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::style;
-use crate::read_model::planning_show::ScopeDriftRow;
-use crate::read_model::topology::{
+use keel::read_model::planning_show::ScopeDriftRow;
+use keel::read_model::topology::{
     EpicTopologyEpic, EpicTopologyProjection, HorizonCommentary, HorizonCommentaryKind,
     KnowledgeAnnotationKind, StoryTopologyNode, TopologyKnowledgeAnnotation,
 };
@@ -272,7 +272,7 @@ fn epic_hotspots(epic: &EpicTopologyEpic) -> Vec<String> {
     hotspots
 }
 
-fn voyage_hotspots(voyage: &crate::read_model::topology::VoyageTopologyNode) -> Vec<String> {
+fn voyage_hotspots(voyage: &keel::read_model::topology::VoyageTopologyNode) -> Vec<String> {
     let mut hotspots: Vec<String> = voyage
         .show
         .scope_drift

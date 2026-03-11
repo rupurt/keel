@@ -28,7 +28,7 @@ pub use manifest::Manifest;
 pub use mission::{Mission, MissionFrontmatter};
 #[allow(unused_imports)] // Priority may be used for voyages in future
 pub use priority::Priority;
-pub use story::{Story, StoryFrontmatter};
+pub use story::{AC_REQ_RE, Story, StoryFrontmatter};
 pub use story_type::StoryType;
 pub use voyage::{Voyage, VoyageFrontmatter};
 

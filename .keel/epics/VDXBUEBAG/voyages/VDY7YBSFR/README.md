@@ -29,7 +29,7 @@ started_at: 2026-03-11T03:15:27
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Restructure Lib Rs For Layer Exports](../../../../stories/VDY7jCFN4/README.md) | refactor | backlog |
-| [Export Domain Ports In Public API](../../../../stories/VDY7jFvPQ/README.md) | refactor | backlog |
+| [Restructure Lib Rs For Layer Exports](../../../../stories/VDY7jCFN4/README.md) | refactor | needs-human-verification |
+| [Export Domain Ports In Public API](../../../../stories/VDY7jFvPQ/README.md) | refactor | in-progress |
 | [Audit And Stabilize Public Visibility Of Domain Models](../../../../stories/VDY7jJaQk/README.md) | refactor | done |
 <!-- END GENERATED -->

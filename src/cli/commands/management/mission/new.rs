@@ -6,15 +6,15 @@ use std::path::Path;
 use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 
-use crate::infrastructure::duplicate_ids::{self, DuplicateEntity};
-use crate::infrastructure::loader::load_board;
-use crate::infrastructure::story_id::generate_story_id;
-use crate::infrastructure::template_rendering;
-use crate::infrastructure::templates;
+use keel::infrastructure::duplicate_ids::{self, DuplicateEntity};
+use keel::infrastructure::loader::load_board;
+use keel::infrastructure::story_id::generate_story_id;
+use keel::infrastructure::template_rendering;
+use keel::infrastructure::templates;
 
 /// Create a new mission
 pub fn run(title: &str) -> Result<String> {
-    let board_dir = crate::infrastructure::config::find_board_dir()?;
+    let board_dir = keel::infrastructure::config::find_board_dir()?;
     new_mission(&board_dir, title)
 }
 
@@ -23,7 +23,7 @@ fn new_mission(board_dir: &Path, title: &str) -> Result<String> {
     duplicate_ids::ensure_unique_ids(board_dir, DuplicateEntity::Mission, "keel mission new")?;
 
     // Enforce Title Case
-    if !crate::infrastructure::utils::is_title_case(title) {
+    if !keel::infrastructure::utils::is_title_case(title) {
         return Err(anyhow!(
             "Mission title '{}' must use Title Case (e.g. 'My Mission Title')",
             title
@@ -113,7 +113,7 @@ fn new_mission(board_dir: &Path, title: &str) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::TestBoardBuilder;
+    use keel::test_helpers::TestBoardBuilder;
 
     #[test]
     fn mission_scaffold_creates_all_files() {

@@ -6,9 +6,9 @@ use std::path::Path;
 use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 
-use crate::infrastructure::config::find_board_dir;
-use crate::infrastructure::frontmatter_mutation::{Mutation, apply};
-use crate::infrastructure::loader::load_board;
+use keel::infrastructure::config::find_board_dir;
+use keel::infrastructure::frontmatter_mutation::{Mutation, apply};
+use keel::infrastructure::loader::load_board;
 
 /// Run the unlink command
 pub fn run(story_id: &str, voyage_id: &str) -> Result<()> {
@@ -66,7 +66,7 @@ fn remove_scope(content: &str) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
 
     #[test]
     fn unlink_removes_scope() {
@@ -76,7 +76,7 @@ mod tests {
             .story(
                 TestStory::new("FEAT0001")
                     .title("Linked Story")
-                    .status(crate::domain::model::StoryState::Backlog)
+                    .status(keel::domain::model::StoryState::Backlog)
                     .scope("test-epic/01-first"),
             )
             .build();

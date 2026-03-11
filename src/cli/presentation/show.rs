@@ -5,8 +5,8 @@
 use owo_colors::OwoColorize;
 
 use crate::cli::style;
-use crate::infrastructure::markdown_sections::SectionExcerpt;
-use crate::infrastructure::utils::visible_width;
+use keel::infrastructure::markdown_sections::SectionExcerpt;
+use keel::infrastructure::utils::visible_width;
 
 #[derive(Debug, Clone, Default)]
 pub struct ShowDocument {

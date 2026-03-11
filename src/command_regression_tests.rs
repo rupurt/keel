@@ -4,11 +4,11 @@
 //! transitions) so refactors preserve observed behavior.
 
 use crate::cli::commands::management::next::NextDecision;
-use crate::domain::model::StoryState;
-use crate::domain::policy::queue::{
+use keel::domain::model::StoryState;
+use keel::domain::policy::queue::{
     FLOW_VERIFY_BLOCK_THRESHOLD, HUMAN_NEXT_VERIFY_BLOCK_THRESHOLD,
 };
-use crate::test_helpers::{TestBoardBuilder, TestStory};
+use keel::test_helpers::{TestBoardBuilder, TestStory};
 use std::fs;
 
 fn board_with_verification_and_ready(verify_count: usize, ready_count: usize) -> tempfile::TempDir {
@@ -27,7 +27,7 @@ fn board_with_verification_and_ready(verify_count: usize, ready_count: usize) ->
 #[test]
 fn regression_next_and_flow_align_on_human_blocked_boundary() {
     let temp = board_with_verification_and_ready(HUMAN_NEXT_VERIFY_BLOCK_THRESHOLD, 1);
-    let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+    let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
 
     let next =
         crate::cli::commands::management::next::calculate_next(&board, temp.path(), false, &crate::cli::commands::management::next::ItemFilter::none())
@@ -37,7 +37,7 @@ fn regression_next_and_flow_align_on_human_blocked_boundary() {
         "human next should be blocked at policy threshold"
     );
 
-    let metrics = crate::read_model::flow_metrics::calculate_metrics(&board);
+    let metrics = keel::read_model::flow_metrics::calculate_metrics(&board);
     let health = crate::cli::presentation::flow::bottleneck::analyze_two_actor_health(&metrics);
     assert!(
         health.action_summary.to_lowercase().contains("blocked"),
@@ -48,7 +48,7 @@ fn regression_next_and_flow_align_on_human_blocked_boundary() {
 #[test]
 fn regression_next_and_flow_align_on_flow_blocked_boundary() {
     let temp = board_with_verification_and_ready(FLOW_VERIFY_BLOCK_THRESHOLD + 1, 1);
-    let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+    let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
 
     let next =
         crate::cli::commands::management::next::calculate_next(&board, temp.path(), false, &crate::cli::commands::management::next::ItemFilter::none())
@@ -58,7 +58,7 @@ fn regression_next_and_flow_align_on_flow_blocked_boundary() {
         "human next should be blocked when flow is verify-blocked"
     );
 
-    let metrics = crate::read_model::flow_metrics::calculate_metrics(&board);
+    let metrics = keel::read_model::flow_metrics::calculate_metrics(&board);
     let health = crate::cli::presentation::flow::bottleneck::analyze_two_actor_health(&metrics);
     assert!(
         health
@@ -95,7 +95,7 @@ fn regression_story_lifecycle_command_chain_reaches_done() {
     crate::cli::commands::management::story::accept::run(temp.path(), "REGCHAIN1", "manager", None)
         .unwrap();
 
-    let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+    let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
     let story = board.require_story("REGCHAIN1").unwrap();
     assert_eq!(story.status, StoryState::Done);
 

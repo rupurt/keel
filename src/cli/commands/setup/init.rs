@@ -3,7 +3,7 @@
 use anyhow::{Context, Result, anyhow};
 use std::path::Path;
 
-use crate::infrastructure::config::Config;
+use keel::infrastructure::config::Config;
 
 const INIT_SUBDIRS: [&str; 4] = ["stories", "epics", "bearings", "adrs"];
 

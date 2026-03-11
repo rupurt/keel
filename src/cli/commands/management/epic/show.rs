@@ -8,10 +8,10 @@ use crate::cli::presentation::planning_lineage;
 use crate::cli::presentation::progress::render_count_bar;
 use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::style;
-use crate::domain::model::{Board, Epic};
-use crate::infrastructure::loader::load_board;
-use crate::infrastructure::utils::cmp_optional_index_then_id;
-use crate::read_model::planning_show::{self, EpicShowProjection};
+use keel::domain::model::{Board, Epic};
+use keel::infrastructure::loader::load_board;
+use keel::infrastructure::utils::cmp_optional_index_then_id;
+use keel::read_model::planning_show::{self, EpicShowProjection};
 
 use std::fs;
 use std::path::Path;
@@ -29,7 +29,7 @@ const PRESS_RELEASE_GUIDANCE: &str = "optional; use for large user-facing value 
 
 /// Show epic details
 pub fn run(id: &str) -> Result<()> {
-    let board_dir = crate::infrastructure::config::find_board_dir()?;
+    let board_dir = keel::infrastructure::config::find_board_dir()?;
     run_with_dir(&board_dir, id)
 }
 
@@ -349,10 +349,10 @@ fn render_voyages(board: &Board, epic: &Epic) -> Option<ShowSection> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::StoryState;
-    use crate::domain::state_machine::invariants::{ScopeLineageIssue, ScopeLineageIssueKind};
-    use crate::infrastructure::loader::load_board;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use keel::domain::model::StoryState;
+    use keel::domain::state_machine::invariants::{ScopeLineageIssue, ScopeLineageIssueKind};
+    use keel::infrastructure::loader::load_board;
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use chrono::{Duration, Local, NaiveDate};
     use std::fs;
     use std::path::Path;

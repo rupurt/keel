@@ -20,7 +20,7 @@ pub mod unlink;
 use anyhow::Result;
 use clap::Subcommand;
 
-use crate::infrastructure::config::find_board_dir;
+use keel::infrastructure::config::find_board_dir;
 
 const STORY_STATUS_VALUES: &[&str] = &[
     "backlog",

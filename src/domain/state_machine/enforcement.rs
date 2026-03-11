@@ -530,7 +530,7 @@ mod tests {
             .story(
                 TestStory::new("STORY3")
                     .scope("test-epic/01-inprogress")
-                    .status(StoryState::Backlog)
+                    .status(StoryState::InProgress)
                     .body(
                         "- [x] [SRS-01/AC-01] Partial chain <!-- verify: manual, SRS-01:start -->",
                     ),
@@ -590,7 +590,7 @@ mod tests {
             .story(
                 TestStory::new("STORY4")
                     .scope("test-epic/01-inprogress")
-                    .status(StoryState::Backlog)
+                    .status(StoryState::InProgress)
                     .body(
                         "- [x] [SRS-01/AC-01] Partial chain <!-- verify: manual, SRS-01:start -->",
                     ),

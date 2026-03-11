@@ -4,9 +4,9 @@ use anyhow::Result;
 use std::path::Path;
 
 use super::super::types::{CheckId, Fix, GapCategory, Problem, Severity};
-use crate::domain::model::{Board, VoyageState};
-use crate::domain::state_machine::invariants;
-use crate::infrastructure::validation::structural;
+use keel::domain::model::{Board, VoyageState};
+use keel::domain::state_machine::invariants;
+use keel::infrastructure::validation::structural;
 
 pub struct VoyageScanResult {
     pub problems: Vec<Problem>,
@@ -190,8 +190,8 @@ pub fn check_voyage_title_case(board: &Board) -> Vec<Problem> {
 
     for voyage in board.voyages.values() {
         let title = &voyage.frontmatter.title;
-        if !crate::infrastructure::utils::is_title_case(title) {
-            let new_title = crate::infrastructure::utils::to_title_case(title);
+        if !keel::infrastructure::utils::is_title_case(title) {
+            let new_title = keel::infrastructure::utils::to_title_case(title);
             problems.push(Problem {
                 severity: Severity::Warning,
                 path: voyage.path.clone(),
@@ -253,9 +253,9 @@ pub fn check_voyage_press_release_artifacts(board: &Board) -> Vec<Problem> {
 
 /// Check for duplicate voyage IDs across all epics
 pub fn check_voyage_duplicates(board_dir: &Path) -> Vec<Problem> {
-    crate::infrastructure::duplicate_ids::duplicate_id_problems(
+    keel::infrastructure::duplicate_ids::duplicate_id_problems(
         board_dir,
-        crate::infrastructure::duplicate_ids::DuplicateEntity::Voyage,
+        keel::infrastructure::duplicate_ids::DuplicateEntity::Voyage,
     )
 }
 
@@ -300,8 +300,8 @@ pub fn check_voyage_id_consistency(board: &Board) -> Vec<Problem> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::StoryState;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use keel::domain::model::StoryState;
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
 
     #[test]
     fn status_drift_reports_backlog_story_in_draft_voyage() {
@@ -315,7 +315,7 @@ mod tests {
             .story(TestStory::new("S1").scope("e1/v1").status(StoryState::Backlog))
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_voyage_status_drift(&board);
 
         assert_eq!(problems.len(), 1);
@@ -336,7 +336,7 @@ mod tests {
             .story(TestStory::new("S1").scope("e1/v1").status(StoryState::Done))
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_voyage_status_drift(&board);
 
         assert_eq!(problems.len(), 1);
@@ -384,13 +384,13 @@ mod tests {
         )
         .unwrap();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let voyage = board.require_voyage("v1").unwrap();
 
-        let gate_messages: Vec<_> = crate::domain::state_machine::evaluate_voyage_transition(
+        let gate_messages: Vec<_> = keel::domain::state_machine::evaluate_voyage_transition(
             &board,
             voyage,
-            crate::domain::state_machine::VoyageTransition::Plan,
+            keel::domain::state_machine::VoyageTransition::Plan,
             true,
         )
         .into_iter()
@@ -434,7 +434,7 @@ mod tests {
         )
         .unwrap();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
 
         assert!(check_prd_lineage_coherence(&board).is_empty());
     }
@@ -530,7 +530,7 @@ mod tests {
         )
         .unwrap();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_scope_lineage_coherence(&board);
         let srs_path = temp.path().join("epics/e1/voyages/v1/SRS.md");
 
@@ -591,7 +591,7 @@ mod tests {
         )
         .unwrap();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_scope_lineage_coherence(&board);
         let srs_path = temp.path().join("epics/e1/voyages/v1/SRS.md");
 
@@ -639,7 +639,7 @@ mod tests {
         )
         .unwrap();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_scope_lineage_coherence(&board);
 
         assert!(problems.iter().any(|problem| {
@@ -662,7 +662,7 @@ mod tests {
             .story(TestStory::new("S1").scope("e1/v1").status(StoryState::Backlog))
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_voyage_status_drift(&board);
         assert!(problems.is_empty());
     }
@@ -699,7 +699,7 @@ mod tests {
         )
         .unwrap();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_scope_lineage_coherence(&board);
 
         assert!(problems.is_empty(), "{problems:#?}");
@@ -723,7 +723,7 @@ mod tests {
             ))
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_scope_authored_content(&board);
 
         assert_eq!(problems.len(), 2);
@@ -776,7 +776,7 @@ mod tests {
             .story(TestStory::new("S2").scope("e1/v1").status(StoryState::Backlog))
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_voyage_status_drift(&board);
         assert!(
             problems.is_empty(),
@@ -797,7 +797,7 @@ mod tests {
             .story(TestStory::new("S2").scope("e1/v1").status(StoryState::Done))
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_voyage_status_drift(&board);
 
         assert_eq!(problems.len(), 1);
@@ -820,7 +820,7 @@ mod tests {
         let press_release = temp.path().join("epics/e1/voyages/v1/PRESS_RELEASE.md");
         std::fs::write(&press_release, "# Voyage press release").unwrap();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_voyage_press_release_artifacts(&board);
         assert_eq!(problems.len(), 1);
         assert_eq!(problems[0].check_id, CheckId::VoyageUnexpectedPressRelease);
@@ -838,7 +838,7 @@ mod tests {
             .voyage(TestVoyage::new("v1", "e1"))
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_voyage_press_release_artifacts(&board);
         assert!(problems.is_empty());
     }
@@ -859,7 +859,7 @@ mod tests {
             ))
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_srs_authored_requirements(&board);
         assert_eq!(problems.len(), 1);
         assert!(problems[0].message.contains("Functional Requirements"));
@@ -881,7 +881,7 @@ mod tests {
             ))
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_srs_authored_requirements(&board);
         assert!(problems.is_empty());
     }
@@ -909,7 +909,7 @@ mod tests {
         )
         .unwrap();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_sdd_authored_content(&board);
         assert_eq!(problems.len(), 1);
         assert!(problems[0].message.contains("authored design content"));
@@ -934,7 +934,7 @@ mod tests {
         )
         .unwrap();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_sdd_authored_content(&board);
         assert!(problems.is_empty());
     }

@@ -4,10 +4,10 @@ use std::path::Path;
 
 use anyhow::Result;
 
-use crate::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
-use crate::infrastructure::config::find_board_dir;
+use keel::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
+use keel::infrastructure::config::find_board_dir;
 #[cfg(test)]
-use crate::infrastructure::loader::load_board;
+use keel::infrastructure::loader::load_board;
 
 use super::guidance::{VoyageLifecycleAction, guidance_for_action, print_human};
 
@@ -44,7 +44,7 @@ pub fn run_with_options(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestVoyage};
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestVoyage};
     use std::fs;
 
     fn write_prd(temp: &tempfile::TempDir, epic_id: &str, content: &str) {
@@ -124,7 +124,7 @@ mod tests {
 
     #[test]
     fn start_voyage_blocks_on_uncovered_requirements() {
-        use crate::test_helpers::TestStory;
+        use keel::test_helpers::TestStory;
 
         let srs = scoped_srs(&[("SRS-01", "FR-01"), ("SRS-02", "FR-02")]);
 
@@ -184,7 +184,7 @@ mod tests {
 
     #[test]
     fn start_voyage_allows_when_all_requirements_covered() {
-        use crate::test_helpers::TestStory;
+        use keel::test_helpers::TestStory;
 
         let srs = scoped_srs(&[("SRS-01", "FR-01")]);
 
@@ -235,7 +235,7 @@ mod tests {
 
     #[test]
     fn start_voyage_force_bypasses_coverage_check() {
-        use crate::test_helpers::TestStory;
+        use keel::test_helpers::TestStory;
 
         let srs = scoped_srs(&[("SRS-01", "FR-01"), ("SRS-02", "FR-02")]);
 
@@ -287,8 +287,8 @@ mod tests {
 
     #[test]
     fn start_voyage_fails_with_in_progress_story() {
-        use crate::domain::model::StoryState;
-        use crate::test_helpers::TestStory;
+        use keel::domain::model::StoryState;
+        use keel::test_helpers::TestStory;
 
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
@@ -313,8 +313,8 @@ mod tests {
 
     #[test]
     fn start_voyage_fails_with_needs_verification_story() {
-        use crate::domain::model::StoryState;
-        use crate::test_helpers::TestStory;
+        use keel::domain::model::StoryState;
+        use keel::test_helpers::TestStory;
 
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
@@ -339,8 +339,8 @@ mod tests {
 
     #[test]
     fn start_voyage_succeeds_with_done_story() {
-        use crate::domain::model::StoryState;
-        use crate::test_helpers::TestStory;
+        use keel::domain::model::StoryState;
+        use keel::test_helpers::TestStory;
 
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
@@ -363,8 +363,8 @@ mod tests {
 
     #[test]
     fn start_voyage_succeeds_with_backlog_and_icebox_stories() {
-        use crate::domain::model::StoryState;
-        use crate::test_helpers::TestStory;
+        use keel::domain::model::StoryState;
+        use keel::test_helpers::TestStory;
 
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))
@@ -392,8 +392,8 @@ mod tests {
 
     #[test]
     fn start_voyage_error_lists_problematic_stories() {
-        use crate::domain::model::StoryState;
-        use crate::test_helpers::TestStory;
+        use keel::domain::model::StoryState;
+        use keel::test_helpers::TestStory;
 
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("test-epic"))

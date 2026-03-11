@@ -9,11 +9,11 @@ use clap::Subcommand;
 use serde::Serialize;
 
 use crate::cli::commands::diagnostics::doctor::catalog::ALL_DOCTOR_CHECKS;
-use crate::infrastructure::config::{self, Config};
-use crate::infrastructure::loader::load_board;
-use crate::infrastructure::verification::parser::parse_verify_annotations;
-use crate::infrastructure::{bearing_research, config::ConfigSource};
-use crate::read_model::{verification_techniques, workflow_topology};
+use keel::infrastructure::config::{self, Config};
+use keel::infrastructure::loader::load_board;
+use keel::infrastructure::verification::parser::parse_verify_annotations;
+use keel::infrastructure::{bearing_research, config::ConfigSource};
+use keel::read_model::{verification_techniques, workflow_topology};
 
 #[derive(Subcommand, Debug)]
 pub enum ConfigAction {
@@ -535,9 +535,9 @@ pub fn run_mode(name: Option<String>) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::StoryState;
-    use crate::infrastructure::config::{LaneConfig, RoleFamilyConfig, RoleOverrideConfig};
-    use crate::test_helpers::{TestBoardBuilder, TestStory};
+    use keel::domain::model::StoryState;
+    use keel::infrastructure::config::{LaneConfig, RoleFamilyConfig, RoleOverrideConfig};
+    use keel::test_helpers::{TestBoardBuilder, TestStory};
     use std::fs;
     use tempfile::TempDir;
 
@@ -835,10 +835,10 @@ enable = ["llm-judge"]
     #[test]
     fn config_show_marks_disabled_doctor_checks() {
         let config = Config {
-            doctor: crate::infrastructure::config::DoctorConfig {
+            doctor: keel::infrastructure::config::DoctorConfig {
                 checks: std::collections::HashMap::from([(
                     "voyage-scope-authored-content".to_string(),
-                    crate::infrastructure::config::DoctorCheckOverride { disabled: true },
+                    keel::infrastructure::config::DoctorCheckOverride { disabled: true },
                 )]),
             },
             ..Config::default()

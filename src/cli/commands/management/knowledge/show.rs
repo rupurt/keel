@@ -6,11 +6,11 @@ use std::path::Path;
 
 use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::style;
-use crate::read_model::knowledge::scanner;
+use keel::read_model::knowledge::scanner;
 
 /// Show detailed information for a single knowledge unit
 pub fn run(board_dir: &Path, id: &str) -> Result<()> {
-    if !crate::read_model::knowledge::is_canonical_knowledge_id(id) {
+    if !keel::read_model::knowledge::is_canonical_knowledge_id(id) {
         return Err(anyhow!(
             "Knowledge show expects a canonical global ID (9-character base62): {}",
             id

@@ -7,8 +7,8 @@ use crate::cli::commands::management::capability_map::{
 };
 use crate::cli::commands::management::guidance::{CanonicalGuidance, CommandGuidance};
 use crate::cli::commands::management::story::guidance::next_command_for_state;
-use crate::domain::model::StoryState;
-use crate::infrastructure::verification::VerificationReport;
+use keel::domain::model::StoryState;
+use keel::infrastructure::verification::VerificationReport;
 
 /// Build canonical guidance for a single-story verify outcome.
 pub fn guidance_for_verify_story(
@@ -119,7 +119,7 @@ mod tests {
     use anyhow::anyhow;
     use serde_json::json;
 
-    use crate::infrastructure::verification::VerificationResult;
+    use keel::infrastructure::verification::VerificationResult;
 
     fn report_for(story_id: &str, passed: bool) -> VerificationReport {
         VerificationReport {

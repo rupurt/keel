@@ -3,7 +3,7 @@
 
 use chrono::NaiveDate;
 
-use crate::domain::model::Board;
+use keel::domain::model::Board;
 
 /// Get the last completion date for stories in a given scope
 ///
@@ -32,8 +32,8 @@ pub fn staleness_score(board: &Board, scope: &str, today: NaiveDate) -> u32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::StoryState;
-    use crate::test_helpers::StoryFactory;
+    use keel::domain::model::StoryState;
+    use keel::test_helpers::StoryFactory;
     use std::collections::HashMap;
     use std::path::PathBuf;
 
@@ -42,7 +42,7 @@ mod tests {
         scope: &str,
         status: StoryState,
         completed_at: Option<NaiveDate>,
-    ) -> crate::domain::model::Story {
+    ) -> keel::domain::model::Story {
         let mut factory = StoryFactory::new(id).scope(scope).status(status);
         if let Some(date) = completed_at {
             factory = factory.completed_at(date.and_hms_opt(12, 0, 0).unwrap());
@@ -50,7 +50,7 @@ mod tests {
         factory.build()
     }
 
-    fn make_board(stories: Vec<crate::domain::model::Story>) -> Board {
+    fn make_board(stories: Vec<keel::domain::model::Story>) -> Board {
         let mut story_map = HashMap::new();
         for s in stories {
             story_map.insert(s.id().to_string(), s);

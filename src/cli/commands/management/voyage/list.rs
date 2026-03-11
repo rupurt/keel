@@ -1,8 +1,8 @@
 //! List voyages command
 
 use crate::cli::table::Table;
-use crate::domain::model::{Board, Voyage};
-use crate::infrastructure::loader::load_board;
+use keel::domain::model::{Board, Voyage};
+use keel::infrastructure::loader::load_board;
 use anyhow::Result;
 
 const DEFAULT_VOYAGE_STATUSES: &[&str] = &["draft", "planned", "in-progress"];
@@ -35,7 +35,7 @@ pub fn doc_status(voyage_dir: &std::path::Path, filename: &str) -> &'static str 
 
 /// List voyages with optional filters
 pub fn run(epic: Option<&str>, status_filters: &[String]) -> Result<()> {
-    let board_dir = crate::infrastructure::config::find_board_dir()?;
+    let board_dir = keel::infrastructure::config::find_board_dir()?;
     let board = load_board(&board_dir)?;
     let status_filter = crate::cli::commands::management::status_filter::resolve_status_filter(
         status_filters,
@@ -79,7 +79,7 @@ pub fn run(epic: Option<&str>, status_filters: &[String]) -> Result<()> {
         let stories = board.stories_for_voyage(v);
         let done = stories
             .iter()
-            .filter(|s| s.status == crate::domain::model::StoryState::Done)
+            .filter(|s| s.status == keel::domain::model::StoryState::Done)
             .count();
         let total = stories.len();
         let story_count = format!("{}/{}", done, total);
@@ -165,7 +165,7 @@ fn collect_voyages<'a>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestVoyage};
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestVoyage};
 
     #[test]
     fn test_list_voyages_filtering() {

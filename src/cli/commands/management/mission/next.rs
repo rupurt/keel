@@ -2,14 +2,14 @@ use anyhow::Result;
 use std::collections::BTreeSet;
 use owo_colors::OwoColorize;
 
-use crate::infrastructure::loader::load_board;
-use crate::read_model::workflow_topology;
+use keel::infrastructure::loader::load_board;
+use keel::read_model::workflow_topology;
 use crate::cli::commands::management::next_support::{calculate_next, format_decision, ItemFilter};
-use crate::domain::model::MissionStatus;
+use keel::domain::model::MissionStatus;
 
 /// Run the mission next command
 pub fn run(mission_id: &str) -> Result<()> {
-    let board_dir = crate::infrastructure::config::find_board_dir()?;
+    let board_dir = keel::infrastructure::config::find_board_dir()?;
     let board = load_board(&board_dir)?;
     
     let mission = board.require_mission(mission_id)?;
@@ -33,12 +33,12 @@ pub fn run(mission_id: &str) -> Result<()> {
     let mut found_any = false;
 
     for role_name in role_families {
-        let role_taxonomy = crate::domain::model::taxonomy::parse(&role_name)?;
+        let role_taxonomy = keel::domain::model::taxonomy::parse(&role_name)?;
         let actor_context = topology.resolve_actor_context(&role_taxonomy)?;
         
         let agent_mode = matches!(
             actor_context.queue_lane,
-            crate::read_model::queue_policy::ActorQueueLane::Execution
+            keel::read_model::queue_policy::ActorQueueLane::Execution
         );
 
         let filter = ItemFilter {

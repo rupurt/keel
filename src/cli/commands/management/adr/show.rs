@@ -5,8 +5,8 @@ use owo_colors::OwoColorize;
 
 use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::style;
-use crate::infrastructure::config::find_board_dir;
-use crate::infrastructure::loader::load_board;
+use keel::infrastructure::config::find_board_dir;
+use keel::infrastructure::loader::load_board;
 
 use super::guidance;
 

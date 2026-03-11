@@ -8,11 +8,11 @@ use std::path::Path;
 
 use crate::cli::presentation::show::{ShowDocument, ShowExcerptLimits, ShowKeyValues, ShowSection};
 use crate::cli::style;
-use crate::domain::model::BearingStatus;
-use crate::infrastructure::config::{find_board_dir, load_config};
-use crate::infrastructure::loader::load_board;
-use crate::infrastructure::scoring::{load_assessment, load_bearing_score};
-use crate::read_model::bearing_show::{
+use keel::domain::model::BearingStatus;
+use keel::infrastructure::config::{find_board_dir, load_config};
+use keel::infrastructure::loader::load_board;
+use keel::infrastructure::scoring::{load_assessment, load_bearing_score};
+use keel::read_model::bearing_show::{
     self, BearingAssessmentSummary, BearingBriefSummary, BearingEvidenceSourceSummary,
     BearingEvidenceSummary,
 };
@@ -143,7 +143,7 @@ pub fn run(pattern: &str) -> Result<()> {
     Ok(())
 }
 
-fn render_documents_section(bearing: &crate::domain::model::Bearing) -> ShowSection {
+fn render_documents_section(bearing: &keel::domain::model::Bearing) -> ShowSection {
     let mut section = ShowSection::new("Documents");
     let documents = bearing_document_inventory(bearing);
     let unauthored_documents: Vec<&str> = documents
@@ -253,7 +253,7 @@ fn render_assessment_section(
     assessment_path: &Path,
     summary: Option<&BearingAssessmentSummary>,
     mode: &str,
-    weights: &crate::infrastructure::config::ModeWeights,
+    weights: &keel::infrastructure::config::ModeWeights,
 ) -> ShowSection {
     let mut section = ShowSection::new("Assessment");
     let Some(summary) = summary else {
@@ -331,7 +331,7 @@ fn render_assessment_section(
 }
 
 fn bearing_document_inventory(
-    bearing: &crate::domain::model::Bearing,
+    bearing: &keel::domain::model::Bearing,
 ) -> Vec<(&'static str, bool)> {
     BEARING_DOCUMENTS
         .into_iter()
@@ -405,9 +405,9 @@ mod tests {
         render_documents_section, render_evidence_section,
     };
     use crate::cli::presentation::show::{ShowDocument, ShowKeyValues};
-    use crate::infrastructure::config::ModeWeights;
-    use crate::infrastructure::markdown_sections::SectionExcerpt;
-    use crate::test_helpers::BearingFactory;
+    use keel::infrastructure::config::ModeWeights;
+    use keel::infrastructure::markdown_sections::SectionExcerpt;
+    use keel::test_helpers::BearingFactory;
     use std::path::Path;
 
     fn render_lines(section: crate::cli::presentation::show::ShowSection) -> Vec<String> {
@@ -733,7 +733,7 @@ mod tests {
     #[test]
     fn bearing_show_renders_lineage_fields_when_present() {
         let bearing = BearingFactory::new("BRG-01")
-            .status(crate::domain::model::BearingStatus::Laid)
+            .status(keel::domain::model::BearingStatus::Laid)
             .has_evidence(true)
             .has_assessment(true)
             .epic("BRG-01")
@@ -772,7 +772,7 @@ mod tests {
     #[test]
     fn bearing_show_omits_lineage_fields_when_absent() {
         let bearing = BearingFactory::new("BRG-02")
-            .status(crate::domain::model::BearingStatus::Exploring)
+            .status(keel::domain::model::BearingStatus::Exploring)
             .build();
 
         let mut metadata = ShowKeyValues::new().with_min_label_width(9);
@@ -805,7 +805,7 @@ mod tests {
     #[test]
     fn bearing_show_renders_unknown_lineage_values_without_truncation() {
         let bearing = BearingFactory::new("BRG-03")
-            .status(crate::domain::model::BearingStatus::Laid)
+            .status(keel::domain::model::BearingStatus::Laid)
             .epic("some-unexpected-legacy-epic-id-that-is-very-long")
             .goals(vec!["UNKNOWN-GOAL-REF", "LEGACY-01"])
             .build();

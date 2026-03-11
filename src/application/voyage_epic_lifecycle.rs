@@ -80,7 +80,10 @@ impl VoyageEpicLifecycleService {
 
         println!("Started voyage: {}", voyage.id());
 
-        crate::cli::commands::generate::run(board_dir)?;
+        crate::infrastructure::generate::sync_board_artifacts(
+            &board,
+            &crate::infrastructure::generate::BoardArtifactSyncOptions::default(),
+        )?;
 
         Ok(())
     }

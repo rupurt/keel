@@ -5,7 +5,7 @@
 
 use chrono::{Datelike, Local, NaiveDate};
 
-use crate::domain::model::Board;
+use keel::domain::model::Board;
 
 /// Throughput metrics over time
 #[allow(dead_code)] // Planned feature (voyage 16)
@@ -187,7 +187,7 @@ fn generate_months(from: NaiveDate, months: usize) -> Vec<(i32, u32)> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::{
+    use keel::domain::model::{
         Bearing, BearingFrontmatter, BearingStatus, Story, StoryFrontmatter, StoryState, StoryType,
     };
     use std::path::PathBuf;

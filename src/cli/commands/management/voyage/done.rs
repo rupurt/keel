@@ -2,8 +2,8 @@
 
 use std::path::Path;
 
-use crate::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
-use crate::infrastructure::config::find_board_dir;
+use keel::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
+use keel::infrastructure::config::find_board_dir;
 use anyhow::Result;
 
 use super::guidance::{VoyageLifecycleAction, guidance_for_action, print_human};
@@ -36,7 +36,7 @@ pub fn run_with_dir(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use std::fs;
 
     #[test]
@@ -105,7 +105,7 @@ END FUNCTIONAL_REQUIREMENTS
             .story(
                 TestStory::new("EVID1")
                     .title("Evidence Story")
-                    .status(crate::domain::model::StoryState::InProgress)
+                    .status(keel::domain::model::StoryState::InProgress)
                     .scope("evidence-epic/01-evidence")
                     .body(
                         "- [x] [SRS-01/AC-01] Validate end-only evidence <!-- verify: echo evidence-ready SRS-01:end -->\n",
@@ -158,9 +158,9 @@ END FUNCTIONAL_REQUIREMENTS
 
         run_with_dir(temp.path(), "02-in-progress", None, None, None).unwrap();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let epic = board.require_epic("test-epic").unwrap();
-        assert_eq!(epic.status(), crate::domain::model::EpicState::Done);
+        assert_eq!(epic.status(), keel::domain::model::EpicState::Done);
 
         let content = fs::read_to_string(temp.path().join("epics/test-epic/README.md")).unwrap();
         assert!(!content.contains("\nstatus:"));
@@ -178,9 +178,9 @@ END FUNCTIONAL_REQUIREMENTS
 
         run_with_dir(temp.path(), "02-in-progress", None, None, None).unwrap();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let epic = board.require_epic("test-epic").unwrap();
-        assert_eq!(epic.status(), crate::domain::model::EpicState::Active);
+        assert_eq!(epic.status(), keel::domain::model::EpicState::Active);
     }
 
     #[test]
@@ -192,7 +192,7 @@ END FUNCTIONAL_REQUIREMENTS
                 TestStory::new("S1")
                     .title("Story 1")
                     .scope("release-epic/01-release")
-                    .status(crate::domain::model::StoryState::Done)
+                    .status(keel::domain::model::StoryState::Done)
                     .body("## Summary\nThis is story 1 summary.\n"),
             )
             .build();
@@ -223,7 +223,7 @@ END FUNCTIONAL_REQUIREMENTS
                 TestStory::new("R1")
                     .title("Report Story")
                     .scope("report-epic/01-report")
-                    .status(crate::domain::model::StoryState::Done),
+                    .status(keel::domain::model::StoryState::Done),
             )
             .build();
 
@@ -256,7 +256,7 @@ END FUNCTIONAL_REQUIREMENTS
                 TestStory::new("D1")
                     .title("Docs Story")
                     .scope("docs-epic/01-docs")
-                    .status(crate::domain::model::StoryState::Done),
+                    .status(keel::domain::model::StoryState::Done),
             )
             .build();
 

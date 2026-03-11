@@ -6,7 +6,7 @@ use super::{
 };
 use owo_colors::OwoColorize;
 
-fn story_header(story: &crate::domain::model::Story) -> String {
+fn story_header(story: &keel::domain::model::Story) -> String {
     format!(
         "{} {}",
         crate::cli::style::styled_story_id(story.id()),
@@ -241,7 +241,7 @@ fn format_mission(d: &super::MissionDecision) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::{StoryState, Story, StoryFrontmatter, StoryType, Voyage, VoyageFrontmatter, VoyageState};
+    use keel::domain::model::{StoryState, Story, StoryFrontmatter, StoryType, Voyage, VoyageFrontmatter, VoyageState};
     use std::path::PathBuf;
 
     fn make_test_story(id: &str, title: &str, status: StoryState) -> Story {
@@ -309,17 +309,18 @@ mod tests {
             warning: Some("Warning!".to_string()),
         });
         let formatted = format_decision(&decision);
-        assert!(formatted.contains("Continue work on existing story"));
+        assert!(formatted.contains("Continue"));
+        assert!(formatted.contains("work on existing story"));
         assert!(formatted.contains("Warning!"));
     }
 
     #[test]
     fn test_format_proposed_adrs() {
-        let adr = crate::domain::model::Adr {
-            frontmatter: crate::domain::model::AdrFrontmatter {
+        let adr = keel::domain::model::Adr {
+            frontmatter: keel::domain::model::AdrFrontmatter {
                 id: "ADR1".to_string(),
                 title: "ADR 1".to_string(),
-                status: crate::domain::model::AdrStatus::Proposed,
+                status: keel::domain::model::AdrStatus::Proposed,
                 context: None,
                 applies_to: vec![],
                 mission: None,
@@ -354,11 +355,11 @@ mod tests {
 
     #[test]
     fn test_format_research() {
-        let bearing = crate::domain::model::Bearing {
-            frontmatter: crate::domain::model::BearingFrontmatter {
+        let bearing = keel::domain::model::Bearing {
+            frontmatter: keel::domain::model::BearingFrontmatter {
                 id: "B1".to_string(),
                 title: "Bearing 1".to_string(),
-                status: crate::domain::model::BearingStatus::Exploring,
+                status: keel::domain::model::BearingStatus::Exploring,
                 index: None,
                 created_at: None,
                 decline_reason: None,

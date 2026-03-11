@@ -2,12 +2,18 @@
 
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
+use std::sync::LazyLock;
 
 use chrono::NaiveDateTime;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 use super::{Entity, StoryState, StoryType, deserialize_strict_datetime};
 use crate::domain::model::taxonomy::{self, ParseError, RoleTaxonomy};
+
+/// Regex for validating [SRS-XX/AC-YY] markers in acceptance criteria
+pub static AC_REQ_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\[(SRS-[A-Z0-9-]+)/AC-\d+\]").unwrap());
 
 /// Story frontmatter from YAML
 #[derive(Debug, Clone, Serialize, Deserialize)]

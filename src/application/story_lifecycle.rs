@@ -187,7 +187,10 @@ impl StoryLifecycleService {
             println!("  Moved to: needs-human-verification");
         }
 
-        crate::cli::commands::generate::run(board_dir)?;
+        crate::infrastructure::generate::sync_board_artifacts(
+            &board,
+            &crate::infrastructure::generate::BoardArtifactSyncOptions::default(),
+        )?;
 
         Ok(())
     }
@@ -269,7 +272,10 @@ impl StoryLifecycleService {
             },
         )?;
 
-        crate::cli::commands::generate::run(board_dir)?;
+        crate::infrastructure::generate::sync_board_artifacts(
+            &board,
+            &crate::infrastructure::generate::BoardArtifactSyncOptions::default(),
+        )?;
 
         Ok(())
     }
@@ -492,7 +498,7 @@ fn materialize_story_reflection_knowledge(board_dir: &Path, story: &Story) -> Re
 }
 
 #[allow(dead_code)]
-pub(crate) fn is_relevant_knowledge(
+pub fn is_relevant_knowledge(
     knowledge: &crate::read_model::knowledge::Knowledge,
     epic_id: Option<&str>,
     scope: Option<&str>,
@@ -513,7 +519,7 @@ pub(crate) fn is_relevant_knowledge(
     false
 }
 
-pub(crate) fn append_rejection(story_path: &Path, reason: &str) -> Result<()> {
+pub fn append_rejection(story_path: &Path, reason: &str) -> Result<()> {
     let today = chrono::Local::now().format("%Y-%m-%d").to_string();
     let content = fs::read_to_string(story_path)
         .with_context(|| format!("Failed to read story: {}", story_path.display()))?;

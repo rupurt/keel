@@ -5,7 +5,7 @@ use owo_colors::OwoColorize;
 use std::path::Path;
 
 use crate::cli::table::Table;
-use crate::read_model::knowledge::{Knowledge, KnowledgeSort, KnowledgeSourceType, scanner};
+use keel::read_model::knowledge::{Knowledge, KnowledgeSort, KnowledgeSourceType, scanner};
 
 const UNKNOWN_SCOPE_SEGMENT: &str = "-";
 const UNKNOWN_STORY_SORT_KEY: &str = "~";
@@ -50,7 +50,7 @@ pub fn run(
 
     let mut table = Table::new(&["ID", "SCOPE", "CAT", "TITLE", "SOURCE", "STATUS"]);
     for k in &knowledge_list {
-        let k: &crate::read_model::knowledge::Knowledge = k;
+        let k: &keel::read_model::knowledge::Knowledge = k;
         let status = if k.is_applied() {
             "applied".green().to_string()
         } else {

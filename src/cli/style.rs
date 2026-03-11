@@ -11,11 +11,11 @@ use syntect::highlighting::ThemeSet;
 use syntect::parsing::SyntaxSet;
 use syntect::util::{LinesWithEndings, as_24_bit_terminal_escaped};
 
-use crate::domain::model::EpicState;
-use crate::domain::model::StoryState;
-use crate::domain::model::StoryType;
-use crate::domain::state_machine::mission::MissionStatus;
-use crate::domain::state_machine::voyage::VoyageState;
+use keel::domain::model::EpicState;
+use keel::domain::model::StoryState;
+use keel::domain::model::StoryType;
+use keel::domain::state_machine::mission::MissionStatus;
+use keel::domain::state_machine::voyage::VoyageState;
 
 /// Regex for SRS requirement references like [SRS-01/AC-01]
 pub static AC_REQ_RE: LazyLock<Regex> =
@@ -302,7 +302,7 @@ pub fn capacity_progress_bar(
 /// Color an evidence chain entry by phase.
 /// Bookend phases (`:start`, `:end`, `:start:end`) get cyan.
 /// `:continues` phases get dimmed to visually nest under bookends.
-pub fn styled_evidence_entry(entry: &crate::read_model::evidence::EvidenceEntry) -> String {
+pub fn styled_evidence_entry(entry: &keel::read_model::evidence::EvidenceEntry) -> String {
     let line = format!(
         ":{} [{}] - \"{}\"",
         entry.phase,
@@ -1020,7 +1020,7 @@ mod tests {
 
     #[test]
     fn styled_evidence_entry_start_has_cyan() {
-        let entry = crate::read_model::evidence::EvidenceEntry {
+        let entry = keel::read_model::evidence::EvidenceEntry {
             requirement_id: "SRS-01".into(),
             story_id: "ABC".into(),
             story_title: "My Story".into(),
@@ -1039,7 +1039,7 @@ mod tests {
 
     #[test]
     fn styled_evidence_entry_continues_is_dimmed() {
-        let entry = crate::read_model::evidence::EvidenceEntry {
+        let entry = keel::read_model::evidence::EvidenceEntry {
             requirement_id: "SRS-01".into(),
             story_id: "ABC".into(),
             story_title: "My Story".into(),
@@ -1060,7 +1060,7 @@ mod tests {
 
     #[test]
     fn styled_evidence_entry_end_has_cyan() {
-        let entry = crate::read_model::evidence::EvidenceEntry {
+        let entry = keel::read_model::evidence::EvidenceEntry {
             requirement_id: "SRS-01".into(),
             story_id: "XYZ".into(),
             story_title: "Final".into(),
@@ -1077,14 +1077,14 @@ mod tests {
     fn rule_renders_correct_length() {
         let r = rule(10, None);
         // Dimmed rule contains ANSI + 10 chars + reset
-        assert_eq!(crate::infrastructure::utils::visible_width(&r), 10);
+        assert_eq!(keel::infrastructure::utils::visible_width(&r), 10);
     }
 
     #[test]
     fn heavy_rule_renders_correct_chars() {
         let r = heavy_rule(5, None);
         assert!(r.contains('═'));
-        assert_eq!(crate::infrastructure::utils::visible_width(&r), 5);
+        assert_eq!(keel::infrastructure::utils::visible_width(&r), 5);
     }
 
     #[test]

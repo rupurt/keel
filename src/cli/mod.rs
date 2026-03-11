@@ -16,5 +16,5 @@ pub use runtime::run;
 
 /// Resolve board directory for CLI command execution.
 pub fn resolve_board_dir() -> Result<PathBuf> {
-    crate::infrastructure::config::find_board_dir()
+    keel::infrastructure::config::find_board_dir()
 }

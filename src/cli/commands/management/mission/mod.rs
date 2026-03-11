@@ -80,43 +80,43 @@ pub enum MissionAction {
 
 /// Run a mission action
 pub fn run(action: MissionAction) -> Result<()> {
-    let board_dir = crate::infrastructure::config::find_board_dir()?;
+    let board_dir = keel::infrastructure::config::find_board_dir()?;
     match action {
         MissionAction::New { title } => run_new(&title),
         MissionAction::List => list::run(),
         MissionAction::Show { id, json } => show::run(&id, json),
         MissionAction::Next { id } => next::run(&id),
         MissionAction::Refine { id, answer } => {
-            crate::application::mission_lifecycle::MissionLifecycleService::refine(
+            keel::application::mission_lifecycle::MissionLifecycleService::refine(
                 &board_dir,
                 &id,
                 answer.as_deref(),
             )
         }
         MissionAction::Activate { id } => {
-            crate::application::mission_lifecycle::MissionLifecycleService::activate(
+            keel::application::mission_lifecycle::MissionLifecycleService::activate(
                 &board_dir, &id,
             )
         }
         MissionAction::Pause { id } => {
-            crate::application::mission_lifecycle::MissionLifecycleService::pause(&board_dir, &id)
+            keel::application::mission_lifecycle::MissionLifecycleService::pause(&board_dir, &id)
         }
         MissionAction::Achieve { id } => {
-            crate::application::mission_lifecycle::MissionLifecycleService::achieve(&board_dir, &id)
+            keel::application::mission_lifecycle::MissionLifecycleService::achieve(&board_dir, &id)
         }
         MissionAction::Verify { id } => {
-            crate::application::mission_lifecycle::MissionLifecycleService::verify(&board_dir, &id)
+            keel::application::mission_lifecycle::MissionLifecycleService::verify(&board_dir, &id)
         }
         MissionAction::Abandon { id } => {
-            crate::application::mission_lifecycle::MissionLifecycleService::abandon(&board_dir, &id)
+            keel::application::mission_lifecycle::MissionLifecycleService::abandon(&board_dir, &id)
         }
         MissionAction::Log { id, entry } => {
-            crate::application::mission_lifecycle::MissionLifecycleService::log(
+            keel::application::mission_lifecycle::MissionLifecycleService::log(
                 &board_dir, &id, &entry,
             )
         }
         MissionAction::Digest { id } => {
-            crate::application::mission_lifecycle::MissionLifecycleService::digest(&board_dir, &id)
+            keel::application::mission_lifecycle::MissionLifecycleService::digest(&board_dir, &id)
         }
     }
 }

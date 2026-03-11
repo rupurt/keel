@@ -4,8 +4,8 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 
 use crate::cli::commands::management::next_support::parallel_scoring::PairwiseConflictScore;
-use crate::domain::model::Story;
-use crate::domain::policy::queue::compare_work_item_ids;
+use keel::domain::model::Story;
+use keel::domain::policy::queue::compare_work_item_ids;
 
 /// Global confidence threshold for parallel eligibility.
 pub const PARALLEL_CONFIDENCE_THRESHOLD: f64 = 0.70;
@@ -117,9 +117,9 @@ mod tests {
     use super::*;
     use crate::cli::commands::management::next_support::parallel_features::extract_parallel_feature_vectors;
     use crate::cli::commands::management::next_support::parallel_scoring::score_parallel_pairwise_conflicts;
-    use crate::domain::model::StoryState;
-    use crate::infrastructure::loader::load_board;
-    use crate::test_helpers::{TestBoardBuilder, TestStory};
+    use keel::domain::model::StoryState;
+    use keel::infrastructure::loader::load_board;
+    use keel::test_helpers::{TestBoardBuilder, TestStory};
 
     #[test]
     fn next_parallel_threshold_blocks_uncertain_pairs() {

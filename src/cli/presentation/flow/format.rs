@@ -23,7 +23,7 @@ pub struct VoyageDepSummary {
 }
 
 pub fn pad_to_width(s: &str, target_width: usize) -> String {
-    let current_width = crate::infrastructure::utils::visible_width(s);
+    let current_width = keel::infrastructure::utils::visible_width(s);
     if current_width >= target_width {
         s.to_string()
     } else {
@@ -35,13 +35,13 @@ pub fn pad_to_width(s: &str, target_width: usize) -> String {
 pub struct StoryScopeSummary<'a> {
     pub id: &'a str,
     pub title: &'a str,
-    pub status: crate::domain::model::StoryState,
+    pub status: keel::domain::model::StoryState,
     pub index: Option<u32>,
     pub scope: Option<&'a str>,
 }
 
 pub fn classify_stories(
-    board: &crate::domain::model::Board,
+    board: &keel::domain::model::Board,
     scope_stories: &[StoryScopeSummary],
     deps: &HashMap<String, Vec<String>>,
     verify_ids: &HashSet<&str>,
@@ -100,11 +100,11 @@ pub fn classify_stories(
 
     for story in sorted_stories {
         let mut blockers = Vec::new();
-        let status = if story.status == crate::domain::model::StoryState::Done {
+        let status = if story.status == keel::domain::model::StoryState::Done {
             DepStatus::Done
-        } else if story.status == crate::domain::model::StoryState::InProgress {
+        } else if story.status == keel::domain::model::StoryState::InProgress {
             DepStatus::InProgress
-        } else if story.status == crate::domain::model::StoryState::Icebox {
+        } else if story.status == keel::domain::model::StoryState::Icebox {
             DepStatus::Inactive
         } else if verify_ids.contains(story.id) {
             DepStatus::VerifyBlocked
@@ -115,7 +115,7 @@ pub fn classify_stories(
                 .filter(|dep_id| {
                     // Dependency is unmet if it's not marked as done in the current scope_stories
                     !scope_stories.iter().any(|s| {
-                        s.id == *dep_id && s.status == crate::domain::model::StoryState::Done
+                        s.id == *dep_id && s.status == keel::domain::model::StoryState::Done
                     })
                 })
                 .cloned()
@@ -209,7 +209,7 @@ pub fn render_epic_capacities(
 type StorySummary = (String, String, DepStatus, Vec<String>);
 
 pub fn render_dependency_chains(
-    board: &crate::domain::model::Board,
+    board: &keel::domain::model::Board,
     summaries: &[StorySummary],
     next_up_ids: &HashSet<String>,
     theme: &Theme,
@@ -360,7 +360,7 @@ impl QueueItemDisplay {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::StoryState;
+    use keel::domain::model::StoryState;
 
     #[test]
     fn test_classify_stories() {
@@ -390,7 +390,7 @@ mod tests {
         let mut deps = HashMap::new();
         deps.insert("S3".to_string(), vec!["S2".to_string()]);
         let verify_ids = HashSet::new();
-        let board = crate::domain::model::Board::default();
+        let board = keel::domain::model::Board::default();
 
         let results = classify_stories(&board, &stories, &deps, &verify_ids);
         assert_eq!(results.len(), 3);
@@ -427,8 +427,8 @@ mod tests {
 
     #[test]
     fn test_render_dependency_chains() {
-        let mut board = crate::domain::model::Board::default();
-        let story = crate::test_helpers::StoryFactory::new("S1")
+        let mut board = keel::domain::model::Board::default();
+        let story = keel::test_helpers::StoryFactory::new("S1")
             .title("Story 1")
             .build();
         board.stories.insert("S1".to_string(), story);

@@ -83,7 +83,7 @@ impl Epic {
     }
 
     /// Update derived status.
-    pub(crate) fn set_status(&mut self, status: EpicState) {
+    pub fn set_status(&mut self, status: EpicState) {
         self.status = status;
     }
 

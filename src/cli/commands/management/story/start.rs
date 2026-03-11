@@ -4,13 +4,13 @@ use std::path::Path;
 use std::sync::Arc;
 
 use anyhow::Result;
-use crate::infrastructure::storage::filesystem::FileSystemAdapter;
+use keel::infrastructure::storage::filesystem::FileSystemAdapter;
 
 #[cfg(test)]
-use crate::application::story_lifecycle;
-use crate::application::story_lifecycle::StoryLifecycleService;
-use crate::domain::model::StoryState;
-use crate::infrastructure::loader::load_board;
+use keel::application::story_lifecycle;
+use keel::application::story_lifecycle::StoryLifecycleService;
+use keel::domain::model::StoryState;
+use keel::infrastructure::loader::load_board;
 
 use super::guidance::{
     StoryLifecycleAction, error_with_recovery, guidance_for_action, print_human,
@@ -45,7 +45,7 @@ pub fn run(board_dir: &Path, id: &str, version: Option<u64>) -> Result<()> {
 /// Check if knowledge is relevant to the given epic and voyage scope
 #[cfg(test)]
 fn is_relevant_knowledge(
-    knowledge: &crate::read_model::knowledge::Knowledge,
+    knowledge: &keel::read_model::knowledge::Knowledge,
     epic_id: Option<&str>,
     scope: Option<&str>,
 ) -> bool {
@@ -55,9 +55,9 @@ fn is_relevant_knowledge(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::StoryState;
-    use crate::test_helpers::{TestBoardBuilder, TestStory};
-    use crate::infrastructure::storage::filesystem::FileSystemAdapter;
+    use keel::domain::model::StoryState;
+    use keel::test_helpers::{TestBoardBuilder, TestStory};
+    use keel::infrastructure::storage::filesystem::FileSystemAdapter;
     use std::sync::Arc;
     use std::fs;
 
@@ -180,10 +180,10 @@ mod tests {
 
     #[test]
     fn is_relevant_knowledge_matches_by_scope() {
-        let knowledge = crate::read_model::knowledge::Knowledge {
+        let knowledge = keel::read_model::knowledge::Knowledge {
             id: "L001".to_string(),
             source: std::path::PathBuf::from("/test.md"),
-            source_type: crate::read_model::knowledge::KnowledgeSourceType::Story,
+            source_type: keel::read_model::knowledge::KnowledgeSourceType::Story,
             scope: Some("board-cli/01-core".to_string()),
             source_story_id: Some("1abcDEF23".to_string()),
             title: "Test".to_string(),
@@ -255,9 +255,9 @@ mod tests {
 
     #[test]
     fn start_first_story_auto_starts_voyage() {
-        use crate::test_helpers::TestVoyage;
+        use keel::test_helpers::TestVoyage;
         let temp = TestBoardBuilder::new()
-            .epic(crate::test_helpers::TestEpic::new("e1"))
+            .epic(keel::test_helpers::TestEpic::new("e1"))
             .voyage(TestVoyage::new("v1", "e1").status("planned"))
             .story(
                 TestStory::new("S1")

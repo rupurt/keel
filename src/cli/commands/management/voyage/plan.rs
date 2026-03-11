@@ -5,15 +5,15 @@ use std::path::Path;
 
 use anyhow::{Context, Result, anyhow};
 
-use crate::domain::model::{StoryState, VoyageState};
-use crate::domain::state_machine::{
+use keel::domain::model::{StoryState, VoyageState};
+use keel::domain::state_machine::{
     EnforcementPolicy, TransitionEntity, TransitionIntent, VoyageTransition, enforce_transition,
     format_enforcement_error,
 };
-use crate::domain::transitions::{TimestampUpdates, update_frontmatter};
-use crate::infrastructure::config::find_board_dir;
-use crate::infrastructure::loader::load_board;
-use crate::infrastructure::validation::parse_acceptance_criteria;
+use keel::domain::transitions::{TimestampUpdates, update_frontmatter};
+use keel::infrastructure::config::find_board_dir;
+use keel::infrastructure::loader::load_board;
+use keel::infrastructure::validation::parse_acceptance_criteria;
 
 use super::guidance::{VoyageLifecycleAction, guidance_for_action, print_human};
 
@@ -125,7 +125,7 @@ pub fn run_with_dir(board_dir: &Path, id: &str, no_review: bool) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
 
     fn write_prd(temp: &tempfile::TempDir, epic_id: &str, content: &str) {
         fs::write(temp.path().join(format!("epics/{epic_id}/PRD.md")), content).unwrap();

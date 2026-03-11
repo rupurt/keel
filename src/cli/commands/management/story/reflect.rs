@@ -6,10 +6,10 @@ use std::path::Path;
 use anyhow::{Context, Result, bail};
 use chrono::Local;
 
-use crate::application::knowledge_context;
-use crate::domain::model::StoryState;
-use crate::infrastructure::loader::load_board;
-use crate::infrastructure::template_rendering;
+use keel::application::knowledge_context;
+use keel::domain::model::StoryState;
+use keel::infrastructure::loader::load_board;
+use keel::infrastructure::template_rendering;
 
 use super::guidance::{
     StoryLifecycleAction, error_with_recovery, guidance_for_action, print_human,
@@ -47,7 +47,7 @@ fn run_impl(board_dir: &Path, id: &str) -> Result<()> {
     }
 
     let content = template_rendering::render(
-        crate::infrastructure::templates::story::REFLECT,
+        keel::infrastructure::templates::story::REFLECT,
         &[
             ("id", story.id()),
             ("title", story.title()),
@@ -57,7 +57,7 @@ fn run_impl(board_dir: &Path, id: &str) -> Result<()> {
             ),
             (
                 "knowledge_example_id",
-                &crate::infrastructure::story_id::generate_story_id(),
+                &keel::infrastructure::story_id::generate_story_id(),
             ),
         ],
     );
@@ -86,7 +86,7 @@ fn run_impl(board_dir: &Path, id: &str) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::{TestBoardBuilder, TestStory};
+    use keel::test_helpers::{TestBoardBuilder, TestStory};
 
     #[test]
     fn reflect_creates_template_for_in_progress_story() {

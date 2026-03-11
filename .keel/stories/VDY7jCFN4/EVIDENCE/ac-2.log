@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-11T04:29:59.059531708-07:00
+mode: manual
+---
+src/cli is now a private module of the binary target and no longer exported in lib.rs.

@@ -253,7 +253,7 @@ fn evaluate_story_submit(board: &Board, story: &Story) -> Vec<Problem> {
             break;
         }
 
-        if !crate::cli::style::AC_REQ_RE.is_match(criterion) {
+        if !crate::domain::model::AC_REQ_RE.is_match(criterion) {
             problems.push(Problem {
                 severity: Severity::Error,
                 path: story.path.clone(),
@@ -786,7 +786,11 @@ pub fn evaluate_voyage_completion(
     let mut evidence_by_req: HashMap<String, RequirementEvidence> = HashMap::new();
     for story in &stories {
         // Skip stories that aren't done yet, UNLESS they are the candidate being accepted/submitted
-        if story.status != StoryState::Done && Some(story.id()) != candidate_story_done {
+        // OR they are currently in progress (so we can check mid-flight evidence consistency)
+        if story.status != StoryState::Done
+            && story.status != StoryState::InProgress
+            && Some(story.id()) != candidate_story_done
+        {
             continue;
         }
 
@@ -1524,7 +1528,7 @@ mod tests {
             .story(
                 TestStory::new("STORY01")
                     .scope("test-epic/01-inprogress")
-                    .status(StoryState::Backlog)
+                    .status(StoryState::InProgress)
                     .body("- [ ] [SRS-01/AC-01] started <!-- verify: cargo test, SRS-01:start -->"),
             )
             .build();

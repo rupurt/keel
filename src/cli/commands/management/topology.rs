@@ -6,12 +6,12 @@ use anyhow::Result;
 
 use crate::cli::presentation::terminal::get_terminal_width;
 use crate::cli::presentation::topology::render_topology;
-use crate::infrastructure::loader::load_board;
-use crate::read_model::topology::{TopologyBuildOptions, build_epic_topology_projection};
+use keel::infrastructure::loader::load_board;
+use keel::read_model::topology::{TopologyBuildOptions, build_epic_topology_projection};
 
 /// Run the topology command.
 pub fn run(epic_id: &str, include_done: bool) -> Result<()> {
-    let board_dir = crate::infrastructure::config::find_board_dir()?;
+    let board_dir = keel::infrastructure::config::find_board_dir()?;
     run_with_dir(&board_dir, epic_id, include_done)
 }
 
@@ -43,9 +43,9 @@ fn build_topology_output_with_width(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::StoryState;
-    use crate::infrastructure::loader::load_board;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use keel::domain::model::StoryState;
+    use keel::infrastructure::loader::load_board;
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use chrono::{Duration, Utc};
     use std::fs;
     use std::path::Path;
@@ -706,8 +706,8 @@ Need topology knowledge and horizon review.
 
         let projection =
             build_epic_topology_projection(&board, epic, TopologyBuildOptions::default()).unwrap();
-        let all_knowledge = crate::read_model::knowledge::scan_all_knowledge(temp.path()).unwrap();
-        let expected_pending = crate::read_model::knowledge::rank_relevant_knowledge(
+        let all_knowledge = keel::read_model::knowledge::scan_all_knowledge(temp.path()).unwrap();
+        let expected_pending = keel::read_model::knowledge::rank_relevant_knowledge(
             all_knowledge.clone(),
             Some("e1"),
             None,
@@ -733,10 +733,10 @@ Need topology knowledge and horizon review.
             })
             .filter_map(|unit| unit.to_signal())
             .collect();
-        let patterns = crate::read_model::knowledge::detect_rising_patterns(
+        let patterns = keel::read_model::knowledge::detect_rising_patterns(
             &relevant_signals,
             Utc::now(),
-            &crate::read_model::knowledge::DetectionConfig::default(),
+            &keel::read_model::knowledge::DetectionConfig::default(),
         );
 
         assert!(

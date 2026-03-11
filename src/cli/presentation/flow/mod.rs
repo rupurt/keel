@@ -12,7 +12,7 @@ pub mod layout;
 pub mod next_up;
 pub mod throughput;
 
-pub use crate::read_model::flow_metrics::{
+pub use keel::read_model::flow_metrics::{
     ExecutionMetrics, FlowMetrics, GovernanceMetrics, PlanningMetrics, ResearchMetrics,
     VerificationMetrics, calculate_metrics,
 };
@@ -32,7 +32,7 @@ pub use throughput::calculate_throughput;
 
 /// Calculate board-wide flow state summary.
 pub fn calculate_flow_state(
-    board: &crate::domain::model::Board,
-) -> crate::read_model::flow_metrics::FlowMetrics {
-    crate::read_model::flow_metrics::calculate_metrics(board)
+    board: &keel::domain::model::Board,
+) -> keel::read_model::flow_metrics::FlowMetrics {
+    keel::read_model::flow_metrics::calculate_metrics(board)
 }

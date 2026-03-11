@@ -8,9 +8,9 @@ use super::format::render_epic_capacities;
 use crate::cli::presentation::flow::layout::LayoutConfig;
 use crate::cli::presentation::theme::Theme;
 use crate::cli::style;
-use crate::domain::model::Board;
-use crate::read_model::flow_metrics::FlowMetrics;
-use crate::read_model::workflow_lane_flow::{LaneFlowCard, LaneFlowProjection, LaneSourceCount};
+use keel::domain::model::Board;
+use keel::read_model::flow_metrics::FlowMetrics;
+use keel::read_model::workflow_lane_flow::{LaneFlowCard, LaneFlowProjection, LaneSourceCount};
 
 /// Render an annotated pipeline flow diagram.
 pub fn render_annotated_flow(
@@ -120,7 +120,7 @@ pub fn render_annotated_flow(
     }
 
     // 4. Bottleneck Dependencies (Only shown when blockage exists)
-    let deps = crate::read_model::traceability::derive_implementation_dependencies(board);
+    let deps = keel::read_model::traceability::derive_implementation_dependencies(board);
     let scope_stories: Vec<_> = board
         .stories
         .values()
@@ -138,7 +138,7 @@ pub fn render_annotated_flow(
     let verify_ids = board
         .stories
         .values()
-        .filter(|s| s.status == crate::domain::model::StoryState::NeedsHumanVerification)
+        .filter(|s| s.status == keel::domain::model::StoryState::NeedsHumanVerification)
         .map(|s| s.id())
         .collect::<std::collections::HashSet<_>>();
 
@@ -206,7 +206,7 @@ fn render_mission_summary(board: &Board, _width: usize, _theme: &Theme) -> Strin
     let mut active_missions: Vec<_> = board
         .missions
         .values()
-        .filter(|m| m.status() == crate::domain::model::MissionStatus::Active)
+        .filter(|m| m.status() == keel::domain::model::MissionStatus::Active)
         .collect();
     active_missions.sort_by_key(|m| m.id());
 
@@ -214,14 +214,14 @@ fn render_mission_summary(board: &Board, _width: usize, _theme: &Theme) -> Strin
         let charter_path = mission.path.parent().unwrap().join("CHARTER.md");
         let charter_content = std::fs::read_to_string(&charter_path).unwrap_or_default();
         let goals =
-            crate::infrastructure::validation::charter::parse_mission_goals(&charter_content);
+            keel::infrastructure::validation::charter::parse_mission_goals(&charter_content);
 
         let board_goals: Vec<_> = goals
             .iter()
             .filter(|g| {
                 matches!(
                     g.verification,
-                    crate::infrastructure::validation::charter::GoalVerification::Board(_)
+                    keel::infrastructure::validation::charter::GoalVerification::Board(_)
                 )
             })
             .collect();
@@ -233,7 +233,7 @@ fn render_mission_summary(board: &Board, _width: usize, _theme: &Theme) -> Strin
         let epics = board.epics_for_mission(mission.id());
         let epics_done = epics
             .iter()
-            .filter(|e| e.status() == crate::domain::model::EpicState::Done)
+            .filter(|e| e.status() == keel::domain::model::EpicState::Done)
             .count();
         let bearings = board.bearings_for_mission(mission.id());
         let bearings_terminal = bearings
@@ -241,8 +241,8 @@ fn render_mission_summary(board: &Board, _width: usize, _theme: &Theme) -> Strin
             .filter(|b| {
                 matches!(
                     b.frontmatter.status,
-                    crate::domain::model::BearingStatus::Laid
-                        | crate::domain::model::BearingStatus::Declined
+                    keel::domain::model::BearingStatus::Laid
+                        | keel::domain::model::BearingStatus::Declined
                 )
             })
             .count();
@@ -284,13 +284,13 @@ fn is_board_goal_met(board: &Board, target: &str) -> bool {
     }
 
     if let Some(epic) = board.epics.get(target) {
-        return epic.status() == crate::domain::model::EpicState::Done;
+        return epic.status() == keel::domain::model::EpicState::Done;
     }
     if let Some(voyage) = board.voyages.get(target) {
-        return voyage.status() == crate::domain::state_machine::voyage::VoyageState::Done;
+        return voyage.status() == keel::domain::state_machine::voyage::VoyageState::Done;
     }
     if let Some(story) = board.stories.get(target) {
-        return story.status == crate::domain::model::StoryState::Done;
+        return story.status == keel::domain::model::StoryState::Done;
     }
     false
 }
@@ -484,11 +484,11 @@ fn strategic_capacity_guidance(board: &Board, metrics: &FlowMetrics) -> &'static
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::infrastructure::config::Config;
-    use crate::read_model::flow_metrics::{
+    use keel::infrastructure::config::Config;
+    use keel::read_model::flow_metrics::{
         ExecutionMetrics, GovernanceMetrics, PlanningMetrics, ResearchMetrics, VerificationMetrics,
     };
-    use crate::read_model::{workflow_lane_flow, workflow_topology};
+    use keel::read_model::{workflow_lane_flow, workflow_topology};
 
     fn make_test_metrics() -> FlowMetrics {
         FlowMetrics {

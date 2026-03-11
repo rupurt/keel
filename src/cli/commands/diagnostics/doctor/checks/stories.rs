@@ -6,9 +6,9 @@ use std::path::{Path, PathBuf};
 
 use super::super::AC_REQ_RE;
 use super::super::types::*;
-use crate::domain::model::{Board, Story, StoryState, VoyageState};
-use crate::infrastructure::validation::parse_acceptance_criteria;
-use crate::infrastructure::validation::structural;
+use keel::domain::model::{Board, Story, StoryState, VoyageState};
+use keel::infrastructure::validation::parse_acceptance_criteria;
+use keel::infrastructure::validation::structural;
 
 /// Scan story files for structural problems
 /// Returns (problems, file_count)
@@ -228,7 +228,7 @@ pub fn check_role_syntax(board: &Board) -> Vec<Problem> {
 
     for story in board.stories.values() {
         if let Some(role) = &story.frontmatter.role
-            && let Err(e) = crate::domain::model::taxonomy::parse(role)
+            && let Err(e) = keel::domain::model::taxonomy::parse(role)
         {
             problems.push(
                 Problem::error(
@@ -453,8 +453,8 @@ pub fn check_story_title_case(board: &Board) -> Vec<Problem> {
 
     for story in board.stories.values() {
         let title = &story.frontmatter.title;
-        if !crate::infrastructure::utils::is_title_case(title) {
-            let new_title = crate::infrastructure::utils::to_title_case(title);
+        if !keel::infrastructure::utils::is_title_case(title) {
+            let new_title = keel::infrastructure::utils::to_title_case(title);
             problems.push(
                 Problem::warning(
                     story.path.clone(),
@@ -519,7 +519,7 @@ pub fn check_verification_manifests(board: &Board) -> Vec<Problem> {
             }
         };
 
-        let manifest: crate::domain::model::Manifest = match serde_yaml::from_str(&manifest_content)
+        let manifest: keel::domain::model::Manifest = match serde_yaml::from_str(&manifest_content)
         {
             Ok(m) => m,
 
@@ -552,7 +552,7 @@ pub fn check_verification_manifests(board: &Board) -> Vec<Problem> {
                 continue;
             }
 
-            match crate::infrastructure::utils::hash_file(&full_path) {
+            match keel::infrastructure::utils::hash_file(&full_path) {
                 Ok(actual_hash) => {
                     if actual_hash != *expected_hash {
                         problems.push(
@@ -740,7 +740,7 @@ pub fn check_srs_traceability(board: &Board) -> Vec<Problem> {
         };
 
         let criteria = parse_acceptance_criteria(&content);
-        let missing_refs = crate::infrastructure::validation::missing_srs_references(&criteria);
+        let missing_refs = keel::infrastructure::validation::missing_srs_references(&criteria);
 
         if !missing_refs.is_empty() {
             let list = missing_refs
@@ -811,7 +811,7 @@ pub fn check_story_dependency_cycles(board: &Board) -> Vec<Problem> {
         return Vec::new();
     }
 
-    let dependencies = crate::read_model::traceability::derive_implementation_dependencies(board);
+    let dependencies = keel::read_model::traceability::derive_implementation_dependencies(board);
     let mut graph: HashMap<String, Vec<String>> = HashMap::new();
 
     for story_id in &active_story_ids {
@@ -1116,7 +1116,7 @@ pub fn check_terminal_story_coherence(board: &Board) -> Vec<Problem> {
                 );
             }
 
-            for issue in crate::read_model::knowledge::scanner::validate_knowledge_content(&content)
+            for issue in keel::read_model::knowledge::scanner::validate_knowledge_content(&content)
             {
                 problems.push(
                     Problem::error(
@@ -1141,7 +1141,7 @@ pub fn check_knowledge_manifest_integrity(board_dir: &Path) -> Vec<Problem> {
     let mut problems = Vec::new();
     let knowledge_dir = board_dir.join("knowledge");
 
-    let catalog = match crate::read_model::knowledge::project_knowledge_catalog(board_dir) {
+    let catalog = match keel::read_model::knowledge::project_knowledge_catalog(board_dir) {
         Ok(catalog) => catalog,
         Err(error) => {
             problems.push(
@@ -1160,7 +1160,7 @@ pub fn check_knowledge_manifest_integrity(board_dir: &Path) -> Vec<Problem> {
     for unit in &catalog.units {
         all_ids.insert(unit.id.clone());
 
-        if !crate::read_model::knowledge::is_canonical_knowledge_id(&unit.id) {
+        if !keel::read_model::knowledge::is_canonical_knowledge_id(&unit.id) {
             problems.push(
                 Problem::error(
                     unit.source.clone(),
@@ -1200,7 +1200,7 @@ pub fn check_knowledge_manifest_integrity(board_dir: &Path) -> Vec<Problem> {
             }
         }
 
-        if unit.source_type == crate::read_model::knowledge::KnowledgeSourceType::Voyage
+        if unit.source_type == keel::read_model::knowledge::KnowledgeSourceType::Voyage
             && unit.linked_ids.is_empty()
         {
             problems.push(
@@ -1215,9 +1215,9 @@ pub fn check_knowledge_manifest_integrity(board_dir: &Path) -> Vec<Problem> {
             );
         }
 
-        if unit.source_type == crate::read_model::knowledge::KnowledgeSourceType::Voyage
+        if unit.source_type == keel::read_model::knowledge::KnowledgeSourceType::Voyage
             && let (Some(similar_to), Some(score)) = (&unit.similar_to, unit.similarity_score)
-            && score >= crate::read_model::knowledge::NEAR_DUPLICATE_KNOWLEDGE_THRESHOLD
+            && score >= keel::read_model::knowledge::NEAR_DUPLICATE_KNOWLEDGE_THRESHOLD
             && !unit.linked_ids.iter().any(|linked| linked == similar_to)
         {
             problems.push(
@@ -1338,7 +1338,7 @@ pub fn check_active_story_coherence(board: &Board) -> Vec<Problem> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use std::fs;
 
     #[test]
@@ -1354,7 +1354,7 @@ mod tests {
             let temp = TestBoardBuilder::new()
                 .story(TestStory::new("S1").status(stage))
                 .build();
-            let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+            let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
             let problems = check_story_dates(&board);
 
             assert!(
@@ -1375,7 +1375,7 @@ mod tests {
             let temp = TestBoardBuilder::new()
                 .story(TestStory::new("S1").status(stage))
                 .build();
-            let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+            let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
             let problems = check_story_dates(&board);
 
             assert!(
@@ -1402,7 +1402,7 @@ mod tests {
         );
         fs::write(&path, updated).unwrap();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_story_dates(&board);
 
         assert!(problems.iter().any(|problem| {
@@ -1427,7 +1427,7 @@ mod tests {
         );
         fs::write(&path, updated).unwrap();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_story_dates(&board);
 
         assert!(!problems.iter().any(|problem| {
@@ -1448,7 +1448,7 @@ mod tests {
             )
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_verification_annotations(&board);
 
         assert_eq!(problems.len(), 1);
@@ -1477,7 +1477,7 @@ mod tests {
 
                 .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
 
         let problems = check_verification_annotations(&board);
 
@@ -1502,7 +1502,7 @@ mod tests {
             )
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
 
         // This function needs to be implemented or updated to check for this
 
@@ -1535,7 +1535,7 @@ mod tests {
             )
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_story_dependency_cycles(&board);
 
         assert_eq!(problems.len(), 1);
@@ -1567,7 +1567,7 @@ mod tests {
             )
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_story_dependency_cycles(&board);
 
         assert!(problems.is_empty());
@@ -1593,7 +1593,7 @@ mod tests {
             )
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_parallel_conflict_coherence(&board);
 
         assert_eq!(problems.len(), 2);
@@ -1656,7 +1656,7 @@ mod tests {
             )
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_terminal_story_coherence(&board);
 
         assert_eq!(problems.len(), 1);
@@ -1686,7 +1686,7 @@ mod tests {
         )
         .unwrap();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_terminal_story_coherence(&board);
 
         assert_eq!(problems.len(), 1);
@@ -1717,7 +1717,7 @@ mod tests {
         )
         .unwrap();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_terminal_story_coherence(&board);
 
         assert!(
@@ -1745,7 +1745,7 @@ mod tests {
         )
         .unwrap();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_terminal_story_coherence(&board);
 
         assert!(
@@ -1773,7 +1773,7 @@ mod tests {
         )
         .unwrap();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_terminal_story_coherence(&board);
 
         assert!(
@@ -1797,7 +1797,7 @@ mod tests {
             )
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_active_story_coherence(&board);
 
         assert_eq!(problems.len(), 1);
@@ -1823,7 +1823,7 @@ mod tests {
             )
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_active_story_coherence(&board);
 
         assert_eq!(problems.len(), 1);
@@ -1851,7 +1851,7 @@ mod tests {
             )
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_active_story_coherence(&board);
 
         assert!(
@@ -1870,7 +1870,7 @@ mod tests {
             )
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_srs_traceability(&board);
 
         assert_eq!(problems.len(), 1);
@@ -1888,7 +1888,7 @@ mod tests {
             )
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_srs_traceability(&board);
 
         assert!(problems.is_empty());

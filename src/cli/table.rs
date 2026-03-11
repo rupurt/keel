@@ -28,7 +28,7 @@ impl Table {
         // Update max widths using visible width (ignoring ANSI codes)
         for (i, value) in row.iter().enumerate() {
             if i < self.widths.len() {
-                let width = crate::infrastructure::utils::visible_width(value);
+                let width = keel::infrastructure::utils::visible_width(value);
                 self.widths[i] = self.widths[i].max(width);
             }
         }
@@ -61,7 +61,7 @@ impl Table {
             }
 
             let target_width = self.widths.get(i).copied().unwrap_or(0);
-            let current_width = crate::infrastructure::utils::visible_width(v);
+            let current_width = keel::infrastructure::utils::visible_width(v);
 
             row_str.push_str(v);
             if target_width > current_width {

@@ -69,7 +69,7 @@ fn extract_generated_section(content: &str) -> &str {
 // ============================================================
 
 mod serde_round_trips {
-    use crate::domain::model::{AdrStatus, BearingStatus, StoryState, StoryType, VoyageState};
+    use keel::domain::model::{AdrStatus, BearingStatus, StoryState, StoryType, VoyageState};
 
     /// All Stage variants — exhaustive match forces compile error when variants change.
     fn all_stages() -> Vec<StoryState> {
@@ -291,7 +291,7 @@ mod template_struct_fields {
     use super::*;
     use chrono::NaiveDate;
 
-    use crate::domain::model::{
+    use keel::domain::model::{
         AdrFrontmatter, AdrStatus, EpicFrontmatter, StoryFrontmatter, StoryState, StoryType,
         VoyageFrontmatter, VoyageState,
     };
@@ -376,7 +376,7 @@ mod template_struct_fields {
     #[test]
     fn story_template_fields_match_struct() {
         let template_keys =
-            extract_frontmatter_keys(crate::infrastructure::templates::story::STORY);
+            extract_frontmatter_keys(keel::infrastructure::templates::story::STORY);
         let struct_fields = serde_field_names(&populated_story());
         let missing: Vec<_> = template_keys
             .iter()
@@ -394,7 +394,7 @@ mod template_struct_fields {
     #[test]
     fn voyage_template_fields_match_struct() {
         let template_keys =
-            extract_frontmatter_keys(crate::infrastructure::templates::voyage::README);
+            extract_frontmatter_keys(keel::infrastructure::templates::voyage::README);
         let struct_fields = serde_field_names(&populated_voyage());
         let missing: Vec<_> = template_keys
             .iter()
@@ -412,7 +412,7 @@ mod template_struct_fields {
     #[test]
     fn epic_template_fields_match_struct() {
         let template_keys =
-            extract_frontmatter_keys(crate::infrastructure::templates::epic::README);
+            extract_frontmatter_keys(keel::infrastructure::templates::epic::README);
         let struct_fields = serde_field_names(&populated_epic());
         let missing: Vec<_> = template_keys
             .iter()
@@ -429,7 +429,7 @@ mod template_struct_fields {
 
     #[test]
     fn adr_template_fields_match_struct() {
-        let template_keys = extract_frontmatter_keys(crate::infrastructure::templates::adr::ADR);
+        let template_keys = extract_frontmatter_keys(keel::infrastructure::templates::adr::ADR);
         let struct_fields = serde_field_names(&populated_adr());
         let missing: Vec<_> = template_keys
             .iter()
@@ -451,10 +451,10 @@ mod template_struct_fields {
 
 mod template_generator {
     use super::*;
-    use crate::infrastructure::generate::epic_readme::generate_epic_readme;
-    use crate::infrastructure::generate::voyage_readme::generate_voyage_readme;
-    use crate::infrastructure::loader::load_board;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use keel::infrastructure::generate::epic_readme::generate_epic_readme;
+    use keel::infrastructure::generate::voyage_readme::generate_voyage_readme;
+    use keel::infrastructure::loader::load_board;
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use std::fs;
 
     fn create_test_board() -> tempfile::TempDir {
@@ -485,7 +485,7 @@ mod template_generator {
     #[test]
     fn epic_progress_line_format() {
         let template_section =
-            extract_generated_section(crate::infrastructure::templates::epic::README);
+            extract_generated_section(keel::infrastructure::templates::epic::README);
         assert!(
             template_section.contains("**Progress:**"),
             "Template should have progress line"
@@ -521,7 +521,7 @@ mod template_generator {
     #[test]
     fn epic_table_headers_match() {
         let template_section =
-            extract_generated_section(crate::infrastructure::templates::epic::README);
+            extract_generated_section(keel::infrastructure::templates::epic::README);
         let template_columns = extract_table_columns(template_section);
 
         let temp = create_test_board();
@@ -540,7 +540,7 @@ mod template_generator {
     #[test]
     fn voyage_table_headers_match() {
         let template_section =
-            extract_generated_section(crate::infrastructure::templates::voyage::README);
+            extract_generated_section(keel::infrastructure::templates::voyage::README);
         let template_columns = extract_table_columns(template_section);
 
         let temp = TestBoardBuilder::new()
@@ -569,7 +569,7 @@ mod template_generator {
     fn generator_column_structure() {
         // Verify specific column expectations
         let epic_section =
-            extract_generated_section(crate::infrastructure::templates::epic::README);
+            extract_generated_section(keel::infrastructure::templates::epic::README);
         let epic_cols = extract_table_columns(epic_section);
         assert_eq!(
             epic_cols,
@@ -578,7 +578,7 @@ mod template_generator {
         );
 
         let voyage_section =
-            extract_generated_section(crate::infrastructure::templates::voyage::README);
+            extract_generated_section(keel::infrastructure::templates::voyage::README);
         let voyage_cols = extract_table_columns(voyage_section);
         assert_eq!(
             voyage_cols,
@@ -647,7 +647,7 @@ mod token_bucket_contract {
     }
 
     fn arg_ids_for_new_subcommand(root: &str) -> BTreeSet<String> {
-        let mut cli = crate::build_cli();
+        let mut cli = crate::cli::build_cli();
         let root_cmd = cli
             .find_subcommand_mut(root)
             .unwrap_or_else(|| panic!("missing root subcommand: {root}"));
@@ -674,44 +674,44 @@ mod token_bucket_contract {
         let templates = [
             (
                 "epic README",
-                crate::infrastructure::templates::epic::README,
+                keel::infrastructure::templates::epic::README,
             ),
-            ("epic PRD", crate::infrastructure::templates::epic::PRD),
+            ("epic PRD", keel::infrastructure::templates::epic::PRD),
             (
                 "epic PRESS_RELEASE",
-                crate::infrastructure::templates::epic::PRESS_RELEASE,
+                keel::infrastructure::templates::epic::PRESS_RELEASE,
             ),
             (
                 "voyage README",
-                crate::infrastructure::templates::voyage::README,
+                keel::infrastructure::templates::voyage::README,
             ),
-            ("voyage SRS", crate::infrastructure::templates::voyage::SRS),
-            ("voyage SDD", crate::infrastructure::templates::voyage::SDD),
+            ("voyage SRS", keel::infrastructure::templates::voyage::SRS),
+            ("voyage SDD", keel::infrastructure::templates::voyage::SDD),
             (
                 "story README",
-                crate::infrastructure::templates::story::STORY,
+                keel::infrastructure::templates::story::STORY,
             ),
             (
                 "story REFLECT",
-                crate::infrastructure::templates::story::REFLECT,
+                keel::infrastructure::templates::story::REFLECT,
             ),
             (
                 "bearing README",
-                crate::infrastructure::templates::bearing::README,
+                keel::infrastructure::templates::bearing::README,
             ),
             (
                 "bearing BRIEF",
-                crate::infrastructure::templates::bearing::BRIEF,
+                keel::infrastructure::templates::bearing::BRIEF,
             ),
             (
                 "bearing EVIDENCE",
-                crate::infrastructure::templates::bearing::EVIDENCE,
+                keel::infrastructure::templates::bearing::EVIDENCE,
             ),
             (
                 "bearing ASSESSMENT",
-                crate::infrastructure::templates::bearing::ASSESSMENT,
+                keel::infrastructure::templates::bearing::ASSESSMENT,
             ),
-            ("adr", crate::infrastructure::templates::adr::ADR),
+            ("adr", keel::infrastructure::templates::adr::ADR),
         ];
 
         for (label, template) in templates {
@@ -766,12 +766,12 @@ mod token_bucket_contract {
         for (label, template) in [
             (
                 "epic README",
-                crate::infrastructure::templates::epic::README,
+                keel::infrastructure::templates::epic::README,
             ),
-            ("epic PRD", crate::infrastructure::templates::epic::PRD),
+            ("epic PRD", keel::infrastructure::templates::epic::PRD),
             (
                 "epic PRESS_RELEASE",
-                crate::infrastructure::templates::epic::PRESS_RELEASE,
+                keel::infrastructure::templates::epic::PRESS_RELEASE,
             ),
         ] {
             let tokens = extract_tokens(template);
@@ -791,12 +791,12 @@ mod token_bucket_contract {
         for (label, template) in [
             (
                 "epic README",
-                crate::infrastructure::templates::epic::README,
+                keel::infrastructure::templates::epic::README,
             ),
-            ("epic PRD", crate::infrastructure::templates::epic::PRD),
+            ("epic PRD", keel::infrastructure::templates::epic::PRD),
             (
                 "epic PRESS_RELEASE",
-                crate::infrastructure::templates::epic::PRESS_RELEASE,
+                keel::infrastructure::templates::epic::PRESS_RELEASE,
             ),
         ] {
             let tokens = extract_tokens(template);
@@ -816,17 +816,17 @@ mod token_bucket_contract {
         let marker_templates = [
             (
                 "epic README",
-                crate::infrastructure::templates::epic::README,
+                keel::infrastructure::templates::epic::README,
                 ["<!-- BEGIN GENERATED -->", "<!-- END GENERATED -->"],
             ),
             (
                 "voyage README",
-                crate::infrastructure::templates::voyage::README,
+                keel::infrastructure::templates::voyage::README,
                 ["<!-- BEGIN GENERATED -->", "<!-- END GENERATED -->"],
             ),
             (
                 "voyage SRS",
-                crate::infrastructure::templates::voyage::SRS,
+                keel::infrastructure::templates::voyage::SRS,
                 [
                     "<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->",
                     "<!-- END FUNCTIONAL_REQUIREMENTS -->",
@@ -850,7 +850,7 @@ mod token_bucket_contract {
 // ============================================================
 
 mod queue_policy_docs {
-    use crate::domain::policy::queue::{
+    use keel::domain::policy::queue::{
         FLOW_VERIFY_BLOCK_THRESHOLD, HUMAN_NEXT_VERIFY_BLOCK_THRESHOLD,
     };
 
@@ -982,8 +982,8 @@ mod guidance_contracts {
     use crate::cli::commands::management::story::guidance as story_guidance;
     use crate::cli::commands::management::verification_guidance;
     use crate::cli::commands::management::voyage::guidance as voyage_guidance;
-    use crate::domain::model::StoryState;
-    use crate::infrastructure::verification::{VerificationReport, VerificationResult};
+    use keel::domain::model::StoryState;
+    use keel::infrastructure::verification::{VerificationReport, VerificationResult};
 
     #[derive(Serialize)]
     struct GuidanceEnvelope {

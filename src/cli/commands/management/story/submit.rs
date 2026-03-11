@@ -4,10 +4,10 @@ use std::path::Path;
 use std::sync::Arc;
 
 use anyhow::Result;
-use crate::infrastructure::storage::filesystem::FileSystemAdapter;
+use keel::infrastructure::storage::filesystem::FileSystemAdapter;
 
-use crate::application::story_lifecycle::StoryLifecycleService;
-use crate::infrastructure::loader::load_board;
+use keel::application::story_lifecycle::StoryLifecycleService;
+use keel::infrastructure::loader::load_board;
 
 use super::guidance::{
     StoryLifecycleAction, error_with_recovery, guidance_for_action, print_human,
@@ -38,10 +38,10 @@ pub fn run(board_dir: &Path, id: &str) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::StoryState;
-    use crate::infrastructure::validation::{CheckId, structural};
-    use crate::test_helpers::{TestBoardBuilder, TestStory};
-    use crate::infrastructure::storage::filesystem::FileSystemAdapter;
+    use keel::domain::model::StoryState;
+    use keel::infrastructure::validation::{CheckId, structural};
+    use keel::test_helpers::{TestBoardBuilder, TestStory};
+    use keel::infrastructure::storage::filesystem::FileSystemAdapter;
     use std::sync::Arc;
     use regex::Regex;
     use std::fs;

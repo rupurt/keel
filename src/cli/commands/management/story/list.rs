@@ -4,8 +4,8 @@ use anyhow::Result;
 use owo_colors::OwoColorize;
 
 use crate::cli::table::Table;
-use crate::domain::model::{Board, Story};
-use crate::infrastructure::loader::load_board;
+use keel::domain::model::{Board, Story};
+use keel::infrastructure::loader::load_board;
 
 const DEFAULT_STORY_STATUSES: &[&str] = &[
     "backlog",
@@ -25,7 +25,7 @@ const ALLOWED_STORY_STATUSES: &[&str] = &[
 
 /// List stories with optional filters.
 pub fn run(status_filters: &[String], epic: Option<&str>, reflections: bool) -> Result<()> {
-    let board_dir = crate::infrastructure::config::find_board_dir()?;
+    let board_dir = keel::infrastructure::config::find_board_dir()?;
     let board = load_board(&board_dir)?;
     let status_filter = crate::cli::commands::management::status_filter::resolve_status_filter(
         status_filters,
@@ -176,8 +176,8 @@ fn collect_stories<'a>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::state_machine::StoryState;
-    use crate::test_helpers::{TestBoardBuilder, TestStory};
+    use keel::domain::state_machine::StoryState;
+    use keel::test_helpers::{TestBoardBuilder, TestStory};
 
     #[test]
     fn test_list_stories_filtering() {
@@ -209,7 +209,7 @@ mod tests {
 
     #[test]
     fn test_list_stories_sorting() {
-        use crate::test_helpers::{TestEpic, TestVoyage};
+        use keel::test_helpers::{TestEpic, TestVoyage};
         let temp = TestBoardBuilder::new()
             .epic(TestEpic::new("E1").index(1))
             .epic(TestEpic::new("E2").index(2))

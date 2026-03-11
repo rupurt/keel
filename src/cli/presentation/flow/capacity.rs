@@ -2,10 +2,10 @@
 //!
 //! Re-exports canonical capacity DTOs and uses the read-model projection.
 
-use crate::domain::model::Board;
-use crate::read_model::capacity;
+use keel::domain::model::Board;
+use keel::read_model::capacity;
 
-pub use crate::read_model::capacity::{
+pub use keel::read_model::capacity::{
     ChargeState, EpicCapacity, EpicCapacityReport, SystemCapacity,
 };
 

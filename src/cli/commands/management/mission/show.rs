@@ -5,12 +5,12 @@ use owo_colors::OwoColorize;
 
 use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::style;
-use crate::infrastructure::loader::load_board;
-use crate::read_model::mission_show::{self, MissionShowProjection};
+use keel::infrastructure::loader::load_board;
+use keel::read_model::mission_show::{self, MissionShowProjection};
 
 /// Show mission details
 pub fn run(id: &str, json: bool) -> Result<()> {
-    let board_dir = crate::infrastructure::config::find_board_dir()?;
+    let board_dir = keel::infrastructure::config::find_board_dir()?;
     let board = load_board(&board_dir)?;
     let mission = board.require_mission(id)?;
     let projection = mission_show::build_projection(&board, mission)?;

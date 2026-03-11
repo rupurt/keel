@@ -5,7 +5,7 @@ use regex::Regex;
 use std::sync::LazyLock;
 
 use crate::cli::style;
-use crate::infrastructure::utils::visible_width;
+use keel::infrastructure::utils::visible_width;
 
 static MARKDOWN_LINK_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\[([^\]]+)\]\(([^)]+)\)").expect("valid markdown link regex"));

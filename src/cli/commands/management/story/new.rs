@@ -6,18 +6,18 @@ use std::path::Path;
 use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 
-use crate::domain::model::{AdrStatus, Board};
-use crate::infrastructure::duplicate_ids::{self, DuplicateEntity};
-use crate::infrastructure::frontmatter_mutation::Mutation;
-use crate::infrastructure::loader::load_board;
-use crate::infrastructure::story_id::generate_story_id;
-use crate::infrastructure::template_rendering;
-use crate::infrastructure::templates;
-use crate::infrastructure::utils::slugify;
+use keel::domain::model::{AdrStatus, Board};
+use keel::infrastructure::duplicate_ids::{self, DuplicateEntity};
+use keel::infrastructure::frontmatter_mutation::Mutation;
+use keel::infrastructure::loader::load_board;
+use keel::infrastructure::story_id::generate_story_id;
+use keel::infrastructure::template_rendering;
+use keel::infrastructure::templates;
+use keel::infrastructure::utils::slugify;
 
 /// Create a new story
 pub fn run(title: &str, story_type: &str, epic: Option<&str>, voyage: Option<&str>) -> Result<()> {
-    let board_dir = crate::infrastructure::config::find_board_dir()?;
+    let board_dir = keel::infrastructure::config::find_board_dir()?;
     new_story(&board_dir, title, story_type, epic, voyage)
 }
 
@@ -106,7 +106,7 @@ fn new_story(
     duplicate_ids::ensure_unique_ids(board_dir, DuplicateEntity::Story, "keel story new")?;
 
     // Enforce Title Case
-    if !crate::infrastructure::utils::is_title_case(title) {
+    if !keel::infrastructure::utils::is_title_case(title) {
         return Err(anyhow!(
             "Story title '{}' must use Title Case (e.g. 'My Story Title')",
             title
@@ -231,8 +231,8 @@ fn new_story(
 mod tests {
     use super::*;
     use crate::cli::commands::diagnostics::doctor::checks::stories::check_index_validation;
-    use crate::domain::model::StoryState;
-    use crate::test_helpers::{TestAdr, TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use keel::domain::model::StoryState;
+    use keel::test_helpers::{TestAdr, TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use std::fs;
 
     fn story_content_by_title(board_dir: &Path, title: &str) -> Option<String> {

@@ -15,7 +15,7 @@ use std::path::Path;
 use std::sync::LazyLock;
 use std::time::{Duration, Instant};
 
-use crate::infrastructure::loader::load_board;
+use keel::infrastructure::loader::load_board;
 pub use types::{CheckResult, DoctorReport};
 
 // Legacy constants for compatibility with existing check modules
@@ -25,11 +25,11 @@ pub static EVIDENCE_PHASE_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\bSRS-[A-Z0-9-]+:([a-z:]+)\b").unwrap());
 
 fn configured_check(
-    doctor_config: &crate::infrastructure::config::DoctorConfig,
+    doctor_config: &keel::infrastructure::config::DoctorConfig,
     id: &'static str,
     name: &'static str,
     evaluations: usize,
-    problems: Vec<crate::infrastructure::validation::Problem>,
+    problems: Vec<keel::infrastructure::validation::Problem>,
 ) -> CheckResult {
     let disabled = doctor_config.is_disabled(id);
     let passed = problems.is_empty();
@@ -73,20 +73,20 @@ pub fn run(board_dir: &Path, fix: bool, _evidence: bool, _watch: bool, _quick: b
 /// Run all health checks and return a full report
 pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
     // Prefer config from the board directory itself or its parent (project root)
-    let (config, source) = crate::infrastructure::config::load_config_from(board_dir);
-    if source != crate::infrastructure::config::ConfigSource::Defaults {
+    let (config, source) = keel::infrastructure::config::load_config_from(board_dir);
+    if source != keel::infrastructure::config::ConfigSource::Defaults {
         return validate_with_config(board_dir, &config);
     }
 
     let project_root = board_dir.parent().unwrap_or(board_dir);
-    let (config, _) = crate::infrastructure::config::load_config_from(project_root);
+    let (config, _) = keel::infrastructure::config::load_config_from(project_root);
     validate_with_config(board_dir, &config)
 }
 
 /// Run all health checks with a specific configuration
 pub fn validate_with_config(
     board_dir: &Path,
-    config: &crate::infrastructure::config::Config,
+    config: &keel::infrastructure::config::Config,
 ) -> Result<DoctorReport> {
     let board = load_board(board_dir)?;
     let doctor_config = &config.doctor;
@@ -708,9 +708,9 @@ pub fn validate_with_config(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::StoryState;
-    use crate::infrastructure::validation::{CheckId, Severity};
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use keel::domain::model::StoryState;
+    use keel::infrastructure::validation::{CheckId, Severity};
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use std::fs;
     use std::path::Path;
     use tempfile::TempDir;
@@ -931,7 +931,7 @@ disabled = true
         .unwrap();
 
         let config =
-            crate::infrastructure::config::load_from_file(&temp.path().join("keel.toml")).unwrap();
+            keel::infrastructure::config::load_from_file(&temp.path().join("keel.toml")).unwrap();
         let report = validate_with_config(temp.path(), &config).unwrap();
         let scope_check = report
             .voyage_checks

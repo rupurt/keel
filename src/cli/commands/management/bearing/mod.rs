@@ -112,17 +112,17 @@ pub enum BearingAction {
 pub mod new;
 
 use crate::cli::table::Table;
-use crate::domain::model::{Bearing, BearingStatus, Board};
-use crate::infrastructure::bearing_evidence::{EvidenceSourceClass, EvidenceStrength};
-use crate::infrastructure::bearing_readiness::evaluate_bearing_readiness;
-use crate::infrastructure::bearing_research::{self, ResearchCaptureRequest};
-use crate::infrastructure::config::{find_board_dir, load_config};
-use crate::infrastructure::frontmatter_mutation::{Mutation, apply};
-use crate::infrastructure::loader::load_board;
-use crate::infrastructure::markdown_sections::extract_section;
-use crate::infrastructure::scoring::load_bearing_score;
-use crate::infrastructure::template_rendering;
-use crate::infrastructure::templates;
+use keel::domain::model::{Bearing, BearingStatus, Board};
+use keel::infrastructure::bearing_evidence::{EvidenceSourceClass, EvidenceStrength};
+use keel::infrastructure::bearing_readiness::evaluate_bearing_readiness;
+use keel::infrastructure::bearing_research::{self, ResearchCaptureRequest};
+use keel::infrastructure::config::{find_board_dir, load_config};
+use keel::infrastructure::frontmatter_mutation::{Mutation, apply};
+use keel::infrastructure::loader::load_board;
+use keel::infrastructure::markdown_sections::extract_section;
+use keel::infrastructure::scoring::load_bearing_score;
+use keel::infrastructure::template_rendering;
+use keel::infrastructure::templates;
 use guidance::{
     BearingLifecycleAction, error_with_recovery, guidance_for_action, informational_for_list,
     print_human,
@@ -288,7 +288,7 @@ fn run_research(pattern: &str, capture: ResearchCaptureArgs) -> Result<()> {
 }
 
 fn run_research_impl(pattern: &str, capture: ResearchCaptureArgs) -> Result<()> {
-    use crate::domain::transitions::bearing::{bearing_transitions, execute};
+    use keel::domain::transitions::bearing::{bearing_transitions, execute};
 
     let board_dir = find_board_dir()?;
     let capture_request = capture.into_request()?;
@@ -328,7 +328,7 @@ struct ResearchCaptureRunResult {
     bearing_id: String,
     evidence_path: std::path::PathBuf,
     transition: Option<ResearchTransitionSummary>,
-    captured: crate::infrastructure::bearing_evidence::EvidenceRecord,
+    captured: keel::infrastructure::bearing_evidence::EvidenceRecord,
 }
 
 #[derive(Debug)]
@@ -351,9 +351,9 @@ fn run_research_capture_with_config(
     board_dir: &Path,
     pattern: &str,
     mut request: ResearchCaptureRequest,
-    config: &crate::infrastructure::config::Config,
+    config: &keel::infrastructure::config::Config,
 ) -> Result<ResearchCaptureRunResult> {
-    use crate::domain::transitions::bearing::{bearing_transitions, execute};
+    use keel::domain::transitions::bearing::{bearing_transitions, execute};
 
     let board = load_board(board_dir)?;
     let bearing = board.require_bearing(pattern)?;
@@ -415,7 +415,7 @@ pub fn run_assess(pattern: &str) -> Result<()> {
 }
 
 fn run_assess_impl(pattern: &str) -> Result<()> {
-    use crate::domain::transitions::bearing::{bearing_transitions, execute};
+    use keel::domain::transitions::bearing::{bearing_transitions, execute};
 
     let board_dir = find_board_dir()?;
     let (config, _source) = load_config();
@@ -551,7 +551,7 @@ fn build_bearing_list_rows(
     board_dir: &Path,
     board: &Board,
     status_filter: &crate::cli::commands::management::status_filter::StatusFilter,
-    weights: &crate::infrastructure::config::ModeWeights,
+    weights: &keel::infrastructure::config::ModeWeights,
 ) -> Vec<BearingListRow> {
     let mut rows: Vec<(&Bearing, Option<f64>, String)> = board
         .bearings
@@ -595,7 +595,7 @@ pub fn run_park(pattern: &str) -> Result<()> {
 }
 
 fn run_park_impl(pattern: &str) -> Result<()> {
-    use crate::domain::transitions::bearing::{bearing_transitions, execute};
+    use keel::domain::transitions::bearing::{bearing_transitions, execute};
 
     let board_dir = find_board_dir()?;
     let result = execute(&board_dir, pattern, &bearing_transitions::PARK)?;
@@ -949,13 +949,13 @@ fn create_prd_from_bearing(board_dir: &Path, bearing: &Bearing) -> Result<String
     Ok(prd)
 }
 
-use crate::infrastructure::validation::goals::{extract_prd_goal_ids, parse_goal_references};
+use keel::infrastructure::validation::goals::{extract_prd_goal_ids, parse_goal_references};
 
 /// Get the EV score for a bearing, if assessment exists and is complete
 fn get_bearing_score(
     board_dir: &Path,
     bearing: &Bearing,
-    weights: &crate::infrastructure::config::ModeWeights,
+    weights: &keel::infrastructure::config::ModeWeights,
 ) -> Option<f64> {
     if !bearing.has_assessment {
         return None;
@@ -1033,10 +1033,10 @@ mod tests {
     use super::*;
     use crate::cli::commands::diagnostics::doctor::checks::bearings::check_bearing_assessment_recommendation;
     use crate::cli::presentation::flow::next_up::calculate_next_up;
-    use crate::infrastructure::bearing_evidence::parse_evidence_records;
-    use crate::infrastructure::config::ModeWeights;
-    use crate::infrastructure::generate::board_readme::generate_board_readme;
-    use crate::test_helpers::{TestBearing, TestBoardBuilder};
+    use keel::infrastructure::bearing_evidence::parse_evidence_records;
+    use keel::infrastructure::config::ModeWeights;
+    use keel::infrastructure::generate::board_readme::generate_board_readme;
+    use keel::test_helpers::{TestBearing, TestBoardBuilder};
     use std::path::{Path, PathBuf};
     use tempfile::TempDir;
 
@@ -1371,10 +1371,10 @@ Deferring this leaves roadmap work underspecified [SRC-01]
     fn research_provider_status_is_explicit() {
         let temp = TempDir::new().unwrap();
         let board_dir = create_test_bearing(&temp);
-        let mut config = crate::infrastructure::config::Config::default();
+        let mut config = keel::infrastructure::config::Config::default();
         config.research.providers.insert(
             "manual".to_string(),
-            crate::infrastructure::config::ResearchProviderOverride {
+            keel::infrastructure::config::ResearchProviderOverride {
                 disabled: true,
                 weight: 0.5,
             },
@@ -1405,7 +1405,7 @@ Deferring this leaves roadmap work underspecified [SRC-01]
                 "https://arxiv.org/abs/1234.5678",
                 "Academic evidence",
             ),
-            &crate::infrastructure::config::Config::default(),
+            &keel::infrastructure::config::Config::default(),
         )
         .unwrap_err()
         .to_string();
@@ -1421,7 +1421,7 @@ Deferring this leaves roadmap work underspecified [SRC-01]
                 "https://news.ycombinator.com/item?id=42",
                 "Social evidence",
             ),
-            &crate::infrastructure::config::Config::default(),
+            &keel::infrastructure::config::Config::default(),
         )
         .unwrap_err()
         .to_string();
@@ -1443,7 +1443,7 @@ Deferring this leaves roadmap work underspecified [SRC-01]
                 "https://example.com/web",
                 "Web evidence",
             ),
-            &crate::infrastructure::config::Config::default(),
+            &keel::infrastructure::config::Config::default(),
         )
         .unwrap_err()
         .to_string();

@@ -1,7 +1,7 @@
 //! Shared render helpers for planning lineage sections.
 
-use crate::domain::state_machine::invariants::ScopeLineageIssueKind;
-use crate::read_model::planning_show::ScopeDriftRow;
+use keel::domain::state_machine::invariants::ScopeLineageIssueKind;
+use keel::read_model::planning_show::ScopeDriftRow;
 
 pub fn format_scope_drift_row(row: &ScopeDriftRow) -> String {
     let prefix = row
@@ -36,7 +36,7 @@ pub fn format_scope_drift_row(row: &ScopeDriftRow) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::state_machine::invariants::{ScopeLineageIssue, ScopeLineageIssueKind};
+    use keel::domain::state_machine::invariants::{ScopeLineageIssue, ScopeLineageIssueKind};
 
     #[test]
     fn scope_drift_formatter_includes_voyage_prefix_when_present() {

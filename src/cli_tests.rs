@@ -130,7 +130,7 @@ enum ManagementCommands {
 
 #[test]
 fn cli_help_displays_top_level_commands() {
-    let mut cmd = crate::build_cli();
+    let mut cmd = crate::cli::build_cli();
     let mut help = Vec::new();
     cmd.write_long_help(&mut help).unwrap();
     let help_str = String::from_utf8(help).unwrap();
@@ -165,31 +165,31 @@ fn cli_parses_generate_command() {
 
 #[test]
 fn cli_rejects_removed_migrate_command() {
-    let result = crate::build_cli().try_get_matches_from(["keel", "migrate"]);
+    let result = crate::cli::build_cli().try_get_matches_from(["keel", "migrate"]);
     assert!(result.is_err());
 }
 
 #[test]
 fn cli_rejects_removed_status_command() {
-    let result = crate::build_cli().try_get_matches_from(["keel", "status"]);
+    let result = crate::cli::build_cli().try_get_matches_from(["keel", "status"]);
     assert!(result.is_err());
 }
 
 #[test]
 fn cli_rejects_removed_capacity_command() {
-    let result = crate::build_cli().try_get_matches_from(["keel", "capacity"]);
+    let result = crate::cli::build_cli().try_get_matches_from(["keel", "capacity"]);
     assert!(result.is_err());
 }
 
 #[test]
 fn cli_rejects_removed_gaps_command() {
-    let result = crate::build_cli().try_get_matches_from(["keel", "gaps"]);
+    let result = crate::cli::build_cli().try_get_matches_from(["keel", "gaps"]);
     assert!(result.is_err());
 }
 
 #[test]
 fn cli_parses_topology_command() {
-    let matches = crate::build_cli()
+    let matches = crate::cli::build_cli()
         .try_get_matches_from(["keel", "topology", "--epic", "e1", "--include-done"])
         .unwrap();
     assert_eq!(matches.subcommand_name(), Some("topology"));
@@ -205,7 +205,7 @@ fn cli_parses_topology_command() {
 
 #[test]
 fn cli_parses_knowledge_prune_command() {
-    let matches = crate::build_cli()
+    let matches = crate::cli::build_cli()
         .try_get_matches_from(["keel", "knowledge", "prune"])
         .unwrap();
     assert_eq!(matches.subcommand_name(), Some("knowledge"));
@@ -215,13 +215,13 @@ fn cli_parses_knowledge_prune_command() {
 
 #[test]
 fn cli_rejects_removed_knowledge_migrate_command() {
-    let result = crate::build_cli().try_get_matches_from(["keel", "knowledge", "migrate"]);
+    let result = crate::cli::build_cli().try_get_matches_from(["keel", "knowledge", "migrate"]);
     assert!(result.is_err());
 }
 
 #[test]
 fn cli_parses_verify_command() {
-    let matches = crate::build_cli()
+    let matches = crate::cli::build_cli()
         .try_get_matches_from(["keel", "verify", "run", "S1", "--all", "--json"])
         .unwrap();
     assert_eq!(matches.subcommand_name(), Some("verify"));
@@ -237,7 +237,7 @@ fn cli_parses_verify_command() {
 
 #[test]
 fn cli_parses_verify_recommend_command() {
-    let matches = crate::build_cli()
+    let matches = crate::cli::build_cli()
         .try_get_matches_from(["keel", "verify", "recommend", "--json"])
         .unwrap();
     assert_eq!(matches.subcommand_name(), Some("verify"));
@@ -248,7 +248,7 @@ fn cli_parses_verify_recommend_command() {
 
 #[test]
 fn cli_parses_verify_detect_command() {
-    let matches = crate::build_cli()
+    let matches = crate::cli::build_cli()
         .try_get_matches_from(["keel", "verify", "detect", "--json"])
         .unwrap();
     assert_eq!(matches.subcommand_name(), Some("verify"));
@@ -259,7 +259,7 @@ fn cli_parses_verify_detect_command() {
 
 #[test]
 fn cli_rejects_verify_without_subcommand() {
-    let result = crate::build_cli().try_get_matches_from(["keel", "verify"]);
+    let result = crate::cli::build_cli().try_get_matches_from(["keel", "verify"]);
     assert!(result.is_err());
     let err = result.unwrap_err().to_string();
     assert!(err.contains("verify"));
@@ -499,7 +499,7 @@ fn cli_parses_story_new() {
 
 #[test]
 fn cli_rejects_story_new_scope_flag() {
-    let result = crate::build_cli().try_get_matches_from([
+    let result = crate::cli::build_cli().try_get_matches_from([
         "keel",
         "story",
         "new",
@@ -547,7 +547,7 @@ fn cli_parses_story_new_scope_flags() {
 
 #[test]
 fn build_cli_story_new_stays_in_sync_with_story_action_contract() {
-    let matches = crate::build_cli()
+    let matches = crate::cli::build_cli()
         .try_get_matches_from([
             "keel",
             "story",
@@ -580,7 +580,7 @@ fn build_cli_story_new_stays_in_sync_with_story_action_contract() {
 
 #[test]
 fn cli_rejects_story_new_voyage_without_epic_flag() {
-    let result = crate::build_cli().try_get_matches_from([
+    let result = crate::cli::build_cli().try_get_matches_from([
         "keel",
         "story",
         "new",
@@ -671,7 +671,7 @@ fn cli_parses_epic_new_requires_problem() {
 
 #[test]
 fn cli_rejects_epic_new_description_flag() {
-    let result = crate::build_cli().try_get_matches_from([
+    let result = crate::cli::build_cli().try_get_matches_from([
         "keel",
         "epic",
         "new",
@@ -749,7 +749,7 @@ fn cli_creation_commands_reject_system_owned_flags() {
     ];
 
     for (args, command_name) in cases {
-        let result = crate::build_cli().try_get_matches_from(args);
+        let result = crate::cli::build_cli().try_get_matches_from(args);
         assert!(
             result.is_err(),
             "Expected parse error when system-owned field flag is used in {command_name}"
@@ -846,7 +846,7 @@ fn bearing_research_command_contract() {
         panic!("Expected Bearing Research capture command");
     }
 
-    let legacy = crate::build_cli().try_get_matches_from(["keel", "bearing", "survey", "B0"]);
+    let legacy = crate::cli::build_cli().try_get_matches_from(["keel", "bearing", "survey", "B0"]);
     assert!(
         legacy.is_err(),
         "legacy survey subcommand should not remain in the public CLI contract"
@@ -1126,7 +1126,7 @@ fn cli_parses_bearing_list_with_filters() {
 
 #[test]
 fn cli_rejects_legacy_story_stage_filter() {
-    let result = crate::build_cli().try_get_matches_from([
+    let result = crate::cli::build_cli().try_get_matches_from([
         "keel",
         "story",
         "list",
@@ -1176,7 +1176,7 @@ fn build_cli_collects_repeated_status_filters() {
     ];
 
     for (args, command, expected) in cases {
-        let matches = crate::build_cli().try_get_matches_from(args).unwrap();
+        let matches = crate::cli::build_cli().try_get_matches_from(args).unwrap();
         let subcommand = matches.subcommand_matches(command).unwrap();
         let list = subcommand.subcommand_matches("list").unwrap();
         let status: Vec<_> = list
@@ -1191,14 +1191,14 @@ fn build_cli_collects_repeated_status_filters() {
 #[test]
 fn cli_rejects_legacy_epic_status_filter() {
     let result =
-        crate::build_cli().try_get_matches_from(["keel", "epic", "list", "--status", "strategic"]);
+        crate::cli::build_cli().try_get_matches_from(["keel", "epic", "list", "--status", "strategic"]);
     assert!(result.is_err());
 }
 
 #[test]
 fn cli_rejects_legacy_voyage_status_filter() {
     let result =
-        crate::build_cli().try_get_matches_from(["keel", "voyage", "list", "--status", "active"]);
+        crate::cli::build_cli().try_get_matches_from(["keel", "voyage", "list", "--status", "active"]);
     assert!(result.is_err());
 }
 

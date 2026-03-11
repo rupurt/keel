@@ -6,16 +6,16 @@ use std::path::Path;
 use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 
-use crate::infrastructure::duplicate_ids::{self, DuplicateEntity};
-use crate::infrastructure::frontmatter_mutation::Mutation;
-use crate::infrastructure::loader::load_board;
-use crate::infrastructure::story_id::generate_story_id;
-use crate::infrastructure::template_rendering;
-use crate::infrastructure::templates;
+use keel::infrastructure::duplicate_ids::{self, DuplicateEntity};
+use keel::infrastructure::frontmatter_mutation::Mutation;
+use keel::infrastructure::loader::load_board;
+use keel::infrastructure::story_id::generate_story_id;
+use keel::infrastructure::template_rendering;
+use keel::infrastructure::templates;
 
 /// Create a new bearing
 pub fn run(name: &str) -> Result<String> {
-    let board_dir = crate::infrastructure::config::find_board_dir()?;
+    let board_dir = keel::infrastructure::config::find_board_dir()?;
     new_bearing(&board_dir, name)
 }
 
@@ -24,7 +24,7 @@ fn new_bearing(board_dir: &Path, name: &str) -> Result<String> {
     duplicate_ids::ensure_unique_ids(board_dir, DuplicateEntity::Bearing, "keel bearing new")?;
 
     // Enforce Title Case
-    if !crate::infrastructure::utils::is_title_case(name) {
+    if !keel::infrastructure::utils::is_title_case(name) {
         return Err(anyhow!(
             "Bearing title '{}' must use Title Case (e.g. 'My Bearing Title')",
             name
@@ -132,7 +132,7 @@ fn new_bearing(board_dir: &Path, name: &str) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::TestBoardBuilder;
+    use keel::test_helpers::TestBoardBuilder;
 
     #[test]
     fn bearing_scaffold_uses_evidence_document_contract() {

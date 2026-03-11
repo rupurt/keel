@@ -4,14 +4,14 @@
 use anyhow::Result;
 use std::path::Path;
 
-use crate::domain::model::{Board, Story, StoryState};
-use crate::domain::policy::queue::compare_work_item_ids;
-use crate::read_model::queue_policy::{self, DraftVoyageQueueCategory};
+use keel::domain::model::{Board, Story, StoryState};
+use keel::domain::policy::queue::compare_work_item_ids;
+use keel::read_model::queue_policy::{self, DraftVoyageQueueCategory};
 
 #[derive(Debug, Clone)]
 pub struct ItemFilter<'a> {
     pub mission_id: Option<&'a str>,
-    pub actor_role: Option<&'a crate::domain::model::taxonomy::RoleTaxonomy>,
+    pub actor_role: Option<&'a keel::domain::model::taxonomy::RoleTaxonomy>,
 }
 
 impl<'a> ItemFilter<'a> {
@@ -29,28 +29,28 @@ impl<'a> ItemFilter<'a> {
             }
         }
         if let Some(role) = self.actor_role {
-            if !crate::domain::model::taxonomy::actor_matches_story(role, story) {
+            if !keel::domain::model::taxonomy::actor_matches_story(role, story) {
                 return false;
             }
         }
         true
     }
 
-    pub fn matches_adr(&self, board: &Board, adr: &crate::domain::model::Adr) -> bool {
+    pub fn matches_adr(&self, board: &Board, adr: &keel::domain::model::Adr) -> bool {
         if let Some(id) = self.mission_id {
             return board.is_adr_in_mission(adr, id);
         }
         true
     }
 
-    pub fn matches_voyage(&self, board: &Board, voyage: &crate::domain::model::Voyage) -> bool {
+    pub fn matches_voyage(&self, board: &Board, voyage: &keel::domain::model::Voyage) -> bool {
         if let Some(id) = self.mission_id {
             return board.is_voyage_in_mission(voyage, id);
         }
         true
     }
 
-    pub fn matches_bearing(&self, board: &Board, bearing: &crate::domain::model::Bearing) -> bool {
+    pub fn matches_bearing(&self, board: &Board, bearing: &keel::domain::model::Bearing) -> bool {
         if let Some(id) = self.mission_id {
             return board.is_bearing_in_mission(bearing, id);
         }
@@ -92,8 +92,8 @@ pub struct MissionsDecision {
 
 #[derive(Debug)]
 pub struct MissionDecision {
-    pub mission: crate::domain::model::Mission,
-    pub unmet_goals: Vec<crate::infrastructure::validation::charter::ParsedMissionGoal>,
+    pub mission: keel::domain::model::Mission,
+    pub unmet_goals: Vec<keel::infrastructure::validation::charter::ParsedMissionGoal>,
     pub suggestion: String,
 }
 
@@ -106,7 +106,7 @@ pub struct StoryDecision {
 
 #[derive(Debug)]
 pub struct AdrDecision {
-    pub adrs: Vec<crate::domain::model::Adr>,
+    pub adrs: Vec<keel::domain::model::Adr>,
     pub blocked_stories: Vec<Story>,
 }
 
@@ -117,7 +117,7 @@ pub struct AcceptDecision {
 
 #[derive(Debug)]
 pub struct ResearchDecision {
-    pub bearings: Vec<crate::domain::model::Bearing>,
+    pub bearings: Vec<keel::domain::model::Bearing>,
 }
 
 #[derive(Debug)]
@@ -133,12 +133,12 @@ pub struct BlockedDecision {
 
 #[derive(Debug)]
 pub struct DecomposeDecision {
-    pub voyages: Vec<crate::domain::model::Voyage>,
+    pub voyages: Vec<keel::domain::model::Voyage>,
 }
 
 #[derive(Debug)]
 pub struct NeedsPRDDecision {
-    pub epics: Vec<crate::domain::model::Epic>,
+    pub epics: Vec<keel::domain::model::Epic>,
 }
 
 /// Calculate the single most important next action.
@@ -148,7 +148,7 @@ pub fn calculate_next(
     agent_mode: bool,
     filter: &ItemFilter,
 ) -> Result<NextDecision> {
-    let metrics = crate::read_model::flow_status::project(board);
+    let metrics = keel::read_model::flow_status::project(board);
     let queue_policy_snapshot = queue_policy::project(&metrics);
 
     // 1. Check for blocking verification backlog (human only)
@@ -173,7 +173,7 @@ pub fn calculate_next(
         let adrs: Vec<_> = board
             .adrs
             .values()
-            .filter(|a| a.status() == crate::domain::model::AdrStatus::Proposed)
+            .filter(|a| a.status() == keel::domain::model::AdrStatus::Proposed)
             .filter(|a| filter.matches_adr(board, a))
             .cloned()
             .collect();
@@ -222,8 +222,8 @@ pub fn calculate_next(
             .filter(|b| {
                 matches!(
                     b.frontmatter.status,
-                    crate::domain::model::BearingStatus::Exploring
-                        | crate::domain::model::BearingStatus::Evaluating
+                    keel::domain::model::BearingStatus::Exploring
+                        | keel::domain::model::BearingStatus::Evaluating
                 )
             })
             .filter(|b| filter.matches_bearing(board, b))
@@ -245,7 +245,7 @@ pub fn calculate_next(
         for epic in board
             .epics
             .values()
-            .filter(|e| e.status() == crate::domain::model::EpicState::Draft)
+            .filter(|e| e.status() == keel::domain::model::EpicState::Draft)
             .filter(|e| {
                 filter
                     .mission_id
@@ -255,7 +255,7 @@ pub fn calculate_next(
             .cloned()
         {
             let prd_path = epic.path.parent().unwrap().join("PRD.md");
-            if !crate::infrastructure::validation::structural::check_epic_prd_authored_content(
+            if !keel::infrastructure::validation::structural::check_epic_prd_authored_content(
                 &prd_path,
             )
             .is_empty()
@@ -274,7 +274,7 @@ pub fn calculate_next(
         for voyage in board
             .voyages
             .values()
-            .filter(|v| v.status() == crate::domain::state_machine::voyage::VoyageState::Draft)
+            .filter(|v| v.status() == keel::domain::state_machine::voyage::VoyageState::Draft)
             .filter(|v| filter.matches_voyage(board, v))
             .cloned()
         {
@@ -317,13 +317,13 @@ pub fn calculate_next(
         }
 
         // 6b. Select from backlog
-        let deps = crate::read_model::traceability::derive_implementation_dependencies(board);
+        let deps = keel::read_model::traceability::derive_implementation_dependencies(board);
         let workable_backlog: Vec<_> = board
             .stories
             .values()
             .filter(|s| s.status == StoryState::Backlog)
             .filter(|s| {
-                crate::domain::state_machine::invariants::story_workable(s, board, board_dir)
+                keel::domain::state_machine::invariants::story_workable(s, board, board_dir)
             })
             .filter(|s| filter.matches_story(board, s))
             .collect();
@@ -360,19 +360,19 @@ pub fn calculate_next(
     let actionable_missions: Vec<_> = board
         .missions
         .values()
-        .filter(|m| m.status() == crate::domain::model::MissionStatus::Active)
+        .filter(|m| m.status() == keel::domain::model::MissionStatus::Active)
         .filter(|m| filter.mission_id.map(|id| m.id() == id).unwrap_or(true))
         .filter_map(|mission| {
             let charter_path = mission.path.parent().unwrap().join("CHARTER.md");
             let content = std::fs::read_to_string(&charter_path).unwrap_or_default();
-            let goals = crate::infrastructure::validation::charter::parse_mission_goals(&content);
+            let goals = keel::infrastructure::validation::charter::parse_mission_goals(&content);
 
             let unmet_goals: Vec<_> = goals
                 .iter()
                 .filter(|g| {
                     matches!(
                         g.verification,
-                        crate::infrastructure::validation::charter::GoalVerification::Board(_)
+                        keel::infrastructure::validation::charter::GoalVerification::Board(_)
                     ) && !is_goal_met(board, g.verification.raw())
                 })
                 .cloned()
@@ -385,17 +385,17 @@ pub fn calculate_next(
                 let suggestion = if bearings.iter().any(|b| {
                     matches!(
                         b.frontmatter.status,
-                        crate::domain::model::BearingStatus::Exploring
-                            | crate::domain::model::BearingStatus::Evaluating
+                        keel::domain::model::BearingStatus::Exploring
+                            | keel::domain::model::BearingStatus::Evaluating
                     )
                 }) {
                     "Complete active research bearings".to_string()
                 } else if let Some(epic) = epics
                     .iter()
-                    .find(|e| e.status() == crate::domain::model::EpicState::Draft)
+                    .find(|e| e.status() == keel::domain::model::EpicState::Draft)
                 {
                     let prd_path = epic.path.parent().unwrap().join("PRD.md");
-                    if crate::infrastructure::validation::structural::check_epic_prd_authored_content(
+                    if keel::infrastructure::validation::structural::check_epic_prd_authored_content(
                         &prd_path,
                     )
                     .is_empty()
@@ -405,13 +405,13 @@ pub fn calculate_next(
                         format!("Author PRD for Epic {}", epic.id())
                     }
                 } else if let Some(voyage) = board.voyages.values().find(|v| {
-                    v.status() == crate::domain::state_machine::voyage::VoyageState::Draft
+                    v.status() == keel::domain::state_machine::voyage::VoyageState::Draft
                         && epics.iter().any(|e| e.id() == v.epic_id)
                 }) {
                     format!("Decompose or author planning for Voyage {}", voyage.id())
                 } else if epics
                     .iter()
-                    .any(|e| e.status() != crate::domain::model::EpicState::Done)
+                    .any(|e| e.status() != keel::domain::model::EpicState::Done)
                 {
                     "Progress existing mission-scoped epics".to_string()
                 } else if bearings.is_empty() && epics.is_empty() {
@@ -462,13 +462,13 @@ fn is_goal_met(board: &Board, target: &str) -> bool {
     }
 
     if let Some(epic) = board.epics.get(target) {
-        return epic.status() == crate::domain::model::EpicState::Done;
+        return epic.status() == keel::domain::model::EpicState::Done;
     }
     if let Some(voyage) = board.voyages.get(target) {
-        return voyage.status() == crate::domain::state_machine::voyage::VoyageState::Done;
+        return voyage.status() == keel::domain::state_machine::voyage::VoyageState::Done;
     }
     if let Some(story) = board.stories.get(target) {
-        return story.status == crate::domain::model::StoryState::Done;
+        return story.status == keel::domain::model::StoryState::Done;
     }
     false
 }
@@ -477,8 +477,8 @@ fn is_goal_met(board: &Board, target: &str) -> bool {
 mod tests {
     use super::*;
     use std::fs;
-    use crate::domain::model::StoryState;
-    use crate::test_helpers::{TestBearing, TestBoardBuilder, TestStory, TestMission, TestAdr};
+    use keel::domain::model::StoryState;
+    use keel::test_helpers::{TestBearing, TestBoardBuilder, TestStory, TestMission, TestAdr};
 
     fn assert_human_queue_decision(decision: &NextDecision) {
         match decision {
@@ -504,7 +504,7 @@ mod tests {
             )
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let next = calculate_next(&board, temp.path(), false, &ItemFilter::none()).unwrap();
 
         assert_human_queue_decision(&next);
@@ -520,7 +520,7 @@ mod tests {
             .bearing(TestBearing::new("B1").status("exploring"))
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let next = calculate_next(&board, Path::new("test"), false, &ItemFilter::none()).unwrap();
 
         assert_human_queue_decision(&next);
@@ -537,7 +537,7 @@ mod tests {
             .story(TestStory::new("S2").status(StoryState::Backlog))
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let next = calculate_next(&board, temp.path(), true, &ItemFilter::none()).unwrap();
 
         match next {
@@ -555,7 +555,7 @@ mod tests {
             .story(TestStory::new("S1").status(StoryState::Backlog))
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let next = calculate_next(&board, temp.path(), true, &ItemFilter::none()).unwrap();
 
         match next {
@@ -582,7 +582,7 @@ mod tests {
 "#;
         fs::write(charter_path, charter).unwrap();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let next = calculate_next(&board, temp.path(), true, &ItemFilter::none()).unwrap();
 
         match next {

@@ -4,12 +4,12 @@ use std::path::Path;
 use std::sync::Arc;
 
 use anyhow::Result;
-use crate::infrastructure::storage::filesystem::FileSystemAdapter;
+use keel::infrastructure::storage::filesystem::FileSystemAdapter;
 
 use super::guidance::{StoryLifecycleAction, error_with_recovery};
 #[cfg(test)]
-use crate::application::story_lifecycle;
-use crate::application::story_lifecycle::StoryLifecycleService;
+use keel::application::story_lifecycle;
+use keel::application::story_lifecycle::StoryLifecycleService;
 
 /// Run the reject command
 pub fn run(board_dir: &Path, id: &str, reason: &str) -> Result<()> {
@@ -35,9 +35,9 @@ fn append_rejection(story_path: &Path, reason: &str) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::StoryState;
-    use crate::test_helpers::{TestBoardBuilder, TestStory};
-    use crate::infrastructure::storage::filesystem::FileSystemAdapter;
+    use keel::domain::model::StoryState;
+    use keel::test_helpers::{TestBoardBuilder, TestStory};
+    use keel::infrastructure::storage::filesystem::FileSystemAdapter;
     use std::sync::Arc;
     use std::fs;
     use tempfile::TempDir;

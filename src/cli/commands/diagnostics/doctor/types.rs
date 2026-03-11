@@ -3,7 +3,7 @@
 use serde::Serialize;
 use std::time::Duration;
 
-pub use crate::infrastructure::validation::{CheckId, Fix, GapCategory, Problem, Severity};
+pub use keel::infrastructure::validation::{CheckId, Fix, GapCategory, Problem, Severity};
 
 /// Full board health report
 #[derive(Debug, Serialize, Clone)]

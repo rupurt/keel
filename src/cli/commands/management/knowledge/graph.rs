@@ -5,7 +5,7 @@ use owo_colors::OwoColorize;
 use std::collections::HashMap;
 use std::path::Path;
 
-use crate::read_model::knowledge::scanner;
+use keel::read_model::knowledge::scanner;
 
 /// Run the graph command to visualize knowledge connections
 pub fn run(board_dir: &Path) -> Result<()> {

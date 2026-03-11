@@ -19,9 +19,9 @@ use crate::cli::commands::management::story::guidance::{
     accept_command_for_role as story_accept_command_for_role,
     creation_command as story_creation_command,
 };
-use crate::domain::model::Story;
-use crate::infrastructure::loader::load_board;
-use crate::read_model::workflow_topology::{self, ResolvedWorkflowTopology};
+use keel::domain::model::Story;
+use keel::infrastructure::loader::load_board;
+use keel::read_model::workflow_topology::{self, ResolvedWorkflowTopology};
 
 #[derive(Serialize)]
 struct JsonResult {
@@ -73,7 +73,7 @@ enum JsonDetails {
     Mission {
         id: String,
         title: String,
-        unmet_goals: Vec<crate::infrastructure::validation::charter::ParsedMissionGoal>,
+        unmet_goals: Vec<keel::infrastructure::validation::charter::ParsedMissionGoal>,
         suggestion: String,
     },
     Missions {
@@ -126,7 +126,7 @@ struct ParallelProjection<'a> {
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct ResolvedActorContext {
     lane_name: String,
-    queue_lane: crate::read_model::queue_policy::ActorQueueLane,
+    queue_lane: keel::read_model::queue_policy::ActorQueueLane,
     supports_parallel: bool,
     role_context: Option<RoleContextGuidance>,
 }
@@ -134,9 +134,9 @@ struct ResolvedActorContext {
 /// Parse optional actor role taxonomy string for `next` filtering.
 pub fn parse_actor_role(
     role: Option<&str>,
-) -> Result<Option<crate::domain::model::taxonomy::RoleTaxonomy>> {
+) -> Result<Option<keel::domain::model::taxonomy::RoleTaxonomy>> {
     Ok(role
-        .map(crate::domain::model::taxonomy::parse)
+        .map(keel::domain::model::taxonomy::parse)
         .transpose()?)
 }
 
@@ -222,16 +222,16 @@ fn unsupported_role_error(
 }
 
 pub(crate) fn calculate_next_for_role(
-    board: &crate::domain::model::Board,
+    board: &keel::domain::model::Board,
     board_dir: &Path,
     parallel: bool,
-    actor_role: Option<&crate::domain::model::taxonomy::RoleTaxonomy>,
+    actor_role: Option<&keel::domain::model::taxonomy::RoleTaxonomy>,
 ) -> Result<NextDecision> {
     let topology = workflow_topology::load_for_board(board_dir)?;
     
     let effective_role = match actor_role {
         Some(r) => r.clone(),
-        None => crate::domain::model::taxonomy::parse(&topology.defaults.management_role)?,
+        None => keel::domain::model::taxonomy::parse(&topology.defaults.management_role)?,
     };
     
     let actor_topology = topology.resolve_actor_context(&effective_role)
@@ -239,7 +239,7 @@ pub(crate) fn calculate_next_for_role(
     
     let execution_mode = matches!(
         actor_topology.queue_lane,
-        crate::read_model::queue_policy::ActorQueueLane::Execution
+        keel::read_model::queue_policy::ActorQueueLane::Execution
     );
 
     if parallel && !actor_topology.parallel {
@@ -263,14 +263,14 @@ pub fn run(
     board_dir: &Path,
     json: bool,
     parallel: bool,
-    actor_role: Option<&crate::domain::model::taxonomy::RoleTaxonomy>,
+    actor_role: Option<&keel::domain::model::taxonomy::RoleTaxonomy>,
 ) -> Result<()> {
     let board = load_board(board_dir)?;
     let topology = workflow_topology::load_for_board(board_dir)?;
     
     let effective_role = match actor_role {
         Some(r) => r.clone(),
-        None => crate::domain::model::taxonomy::parse(&topology.defaults.management_role)?,
+        None => keel::domain::model::taxonomy::parse(&topology.defaults.management_role)?,
     };
     
     let actor_topology = topology.resolve_actor_context(&effective_role)
@@ -288,7 +288,7 @@ pub fn run(
         }
         
         let role_context =
-            crate::read_model::role_context::resolve_role_context(&topology, &effective_role)
+            keel::read_model::role_context::resolve_role_context(&topology, &effective_role)
                 .ok()
                 .map(|contract| RoleContextGuidance::from_contract(&effective_role, contract));
 
@@ -312,7 +312,7 @@ pub fn run(
     let decision = calculate_next_for_role(&board, board_dir, false, Some(&effective_role))?;
     
     let role_context =
-        crate::read_model::role_context::resolve_role_context(&topology, &effective_role)
+        keel::read_model::role_context::resolve_role_context(&topology, &effective_role)
             .ok()
             .map(|contract| RoleContextGuidance::from_contract(&effective_role, contract));
 
@@ -382,7 +382,7 @@ fn surface_ranked_knowledge(
     scope: Option<&str>,
     limit: usize,
 ) {
-    let _ = crate::application::knowledge_context::surface_ranked_knowledge(
+    let _ = keel::application::knowledge_context::surface_ranked_knowledge(
         board_dir, heading, epic, scope, limit, None,
     );
 }
@@ -612,12 +612,12 @@ fn render_parallel_blockers_human(
 }
 
 fn project_parallel_work<'a>(
-    board: &'a crate::domain::model::Board,
+    board: &'a keel::domain::model::Board,
     board_dir: &Path,
-    actor_role: Option<&crate::domain::model::taxonomy::RoleTaxonomy>,
+    actor_role: Option<&keel::domain::model::taxonomy::RoleTaxonomy>,
 ) -> ParallelProjection<'a> {
-    use crate::domain::state_machine::invariants;
-    use crate::read_model::traceability::derive_implementation_dependencies;
+    use keel::domain::state_machine::invariants;
+    use keel::read_model::traceability::derive_implementation_dependencies;
 
     // Get all workable stories, optionally filtered by role.
     let mut candidates: Vec<&Story> = board
@@ -626,7 +626,7 @@ fn project_parallel_work<'a>(
         .filter(|s| invariants::story_workable(s, board, board_dir))
         .filter(|s| {
             actor_role
-                .map(|actor| crate::domain::model::taxonomy::actor_matches_story(actor, s))
+                .map(|actor| keel::domain::model::taxonomy::actor_matches_story(actor, s))
                 .unwrap_or(true)
         })
         .collect();
@@ -645,7 +645,7 @@ fn project_parallel_work<'a>(
                 board
                     .stories
                     .get(id)
-                    .map(|dep| dep.status == crate::domain::model::StoryState::Done)
+                    .map(|dep| dep.status == keel::domain::model::StoryState::Done)
                     .unwrap_or(false)
             })
         });
@@ -749,10 +749,10 @@ fn build_parallel_json_result(
 }
 
 fn run_parallel(
-    board: &crate::domain::model::Board,
+    board: &keel::domain::model::Board,
     board_dir: &Path,
     json: bool,
-    actor_role: Option<&crate::domain::model::taxonomy::RoleTaxonomy>,
+    actor_role: Option<&keel::domain::model::taxonomy::RoleTaxonomy>,
     actor_context: Option<&ResolvedActorContext>,
     management_role_example: &str,
 ) -> Result<()> {
@@ -826,9 +826,9 @@ fn parallel_story_with_scope(story: &Story) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::Story;
-    use crate::domain::model::StoryState;
-    use crate::test_helpers::{
+    use keel::domain::model::Story;
+    use keel::domain::model::StoryState;
+    use keel::test_helpers::{
         AdrFactory, BearingFactory, StoryFactory, TestBoardBuilder, TestEpic, TestStory,
         TestVoyage, VoyageFactory,
     };
@@ -853,7 +853,7 @@ mod tests {
                     .status(StoryState::Backlog),
             )
             .build();
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let story = board.stories.get("S1").unwrap();
 
         let line = parallel_story_with_scope(story);
@@ -870,7 +870,7 @@ mod tests {
                     .status(StoryState::Backlog),
             )
             .build();
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let story = board.stories.get("S2").unwrap();
 
         let line = parallel_story(story);
@@ -882,14 +882,14 @@ mod tests {
     }
 
     fn default_topology() -> ResolvedWorkflowTopology {
-        workflow_topology::resolve(&crate::infrastructure::config::Config::default()).unwrap()
+        workflow_topology::resolve(&keel::infrastructure::config::Config::default()).unwrap()
     }
 
     fn make_role_context(role: &str) -> RoleContextGuidance {
-        let taxonomy = crate::domain::model::taxonomy::parse(role).unwrap();
+        let taxonomy = keel::domain::model::taxonomy::parse(role).unwrap();
         let topology = default_topology();
         let template =
-            crate::read_model::role_context::resolve_role_context(&topology, &taxonomy).unwrap();
+            keel::read_model::role_context::resolve_role_context(&topology, &taxonomy).unwrap();
         RoleContextGuidance::from_contract(&taxonomy, template)
     }
 
@@ -1226,8 +1226,8 @@ priority = 50
             )
             .build();
 
-        let board_first = crate::infrastructure::loader::load_board(temp.path()).unwrap();
-        let board_second = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board_first = keel::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board_second = keel::infrastructure::loader::load_board(temp.path()).unwrap();
 
         let first_projection = project_parallel_work(&board_first, temp.path(), None);
         let second_projection = project_parallel_work(&board_second, temp.path(), None);
@@ -1283,7 +1283,7 @@ priority = 50
             )
             .build();
 
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let projection = project_parallel_work(&board, temp.path(), None);
 
         let selected_ids: Vec<_> = projection.ready.iter().map(|story| story.id()).collect();
@@ -1332,7 +1332,7 @@ priority = 50
         let temp = TestBoardBuilder::new().build();
         write_custom_topology_config(temp.path());
         let topology = workflow_topology::load_for_board(temp.path()).unwrap();
-        let analyst = crate::domain::model::taxonomy::parse("analyst/research").unwrap();
+        let analyst = keel::domain::model::taxonomy::parse("analyst/research").unwrap();
 
         let error = topology.resolve_actor_context(&analyst)
             .unwrap_err()
@@ -1350,7 +1350,7 @@ priority = 50
             .story(TestStory::new("S1").status(StoryState::Backlog))
             .build();
         let topology = workflow_topology::load_for_board(temp.path()).unwrap();
-        let manager = crate::domain::model::taxonomy::parse("manager").unwrap();
+        let manager = keel::domain::model::taxonomy::parse("manager").unwrap();
         let actor_context = topology.resolve_actor_context(&manager).unwrap();
 
         assert!(!actor_context.parallel);
@@ -1361,7 +1361,7 @@ priority = 50
         let temp = TestBoardBuilder::new().build();
         write_custom_topology_config(temp.path());
         let topology = workflow_topology::load_for_board(temp.path()).unwrap();
-        let maker = crate::domain::model::taxonomy::parse("maker").unwrap();
+        let maker = keel::domain::model::taxonomy::parse("maker").unwrap();
 
         let first = topology.resolve_actor_context(&maker).unwrap();
         let second = topology.resolve_actor_context(&maker).unwrap();

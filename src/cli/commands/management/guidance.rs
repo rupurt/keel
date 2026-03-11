@@ -1,7 +1,7 @@
 //! Canonical guidance output contract for actionable command responses.
 
-use crate::domain::model::taxonomy::RoleTaxonomy;
-use crate::read_model::role_context::OperationalContract;
+use keel::domain::model::taxonomy::RoleTaxonomy;
+use keel::read_model::role_context::OperationalContract;
 use serde::Serialize;
 
 /// Canonical next/recovery guidance payload.
@@ -116,8 +116,8 @@ pub fn render_command_guidance(guidance: Option<CommandGuidance>) -> Option<Cano
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::infrastructure::config::Config;
-    use crate::read_model::{role_context, workflow_topology};
+    use keel::infrastructure::config::Config;
+    use keel::read_model::{role_context, workflow_topology};
     use serde_json::json;
 
     #[test]
@@ -161,7 +161,7 @@ mod tests {
     #[test]
     fn serializes_role_context_when_present() {
         let role =
-            crate::domain::model::taxonomy::parse("operator/software:infra~steady#oncall").unwrap();
+            keel::domain::model::taxonomy::parse("operator/software:infra~steady#oncall").unwrap();
         let topology = workflow_topology::resolve(&Config::default()).unwrap();
         let contract = role_context::resolve_role_context(&topology, &role).unwrap();
         let guidance = CanonicalGuidance::next("keel story start S1")
