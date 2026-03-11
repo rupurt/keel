@@ -15,6 +15,7 @@ pub struct MissionShowProjection {
     pub goals: Vec<ParsedMissionGoal>,
     pub child_entities: MissionChildren,
     pub log_summary: Option<String>,
+    pub operator_signal: Option<String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -87,6 +88,7 @@ pub fn build_projection(board: &Board, mission: &Mission) -> Result<MissionShowP
             adrs,
         },
         log_summary,
+        operator_signal: mission.frontmatter.operator_signal.clone(),
     })
 }
 

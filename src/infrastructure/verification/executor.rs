@@ -1,6 +1,6 @@
 //! Execution of verification commands
 
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use std::collections::BTreeMap;
 use std::path::Path;
 use std::process::Command;
@@ -45,15 +45,35 @@ impl ExecuteResult {
 
 use wait_timeout::ChildExt;
 
-pub fn execute(cmd: &str, cwd: &Path, timeout: Duration) -> Result<ExecuteResult> {
-    // Basic implementation for tests/compilation
-    let mut child = Command::new("bash")
-        .arg("-c")
-        .arg(cmd)
-        .current_dir(cwd)
+use super::parser::{Comparison, RequirementPhase, VerificationCommand};
+
+pub fn execute(
+    cmd: &VerificationCommand,
+    board_dir: &Path,
+    timeout: Duration,
+) -> Result<ExecuteResult> {
+    let mut command = if cmd.argv.is_empty() {
+        return Err(anyhow!("Empty command"));
+    } else {
+        let mut c = Command::new(&cmd.argv[0]);
+        if cmd.argv.len() > 1 {
+            c.args(&cmd.argv[1..]);
+        }
+        c
+    };
+
+    let effective_cwd = if let Some(rel_cwd) = &cmd.cwd {
+        board_dir.join(rel_cwd)
+    } else {
+        board_dir.to_path_buf()
+    };
+
+    command
+        .current_dir(&effective_cwd)
         .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .spawn()?;
+        .stderr(std::process::Stdio::piped());
+
+    let mut child = command.spawn()?;
 
     let (exit_status, stdout, stderr) = match child.wait_timeout(timeout)? {
         Some(status) => {
@@ -74,25 +94,29 @@ pub fn execute(cmd: &str, cwd: &Path, timeout: Duration) -> Result<ExecuteResult
         }
     };
 
-    if stderr.contains("Command timed out") {
-        return Ok(ExecuteResult {
-            exit_code: 1,
-            stdout,
-            stderr,
-            error: Some("Timeout".to_string()),
-        });
-    }
+    let error = if stderr.contains("Command timed out") {
+        Some("Timeout".to_string())
+    } else if !exit_status.success() {
+        Some(format!("Exit code {}", exit_status.code().unwrap_or(1)))
+    } else {
+        None
+    };
 
     Ok(ExecuteResult {
         exit_code: exit_status.code().unwrap_or(1),
         stdout,
         stderr,
-        error: None,
+        error,
     })
 }
 
-fn execute_vhs(_board_dir: &Path, story_dir: &Path, cmd: &str) -> Result<ExecuteResult> {
-    let tape_file = cmd.strip_prefix("vhs ").unwrap_or(cmd).trim();
+fn execute_vhs(
+    _board_dir: &Path,
+    story_dir: &Path,
+    cmd: &VerificationCommand,
+) -> Result<ExecuteResult> {
+    let cmd_str = cmd.display();
+    let tape_file = cmd_str.strip_prefix("vhs ").unwrap_or(&cmd_str).trim();
     let tape_path = story_dir.join(tape_file);
 
     if !tape_path.exists() {
@@ -176,19 +200,23 @@ pub fn verify_story(
     let story_dir = board_dir.join("stories").join(story_id);
 
     for ann in annotations {
-        let cmd = ann.command.as_deref().unwrap_or("manual");
-        if cmd == "manual" {
+        let Some(cmd) = &ann.command else {
             results.push(super::reporter::VerificationResult {
                 criterion: ann.criterion.clone(),
                 passed: false,
                 actual: "manual verification required".to_string(),
                 expected: "success".to_string(),
                 requires_human_review: true,
+                command: None,
+                cwd: None,
+                stderr: None,
             });
             continue;
-        }
+        };
 
-        if cmd.starts_with("vhs ") {
+        let cmd_str = cmd.display();
+
+        if cmd_str.starts_with("vhs ") {
             let res = execute_vhs(board_dir, &story_dir, cmd)?;
             results.push(super::reporter::VerificationResult {
                 criterion: ann.criterion.clone(),
@@ -200,11 +228,18 @@ pub fn verify_story(
                 },
                 expected: "vhs recording".to_string(),
                 requires_human_review: false,
+                command: Some(cmd_str),
+                cwd: cmd.cwd.as_ref().map(|p| p.display().to_string()),
+                stderr: if res.exit_code != 0 {
+                    Some(res.stderr)
+                } else {
+                    None
+                },
             });
             continue;
         }
 
-        if cmd == "llm-judge" {
+        if cmd_str == "llm-judge" {
             let res = execute_llm_judge(board_dir, story_id, &ann.criterion)?;
             results.push(super::reporter::VerificationResult {
                 criterion: ann.criterion.clone(),
@@ -216,6 +251,13 @@ pub fn verify_story(
                 },
                 expected: "llm-judge signature".to_string(),
                 requires_human_review: false,
+                command: Some(cmd_str),
+                cwd: None,
+                stderr: if res.exit_code != 0 {
+                    Some(res.stderr)
+                } else {
+                    None
+                },
             });
             continue;
         }
@@ -227,6 +269,13 @@ pub fn verify_story(
             actual: format!("exit code {}", res.exit_code),
             expected: "exit code 0".to_string(),
             requires_human_review: false,
+            command: Some(cmd_str),
+            cwd: cmd.cwd.as_ref().map(|p| p.display().to_string()),
+            stderr: if res.exit_code != 0 {
+                Some(res.stderr)
+            } else {
+                None
+            },
         });
     }
 

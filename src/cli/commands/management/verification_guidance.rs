@@ -134,6 +134,9 @@ mod tests {
                     "exit code 1".to_string()
                 },
                 requires_human_review: false,
+                command: None,
+                cwd: None,
+                stderr: None,
             }],
         }
     }

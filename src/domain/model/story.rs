@@ -55,6 +55,9 @@ pub struct StoryFrontmatter {
     /// Role taxonomy string specifying required actor capabilities
     #[serde(default)]
     pub role: Option<String>,
+    /// Optional signal from the operator (separate from evidence)
+    #[serde(default, rename = "operator-signal")]
+    pub operator_signal: Option<String>,
 }
 
 /// A story with its frontmatter and file location

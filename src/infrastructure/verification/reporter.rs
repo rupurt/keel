@@ -15,6 +15,12 @@ pub struct VerificationResult {
     pub actual: String,
     /// Whether this requires manual verification
     pub requires_human_review: bool,
+    /// The command that was executed
+    pub command: Option<String>,
+    /// The working directory where it was executed
+    pub cwd: Option<String>,
+    /// The stderr output if the command failed
+    pub stderr: Option<String>,
 }
 
 /// Full report for a story verification
@@ -65,6 +71,21 @@ pub fn print_terminal_report(report: &VerificationReport) {
         if !result.passed && !result.requires_human_review {
             println!("    {}", format!("expected: {}", result.expected).red());
             println!("    {}", format!("actual:   {}", result.actual).red());
+
+            if let Some(cmd) = &result.command {
+                println!("    {}", format!("command:  {}", cmd).dimmed());
+            }
+            if let Some(cwd) = &result.cwd {
+                println!("    {}", format!("cwd:      {}", cwd).dimmed());
+            }
+            if let Some(stderr) = &result.stderr
+                && !stderr.is_empty()
+            {
+                println!("    {}", "stderr:".red());
+                for line in stderr.lines() {
+                    println!("      {}", line.red());
+                }
+            }
         }
     }
 
@@ -89,6 +110,9 @@ mod tests {
             expected: "ok".to_string(),
             actual: "ok".to_string(),
             requires_human_review: false,
+            command: None,
+            cwd: None,
+            stderr: None,
         }
     }
 
@@ -111,6 +135,9 @@ mod tests {
                 expected: "".into(),
                 actual: "".into(),
                 requires_human_review: true,
+                command: None,
+                cwd: None,
+                stderr: None,
             }],
         };
         assert!(report.passed()); // manual review doesn't count as "failed"
@@ -129,6 +156,9 @@ mod tests {
                     expected: "exp".into(),
                     actual: "act".into(),
                     requires_human_review: false,
+                    command: Some("ls".to_string()),
+                    cwd: Some(".".to_string()),
+                    stderr: Some("error".to_string()),
                 },
             ],
         };

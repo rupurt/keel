@@ -317,6 +317,7 @@ mod template_struct_fields {
             governed_by: vec!["g".to_string()],
             blocked_by: vec!["b".to_string()],
             role: Some("r".to_string()),
+            operator_signal: Some("s".to_string()),
         }
     }
 
@@ -336,6 +337,7 @@ mod template_struct_fields {
             updated_at: Some(dt),
             started_at: Some(dt),
             completed_at: Some(dt),
+            operator_signal: Some("s".to_string()),
         }
     }
 
@@ -992,6 +994,9 @@ mod guidance_contracts {
                     "exit code 1".to_string()
                 },
                 requires_human_review: false,
+                command: None,
+                cwd: None,
+                stderr: None,
             }],
         }
     }

@@ -210,6 +210,7 @@ mod tests {
                 governed_by: vec![],
                 blocked_by: vec![],
                 role: None,
+                operator_signal: None,
             },
             PathBuf::from(format!("{}.md", id)),
         )

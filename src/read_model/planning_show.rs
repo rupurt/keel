@@ -326,7 +326,8 @@ pub fn build_epic_show_projection(board: &Board, epic: &Epic) -> Result<EpicShow
     for story in stories {
         let story_content = fs::read_to_string(&story.path).unwrap_or_default();
         for ann in parse_verify_annotations(&story_content) {
-            if let Some(command) = ann.command.as_deref() {
+            if let Some(cmd) = ann.command.as_ref() {
+                let command = cmd.display();
                 let command = command.trim();
                 if command.starts_with("vhs ") || command == "vhs" {
                     verification.used_techniques.insert("vhs".to_string());
@@ -631,7 +632,7 @@ pub fn build_story_evidence_projection(story_path: &Path, content: &str) -> Evid
             criterion: ann.criterion,
             requirements,
             mode,
-            command: ann.command,
+            command: ann.command.map(|c| c.display()),
             proof_filename,
             proof_metadata,
             excerpt_lines,

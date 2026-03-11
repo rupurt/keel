@@ -68,9 +68,10 @@ pub fn analyze_annotations(
                 }
                 _ => {
                     if let Some(ref cmd) = ann.command {
-                        if cmd.starts_with("test=") {
+                        let cmd_str = cmd.display();
+                        if cmd_str.starts_with("test=") {
                             coverage.test += 1;
-                        } else if cmd.contains("grep") {
+                        } else if cmd_str.contains("grep") {
                             coverage.grep += 1;
                         } else {
                             coverage.other_executable += 1;

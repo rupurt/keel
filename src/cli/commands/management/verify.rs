@@ -351,7 +351,9 @@ fn collect_used_techniques(board_dir: &Path) -> Result<BTreeSet<String>> {
         };
         for annotation in parse_verify_annotations(&content) {
             if let Some(command) = annotation.command {
-                for technique_id in verification_techniques::infer_used_technique_ids(&command) {
+                for technique_id in
+                    verification_techniques::infer_used_technique_ids(&command.display())
+                {
                     used.insert(technique_id);
                 }
             }

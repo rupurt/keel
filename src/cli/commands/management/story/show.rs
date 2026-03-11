@@ -42,6 +42,14 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
         "Scope:",
         story.frontmatter.scope.as_deref().map(styled_story_scope),
     );
+    metadata.push_optional_row(
+        "Signal:",
+        story
+            .frontmatter
+            .operator_signal
+            .as_ref()
+            .map(|s| format!("{}", s.italic().bright_cyan())),
+    );
     metadata.push_standard_timestamps(
         story
             .frontmatter

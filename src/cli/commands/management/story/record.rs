@@ -160,13 +160,17 @@ fn run_impl(
         );
         proof_content = combined;
     } else {
-        let cmd = cmd_override
-            .as_ref()
-            .or(ann.command.as_ref())
-            .context("No command specified for this AC and no --cmd override provided")?;
+        let cmd = if let Some(over) = cmd_override {
+            keel::infrastructure::verification::parser::VerificationCommand::shell(over)
+        } else {
+            ann.command
+                .clone()
+                .context("No command specified for this AC and no --cmd override provided")?
+        };
 
-        println!("Running: {}", cmd.bright_white());
-        let result = execute(cmd, board_dir, Duration::from_secs(60))?;
+        let cmd_display = cmd.display();
+        println!("Running: {}", cmd_display.bright_white());
+        let result = execute(&cmd, board_dir, Duration::from_secs(60))?;
 
         if result.exit_code != 0 {
             println!("{}", result.stdout);
@@ -178,7 +182,7 @@ fn run_impl(
         let mut combined = format!(
             "---\nrecorded_at: {}\ncommand: {}\n---\n",
             chrono::Local::now().to_rfc3339(),
-            cmd
+            cmd_display
         );
         combined.push_str(&result.stdout);
         if !result.stderr.is_empty() {

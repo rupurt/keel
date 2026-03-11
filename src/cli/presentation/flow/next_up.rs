@@ -448,6 +448,7 @@ mod tests {
                 governed_by: vec![],
                 blocked_by: vec![],
                 role: None,
+                operator_signal: None,
             },
             PathBuf::from(format!("{}.md", id)),
         )
@@ -470,6 +471,7 @@ mod tests {
                 updated_at: None,
                 started_at: None,
                 completed_at: None,
+                operator_signal: None,
             },
             path: PathBuf::from(format!("{}/README.md", id)),
             epic_id: "test-epic".to_string(),
@@ -817,6 +819,7 @@ mod tests {
                 updated_at: None,
                 started_at: None,
                 completed_at: None,
+                operator_signal: None,
             },
             path: PathBuf::from(format!("{}/README.md", id)),
             epic_id: epic.to_string(),

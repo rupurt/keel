@@ -151,6 +151,7 @@ mod tests {
                 updated_at: None,
                 started_at: None,
                 completed_at: None,
+                operator_signal: None,
             },
             path: voyage_dir.join("README.md"),
             epic_id: epic_id.to_string(),
@@ -195,6 +196,7 @@ mod tests {
                 governed_by: Vec::new(),
                 blocked_by: Vec::new(),
                 role: None,
+                operator_signal: None,
             },
             story_dir.join("README.md"),
         )
@@ -324,6 +326,7 @@ mod tests {
                     governed_by: Vec::new(),
                     blocked_by: Vec::new(),
                     role: None,
+                    operator_signal: None,
                 },
                 story_dir.join("README.md"),
             ),

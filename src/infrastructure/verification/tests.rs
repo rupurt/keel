@@ -3,7 +3,8 @@
 use crate::infrastructure::verification::comparator::compare;
 use crate::infrastructure::verification::executor::execute;
 use crate::infrastructure::verification::parser::{
-    Comparison, RequirementPhase, parse_ac_references, parse_verify_annotations,
+    Comparison, RequirementPhase, VerificationCommand, parse_ac_references,
+    parse_verify_annotations,
 };
 use std::path::Path;
 use std::time::Duration;
@@ -13,7 +14,10 @@ fn parses_simple_verify_annotation() {
     let content = "Check this <!-- verify: cargo test -->";
     let annotations = parse_verify_annotations(content);
     assert_eq!(annotations.len(), 1);
-    assert_eq!(annotations[0].command, Some("cargo test".to_string()));
+    assert_eq!(
+        annotations[0].command,
+        Some(VerificationCommand::shell("cargo test"))
+    );
     assert!(matches!(annotations[0].comparison, Comparison::Success));
 }
 
@@ -57,8 +61,14 @@ fn parses_multiple_annotations() {
 "#;
     let annotations = parse_verify_annotations(content);
     assert_eq!(annotations.len(), 2);
-    assert_eq!(annotations[0].command, Some("cmd1".to_string()));
-    assert_eq!(annotations[1].command, Some("cmd2".to_string()));
+    assert_eq!(
+        annotations[0].command,
+        Some(VerificationCommand::shell("cmd1"))
+    );
+    assert_eq!(
+        annotations[1].command,
+        Some(VerificationCommand::shell("cmd2"))
+    );
 }
 
 #[test]
@@ -272,7 +282,11 @@ fn comparator_manual_always_pending() {
 
 #[test]
 fn executor_executes_simple_command() {
-    let result = execute("echo hello", Path::new("."), Duration::from_secs(5));
+    let result = execute(
+        &VerificationCommand::shell("echo hello"),
+        Path::new("."),
+        Duration::from_secs(5),
+    );
     assert!(result.is_ok());
     let r = result.unwrap();
     assert_eq!(r.exit_code, 0);
@@ -281,14 +295,22 @@ fn executor_executes_simple_command() {
 
 #[test]
 fn executor_captures_exit_code() {
-    let result = execute("exit 42", Path::new("."), Duration::from_secs(5));
+    let result = execute(
+        &VerificationCommand::shell("exit 42"),
+        Path::new("."),
+        Duration::from_secs(5),
+    );
     let r = result.unwrap();
     assert_eq!(r.exit_code, 42);
 }
 
 #[test]
 fn executor_captures_stderr() {
-    let result = execute("echo error >&2", Path::new("."), Duration::from_secs(5));
+    let result = execute(
+        &VerificationCommand::shell("echo error >&2"),
+        Path::new("."),
+        Duration::from_secs(5),
+    );
     let r = result.unwrap();
     assert!(r.stderr.contains("error"));
 }
@@ -297,7 +319,11 @@ fn executor_captures_stderr() {
 fn executor_respects_working_directory() {
     let tmp = tempfile::tempdir().unwrap();
     let tmp_path = tmp.path();
-    let result = execute("pwd", tmp_path, Duration::from_secs(5));
+    let result = execute(
+        &VerificationCommand::shell("pwd"),
+        tmp_path,
+        Duration::from_secs(5),
+    );
     let r = result.unwrap();
 
     let pwd = r.stdout.trim();

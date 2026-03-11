@@ -11,16 +11,24 @@ When AI agents implement features, they drift from specifications. Small misunde
 
 Traditional project management tools don't help — they're designed for humans reading dashboards, not agents parsing context.
 
+## Verified Spec Driven Development (VSDD)
+
+Keel introduces **Verified Spec Driven Development (VSDD)** — a methodology that treats the specification (SRS/SDD) as an executable contract. 
+
+In VSDD, a feature is not "done" when the code is written; it is done when the **Specification-Evidence Loop** is closed. Every requirement in the spec must be satisfied by a machine-verifiable proof (command output, test result, or LLM-judged signal) recorded as immutable evidence.
+
+This shifts the focus from "tracking tasks" to "verifying outcomes," ensuring that agents and humans remain perfectly aligned with the authored intent.
+
 ## How Keel Helps
 
 Keel structures work into a **research → planning → execution → verification → learning** loop that catches drift early and builds long-term intelligence:
 
-| Phase | What Happens | Drift Prevention |
-|-------|--------------|------------------|
+| Phase | What Happens | Drift Prevention (VSDD) |
+|-------|--------------|-------------------------|
 | **Research** | Bearings and play-driven exploration run before planning | Ambiguity is reduced before requirements are frozen |
 | **Planning** | Requirements captured in PRD → SRS → Stories | Specifications are explicit and traceable |
 | **Execution** | Stories track implementation with acceptance criteria | Work stays scoped to what was planned |
-| **Verification** | Doctor validates health, story reflections capture drift | Drift is detected before it compounds |
+| **Verification** | Evidence recorded for every requirement | Outcome is verified against the spec before transition |
 | **Learning** | Navigator surfaces trends and thematic rising patterns | Past mistakes inform future research and ADRs |
 
 **Everything flows down**: Vision → Epic → Voyage → Story → Implementation → Reflection.

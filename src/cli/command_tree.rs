@@ -22,7 +22,7 @@ Management
   bearing     Bearing commands (research phase)
   epic        Epic commands
   voyage      Voyage commands
-  story       Story commands
+  story       Story commands (new, start, submit, accept, reject, ice, thaw, show, list, link, unlink, record, audit)
 
 Diagnostics
   doctor      Validate board health and optionally fix issues

@@ -1400,6 +1400,7 @@ mod tests {
                 governed_by: vec![],
                 blocked_by: vec![],
                 role: None,
+                operator_signal: None,
             },
             std::path::PathBuf::from(format!("{}.md", id)),
         )
@@ -1418,6 +1419,7 @@ mod tests {
                 updated_at: None,
                 started_at: None,
                 completed_at: None,
+                operator_signal: None,
             },
             path: path.to_path_buf(),
             epic_id: "test-epic".to_string(),

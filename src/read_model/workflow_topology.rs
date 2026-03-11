@@ -548,6 +548,7 @@ mod tests {
                 "bearing.laid".to_string(),
                 "bearing.parked".to_string(),
                 "bearing.ready".to_string(),
+                "mission.achieved".to_string(),
                 "story.needs-human-verification".to_string(),
                 "voyage.draft".to_string(),
             ]

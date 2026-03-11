@@ -4,8 +4,8 @@ use super::{
     AcceptDecision, AdrDecision, BlockedDecision, DecomposeDecision, EmptyDecision, NextDecision,
     ResearchDecision, StoryDecision, VerifyMissionDecision,
 };
-use owo_colors::OwoColorize;
 use keel::domain::model::Entity;
+use owo_colors::OwoColorize;
 
 fn story_header(story: &keel::domain::model::Story) -> String {
     format!(
@@ -286,6 +286,7 @@ mod tests {
                 governed_by: Vec::new(),
                 blocked_by: Vec::new(),
                 role: None,
+                operator_signal: None,
             },
             path: PathBuf::from("test.md"),
         }
@@ -304,6 +305,7 @@ mod tests {
                 updated_at: None,
                 started_at: None,
                 completed_at: None,
+                operator_signal: None,
             },
             path: PathBuf::from("test.md"),
             epic_id: "epic1".to_string(),

@@ -1,6 +1,9 @@
 use regex::Regex;
 use std::sync::LazyLock;
 
+use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
+
 // Compile each regex once on first use, then reuse forever.
 static AC_REF_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\[(SRS-[A-Z0-9-]+)/AC-(\d+)\]").unwrap());
@@ -15,6 +18,39 @@ static CONTAINS_REGEX: LazyLock<Regex> =
 static EQUALS_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^(.+?)\s+==\s+(.+)$").unwrap());
 static PROOF_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"proof:\s*(\S+)\s*$").unwrap());
+
+/// A structured verification command
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct VerificationCommand {
+    /// Command and arguments
+    pub argv: Vec<String>,
+    /// Optional working directory relative to board root
+    pub cwd: Option<PathBuf>,
+}
+
+impl VerificationCommand {
+    /// Create a command from a raw shell string (legacy compatibility)
+    pub fn shell(cmd: impl Into<String>) -> Self {
+        Self {
+            argv: vec!["bash".to_string(), "-c".to_string(), cmd.into()],
+            cwd: None,
+        }
+    }
+
+    /// Create a structured command
+    pub fn new(argv: Vec<String>, cwd: Option<PathBuf>) -> Self {
+        Self { argv, cwd }
+    }
+
+    /// Display the command as a string for reporting
+    pub fn display(&self) -> String {
+        if self.argv.len() == 3 && self.argv[0] == "bash" && self.argv[1] == "-c" {
+            self.argv[2].clone()
+        } else {
+            self.argv.join(" ")
+        }
+    }
+}
 
 /// Comparison type for verify annotations
 #[derive(Debug, Clone, PartialEq)]
@@ -66,7 +102,7 @@ pub struct VerifyAnnotation {
     /// The acceptance criterion text
     pub criterion: String,
     /// The command to run (None for manual)
-    pub command: Option<String>,
+    pub command: Option<VerificationCommand>,
     /// How to compare the output
     pub comparison: Comparison,
     /// Requirement traceability refs carried by this annotation
@@ -161,7 +197,7 @@ pub fn parse_verify_annotations(content: &str) -> Vec<VerifyAnnotation> {
 fn parse_verify_content(
     content: &str,
 ) -> (
-    Option<String>,
+    Option<VerificationCommand>,
     Comparison,
     Vec<RequirementRef>,
     Option<String>,
@@ -229,6 +265,13 @@ fn parse_verify_content(
         return (None, Comparison::Manual, requirements, proof);
     }
 
+    // Try to parse as structured YAML if it looks like it
+    if command_str.starts_with('{')
+        && let Ok(cmd) = serde_yaml::from_str::<VerificationCommand>(command_str)
+    {
+        return (Some(cmd), Comparison::Success, requirements, proof);
+    }
+
     // Handle contains "text"
     if let Some(caps) = CONTAINS_REGEX.captures(command_str) {
         let command = caps.get(1).unwrap().as_str().trim().to_string();
@@ -240,7 +283,7 @@ fn parse_verify_content(
             .trim_matches('"')
             .to_string();
         return (
-            Some(command),
+            Some(VerificationCommand::shell(command)),
             Comparison::Contains(expected),
             requirements,
             proof,
@@ -252,7 +295,7 @@ fn parse_verify_content(
         let command = caps.get(1).unwrap().as_str().trim().to_string();
         let expected = caps.get(2).unwrap().as_str().trim().to_string();
         return (
-            Some(command),
+            Some(VerificationCommand::shell(command)),
             Comparison::Equals(expected),
             requirements,
             proof,
@@ -261,7 +304,7 @@ fn parse_verify_content(
 
     // Default: bare command (success check)
     (
-        Some(command_str.to_string()),
+        Some(VerificationCommand::shell(command_str.to_string())),
         Comparison::Success,
         requirements,
         proof,

@@ -303,6 +303,7 @@ mod tests {
                 updated_at: None,
                 started_at: None,
                 completed_at: None,
+                operator_signal: None,
             },
             path: PathBuf::from(format!("{}/README.md", id)),
             epic_id: epic_id.to_string(),

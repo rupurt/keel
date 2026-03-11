@@ -951,6 +951,7 @@ impl StoryFactory {
                 governed_by: vec![],
                 blocked_by: self.blocked_by,
                 role: self.role,
+                operator_signal: None,
             },
             PathBuf::from(format!("{}.md", self.id)),
         )
@@ -1104,6 +1105,7 @@ impl VoyageFactory {
                 updated_at: None,
                 started_at: None,
                 completed_at: None,
+                operator_signal: None,
             },
             path: PathBuf::from(format!("{}.md", self.id)),
             epic_id: self.epic_id,

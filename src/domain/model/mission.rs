@@ -39,6 +39,9 @@ pub struct MissionFrontmatter {
     /// Date mission was verified (Achieved → Verified)
     #[serde(default, deserialize_with = "deserialize_strict_datetime")]
     pub verified_at: Option<NaiveDateTime>,
+    /// Optional signal from the operator
+    #[serde(default, rename = "operator-signal")]
+    pub operator_signal: Option<String>,
 }
 
 /// A mission with its frontmatter and file location
@@ -200,6 +203,7 @@ status: defining
             activated_at: None,
             achieved_at: None,
             verified_at: None,
+            operator_signal: None,
         };
 
         let mission = Mission::new(fm, "/test/missions/test-mission/README.md", true, false);
@@ -222,6 +226,7 @@ status: defining
             activated_at: None,
             achieved_at: None,
             verified_at: None,
+            operator_signal: None,
         };
 
         let mission = Mission::new(fm, "/board/missions/m1/README.md", true, true);

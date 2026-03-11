@@ -38,6 +38,14 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
         .row("Title:", format!("{}", voyage.frontmatter.title.bold()))
         .row("Epic:", style::styled_epic_id(&voyage.epic_id))
         .row("Status:", style::styled_voyage_stage(&voyage.status()));
+    metadata.push_optional_row(
+        "Signal:",
+        voyage
+            .frontmatter
+            .operator_signal
+            .as_ref()
+            .map(|s| format!("{}", s.italic().bright_cyan())),
+    );
     metadata.push_standard_timestamps(
         voyage
             .frontmatter

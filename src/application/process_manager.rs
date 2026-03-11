@@ -14,11 +14,13 @@ use crate::infrastructure::loader::load_board;
 enum ProcessAction {
     StartVoyage { voyage_id: String },
     CompleteVoyage { voyage_id: String },
+    CompleteEpic { epic_id: String },
 }
 
 pub trait ProcessActionExecutor: Send + Sync {
     fn start_voyage(&self, voyage_id: &str) -> Result<()>;
     fn complete_voyage(&self, voyage_id: &str) -> Result<()>;
+    fn complete_epic(&self, epic_id: &str) -> Result<()>;
 }
 
 pub struct LiveProcessActionExecutor {
@@ -38,6 +40,14 @@ impl ProcessActionExecutor for LiveProcessActionExecutor {
 
     fn complete_voyage(&self, voyage_id: &str) -> Result<()> {
         self.service.complete_voyage(voyage_id, None, None, None)
+    }
+
+    fn complete_epic(&self, epic_id: &str) -> Result<()> {
+        // Epics are currently completed via derived state, but we might want
+        // a formal transition if we add more frontmatter logic.
+        // For now, we'll just log it or perform any necessary side effects.
+        println!("[process-manager] Finalizing epic {}", epic_id);
+        Ok(())
     }
 }
 
@@ -78,6 +88,13 @@ impl<E: ProcessActionExecutor> DomainProcessManager<E> {
                 );
                 self.executor.complete_voyage(&voyage_id)
             }
+            ProcessAction::CompleteEpic { epic_id } => {
+                println!(
+                    "[process-manager] Finalizing epic {} because all voyages are done.",
+                    epic_id
+                );
+                self.executor.complete_epic(&epic_id)
+            }
         }
     }
 
@@ -89,7 +106,9 @@ impl<E: ProcessActionExecutor> DomainProcessManager<E> {
             DomainEvent::StoryAccepted {
                 scope: Some(scope), ..
             } => plan_story_accepted_actions(board, scope),
-            DomainEvent::VoyageCompleted { .. } => Vec::new(),
+            DomainEvent::VoyageCompleted { voyage_id, epic_id } => {
+                plan_voyage_completed_actions(board, voyage_id, epic_id)
+            }
             DomainEvent::StoryStarted { scope: None, .. }
             | DomainEvent::StoryAccepted { scope: None, .. } => Vec::new(),
         }
@@ -157,6 +176,30 @@ fn plan_story_accepted_actions(board: &Board, scope: &str) -> Vec<ProcessAction>
     }]
 }
 
+fn plan_voyage_completed_actions(
+    board: &Board,
+    _voyage_id: &str,
+    epic_id: &str,
+) -> Vec<ProcessAction> {
+    let Some(epic) = board.epics.get(epic_id) else {
+        return Vec::new();
+    };
+
+    let voyages = board.voyages_for_epic_id(epic.id());
+    if voyages.is_empty() {
+        return Vec::new();
+    }
+
+    let all_done = voyages.iter().all(|v| v.status() == VoyageState::Done);
+    if !all_done {
+        return Vec::new();
+    }
+
+    vec![ProcessAction::CompleteEpic {
+        epic_id: epic.id().to_string(),
+    }]
+}
+
 #[cfg(test)]
 mod tests {
     use std::sync::{Arc, Mutex};
@@ -184,6 +227,14 @@ mod tests {
                 .lock()
                 .unwrap()
                 .push(format!("complete:{voyage_id}"));
+            Ok(())
+        }
+
+        fn complete_epic(&self, epic_id: &str) -> Result<()> {
+            self.calls
+                .lock()
+                .unwrap()
+                .push(format!("complete_epic:{epic_id}"));
             Ok(())
         }
     }
@@ -245,6 +296,33 @@ mod tests {
 
         let calls = calls.lock().unwrap();
         assert_eq!(calls.as_slice(), ["complete:v1"]);
+    }
+
+    #[test]
+    fn voyage_completed_event_completes_epic_when_all_voyages_done() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").status("done"))
+            .voyage(TestVoyage::new("v2", "e1").status("done"))
+            .build();
+
+        let calls = Arc::new(Mutex::new(Vec::new()));
+        let manager = DomainProcessManager::new(MockExecutor {
+            calls: calls.clone(),
+        });
+
+        manager
+            .handle(
+                temp.path(),
+                DomainEvent::VoyageCompleted {
+                    voyage_id: "v2".to_string(),
+                    epic_id: "e1".to_string(),
+                },
+            )
+            .unwrap();
+
+        let calls = calls.lock().unwrap();
+        assert_eq!(calls.as_slice(), ["complete_epic:e1"]);
     }
 
     #[test]

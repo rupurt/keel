@@ -158,6 +158,11 @@ pub enum StoryAction {
         #[arg(long = "file", short = 'f', action = clap::ArgAction::Append)]
         files: Vec<String>,
     },
+    /// Audit story evidence and traceability
+    Audit {
+        /// Story ID to audit
+        id: String,
+    },
 }
 
 /// Run a story action through the story interface adapter.
@@ -199,5 +204,6 @@ pub fn run(action: StoryAction) -> Result<()> {
             judge,
             files,
         } => record::run(&find_board_dir()?, id, ac, cmd, msg, judge, files),
+        StoryAction::Audit { id } => audit::run(&find_board_dir()?, Some(&id)),
     }
 }

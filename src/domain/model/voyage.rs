@@ -33,6 +33,9 @@ pub struct VoyageFrontmatter {
     /// Completion datetime
     #[serde(default, deserialize_with = "deserialize_strict_datetime")]
     pub completed_at: Option<NaiveDateTime>,
+    /// Optional signal from the operator
+    #[serde(default, rename = "operator-signal")]
+    pub operator_signal: Option<String>,
 }
 
 /// A voyage with its frontmatter and file location
@@ -136,6 +139,7 @@ title: Generate Command
                 updated_at: None,
                 started_at: None,
                 completed_at: None,
+                operator_signal: None,
             },
             path: PathBuf::from("test"),
             epic_id: "board-cli".to_string(),

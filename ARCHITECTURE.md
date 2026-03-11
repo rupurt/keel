@@ -124,7 +124,7 @@ This map describes logical ownership by business context while using the normali
 | `governance` | ADR lifecycle, role taxonomy, constitutional constraints | `src/cli/commands/management/adr/**`, `src/domain/model/taxonomy.rs`, `src/domain/state_machine/invariants.rs` |
 | `work-management` | Story/voyage/epic lifecycle orchestration and transitions | `src/cli/commands/management/story/**`, `src/cli/commands/management/voyage/**`, `src/cli/commands/management/epic/**`, `src/application/**`, `src/domain/state_machine/**`, `src/domain/transitions/**` |
 | `research` | Bearing discovery, play workflow, and synthesis inputs | `src/cli/commands/management/bearing/**`, `src/cli/commands/management/play.rs`, `src/read_model/knowledge/**` |
-| `verification` | Evidence capture, structural checks, command proof execution | `src/cli/commands/management/verify.rs`, `src/cli/commands/diagnostics/doctor/**`, `src/infrastructure/verification/**`, `src/infrastructure/validation/**`, `src/read_model/evidence.rs`, `src/read_model/traceability.rs` |
+| `verification` | Verified Spec Driven Development (VSDD): Evidence capture, structural checks, command proof execution | `src/cli/commands/management/verify.rs`, `src/cli/commands/diagnostics/doctor/**`, `src/infrastructure/verification/**`, `src/infrastructure/validation/**`, `src/read_model/evidence.rs`, `src/read_model/traceability.rs` |
 | `read-model` | Flow/capacity projections and queue-policy facades | `src/read_model/**`, consumed by `src/cli/presentation/flow/**` and `src/cli/commands/management/next_support/**` |
 
 Boundary rules:
@@ -230,6 +230,19 @@ exploring -> evaluating -> ready -> laid
                     \-> parked
                     \-> declined
 ```
+
+## Verified Spec Driven Development (VSDD)
+
+VSDD is the core methodology implemented by Keel's architectural patterns. It mandates that transitions in the entity state machines are gated by **verifiable evidence**.
+
+### The Specification-Evidence Loop
+
+1.  **Specification**: Authors define requirements in `SRS.md` and acceptance criteria in story `README.md`.
+2.  **Implementation**: Operators (agents or humans) write code to satisfy the criteria.
+3.  **Verification**: The `verification` context executes structured proofs (commands, tests, or judges) and records the output as immutable **Evidence**.
+4.  **Transition**: The `domain` gating logic only allows terminal transitions (e.g., `InProgress` → `Done`) when the evidence chain for all linked requirements is complete and valid.
+
+This loop ensures that the "Definition of Done" is not a checklist, but an executable proof.
 
 ## Gating Architecture
 

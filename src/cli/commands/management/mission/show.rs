@@ -33,6 +33,13 @@ fn render_human_output(projection: &MissionShowProjection) {
         .row(
             "Status:",
             style::styled_mission_status(&projection.status.parse().unwrap()),
+        )
+        .row_optional(
+            "Signal:",
+            projection
+                .operator_signal
+                .as_ref()
+                .map(|s| format!("{}", s.italic().bright_cyan())),
         );
 
     let mut document = ShowDocument::new();
