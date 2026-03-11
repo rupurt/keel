@@ -1,14 +1,14 @@
 ---
-id: VDXBU7W4O
-title: Application Service Refactor
-mission: VDXqZtRef
-created_at: 2026-03-10T22:36:26
-index: 18
+id: VDZKYX7TX
+title: Lifecycle Automation
+mission: VDZKSJa7V
+created_at: 2026-03-11T07:25:00
+index: 25
 ---
 
-# Application Service Refactor
+# Lifecycle Automation
 
-> Services must depend on traits rather than concrete filesystem loaders to support the hexagonal architecture pattern.
+> Manual lifecycle transitions for voyages and epics are redundant when all child entities are complete.
 
 ## Documents
 
@@ -20,8 +20,7 @@ index: 18
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/1 voyages complete, 4/4 stories done
+**Progress:** 0/0 voyages complete, 0/0 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Dependency Injection for Services](voyages/VDY6bQawh/) | done | 4/4 |
 <!-- END GENERATED -->

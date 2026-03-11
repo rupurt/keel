@@ -135,11 +135,11 @@
 |--------|--------|
 | [Core Storage Traits](epics/VDXBSiFXW/voyages/VDXHyy82b/) | done |
 
-### [Application Service Refactor](epics/VDXBU7W4O/) (active)
+### [Application Service Refactor](epics/VDXBU7W4O/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Dependency Injection for Services](epics/VDXBU7W4O/voyages/VDY6bQawh/) | in-progress |
+| [Dependency Injection for Services](epics/VDXBU7W4O/voyages/VDY6bQawh/) | done |
 
 ### [FileSystem Storage Adapter](epics/VDXBUAn7a/) (done)
 
@@ -158,6 +158,14 @@
 | Voyage | Status |
 |--------|--------|
 | [Storage Backend Configuration](epics/VDXBUHZB0/voyages/VDY7AlCLy/) | done |
+
+### [Structured Verification Infrastructure](epics/VDZKYMeNQ/) (draft)
+
+### [Audit and Diagnostics](epics/VDZKYQ9RC/) (draft)
+
+### [Signal Fields](epics/VDZKYTeQK/) (draft)
+
+### [Lifecycle Automation](epics/VDZKYX7TX/) (draft)
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
