@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-12T08:49:14.841195020-07:00
+mode: manual
+---
+World map topology now consumes BoardGraph containment and dependency edges directly, preserving blocked-story signals and hierarchy links; proved by cargo test --lib world_map_uses_board_graph_relationships plus the full hygiene stack.

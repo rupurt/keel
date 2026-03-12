@@ -14,3 +14,7 @@ Completed story VDfOIc3Ok Introduce BoardGraph Projection. Added the first canon
 ## 2026-03-12T08:40:22
 
 Completed story VDfOIcWP1 by adding the workflow graph integrity doctor check on BoardGraph, covering orphans, containment cycles, and terminal-parent violations while building the graph once per validation path. Verified with just quality, just test, just doctest, and cargo run -- doctor.
+
+## 2026-03-12T08:50:33
+
+Completed story VDfOIf3Uw by routing the topology world-map projection through BoardGraph, then closed voyage VDfO1dN84, epic VDfNdssJL, and mission VDfNPmPb0 after doctor confirmed all board goals were met. Verified with just quality, just test, just doctest, and cargo run -- doctor.

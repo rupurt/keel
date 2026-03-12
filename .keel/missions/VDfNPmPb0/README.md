@@ -1,10 +1,12 @@
 ---
 id: VDfNPmPb0
 title: Canonical Board Graph and Scoped Regeneration
-status: active
+status: verified
 created_at: 2026-03-12T08:14:00
-updated_at: 2026-03-12T08:18:11
+updated_at: 2026-03-12T08:50:27
 activated_at: 2026-03-12T08:18:11
+achieved_at: 2026-03-12T08:50:27
+verified_at: 2026-03-12T08:50:27
 ---
 
 # Canonical Board Graph and Scoped Regeneration

@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-12T08:49:15.100749829-07:00
+mode: manual
+---
+The topology projection now has a single canonical relationship source by building BoardGraph once per render path with no fallback local graph builder; proved by cargo test --lib world_map_board_graph_is_canonical_path.

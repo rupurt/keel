@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-12T08:49:14.972146167-07:00
+mode: manual
+---
+The BoardGraph migration preserves world zoom, mission focus, and dependency rendering behavior for the topology projection; proved by cargo test --lib world_map_board_graph_preserves_behavior and just test.

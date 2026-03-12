@@ -7,10 +7,12 @@ use std::str::FromStr;
 use anyhow::{Result, anyhow};
 use chrono::{NaiveDateTime, Utc};
 
-use crate::domain::model::{Adr, Bearing, Board, Epic, Mission, MissionStatus, Story, Voyage};
+use crate::domain::model::{Board, Epic, Mission, Story, Voyage};
 use crate::infrastructure::utils::{cmp_optional_index_then_id, pluralize};
+use crate::read_model::board_graph::{
+    BoardEdgeKind, BoardGraph, BoardGraphNode, BoardNodeId, BoardNodeKind, build_board_graph,
+};
 use crate::read_model::planning_show;
-use crate::read_model::traceability;
 
 const WORLD_NODE_ID: &str = "__world__";
 const HIGHLIGHT_LIMIT: usize = 8;
@@ -217,199 +219,33 @@ pub fn build_world_map_projection(
     board: &Board,
     options: WorldMapBuildOptions<'_>,
 ) -> Result<WorldMapProjection> {
+    build_world_map_projection_with_builder(board, options, build_board_graph)
+}
+
+fn build_world_map_projection_with_builder<F>(
+    board: &Board,
+    options: WorldMapBuildOptions<'_>,
+    build: F,
+) -> Result<WorldMapProjection>
+where
+    F: FnOnce(&Board) -> BoardGraph,
+{
     let reference_time = options
         .reference_time
         .unwrap_or_else(|| Utc::now().naive_utc());
-    let story_dependencies = story_dependency_map(board);
+    let graph = build(board);
     let mut nodes = BTreeMap::new();
+    let id_index: HashMap<_, _> = graph
+        .nodes()
+        .iter()
+        .map(|node| (world_node_id(&node.id), node.id.clone()))
+        .collect();
 
-    nodes.insert(
-        WORLD_NODE_ID.to_string(),
-        WorldMapNode {
-            id: WORLD_NODE_ID.to_string(),
-            title: "Keel World".to_string(),
-            kind: WorldMapNodeKind::World,
-            state: "live".to_string(),
-            parent_id: None,
-            depth: 0,
-            terminal: false,
-            order_index: Some(0),
-            summary: Some(format!(
-                "{} {}, {} {}, {} {}, {} {}, {} {}, {} {}",
-                board.missions.len(),
-                pluralize(board.missions.len(), "mission", "missions"),
-                board.epics.len(),
-                pluralize(board.epics.len(), "epic", "epics"),
-                board.bearings.len(),
-                pluralize(board.bearings.len(), "bearing", "bearings"),
-                board.adrs.len(),
-                pluralize(board.adrs.len(), "ADR", "ADRs"),
-                board.voyages.len(),
-                pluralize(board.voyages.len(), "voyage", "voyages"),
-                board.stories.len(),
-                pluralize(board.stories.len(), "story", "stories"),
-            )),
-            timer: None,
-            signals: Vec::new(),
-        },
-    );
-
-    for mission in sorted_missions(board) {
+    for node in graph.nodes() {
+        let world_id = world_node_id(&node.id);
         nodes.insert(
-            mission.id().to_string(),
-            WorldMapNode {
-                id: mission.id().to_string(),
-                title: mission.title().to_string(),
-                kind: WorldMapNodeKind::Mission,
-                state: mission.status().to_string(),
-                parent_id: Some(WORLD_NODE_ID.to_string()),
-                depth: 1,
-                terminal: mission_terminal(mission.status()),
-                order_index: None,
-                summary: Some(mission_summary(board, mission)),
-                timer: mission_timer(mission, reference_time),
-                signals: Vec::new(),
-            },
-        );
-    }
-
-    for epic in sorted_epics(board) {
-        let parent_id = epic
-            .frontmatter
-            .mission
-            .clone()
-            .unwrap_or_else(|| WORLD_NODE_ID.to_string());
-        let parent_depth = nodes.get(&parent_id).map(|node| node.depth).unwrap_or(0);
-        let (open_voyages, total_voyages) = epic_voyage_counts(board, epic);
-        nodes.insert(
-            epic.id().to_string(),
-            WorldMapNode {
-                id: epic.id().to_string(),
-                title: epic.title().to_string(),
-                kind: WorldMapNodeKind::Epic,
-                state: epic.status().to_string(),
-                parent_id: Some(parent_id),
-                depth: parent_depth + 1,
-                terminal: epic.status().to_string() == "done",
-                order_index: epic.index(),
-                summary: Some(format!(
-                    "{open_voyages}/{total_voyages} open {}",
-                    pluralize(total_voyages, "voyage", "voyages")
-                )),
-                timer: epic_timer(board, epic, reference_time),
-                signals: Vec::new(),
-            },
-        );
-    }
-
-    for bearing in sorted_bearings(board) {
-        let parent_id = bearing
-            .frontmatter
-            .mission
-            .clone()
-            .unwrap_or_else(|| WORLD_NODE_ID.to_string());
-        let parent_depth = nodes.get(&parent_id).map(|node| node.depth).unwrap_or(0);
-        nodes.insert(
-            bearing.id().to_string(),
-            WorldMapNode {
-                id: bearing.id().to_string(),
-                title: bearing.title().to_string(),
-                kind: WorldMapNodeKind::Bearing,
-                state: bearing.status().to_string(),
-                parent_id: Some(parent_id),
-                depth: parent_depth + 1,
-                terminal: bearing.is_complete(),
-                order_index: bearing.frontmatter.index,
-                summary: None,
-                timer: None,
-                signals: Vec::new(),
-            },
-        );
-    }
-
-    for adr in sorted_adrs(board) {
-        let parent_id = adr
-            .frontmatter
-            .mission
-            .clone()
-            .unwrap_or_else(|| WORLD_NODE_ID.to_string());
-        let parent_depth = nodes.get(&parent_id).map(|node| node.depth).unwrap_or(0);
-        nodes.insert(
-            adr.id().to_string(),
-            WorldMapNode {
-                id: adr.id().to_string(),
-                title: adr.title().to_string(),
-                kind: WorldMapNodeKind::Adr,
-                state: adr.status().to_string(),
-                parent_id: Some(parent_id),
-                depth: parent_depth + 1,
-                terminal: adr.status().is_terminal(),
-                order_index: adr.frontmatter.index,
-                summary: None,
-                timer: None,
-                signals: Vec::new(),
-            },
-        );
-    }
-
-    for voyage in sorted_voyages(board) {
-        let parent_id = if nodes.contains_key(&voyage.epic_id) {
-            voyage.epic_id.clone()
-        } else {
-            WORLD_NODE_ID.to_string()
-        };
-        let parent_depth = nodes.get(&parent_id).map(|node| node.depth).unwrap_or(0);
-        let (open_stories, total_stories) = voyage_story_counts(board, voyage);
-        nodes.insert(
-            voyage.id().to_string(),
-            WorldMapNode {
-                id: voyage.id().to_string(),
-                title: voyage.title().to_string(),
-                kind: WorldMapNodeKind::Voyage,
-                state: voyage.status().to_string(),
-                parent_id: Some(parent_id),
-                depth: parent_depth + 1,
-                terminal: voyage.status().to_string() == "done",
-                order_index: voyage.index(),
-                summary: Some(format!(
-                    "{open_stories}/{total_stories} open {}",
-                    pluralize(total_stories, "story", "stories")
-                )),
-                timer: voyage_timer(voyage, reference_time),
-                signals: Vec::new(),
-            },
-        );
-    }
-
-    for story in sorted_stories(board) {
-        let parent_id = story
-            .voyage()
-            .filter(|voyage_id| nodes.contains_key(*voyage_id))
-            .map(ToOwned::to_owned)
-            .or_else(|| {
-                story
-                    .epic()
-                    .filter(|epic_id| nodes.contains_key(*epic_id))
-                    .map(ToOwned::to_owned)
-            })
-            .unwrap_or_else(|| WORLD_NODE_ID.to_string());
-        let parent_depth = nodes.get(&parent_id).map(|node| node.depth).unwrap_or(0);
-        let signals = story_signals(board, story, &story_dependencies)?;
-        nodes.insert(
-            story.id().to_string(),
-            WorldMapNode {
-                id: story.id().to_string(),
-                title: story.title().to_string(),
-                kind: WorldMapNodeKind::Story,
-                state: story.status().to_string(),
-                parent_id: Some(parent_id),
-                depth: parent_depth + 1,
-                terminal: story.status().is_terminal(),
-                order_index: story.index(),
-                summary: Some(story_scope_summary(story)),
-                timer: None,
-                signals,
-            },
+            world_id,
+            build_world_map_node(board, &graph, node, reference_time)?,
         );
     }
 
@@ -417,7 +253,7 @@ pub fn build_world_map_projection(
     let focus = resolve_focus(&nodes, options.focus_id)?;
     let focus_ids = focus
         .as_ref()
-        .map(|focus| focus_related_ids(focus, &nodes, &child_map, &story_dependencies))
+        .map(|focus| focus_related_ids(focus, &graph, &id_index))
         .unwrap_or_default();
 
     let depth_limited_ids: HashSet<_> = nodes
@@ -465,7 +301,7 @@ pub fn build_world_map_projection(
 
     let kind_counts = visible_kind_counts(&visible_nodes);
     let layers = visible_layers(&visible_nodes);
-    let links = visible_links(&visible_nodes, &story_dependencies, options.zoom);
+    let links = visible_links(&graph, &visible_ids, options.zoom);
     let highlights = highlight_lines(&visible_nodes, &focus);
 
     Ok(WorldMapProjection {
@@ -479,24 +315,148 @@ pub fn build_world_map_projection(
     })
 }
 
-fn mission_terminal(status: MissionStatus) -> bool {
-    matches!(status, MissionStatus::Verified | MissionStatus::Abandoned)
+fn build_world_map_node(
+    board: &Board,
+    graph: &BoardGraph,
+    node: &BoardGraphNode,
+    reference_time: NaiveDateTime,
+) -> Result<WorldMapNode> {
+    let id = world_node_id(&node.id);
+    let parent_id = graph.parent(&node.id).map(world_node_id);
+    let depth = match node.id {
+        BoardNodeId::Board => 0,
+        _ if parent_id.is_some() => graph.ancestors(&node.id).len(),
+        _ => 1,
+    };
+
+    let (title, kind, summary, timer, signals) = match &node.id {
+        BoardNodeId::Board => (
+            "Keel World".to_string(),
+            WorldMapNodeKind::World,
+            Some(format!(
+                "{} {}, {} {}, {} {}, {} {}, {} {}, {} {}",
+                board.missions.len(),
+                pluralize(board.missions.len(), "mission", "missions"),
+                board.epics.len(),
+                pluralize(board.epics.len(), "epic", "epics"),
+                board.bearings.len(),
+                pluralize(board.bearings.len(), "bearing", "bearings"),
+                board.adrs.len(),
+                pluralize(board.adrs.len(), "ADR", "ADRs"),
+                board.voyages.len(),
+                pluralize(board.voyages.len(), "voyage", "voyages"),
+                board.stories.len(),
+                pluralize(board.stories.len(), "story", "stories"),
+            )),
+            None,
+            Vec::new(),
+        ),
+        BoardNodeId::Mission(id) => {
+            let mission = board
+                .missions
+                .get(id)
+                .expect("graph mission nodes must resolve against the board");
+            (
+                node.title.clone(),
+                world_node_kind(node.kind),
+                Some(mission_summary(board, mission)),
+                mission_timer(mission, reference_time),
+                Vec::new(),
+            )
+        }
+        BoardNodeId::Epic(id) => {
+            let epic = board
+                .epics
+                .get(id)
+                .expect("graph epic nodes must resolve against the board");
+            let (open_voyages, total_voyages) = epic_voyage_counts(board, epic);
+            (
+                node.title.clone(),
+                world_node_kind(node.kind),
+                Some(format!(
+                    "{open_voyages}/{total_voyages} open {}",
+                    pluralize(total_voyages, "voyage", "voyages")
+                )),
+                epic_timer(board, epic, reference_time),
+                Vec::new(),
+            )
+        }
+        BoardNodeId::Bearing(_) | BoardNodeId::Adr(_) => (
+            node.title.clone(),
+            world_node_kind(node.kind),
+            None,
+            None,
+            Vec::new(),
+        ),
+        BoardNodeId::Voyage(id) => {
+            let voyage = board
+                .voyages
+                .get(id)
+                .expect("graph voyage nodes must resolve against the board");
+            let (open_stories, total_stories) = voyage_story_counts(board, voyage);
+            (
+                node.title.clone(),
+                world_node_kind(node.kind),
+                Some(format!(
+                    "{open_stories}/{total_stories} open {}",
+                    pluralize(total_stories, "story", "stories")
+                )),
+                voyage_timer(voyage, reference_time),
+                Vec::new(),
+            )
+        }
+        BoardNodeId::Story(id) => {
+            let story = board
+                .stories
+                .get(id)
+                .expect("graph story nodes must resolve against the board");
+            (
+                node.title.clone(),
+                world_node_kind(node.kind),
+                Some(story_scope_summary(story)),
+                None,
+                story_signals(graph, story)?,
+            )
+        }
+    };
+
+    Ok(WorldMapNode {
+        id,
+        title,
+        kind,
+        state: node.state.clone(),
+        parent_id,
+        depth,
+        terminal: node.terminal,
+        order_index: node.order_index,
+        summary,
+        timer,
+        signals,
+    })
 }
 
-fn story_dependency_map(board: &Board) -> HashMap<String, Vec<String>> {
-    let mut dependencies = traceability::derive_implementation_dependencies(board);
-    for story in board.stories.values() {
-        if story.frontmatter.blocked_by.is_empty() {
-            continue;
-        }
-
-        let entry = dependencies.entry(story.id().to_string()).or_default();
-        entry.extend(story.frontmatter.blocked_by.iter().cloned());
-        entry.sort();
-        entry.dedup();
+fn world_node_id(id: &BoardNodeId) -> String {
+    match id {
+        BoardNodeId::Board => WORLD_NODE_ID.to_string(),
+        BoardNodeId::Mission(id)
+        | BoardNodeId::Epic(id)
+        | BoardNodeId::Bearing(id)
+        | BoardNodeId::Adr(id)
+        | BoardNodeId::Voyage(id)
+        | BoardNodeId::Story(id) => id.clone(),
     }
+}
 
-    dependencies
+fn world_node_kind(kind: BoardNodeKind) -> WorldMapNodeKind {
+    match kind {
+        BoardNodeKind::Board => WorldMapNodeKind::World,
+        BoardNodeKind::Mission => WorldMapNodeKind::Mission,
+        BoardNodeKind::Epic => WorldMapNodeKind::Epic,
+        BoardNodeKind::Bearing => WorldMapNodeKind::Bearing,
+        BoardNodeKind::Adr => WorldMapNodeKind::Adr,
+        BoardNodeKind::Voyage => WorldMapNodeKind::Voyage,
+        BoardNodeKind::Story => WorldMapNodeKind::Story,
+    }
 }
 
 fn mission_timer(mission: &Mission, reference_time: NaiveDateTime) -> Option<String> {
@@ -610,25 +570,21 @@ fn voyage_story_counts(board: &Board, voyage: &Voyage) -> (usize, usize) {
     (open, total)
 }
 
-fn story_signals(
-    board: &Board,
-    story: &Story,
-    dependencies: &HashMap<String, Vec<String>>,
-) -> Result<Vec<String>> {
+fn story_signals(graph: &BoardGraph, story: &Story) -> Result<Vec<String>> {
     let mut signals = Vec::new();
     let show = planning_show::build_story_show_projection(story)?;
 
-    if let Some(required) = dependencies.get(story.id()) {
-        let unmet: Vec<_> = required
-            .iter()
-            .filter_map(|dependency_id| {
-                let dependency = board.require_story(dependency_id).ok()?;
-                (!dependency.status().is_terminal()).then(|| dependency_id.clone())
-            })
-            .collect();
-        if !unmet.is_empty() {
-            signals.push(format!("blocked by {}", unmet.join(", ")));
-        }
+    let story_id = BoardNodeId::Story(story.id().to_string());
+    let unmet: Vec<_> = graph
+        .dependencies(&story_id)
+        .iter()
+        .filter_map(|dependency_id| {
+            let dependency = graph.node(dependency_id)?;
+            (!dependency.terminal).then(|| world_node_id(dependency_id))
+        })
+        .collect();
+    if !unmet.is_empty() {
+        signals.push(format!("blocked by {}", unmet.join(", ")));
     }
 
     if !show.evidence.missing_proofs.is_empty() {
@@ -678,54 +634,41 @@ fn resolve_focus(
 
 fn focus_related_ids(
     focus: &WorldMapFocus,
-    nodes: &BTreeMap<String, WorldMapNode>,
-    child_map: &HashMap<String, Vec<String>>,
-    story_dependencies: &HashMap<String, Vec<String>>,
+    graph: &BoardGraph,
+    id_index: &HashMap<String, BoardNodeId>,
 ) -> HashSet<String> {
     let mut ids = HashSet::new();
     ids.insert(WORLD_NODE_ID.to_string());
     ids.insert(focus.id.clone());
 
-    let mut cursor = focus.id.as_str();
-    while let Some(parent_id) = nodes.get(cursor).and_then(|node| node.parent_id.as_deref()) {
-        ids.insert(parent_id.to_string());
-        if parent_id == WORLD_NODE_ID {
-            break;
-        }
-        cursor = parent_id;
-    }
+    let Some(focus_id) = id_index.get(&focus.id) else {
+        return ids;
+    };
 
-    collect_descendants(&focus.id, child_map, &mut ids);
+    ids.extend(
+        graph
+            .ancestors(focus_id)
+            .into_iter()
+            .map(|id| world_node_id(&id)),
+    );
+    ids.extend(
+        graph
+            .descendants(focus_id)
+            .into_iter()
+            .map(|id| world_node_id(&id)),
+    );
 
     if focus.kind == WorldMapNodeKind::Story {
-        if let Some(required) = story_dependencies.get(&focus.id) {
-            ids.extend(required.iter().cloned());
-        }
-        for (story_id, dependencies) in story_dependencies {
-            if dependencies
+        ids.extend(graph.dependencies(focus_id).iter().map(world_node_id));
+        ids.extend(
+            graph
+                .incoming(focus_id, BoardEdgeKind::DependsOn)
                 .iter()
-                .any(|dependency| dependency == &focus.id)
-            {
-                ids.insert(story_id.clone());
-            }
-        }
+                .map(world_node_id),
+        );
     }
 
     ids
-}
-
-fn collect_descendants(
-    id: &str,
-    child_map: &HashMap<String, Vec<String>>,
-    ids: &mut HashSet<String>,
-) {
-    if let Some(children) = child_map.get(id) {
-        for child in children {
-            if ids.insert(child.clone()) {
-                collect_descendants(child, child_map, ids);
-            }
-        }
-    }
 }
 
 fn should_show_node(
@@ -832,50 +775,55 @@ fn visible_layers(nodes: &[WorldMapNode]) -> Vec<WorldMapLayer> {
 }
 
 fn visible_links(
-    nodes: &[WorldMapNode],
-    story_dependencies: &HashMap<String, Vec<String>>,
+    graph: &BoardGraph,
+    visible_ids: &HashSet<String>,
     zoom: TopologyZoom,
 ) -> Vec<WorldMapLink> {
-    let visible_ids: HashSet<_> = nodes.iter().map(|node| node.id.as_str()).collect();
     let mut links = Vec::new();
 
-    for node in nodes {
-        if let Some(parent_id) = &node.parent_id
-            && visible_ids.contains(parent_id.as_str())
-        {
-            links.push(WorldMapLink {
-                from_id: parent_id.clone(),
-                to_id: node.id.clone(),
-                kind: WorldMapLinkKind::Hierarchy,
-            });
+    for edge in graph.edges() {
+        match edge.kind {
+            BoardEdgeKind::Contains => {
+                let from_id = world_node_id(&edge.from);
+                let to_id = world_node_id(&edge.to);
+                if visible_ids.contains(&from_id) && visible_ids.contains(&to_id) {
+                    links.push(WorldMapLink {
+                        from_id,
+                        to_id,
+                        kind: WorldMapLinkKind::Hierarchy,
+                    });
+                }
+            }
+            BoardEdgeKind::DependsOn if zoom == TopologyZoom::Story => {
+                let from_id = world_node_id(&edge.to);
+                let to_id = world_node_id(&edge.from);
+                if visible_ids.contains(&from_id) && visible_ids.contains(&to_id) {
+                    links.push(WorldMapLink {
+                        from_id,
+                        to_id,
+                        kind: WorldMapLinkKind::Dependency,
+                    });
+                }
+            }
+            _ => {}
         }
     }
 
-    if zoom == TopologyZoom::Story {
-        let mut dependency_links = Vec::new();
-        for node in nodes
-            .iter()
-            .filter(|node| node.kind == WorldMapNodeKind::Story)
-        {
-            if let Some(required) = story_dependencies.get(&node.id) {
-                for dependency_id in required {
-                    if visible_ids.contains(dependency_id.as_str()) {
-                        dependency_links.push(WorldMapLink {
-                            from_id: dependency_id.clone(),
-                            to_id: node.id.clone(),
-                            kind: WorldMapLinkKind::Dependency,
-                        });
-                    }
-                }
-            }
-        }
-        dependency_links.sort_by(|left, right| {
-            left.to_id
-                .cmp(&right.to_id)
-                .then_with(|| left.from_id.cmp(&right.from_id))
-        });
-        links.extend(dependency_links);
-    }
+    links.sort_by(|left, right| {
+        let left_kind = match left.kind {
+            WorldMapLinkKind::Hierarchy => 0,
+            WorldMapLinkKind::Dependency => 1,
+        };
+        let right_kind = match right.kind {
+            WorldMapLinkKind::Hierarchy => 0,
+            WorldMapLinkKind::Dependency => 1,
+        };
+        left_kind
+            .cmp(&right_kind)
+            .then_with(|| left.to_id.cmp(&right.to_id))
+            .then_with(|| left.from_id.cmp(&right.from_id))
+    });
+    links.dedup();
 
     links
 }
@@ -951,65 +899,11 @@ fn compare_nodes(left: &WorldMapNode, right: &WorldMapNode) -> std::cmp::Orderin
         .then_with(|| left.title.cmp(&right.title))
 }
 
-fn sorted_missions(board: &Board) -> Vec<&Mission> {
-    let mut missions: Vec<_> = board.missions.values().collect();
-    missions.sort_by(|left, right| left.id().cmp(right.id()));
-    missions
-}
-
-fn sorted_epics(board: &Board) -> Vec<&Epic> {
-    let mut epics: Vec<_> = board.epics.values().collect();
-    epics.sort_by(|left, right| {
-        cmp_optional_index_then_id(left.index(), left.id(), right.index(), right.id())
-    });
-    epics
-}
-
-fn sorted_bearings(board: &Board) -> Vec<&Bearing> {
-    let mut bearings: Vec<_> = board.bearings.values().collect();
-    bearings.sort_by(|left, right| {
-        cmp_optional_index_then_id(
-            left.frontmatter.index,
-            left.id(),
-            right.frontmatter.index,
-            right.id(),
-        )
-    });
-    bearings
-}
-
-fn sorted_adrs(board: &Board) -> Vec<&Adr> {
-    let mut adrs: Vec<_> = board.adrs.values().collect();
-    adrs.sort_by(|left, right| {
-        cmp_optional_index_then_id(
-            left.frontmatter.index,
-            left.id(),
-            right.frontmatter.index,
-            right.id(),
-        )
-    });
-    adrs
-}
-
-fn sorted_voyages(board: &Board) -> Vec<&Voyage> {
-    let mut voyages: Vec<_> = board.voyages.values().collect();
-    voyages.sort_by(|left, right| {
-        cmp_optional_index_then_id(left.index(), left.id(), right.index(), right.id())
-    });
-    voyages
-}
-
-fn sorted_stories(board: &Board) -> Vec<&Story> {
-    let mut stories: Vec<_> = board.stories.values().collect();
-    stories.sort_by(|left, right| {
-        cmp_optional_index_then_id(left.index(), left.id(), right.index(), right.id())
-    });
-    stories
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::cell::Cell;
+
     use crate::domain::model::StoryState;
     use crate::test_helpers::{
         TestBearing, TestBoardBuilder, TestEpic, TestMission, TestStory, TestVoyage,
@@ -1070,62 +964,7 @@ mod tests {
     }
 
     #[test]
-    fn world_zoom_shows_missions_and_orphan_strategic_entities() {
-        let temp = world_fixture();
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
-
-        let projection = build_world_map_projection(
-            &board,
-            WorldMapBuildOptions {
-                zoom: TopologyZoom::World,
-                focus_id: None,
-                include_done: false,
-                reference_time: None,
-            },
-        )
-        .unwrap();
-
-        let visible_ids: Vec<_> = projection
-            .nodes
-            .iter()
-            .map(|node| node.id.as_str())
-            .collect();
-        assert!(visible_ids.contains(&WORLD_NODE_ID));
-        assert!(visible_ids.contains(&"M1"));
-        assert!(visible_ids.contains(&"M2"));
-        assert!(visible_ids.contains(&"B1"));
-        assert!(!visible_ids.contains(&"E1"));
-        assert!(!visible_ids.contains(&"V1"));
-        assert!(!visible_ids.contains(&"S1"));
-    }
-
-    #[test]
-    fn mission_zoom_reveals_mission_children() {
-        let temp = world_fixture();
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
-
-        let projection = build_world_map_projection(
-            &board,
-            WorldMapBuildOptions {
-                zoom: TopologyZoom::Mission,
-                focus_id: None,
-                include_done: false,
-                reference_time: None,
-            },
-        )
-        .unwrap();
-
-        let visible_ids: Vec<_> = projection
-            .nodes
-            .iter()
-            .map(|node| node.id.as_str())
-            .collect();
-        assert!(visible_ids.contains(&"E1"));
-        assert!(!visible_ids.contains(&"V1"));
-    }
-
-    #[test]
-    fn story_zoom_surfaces_dependency_links_and_story_signals() {
+    fn world_map_uses_board_graph_relationships() {
         let temp = world_fixture();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
 
@@ -1140,6 +979,12 @@ mod tests {
         )
         .unwrap();
 
+        assert!(projection.links.iter().any(|link| {
+            link.kind == WorldMapLinkKind::Hierarchy && link.from_id == "M1" && link.to_id == "E1"
+        }));
+        assert!(projection.links.iter().any(|link| {
+            link.kind == WorldMapLinkKind::Hierarchy && link.from_id == "V1" && link.to_id == "S2"
+        }));
         assert!(
             projection
                 .links
@@ -1159,6 +1004,84 @@ mod tests {
                 .signals
                 .iter()
                 .any(|signal| signal.contains("blocked by S1"))
+        );
+    }
+
+    #[test]
+    fn world_map_board_graph_preserves_behavior() {
+        let temp = world_fixture();
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+
+        let world = build_world_map_projection(
+            &board,
+            WorldMapBuildOptions {
+                zoom: TopologyZoom::World,
+                focus_id: None,
+                include_done: false,
+                reference_time: None,
+            },
+        )
+        .unwrap();
+        let world_ids: Vec<_> = world.nodes.iter().map(|node| node.id.as_str()).collect();
+        assert!(world_ids.contains(&WORLD_NODE_ID));
+        assert!(world_ids.contains(&"M1"));
+        assert!(world_ids.contains(&"M2"));
+        assert!(world_ids.contains(&"B1"));
+        assert!(!world_ids.contains(&"E1"));
+        assert!(!world_ids.contains(&"V1"));
+        assert!(!world_ids.contains(&"S1"));
+
+        let mission = build_world_map_projection(
+            &board,
+            WorldMapBuildOptions {
+                zoom: TopologyZoom::Mission,
+                focus_id: Some("M1"),
+                include_done: false,
+                reference_time: None,
+            },
+        )
+        .unwrap();
+        let mission_ids: Vec<_> = mission.nodes.iter().map(|node| node.id.as_str()).collect();
+        assert!(mission_ids.contains(&"M1"));
+        assert!(mission_ids.contains(&"E1"));
+        assert!(!mission_ids.contains(&"V1"));
+        assert!(!mission_ids.contains(&"M2"));
+        assert!(!mission_ids.contains(&"B1"));
+        assert_eq!(
+            mission.focus.as_ref().map(|focus| focus.id.as_str()),
+            Some("M1")
+        );
+    }
+
+    #[test]
+    fn world_map_board_graph_is_canonical_path() {
+        let temp = world_fixture();
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let build_count = Cell::new(0);
+
+        let projection = build_world_map_projection_with_builder(
+            &board,
+            WorldMapBuildOptions {
+                zoom: TopologyZoom::Story,
+                focus_id: Some("S2"),
+                include_done: false,
+                reference_time: None,
+            },
+            |board| {
+                build_count.set(build_count.get() + 1);
+                build_board_graph(board)
+            },
+        )
+        .unwrap();
+
+        assert_eq!(build_count.get(), 1);
+        assert!(
+            projection
+                .links
+                .iter()
+                .any(|link| link.kind == WorldMapLinkKind::Dependency
+                    && link.from_id == "S1"
+                    && link.to_id == "S2")
         );
     }
 
@@ -1202,37 +1125,6 @@ mod tests {
             .collect();
         assert!(visible_ids.contains(&"V1"));
         assert!(visible_ids.contains(&"S1"));
-    }
-
-    #[test]
-    fn focus_filters_to_selected_branch() {
-        let temp = world_fixture();
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
-
-        let projection = build_world_map_projection(
-            &board,
-            WorldMapBuildOptions {
-                zoom: TopologyZoom::Mission,
-                focus_id: Some("M1"),
-                include_done: false,
-                reference_time: None,
-            },
-        )
-        .unwrap();
-
-        let visible_ids: Vec<_> = projection
-            .nodes
-            .iter()
-            .map(|node| node.id.as_str())
-            .collect();
-        assert!(visible_ids.contains(&"M1"));
-        assert!(visible_ids.contains(&"E1"));
-        assert!(!visible_ids.contains(&"M2"));
-        assert!(!visible_ids.contains(&"B1"));
-        assert_eq!(
-            projection.focus.as_ref().map(|focus| focus.id.as_str()),
-            Some("M1")
-        );
     }
 
     #[test]

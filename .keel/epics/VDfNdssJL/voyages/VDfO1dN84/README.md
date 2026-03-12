@@ -1,12 +1,13 @@
 ---
 id: VDfO1dN84
 title: BoardGraph Integrity Kernel
-status: in-progress
+status: done
 epic: VDfNdssJL
 created_at: 2026-03-12T08:16:25
 index: 1
 updated_at: 2026-03-12T08:18:05
 started_at: 2026-03-12T08:19:47
+completed_at: 2026-03-12T08:50:01
 ---
 
 # BoardGraph Integrity Kernel
@@ -20,16 +21,18 @@ started_at: 2026-03-12T08:19:47
 |----------|-------------|
 | [SRS.md](SRS.md) | Requirements and verification criteria |
 | [SDD.md](SDD.md) | Architecture and implementation details |
+| [VOYAGE_REPORT.md](VOYAGE_REPORT.md) | Narrative summary of implementation and evidence |
+| [COMPLIANCE_REPORT.md](COMPLIANCE_REPORT.md) | Traceability matrix and verification proof |
 <!-- END DOCUMENTS -->
 
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/3 stories complete
+**Progress:** 3/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Introduce BoardGraph Projection](../../../../stories/VDfOIc3Ok/README.md) | feat | done |
-| [Add Graph Integrity Doctor Check](../../../../stories/VDfOIcWP1/README.md) | feat | in-progress |
-| [Route Topology Through BoardGraph](../../../../stories/VDfOIf3Uw/README.md) | feat | backlog |
+| [Add Graph Integrity Doctor Check](../../../../stories/VDfOIcWP1/README.md) | feat | done |
+| [Route Topology Through BoardGraph](../../../../stories/VDfOIf3Uw/README.md) | feat | done |
 <!-- END GENERATED -->
