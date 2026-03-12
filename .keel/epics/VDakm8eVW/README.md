@@ -23,5 +23,5 @@ index: 29
 **Progress:** 0/1 voyages complete, 0/3 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Routine Foundation](voyages/VDcFd11nc/) | planned | 0/3 |
+| [Routine Foundation](voyages/VDcFd11nc/) | in-progress | 0/3 |
 <!-- END GENERATED -->

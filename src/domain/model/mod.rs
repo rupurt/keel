@@ -1,6 +1,7 @@
 //! Board data model
 //!
-//! Structs for stories, voyages, epics, bearings, ADRs, and the board itself.
+//! Structs for routines, stories, voyages, epics, bearings, ADRs, and the
+//! board itself.
 
 mod adr;
 mod bearing;
@@ -10,6 +11,7 @@ mod epic;
 mod manifest;
 mod mission;
 mod priority;
+mod routine;
 mod story;
 mod story_type;
 pub mod taxonomy;
@@ -28,6 +30,7 @@ pub use manifest::Manifest;
 pub use mission::{Mission, MissionFrontmatter};
 #[allow(unused_imports)] // Priority may be used for voyages in future
 pub use priority::Priority;
+pub use routine::{Routine, RoutineCadence, RoutineFrontmatter};
 pub use story::{AC_REQ_RE, Story, StoryFrontmatter};
 pub use story_type::StoryType;
 pub use voyage::{Voyage, VoyageFrontmatter};

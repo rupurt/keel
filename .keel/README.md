@@ -205,7 +205,7 @@
 
 | Voyage | Status |
 |--------|--------|
-| [Routine Foundation](epics/VDakm8eVW/voyages/VDcFd11nc/) | planned |
+| [Routine Foundation](epics/VDakm8eVW/voyages/VDcFd11nc/) | in-progress |
 
 ### [Temporal Gating in Next Algorithm](epics/VDakmCGYi/) (active)
 

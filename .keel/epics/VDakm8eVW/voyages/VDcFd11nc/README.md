@@ -1,11 +1,12 @@
 ---
 id: VDcFd11nc
 title: Routine Foundation
-status: planned
+status: in-progress
 epic: VDakm8eVW
 created_at: 2026-03-11T19:24:15
 index: 1
 updated_at: 2026-03-11T19:29:44
+started_at: 2026-03-11T20:22:35
 ---
 
 # Routine Foundation
@@ -28,7 +29,7 @@ updated_at: 2026-03-11T19:29:44
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Routine Bundle Contract](../../../../stories/VDcFgmgKS/README.md) | feat | backlog |
+| [Routine Bundle Contract](../../../../stories/VDcFgmgKS/README.md) | feat | in-progress |
 | [Routine Board Integration](../../../../stories/VDcFgn0KR/README.md) | feat | backlog |
 | [Routine CLI Surfaces](../../../../stories/VDcFgruMk/README.md) | feat | backlog |
 <!-- END GENERATED -->

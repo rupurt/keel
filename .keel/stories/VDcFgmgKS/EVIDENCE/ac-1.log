@@ -1,0 +1,16 @@
+---
+recorded_at: 2026-03-11T20:27:07.751997039-07:00
+command: cargo test domain::model::routine::tests --lib
+---
+
+running 3 tests
+test domain::model::routine::tests::routine_frontmatter_rejects_unknown_fields ... ok
+test domain::model::routine::tests::routine_contract_does_not_change_story_frontmatter_parsing ... ok
+test domain::model::routine::tests::routine_frontmatter_deserializes_canonical_contract ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 855 filtered out; finished in 0.00s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.06s
+     Running unittests src/lib.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-bec18a36668a42b8)
