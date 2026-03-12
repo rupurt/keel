@@ -232,6 +232,12 @@
 |--------|--------|
 | [Explicit Lifecycle Reactors](epics/VDeRV9CAo/voyages/VDeUIiB3Q/) | done |
 
+### [Canonical Board Graph Kernel](epics/VDfNdssJL/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [BoardGraph Integrity Kernel](epics/VDfNdssJL/voyages/VDfO1dN84/) | planned |
+
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
 | Voyage | Status |
