@@ -361,7 +361,7 @@ fn process_answer(content: &str, answer: &str) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestMission, TestVoyage};
+    use crate::test_helpers::{TestBearing, TestBoardBuilder, TestEpic, TestMission, TestVoyage};
     use std::fs;
 
     fn authored_charter(board_target: &str) -> String {
@@ -487,7 +487,7 @@ mod tests {
     }
 
     #[test]
-    fn test_mission_activate_fails_with_only_draft_epics() {
+    fn test_mission_activate_fails_with_only_draft_epics_and_no_bearings() {
         let temp = TestBoardBuilder::new()
             .mission(
                 TestMission::new("M1")
@@ -502,7 +502,32 @@ mod tests {
 
         let res = MissionLifecycleService::activate(temp.path(), "M1");
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("planned epic"));
+        assert!(
+            res.unwrap_err()
+                .to_string()
+                .contains("planned epic or bearing")
+        );
+    }
+
+    #[test]
+    fn test_mission_activate_allows_bearing_without_planned_epic() {
+        let temp = TestBoardBuilder::new()
+            .mission(
+                TestMission::new("M1")
+                    .title("Mission One")
+                    .status("defining"),
+            )
+            .epic(TestEpic::new("E1").mission("M1"))
+            .bearing(TestBearing::new("B1").mission("M1"))
+            .build();
+
+        let charter_path = temp.path().join("missions/M1/CHARTER.md");
+        fs::write(charter_path, authored_charter("B1")).unwrap();
+
+        MissionLifecycleService::activate(temp.path(), "M1").unwrap();
+
+        let readme = fs::read_to_string(temp.path().join("missions/M1/README.md")).unwrap();
+        assert!(readme.contains("status: active"));
     }
 
     #[test]

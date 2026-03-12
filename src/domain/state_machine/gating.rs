@@ -90,7 +90,7 @@ fn evaluate_mission_activation(
     }
 
     problems.extend(
-        crate::infrastructure::validation::missions::check_mission_planned_epic_readiness(
+        crate::infrastructure::validation::missions::check_mission_actionable_lineage_readiness(
             board, mission,
         ),
     );

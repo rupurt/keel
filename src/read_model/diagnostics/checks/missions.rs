@@ -67,7 +67,7 @@ pub fn check_mission_definition_readiness(board: &Board) -> Vec<Problem> {
         }
 
         problems.extend(charter::check_mission_charter_readiness(board, mission));
-        problems.extend(missions::check_mission_planned_epic_readiness(
+        problems.extend(missions::check_mission_actionable_lineage_readiness(
             board, mission,
         ));
     }
@@ -342,7 +342,7 @@ pub fn check_mission_dates(board: &Board) -> Vec<Problem> {
 mod tests {
     use super::*;
     use crate::infrastructure::loader::load_board;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestMission, TestVoyage};
+    use crate::test_helpers::{TestBearing, TestBoardBuilder, TestEpic, TestMission, TestVoyage};
     use std::fs;
 
     #[test]
@@ -404,7 +404,7 @@ mod tests {
     }
 
     #[test]
-    fn test_check_mission_definition_readiness_requires_planned_epic() {
+    fn test_check_mission_definition_readiness_requires_planned_epic_or_bearing() {
         let temp = TestBoardBuilder::new()
             .mission(TestMission::new("M1").status("active"))
             .epic(TestEpic::new("E1").mission("M1"))
@@ -434,7 +434,40 @@ mod tests {
 
         assert_eq!(problems.len(), 1);
         assert_eq!(problems[0].check_id, CheckId::MissionDefinitionReadiness);
-        assert!(problems[0].message.contains("planned epic"));
+        assert!(problems[0].message.contains("planned epic or bearing"));
+    }
+
+    #[test]
+    fn test_check_mission_definition_readiness_allows_bearing_without_planned_epic() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .bearing(TestBearing::new("B1").mission("M1"))
+            .build();
+
+        let charter_path = temp.path().join("missions/M1/CHARTER.md");
+        fs::write(
+            charter_path,
+            r#"
+## Goals
+| ID | Description | Verification |
+|----|-------------|--------------|
+| MG-01 | Test goal | board: B1 |
+
+## Constraints
+- Keep the work scoped to one investigation at a time.
+
+## Halting Rules
+- Halt after the first bearing produces enough evidence to choose the next step.
+- Yield to human review before changing external workflow contracts.
+"#,
+        )
+        .unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_mission_definition_readiness(&board);
+
+        assert!(problems.is_empty());
     }
 
     #[test]
