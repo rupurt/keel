@@ -24,10 +24,10 @@ Update user-facing output for lay paths so lineage metadata is visible and expla
 - [x] [SRS-06/AC-01] Ensure show surfaces render lineage-related fields without truncating unknown legacy values. <!-- verify: manual, SRS-06:start:end, proof: ac-4.log -->
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/1vzWgD000/EVIDENCE/ac-4.log)
 - [ac-1.log](../../../../stories/1vzWgD000/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vzWgD000/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vzWgD000/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vzWgD000/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/1vzWgD000/EVIDENCE/ac-4.log)
 
 ### Lineage Doctor Checks
 - **ID:** 1vzWgW000

@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-12T09:43:51.718802168-07:00
+mode: manual
+---
+Verified canonical epic and voyage sync traversal with cargo test --lib sync_board_artifacts_uses_canonical_order.

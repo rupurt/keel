@@ -32,15 +32,15 @@ Mission struct with Entity trait.
 - [x] [SRS-04/AC-01] Mission struct implements Entity trait (id, title, path) with has_charter and has_log fields <!-- verify: cargo test --lib domain::model::mission::tests::mission_struct_has_entity_fields_and_artifact_flags, proof: ac-9.log, SRS-04:start:end -->
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/1vzeUF000/EVIDENCE/ac-4.log)
-- [ac-9.log](../../../../stories/1vzeUF000/EVIDENCE/ac-9.log)
-- [ac-6.log](../../../../stories/1vzeUF000/EVIDENCE/ac-6.log)
 - [ac-1.log](../../../../stories/1vzeUF000/EVIDENCE/ac-1.log)
-- [ac-5.log](../../../../stories/1vzeUF000/EVIDENCE/ac-5.log)
-- [ac-3.log](../../../../stories/1vzeUF000/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vzeUF000/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vzeUF000/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/1vzeUF000/EVIDENCE/ac-4.log)
+- [ac-5.log](../../../../stories/1vzeUF000/EVIDENCE/ac-5.log)
+- [ac-6.log](../../../../stories/1vzeUF000/EVIDENCE/ac-6.log)
 - [ac-7.log](../../../../stories/1vzeUF000/EVIDENCE/ac-7.log)
 - [ac-8.log](../../../../stories/1vzeUF000/EVIDENCE/ac-8.log)
+- [ac-9.log](../../../../stories/1vzeUF000/EVIDENCE/ac-9.log)
 
 ### Mission Templates And Directory Scaffold
 - **ID:** 1vzeUJ000
@@ -58,10 +58,10 @@ Goals table with MG-XX IDs, Constraints section, and Halting Rules section.
 - [x] [SRS-05/AC-04] CHARTER.md scaffold has Halting Rules section <!-- verify: cargo test --lib infrastructure::templates::tests::mission_charter_has_halting_rules_section, SRS-05:end, proof: ac-4.log-->
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/1vzeUJ000/EVIDENCE/ac-4.log)
 - [ac-1.log](../../../../stories/1vzeUJ000/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vzeUJ000/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vzeUJ000/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vzeUJ000/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/1vzeUJ000/EVIDENCE/ac-4.log)
 
 ### Board Loader Mission Integration
 - **ID:** 1vzeUN000
@@ -82,12 +82,12 @@ and wire it into load_board().
 - [x] [SRS-08/AC-03] CHARTER.md scaffold has Halting Rules section <!-- verify: cargo test --lib infrastructure::templates::tests::mission_charter_has_halting_rules_section, SRS-08:end, proof: ac-7.log-->
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/1vzeUN000/EVIDENCE/ac-4.log)
-- [ac-6.log](../../../../stories/1vzeUN000/EVIDENCE/ac-6.log)
 - [ac-1.log](../../../../stories/1vzeUN000/EVIDENCE/ac-1.log)
-- [ac-5.log](../../../../stories/1vzeUN000/EVIDENCE/ac-5.log)
-- [ac-3.log](../../../../stories/1vzeUN000/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vzeUN000/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vzeUN000/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/1vzeUN000/EVIDENCE/ac-4.log)
+- [ac-5.log](../../../../stories/1vzeUN000/EVIDENCE/ac-5.log)
+- [ac-6.log](../../../../stories/1vzeUN000/EVIDENCE/ac-6.log)
 - [ac-7.log](../../../../stories/1vzeUN000/EVIDENCE/ac-7.log)
 
 

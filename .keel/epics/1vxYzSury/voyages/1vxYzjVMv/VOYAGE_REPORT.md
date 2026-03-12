@@ -24,8 +24,8 @@ Add canonical guidance output to ADR lifecycle transitions so successful and rec
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxZ0C7OF/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxZ0C7OF/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxZ0C7OF/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxZ0C7OF/EVIDENCE/ac-3.log)
 
 ### Add Canonical Guidance To Bearing Transition Commands
 - **ID:** 1vxZ0DAeT
@@ -41,8 +41,8 @@ Add canonical guidance output to bearing lifecycle transitions so exploration wo
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxZ0DAeT/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxZ0DAeT/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxZ0DAeT/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxZ0DAeT/EVIDENCE/ac-3.log)
 
 ### Keep Informational Governance Commands Non Prescriptive
 - **ID:** 1vxZ0Dvw9
@@ -58,7 +58,7 @@ Ensure informational governance commands remain non-prescriptive by omitting can
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxZ0Dvw9/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxZ0Dvw9/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxZ0Dvw9/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxZ0Dvw9/EVIDENCE/ac-3.log)
 
 

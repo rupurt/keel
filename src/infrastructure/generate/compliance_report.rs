@@ -35,16 +35,9 @@ pub fn generate_compliance_report(board: &Board, voyage: &Voyage) -> String {
                 // Check EVIDENCE/ directory for proof artifacts
                 let story_dir = story.path.parent().unwrap();
                 let evidence_dir = story_dir.join("EVIDENCE");
-                if evidence_dir.exists()
-                    && let Ok(entries) = fs::read_dir(evidence_dir)
+                if let Ok(sorted_proofs) = super::artifact_io::read_sorted_file_names(&evidence_dir)
                 {
-                    for entry in entries.flatten() {
-                        let path = entry.path();
-                        if path.is_file() {
-                            proofs.push(path.file_name().unwrap().to_string_lossy().to_string());
-                        }
-                    }
-                    proofs.sort();
+                    proofs = sorted_proofs;
                 }
 
                 for req_ref in ann.requirements {
@@ -203,7 +196,7 @@ mod tests {
     }
 
     #[test]
-    fn compliance_report_is_deterministic_across_equivalent_boards() {
+    fn compliance_report_renders_deterministically() {
         let temp = tempfile::TempDir::new().unwrap();
         let voyage = make_voyage(temp.path());
         let scope = voyage.scope_path();

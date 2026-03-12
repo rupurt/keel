@@ -24,8 +24,8 @@ Refactor the `voyage plan` and `voyage start` commands to use the unified enforc
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vv7Yj0Kt/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vv7Yj0Kt/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vv7Yj0Kt/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vv7Yj0Kt/EVIDENCE/ac-3.log)
 
 ### Refactor Story Submit and Accept to Use Unified Enforcer
 - **ID:** 1vv7YjJlc
@@ -41,8 +41,8 @@ Refactor the `story submit` and `story accept` commands to use the unified enfor
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vv7YjJlc/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vv7YjJlc/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vv7YjJlc/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vv7YjJlc/EVIDENCE/ac-3.log)
 
 ### Refactor Story Start Command to Use Unified Enforcer
 - **ID:** 1vv7YjYpr

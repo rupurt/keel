@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-12T09:43:51.817651143-07:00
+mode: manual
+---
+Verified byte-identical repeated generation with cargo test --lib voyage_artifact_generation_is_idempotent.

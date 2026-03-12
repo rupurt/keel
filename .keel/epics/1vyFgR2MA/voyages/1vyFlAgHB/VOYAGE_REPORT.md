@@ -47,10 +47,10 @@ Hydrate authored problem text into fresh epic scaffolds so newly created epics s
 - [x] [SRS-02/AC-02] [SRS-NFR-01/AC-01] Identical `epic new --problem` inputs yield deterministic scaffold output. <!-- verify: cargo test -p keel epic_problem_scaffold_is_deterministic, SRS-NFR-01:start:end, SRS-02:end, proof: ac-4.log-->
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/1vyGZdgBX/EVIDENCE/ac-4.log)
 - [ac-1.log](../../../../stories/1vyGZdgBX/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vyGZdgBX/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vyGZdgBX/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vyGZdgBX/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/1vyGZdgBX/EVIDENCE/ac-4.log)
 
 ### Keep Fresh Epic Scaffolds Doctor Clean
 - **ID:** 1vyGZet0Z
@@ -74,7 +74,7 @@ Keep newly scaffolded epic artifacts structurally clean after the problem-only C
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vyGZet0Z/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vyGZet0Z/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vyGZet0Z/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vyGZet0Z/EVIDENCE/ac-3.log)
 
 

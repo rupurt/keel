@@ -24,8 +24,8 @@ Align `keel next` guidance rendering across human-readable and JSON outputs so b
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxZ0DxDl/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxZ0DxDl/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxZ0DxDl/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxZ0DxDl/EVIDENCE/ac-3.log)
 
 ### Add Canonical Guidance To Verify And Audit Commands
 - **ID:** 1vxZ0EXHC
@@ -41,8 +41,8 @@ Add canonical guidance output to verification and audit command outcomes so succ
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxZ0EXHC/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxZ0EXHC/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxZ0EXHC/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxZ0EXHC/EVIDENCE/ac-3.log)
 
 ### Add Canonical Guidance To Play Command Outcomes
 - **ID:** 1vxZ0Eoj9
@@ -58,7 +58,7 @@ Add canonical guidance handling to play command outcomes so deterministic result
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxZ0Eoj9/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxZ0Eoj9/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxZ0Eoj9/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxZ0Eoj9/EVIDENCE/ac-3.log)
 
 

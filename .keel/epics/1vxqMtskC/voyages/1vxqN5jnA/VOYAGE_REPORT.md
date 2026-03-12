@@ -32,8 +32,8 @@ Expose technique recommendations in planning read commands so teams can see whic
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxqNFHpk/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxqNFHpk/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxqNFHpk/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxqNFHpk/EVIDENCE/ac-3.log)
 
 ### Implement Keel.toml Technique Configuration Overrides
 - **ID:** 1vxqNFJOf
@@ -57,8 +57,8 @@ Allow projects to configure the technique bank through `keel.toml`, including en
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxqNFJOf/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxqNFJOf/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxqNFJOf/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxqNFJOf/EVIDENCE/ac-3.log)
 
 ### Implement Project Autodetection And Recommendation Engine
 - **ID:** 1vxqNFNdN
@@ -82,8 +82,8 @@ Build the autodetection and ranking pipeline that infers project stack signals a
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxqNFNdN/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxqNFNdN/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxqNFNdN/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxqNFNdN/EVIDENCE/ac-3.log)
 
 ### Define Verification Technique Catalog Model
 - **ID:** 1vxqNFaR9
@@ -107,7 +107,7 @@ Define the canonical automated-verification technique model and built-in catalog
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxqNFaR9/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxqNFaR9/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxqNFaR9/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxqNFaR9/EVIDENCE/ac-3.log)
 
 

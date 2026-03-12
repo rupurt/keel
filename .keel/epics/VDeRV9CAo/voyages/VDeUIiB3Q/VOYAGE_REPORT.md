@@ -26,8 +26,8 @@ hard-coded planner.
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/VDeUNOfrU/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/VDeUNOfrU/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/VDeUNOfrU/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/VDeUNOfrU/EVIDENCE/ac-3.log)
 
 ### Move Story Lifecycle Automation To Explicit Reactors
 - **ID:** VDeUNP4rV
@@ -60,8 +60,8 @@ surfaces.
 - [x] [SRS-04/AC-01] Architecture documentation states that reactors live in the application layer and preserve current CLI semantics. <!-- verify: llm-judge, SRS-04:start:end, proof: ac-2.log-->
 
 #### Verified Evidence
-- [llm-judge-architecture-documentation-states-that-reactors-live-in-the-application-layer-and-preserve-current-cli-semantics.txt](../../../../stories/VDeUNRFtq/EVIDENCE/llm-judge-architecture-documentation-states-that-reactors-live-in-the-application-layer-and-preserve-current-cli-semantics.txt)
 - [ac-1.log](../../../../stories/VDeUNRFtq/EVIDENCE/ac-1.log)
 - [ac-2.log](../../../../stories/VDeUNRFtq/EVIDENCE/ac-2.log)
+- [llm-judge-architecture-documentation-states-that-reactors-live-in-the-application-layer-and-preserve-current-cli-semantics.txt](../../../../stories/VDeUNRFtq/EVIDENCE/llm-judge-architecture-documentation-states-that-reactors-live-in-the-application-layer-and-preserve-current-cli-semantics.txt)
 
 

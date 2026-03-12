@@ -24,8 +24,8 @@ Replace the bearing scaffolds so the canonical document bundle becomes `BRIEF.md
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vzQwj000/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vzQwj000/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vzQwj000/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vzQwj000/EVIDENCE/ac-3.log)
 
 ### Cut Over Bearing Lifecycle Commands And Guidance To Research Language
 - **ID:** 1vzQwk000
@@ -41,8 +41,8 @@ Cut the CLI and guidance surfaces over from survey semantics to research semanti
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vzQwk000/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vzQwk000/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vzQwk000/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vzQwk000/EVIDENCE/ac-3.log)
 
 ### Enforce Hard-Cutover Validation And Migrate Bearing Fixtures
 - **ID:** 1vzQwl000
@@ -58,7 +58,7 @@ Fail fast on legacy survey-era bearing artifacts and migrate in-repo fixtures an
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vzQwl000/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vzQwl000/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vzQwl000/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vzQwl000/EVIDENCE/ac-3.log)
 
 

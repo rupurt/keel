@@ -38,10 +38,10 @@ Validate that each PRD requirement links back to strategic goals and make those 
 
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/1vyGZeEI7/EVIDENCE/ac-4.log)
 - [ac-1.log](../../../../stories/1vyGZeEI7/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vyGZeEI7/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vyGZeEI7/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vyGZeEI7/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/1vyGZeEI7/EVIDENCE/ac-4.log)
 
 ### Parse Canonical Goal Lineage
 - **ID:** 1vyGZeNMa
@@ -88,7 +88,7 @@ Render goal-to-requirement lineage in epic planning views so reviewers can inspe
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vyGZfiEk/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vyGZfiEk/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vyGZfiEk/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vyGZfiEk/EVIDENCE/ac-3.log)
 
 

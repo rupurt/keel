@@ -32,10 +32,10 @@ Enforce the canonical PRD-to-SRS lineage contract during voyage planning so inva
 
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/1vyGZEO8S/EVIDENCE/ac-4.log)
 - [ac-1.log](../../../../stories/1vyGZEO8S/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vyGZEO8S/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vyGZEO8S/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vyGZEO8S/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/1vyGZEO8S/EVIDENCE/ac-4.log)
 
 ### Render Epic Requirement Coverage
 - **ID:** 1vyGZEZNc
@@ -65,10 +65,10 @@ Surface epic-wide parent requirement coverage from the same lineage rules used b
 
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/1vyGZEZNc/EVIDENCE/ac-4.log)
 - [ac-1.log](../../../../stories/1vyGZEZNc/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vyGZEZNc/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vyGZEZNc/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vyGZEZNc/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/1vyGZEZNc/EVIDENCE/ac-4.log)
 
 ### Parse Canonical PRD Requirement Lineage
 - **ID:** 1vyGZEowA
@@ -84,7 +84,7 @@ Introduce the canonical parser and lineage model that extracts epic `FR-*` and `
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vyGZEowA/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vyGZEowA/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vyGZEowA/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vyGZEowA/EVIDENCE/ac-3.log)
 
 

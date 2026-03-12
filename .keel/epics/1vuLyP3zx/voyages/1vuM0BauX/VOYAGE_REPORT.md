@@ -22,9 +22,9 @@ This story unified the error reporting system by merging `GateProblem` into `Pro
 - [x] [SRS-01/AC-02] `GateSeverity` is merged with `Severity` <!-- verify: ! grep -q "enum GateSeverity" src/validation/types.rs, proof: ac-2.log, SRS-01:start:end -->
 
 #### Verified Evidence
-- [logs.txt](../../../../stories/1vuM0Nbhn/EVIDENCE/logs.txt)
 - [ac-1.log](../../../../stories/1vuM0Nbhn/EVIDENCE/ac-1.log)
 - [ac-2.log](../../../../stories/1vuM0Nbhn/EVIDENCE/ac-2.log)
+- [logs.txt](../../../../stories/1vuM0Nbhn/EVIDENCE/logs.txt)
 
 ### Centralize Structural Checks for Stories and Voyages
 - **ID:** 1vuM0Q0Un
@@ -38,9 +38,9 @@ Implemented and validated as part of the completed story.
 - [x] [SRS-02/AC-02] Structural checks for voyages are moved into `src/validation/structural.rs` and delegated to by `doctor` <!-- verify: manual, proof: ac-2.log, SRS-02:start:end -->
 
 #### Verified Evidence
-- [logs.txt](../../../../stories/1vuM0Q0Un/EVIDENCE/logs.txt)
 - [ac-1.log](../../../../stories/1vuM0Q0Un/EVIDENCE/ac-1.log)
 - [ac-2.log](../../../../stories/1vuM0Q0Un/EVIDENCE/ac-2.log)
+- [logs.txt](../../../../stories/1vuM0Q0Un/EVIDENCE/logs.txt)
 
 ### Refactor Doctor to Delegate to Centralized Check Modules
 - **ID:** 1vuM0Q0ow
@@ -54,8 +54,8 @@ Implemented and validated as part of the completed story.
 - [x] [SRS-04/AC-02] Shared check functions are called by both `doctor` and `gating.rs` <!-- verify: manual, SRS-04:start:end -->
 
 #### Verified Evidence
-- [logs.txt](../../../../stories/1vuM0Q0ow/EVIDENCE/logs.txt)
 - [ac-1.log](../../../../stories/1vuM0Q0ow/EVIDENCE/ac-1.log)
+- [logs.txt](../../../../stories/1vuM0Q0ow/EVIDENCE/logs.txt)
 
 ### Ensure Story Submit Uses Unified Check Logic
 - **ID:** 1vuM0QNKs
@@ -69,8 +69,8 @@ Implemented and validated as part of the completed story.
 - [x] [SRS-05/AC-02] Evidence/Reflection problems are reported via the unified `Problem` type <!-- verify: manual, SRS-05:start:end -->
 
 #### Verified Evidence
-- [logs.txt](../../../../stories/1vuM0QNKs/EVIDENCE/logs.txt)
 - [ac-1.log](../../../../stories/1vuM0QNKs/EVIDENCE/ac-1.log)
+- [logs.txt](../../../../stories/1vuM0QNKs/EVIDENCE/logs.txt)
 
 ### Update State Machine Transitions to Use Unified Problem Type
 - **ID:** 1vuM0Qq0V
@@ -84,7 +84,7 @@ Implemented and validated as part of the completed story.
 - [x] [SRS-03/AC-02] `evaluate_voyage_transition` in `gating.rs` returns `Vec<Problem>` <!-- verify: manual, SRS-03:start:end -->
 
 #### Verified Evidence
-- [logs.txt](../../../../stories/1vuM0Qq0V/EVIDENCE/logs.txt)
 - [ac-1.log](../../../../stories/1vuM0Qq0V/EVIDENCE/ac-1.log)
+- [logs.txt](../../../../stories/1vuM0Qq0V/EVIDENCE/logs.txt)
 
 

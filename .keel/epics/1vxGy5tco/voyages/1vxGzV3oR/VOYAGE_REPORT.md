@@ -32,8 +32,8 @@ Replace non-canonical template token names with canonical schema/frontmatter-mir
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxH83JcY/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxH83JcY/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxH83JcY/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxH83JcY/EVIDENCE/ac-3.log)
 
 ### Align CLI Contracts For Creation Commands
 - **ID:** 1vxH83MOO
@@ -58,8 +58,8 @@ Align creation command interfaces with ownership policy so only user-owned input
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxH83MOO/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxH83MOO/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxH83MOO/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxH83MOO/EVIDENCE/ac-3.log)
 
 ### Codify Token Bucket Contract Tests
 - **ID:** 1vxH84K5a
@@ -83,8 +83,8 @@ Create deterministic contract tests for token bucket policy so unknown tokens or
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxH84K5a/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxH84K5a/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxH84K5a/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxH84K5a/EVIDENCE/ac-3.log)
 
 ### Extend Adr Creation Inputs For Context Ownership
 - **ID:** 1vxH84Xh8
@@ -108,7 +108,7 @@ Add explicit ADR creation inputs for context scope ownership and persist these v
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxH84Xh8/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxH84Xh8/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxH84Xh8/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxH84Xh8/EVIDENCE/ac-3.log)
 
 

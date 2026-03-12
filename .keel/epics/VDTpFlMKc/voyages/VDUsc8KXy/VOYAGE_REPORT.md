@@ -37,7 +37,7 @@ Attach the selected role template to `keel next` output so harnesses receive con
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/VDUt9jjC6/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/VDUt9jjC6/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/VDUt9jjC6/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/VDUt9jjC6/EVIDENCE/ac-3.log)
 
 

@@ -32,8 +32,8 @@ Parse canonical scope identifiers from PRD and SRS artifacts so planning can rea
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vyGZfkjV/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vyGZfkjV/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vyGZfkjV/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vyGZfkjV/EVIDENCE/ac-3.log)
 
 ### Detect Scope Drift During Planning
 - **ID:** 1vyGZflfJ
@@ -69,8 +69,8 @@ Detect scope drift during planning so voyages cannot quietly claim work outside 
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vyGZflfJ/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vyGZflfJ/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vyGZflfJ/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vyGZflfJ/EVIDENCE/ac-3.log)
 
 ### Render Scope Lineage In Planning Surfaces
 - **ID:** 1vyGZgiTK
@@ -106,7 +106,7 @@ Expose scope lineage and drift findings in voyage and epic planning surfaces so 
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vyGZgiTK/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vyGZgiTK/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vyGZgiTK/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vyGZgiTK/EVIDENCE/ac-3.log)
 
 

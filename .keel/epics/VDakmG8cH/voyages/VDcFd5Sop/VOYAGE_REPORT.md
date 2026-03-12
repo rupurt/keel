@@ -25,10 +25,10 @@ exactly once per eligible window.
 - [x] [SRS-03/AC-01] Pulse records enough diagnostic state to explain why a routine was created, skipped, or deferred. <!-- verify: cargo test pulse_json_output_is_structured_for_created_skipped_and_deferred_state --bin keel, SRS-03:start:end, proof: ac-4.log-->
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/VDcFgtHNB/EVIDENCE/ac-4.log)
 - [ac-1.log](../../../../stories/VDcFgtHNB/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/VDcFgtHNB/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/VDcFgtHNB/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/VDcFgtHNB/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/VDcFgtHNB/EVIDENCE/ac-4.log)
 
 ### Scheduled Flow Lane Projection
 - **ID:** VDcFgtbNC
@@ -45,8 +45,8 @@ pulse run.
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/VDcFgtbNC/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/VDcFgtbNC/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/VDcFgtbNC/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/VDcFgtbNC/EVIDENCE/ac-3.log)
 
 ### Pulse Command Surface
 - **ID:** VDcFgtsLv
@@ -63,7 +63,7 @@ cycle summary contract for schedulers and operators.
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/VDcFgtsLv/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/VDcFgtsLv/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/VDcFgtsLv/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/VDcFgtsLv/EVIDENCE/ac-3.log)
 
 

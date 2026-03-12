@@ -24,8 +24,8 @@ Create the canonical epic-topology projection that composes epic, voyage, story,
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vyWNb000/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vyWNb000/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vyWNb000/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vyWNb000/EVIDENCE/ac-3.log)
 
 ### Add Topology Command And Filters
 - **ID:** 1vyWNd000
@@ -41,8 +41,8 @@ Introduce the `keel topology` command path, epic targeting, and done-visibility 
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vyWNd000/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vyWNd000/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vyWNd000/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vyWNd000/EVIDENCE/ac-3.log)
 
 ### Render Topology Drift Hotspots
 - **ID:** 1vyWNi000
@@ -76,10 +76,10 @@ Attach scoped knowledge and forward-looking commentary to the topology output so
 - [x] [SRS-05/AC-03] [SRS-NFR-03/AC-02] Knowledge and horizon derivation reuse existing scanner and navigator helpers rather than duplicate parsing paths. <!-- verify: cargo test --lib topology_horizon_reuses_knowledge_helpers, SRS-05:end, proof: ac-4.log -->
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/1vyWNn000/EVIDENCE/ac-4.log)
 - [ac-1.log](../../../../stories/1vyWNn000/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vyWNn000/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vyWNn000/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vyWNn000/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/1vyWNn000/EVIDENCE/ac-4.log)
 - [llm-judge-horizon-commentary-surfaces-tech-or-process-debt-heuristics-from-scoped-knowledge-signals-and-labels-recommendations-as-advisory.txt](../../../../stories/1vyWNn000/EVIDENCE/llm-judge-horizon-commentary-surfaces-tech-or-process-debt-heuristics-from-scoped-knowledge-signals-and-labels-recommendations-as-advisory.txt)
 
 

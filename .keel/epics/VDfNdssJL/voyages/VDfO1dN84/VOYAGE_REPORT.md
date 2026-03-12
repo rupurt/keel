@@ -24,10 +24,10 @@ Introduce the first canonical `BoardGraph` projection and deterministic relation
 - [x] [SRS-NFR-01/AC-01] Equivalent board states produce identical node ordering, edge ordering, and query results. <!-- verify: cargo test --lib board_graph_is_deterministic_across_equivalent_boards, SRS-NFR-01:start:end, SRS-01:end, proof: ac-4.log-->
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/VDfOIc3Ok/EVIDENCE/ac-4.log)
 - [ac-1.log](../../../../stories/VDfOIc3Ok/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/VDfOIc3Ok/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/VDfOIc3Ok/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/VDfOIc3Ok/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/VDfOIc3Ok/EVIDENCE/ac-4.log)
 
 ### Add Graph Integrity Doctor Check
 - **ID:** VDfOIcWP1
@@ -43,8 +43,8 @@ Add the first graph-level doctor check so Keel can validate structural tree inte
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/VDfOIcWP1/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/VDfOIcWP1/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/VDfOIcWP1/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/VDfOIcWP1/EVIDENCE/ac-3.log)
 
 ### Route Topology Through BoardGraph
 - **ID:** VDfOIf3Uw
@@ -60,7 +60,7 @@ Migrate the topology world-map relationship path to `BoardGraph` so the new grap
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/VDfOIf3Uw/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/VDfOIf3Uw/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/VDfOIf3Uw/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/VDfOIf3Uw/EVIDENCE/ac-3.log)
 
 

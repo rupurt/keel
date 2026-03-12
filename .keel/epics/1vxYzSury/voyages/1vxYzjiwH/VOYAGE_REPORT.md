@@ -24,8 +24,8 @@ Apply canonical deterministic guidance to story lifecycle commands so each succe
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxZ0BXgR/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxZ0BXgR/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxZ0BXgR/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxZ0BXgR/EVIDENCE/ac-3.log)
 
 ### Add Canonical Guidance To Voyage Lifecycle Commands
 - **ID:** 1vxZ0C8QB
@@ -41,8 +41,8 @@ Apply canonical deterministic guidance to voyage lifecycle commands so planning 
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxZ0C8QB/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxZ0C8QB/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxZ0C8QB/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxZ0C8QB/EVIDENCE/ac-3.log)
 
 ### Add Canonical Recovery Guidance To Story Lifecycle Errors
 - **ID:** 1vxZ0CBPx
@@ -58,7 +58,7 @@ Add canonical recovery guidance for story lifecycle failures so blocked transiti
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxZ0CBPx/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxZ0CBPx/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxZ0CBPx/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxZ0CBPx/EVIDENCE/ac-3.log)
 
 

@@ -36,8 +36,8 @@ Refactor `StoryLifecycleService` to use instance-based methods and injected stor
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/VDY6s2c9T/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/VDY6s2c9T/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/VDY6s2c9T/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/VDY6s2c9T/EVIDENCE/ac-3.log)
 
 ### Refactor VoyageEpicLifecycleService For Dependency Injection
 - **ID:** VDY6s6EBp

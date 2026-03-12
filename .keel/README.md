@@ -232,11 +232,17 @@
 |--------|--------|
 | [Explicit Lifecycle Reactors](epics/VDeRV9CAo/voyages/VDeUIiB3Q/) | done |
 
-### [Canonical Board Graph Kernel](epics/VDfNdssJL/) (active)
+### [Canonical Board Graph Kernel](epics/VDfNdssJL/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [BoardGraph Integrity Kernel](epics/VDfNdssJL/voyages/VDfO1dN84/) | in-progress |
+| [BoardGraph Integrity Kernel](epics/VDfNdssJL/voyages/VDfO1dN84/) | done |
+
+### [Deterministic Voyage Artifact Rendering](epics/VDfhxO64S/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Canonicalize Voyage Artifact Ordering](epics/VDfhxO64S/voyages/VDfhz9Hl7/) | in-progress |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

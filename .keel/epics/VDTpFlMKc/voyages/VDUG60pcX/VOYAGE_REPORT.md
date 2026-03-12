@@ -54,10 +54,10 @@ Update `keel next` to route based on `--role` instead of `--agent`/`--human`.
 - [x] [SRS-03/AC-02] `engineer/*` role maps to Execution queue work <!-- verify: cargo test cli::commands::management::next_support::algorithm::tests::engineer_roles_route_to_execution_queue_work -- --nocapture, SRS-03:end, proof: ac-4.log -->
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/VDUGflIUh/EVIDENCE/ac-4.log)
 - [ac-1.log](../../../../stories/VDUGflIUh/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/VDUGflIUh/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/VDUGflIUh/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/VDUGflIUh/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/VDUGflIUh/EVIDENCE/ac-4.log)
 
 ### Update Accept Role Authorization
 - **ID:** VDUGfu8bf

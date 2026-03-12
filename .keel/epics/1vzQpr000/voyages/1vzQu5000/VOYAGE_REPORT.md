@@ -24,10 +24,10 @@ Make `ASSESSMENT.md` citation-aware and evolve EV scoring so the recommendation 
 - [x] [SRS-02/AC-03] [SRS-NFR-01/AC-01] Equivalent evidence inputs and authored assessment factors always produce identical scores and ordering. <!-- verify: cargo test -p keel bearing_ev_score_is_deterministic, SRS-NFR-01:start:end, SRS-02:end, proof: ac-4.log-->
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/1vzQwq000/EVIDENCE/ac-4.log)
 - [ac-1.log](../../../../stories/1vzQwq000/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vzQwq000/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vzQwq000/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vzQwq000/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/1vzQwq000/EVIDENCE/ac-4.log)
 
 ### Render Evidence-Backed Bearing Show And File Surfaces
 - **ID:** 1vzQwr000
@@ -43,9 +43,9 @@ Render evidence-backed bearing reading surfaces so operators can inspect citatio
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vzQwr000/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vzQwr000/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vzQwr000/EVIDENCE/ac-2.log)
 ![ac-3.gif](../../../../stories/1vzQwr000/EVIDENCE/ac-3.gif)
+- [ac-3.log](../../../../stories/1vzQwr000/EVIDENCE/ac-3.log)
 ![record-cli.gif](../../../../stories/1vzQwr000/EVIDENCE/record-cli.gif)
 
 ### Gate Readiness And Board Projections On Evidence Quality
@@ -62,7 +62,7 @@ Gate bearing readiness on evidence quality and expose that state in board projec
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vzQws000/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vzQws000/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vzQws000/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vzQws000/EVIDENCE/ac-3.log)
 
 

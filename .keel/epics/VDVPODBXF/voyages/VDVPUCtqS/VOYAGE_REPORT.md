@@ -24,8 +24,8 @@ Add the config schema and effective-topology resolver that seed default roles an
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/VDVRaQp66/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/VDVRaQp66/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/VDVRaQp66/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/VDVRaQp66/EVIDENCE/ac-3.log)
 
 ### Route Next Through Configured Lanes
 - **ID:** VDVRaRR5x

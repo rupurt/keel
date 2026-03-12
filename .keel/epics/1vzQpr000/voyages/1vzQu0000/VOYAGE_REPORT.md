@@ -24,8 +24,8 @@ Define the canonical evidence record schema and parsing rules for `EVIDENCE.md` 
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vzQwm000/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vzQwm000/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vzQwm000/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vzQwm000/EVIDENCE/ac-3.log)
 
 ### Add Research Provider Configuration And Weighting Controls
 - **ID:** 1vzQwn000
@@ -41,8 +41,8 @@ Add provider configuration and weighting controls to `keel.toml` so research sou
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vzQwn000/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vzQwn000/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vzQwn000/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vzQwn000/EVIDENCE/ac-3.log)
 
 ### Capture Web Academic Social And Manual Evidence Through One Workflow
 - **ID:** 1vzQwp000

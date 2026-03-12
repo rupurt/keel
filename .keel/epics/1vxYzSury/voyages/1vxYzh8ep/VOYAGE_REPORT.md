@@ -24,8 +24,8 @@ Define a canonical command-guidance contract that can represent one deterministi
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxZ0AFJK/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxZ0AFJK/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxZ0AFJK/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxZ0AFJK/EVIDENCE/ac-3.log)
 
 ### Add Contract Tests For Canonical Guidance Fields
 - **ID:** 1vxZ0Bh0v
@@ -41,8 +41,8 @@ Add regression tests that lock the canonical guidance payload shape so downstrea
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxZ0Bh0v/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxZ0Bh0v/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxZ0Bh0v/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxZ0Bh0v/EVIDENCE/ac-3.log)
 
 ### Implement Shared Guidance Renderer Helpers
 - **ID:** 1vxZ0BinH
@@ -58,7 +58,7 @@ Extract and reuse shared guidance rendering helpers so commands emit canonical n
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxZ0BinH/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxZ0BinH/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxZ0BinH/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxZ0BinH/EVIDENCE/ac-3.log)
 
 

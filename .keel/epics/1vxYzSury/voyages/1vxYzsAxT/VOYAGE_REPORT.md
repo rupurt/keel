@@ -24,8 +24,8 @@ Add drift tests that enforce canonical command guidance contracts and prevent ac
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxZ0FGSF/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxZ0FGSF/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxZ0FGSF/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxZ0FGSF/EVIDENCE/ac-3.log)
 
 ### Implement Command Capability Classification Map
 - **ID:** 1vxZ0FZaN
@@ -41,8 +41,8 @@ Implement a single command-capability classification map so guidance rendering c
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxZ0FZaN/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxZ0FZaN/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxZ0FZaN/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxZ0FZaN/EVIDENCE/ac-3.log)
 
 ### Document Command Guidance Contract For Harness Consumers
 - **ID:** 1vxZ0FtD2
@@ -58,7 +58,7 @@ Document the canonical command guidance contract for harness consumers so automa
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxZ0FtD2/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxZ0FtD2/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxZ0FtD2/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxZ0FtD2/EVIDENCE/ac-3.log)
 
 

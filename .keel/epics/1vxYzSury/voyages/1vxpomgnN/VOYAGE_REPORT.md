@@ -32,8 +32,8 @@ Define a shared planning/evidence projection contract that all three `show` comm
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxppk4Oj/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxppk4Oj/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxppk4Oj/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxppk4Oj/EVIDENCE/ac-3.log)
 
 ### Implement Voyage Show Requirement Progress
 - **ID:** 1vxppkB6M
@@ -57,10 +57,10 @@ Upgrade `keel voyage show` so it reports voyage intent, scope boundaries, and re
 
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/1vxppkB6M/EVIDENCE/ac-4.log)
 - [ac-1.log](../../../../stories/1vxppkB6M/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxppkB6M/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxppkB6M/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxppkB6M/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/1vxppkB6M/EVIDENCE/ac-4.log)
 
 ### Render Concrete Evidence In Story Show
 - **ID:** 1vxppkEH9
@@ -84,10 +84,10 @@ Rework `keel story show` evidence output to display real proof details (metadata
 
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/1vxppkEH9/EVIDENCE/ac-4.log)
 - [ac-1.log](../../../../stories/1vxppkEH9/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxppkEH9/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxppkEH9/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxppkEH9/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/1vxppkEH9/EVIDENCE/ac-4.log)
 
 ### Implement Epic Show Planning Summary
 - **ID:** 1vxppkN0w
@@ -112,10 +112,10 @@ Upgrade `keel epic show` to render an actionable planning report: authored summa
 
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/1vxppkN0w/EVIDENCE/ac-4.log)
 - [ac-1.log](../../../../stories/1vxppkN0w/EVIDENCE/ac-1.log)
-- [ac-5.log](../../../../stories/1vxppkN0w/EVIDENCE/ac-5.log)
-- [ac-3.log](../../../../stories/1vxppkN0w/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxppkN0w/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxppkN0w/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/1vxppkN0w/EVIDENCE/ac-4.log)
+- [ac-5.log](../../../../stories/1vxppkN0w/EVIDENCE/ac-5.log)
 
 

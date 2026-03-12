@@ -67,27 +67,17 @@ pub fn generate_voyage_report(board: &Board, voyage: &Voyage) -> String {
 
         // Include Evidence links
         let evidence_dir = story_dir.join("EVIDENCE");
-        if evidence_dir.exists()
-            && let Ok(entries) = fs::read_dir(evidence_dir)
+        if let Ok(proofs) = super::artifact_io::read_sorted_file_names(&evidence_dir)
+            && !proofs.is_empty()
         {
-            let mut proofs = Vec::new();
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_file() {
-                    proofs.push(path.file_name().unwrap().to_string_lossy().to_string());
-                }
-            }
-
-            if !proofs.is_empty() {
-                writeln!(narrative).unwrap();
-                writeln!(narrative, "#### Verified Evidence").unwrap();
-                for proof in proofs {
-                    let rel_path = format!("../../../../stories/{}/EVIDENCE/{}", story.id(), proof);
-                    if proof.ends_with(".gif") {
-                        writeln!(narrative, "![{}]({})", proof, rel_path).unwrap();
-                    } else {
-                        writeln!(narrative, "- [{}]({})", proof, rel_path).unwrap();
-                    }
+            writeln!(narrative).unwrap();
+            writeln!(narrative, "#### Verified Evidence").unwrap();
+            for proof in proofs {
+                let rel_path = format!("../../../../stories/{}/EVIDENCE/{}", story.id(), proof);
+                if proof.ends_with(".gif") {
+                    writeln!(narrative, "![{}]({})", proof, rel_path).unwrap();
+                } else {
+                    writeln!(narrative, "- [{}]({})", proof, rel_path).unwrap();
                 }
             }
         }
@@ -154,5 +144,60 @@ fn render_knowledge_entries(
             writeln!(output, "  - Category: {}", entry.category).unwrap();
         }
         writeln!(output).unwrap();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    use crate::domain::model::StoryState;
+    use crate::infrastructure::loader::load_board;
+    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+
+    #[test]
+    fn voyage_artifacts_render_proofs_deterministically() {
+        let srs = r#"# SRS
+
+<!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
+| ID | Requirement | Scope | Source | Verification |
+|----|-------------|-------|--------|--------------|
+| SRS-01 | Stable reports | SCOPE-01 | FR-01 | automated |
+<!-- END FUNCTIONAL_REQUIREMENTS -->
+"#;
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("E1"))
+            .voyage(
+                TestVoyage::new("V1", "E1")
+                    .status("done")
+                    .srs_content(srs),
+            )
+            .story(
+                TestStory::new("S1")
+                    .title("Story One")
+                    .scope("E1/V1")
+                    .status(StoryState::Done)
+                    .body(
+                        "# Summary\n\nDeterministic report.\n\n## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] stable\n",
+                    ),
+            )
+            .build();
+
+        let evidence_dir = temp.path().join("stories").join("S1").join("EVIDENCE");
+        fs::create_dir_all(&evidence_dir).unwrap();
+        fs::write(evidence_dir.join("zeta.log"), "proof").unwrap();
+        fs::write(evidence_dir.join("alpha.log"), "proof").unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let voyage = board.require_voyage("V1").unwrap();
+        let report = generate_voyage_report(&board, voyage);
+
+        let alpha_index = report.find("[alpha.log]").unwrap();
+        let zeta_index = report.find("[zeta.log]").unwrap();
+        assert!(
+            alpha_index < zeta_index,
+            "proof links should be rendered in filename order"
+        );
     }
 }

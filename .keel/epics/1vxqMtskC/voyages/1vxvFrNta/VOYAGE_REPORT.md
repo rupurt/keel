@@ -32,10 +32,10 @@ Refactor `keel config show` to present verification techniques as a canonical fl
 
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/1vxvIZRXy/EVIDENCE/ac-4.log)
 - [ac-1.log](../../../../stories/1vxvIZRXy/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxvIZRXy/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxvIZRXy/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxvIZRXy/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/1vxvIZRXy/EVIDENCE/ac-4.log)
 
 ### Remove Planning Show Recommendations And Update Planning Guidance
 - **ID:** 1vxvIa2RC
@@ -59,8 +59,8 @@ Remove recommendation sections from planning read commands and update architect 
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxvIa2RC/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxvIa2RC/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxvIa2RC/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxvIa2RC/EVIDENCE/ac-3.log)
 
 ### Implement Verify Recommend For Active Detected Techniques
 - **ID:** 1vxvIaM4w
@@ -84,8 +84,8 @@ Introduce `keel verify recommend` as the recommendation surface, filtered to det
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxvIaM4w/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxvIaM4w/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxvIaM4w/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxvIaM4w/EVIDENCE/ac-3.log)
 
 ### Hard Cutover Verify Command To Subcommands
 - **ID:** 1vxvIaPe8
@@ -109,7 +109,7 @@ Perform a hard cutover of verification execution to `keel verify run`, preservin
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxvIaPe8/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxvIaPe8/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxvIaPe8/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxvIaPe8/EVIDENCE/ac-3.log)
 
 

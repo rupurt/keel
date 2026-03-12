@@ -32,8 +32,8 @@ Enforce submit/accept lifecycle gating so unresolved scaffold/default story and 
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxH84M8t/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxH84M8t/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxH84M8t/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxH84M8t/EVIDENCE/ac-3.log)
 
 ### Add Hard Cutover Regression Coverage
 - **ID:** 1vxH84jzB
@@ -57,8 +57,8 @@ Add regression coverage that enforces hard-cutover behavior across doctor and tr
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxH84jzB/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxH84jzB/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxH84jzB/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxH84jzB/EVIDENCE/ac-3.log)
 
 ### Escalate Unresolved Scaffold Checks To Doctor Errors
 - **ID:** 1vxH84k3U
@@ -82,8 +82,8 @@ Promote unresolved scaffold/default text findings from warning-level to error-le
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxH84k3U/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxH84k3U/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxH84k3U/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxH84k3U/EVIDENCE/ac-3.log)
 
 ### Enforce Terminal Story Coherency In Doctor
 - **ID:** 1vxH84nTQ
@@ -107,7 +107,7 @@ Add stage-aware story/reflection coherency checks so unresolved default scaffold
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vxH84nTQ/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxH84nTQ/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxH84nTQ/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxH84nTQ/EVIDENCE/ac-3.log)
 
 

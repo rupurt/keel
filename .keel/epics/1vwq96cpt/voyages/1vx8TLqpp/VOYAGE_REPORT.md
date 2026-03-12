@@ -34,8 +34,8 @@ boundaries are violated.
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/1vx8UtmC9/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vx8UtmC9/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vx8UtmC9/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vx8UtmC9/EVIDENCE/ac-3.log)
 
 ### Relocate Infrastructure Services Into Src Infrastructure
 - **ID:** 1vx8V5VeE
@@ -61,10 +61,10 @@ are physically separated from domain and application logic.
 
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/1vx8V5VeE/EVIDENCE/ac-4.log)
 - [ac-1.log](../../../../stories/1vx8V5VeE/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vx8V5VeE/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vx8V5VeE/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vx8V5VeE/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/1vx8V5VeE/EVIDENCE/ac-4.log)
 
 ### Relocate Cli Command Surface Into Src Cli
 - **ID:** 1vx8V5uUT
@@ -89,10 +89,10 @@ code into `src/cli/**` so the physical layout matches the DDD interface boundary
 
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/1vx8V5uUT/EVIDENCE/ac-4.log)
 - [ac-1.log](../../../../stories/1vx8V5uUT/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vx8V5uUT/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vx8V5uUT/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vx8V5uUT/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/1vx8V5uUT/EVIDENCE/ac-4.log)
 
 ### Relocate Domain Core Modules Into Src Domain
 - **ID:** 1vx8V69uz
@@ -118,9 +118,9 @@ grouped and independent from adapters.
 
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/1vx8V69uz/EVIDENCE/ac-4.log)
 - [ac-1.log](../../../../stories/1vx8V69uz/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vx8V69uz/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vx8V69uz/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vx8V69uz/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/1vx8V69uz/EVIDENCE/ac-4.log)
 
 

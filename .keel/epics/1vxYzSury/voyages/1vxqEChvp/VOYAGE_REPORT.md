@@ -32,9 +32,9 @@ Change story creation defaults so all new stories start in `icebox`, with explic
 
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/1vxqELhgo/EVIDENCE/ac-4.log)
 - [ac-1.log](../../../../stories/1vxqELhgo/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/1vxqELhgo/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/1vxqELhgo/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/1vxqELhgo/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/1vxqELhgo/EVIDENCE/ac-4.log)
 
 

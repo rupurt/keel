@@ -41,8 +41,8 @@ bundles alongside the existing entity graph.
 
 #### Verified Evidence
 - [ac-1.log](../../../../stories/VDcFgn0KR/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/VDcFgn0KR/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/VDcFgn0KR/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/VDcFgn0KR/EVIDENCE/ac-3.log)
 
 ### Routine CLI Surfaces
 - **ID:** VDcFgruMk
@@ -59,9 +59,9 @@ inspect routines without hand-editing board directories.
 - [x] [SRS-04/AC-01] The routine scaffold keeps cadence settings, target scope, and blueprint narrative together in one human-editable artifact. <!-- verify: cargo test routine_new_scaffolds_valid_single_bundle_with_opaque_cadence_mapping --bin keel, SRS-04:start:end, proof: ac-4.log-->
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-4.log)
 - [ac-1.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-1.log)
-- [ac-3.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-4.log)
 
 

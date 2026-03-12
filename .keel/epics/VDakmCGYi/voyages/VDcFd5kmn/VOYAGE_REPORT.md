@@ -42,10 +42,10 @@ both human and JSON pull surfaces.
 - [x] [SRS-03/AC-02] Due routines participate in existing prioritization semantics without reordering unrelated actionable work. <!-- verify: cargo test calculate_next_keeps_due_routine_scope_in_existing_priority_order --bin keel, SRS-03:end, proof: ac-5.log-->
 
 #### Verified Evidence
-- [ac-4.log](../../../../stories/VDcFgsuLw/EVIDENCE/ac-4.log)
 - [ac-1.log](../../../../stories/VDcFgsuLw/EVIDENCE/ac-1.log)
-- [ac-5.log](../../../../stories/VDcFgsuLw/EVIDENCE/ac-5.log)
-- [ac-3.log](../../../../stories/VDcFgsuLw/EVIDENCE/ac-3.log)
 - [ac-2.log](../../../../stories/VDcFgsuLw/EVIDENCE/ac-2.log)
+- [ac-3.log](../../../../stories/VDcFgsuLw/EVIDENCE/ac-3.log)
+- [ac-4.log](../../../../stories/VDcFgsuLw/EVIDENCE/ac-4.log)
+- [ac-5.log](../../../../stories/VDcFgsuLw/EVIDENCE/ac-5.log)
 
 

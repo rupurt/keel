@@ -26,6 +26,25 @@ pub fn remove_if_exists(path: &Path) -> Result<bool> {
     }
 }
 
+/// Read file names from a directory in deterministic filename order.
+pub fn read_sorted_file_names(path: &Path) -> Result<Vec<String>> {
+    if !path.exists() {
+        return Ok(Vec::new());
+    }
+
+    let mut names = Vec::new();
+    for entry in fs::read_dir(path)? {
+        let entry = entry?;
+        let entry_path = entry.path();
+        if entry_path.is_file() {
+            names.push(entry.file_name().to_string_lossy().to_string());
+        }
+    }
+
+    names.sort();
+    Ok(names)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -52,5 +71,18 @@ mod tests {
         let removed = remove_if_exists(&path).unwrap();
 
         assert!(!removed);
+    }
+
+    #[test]
+    fn read_sorted_file_names_returns_canonical_order() {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("evidence");
+        fs::create_dir_all(&path).unwrap();
+        fs::write(path.join("zeta.log"), "z").unwrap();
+        fs::write(path.join("alpha.log"), "a").unwrap();
+
+        let names = read_sorted_file_names(&path).unwrap();
+
+        assert_eq!(names, vec!["alpha.log".to_string(), "zeta.log".to_string()]);
     }
 }
