@@ -202,6 +202,11 @@ pub fn render_annotated_flow(
 
 fn render_mission_summary(board: &Board, _width: usize, _theme: &Theme) -> String {
     let mut out = String::new();
+    let detail_label_width = ["Goals", "Child entities"]
+        .into_iter()
+        .map(str::len)
+        .max()
+        .unwrap_or(0);
     let mut active_missions: Vec<_> = board
         .missions
         .values()
@@ -256,18 +261,22 @@ fn render_mission_summary(board: &Board, _width: usize, _theme: &Theme) -> Strin
         .unwrap();
         writeln!(
             out,
-            "    Goals: {}/{} board goals met",
+            "    {:>label_width$}: {}/{} board goals met",
+            "Goals",
             board_met,
-            board_goals.len()
+            board_goals.len(),
+            label_width = detail_label_width
         )
         .unwrap();
         writeln!(
             out,
-            "    Child entities: {}/{} epics done, {}/{} bearings terminal",
+            "    {:>label_width$}: {}/{} epics done, {}/{} bearings terminal",
+            "Child entities",
             epics_done,
             epics.len(),
             bearings_terminal,
-            bearings.len()
+            bearings.len(),
+            label_width = detail_label_width
         )
         .unwrap();
         if idx + 1 < active_missions.len() {
@@ -576,5 +585,25 @@ mod tests {
 
         assert!(rendered.starts_with("  Mission:"));
         assert!(!rendered.ends_with("\n\n"));
+    }
+
+    #[test]
+    fn render_mission_summary_aligns_mission_detail_values() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").title("Mission One").status("active"))
+            .build();
+        let board = loader::load_board(temp.path()).unwrap();
+
+        let rendered = render_mission_summary(&board, 100, &Theme::default());
+        let goals_line = rendered
+            .lines()
+            .find(|line| line.contains("Goals"))
+            .unwrap();
+        let child_entities_line = rendered
+            .lines()
+            .find(|line| line.contains("Child entities"))
+            .unwrap();
+
+        assert_eq!(goals_line.find(':'), child_entities_line.find(':'));
     }
 }
