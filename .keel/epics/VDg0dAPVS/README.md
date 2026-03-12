@@ -23,5 +23,5 @@ mission: VDfufy86v
 **Progress:** 0/1 voyages complete, 0/3 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Render Knowledge Graph Command and Drift Surfaces](voyages/VDg0f0aHW/) | planned | 0/3 |
+| [Render Knowledge Graph Command and Drift Surfaces](voyages/VDg0f0aHW/) | in-progress | 0/3 |
 <!-- END GENERATED -->

@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-12T11:17:38.137256924-07:00
+mode: manual
+---
+Validated interactive knowledge graph mode with cargo test --bin keel knowledge_graph_interactive_mode_uses_tty_controls_and_viewport plus a TTY smoke run of cargo run -- knowledge graph confirming viewport-sized rendering, zoom/focus controls, and clean non-TTY fallback.

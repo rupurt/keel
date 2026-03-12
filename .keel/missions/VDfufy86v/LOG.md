@@ -14,3 +14,7 @@ Completed story VDfuntHAT and sealed voyage VDfumi8ha candidate closure; the kno
 ## 2026-03-12T11:05:05
 
 Planned follow-on epic VDg0dAPVS and voyage VDg0f0aHW to deliver the interactive/static knowledge graph surface and drift visibility across graph-adjacent commands; next operator slice is VDg1N07jJ.
+
+## 2026-03-12T11:19:03
+
+Completed story VDg1N07jJ with interactive knowledge graph navigation, viewport-safe TTY controls, and clean non-TTY fallback. Mission operator lane now advances to VDg1MxQfg for the explicit static command surface.

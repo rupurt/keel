@@ -254,7 +254,7 @@
 
 | Voyage | Status |
 |--------|--------|
-| [Render Knowledge Graph Command and Drift Surfaces](epics/VDg0dAPVS/voyages/VDg0f0aHW/) | planned |
+| [Render Knowledge Graph Command and Drift Surfaces](epics/VDg0dAPVS/voyages/VDg0f0aHW/) | in-progress |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
