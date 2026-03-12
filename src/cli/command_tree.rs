@@ -21,6 +21,7 @@ Management
   adr         ADR commands (architecture decisions)
   bearing     Bearing commands (research phase)
   epic        Epic commands
+  routine     Routine commands
   voyage      Voyage commands
   story       Story commands (new, start, submit, accept, reject, ice, thaw, show, list, link, unlink, record, audit)
 
@@ -294,6 +295,9 @@ pub fn build_cli() -> Command {
         .subcommand(hidden_subcommand_group::<
             crate::cli::commands::management::epic::EpicAction,
         >("epic", "Epic commands"))
+        .subcommand(hidden_subcommand_group::<
+            crate::cli::commands::management::routine::RoutineAction,
+        >("routine", "Routine commands"))
         .subcommand(hidden_subcommand_group::<
             crate::cli::commands::management::voyage::VoyageAction,
         >("voyage", "Voyage commands"))

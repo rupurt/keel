@@ -114,6 +114,7 @@ pub fn run() -> Result<()> {
         Some(("generate", _)) => super::commands::setup::generate::run(&resolve_board_dir()?),
         Some(("init", _)) => Ok(super::commands::setup::init::run()?),
         Some(("epic", m)) => handle_epic_command(m),
+        Some(("routine", m)) => handle_routine_command(m),
         Some(("voyage", m)) => handle_voyage_command(m),
         Some(("story", m)) => handle_story_command(m),
         Some(("bearing", m)) => handle_bearing_command(m),
@@ -139,6 +140,10 @@ fn handle_voyage_command(matches: &ArgMatches) -> Result<()> {
         &resolve_board_dir()?,
         parse_subcommand_action(matches)?,
     )
+}
+
+fn handle_routine_command(matches: &ArgMatches) -> Result<()> {
+    super::commands::management::routine::run(parse_subcommand_action(matches)?)
 }
 
 fn handle_story_command(matches: &ArgMatches) -> Result<()> {

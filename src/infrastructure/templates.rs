@@ -35,6 +35,12 @@ pub mod story {
     pub const REFLECT: &str = include_str!("../../templates/stories/[id]/REFLECT.md");
 }
 
+/// Routine templates
+pub mod routine {
+    /// Routine README template
+    pub const README: &str = include_str!("../../templates/routines/[id]/README.md");
+}
+
 /// Bearing templates
 pub mod bearing {
     /// Bearing README template

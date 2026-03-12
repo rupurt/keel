@@ -2,6 +2,7 @@
 use crate::cli::commands::management::adr::AdrAction;
 use crate::cli::commands::management::bearing::BearingAction;
 use crate::cli::commands::management::epic::EpicAction;
+use crate::cli::commands::management::routine::RoutineAction;
 use crate::cli::commands::management::story::StoryAction;
 use crate::cli::commands::management::voyage::VoyageAction;
 use crate::cli::commands::setup::config::ConfigAction;
@@ -106,6 +107,11 @@ enum ManagementCommands {
         #[command(subcommand)]
         action: VoyageAction,
     },
+    /// Routine commands
+    Routine {
+        #[command(subcommand)]
+        action: RoutineAction,
+    },
     /// Story commands
     Story {
         #[command(subcommand)]
@@ -140,6 +146,7 @@ fn cli_help_displays_top_level_commands() {
     assert!(help_str.contains("generate"), "Missing generate command");
     assert!(help_str.contains("story"), "Missing story subcommand");
     assert!(help_str.contains("epic"), "Missing epic subcommand");
+    assert!(help_str.contains("routine"), "Missing routine subcommand");
     assert!(help_str.contains("voyage"), "Missing voyage subcommand");
     assert!(help_str.contains("verify"), "Missing verify command");
 
@@ -161,6 +168,47 @@ fn cli_parses_generate_command() {
         cli.command,
         Commands::Management(ManagementCommands::Generate)
     ));
+}
+
+#[test]
+fn cli_parses_routine_new() {
+    let matches = crate::cli::build_cli()
+        .try_get_matches_from([
+            "keel",
+            "routine",
+            "new",
+            "Weekly Review",
+            "--target-scope",
+            "E1/V1",
+            "--cadence",
+            "cron=0 9 * * 1",
+            "--cadence",
+            "timezone=America/Los_Angeles",
+        ])
+        .unwrap();
+    assert_eq!(matches.subcommand_name(), Some("routine"));
+    let routine = matches.subcommand_matches("routine").unwrap();
+    assert_eq!(routine.subcommand_name(), Some("new"));
+}
+
+#[test]
+fn cli_parses_routine_list() {
+    let matches = crate::cli::build_cli()
+        .try_get_matches_from(["keel", "routine", "list"])
+        .unwrap();
+    assert_eq!(matches.subcommand_name(), Some("routine"));
+    let routine = matches.subcommand_matches("routine").unwrap();
+    assert_eq!(routine.subcommand_name(), Some("list"));
+}
+
+#[test]
+fn cli_parses_routine_show() {
+    let matches = crate::cli::build_cli()
+        .try_get_matches_from(["keel", "routine", "show", "routine-weekly-review"])
+        .unwrap();
+    assert_eq!(matches.subcommand_name(), Some("routine"));
+    let routine = matches.subcommand_matches("routine").unwrap();
+    assert_eq!(routine.subcommand_name(), Some("show"));
 }
 
 #[test]

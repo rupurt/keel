@@ -38,21 +38,28 @@ impl Table {
 
     /// Print the table with proper column alignment
     pub fn print(&self) {
-        // Print header
-        self.print_row(&self.headers);
+        print!("{}", self.render());
+    }
 
-        // Print separator
+    /// Render the table with proper column alignment.
+    pub fn render(&self) -> String {
+        let mut lines = Vec::new();
+        lines.push(self.render_row(&self.headers));
+
         let total_width: usize = self.widths.iter().sum::<usize>() + (self.widths.len() - 1) * 2;
-        println!("{}", "-".repeat(total_width));
+        lines.push("-".repeat(total_width));
 
-        // Print rows
         for row in &self.rows {
-            self.print_row(row);
+            lines.push(self.render_row(row));
         }
+
+        let mut rendered = lines.join("\n");
+        rendered.push('\n');
+        rendered
     }
 
     /// Print a single row with proper column widths
-    fn print_row(&self, values: &[String]) {
+    fn render_row(&self, values: &[String]) -> String {
         let mut row_str = String::new();
 
         for (i, v) in values.iter().enumerate() {
@@ -69,7 +76,7 @@ impl Table {
             }
         }
 
-        println!("{}", row_str);
+        row_str
     }
 
     /// Check if the table has any rows

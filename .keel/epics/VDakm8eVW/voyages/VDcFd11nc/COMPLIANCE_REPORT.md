@@ -1,0 +1,10 @@
+# COMPLIANCE REPORT: Routine Foundation
+
+## Requirement Traceability Matrix
+
+| Req ID | Status | Implemented By | Proof Artifacts |
+|--------|--------|----------------|-----------------|
+| SRS-01 | ✓ VERIFIED | [VDcFgmgKS](../../../../stories/VDcFgmgKS/README.md) | [ac-1.log](../../../../stories/VDcFgmgKS/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/VDcFgmgKS/EVIDENCE/ac-2.log) |
+| SRS-02 | ✓ VERIFIED | [VDcFgn0KR](../../../../stories/VDcFgn0KR/README.md), [VDcFgn0KR](../../../../stories/VDcFgn0KR/README.md) | [ac-1.log](../../../../stories/VDcFgn0KR/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/VDcFgn0KR/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/VDcFgn0KR/EVIDENCE/ac-3.log)<br>[ac-1.log](../../../../stories/VDcFgn0KR/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/VDcFgn0KR/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/VDcFgn0KR/EVIDENCE/ac-3.log) |
+| SRS-03 | ✓ VERIFIED | [VDcFgruMk](../../../../stories/VDcFgruMk/README.md), [VDcFgruMk](../../../../stories/VDcFgruMk/README.md), [VDcFgruMk](../../../../stories/VDcFgruMk/README.md) | [ac-1.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-3.log)<br>[ac-4.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-4.log)<br>[ac-1.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-3.log)<br>[ac-4.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-4.log)<br>[ac-1.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-3.log)<br>[ac-4.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-4.log) |
+| SRS-04 | ✓ VERIFIED | [VDcFgruMk](../../../../stories/VDcFgruMk/README.md) | [ac-1.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-3.log)<br>[ac-4.log](../../../../stories/VDcFgruMk/EVIDENCE/ac-4.log) |
