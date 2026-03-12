@@ -27,8 +27,8 @@ pub enum MissionAction {
     },
     /// Show next steps across all roles for a mission
     Next {
-        /// Mission ID
-        id: String,
+        /// Mission ID (omit to auto-select the highest-priority actionable mission)
+        id: Option<String>,
     },
     /// Refine mission charter (elicitation)
     Refine {
@@ -85,7 +85,7 @@ pub fn run(action: MissionAction) -> Result<()> {
         MissionAction::New { title } => run_new(&title),
         MissionAction::List => list::run(),
         MissionAction::Show { id, json } => show::run(&id, json),
-        MissionAction::Next { id } => next::run(&id),
+        MissionAction::Next { id } => next::run(id.as_deref()),
         MissionAction::Refine { id, answer } => {
             keel::application::mission_lifecycle::MissionLifecycleService::refine(
                 &board_dir,

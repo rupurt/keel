@@ -10,7 +10,7 @@ If your harness supports subagents, worker sessions, or fresh task-local context
 use them to preserve workflow-specific focus instead of carrying one mixed context
 across planning, research, and execution.
 
-1. **Keep One Mission Steward**: The top-level harness/session owns mission scope, charter integrity, `just keel mission show <id>`, `just keel flow`, `just keel mission next <id>`, mission logging, phase switching, and final mission lifecycle transitions.
+1. **Keep One Mission Steward**: The top-level harness/session owns mission scope, charter integrity, `just keel mission show <id>`, `just keel flow`, `just keel mission next [<id>]`, mission logging, phase switching, and final mission lifecycle transitions.
 2. **Delegate By Workflow Type**: Hand one concrete work unit to a dedicated worker context:
    - **Operator**: one primary implementation slice at a time, usually one story plus any directly coupled lifecycle work required to finish that slice cleanly (for example `story submit`, evidence capture, or `voyage done` when closing the final scoped story).
    - **Manager**: one planning unit at a time (epic or voyage), including the authored artifacts and downstream story decomposition needed to seal that unit cleanly.
@@ -168,13 +168,13 @@ the request is broad and no mission covers it yet, create one first.
 4. **Refresh State At The Start Of Every Cycle**: Re-open the mission and board before choosing work:
    - `just keel mission show <id>`
    - `just keel flow`
-   - `just keel mission next <id>` to resolve indecision points across all roles.
+   - `just keel mission next [<id>]` to resolve indecision points across all roles. Omit the ID to auto-select the highest-priority actionable mission.
 5. **Choose The Correct Phase And Hand Off To The Matching Workflow**:
-   - Use `just keel mission next <id>` to see the immediate priority for all role families.
+   - Use `just keel mission next [<id>]` to see the immediate priority for all role families. Omit the ID to auto-select the highest-priority actionable mission.
    - If a story is ready or the next step is a concrete implementation slice, use the **Delivery Workflow** in a dedicated operator context.
    - If no story is ready and the next step is decomposition, scoping, or requirements/design authoring, use the **Management Workflow** in a dedicated manager context.
    - If planning or execution is blocked by ambiguity, missing evidence, or external research, use the **Research Workflow** in a dedicated explorer context.
-   - If `just keel mission next <id>` reports no ready work but mission goals remain unmet, create the next bearing, epic, voyage, or story instead of stopping.
+   - If `just keel mission next [<id>]` reports no ready work but mission goals remain unmet, create the next bearing, epic, voyage, or story instead of stopping.
 6. **Rejoin The Mission Loop After Every Worker Result**:
    - Review the resulting board state and changed artifacts.
    - Record the decision, evidence, blocker, and next phase with `just keel mission log <id> --entry "<text>"`.
@@ -266,7 +266,7 @@ Run `just keel --help` for the full command tree. The core commands you should r
 | Discovery | `just keel bearing new <name>` `just keel bearing research <id>` `just keel bearing assess <id>` `just keel bearing list` |
 | Planning | `just keel epic new <name> --problem <problem>` `just keel voyage new <name> --epic <epic-id> --goal <goal>` |
 | Execution | `just keel story new "<title>" [--type <type>] [--epic <epic-id> [--voyage <voyage-id>]]` |
-| Board Ops | `just keel mission next <id>` `just keel next --role manager` `just keel next --role operator` `just keel flow` `just keel doctor` `just keel generate` `just keel config show` `just keel mission show <id>` |
+| Board Ops | `just keel mission next [<id>]` `just keel next --role manager` `just keel next --role operator` `just keel flow` `just keel doctor` `just keel generate` `just keel config show` `just keel mission show <id>` |
 | Lifecycle | Story/voyage/epic transitions in the table below |
 
 ## Story and Milestone State Changes

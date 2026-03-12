@@ -2,6 +2,7 @@
 use crate::cli::commands::management::adr::AdrAction;
 use crate::cli::commands::management::bearing::BearingAction;
 use crate::cli::commands::management::epic::EpicAction;
+use crate::cli::commands::management::mission::MissionAction;
 use crate::cli::commands::management::routine::RoutineAction;
 use crate::cli::commands::management::story::StoryAction;
 use crate::cli::commands::management::voyage::VoyageAction;
@@ -132,6 +133,11 @@ enum ManagementCommands {
         #[command(subcommand)]
         action: ConfigAction,
     },
+    /// Mission commands
+    Mission {
+        #[command(subcommand)]
+        action: MissionAction,
+    },
 }
 
 #[test]
@@ -210,6 +216,28 @@ fn cli_parses_routine_show() {
     assert_eq!(matches.subcommand_name(), Some("routine"));
     let routine = matches.subcommand_matches("routine").unwrap();
     assert_eq!(routine.subcommand_name(), Some("show"));
+}
+
+#[test]
+fn cli_parses_mission_next_without_id() {
+    let cli = Cli::try_parse_from(["board", "mission", "next"]).unwrap();
+    assert!(matches!(
+        cli.command,
+        Commands::Management(ManagementCommands::Mission {
+            action: MissionAction::Next { id: None }
+        })
+    ));
+}
+
+#[test]
+fn cli_parses_mission_next_with_id() {
+    let cli = Cli::try_parse_from(["board", "mission", "next", "M1"]).unwrap();
+    assert!(matches!(
+        cli.command,
+        Commands::Management(ManagementCommands::Mission {
+            action: MissionAction::Next { id: Some(id) }
+        }) if id == "M1"
+    ));
 }
 
 #[test]

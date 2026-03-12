@@ -2,6 +2,7 @@
 //! Pull-system decision algorithm for selecting the next task.
 
 use anyhow::Result;
+use std::cmp::Ordering;
 use std::path::Path;
 
 use keel::domain::model::{Board, Story, StoryState};
@@ -109,6 +110,26 @@ pub struct MissionDecision {
     pub mission: keel::domain::model::Mission,
     pub unmet_goals: Vec<keel::infrastructure::validation::charter::ParsedMissionGoal>,
     pub suggestion: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct MissionWorkSummary {
+    pub unmet_goals: usize,
+    pub open_epics: usize,
+    pub open_bearings: usize,
+    pub open_adrs: usize,
+    pub open_voyages: usize,
+    pub open_stories: usize,
+}
+
+impl MissionWorkSummary {
+    pub fn total_open_items(&self) -> usize {
+        self.open_epics
+            + self.open_bearings
+            + self.open_adrs
+            + self.open_voyages
+            + self.open_stories
+    }
 }
 
 #[derive(Debug)]
@@ -455,79 +476,7 @@ pub(crate) fn calculate_next_at(
     }
 
     // 7. Mission Steering (Shared)
-    let actionable_missions: Vec<_> = board
-        .missions
-        .values()
-        .filter(|m| m.status() == keel::domain::model::MissionStatus::Active)
-        .filter(|m| filter.mission_id.map(|id| m.id() == id).unwrap_or(true))
-        .filter_map(|mission| {
-            let charter_path = mission.path.parent().unwrap().join("CHARTER.md");
-            let content = std::fs::read_to_string(&charter_path).unwrap_or_default();
-            let goals = keel::infrastructure::validation::charter::parse_mission_goals(&content);
-
-            let unmet_goals: Vec<_> = goals
-                .iter()
-                .filter(|g| {
-                    matches!(
-                        g.verification,
-                        keel::infrastructure::validation::charter::GoalVerification::Board(_)
-                    ) && !is_goal_met(board, g.verification.raw())
-                })
-                .cloned()
-                .collect();
-
-            if !unmet_goals.is_empty() {
-                let epics = board.epics_for_mission(mission.id());
-                let bearings = board.bearings_for_mission(mission.id());
-
-                let suggestion = if bearings.iter().any(|b| {
-                    matches!(
-                        b.frontmatter.status,
-                        keel::domain::model::BearingStatus::Exploring
-                            | keel::domain::model::BearingStatus::Evaluating
-                    )
-                }) {
-                    "Complete active research bearings".to_string()
-                } else if let Some(epic) = epics
-                    .iter()
-                    .find(|e| e.status() == keel::domain::model::EpicState::Draft)
-                {
-                    let prd_path = epic.path.parent().unwrap().join("PRD.md");
-                    if keel::infrastructure::validation::structural::check_epic_prd_authored_content(
-                        &prd_path,
-                    )
-                    .is_empty()
-                    {
-                        format!("Decompose Epic {} into voyages", epic.id())
-                    } else {
-                        format!("Author PRD for Epic {}", epic.id())
-                    }
-                } else if let Some(voyage) = board.voyages.values().find(|v| {
-                    v.status() == keel::domain::state_machine::voyage::VoyageState::Draft
-                        && epics.iter().any(|e| e.id() == v.epic_id)
-                }) {
-                    format!("Decompose or author planning for Voyage {}", voyage.id())
-                } else if epics
-                    .iter()
-                    .any(|e| e.status() != keel::domain::model::EpicState::Done)
-                {
-                    "Progress existing mission-scoped epics".to_string()
-                } else if bearings.is_empty() && epics.is_empty() {
-                    "Create first bearing or epic for mission".to_string()
-                } else {
-                    "Create next bearing or epic to address unmet goals".to_string()
-                };
-
-                Some(MissionDecision {
-                    mission: mission.clone(),
-                    unmet_goals,
-                    suggestion,
-                })
-            } else {
-                None
-            }
-        })
-        .collect();
+    let actionable_missions = actionable_mission_decisions(board, filter);
 
     if !actionable_missions.is_empty() {
         if actionable_missions.len() == 1 {
@@ -551,6 +500,156 @@ pub(crate) fn calculate_next_at(
             ]
         },
     }))
+}
+
+pub(crate) fn actionable_mission_decisions(
+    board: &Board,
+    filter: &ItemFilter,
+) -> Vec<MissionDecision> {
+    let mut actionable_missions: Vec<_> = board
+        .missions
+        .values()
+        .filter(|m| m.status() == keel::domain::model::MissionStatus::Active)
+        .filter(|m| filter.mission_id.map(|id| m.id() == id).unwrap_or(true))
+        .filter_map(|mission| {
+            let unmet_goals = mission_unmet_board_goals(board, mission);
+            if unmet_goals.is_empty() {
+                return None;
+            }
+
+            Some(MissionDecision {
+                mission: mission.clone(),
+                suggestion: mission_suggestion(board, mission),
+                unmet_goals,
+            })
+        })
+        .collect();
+
+    actionable_missions.sort_by(|left, right| compare_mission_decisions(board, left, right));
+    actionable_missions
+}
+
+pub(crate) fn mission_unmet_board_goals(
+    board: &Board,
+    mission: &keel::domain::model::Mission,
+) -> Vec<keel::infrastructure::validation::charter::ParsedMissionGoal> {
+    let charter_path = mission.path.parent().unwrap().join("CHARTER.md");
+    let content = std::fs::read_to_string(&charter_path).unwrap_or_default();
+    let goals = keel::infrastructure::validation::charter::parse_mission_goals(&content);
+
+    goals
+        .into_iter()
+        .filter(|goal| {
+            matches!(
+                goal.verification,
+                keel::infrastructure::validation::charter::GoalVerification::Board(_)
+            ) && !is_goal_met(board, goal.verification.raw())
+        })
+        .collect()
+}
+
+pub(crate) fn mission_work_summary(
+    board: &Board,
+    mission: &keel::domain::model::Mission,
+    unmet_goals: usize,
+) -> MissionWorkSummary {
+    MissionWorkSummary {
+        unmet_goals,
+        open_epics: board
+            .epics_for_mission(mission.id())
+            .into_iter()
+            .filter(|epic| epic.status() != keel::domain::model::EpicState::Done)
+            .count(),
+        open_bearings: board
+            .bearings_for_mission(mission.id())
+            .into_iter()
+            .filter(|bearing| !bearing.is_complete())
+            .count(),
+        open_adrs: board
+            .adrs_for_mission(mission.id())
+            .into_iter()
+            .filter(|adr| adr.status() == keel::domain::model::AdrStatus::Proposed)
+            .count(),
+        open_voyages: board
+            .voyages
+            .values()
+            .filter(|voyage| board.is_voyage_in_mission(voyage, mission.id()))
+            .filter(|voyage| {
+                voyage.status() != keel::domain::state_machine::voyage::VoyageState::Done
+            })
+            .count(),
+        open_stories: board
+            .stories
+            .values()
+            .filter(|story| board.is_story_in_mission(story, mission.id()))
+            .filter(|story| story.status != keel::domain::model::StoryState::Done)
+            .count(),
+    }
+}
+
+fn compare_mission_decisions(
+    board: &Board,
+    left: &MissionDecision,
+    right: &MissionDecision,
+) -> Ordering {
+    let left_summary = mission_work_summary(board, &left.mission, left.unmet_goals.len());
+    let right_summary = mission_work_summary(board, &right.mission, right.unmet_goals.len());
+
+    right_summary
+        .unmet_goals
+        .cmp(&left_summary.unmet_goals)
+        .then_with(|| {
+            right_summary
+                .total_open_items()
+                .cmp(&left_summary.total_open_items())
+        })
+        .then_with(|| right_summary.open_epics.cmp(&left_summary.open_epics))
+        .then_with(|| right_summary.open_voyages.cmp(&left_summary.open_voyages))
+        .then_with(|| right_summary.open_stories.cmp(&left_summary.open_stories))
+        .then_with(|| right_summary.open_bearings.cmp(&left_summary.open_bearings))
+        .then_with(|| right_summary.open_adrs.cmp(&left_summary.open_adrs))
+        .then_with(|| left.mission.id().cmp(right.mission.id()))
+}
+
+fn mission_suggestion(board: &Board, mission: &keel::domain::model::Mission) -> String {
+    let epics = board.epics_for_mission(mission.id());
+    let bearings = board.bearings_for_mission(mission.id());
+
+    if bearings.iter().any(|b| {
+        matches!(
+            b.frontmatter.status,
+            keel::domain::model::BearingStatus::Exploring
+                | keel::domain::model::BearingStatus::Evaluating
+        )
+    }) {
+        "Complete active research bearings".to_string()
+    } else if let Some(epic) = epics
+        .iter()
+        .find(|epic| epic.status() == keel::domain::model::EpicState::Draft)
+    {
+        let prd_path = epic.path.parent().unwrap().join("PRD.md");
+        if keel::infrastructure::validation::structural::check_epic_prd_authored_content(&prd_path)
+            .is_empty()
+        {
+            format!("Decompose Epic {} into voyages", epic.id())
+        } else {
+            format!("Author PRD for Epic {}", epic.id())
+        }
+    } else if let Some(voyage) = board.voyages.values().find(|voyage| {
+        voyage.status() == keel::domain::state_machine::voyage::VoyageState::Draft
+            && epics.iter().any(|epic| epic.id() == voyage.epic_id)
+    }) {
+        format!("Decompose or author planning for Voyage {}", voyage.id())
+    } else if epics
+        .iter()
+        .any(|epic| epic.status() != keel::domain::model::EpicState::Done)
+    {
+        "Progress existing mission-scoped epics".to_string()
+    } else if bearings.is_empty() && epics.is_empty() {
+        "Create first bearing or epic for mission".to_string()
+    } else {
+        "Create next bearing or epic to address unmet goals".to_string()
+    }
 }
 
 fn is_goal_met(board: &Board, target: &str) -> bool {
@@ -716,6 +815,67 @@ updated_at: 2026-01-01T00:00:00
                 assert_eq!(d.unmet_goals.len(), 1);
             }
             other => panic!("expected mission decision, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn mission_steering_orders_active_missions_by_outstanding_work() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .mission(TestMission::new("M2").status("active"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .epic(TestEpic::new("E2").mission("M2"))
+            .voyage(
+                TestVoyage::new("V1", "E1")
+                    .status("planned")
+                    .srs_content("# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req | test |\nEND FUNCTIONAL_REQUIREMENTS"),
+            )
+            .voyage(
+                TestVoyage::new("V2", "E2")
+                    .status("planned")
+                    .srs_content("# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req | test |\nEND FUNCTIONAL_REQUIREMENTS"),
+            )
+            .voyage(
+                TestVoyage::new("V3", "E2")
+                    .status("planned")
+                    .srs_content("# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req | test |\nEND FUNCTIONAL_REQUIREMENTS"),
+            )
+            .story(TestStory::new("S1").scope("E1/V1"))
+            .story(TestStory::new("S2").scope("E2/V2"))
+            .story(TestStory::new("S3").scope("E2/V3"))
+            .build();
+
+        fs::write(
+            temp.path().join("missions/M1/CHARTER.md"),
+            r#"
+## Goals
+| ID | Description | Verification |
+|----|-------------|--------------|
+| MG-01 | First goal | board: E1 |
+"#,
+        )
+        .unwrap();
+        fs::write(
+            temp.path().join("missions/M2/CHARTER.md"),
+            r#"
+## Goals
+| ID | Description | Verification |
+|----|-------------|--------------|
+| MG-01 | Second goal | board: E2 |
+"#,
+        )
+        .unwrap();
+
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
+        let next = calculate_next(&board, temp.path(), false, &ItemFilter::none()).unwrap();
+
+        match next {
+            NextDecision::Missions(d) => {
+                assert_eq!(d.missions.len(), 2);
+                assert_eq!(d.missions[0].mission.id(), "M2");
+                assert_eq!(d.missions[1].mission.id(), "M1");
+            }
+            other => panic!("expected missions decision, got {other:?}"),
         }
     }
 
