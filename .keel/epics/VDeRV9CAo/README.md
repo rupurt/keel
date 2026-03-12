@@ -23,5 +23,5 @@ index: 33
 **Progress:** 0/1 voyages complete, 0/3 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Explicit Lifecycle Reactors](voyages/VDeUIiB3Q/) | planned | 0/3 |
+| [Explicit Lifecycle Reactors](voyages/VDeUIiB3Q/) | in-progress | 0/3 |
 <!-- END GENERATED -->

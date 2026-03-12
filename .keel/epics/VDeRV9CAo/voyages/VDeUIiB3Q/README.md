@@ -2,11 +2,12 @@
 id: VDeUIiB3Q
 title: Explicit Lifecycle Reactors
 goal: Replace the branching process manager with explicit lifecycle reactors while preserving current CLI behavior.
-status: planned
+status: in-progress
 epic: VDeRV9CAo
 created_at: 2026-03-12T04:35:05
 index: 1
 updated_at: 2026-03-12T04:40:07
+started_at: 2026-03-12T04:41:10
 ---
 
 # Explicit Lifecycle Reactors
@@ -29,7 +30,7 @@ updated_at: 2026-03-12T04:40:07
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Introduce Reactor Contracts and Planner Wiring](../../../../stories/VDeUNOfrU/README.md) | feat | backlog |
+| [Introduce Reactor Contracts and Planner Wiring](../../../../stories/VDeUNOfrU/README.md) | feat | in-progress |
 | [Move Story Lifecycle Automation To Explicit Reactors](../../../../stories/VDeUNP4rV/README.md) | feat | backlog |
 | [Wire Voyage Completion as a Real Event Path](../../../../stories/VDeUNRFtq/README.md) | feat | backlog |
 <!-- END GENERATED -->

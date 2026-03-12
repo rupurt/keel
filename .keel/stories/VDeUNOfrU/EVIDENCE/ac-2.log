@@ -1,0 +1,27 @@
+---
+recorded_at: 2026-03-12T04:45:11.377198194-07:00
+command: cargo test architecture_contract_tests --lib
+---
+
+running 14 tests
+test architecture_contract_tests::forbidden_edge_detector_reports_cross_context_fixture_violations ... ok
+test architecture_contract_tests::flow_adapter_uses_canonical_projection_service ... ok
+test architecture_contract_tests::diagnostics_adapters_avoid_cross_context_orchestration_edges ... ok
+test architecture_contract_tests::forbidden_edge_detector_reports_fixture_violations ... ok
+test architecture_contract_tests::main_dispatch_adapter_avoids_domain_and_infrastructure_internals ... ok
+test architecture_contract_tests::main_bootstrap_depends_on_cli_surface ... ok
+test architecture_contract_tests::creation_paths_use_shared_template_rendering_service ... ok
+test architecture_contract_tests::lib_declarations_expose_normalized_layer_roots ... ok
+test architecture_contract_tests::throughput_diagnostics_adapter_uses_throughput_projection_and_store ... ok
+test architecture_contract_tests::source_tree_removes_legacy_root_module_families ... ok
+test architecture_contract_tests::queue_policy_consumers_use_shared_read_model_api ... ok
+test architecture_contract_tests::next_algorithm_avoids_interface_or_transition_edges ... ok
+test architecture_contract_tests::lifecycle_commands_delegate_to_application_services ... ok
+test architecture_contract_tests::read_model_projection_layer_avoids_command_and_transition_edges ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 861 filtered out; finished in 0.02s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.07s
+     Running unittests src/lib.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-2ef2fabeec7cd10a)

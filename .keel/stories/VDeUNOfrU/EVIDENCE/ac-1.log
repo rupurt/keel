@@ -1,0 +1,16 @@
+---
+recorded_at: 2026-03-12T04:45:06.721903347-07:00
+command: cargo test process_manager_reactors --lib
+---
+
+running 2 tests
+test application::process_manager::tests::process_manager_reactors_are_deterministic ... ok
+test application::process_manager::tests::process_manager_reactors_use_named_planner_units ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 873 filtered out; finished in 0.01s
+
+
+--- stderr ---
+   Compiling keel v0.1.0 (/home/alex/workspace/spoke-sh/keel)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.01s
+     Running unittests src/lib.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-2ef2fabeec7cd10a)

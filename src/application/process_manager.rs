@@ -23,6 +23,44 @@ pub trait ProcessActionExecutor: Send + Sync {
     fn complete_epic(&self, epic_id: &str) -> Result<()>;
 }
 
+trait ProcessReactor: Send + Sync {
+    fn name(&self) -> &'static str;
+
+    fn priority(&self) -> u8 {
+        100
+    }
+
+    fn plan(&self, board: &Board, event: &DomainEvent) -> Vec<ProcessAction>;
+}
+
+struct LifecyclePlanningReactor;
+
+impl ProcessReactor for LifecyclePlanningReactor {
+    fn name(&self) -> &'static str {
+        "lifecycle-planner"
+    }
+
+    fn plan(&self, board: &Board, event: &DomainEvent) -> Vec<ProcessAction> {
+        match event {
+            DomainEvent::StoryStarted {
+                scope: Some(scope), ..
+            } => plan_story_started_actions(board, scope),
+            DomainEvent::StoryAccepted {
+                scope: Some(scope), ..
+            } => plan_story_accepted_actions(board, scope),
+            DomainEvent::VoyageCompleted { voyage_id, epic_id } => {
+                plan_voyage_completed_actions(board, voyage_id, epic_id)
+            }
+            DomainEvent::StoryStarted { scope: None, .. }
+            | DomainEvent::StoryAccepted { scope: None, .. } => Vec::new(),
+        }
+    }
+}
+
+fn default_reactors() -> Vec<Box<dyn ProcessReactor>> {
+    vec![Box::new(LifecyclePlanningReactor)]
+}
+
 pub struct LiveProcessActionExecutor {
     service: Arc<VoyageEpicLifecycleService>,
 }
@@ -53,18 +91,27 @@ impl ProcessActionExecutor for LiveProcessActionExecutor {
 
 pub struct DomainProcessManager<E = LiveProcessActionExecutor> {
     executor: E,
+    reactors: Vec<Box<dyn ProcessReactor>>,
 }
 
 impl<E: ProcessActionExecutor> DomainProcessManager<E> {
     pub fn new(executor: E) -> Self {
-        Self { executor }
+        Self {
+            executor,
+            reactors: default_reactors(),
+        }
+    }
+
+    #[cfg(test)]
+    fn with_reactors(executor: E, reactors: Vec<Box<dyn ProcessReactor>>) -> Self {
+        Self { executor, reactors }
     }
 
     pub fn handle(&self, board_dir: &Path, event: DomainEvent) -> Result<()> {
         log_event(&event);
 
         let board = load_board(board_dir)?;
-        let actions = Self::plan_actions(&board, &event);
+        let actions = self.plan_actions(&board, &event);
         for action in actions {
             self.execute_action(action)?;
         }
@@ -98,20 +145,32 @@ impl<E: ProcessActionExecutor> DomainProcessManager<E> {
         }
     }
 
-    fn plan_actions(board: &Board, event: &DomainEvent) -> Vec<ProcessAction> {
-        match event {
-            DomainEvent::StoryStarted {
-                scope: Some(scope), ..
-            } => plan_story_started_actions(board, scope),
-            DomainEvent::StoryAccepted {
-                scope: Some(scope), ..
-            } => plan_story_accepted_actions(board, scope),
-            DomainEvent::VoyageCompleted { voyage_id, epic_id } => {
-                plan_voyage_completed_actions(board, voyage_id, epic_id)
+    fn plan_actions(&self, board: &Board, event: &DomainEvent) -> Vec<ProcessAction> {
+        let mut reactors: Vec<_> = self
+            .reactors
+            .iter()
+            .map(|reactor| reactor.as_ref())
+            .collect();
+        reactors.sort_by(|left, right| {
+            left.priority()
+                .cmp(&right.priority())
+                .then_with(|| left.name().cmp(right.name()))
+        });
+
+        let mut actions = Vec::new();
+        for reactor in reactors {
+            let planned = reactor.plan(board, event);
+            if !planned.is_empty() {
+                println!(
+                    "[process-manager] reactor={} planned_actions={}",
+                    reactor.name(),
+                    planned.len()
+                );
             }
-            DomainEvent::StoryStarted { scope: None, .. }
-            | DomainEvent::StoryAccepted { scope: None, .. } => Vec::new(),
+            actions.extend(planned);
         }
+
+        actions
     }
 }
 
@@ -211,6 +270,26 @@ mod tests {
     #[derive(Clone)]
     struct MockExecutor {
         calls: Arc<Mutex<Vec<String>>>,
+    }
+
+    struct TestReactor {
+        name: &'static str,
+        priority: u8,
+        actions: Vec<ProcessAction>,
+    }
+
+    impl ProcessReactor for TestReactor {
+        fn name(&self) -> &'static str {
+            self.name
+        }
+
+        fn priority(&self) -> u8 {
+            self.priority
+        }
+
+        fn plan(&self, _board: &Board, _event: &DomainEvent) -> Vec<ProcessAction> {
+            self.actions.clone()
+        }
     }
 
     impl ProcessActionExecutor for MockExecutor {
@@ -378,5 +457,87 @@ mod tests {
 
         let calls = calls.lock().unwrap();
         assert!(calls.is_empty());
+    }
+
+    #[test]
+    fn process_manager_reactors_use_named_planner_units() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").status("planned"))
+            .story(
+                TestStory::new("S1")
+                    .scope("e1/v1")
+                    .status(StoryState::Backlog),
+            )
+            .build();
+
+        let calls = Arc::new(Mutex::new(Vec::new()));
+        let manager = DomainProcessManager::new(MockExecutor {
+            calls: calls.clone(),
+        });
+
+        manager
+            .handle(
+                temp.path(),
+                DomainEvent::StoryStarted {
+                    story_id: "S1".to_string(),
+                    scope: Some("e1/v1".to_string()),
+                },
+            )
+            .unwrap();
+
+        let calls = calls.lock().unwrap();
+        assert_eq!(calls.as_slice(), ["start:v1"]);
+    }
+
+    #[test]
+    fn process_manager_reactors_are_deterministic() {
+        let temp = TestBoardBuilder::new().build();
+
+        let calls = Arc::new(Mutex::new(Vec::new()));
+        let manager = DomainProcessManager::with_reactors(
+            MockExecutor {
+                calls: calls.clone(),
+            },
+            vec![
+                Box::new(TestReactor {
+                    name: "zeta",
+                    priority: 50,
+                    actions: vec![ProcessAction::StartVoyage {
+                        voyage_id: "zeta".to_string(),
+                    }],
+                }),
+                Box::new(TestReactor {
+                    name: "alpha",
+                    priority: 10,
+                    actions: vec![ProcessAction::StartVoyage {
+                        voyage_id: "alpha".to_string(),
+                    }],
+                }),
+                Box::new(TestReactor {
+                    name: "beta",
+                    priority: 10,
+                    actions: vec![ProcessAction::StartVoyage {
+                        voyage_id: "beta".to_string(),
+                    }],
+                }),
+            ],
+        );
+
+        manager
+            .handle(
+                temp.path(),
+                DomainEvent::StoryStarted {
+                    story_id: "S1".to_string(),
+                    scope: None,
+                },
+            )
+            .unwrap();
+
+        let calls = calls.lock().unwrap();
+        assert_eq!(
+            calls.as_slice(),
+            ["start:alpha", "start:beta", "start:zeta"]
+        );
     }
 }
