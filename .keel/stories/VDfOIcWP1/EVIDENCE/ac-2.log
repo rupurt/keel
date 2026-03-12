@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-12T08:37:54.981128132-07:00
+mode: manual
+---
+Graph integrity now reports terminal parents that still contain unfinished descendants across mission/epic/voyage containment; proved by cargo test --lib doctor_graph_integrity_reports_terminal_parent_violations.

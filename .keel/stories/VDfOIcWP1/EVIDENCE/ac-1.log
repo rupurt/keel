@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-12T08:37:54.727304929-07:00
+mode: manual
+---
+Added src/read_model/diagnostics/checks/graph.rs and wired workflow-graph-integrity into the doctor catalog/report so orphaned nodes and containment cycles are reported from BoardGraph; proved by cargo test --lib doctor_graph_integrity_reports_orphans_and_cycles and cargo run -- doctor.

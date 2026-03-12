@@ -664,6 +664,20 @@ pub fn validate_with_config(
     ));
 
     // 7. Workflow Checks
+    let graph_integrity_problems = checks::graph::check_workflow_graph_integrity(&board);
+    workflow_checks.push(configured_check(
+        doctor_config,
+        "workflow-graph-integrity",
+        "Graph integrity",
+        board.missions.len()
+            + board.epics.len()
+            + board.bearings.len()
+            + board.adrs.len()
+            + board.voyages.len()
+            + board.stories.len(),
+        graph_integrity_problems,
+    ));
+
     let topology_problems = checks::workflow::check_workflow_topology(board_dir);
     workflow_checks.push(configured_check(
         doctor_config,

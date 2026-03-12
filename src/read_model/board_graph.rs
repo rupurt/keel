@@ -346,7 +346,7 @@ pub fn build_board_graph(board: &Board) -> BoardGraph {
 }
 
 impl BoardGraph {
-    fn new(
+    pub(crate) fn new(
         mut nodes: Vec<BoardGraphNode>,
         mut edges: Vec<BoardGraphEdge>,
         mut dangling_edges: Vec<BoardGraphDanglingEdge>,
@@ -535,7 +535,7 @@ fn add_edge(
 ) {
     if known_ids.contains(&from) && known_ids.contains(&to) {
         edges.insert(BoardGraphEdge::new(from, to, kind));
-    } else if known_ids.contains(&from) {
+    } else if known_ids.contains(&from) || known_ids.contains(&to) {
         dangling_edges.insert(BoardGraphDanglingEdge { from, to, kind });
     }
 }

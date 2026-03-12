@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-12T08:37:54.965026985-07:00
+mode: manual
+---
+The workflow graph integrity path builds BoardGraph once and reuses it for orphan, cycle, and terminal-parent validation instead of rebuilding local relationship scans; proved by cargo test --lib doctor_graph_integrity_uses_single_graph_build.

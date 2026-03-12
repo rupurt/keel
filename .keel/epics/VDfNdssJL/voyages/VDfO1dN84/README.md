@@ -25,11 +25,11 @@ started_at: 2026-03-12T08:19:47
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/3 stories complete
+**Progress:** 1/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Introduce BoardGraph Projection](../../../../stories/VDfOIc3Ok/README.md) | feat | in-progress |
-| [Add Graph Integrity Doctor Check](../../../../stories/VDfOIcWP1/README.md) | feat | backlog |
+| [Introduce BoardGraph Projection](../../../../stories/VDfOIc3Ok/README.md) | feat | done |
+| [Add Graph Integrity Doctor Check](../../../../stories/VDfOIcWP1/README.md) | feat | in-progress |
 | [Route Topology Through BoardGraph](../../../../stories/VDfOIf3Uw/README.md) | feat | backlog |
 <!-- END GENERATED -->

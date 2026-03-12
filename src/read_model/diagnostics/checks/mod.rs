@@ -4,6 +4,7 @@ pub mod bearings;
 pub mod drift;
 pub mod epics;
 pub mod evidence;
+pub mod graph;
 pub mod missions;
 pub mod stories;
 pub mod voyages;
