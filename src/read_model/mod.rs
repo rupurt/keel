@@ -1,6 +1,7 @@
 //! Canonical read-model projections consumed by interface adapters.
 
 pub mod bearing_show;
+pub mod board_graph;
 pub mod capacity;
 pub mod diagnostics;
 pub mod evidence;

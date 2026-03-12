@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-12T08:29:41.766209108-07:00
+mode: manual
+---
+Canonical graph construction normalizes node, edge, and adjacency ordering so equivalent board states yield identical projections; proved by cargo test --lib board_graph_is_deterministic_across_equivalent_boards plus just quality/test/doctest and cargo run -- doctor.

@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-12T08:29:32.097212842-07:00
+mode: manual
+---
+Added src/read_model/board_graph.rs with typed nodes, containment edges, lineage edges, governance edges, and canonical story dependency edges; proved by cargo test --lib board_graph_builds_typed_relationships.

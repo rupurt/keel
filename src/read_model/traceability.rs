@@ -7,8 +7,8 @@ use std::collections::HashMap;
 use std::fs;
 
 use crate::domain::model::Board;
-use crate::domain::state_machine::invariants;
 use crate::infrastructure::verification::parse_ac_references;
+use crate::read_model::board_graph::build_board_graph;
 
 /// Traceability matrix mapping requirements to IMPLEMENTATIONS (stories).
 #[derive(Debug, Default)]
@@ -53,79 +53,7 @@ pub fn build_matrix(board: &Board) -> TraceabilityMatrix {
 
 /// Calculate story-to-story implementation dependencies based on SRS order.
 pub fn derive_implementation_dependencies(board: &Board) -> HashMap<String, Vec<String>> {
-    let mut deps: HashMap<String, Vec<String>> = HashMap::new();
-
-    // Group stories by voyage/scope to enforce ordering only within tactical units.
-    let mut scope_to_requirements: HashMap<String, HashMap<String, Vec<String>>> = HashMap::new();
-
-    for story in board.stories.values() {
-        let Some(scope) = story.scope() else {
-            continue;
-        };
-
-        let content = match fs::read_to_string(&story.path) {
-            Ok(c) => c,
-            Err(_) => continue,
-        };
-
-        let refs = parse_ac_references(&content);
-        for ac_ref in refs {
-            scope_to_requirements
-                .entry(scope.to_string())
-                .or_default()
-                .entry(ac_ref.srs_id)
-                .or_default()
-                .push(story.id().to_string());
-        }
-    }
-
-    // For each voyage, determine story dependencies based on SRS requirement order.
-    for voyage in board.voyages.values() {
-        let srs_path = voyage.path.parent().unwrap().join("SRS.md");
-        if !srs_path.exists() {
-            continue;
-        }
-
-        let requirements = invariants::parse_requirements(&srs_path);
-        let scope = voyage.scope_path();
-        let Some(req_to_stories) = scope_to_requirements.get(&scope) else {
-            continue;
-        };
-
-        // Track stories implementing each requirement.
-        // A story depends on all stories implementing PREVIOUS requirements in the SRS.
-        let mut previous_stories: Vec<String> = Vec::new();
-
-        for req_id in requirements {
-            // NFRs (Non-Functional Requirements) don't create ordering constraints.
-            if req_id.contains("NFR") {
-                continue;
-            }
-
-            if let Some(stories) = req_to_stories.get(&req_id) {
-                for story_id in stories {
-                    let mut story_deps = previous_stories.clone();
-                    // Don't depend on yourself if multiple stories implement same req.
-                    story_deps.retain(|id| id != story_id);
-
-                    deps.entry(story_id.clone()).or_default().extend(story_deps);
-                }
-
-                // Add these stories to "previous" for the next requirement in SRS.
-                previous_stories.extend(stories.iter().cloned());
-                previous_stories.sort();
-                previous_stories.dedup();
-            }
-        }
-    }
-
-    // Deduplicate and flatten transitive dependencies.
-    for story_deps in deps.values_mut() {
-        story_deps.sort();
-        story_deps.dedup();
-    }
-
-    deps
+    build_board_graph(board).story_dependencies()
 }
 
 /// Check if a story is "parallel safe" (has no implementation dependencies).

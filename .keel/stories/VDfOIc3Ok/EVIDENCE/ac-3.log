@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-12T08:29:38.608792097-07:00
+mode: manual
+---
+Merged inferred SRS-order dependencies with explicit blocked_by metadata into the canonical graph and routed traceability dependency derivation through BoardGraph; proved by cargo test --lib board_graph_merges_story_dependency_sources and the updated next --parallel regression.

@@ -1576,29 +1576,17 @@ priority = 50
 
         let selected_ids: Vec<_> = projection.ready.iter().map(|story| story.id()).collect();
         assert_eq!(selected_ids, vec!["S1", "S3"]);
-        assert_eq!(projection.blocked_pairs.len(), 1);
-
-        let blocker = &projection.blocked_pairs[0];
-        let human = render_parallel_blockers_human(&projection.blocked_pairs);
-        let json = serde_json::to_value(build_parallel_json_result(
-            &projection,
-            &[],
-            None,
-            "manager",
-        ))
-        .expect("json payload");
-        let json_blocker = &json["details"]["parallel_work"]["blocked_pairs"][0];
-
-        assert_eq!(json_blocker["story_id"], blocker.story_id);
-        assert_eq!(json_blocker["blocked_by"], blocker.blocked_by_story_id);
-        assert_eq!(json_blocker["reasons"][0], blocker.reasons[0]);
+        assert!(projection.blocked_pairs.is_empty());
         assert_eq!(
-            json_blocker["confidence"].as_f64().unwrap(),
-            blocker.confidence
+            projection
+                .sequential_chains
+                .get("keel/01-parallel")
+                .expect("sequential chain")
+                .iter()
+                .map(|story| story.id())
+                .collect::<Vec<_>>(),
+            vec!["S2"]
         );
-        assert!(human.contains(&blocker.story_id));
-        assert!(human.contains(&blocker.blocked_by_story_id));
-        assert!(human.contains(blocker.reasons[0].as_str()));
     }
 
     #[test]

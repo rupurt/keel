@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-12T08:29:35.213342155-07:00
+mode: manual
+---
+Exposed parent, children, ancestors, descendants, incoming, outgoing, and dependency queries on BoardGraph with deterministic adjacency ordering; proved by cargo test --lib board_graph_queries_traverse_relationships.

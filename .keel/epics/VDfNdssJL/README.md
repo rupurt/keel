@@ -23,5 +23,5 @@ index: 34
 **Progress:** 0/1 voyages complete, 0/3 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [BoardGraph Integrity Kernel](voyages/VDfO1dN84/) | planned | 0/3 |
+| [BoardGraph Integrity Kernel](voyages/VDfO1dN84/) | in-progress | 0/3 |
 <!-- END GENERATED -->

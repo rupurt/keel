@@ -236,7 +236,7 @@
 
 | Voyage | Status |
 |--------|--------|
-| [BoardGraph Integrity Kernel](epics/VDfNdssJL/voyages/VDfO1dN84/) | planned |
+| [BoardGraph Integrity Kernel](epics/VDfNdssJL/voyages/VDfO1dN84/) | in-progress |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

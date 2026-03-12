@@ -359,6 +359,11 @@ impl TestAdr {
             format!("[{}]", self.applies_to.join(", "))
         };
         let context_str = self.context.as_deref().unwrap_or("null");
+        let mission_line = self
+            .mission
+            .as_ref()
+            .map(|mission| format!("mission: {mission}\n"))
+            .unwrap_or_default();
 
         format!(
             r#"---
@@ -368,7 +373,7 @@ title: {}
 status: {}
 context: {}
 applies-to: {}
-supersedes: []
+{}supersedes: []
 superseded-by: null
 decided_at: 2026-01-01T00:00:00
 ---
@@ -383,7 +388,7 @@ decided_at: 2026-01-01T00:00:00
 
 Test ADR content.
 "#,
-            self.id, self.title, self.status, context_str, applies_to_str, self.title
+            self.id, self.title, self.status, context_str, applies_to_str, mission_line, self.title
         )
     }
 }
