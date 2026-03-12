@@ -1,11 +1,12 @@
 ---
 id: VDcFd5Sop
 title: Pulse Automation Execution
-status: planned
+status: in-progress
 epic: VDakmG8cH
 created_at: 2026-03-11T19:24:15
 index: 1
 updated_at: 2026-03-11T19:29:45
+started_at: 2026-03-11T21:24:01
 ---
 
 # Pulse Automation Execution
@@ -30,5 +31,5 @@ updated_at: 2026-03-11T19:29:45
 |-------|------|--------|
 | [Pulse Routine Materialization](../../../../stories/VDcFgtHNB/README.md) | feat | backlog |
 | [Scheduled Flow Lane Projection](../../../../stories/VDcFgtbNC/README.md) | feat | backlog |
-| [Pulse Command Surface](../../../../stories/VDcFgtsLv/README.md) | feat | backlog |
+| [Pulse Command Surface](../../../../stories/VDcFgtsLv/README.md) | feat | in-progress |
 <!-- END GENERATED -->

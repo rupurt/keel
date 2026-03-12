@@ -1,0 +1,12 @@
+---
+recorded_at: 2026-03-11T21:29:38.811341194-07:00
+command: cargo run -- pulse
+---
+Pulse cycle (dry-run)
+  Evaluated: 0
+  Would trigger: 0
+  Skipped:   0
+
+--- stderr ---
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.07s
+     Running `/home/alex/.cache/cargo-target/keel/debug/keel pulse`

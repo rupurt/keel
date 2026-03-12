@@ -207,17 +207,17 @@
 |--------|--------|
 | [Routine Foundation](epics/VDakm8eVW/voyages/VDcFd11nc/) | done |
 
-### [Temporal Gating in Next Algorithm](epics/VDakmCGYi/) (active)
+### [Temporal Gating in Next Algorithm](epics/VDakmCGYi/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Temporal Routine Gating](epics/VDakmCGYi/voyages/VDcFd5kmn/) | in-progress |
+| [Temporal Routine Gating](epics/VDakmCGYi/voyages/VDcFd5kmn/) | done |
 
 ### [Pulse Automation Engine](epics/VDakmG8cH/) (active)
 
 | Voyage | Status |
 |--------|--------|
-| [Pulse Automation Execution](epics/VDakmG8cH/voyages/VDcFd5Sop/) | planned |
+| [Pulse Automation Execution](epics/VDakmG8cH/voyages/VDcFd5Sop/) | in-progress |
 
 ### [Automation Documentation and Guides](epics/VDakmJodq/) (active)
 

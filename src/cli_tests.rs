@@ -147,6 +147,7 @@ fn cli_help_displays_top_level_commands() {
     assert!(help_str.contains("story"), "Missing story subcommand");
     assert!(help_str.contains("epic"), "Missing epic subcommand");
     assert!(help_str.contains("routine"), "Missing routine subcommand");
+    assert!(help_str.contains("pulse"), "Missing pulse command");
     assert!(help_str.contains("voyage"), "Missing voyage subcommand");
     assert!(help_str.contains("verify"), "Missing verify command");
 
@@ -209,6 +210,16 @@ fn cli_parses_routine_show() {
     assert_eq!(matches.subcommand_name(), Some("routine"));
     let routine = matches.subcommand_matches("routine").unwrap();
     assert_eq!(routine.subcommand_name(), Some("show"));
+}
+
+#[test]
+fn cli_parses_pulse_with_json() {
+    let matches = crate::cli::build_cli()
+        .try_get_matches_from(["keel", "pulse", "--json"])
+        .unwrap();
+    assert_eq!(matches.subcommand_name(), Some("pulse"));
+    let pulse = matches.subcommand_matches("pulse").unwrap();
+    assert!(*pulse.get_one::<bool>("json").unwrap());
 }
 
 #[test]

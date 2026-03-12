@@ -67,6 +67,10 @@ pub fn run() -> Result<()> {
                 role.as_ref(),
             )
         }
+        Some(("pulse", m)) => {
+            let json = *m.get_one::<bool>("json").unwrap_or(&false);
+            super::commands::management::pulse::run(json)
+        }
         Some(("topology", m)) => {
             let epic_id = m.get_one::<String>("epic").expect("required");
             let include_done = *m.get_one::<bool>("include_done").unwrap_or(&false);

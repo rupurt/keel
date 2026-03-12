@@ -12,6 +12,7 @@ Setup
 
 Management
   next        Pull the next item using role-based queue routing
+  pulse       Run one non-interactive automation cycle
   topology    Show an epic-scoped topology map
   play        Invite play-driven discovery
   audit       Rich evidence/traceability report
@@ -116,6 +117,17 @@ pub fn build_cli() -> Command {
                     Arg::new("parallel")
                         .long("parallel")
                         .help("Return all parallel-safe stories for batch dispatch")
+                        .action(ArgAction::SetTrue),
+                ),
+        )
+        .subcommand(
+            Command::new("pulse")
+                .about("Run one non-interactive automation cycle")
+                .hide(true)
+                .arg(
+                    Arg::new("json")
+                        .long("json")
+                        .help("Output as JSON for scripting")
                         .action(ArgAction::SetTrue),
                 ),
         )
