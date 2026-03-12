@@ -10,3 +10,7 @@ Created mission VDeRCfKVl for the simulation-kernel architecture extension. Link
 ## 2026-03-12T04:33:12
 
 Advanced bearing VDeRKA7fo from exploring to ready. Research and assessment confirm that Keel should extend DDD and hexagonal architecture with a small internal simulation kernel rather than replace the architecture. Recommended first refactor slices: explicit reactor extraction from process_manager, shared reference-time simulation context for temporal evaluation, and a shared projection pipeline for flow/next steering. Epic VDeRV9CAo remains the implementation line; do not lay a duplicate epic from the bearing.
+
+## 2026-03-12T04:40:25
+
+Planned voyage VDeUIiB3Q Explicit Lifecycle Reactors under epic VDeRV9CAo. Narrowed the first implementation slice to the reactor seam only: explicit reactor contracts, story lifecycle reactors, and voyage-completion event wiring. Deferred shared simulation-context and projection unification to later voyages. Created and thawed stories VDeUNOfrU, VDeUNP4rV, and VDeUNRFtq for operator execution.
