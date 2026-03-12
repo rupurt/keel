@@ -8,6 +8,7 @@
 | Bearing | Status | Evidence | Assessment | Readiness | EV | Laid |
 |---------|--------|----------|------------|-----------|----|------|
 | [MissionEntity](bearings/1vzeJF000/) | laid | ✓ | ✓ | decision-ready | 3.60 | ✓ |
+| [Simulation Kernel Architecture Research](bearings/VDeRKA7fo/) | laid | ✓ | ✓ | decision-ready | 3.36 | ✓ |
 | [Semantic Search and Ranking in Keel](bearings/1w5H2Bq9L/) | evaluating | ✓ | ✓ | decision-ready | 4.66 | - |
 
 ## Epics
@@ -219,11 +220,17 @@
 |--------|--------|
 | [Pulse Automation Execution](epics/VDakmG8cH/voyages/VDcFd5Sop/) | done |
 
-### [Automation Documentation and Guides](epics/VDakmJodq/) (active)
+### [Automation Documentation and Guides](epics/VDakmJodq/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Automation Guide Authoring](epics/VDakmJodq/voyages/VDcFd62ny/) | in-progress |
+| [Automation Guide Authoring](epics/VDakmJodq/voyages/VDcFd62ny/) | done |
+
+### [Simulation Kernel Core](epics/VDeRV9CAo/) (done)
+
+| Voyage | Status |
+|--------|--------|
+| [Explicit Lifecycle Reactors](epics/VDeRV9CAo/voyages/VDeUIiB3Q/) | done |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
