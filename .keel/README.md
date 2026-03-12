@@ -238,11 +238,17 @@
 |--------|--------|
 | [BoardGraph Integrity Kernel](epics/VDfNdssJL/voyages/VDfO1dN84/) | done |
 
-### [Deterministic Voyage Artifact Rendering](epics/VDfhxO64S/) (active)
+### [Deterministic Voyage Artifact Rendering](epics/VDfhxO64S/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Canonicalize Voyage Artifact Ordering](epics/VDfhxO64S/voyages/VDfhz9Hl7/) | in-progress |
+| [Canonicalize Voyage Artifact Ordering](epics/VDfhxO64S/voyages/VDfhz9Hl7/) | done |
+
+### [Canonical Knowledge Graph World Map](epics/VDfufyl6w/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Build Knowledge Graph Kernel and Cache](epics/VDfufyl6w/voyages/VDfumi8ha/) | planned |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

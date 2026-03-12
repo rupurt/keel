@@ -20,8 +20,8 @@ index: 35
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 0/1 stories done
+**Progress:** 1/1 voyages complete, 1/1 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Canonicalize Voyage Artifact Ordering](voyages/VDfhz9Hl7/) | in-progress | 0/1 |
+| [Canonicalize Voyage Artifact Ordering](voyages/VDfhz9Hl7/) | done | 1/1 |
 <!-- END GENERATED -->
