@@ -6,7 +6,6 @@ use std::fmt::Write;
 
 use super::box_component::BoxComponent;
 use super::format::render_epic_capacities;
-use crate::cli::presentation::flow::layout::LayoutConfig;
 use crate::cli::presentation::scheduled_routines::describe_scheduled_routine;
 use crate::cli::presentation::theme::Theme;
 use crate::cli::style;
@@ -27,84 +26,28 @@ pub fn render_annotated_flow(
     no_color: bool,
 ) -> String {
     let mut output = String::new();
-    let config = LayoutConfig::from_terminal_width(width);
-    let use_color = Theme::should_use_color(no_color);
-    let theme = Theme::for_color_mode(use_color);
+    let theme = Theme::for_color_mode(Theme::should_use_color(no_color));
 
-    // 1. Pipeline Stages (Strategic & Tactical Flow)
-    writeln!(output, "{}", style::heavy_rule(width, Some(&theme))).unwrap();
-    writeln!(output).unwrap();
-
-    // Stage labels
-    let labels = config.render_stage_labels(theme.human, theme.agent, theme.reset);
-    writeln!(output, "{}", labels).unwrap();
-
-    // Visual flow diagram (ASCII art)
-    let flow = config.render_flow_diagram();
-    writeln!(output, "{}", flow).unwrap();
-
-    // Item counts per stage
-    let human_counts = [
-        metrics.research.exploring_count,
-        metrics.research.surveying_count,
-        metrics.research.assessing_count,
-        metrics.planning.draft_count,
-        metrics.planning.planned_count,
-        metrics.execution.active_voyages_count,
-        metrics.verification.count,
-    ];
-    let agent_counts = [
-        metrics.execution.backlog_count,
-        metrics.execution.in_progress_count,
-    ];
-    let counts = config.render_stage_counts(
-        metrics.governance.proposed_count,
-        &human_counts,
-        &agent_counts,
-        metrics.done_count,
-    );
-    writeln!(output, "{}", counts).unwrap();
-    writeln!(output).unwrap();
-
-    // 1b. Mission Summary (Long-running Objectives)
+    // 1. Mission Summary (Long-running Objectives)
     let mission_summary = render_mission_summary(board, width, &theme);
     if !mission_summary.is_empty() {
         writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
         writeln!(output, "  Active Missions").unwrap();
         writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
-        writeln!(output, "{}", mission_summary).unwrap();
+        writeln!(output).unwrap();
+        write!(output, "{}", mission_summary).unwrap();
     }
 
-    // 2. Flow Assessment (Bottleneck Analysis)
-    let throughput = crate::cli::presentation::flow::throughput::calculate_throughput(board, 4);
-    let health = crate::cli::presentation::flow::bottleneck::analyze_health(metrics, &throughput);
-
-    writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
-    let constraint_text = if use_color {
-        health.constraint_reason.yellow().to_string()
-    } else {
-        health.constraint_reason.clone()
-    };
-    writeln!(output, "  Flow Assessment: {}", constraint_text).unwrap();
-    if !health.suggested_actions.is_empty() {
-        let suggested_text = if use_color {
-            health.suggested_actions[0].bold().to_string()
-        } else {
-            health.suggested_actions[0].clone()
-        };
-        writeln!(output, "  Suggested: {}", suggested_text).unwrap();
-    }
-    writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
-    writeln!(output).unwrap();
-
-    // 3. Queue Handoff (Configured Workflow Lanes)
+    // 2. Queue Handoff (Configured Workflow Lanes)
+    ensure_section_spacing(&mut output);
     let lane_boxes = render_lane_boxes(lane_flow, width, &theme);
-    writeln!(output, "{}", lane_boxes).unwrap();
+    write!(output, "{}", lane_boxes).unwrap();
 
+    // 3. Scheduled Capacity
     let scheduled_capacity =
         render_scheduled_capacity(scheduled, materialized_by_key, width, &theme);
     if !scheduled_capacity.is_empty() {
-        writeln!(output).unwrap();
+        ensure_section_spacing(&mut output);
         writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
         writeln!(output, "  Scheduled Capacity").unwrap();
         writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
@@ -124,6 +67,7 @@ pub fn render_annotated_flow(
 
     let cap_render = render_epic_capacities(&cap_map, &theme);
     if !cap_render.is_empty() {
+        ensure_section_spacing(&mut output);
         writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
         writeln!(output, "  Strategic Capacity").unwrap();
         writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
@@ -217,7 +161,13 @@ pub fn render_annotated_flow(
     output
 }
 
-fn render_mission_summary(board: &Board, _width: usize, _theme: &Theme) -> String {
+fn ensure_section_spacing(output: &mut String) {
+    if !output.is_empty() && !output.ends_with("\n\n") {
+        writeln!(output).unwrap();
+    }
+}
+
+fn render_mission_summary(board: &Board, _width: usize, theme: &Theme) -> String {
     let mut out = String::new();
     let detail_label_width = ["Goals", "Child entities"]
         .into_iter()
@@ -278,21 +228,33 @@ fn render_mission_summary(board: &Board, _width: usize, _theme: &Theme) -> Strin
         .unwrap();
         writeln!(
             out,
-            "    {:>label_width$}: {}/{} board goals met",
+            "    {:>label_width$}: {}",
             "Goals",
-            board_met,
-            board_goals.len(),
+            style_mission_summary_value(
+                format!("{}/{} board goals met", board_met, board_goals.len()),
+                board_met,
+                board_goals.len(),
+                theme
+            ),
             label_width = detail_label_width
         )
         .unwrap();
         writeln!(
             out,
-            "    {:>label_width$}: {}/{} epics done, {}/{} bearings terminal",
+            "    {:>label_width$}: {}, {}",
             "Child entities",
-            epics_done,
-            epics.len(),
-            bearings_terminal,
-            bearings.len(),
+            style_mission_summary_value(
+                format!("{}/{} epics done", epics_done, epics.len()),
+                epics_done,
+                epics.len(),
+                theme
+            ),
+            style_mission_summary_value(
+                format!("{}/{} bearings terminal", bearings_terminal, bearings.len()),
+                bearings_terminal,
+                bearings.len(),
+                theme
+            ),
             label_width = detail_label_width
         )
         .unwrap();
@@ -302,6 +264,31 @@ fn render_mission_summary(board: &Board, _width: usize, _theme: &Theme) -> Strin
     }
 
     out
+}
+
+fn style_mission_summary_value(
+    value: String,
+    completed: usize,
+    total: usize,
+    theme: &Theme,
+) -> String {
+    if theme.reset.is_empty() {
+        return value;
+    }
+
+    if total == 0 {
+        return value.dimmed().to_string();
+    }
+
+    if completed == total {
+        return value.green().bold().to_string();
+    }
+
+    if completed == 0 {
+        return value.red().bold().to_string();
+    }
+
+    value.yellow().bold().to_string()
 }
 
 fn is_board_goal_met(board: &Board, target: &str) -> bool {
@@ -470,7 +457,7 @@ fn render_lane_boxes_stacked(
         }
     }
 
-    output
+    output.trim_end().to_string()
 }
 
 fn build_lane_box(
@@ -489,6 +476,7 @@ fn build_lane_box(
         .iter()
         .filter(|source| source.count > 0)
         .collect();
+    let label_width = lane_source_label_width(&non_zero_sources);
 
     let mut lines_pushed = 0;
     if non_zero_sources.is_empty() {
@@ -496,7 +484,12 @@ fn build_lane_box(
         lines_pushed += 1;
     } else {
         for source in non_zero_sources {
-            lane_box.push_line(render_lane_source_line(source, width - 2, theme));
+            lane_box.push_line(render_lane_source_line(
+                source,
+                label_width,
+                width - 2,
+                theme,
+            ));
             lines_pushed += 1;
         }
     }
@@ -513,13 +506,32 @@ fn build_lane_box(
     lane_box
 }
 
-fn render_lane_source_line(source: &LaneSourceCount, width: usize, theme: &Theme) -> String {
+fn lane_source_label_width(sources: &[&LaneSourceCount]) -> usize {
+    sources
+        .iter()
+        .map(|source| keel::infrastructure::utils::visible_width(&source.source))
+        .max()
+        .unwrap_or(0)
+}
+
+fn render_lane_source_line(
+    source: &LaneSourceCount,
+    label_width: usize,
+    width: usize,
+    theme: &Theme,
+) -> String {
     let count = if source.source.starts_with("story.") {
-        format!("{}{}{}", theme.agent, source.count, theme.reset)
+        format!(
+            "{}{}{}{}",
+            theme.bold, theme.agent, source.count, theme.reset
+        )
     } else {
-        format!("{}{}{}", theme.human, source.count, theme.reset)
+        format!(
+            "{}{}{}{}",
+            theme.bold, theme.human, source.count, theme.reset
+        )
     };
-    let line = format!("  {:<28} {:>3}", source.source, count);
+    let line = format!("  {:<label_width$}  {}", source.source, count);
     crate::cli::presentation::flow::format::pad_to_width(&line, width)
 }
 
@@ -572,7 +584,19 @@ mod tests {
         ScheduledRoutineGatingReason, ScheduledRoutineProjection, ScheduledRoutineState,
     };
     use keel::read_model::{workflow_lane_flow, workflow_topology};
-    use keel::test_helpers::{TestBoardBuilder, TestMission};
+    use keel::test_helpers::{
+        TestBearing, TestBoardBuilder, TestEpic, TestMission, TestStory, TestVoyage,
+    };
+    use owo_colors::OwoColorize;
+    use std::fs;
+
+    fn write_test_mission_charter(root: &std::path::Path, mission_id: &str, goals_table: &str) {
+        fs::write(
+            root.join("missions").join(mission_id).join("CHARTER.md"),
+            format!("# Mission Charter\n\n## Goals\n{goals_table}\n"),
+        )
+        .unwrap();
+    }
 
     fn make_test_metrics() -> FlowMetrics {
         FlowMetrics {
@@ -659,6 +683,50 @@ mod tests {
     }
 
     #[test]
+    fn render_lane_source_line_bolds_colored_counts() {
+        let theme = Theme::default();
+        let management_line = render_lane_source_line(
+            &LaneSourceCount {
+                source: "bearing.laid".to_string(),
+                count: 7,
+            },
+            "bearing.laid".len(),
+            40,
+            &theme,
+        );
+        let delivery_line = render_lane_source_line(
+            &LaneSourceCount {
+                source: "story.backlog".to_string(),
+                count: 3,
+            },
+            "story.backlog".len(),
+            40,
+            &theme,
+        );
+
+        assert!(
+            management_line.contains(&format!("{}{}7{}", theme.bold, theme.human, theme.reset))
+        );
+        assert!(delivery_line.contains(&format!("{}{}3{}", theme.bold, theme.agent, theme.reset)));
+    }
+
+    #[test]
+    fn render_lane_source_line_keeps_counts_close_to_labels() {
+        let line = render_lane_source_line(
+            &LaneSourceCount {
+                source: "bearing.evaluating".to_string(),
+                count: 12,
+            },
+            "bearing.evaluating".len(),
+            40,
+            &Theme::no_color(),
+        );
+
+        assert!(line.contains("bearing.evaluating  12"));
+        assert!(!line.contains("bearing.evaluating             12"));
+    }
+
+    #[test]
     fn test_render_annotated_flow() {
         let board = Board::default();
         let metrics = make_test_metrics();
@@ -672,14 +740,15 @@ mod tests {
             100,
             false,
         );
-        assert!(rendered.contains("Governance"));
-        assert!(rendered.contains("Research"));
-        assert!(rendered.contains("Planning"));
-        assert!(rendered.contains("Execution"));
-        assert!(rendered.contains("Verification"));
         assert!(rendered.contains("management (0) [p100]"));
         assert!(rendered.contains("delivery (0) [p50]"));
         assert!(rendered.contains("No executable epic capacity"));
+        assert!(!rendered.contains("Governance"));
+        assert!(!rendered.contains("Research"));
+        assert!(!rendered.contains("Planning"));
+        assert!(!rendered.contains("Execution"));
+        assert!(!rendered.contains("Verification"));
+        assert!(!rendered.contains("Done"));
     }
 
     #[test]
@@ -829,5 +898,151 @@ mod tests {
             .unwrap();
 
         assert_eq!(goals_line.find(':'), child_entities_line.find(':'));
+    }
+
+    #[test]
+    fn render_mission_summary_colors_goal_value_by_completion_state() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").title("Mission One").status("active"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .story(
+                TestStory::new("S1")
+                    .scope("E1")
+                    .status(keel::domain::model::StoryState::Done),
+            )
+            .story(
+                TestStory::new("S2")
+                    .scope("E1")
+                    .status(keel::domain::model::StoryState::Backlog),
+            )
+            .build();
+        write_test_mission_charter(
+            temp.path(),
+            "M1",
+            "| ID | Description | Verification |\n|----|-------------|--------------|\n| MG-01 | First goal | board: S1 |\n| MG-02 | Second goal | board: S2 |",
+        );
+        let board = loader::load_board(temp.path()).unwrap();
+
+        let rendered = render_mission_summary(&board, 100, &Theme::default());
+
+        assert!(rendered.contains(&format!("{}", "1/2 board goals met".yellow().bold())));
+    }
+
+    #[test]
+    fn render_mission_summary_colors_child_entity_segments_independently() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").title("Mission One").status("active"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "E1").status("done"))
+            .bearing(
+                TestBearing::new("B1")
+                    .title("Exploring Bearing")
+                    .mission("M1")
+                    .status("exploring"),
+            )
+            .build();
+        let board = loader::load_board(temp.path()).unwrap();
+
+        let rendered = render_mission_summary(&board, 100, &Theme::default());
+
+        assert!(rendered.contains(&format!("{}", "1/1 epics done".green().bold())));
+        assert!(rendered.contains(&format!("{}", "0/1 bearings terminal".red().bold())));
+    }
+
+    #[test]
+    fn render_annotated_flow_does_not_prefix_active_missions_with_heavy_rule() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").title("Mission One").status("active"))
+            .build();
+        let board = loader::load_board(temp.path()).unwrap();
+        let metrics = make_test_metrics();
+        let lane_flow = make_test_lane_flow();
+
+        let rendered = render_annotated_flow(
+            &board,
+            &metrics,
+            &lane_flow,
+            &[],
+            &HashMap::new(),
+            100,
+            true,
+        );
+
+        let first_non_empty = rendered
+            .lines()
+            .find(|line| !line.trim().is_empty())
+            .unwrap();
+
+        assert!(first_non_empty.starts_with('─'));
+        assert!(!first_non_empty.starts_with('═'));
+        assert!(rendered.contains("  Active Missions"));
+    }
+
+    #[test]
+    fn render_annotated_flow_places_active_mission_spacer_under_header_not_before_lanes() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").title("Mission One").status("active"))
+            .build();
+        let board = loader::load_board(temp.path()).unwrap();
+        let metrics = make_test_metrics();
+        let lane_flow = make_test_lane_flow();
+
+        let rendered = render_annotated_flow(
+            &board,
+            &metrics,
+            &lane_flow,
+            &[],
+            &HashMap::new(),
+            100,
+            true,
+        );
+
+        let lines = rendered.lines().collect::<Vec<_>>();
+        let header_index = lines
+            .iter()
+            .position(|line| *line == "  Active Missions")
+            .unwrap();
+        let mission_index = lines
+            .iter()
+            .position(|line| line.contains("Mission:"))
+            .unwrap();
+        let child_entities_index = lines
+            .iter()
+            .position(|line| line.contains("Child entities"))
+            .unwrap();
+        let spacer_index = child_entities_index + 1;
+        let lane_index = lines
+            .iter()
+            .position(|line| line.contains("management (0) [p100]"))
+            .unwrap();
+
+        assert!(lines[header_index + 1].starts_with('─'));
+        assert!(lines[header_index + 2].is_empty());
+        assert_eq!(mission_index, header_index + 3);
+        assert!(lines[spacer_index].is_empty());
+        assert_eq!(lane_index, spacer_index + 1);
+    }
+
+    #[test]
+    fn render_annotated_flow_places_next_section_immediately_after_lane_boxes() {
+        let board = Board::default();
+        let metrics = make_test_metrics();
+        let lane_flow = make_test_lane_flow();
+
+        let rendered = render_annotated_flow(
+            &board,
+            &metrics,
+            &lane_flow,
+            &[],
+            &HashMap::new(),
+            100,
+            true,
+        );
+
+        let lines = rendered.lines().collect::<Vec<_>>();
+        let lane_bottom_index = lines.iter().position(|line| line.starts_with('└')).unwrap();
+
+        assert!(lines[lane_bottom_index + 1].starts_with('─'));
+        assert_eq!(lines[lane_bottom_index + 2], "  Strategic Capacity");
     }
 }

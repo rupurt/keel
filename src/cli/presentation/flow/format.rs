@@ -144,7 +144,7 @@ pub fn classify_stories(
 
 pub fn render_epic_capacities(
     capacities: &HashMap<String, EpicCapacityReport>,
-    theme: &Theme,
+    _theme: &Theme,
 ) -> String {
     let mut sorted: Vec<_> = capacities.values().collect();
     sorted.sort_by_key(|c| c.id.clone());
@@ -161,7 +161,7 @@ pub fn render_epic_capacities(
     max_width += 2; // buffer
 
     let mut output = String::new();
-    let header = format!("     {: <w$} CAPACITY", "EPIC", w = max_width);
+    let header = format!("     {: <w$} STATUS", "EPIC", w = max_width);
     writeln!(output, "{header}").unwrap();
     let ellipsis_width = centered_ellipsis_width(max_width, &header);
 
@@ -185,30 +185,15 @@ pub fn render_epic_capacities(
             crate::cli::presentation::flow::capacity::ChargeState::Overloaded => "🔥",
         };
 
-        let total = cap.capacity.done
-            + cap.capacity.ready
-            + cap.capacity.in_flight
-            + cap.capacity.blocked
-            + cap.capacity.inactive;
-
-        let bar = crate::cli::style::capacity_progress_bar(
-            cap.capacity.done,
-            cap.capacity.in_flight,
-            total,
-            15,
-            Some(theme),
-        );
-
         let id_styled = crate::cli::style::styled_epic_id(&cap.id);
         let epic_label = format!("{} {}", id_styled, cap.title);
         let epic_padded = pad_to_width(&epic_label, max_width);
 
         writeln!(
             output,
-            "  {} {} {} [D:{:>2} R:{:>2} F:{:>2} B:{:>2} I:{:>2}]",
+            "  {} {} [D:{:>2} R:{:>2} F:{:>2} B:{:>2} I:{:>2}]",
             emoji,
             epic_padded,
-            bar,
             cap.capacity.done,
             cap.capacity.ready,
             cap.capacity.in_flight,
@@ -222,11 +207,7 @@ pub fn render_epic_capacities(
 }
 
 fn centered_ellipsis_width(max_width: usize, header: &str) -> usize {
-    let sample_row = format!(
-        "  ⚪ {} {} [D: 0 R: 0 F: 0 B: 0 I: 0]",
-        " ".repeat(max_width),
-        "░".repeat(15)
-    );
+    let sample_row = format!("  ⚪ {} [D: 0 R: 0 F: 0 B: 0 I: 0]", " ".repeat(max_width));
     let target_width = keel::infrastructure::utils::visible_width(header)
         .max(keel::infrastructure::utils::visible_width(&sample_row));
     target_width.saturating_sub(3) / 2
@@ -482,8 +463,11 @@ mod tests {
         let theme = Theme::default();
         let rendered = render_epic_capacities(&capacities, &theme);
         assert!(rendered.contains("epic1"));
-        assert!(rendered.contains("█"));
-        assert!(rendered.contains("▒"));
+        assert!(rendered.contains("STATUS"));
+        assert!(rendered.contains("[D: 1 R: 1 F: 1 B: 0 I: 0]"));
+        assert!(!rendered.contains("█"));
+        assert!(!rendered.contains("▒"));
+        assert!(!rendered.contains("░"));
     }
 
     #[test]

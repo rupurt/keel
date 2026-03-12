@@ -260,46 +260,6 @@ pub fn progress_bar(
     }
 }
 
-/// Render Epic capacity progress bar with Done (█) and In-Flight (▒) states
-pub fn capacity_progress_bar(
-    done: usize,
-    in_flight: usize,
-    total: usize,
-    width: usize,
-    theme: Option<&crate::cli::presentation::theme::Theme>,
-) -> String {
-    if total == 0 {
-        let empty = "░".repeat(width);
-        if let Some(t) = theme {
-            return format!("{}[{}{}{}]{}", t.reset, t.muted, empty, t.reset, t.reset);
-        } else {
-            return format!("[{}]", empty.dimmed());
-        }
-    }
-
-    let done_filled = (done * width) / total;
-    let in_flight_filled = ((done + in_flight) * width) / total - done_filled;
-    let empty = width.saturating_sub(done_filled + in_flight_filled);
-
-    let bar_done = "█".repeat(done_filled);
-    let bar_in_flight = "▒".repeat(in_flight_filled);
-    let bar_empty = "░".repeat(empty);
-
-    if let Some(t) = theme {
-        format!(
-            "{}[{}{}{}{}{}{}]",
-            t.reset, t.agent, bar_done, bar_in_flight, t.muted, bar_empty, t.reset
-        )
-    } else {
-        format!(
-            "[{} {} {}]",
-            bar_done.green(),
-            bar_in_flight.blue(),
-            bar_empty.dimmed()
-        )
-    }
-}
-
 /// Color an evidence chain entry by phase.
 /// Bookend phases (`:start`, `:end`, `:start:end`) get cyan.
 /// `:continues` phases get dimmed to visually nest under bookends.
@@ -847,22 +807,6 @@ mod tests {
     #[test]
     fn progress_bar_handles_zero_total() {
         assert_eq!(progress_bar(0, 0, 10, None), "");
-    }
-
-    #[test]
-    fn capacity_progress_bar_renders_segments() {
-        // 10 total, 2 done (20%), 3 in_flight (30%), width 10
-        // Expected: 2 done, 3 in_flight, 5 empty
-        let bar = capacity_progress_bar(2, 3, 10, 10, None);
-        assert!(bar.contains('█'));
-        assert!(bar.contains('▒'));
-        assert!(bar.contains('░'));
-    }
-
-    #[test]
-    fn capacity_progress_bar_handles_zero_total() {
-        let bar = capacity_progress_bar(0, 0, 0, 10, None);
-        assert_eq!(bar, format!("[{}]", "░".repeat(10).dimmed()));
     }
 
     #[test]

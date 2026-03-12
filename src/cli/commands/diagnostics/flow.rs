@@ -54,7 +54,7 @@ mod tests {
     use chrono::TimeZone;
     use keel::domain::model::StoryState;
     use keel::read_model::routine_materialization::materialization_marker;
-    use keel::test_helpers::{TestBearing, TestBoardBuilder, TestStory};
+    use keel::test_helpers::{TestBearing, TestBoardBuilder, TestMission, TestStory};
     use std::fs;
     use std::path::Path;
 
@@ -189,6 +189,9 @@ priority = 100
         assert!(output.contains("run `keel pulse`"));
         assert!(output.contains("routine-upcoming"));
         assert!(output.contains("next run in 1h"));
+        let management = output.find("management (").unwrap();
+        let scheduled_capacity = output.find("  Scheduled Capacity").unwrap();
+        assert!(management < scheduled_capacity);
     }
 
     #[test]
@@ -231,5 +234,29 @@ updated_at: 2026-01-05T18:00:00
         .unwrap();
 
         assert!(output.contains("already materialized this window as S1"));
+    }
+
+    #[test]
+    fn build_output_omits_flow_assessment_section() {
+        let temp = TestBoardBuilder::new().build();
+
+        let output = build_output(temp.path(), true).unwrap();
+        assert!(!output.contains("  Flow Assessment:"));
+        assert!(!output.contains("  Suggested:"));
+    }
+
+    #[test]
+    fn build_output_omits_pipeline_status_block() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").title("Mission One").status("active"))
+            .build();
+
+        let output = build_output(temp.path(), true).unwrap();
+        assert!(!output.contains("Governance"));
+        assert!(!output.contains("Research"));
+        assert!(!output.contains("Planning"));
+        assert!(!output.contains("Execution"));
+        assert!(!output.contains("Verification"));
+        assert!(!output.contains("Done"));
     }
 }
