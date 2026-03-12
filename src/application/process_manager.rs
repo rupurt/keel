@@ -33,32 +33,66 @@ trait ProcessReactor: Send + Sync {
     fn plan(&self, board: &Board, event: &DomainEvent) -> Vec<ProcessAction>;
 }
 
-struct LifecyclePlanningReactor;
+struct StoryStartedVoyageStartReactor;
 
-impl ProcessReactor for LifecyclePlanningReactor {
+impl ProcessReactor for StoryStartedVoyageStartReactor {
     fn name(&self) -> &'static str {
-        "lifecycle-planner"
+        "story-started-voyage-start"
     }
 
     fn plan(&self, board: &Board, event: &DomainEvent) -> Vec<ProcessAction> {
-        match event {
-            DomainEvent::StoryStarted {
-                scope: Some(scope), ..
-            } => plan_story_started_actions(board, scope),
-            DomainEvent::StoryAccepted {
-                scope: Some(scope), ..
-            } => plan_story_accepted_actions(board, scope),
-            DomainEvent::VoyageCompleted { voyage_id, epic_id } => {
-                plan_voyage_completed_actions(board, voyage_id, epic_id)
-            }
-            DomainEvent::StoryStarted { scope: None, .. }
-            | DomainEvent::StoryAccepted { scope: None, .. } => Vec::new(),
-        }
+        let DomainEvent::StoryStarted {
+            scope: Some(scope), ..
+        } = event
+        else {
+            return Vec::new();
+        };
+
+        plan_story_started_actions(board, scope)
+    }
+}
+
+struct StoryAcceptedVoyageCompletionReactor;
+
+impl ProcessReactor for StoryAcceptedVoyageCompletionReactor {
+    fn name(&self) -> &'static str {
+        "story-accepted-voyage-completion"
+    }
+
+    fn plan(&self, board: &Board, event: &DomainEvent) -> Vec<ProcessAction> {
+        let DomainEvent::StoryAccepted {
+            scope: Some(scope), ..
+        } = event
+        else {
+            return Vec::new();
+        };
+
+        plan_story_accepted_actions(board, scope)
+    }
+}
+
+struct VoyageCompletedEpicFinalizationReactor;
+
+impl ProcessReactor for VoyageCompletedEpicFinalizationReactor {
+    fn name(&self) -> &'static str {
+        "voyage-completed-epic-finalization"
+    }
+
+    fn plan(&self, board: &Board, event: &DomainEvent) -> Vec<ProcessAction> {
+        let DomainEvent::VoyageCompleted { voyage_id, epic_id } = event else {
+            return Vec::new();
+        };
+
+        plan_voyage_completed_actions(board, voyage_id, epic_id)
     }
 }
 
 fn default_reactors() -> Vec<Box<dyn ProcessReactor>> {
-    vec![Box::new(LifecyclePlanningReactor)]
+    vec![
+        Box::new(StoryStartedVoyageStartReactor),
+        Box::new(StoryAcceptedVoyageCompletionReactor),
+        Box::new(VoyageCompletedEpicFinalizationReactor),
+    ]
 }
 
 pub struct LiveProcessActionExecutor {
@@ -488,6 +522,23 @@ mod tests {
 
         let calls = calls.lock().unwrap();
         assert_eq!(calls.as_slice(), ["start:v1"]);
+    }
+
+    #[test]
+    fn default_reactors_split_lifecycle_events_into_explicit_units() {
+        let names: Vec<_> = default_reactors()
+            .into_iter()
+            .map(|reactor| reactor.name())
+            .collect();
+
+        assert_eq!(
+            names,
+            vec![
+                "story-started-voyage-start",
+                "story-accepted-voyage-completion",
+                "voyage-completed-epic-finalization",
+            ]
+        );
     }
 
     #[test]

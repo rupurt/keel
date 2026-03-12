@@ -18,3 +18,7 @@ Planned voyage VDeUIiB3Q Explicit Lifecycle Reactors under epic VDeRV9CAo. Narro
 ## 2026-03-12T04:46:42
 
 Story VDeUNOfrU sealed: explicit reactor registry and deterministic planning order landed in process_manager; proofs captured with targeted reactor and architecture tests; next slice is VDeUNP4rV for story-accepted automation.
+
+## 2026-03-12T04:51:01
+
+Story VDeUNP4rV sealed: process_manager lifecycle automation is now split into explicit story-started, story-accepted, and voyage-completed reactors; the malformed AC proof command was corrected and evidence captured; next slice is VDeUNRFtq to emit real voyage.completed events.

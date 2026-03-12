@@ -1,0 +1,21 @@
+---
+recorded_at: 2026-03-12T04:50:22.466070013-07:00
+command: cargo test process_manager --lib
+---
+
+running 8 tests
+test application::process_manager::tests::default_reactors_split_lifecycle_events_into_explicit_units ... ok
+test application::process_manager::tests::process_manager_reactors_are_deterministic ... ok
+test application::process_manager::tests::voyage_completed_event_noops ... ok
+test application::process_manager::tests::process_manager_reactors_use_named_planner_units ... ok
+test application::process_manager::tests::story_started_event_starts_planned_voyage ... ok
+test application::process_manager::tests::story_accepted_event_completes_voyage_when_all_stories_done ... ok
+test application::process_manager::tests::voyage_completed_event_completes_epic_when_all_voyages_done ... ok
+test application::process_manager::tests::story_accepted_event_noops_when_voyage_not_ready ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 868 filtered out; finished in 0.01s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.07s
+     Running unittests src/lib.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-2ef2fabeec7cd10a)
