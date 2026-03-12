@@ -1,0 +1,17 @@
+---
+recorded_at: 2026-03-11T21:56:50.734879802-07:00
+command: cargo test render_annotated_flow_keeps_scheduled_output_stable_across_widths --bin keel
+---
+
+running 1 test
+test cli::presentation::flow::display::tests::render_annotated_flow_keeps_scheduled_output_stable_across_widths ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 620 filtered out; finished in 0.00s
+
+
+--- stderr ---
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.10s
+     Running unittests src/main.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-6b6267650f0e80fa)

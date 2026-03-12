@@ -11,13 +11,13 @@ use serde::Serialize;
 use keel::domain::model::{AdrStatus, Board, StoryFrontmatter, StoryState, StoryType};
 use keel::infrastructure::loader::load_board;
 use keel::infrastructure::story_id::generate_story_id;
+use keel::read_model::routine_materialization::{
+    existing_materializations, materialization_marker, projection_materialization_key,
+};
 use keel::read_model::scheduled_routines::{
     RoutineScheduleFilter, ScheduledRoutineGatingReason, ScheduledRoutineProjection,
-    ScheduledRoutineState, project_scheduled_routines,
+    project_scheduled_routines,
 };
-
-const MATERIALIZATION_MARKER_PREFIX: &str = "<!-- keel:pulse-materialization: ";
-const MATERIALIZATION_MARKER_SUFFIX: &str = " -->";
 
 /// Run the pulse command.
 pub fn run(json: bool) -> Result<()> {
@@ -108,7 +108,7 @@ fn build_pulse_cycle(board_dir: &Path, reference_time: DateTime<Utc>) -> Result<
                 outcome: PulseRoutineOutcome::Deferred,
                 reason: PulseRoutineReason::MaterializationFailed,
                 story_id: None,
-                materialization_key: materialization_key(routine),
+                materialization_key: projection_materialization_key(routine),
                 next_eligible_at: routine.next_eligible_at,
                 countdown: routine.countdown.clone(),
                 error: Some(error.to_string()),
@@ -154,7 +154,7 @@ fn map_pulse_routine(
     materialized_by_key: &mut HashMap<String, String>,
     next_scope_indexes: &mut HashMap<String, u32>,
 ) -> Result<PulseRoutineSummary> {
-    let materialization_key = materialization_key(routine);
+    let materialization_key = projection_materialization_key(routine);
 
     match routine.gating_reason {
         ScheduledRoutineGatingReason::NotDueUntilNextEligible => Ok(PulseRoutineSummary {
@@ -224,46 +224,6 @@ fn map_pulse_routine(
             })
         }
     }
-}
-
-fn materialization_key(routine: &ScheduledRoutineProjection) -> Option<String> {
-    matches!(routine.state, ScheduledRoutineState::Due)
-        .then(|| {
-            routine.next_eligible_at.map(|next_eligible_at| {
-                format!("{}@{}", routine.id, format_timestamp(next_eligible_at))
-            })
-        })
-        .flatten()
-}
-
-fn existing_materializations(board: &Board) -> Result<HashMap<String, String>> {
-    let mut stories: Vec<_> = board.stories.values().collect();
-    stories.sort_by_key(|story| story.id());
-
-    let mut materialized = HashMap::new();
-    for story in stories {
-        let content = match fs::read_to_string(&story.path) {
-            Ok(content) => content,
-            Err(_) => continue,
-        };
-
-        if let Some(key) = extract_materialization_key(&content) {
-            materialized
-                .entry(key)
-                .or_insert_with(|| story.id().to_string());
-        }
-    }
-
-    Ok(materialized)
-}
-
-fn extract_materialization_key(content: &str) -> Option<String> {
-    content.lines().find_map(|line| {
-        let key = line
-            .strip_prefix(MATERIALIZATION_MARKER_PREFIX)?
-            .strip_suffix(MATERIALIZATION_MARKER_SUFFIX)?;
-        Some(key.to_string())
-    })
 }
 
 fn next_scope_indexes(board: &Board) -> HashMap<String, u32> {
@@ -416,10 +376,6 @@ fn render_blueprint_block(blueprint: &str) -> String {
     } else {
         format!("## Blueprint\n\n{trimmed}")
     }
-}
-
-fn materialization_marker(materialization_key: &str) -> String {
-    format!("{MATERIALIZATION_MARKER_PREFIX}{materialization_key}{MATERIALIZATION_MARKER_SUFFIX}")
 }
 
 fn render_pulse_human(cycle: &PulseCycleOutput) -> String {
@@ -826,16 +782,6 @@ updated_at: 2026-01-01T00:00:00
                     }
                 ]
             })
-        );
-    }
-
-    #[test]
-    fn extract_materialization_key_reads_canonical_marker() {
-        let content =
-            "<!-- keel:pulse-materialization: routine-due@2026-01-12T17:00:00Z -->\n# Story\n";
-        assert_eq!(
-            extract_materialization_key(content).as_deref(),
-            Some("routine-due@2026-01-12T17:00:00Z")
         );
     }
 

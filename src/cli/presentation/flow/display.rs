@@ -1,15 +1,19 @@
 //! Flow visualization and terminal rendering
 
 use owo_colors::OwoColorize;
+use std::collections::HashMap;
 use std::fmt::Write;
 
 use super::box_component::BoxComponent;
 use super::format::render_epic_capacities;
 use crate::cli::presentation::flow::layout::LayoutConfig;
+use crate::cli::presentation::scheduled_routines::describe_scheduled_routine;
 use crate::cli::presentation::theme::Theme;
 use crate::cli::style;
 use keel::domain::model::Board;
 use keel::read_model::flow_metrics::FlowMetrics;
+use keel::read_model::routine_materialization::projection_materialization_key;
+use keel::read_model::scheduled_routines::{ScheduledRoutineProjection, ScheduledRoutineState};
 use keel::read_model::workflow_lane_flow::{LaneFlowCard, LaneFlowProjection, LaneSourceCount};
 
 /// Render an annotated pipeline flow diagram.
@@ -17,6 +21,8 @@ pub fn render_annotated_flow(
     board: &Board,
     metrics: &FlowMetrics,
     lane_flow: &LaneFlowProjection,
+    scheduled: &[ScheduledRoutineProjection],
+    materialized_by_key: &HashMap<String, String>,
     width: usize,
     no_color: bool,
 ) -> String {
@@ -95,6 +101,17 @@ pub fn render_annotated_flow(
     let lane_boxes = render_lane_boxes(lane_flow, width, &theme);
     writeln!(output, "{}", lane_boxes).unwrap();
 
+    let scheduled_capacity =
+        render_scheduled_capacity(scheduled, materialized_by_key, width, &theme);
+    if !scheduled_capacity.is_empty() {
+        writeln!(output).unwrap();
+        writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
+        writeln!(output, "  Scheduled Capacity").unwrap();
+        writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
+        writeln!(output).unwrap();
+        writeln!(output, "{}", scheduled_capacity).unwrap();
+    }
+
     // 4. Execution Capacity (Strategic Throughput)
     let capacity = crate::cli::presentation::flow::capacity::calculate_system_capacity(board);
     let has_actionable_capacity = strategic_capacity_available(&capacity.epics);
@@ -118,7 +135,7 @@ pub fn render_annotated_flow(
         }
     }
 
-    // 4. Bottleneck Dependencies (Only shown when blockage exists)
+    // 5. Bottleneck Dependencies (Only shown when blockage exists)
     let deps = keel::read_model::traceability::derive_implementation_dependencies(board);
     let scope_stories: Vec<_> = board
         .stories
@@ -303,6 +320,56 @@ fn is_board_goal_met(board: &Board, target: &str) -> bool {
         return story.status == keel::domain::model::StoryState::Done;
     }
     false
+}
+
+fn render_scheduled_capacity(
+    scheduled: &[ScheduledRoutineProjection],
+    materialized_by_key: &HashMap<String, String>,
+    _width: usize,
+    _theme: &Theme,
+) -> String {
+    if scheduled.is_empty() {
+        return String::new();
+    }
+
+    let mut out = String::new();
+    for routine in scheduled {
+        writeln!(
+            out,
+            "  - {} {} [{}] {}",
+            style::styled_id(&routine.id),
+            routine.title,
+            style::styled_scope(Some(&routine.target_scope)),
+            render_scheduled_capacity_line(routine, materialized_by_key)
+        )
+        .unwrap();
+    }
+
+    out.trim_end().to_string()
+}
+
+fn render_scheduled_capacity_line(
+    routine: &ScheduledRoutineProjection,
+    materialized_by_key: &HashMap<String, String>,
+) -> String {
+    let mut line = describe_scheduled_routine(routine);
+    match routine.state {
+        ScheduledRoutineState::Due => {
+            let guidance = projection_materialization_key(routine)
+                .and_then(|key| materialized_by_key.get(&key).cloned())
+                .map(|story_id| format!("already materialized this window as {story_id}"))
+                .unwrap_or_else(|| "run `keel pulse` to materialize".to_string());
+            line.push_str("; ");
+            line.push_str(&guidance);
+        }
+        ScheduledRoutineState::Upcoming => {
+            line.push_str("; no pulse action yet");
+        }
+        ScheduledRoutineState::Invalid => {
+            line.push_str("; repair routine cadence");
+        }
+    }
+    line
 }
 
 /// Render configured workflow lanes as queue cards.
@@ -494,10 +561,15 @@ fn strategic_capacity_guidance(board: &Board, metrics: &FlowMetrics) -> &'static
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::{TimeZone, Utc};
     use keel::infrastructure::config::Config;
     use keel::infrastructure::loader;
     use keel::read_model::flow_metrics::{
         ExecutionMetrics, GovernanceMetrics, PlanningMetrics, ResearchMetrics, VerificationMetrics,
+    };
+    use keel::read_model::routine_materialization::materialization_key;
+    use keel::read_model::scheduled_routines::{
+        ScheduledRoutineGatingReason, ScheduledRoutineProjection, ScheduledRoutineState,
     };
     use keel::read_model::{workflow_lane_flow, workflow_topology};
     use keel::test_helpers::{TestBoardBuilder, TestMission};
@@ -542,6 +614,34 @@ mod tests {
         workflow_lane_flow::project(&Board::default(), &topology)
     }
 
+    fn make_scheduled_projection(
+        id: &str,
+        title: &str,
+        target_scope: &str,
+        state: ScheduledRoutineState,
+        next_eligible_at: Option<chrono::DateTime<chrono::Utc>>,
+        countdown: Option<&str>,
+        error: Option<&str>,
+    ) -> ScheduledRoutineProjection {
+        ScheduledRoutineProjection {
+            id: id.to_string(),
+            title: title.to_string(),
+            target_scope: target_scope.to_string(),
+            state,
+            actionable: matches!(state, ScheduledRoutineState::Due),
+            gating_reason: match state {
+                ScheduledRoutineState::Due => ScheduledRoutineGatingReason::DueNow,
+                ScheduledRoutineState::Upcoming => {
+                    ScheduledRoutineGatingReason::NotDueUntilNextEligible
+                }
+                ScheduledRoutineState::Invalid => ScheduledRoutineGatingReason::InvalidCadence,
+            },
+            next_eligible_at,
+            countdown: countdown.map(str::to_string),
+            error: error.map(str::to_string),
+        }
+    }
+
     #[test]
     fn render_lane_boxes_contains_management_header() {
         let lane_flow = make_test_lane_flow();
@@ -563,7 +663,15 @@ mod tests {
         let board = Board::default();
         let metrics = make_test_metrics();
         let lane_flow = make_test_lane_flow();
-        let rendered = render_annotated_flow(&board, &metrics, &lane_flow, 100, false);
+        let rendered = render_annotated_flow(
+            &board,
+            &metrics,
+            &lane_flow,
+            &[],
+            &HashMap::new(),
+            100,
+            false,
+        );
         assert!(rendered.contains("Governance"));
         assert!(rendered.contains("Research"));
         assert!(rendered.contains("Planning"));
@@ -572,6 +680,122 @@ mod tests {
         assert!(rendered.contains("management (0) [p100]"));
         assert!(rendered.contains("delivery (0) [p50]"));
         assert!(rendered.contains("No executable epic capacity"));
+    }
+
+    #[test]
+    fn render_annotated_flow_shows_scheduled_capacity_guidance() {
+        let board = Board::default();
+        let metrics = make_test_metrics();
+        let lane_flow = make_test_lane_flow();
+        let due_next = Utc.with_ymd_and_hms(2026, 1, 12, 17, 0, 0).unwrap();
+        let scheduled = vec![
+            make_scheduled_projection(
+                "routine-due",
+                "Weekly Review",
+                "E1/V1",
+                ScheduledRoutineState::Due,
+                Some(due_next),
+                Some("in 6d 23h"),
+                None,
+            ),
+            make_scheduled_projection(
+                "routine-upcoming",
+                "Friday Review",
+                "E1/V1",
+                ScheduledRoutineState::Upcoming,
+                Some(Utc.with_ymd_and_hms(2026, 1, 5, 19, 0, 0).unwrap()),
+                Some("in 1h"),
+                None,
+            ),
+            make_scheduled_projection(
+                "routine-invalid",
+                "Broken Review",
+                "E1/V1",
+                ScheduledRoutineState::Invalid,
+                None,
+                None,
+                Some("missing cadence.cron"),
+            ),
+        ];
+        let materialized_by_key = HashMap::from([(
+            materialization_key("routine-due", due_next),
+            "S1".to_string(),
+        )]);
+
+        let rendered = render_annotated_flow(
+            &board,
+            &metrics,
+            &lane_flow,
+            &scheduled,
+            &materialized_by_key,
+            100,
+            true,
+        );
+
+        assert!(rendered.contains("Scheduled Capacity"));
+        assert!(rendered.contains("routine-due"));
+        assert!(rendered.contains("due now; next run in 6d 23h (2026-01-12T17:00:00Z)"));
+        assert!(rendered.contains("already materialized this window as S1"));
+        assert!(rendered.contains("routine-upcoming"));
+        assert!(rendered.contains("next run in 1h (2026-01-05T19:00:00Z); no pulse action yet"));
+        assert!(rendered.contains("routine-invalid"));
+        assert!(rendered.contains("invalid cadence: missing cadence.cron; repair routine cadence"));
+    }
+
+    #[test]
+    fn render_annotated_flow_keeps_scheduled_output_stable_across_widths() {
+        let board = Board::default();
+        let metrics = make_test_metrics();
+        let lane_flow = make_test_lane_flow();
+        let scheduled = vec![
+            make_scheduled_projection(
+                "routine-due",
+                "Weekly Review",
+                "E1/V1",
+                ScheduledRoutineState::Due,
+                Some(Utc.with_ymd_and_hms(2026, 1, 12, 17, 0, 0).unwrap()),
+                Some("in 6d 23h"),
+                None,
+            ),
+            make_scheduled_projection(
+                "routine-upcoming",
+                "Friday Review",
+                "E1/V1",
+                ScheduledRoutineState::Upcoming,
+                Some(Utc.with_ymd_and_hms(2026, 1, 5, 19, 0, 0).unwrap()),
+                Some("in 1h"),
+                None,
+            ),
+        ];
+
+        let wide = render_annotated_flow(
+            &board,
+            &metrics,
+            &lane_flow,
+            &scheduled,
+            &HashMap::new(),
+            100,
+            true,
+        );
+        let narrow = render_annotated_flow(
+            &board,
+            &metrics,
+            &lane_flow,
+            &scheduled,
+            &HashMap::new(),
+            72,
+            true,
+        );
+
+        for rendered in [wide, narrow] {
+            assert!(rendered.contains("Scheduled Capacity"));
+            assert!(rendered.contains(
+                "due now; next run in 6d 23h (2026-01-12T17:00:00Z); run `keel pulse` to materialize"
+            ));
+            assert!(
+                rendered.contains("next run in 1h (2026-01-05T19:00:00Z); no pulse action yet")
+            );
+        }
     }
 
     #[test]

@@ -23,6 +23,7 @@ use crate::cli::commands::management::story::guidance::{
     accept_command_for_role as story_accept_command_for_role,
     creation_command as story_creation_command,
 };
+use crate::cli::presentation::scheduled_routines::describe_scheduled_routine;
 use keel::domain::model::Story;
 use keel::infrastructure::loader::load_board;
 use keel::read_model::scheduled_routines::ScheduledRoutineProjection;
@@ -694,29 +695,12 @@ fn render_scheduled_routines_human(scheduled: &[ScheduledRoutineProjection]) -> 
     out.push_str("\nScheduled routines:\n");
 
     for routine in scheduled {
-        let line = match routine.state {
-            keel::read_model::scheduled_routines::ScheduledRoutineState::Due => format!(
-                "due now; next run {}{}",
-                routine.countdown.as_deref().unwrap_or("later"),
-                next_eligible_suffix(routine.next_eligible_at)
-            ),
-            keel::read_model::scheduled_routines::ScheduledRoutineState::Upcoming => format!(
-                "next run {}{}",
-                routine.countdown.as_deref().unwrap_or("later"),
-                next_eligible_suffix(routine.next_eligible_at)
-            ),
-            keel::read_model::scheduled_routines::ScheduledRoutineState::Invalid => format!(
-                "invalid cadence: {}",
-                routine.error.as_deref().unwrap_or("unknown error")
-            ),
-        };
-
         out.push_str(&format!(
             "  - {} {} [{}] {}\n",
             crate::cli::style::styled_id(&routine.id),
             routine.title,
             crate::cli::style::styled_scope(Some(&routine.target_scope)),
-            line
+            describe_scheduled_routine(routine)
         ));
     }
 
@@ -738,12 +722,6 @@ fn json_scheduled_routines(scheduled: &[ScheduledRoutineProjection]) -> Vec<Json
             error: routine.error.clone(),
         })
         .collect()
-}
-
-fn next_eligible_suffix(next_eligible_at: Option<chrono::DateTime<chrono::Utc>>) -> String {
-    next_eligible_at
-        .map(|next| format!(" ({})", next.to_rfc3339()))
-        .unwrap_or_default()
 }
 
 fn scheduled_state_label(

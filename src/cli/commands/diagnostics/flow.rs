@@ -1,10 +1,13 @@
 //! Flow command - aggregate pull-system diagnostics
 
 use anyhow::Result;
+use chrono::{DateTime, Utc};
 
 use crate::cli::presentation::flow::display::render_annotated_flow;
 use crate::cli::presentation::terminal::get_terminal_width;
 use keel::infrastructure::loader::load_board;
+use keel::read_model::routine_materialization::existing_materializations;
+use keel::read_model::scheduled_routines::{RoutineScheduleFilter, project_scheduled_routines};
 use keel::read_model::{flow_status, workflow_lane_flow, workflow_topology};
 
 /// Run the flow command
@@ -16,24 +19,69 @@ pub fn run(board_dir: &std::path::Path, no_color: bool) -> Result<()> {
 }
 
 fn build_output(board_dir: &std::path::Path, no_color: bool) -> Result<String> {
+    build_output_at(board_dir, no_color, Utc::now())
+}
+
+fn build_output_at(
+    board_dir: &std::path::Path,
+    no_color: bool,
+    reference_time: DateTime<Utc>,
+) -> Result<String> {
     let board = load_board(board_dir)?;
     let width = get_terminal_width();
 
     let metrics = flow_status::project(&board);
     let topology = workflow_topology::load_for_board(board_dir)?;
     let lane_flow = workflow_lane_flow::project(&board, &topology);
+    let scheduled =
+        project_scheduled_routines(&board, reference_time, RoutineScheduleFilter::default());
+    let materialized_by_key = existing_materializations(&board)?;
 
     Ok(render_annotated_flow(
-        &board, &metrics, &lane_flow, width, no_color,
+        &board,
+        &metrics,
+        &lane_flow,
+        &scheduled,
+        &materialized_by_key,
+        width,
+        no_color,
     ))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::TimeZone;
     use keel::domain::model::StoryState;
+    use keel::read_model::routine_materialization::materialization_marker;
     use keel::test_helpers::{TestBearing, TestBoardBuilder, TestStory};
     use std::fs;
+    use std::path::Path;
+
+    fn write_routine(root: &Path, id: &str, title: &str, target_scope: &str, cadence_block: &str) {
+        let routine_dir = root.join("routines").join(id);
+        fs::create_dir_all(&routine_dir).unwrap();
+        fs::write(
+            routine_dir.join("README.md"),
+            format!(
+                r#"---
+id: {id}
+title: {title}
+cadence:
+{cadence_block}
+target-scope: {target_scope}
+created_at: 2026-01-01T00:00:00
+updated_at: 2026-01-01T00:00:00
+---
+
+# Blueprint
+
+- Review recurring work.
+"#
+            ),
+        )
+        .unwrap();
+    }
 
     #[test]
     fn test_flow_run() {
@@ -108,5 +156,80 @@ priority = 100
         assert!(output.contains("story.backlog"));
         assert!(output.contains("bearing.exploring"));
         assert!(!output.contains("story.done"));
+    }
+
+    #[test]
+    fn build_output_surfaces_scheduled_capacity_from_routine_schedule_state() {
+        let temp = TestBoardBuilder::new().build();
+        write_routine(
+            temp.path(),
+            "routine-due",
+            "Weekly Review",
+            "E1/V1",
+            "  cron: 0 9 * * 1\n  timezone: America/Los_Angeles",
+        );
+        write_routine(
+            temp.path(),
+            "routine-upcoming",
+            "Friday Review",
+            "E1/V1",
+            "  cron: 0 11 * * 1\n  timezone: America/Los_Angeles",
+        );
+
+        let output = build_output_at(
+            temp.path(),
+            true,
+            Utc.with_ymd_and_hms(2026, 1, 5, 18, 0, 0).unwrap(),
+        )
+        .unwrap();
+
+        assert!(output.contains("Scheduled Capacity"));
+        assert!(output.contains("routine-due"));
+        assert!(output.contains("due now"));
+        assert!(output.contains("run `keel pulse`"));
+        assert!(output.contains("routine-upcoming"));
+        assert!(output.contains("next run in 1h"));
+    }
+
+    #[test]
+    fn build_output_marks_due_routine_as_already_materialized_after_pulse_window() {
+        let temp = TestBoardBuilder::new().build();
+        write_routine(
+            temp.path(),
+            "routine-due",
+            "Weekly Review",
+            "E1/V1",
+            "  cron: 0 9 * * 1\n  timezone: America/Los_Angeles",
+        );
+        fs::create_dir_all(temp.path().join("stories").join("S1")).unwrap();
+        fs::write(
+            temp.path().join("stories").join("S1").join("README.md"),
+            format!(
+                r#"---
+id: S1
+title: Weekly Review
+type: feat
+status: backlog
+created_at: 2026-01-05T18:00:00
+updated_at: 2026-01-05T18:00:00
+---
+
+{}
+
+# Materialized story
+"#,
+                materialization_marker("routine-due@2026-01-12T17:00:00Z")
+            ),
+        )
+        .unwrap();
+
+        let output = build_output_at(
+            temp.path(),
+            true,
+            Utc.with_ymd_and_hms(2026, 1, 5, 18, 0, 0).unwrap(),
+        )
+        .unwrap();
+
+        assert!(output.contains("already materialized this window as S1"));
     }
 }
