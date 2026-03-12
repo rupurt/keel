@@ -1,6 +1,7 @@
 ---
 id: VDeRV9CAo
 title: Simulation Kernel Core
+bearing: VDeRKA7fo
 mission: VDeRCfKVl
 created_at: 2026-03-12T04:23:57
 index: 33
@@ -20,8 +21,8 @@ index: 33
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 2/3 stories done
+**Progress:** 1/1 voyages complete, 3/3 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Explicit Lifecycle Reactors](voyages/VDeUIiB3Q/) | in-progress | 2/3 |
+| [Explicit Lifecycle Reactors](voyages/VDeUIiB3Q/) | done | 3/3 |
 <!-- END GENERATED -->

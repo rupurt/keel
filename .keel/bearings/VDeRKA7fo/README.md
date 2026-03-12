@@ -1,10 +1,12 @@
 ---
 id: VDeRKA7fo
 title: Simulation Kernel Architecture Research
-status: ready
+status: laid
 mission: VDeRCfKVl
 created_at: 2026-03-12T04:23:15
 index: 2
+laid_at: 2026-03-12T05:08:16
+epic: VDeRV9CAo
 ---
 
 # Simulation Kernel Architecture Research

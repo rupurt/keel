@@ -427,21 +427,26 @@ pub fn check_bearing_epic_coherence(board: &Board) -> Vec<Problem> {
 
     for bearing in board.bearings.values() {
         if bearing.status() == BearingStatus::Laid {
-            // Check if there's an epic with a matching ID
-            // Convention: bearing ID should match or be a prefix of epic ID
-            let bearing_id = bearing.id();
-            let has_matching_epic = board
-                .epics
-                .values()
-                .any(|e| e.id() == bearing_id || e.id().starts_with(&format!("{}-", bearing_id)));
+            let linked_epic = bearing
+                .frontmatter
+                .epic
+                .as_deref()
+                .and_then(|epic_id| board.epics.get(epic_id))
+                .or_else(|| {
+                    let bearing_id = bearing.id();
+                    board.epics.values().find(|epic| {
+                        epic.id() == bearing_id
+                            || epic.id().starts_with(&format!("{}-", bearing_id))
+                    })
+                });
 
-            if !has_matching_epic {
+            if linked_epic.is_none() {
                 problems.push(Problem {
                     severity: Severity::Warning,
                     path: bearing.path.clone(),
                     message: format!(
-                        "bearing '{}' is laid but no matching epic found",
-                        bearing_id
+                        "bearing '{}' is laid but no linked epic found",
+                        bearing.id()
                     ),
                     fix: None,
                     scope: None,
@@ -495,11 +500,11 @@ pub fn generate_bearing_insight(board: &Board, board_dir: &Path) -> Option<Strin
     for bearing in board.bearings.values() {
         match bearing.status() {
             BearingStatus::Laid => {
-                // Check if epic has voyages
+                let epic_id = bearing.frontmatter.epic.as_deref().unwrap_or(bearing.id());
                 let has_voyages = board
                     .voyages
                     .values()
-                    .any(|v| v.frontmatter.epic.as_deref() == Some(bearing.id()));
+                    .any(|voyage| voyage.frontmatter.epic.as_deref() == Some(epic_id));
                 if !has_voyages {
                     needs_voyages.push(bearing.id());
                 }
@@ -663,7 +668,7 @@ pub fn check_bearing_lineage_goals(board: &Board, board_dir: &Path) -> Vec<Probl
 mod tests {
     use super::*;
     use crate::infrastructure::loader::load_board;
-    use crate::test_helpers::{TestBearing, TestBoardBuilder};
+    use crate::test_helpers::{TestBearing, TestBoardBuilder, TestEpic, TestVoyage};
 
     #[test]
     fn test_scan_bearing_files_empty() {
@@ -844,6 +849,39 @@ mod tests {
         assert_eq!(problems.len(), 1);
         assert!(problems[0].message.contains("invalid goal reference"));
         assert_eq!(problems[0].check_id, CheckId::BearingInvalidGoalLineage);
+    }
+
+    #[test]
+    fn check_bearing_epic_coherence_accepts_explicit_epic_lineage() {
+        let temp = TestBoardBuilder::new()
+            .bearing(
+                TestBearing::new("1w5H2Bq9L")
+                    .status("laid")
+                    .epic("1w5H2Bq9M"),
+            )
+            .epic(TestEpic::new("1w5H2Bq9M"))
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_bearing_epic_coherence(&board);
+        assert!(problems.is_empty());
+    }
+
+    #[test]
+    fn generate_bearing_insight_uses_explicit_epic_lineage_for_laid_bearings() {
+        let temp = TestBoardBuilder::new()
+            .bearing(
+                TestBearing::new("1w5H2Bq9L")
+                    .status("laid")
+                    .epic("1w5H2Bq9M"),
+            )
+            .epic(TestEpic::new("1w5H2Bq9M"))
+            .voyage(TestVoyage::new("1w5H2Bq9N", "1w5H2Bq9M").status("planned"))
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+        let insight = generate_bearing_insight(&board, temp.path());
+        assert_ne!(insight.as_deref(), Some("  → 1w5H2Bq9L needs voyages"));
     }
 
     #[test]
