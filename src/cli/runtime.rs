@@ -66,9 +66,15 @@ pub fn run() -> Result<()> {
             super::commands::management::pulse::run(json)
         }
         Some(("topology", m)) => {
-            let epic_id = m.get_one::<String>("epic").expect("required");
+            let zoom = m
+                .get_one::<String>("zoom")
+                .expect("defaulted")
+                .parse()
+                .expect("validated by clap");
+            let focus_id = m.get_one::<String>("focus").map(|value| value.as_str());
             let include_done = *m.get_one::<bool>("include_done").unwrap_or(&false);
-            super::commands::management::topology::run(epic_id, include_done)
+            let static_output = *m.get_one::<bool>("static").unwrap_or(&false);
+            super::commands::management::topology::run(zoom, focus_id, include_done, static_output)
         }
         Some(("play", m)) => {
             let bearing = m.get_one::<String>("bearing").cloned();

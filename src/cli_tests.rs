@@ -277,17 +277,49 @@ fn cli_rejects_removed_gaps_command() {
 #[test]
 fn cli_parses_topology_command() {
     let matches = crate::cli::build_cli()
-        .try_get_matches_from(["keel", "topology", "--epic", "e1", "--include-done"])
+        .try_get_matches_from([
+            "keel",
+            "topology",
+            "--zoom",
+            "story",
+            "--focus",
+            "e1",
+            "--include-done",
+            "--static",
+        ])
         .unwrap();
     assert_eq!(matches.subcommand_name(), Some("topology"));
     let topology = matches.subcommand_matches("topology").unwrap();
     assert_eq!(
         topology
-            .get_one::<String>("epic")
+            .get_one::<String>("zoom")
+            .map(|value| value.as_str()),
+        Some("story")
+    );
+    assert_eq!(
+        topology
+            .get_one::<String>("focus")
             .map(|value| value.as_str()),
         Some("e1")
     );
     assert!(*topology.get_one::<bool>("include_done").unwrap());
+    assert!(*topology.get_one::<bool>("static").unwrap());
+}
+
+#[test]
+fn cli_parses_topology_command_without_focus() {
+    let matches = crate::cli::build_cli()
+        .try_get_matches_from(["keel", "topology"])
+        .unwrap();
+    let topology = matches.subcommand_matches("topology").unwrap();
+    assert_eq!(
+        topology
+            .get_one::<String>("zoom")
+            .map(|value| value.as_str()),
+        Some("world")
+    );
+    assert!(topology.get_one::<String>("focus").is_none());
+    assert!(!topology.get_one::<bool>("static").copied().unwrap_or(false));
 }
 
 #[test]

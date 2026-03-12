@@ -21,3 +21,4 @@ pub mod traceability;
 pub mod verification_techniques;
 pub mod workflow_lane_flow;
 pub mod workflow_topology;
+pub mod world_map;

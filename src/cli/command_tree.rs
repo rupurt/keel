@@ -13,7 +13,7 @@ Setup
 Management
   next        Pull the next item using explicit role-based queue routing
   pulse       Run one non-interactive automation cycle
-  topology    Show an epic-scoped topology map
+  topology    Show a zoomable world map of the board
   play        Invite play-driven discovery
   audit       Rich evidence/traceability report
   verify      Execute verification proofs
@@ -134,19 +134,32 @@ pub fn build_cli() -> Command {
         )
         .subcommand(
             Command::new("topology")
-                .about("Show an epic-scoped topology map")
+                .about("Show a zoomable world map of the board")
                 .hide(true)
                 .arg(
-                    Arg::new("epic")
-                        .long("epic")
+                    Arg::new("zoom")
+                        .long("zoom")
+                        .value_name("LEVEL")
+                        .default_value("world")
+                        .value_parser(["world", "mission", "epic", "voyage", "story"])
+                        .help("Zoom level to render"),
+                )
+                .arg(
+                    Arg::new("focus")
+                        .long("focus")
                         .value_name("ID")
-                        .required(true)
-                        .help("Epic ID to render"),
+                        .help("Center the map on a specific entity branch"),
                 )
                 .arg(
                     Arg::new("include_done")
                         .long("include-done")
                         .help("Include done voyages and stories")
+                        .action(ArgAction::SetTrue),
+                )
+                .arg(
+                    Arg::new("static")
+                        .long("static")
+                        .help("Render once and exit even in an interactive terminal")
                         .action(ArgAction::SetTrue),
                 ),
         )
