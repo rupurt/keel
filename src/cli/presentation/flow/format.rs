@@ -173,6 +173,7 @@ pub fn render_epic_capacities(
     for (idx, cap) in visible.iter().enumerate() {
         if Some(idx) == first_visible_completed {
             writeln!(output, "{:indent$}...", "", indent = ellipsis_width).unwrap();
+            writeln!(output).unwrap();
         }
 
         let emoji = match cap.charge_state {
@@ -518,14 +519,21 @@ mod tests {
         assert!(rendered.contains("epic3"));
         assert!(rendered.contains("epic4"));
         assert!(rendered.contains("epic5"));
-        let ellipsis_line = rendered
-            .lines()
-            .find(|line| line.trim() == "...")
+        let lines: Vec<_> = rendered.lines().collect();
+        let ellipsis_index = lines
+            .iter()
+            .position(|line| line.trim() == "...")
             .expect("expected ellipsis line");
+        let ellipsis_line = lines[ellipsis_index];
         let leading_spaces = ellipsis_line.chars().take_while(|ch| *ch == ' ').count();
         assert!(
             leading_spaces > 4,
             "expected centered ellipsis, got: {ellipsis_line:?}"
+        );
+        assert_eq!(
+            lines.get(ellipsis_index + 1).copied(),
+            Some(""),
+            "expected blank spacer below ellipsis"
         );
     }
 
