@@ -412,6 +412,11 @@ impl TestBearing {
         }
     }
 
+    pub fn title(mut self, title: &str) -> Self {
+        self.title = title.to_string();
+        self
+    }
+
     pub fn index(mut self, index: u32) -> Self {
         self.index = Some(index);
         self

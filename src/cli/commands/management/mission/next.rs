@@ -11,7 +11,7 @@ use crate::cli::commands::management::next_support::algorithm::{
     MissionWorkSummary, mission_unmet_board_goals, mission_work_summary,
 };
 use crate::cli::commands::management::next_support::{ItemFilter, calculate_next, format_decision};
-use keel::domain::model::{Board, Mission, MissionStatus};
+use keel::domain::model::{Bearing, Board, Mission, MissionStatus};
 use keel::infrastructure::loader::load_board;
 use keel::read_model::knowledge::{
     DetectionConfig, Knowledge, RisingPattern, detect_rising_patterns, filter_unapplied,
@@ -43,12 +43,13 @@ pub fn run(mission_id: Option<&str>) -> Result<()> {
     }
 
     let paused = paused_missions(&board);
+    let orphaned_bearings = top_orphaned_bearings(&board, 3);
     let knowledge = scan_all_knowledge(&board_dir)?;
     let pending = top_pending_knowledge(&knowledge, 3);
     let patterns = top_rising_patterns(&knowledge, 3);
     println!(
         "{}",
-        format_no_actionable_mission_message(&pending, &patterns, &paused)
+        format_no_actionable_mission_message(&pending, &patterns, &paused, &orphaned_bearings)
     );
     flush_and_exit(1);
 }
@@ -210,6 +211,18 @@ fn paused_missions(board: &Board) -> Vec<Mission> {
     paused
 }
 
+fn top_orphaned_bearings(board: &Board, limit: usize) -> Vec<Bearing> {
+    let mut orphaned: Vec<_> = board
+        .bearings
+        .values()
+        .filter(|bearing| bearing.frontmatter.mission.is_none() && !bearing.is_complete())
+        .cloned()
+        .collect();
+    orphaned.sort_by(|left, right| left.priority_key().cmp(&right.priority_key()));
+    orphaned.truncate(limit);
+    orphaned
+}
+
 fn top_pending_knowledge(knowledge: &[Knowledge], limit: usize) -> Vec<Knowledge> {
     let mut pending = filter_unapplied(knowledge.to_vec());
     pending.sort_by(|left, right| {
@@ -240,6 +253,7 @@ fn format_no_actionable_mission_message(
     pending: &[Knowledge],
     patterns: &[RisingPattern],
     paused: &[Mission],
+    orphaned_bearings: &[Bearing],
 ) -> String {
     let mut out = String::new();
     writeln!(out, "No actionable missions found.").unwrap();
@@ -254,6 +268,20 @@ fn format_no_actionable_mission_message(
         writeln!(out, "Paused missions:").unwrap();
         for mission in paused {
             writeln!(out, "  - {} {}", mission.id(), mission.title()).unwrap();
+        }
+    }
+
+    if !orphaned_bearings.is_empty() {
+        writeln!(out).unwrap();
+        writeln!(out, "Orphaned bearings worth turning into missions:").unwrap();
+        for bearing in orphaned_bearings {
+            writeln!(out, "  - {} {}", bearing.id(), bearing.title().trim()).unwrap();
+            writeln!(
+                out,
+                "    Suggested command: {}",
+                suggested_mission_command(bearing.title())
+            )
+            .unwrap();
         }
     }
 
@@ -303,6 +331,13 @@ fn format_no_actionable_mission_message(
         )
         .unwrap();
     }
+    if !orphaned_bearings.is_empty() {
+        writeln!(
+            out,
+            "  - Create a mission for the orphaned bearings above, then assign each bearing's `mission:` field to the new mission ID."
+        )
+        .unwrap();
+    }
     writeln!(
         out,
         "  - Create a fresh mission with `keel mission new \"<Title>\"` if no current mission should continue."
@@ -310,6 +345,36 @@ fn format_no_actionable_mission_message(
     .unwrap();
 
     out.trim_end().to_string()
+}
+
+fn suggested_mission_command(bearing_title: &str) -> String {
+    format!(
+        "keel mission new \"{}\"",
+        escape_double_quoted_argument(&suggested_mission_title(bearing_title))
+    )
+}
+
+fn suggested_mission_title(bearing_title: &str) -> String {
+    let trimmed = bearing_title.trim();
+    for suffix in [
+        " Research",
+        " Exploration",
+        " Investigation",
+        " Discovery",
+        " Study",
+    ] {
+        if let Some(stripped) = trimmed.strip_suffix(suffix) {
+            let stripped = stripped.trim();
+            if !stripped.is_empty() {
+                return stripped.to_string();
+            }
+        }
+    }
+    trimmed.to_string()
+}
+
+fn escape_double_quoted_argument(value: &str) -> String {
+    value.replace('\\', "\\\\").replace('"', "\\\"")
 }
 
 fn flush_and_exit(code: i32) -> ! {
@@ -323,7 +388,9 @@ mod tests {
     use chrono::{Duration, TimeZone};
     use keel::domain::model::StoryState;
     use keel::read_model::knowledge::{KnowledgeSourceType, ReflectionSignal};
-    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestMission, TestStory, TestVoyage};
+    use keel::test_helpers::{
+        TestBearing, TestBoardBuilder, TestEpic, TestMission, TestStory, TestVoyage,
+    };
     use std::fs;
     use std::path::PathBuf;
 
@@ -500,7 +567,7 @@ mod tests {
         ];
         let patterns = detect_rising_patterns(&signals, now, &DetectionConfig::default());
 
-        let message = format_no_actionable_mission_message(&pending, &patterns, &[]);
+        let message = format_no_actionable_mission_message(&pending, &patterns, &[], &[]);
 
         assert!(message.contains("No actionable missions found."));
         assert!(message.contains("Pending knowledge worth institutionalizing"));
@@ -510,5 +577,67 @@ mod tests {
         assert!(message.contains("keel knowledge impact"));
         assert!(message.contains("keel knowledge explore"));
         assert!(message.contains("keel mission new"));
+    }
+
+    #[test]
+    fn top_orphaned_bearings_prioritizes_open_unmissioned_bearings() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .bearing(
+                TestBearing::new("B1")
+                    .title("Payments Research")
+                    .status("ready")
+                    .has_evidence(true)
+                    .has_assessment(true),
+            )
+            .bearing(TestBearing::new("B2").status("laid"))
+            .bearing(TestBearing::new("B3").status("exploring").mission("M1"))
+            .bearing(
+                TestBearing::new("B4")
+                    .status("evaluating")
+                    .has_evidence(true),
+            )
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+        let orphaned = top_orphaned_bearings(&board, 10);
+
+        let orphaned_ids: Vec<_> = orphaned.iter().map(|bearing| bearing.id()).collect();
+        assert_eq!(orphaned_ids, vec!["B1", "B4"]);
+    }
+
+    #[test]
+    fn no_actionable_mission_message_recommends_missions_for_orphaned_bearings() {
+        let temp = TestBoardBuilder::new()
+            .bearing(
+                TestBearing::new("B1")
+                    .title("Payments Research")
+                    .status("ready")
+                    .has_evidence(true)
+                    .has_assessment(true),
+            )
+            .build();
+        let board = load_board(temp.path()).unwrap();
+        let orphaned = top_orphaned_bearings(&board, 3);
+
+        let message = format_no_actionable_mission_message(&[], &[], &[], &orphaned);
+
+        assert!(message.contains("Orphaned bearings worth turning into missions"));
+        assert!(message.contains("B1 Payments Research"));
+        assert!(message.contains("keel mission new \"Payments\""));
+        assert!(message.contains("assign each bearing's `mission:` field"));
+    }
+
+    #[test]
+    fn suggested_mission_title_strips_research_suffixes() {
+        assert_eq!(suggested_mission_title("Payments Research"), "Payments");
+        assert_eq!(
+            suggested_mission_title("Temporal Automation Exploration"),
+            "Temporal Automation"
+        );
+        assert_eq!(
+            suggested_mission_title("Strategic Capacity"),
+            "Strategic Capacity"
+        );
     }
 }
