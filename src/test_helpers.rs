@@ -523,6 +523,30 @@ fn render_fixture_bearing_readme(bearing: &TestBearing) -> String {
     )
 }
 
+fn render_fixture_bearing_brief(bearing: &TestBearing) -> String {
+    format!(
+        r#"# {} — Brief
+
+## Hypothesis
+
+{} is worth exploring because it addresses a repeated strategic pain point.
+
+## Problem Space
+
+The team needs a clear problem statement for {} before the bearing can advance.
+
+## Success Criteria
+
+- [ ] The brief explains the bet clearly enough to guide research.
+
+## Open Questions
+
+- What evidence would materially change the recommendation?
+"#,
+        bearing.title, bearing.title, bearing.title
+    )
+}
+
 fn render_fixture_bearing_evidence(bearing: &TestBearing) -> String {
     format!(
         r#"---
@@ -794,10 +818,7 @@ Test harness epic problem statement.
                 // BRIEF.md
                 fs::write(
                     bearing_dir.join("BRIEF.md"),
-                    template_rendering::render_body(
-                        templates::bearing::BRIEF,
-                        &[("title", &bearing.title)],
-                    ),
+                    render_fixture_bearing_brief(bearing),
                 )
                 .unwrap();
 

@@ -705,6 +705,22 @@ fn run_lay_at(board_dir: &Path, pattern: &str) -> Result<()> {
         _ => {}
     }
 
+    let brief_problems =
+        keel::infrastructure::validation::bearings::check_bearing_content_sections_for_bearing(
+            bearing,
+        );
+    if !brief_problems.is_empty() {
+        return Err(anyhow!(
+            "{}\nRecovery step:\n  keel bearing file {} BRIEF",
+            brief_problems
+                .into_iter()
+                .map(|problem| problem.message)
+                .collect::<Vec<_>>()
+                .join("\n"),
+            bearing.id()
+        ));
+    }
+
     let readiness = evaluate_bearing_readiness(board_dir, bearing, Some(&config.current_weights()));
     if !readiness.is_decision_ready() {
         let command = readiness
@@ -1063,7 +1079,28 @@ status: {}
         )
         .unwrap();
 
-        fs::write(bearing_dir.join("BRIEF.md"), "# Test Research — Brief\n").unwrap();
+        fs::write(
+            bearing_dir.join("BRIEF.md"),
+            r#"# Test Research — Brief
+
+## Hypothesis
+
+The research should surface enough signal to justify a delivery epic.
+
+## Problem Space
+
+The team needs bearing framing that is explicit before downstream planning starts.
+
+## Success Criteria
+
+- [ ] The brief captures the bet clearly enough to guide research.
+
+## Open Questions
+
+- What evidence would overturn the current direction?
+"#,
+        )
+        .unwrap();
 
         root.to_path_buf()
     }
@@ -1107,6 +1144,14 @@ status: {}
             bearing_dir.join("BRIEF.md"),
             format!(
                 r#"# Test Research — Brief
+
+## Hypothesis
+
+The research direction is promising enough to merit deeper investigation.
+
+## Problem Space
+
+The operator needs a concrete problem statement before the bearing advances.
 
 ## Success Criteria
 {}
@@ -1583,6 +1628,47 @@ Different section content.
     }
 
     #[test]
+    fn bearing_lay_requires_authored_brief_framing() {
+        let temp = TempDir::new().unwrap();
+        let board_dir = create_test_bearing_with_status(&temp, "ready");
+        seed_readiness_docs(
+            &board_dir,
+            "test-research",
+            strong_evidence_fixture(),
+            cited_assessment_fixture(),
+        );
+        fs::write(
+            board_dir.join("bearings/test-research/BRIEF.md"),
+            r#"# Test Research — Brief
+
+## Hypothesis
+
+What we believe and why it might matter.
+
+## Problem Space
+
+What problem or opportunity are we investigating?
+
+## Success Criteria
+
+- [ ] Criterion 1
+- [ ] Criterion 2
+
+## Open Questions
+
+- Question we need to answer
+"#,
+        )
+        .unwrap();
+
+        let error = run_lay_at(&board_dir, "test-research")
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("BRIEF.md Hypothesis scaffold"));
+        assert!(error.contains("keel bearing file test-research BRIEF"));
+    }
+
+    #[test]
     fn bearing_lay_persists_epic_lineage_field() {
         let temp = TempDir::new().unwrap();
         let board_dir = create_test_bearing_with_status(&temp, "ready");
@@ -1766,9 +1852,21 @@ Different section content.
             board_dir.join("bearings/test-research/BRIEF.md"),
             r#"# Test Research — Brief
 
+## Hypothesis
+
+Explicit goal references in research briefs should flow into laid-bearing lineage.
+
+## Problem Space
+
+Goal-link validation should fail fast without allowing the bearing to lay partial lineage state.
+
 ## Success Criteria
 
 - [ ] GOAL-99: This goal does not exist in the PRD
+
+## Open Questions
+
+- How should lay surface invalid goal-link recovery guidance?
 "#,
         )
         .unwrap();
@@ -1806,9 +1904,21 @@ Different section content.
             board_dir.join("bearings/test-research/BRIEF.md"),
             r#"# Test Research — Brief
 
+## Hypothesis
+
+Explicit goal references in research briefs should survive the lay transition.
+
+## Problem Space
+
+Validated brief goals need to persist as machine-readable bearing lineage.
+
 ## Success Criteria
 
 - [ ] GOAL-01: Valid criterion matching PRD goal
+
+## Open Questions
+
+- Should multiple valid goals preserve deterministic ordering?
 "#,
         )
         .unwrap();

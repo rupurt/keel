@@ -1,34 +1,32 @@
 # MissionEntity — Brief
 
-## Context
-Current autonomous workflows (sift, port) span multiple epics over days.
-The stopping condition is implicit — an AGENTS.md policy that says "don't stop
-until the objective is done." Problems observed:
+## Hypothesis
 
-1. **False halting**: Harnesses stop when the queue is empty even though the
-   objective is incomplete.
-2. **No traceability**: No single artifact showing what was accomplished and why.
-3. **No verification boundary**: The harness can't distinguish "board work done" from "objective achieved."
-4. **No lineage root**: Disconnected entities spawned during autonomous work.
+Introducing a first-class Mission entity with machine-readable goals, success
+criteria, and halting rules will let autonomous harnesses reason about mission
+completion deterministically instead of relying on implicit AGENTS.md policy.
 
-## Objectives
-Introduce a Mission entity that encodes goals, success criteria, and halting rules as machine-readable board state to let keel reason about completion deterministically.
+## Problem Space
 
-## Scope
-- Mission entity with state machine, frontmatter, loader, and Board integration
-- CLI commands for full mission lifecycle
-- Lineage field (`mission`) on epics, bearings, and ADRs with doctor validation
-- Doctor checks that signal mission completion
-- `keel next` mission-awareness
-- CHARTER.md with structured goals, constraints, and halting rules
-- Refinement loop (`keel mission refine`)
-- LOG.md decision journal
+Current autonomous workflows can span multiple epics and days of work, but the
+stopping condition is implicit. That creates false halts when the queue is
+ empty, weak traceability for what was accomplished, no clean distinction
+ between "board work done" and "objective achieved", and no single lineage root
+ for mission-scoped entities.
 
-## Research Questions
-- What threshold triggers LOG.md digest? Line count, age, or entry count?
-- Should `keel flow` show mission-level progress as a top-level summary?
-- How does mission-awareness interact with multi-mission boards?
-- Should CHARTER.md constraints feed into ADR governance?
+## Success Criteria
+
+- [ ] A mission can encode goals, halting rules, and verification boundaries as
+      durable board state.
+- [ ] Autonomous loops can distinguish temporary queue exhaustion from true
+      mission completion.
+- [ ] Mission lineage makes related epics, bearings, and ADRs navigable from a
+      single steering artifact.
 
 ## Open Questions
-- (none yet)
+
+- What threshold should trigger `LOG.md` digest: line count, age, or entry
+  count?
+- Should `keel flow` surface mission-level progress as a top-level summary?
+- How should mission-awareness interact with multi-mission boards?
+- Should `CHARTER.md` constraints feed directly into ADR governance?

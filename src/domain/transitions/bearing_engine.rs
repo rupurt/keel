@@ -78,6 +78,26 @@ fn validate_transition(spec: &BearingTransitionSpec, bearing: &Bearing) -> Resul
             valid_sources.join(" or ")
         ));
     }
+
+    if matches!(spec.to, BearingStatus::Evaluating | BearingStatus::Ready) {
+        let problems =
+            crate::infrastructure::validation::bearings::check_bearing_content_sections_for_bearing(
+                bearing,
+            );
+        if !problems.is_empty() {
+            return Err(anyhow!(
+                "{}\nRepair `bearings/{}/BRIEF.md` before rerunning `keel bearing {}`.",
+                problems
+                    .into_iter()
+                    .map(|problem| problem.message)
+                    .collect::<Vec<_>>()
+                    .join("\n"),
+                bearing.id(),
+                spec.name
+            ));
+        }
+    }
+
     Ok(())
 }
 
@@ -172,7 +192,28 @@ status: {}
         )
         .unwrap();
 
-        fs::write(bearing_dir.join("BRIEF.md"), "# Test Research — Brief\n").unwrap();
+        fs::write(
+            bearing_dir.join("BRIEF.md"),
+            r#"# Test Research — Brief
+
+## Hypothesis
+
+The research thread is worth pursuing because it targets a repeated operator pain point.
+
+## Problem Space
+
+The team needs a concrete problem statement before a bearing can advance cleanly.
+
+## Success Criteria
+
+- [ ] The bearing has enough framing to justify deeper research.
+
+## Open Questions
+
+- What evidence would materially change the recommendation?
+"#,
+        )
+        .unwrap();
 
         root.to_path_buf()
     }
@@ -266,6 +307,44 @@ status: {}
                 .to_string()
                 .contains("must be evaluating")
         );
+    }
+
+    #[test]
+    fn research_rejects_scaffold_brief_sections() {
+        let temp = TempDir::new().unwrap();
+        let board_dir = create_test_bearing_with_status(&temp, "exploring");
+        fs::write(
+            board_dir.join("bearings/test-research/BRIEF.md"),
+            r#"# Test Research — Brief
+
+## Hypothesis
+
+What we believe and why it might matter.
+
+## Problem Space
+
+What problem or opportunity are we investigating?
+
+## Success Criteria
+
+How will we know if this research was valuable?
+
+- [ ] Criterion 1
+- [ ] Criterion 2
+
+## Open Questions
+
+- Question we need to answer
+"#,
+        )
+        .unwrap();
+
+        let result = execute(&board_dir, "test-research", &bearing_transitions::RESEARCH);
+
+        assert!(result.is_err());
+        let error = result.unwrap_err().to_string();
+        assert!(error.contains("BRIEF.md Hypothesis scaffold"));
+        assert!(error.contains("BRIEF.md Problem Space scaffold"));
     }
 
     #[test]
