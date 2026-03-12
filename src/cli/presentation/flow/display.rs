@@ -66,7 +66,6 @@ pub fn render_annotated_flow(
         writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
         writeln!(output, "  Active Missions").unwrap();
         writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
-        writeln!(output).unwrap();
         writeln!(output, "{}", mission_summary).unwrap();
     }
 
@@ -210,7 +209,7 @@ fn render_mission_summary(board: &Board, _width: usize, _theme: &Theme) -> Strin
         .collect();
     active_missions.sort_by_key(|m| m.id());
 
-    for mission in active_missions {
+    for (idx, mission) in active_missions.iter().enumerate() {
         let charter_path = mission.path.parent().unwrap().join("CHARTER.md");
         let charter_content = std::fs::read_to_string(&charter_path).unwrap_or_default();
         let goals =
@@ -271,7 +270,9 @@ fn render_mission_summary(board: &Board, _width: usize, _theme: &Theme) -> Strin
             bearings.len()
         )
         .unwrap();
-        writeln!(out).unwrap();
+        if idx + 1 < active_missions.len() {
+            writeln!(out).unwrap();
+        }
     }
 
     out
@@ -485,10 +486,12 @@ fn strategic_capacity_guidance(board: &Board, metrics: &FlowMetrics) -> &'static
 mod tests {
     use super::*;
     use keel::infrastructure::config::Config;
+    use keel::infrastructure::loader;
     use keel::read_model::flow_metrics::{
         ExecutionMetrics, GovernanceMetrics, PlanningMetrics, ResearchMetrics, VerificationMetrics,
     };
     use keel::read_model::{workflow_lane_flow, workflow_topology};
+    use keel::test_helpers::{TestBoardBuilder, TestMission};
 
     fn make_test_metrics() -> FlowMetrics {
         FlowMetrics {
@@ -560,5 +563,18 @@ mod tests {
         assert!(rendered.contains("management (0) [p100]"));
         assert!(rendered.contains("delivery (0) [p50]"));
         assert!(rendered.contains("No executable epic capacity"));
+    }
+
+    #[test]
+    fn render_mission_summary_is_compact_around_items() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").title("Mission One").status("active"))
+            .build();
+        let board = loader::load_board(temp.path()).unwrap();
+
+        let rendered = render_mission_summary(&board, 100, &Theme::default());
+
+        assert!(rendered.starts_with("  Mission:"));
+        assert!(!rendered.ends_with("\n\n"));
     }
 }

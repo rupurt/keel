@@ -7,6 +7,8 @@ use std::fmt::Write;
 pub use super::capacity::EpicCapacityReport;
 use crate::cli::presentation::theme::Theme;
 
+const COMPLETED_EPIC_RENDER_LIMIT: usize = 3;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DepStatus {
     Ready,
@@ -146,10 +148,11 @@ pub fn render_epic_capacities(
 ) -> String {
     let mut sorted: Vec<_> = capacities.values().collect();
     sorted.sort_by_key(|c| c.id.clone());
+    let visible = visible_epic_capacities(&sorted);
 
     // Calculate max label width for alignment
     let mut max_width = 15; // default minimum
-    for cap in &sorted {
+    for cap in &visible {
         let label_width = cap.id.len() + 1 + cap.title.len();
         if label_width > max_width {
             max_width = label_width;
@@ -158,9 +161,20 @@ pub fn render_epic_capacities(
     max_width += 2; // buffer
 
     let mut output = String::new();
-    writeln!(output, "     {: <w$} CAPACITY", "EPIC", w = max_width).unwrap();
+    let header = format!("     {: <w$} CAPACITY", "EPIC", w = max_width);
+    writeln!(output, "{header}").unwrap();
+    let ellipsis_width = centered_ellipsis_width(max_width, &header);
 
-    for cap in sorted {
+    let first_visible_completed = visible
+        .iter()
+        .position(|cap| is_completed_epic(cap))
+        .filter(|_| clipped_completed_epics(&sorted));
+
+    for (idx, cap) in visible.iter().enumerate() {
+        if Some(idx) == first_visible_completed {
+            writeln!(output, "{:indent$}...", "", indent = ellipsis_width).unwrap();
+        }
+
         let emoji = match cap.charge_state {
             crate::cli::presentation::flow::capacity::ChargeState::Blocked => "🔴",
             crate::cli::presentation::flow::capacity::ChargeState::Discharged => "⚪",
@@ -204,6 +218,52 @@ pub fn render_epic_capacities(
     }
 
     output
+}
+
+fn centered_ellipsis_width(max_width: usize, header: &str) -> usize {
+    let sample_row = format!(
+        "  ⚪ {} {} [D: 0 R: 0 F: 0 B: 0 I: 0]",
+        " ".repeat(max_width),
+        "░".repeat(15)
+    );
+    let target_width = keel::infrastructure::utils::visible_width(header)
+        .max(keel::infrastructure::utils::visible_width(&sample_row));
+    target_width.saturating_sub(3) / 2
+}
+
+fn visible_epic_capacities<'a>(sorted: &[&'a EpicCapacityReport]) -> Vec<&'a EpicCapacityReport> {
+    let completed_total = sorted.iter().filter(|cap| is_completed_epic(cap)).count();
+    let completed_to_skip = completed_total.saturating_sub(COMPLETED_EPIC_RENDER_LIMIT);
+    let mut skipped_completed = 0;
+    let mut visible = Vec::with_capacity(
+        sorted.len().min(
+            completed_to_skip
+                .saturating_add(COMPLETED_EPIC_RENDER_LIMIT)
+                .saturating_add(1),
+        ),
+    );
+
+    for cap in sorted {
+        if is_completed_epic(cap) && skipped_completed < completed_to_skip {
+            skipped_completed += 1;
+            continue;
+        }
+        visible.push(*cap);
+    }
+
+    visible
+}
+
+fn clipped_completed_epics(sorted: &[&EpicCapacityReport]) -> bool {
+    sorted.iter().filter(|cap| is_completed_epic(cap)).count() > COMPLETED_EPIC_RENDER_LIMIT
+}
+
+fn is_completed_epic(cap: &EpicCapacityReport) -> bool {
+    cap.capacity.done > 0
+        && cap.capacity.ready == 0
+        && cap.capacity.in_flight == 0
+        && cap.capacity.blocked == 0
+        && cap.capacity.inactive == 0
 }
 
 type StorySummary = (String, String, DepStatus, Vec<String>);
@@ -290,7 +350,7 @@ pub fn render_dependency_chains(
 
             writeln!(
                 output,
-                "{}  {}  {} {} ({})",
+                "{}  {}{} {} ({})",
                 prefix, connector, id_padded, title, status_text
             )
             .unwrap();
@@ -426,6 +486,155 @@ mod tests {
     }
 
     #[test]
+    fn render_epic_capacities_clips_completed_epics_to_last_three() {
+        let theme = Theme::default();
+        let capacities = HashMap::from([
+            (
+                "epic1".to_string(),
+                epic_capacity("epic1", "Epic 1", 2, 0, 0, 0, 0),
+            ),
+            (
+                "epic2".to_string(),
+                epic_capacity("epic2", "Epic 2", 4, 0, 0, 0, 0),
+            ),
+            (
+                "epic3".to_string(),
+                epic_capacity("epic3", "Epic 3", 6, 0, 0, 0, 0),
+            ),
+            (
+                "epic4".to_string(),
+                epic_capacity("epic4", "Epic 4", 8, 0, 0, 0, 0),
+            ),
+            (
+                "epic5".to_string(),
+                epic_capacity("epic5", "Epic 5", 10, 0, 0, 0, 0),
+            ),
+        ]);
+
+        let rendered = render_epic_capacities(&capacities, &theme);
+
+        assert!(!rendered.contains("epic1"));
+        assert!(!rendered.contains("epic2"));
+        assert!(rendered.contains("epic3"));
+        assert!(rendered.contains("epic4"));
+        assert!(rendered.contains("epic5"));
+        let ellipsis_line = rendered
+            .lines()
+            .find(|line| line.trim() == "...")
+            .expect("expected ellipsis line");
+        let leading_spaces = ellipsis_line.chars().take_while(|ch| *ch == ' ').count();
+        assert!(
+            leading_spaces > 4,
+            "expected centered ellipsis, got: {ellipsis_line:?}"
+        );
+    }
+
+    #[test]
+    fn render_epic_capacities_keeps_incomplete_epics_even_when_completed_are_clipped() {
+        let theme = Theme::default();
+        let capacities = HashMap::from([
+            (
+                "epic1".to_string(),
+                epic_capacity("epic1", "Epic 1", 2, 0, 0, 0, 0),
+            ),
+            (
+                "epic2".to_string(),
+                epic_capacity("epic2", "Epic 2", 4, 0, 0, 0, 0),
+            ),
+            (
+                "epic3".to_string(),
+                epic_capacity("epic3", "Epic 3", 6, 0, 0, 0, 0),
+            ),
+            (
+                "epic4".to_string(),
+                epic_capacity("epic4", "Epic 4", 8, 0, 0, 0, 0),
+            ),
+            (
+                "epic5".to_string(),
+                epic_capacity("epic5", "Epic 5", 10, 0, 0, 0, 0),
+            ),
+            (
+                "epic6".to_string(),
+                epic_capacity("epic6", "Epic 6", 0, 1, 0, 0, 0),
+            ),
+            (
+                "epic7".to_string(),
+                epic_capacity("epic7", "Epic 7", 0, 0, 0, 0, 0),
+            ),
+            (
+                "epic8".to_string(),
+                epic_capacity("epic8", "Epic 8", 1, 0, 0, 1, 0),
+            ),
+        ]);
+
+        let rendered = render_epic_capacities(&capacities, &theme);
+
+        assert!(!rendered.contains("epic1"));
+        assert!(!rendered.contains("epic2"));
+        assert!(rendered.contains("epic3"));
+        assert!(rendered.contains("epic4"));
+        assert!(rendered.contains("epic5"));
+        assert!(rendered.contains("epic6"));
+        assert!(rendered.contains("epic7"));
+        assert!(rendered.contains("epic8"));
+    }
+
+    #[test]
+    fn render_epic_capacities_skips_ellipsis_when_completed_epics_fit() {
+        let theme = Theme::default();
+        let capacities = HashMap::from([
+            (
+                "epic1".to_string(),
+                epic_capacity("epic1", "Epic 1", 2, 0, 0, 0, 0),
+            ),
+            (
+                "epic2".to_string(),
+                epic_capacity("epic2", "Epic 2", 4, 0, 0, 0, 0),
+            ),
+            (
+                "epic3".to_string(),
+                epic_capacity("epic3", "Epic 3", 6, 0, 0, 0, 0),
+            ),
+            (
+                "epic4".to_string(),
+                epic_capacity("epic4", "Epic 4", 0, 1, 0, 0, 0),
+            ),
+        ]);
+
+        let rendered = render_epic_capacities(&capacities, &theme);
+
+        assert!(rendered.contains("epic1"));
+        assert!(rendered.contains("epic2"));
+        assert!(rendered.contains("epic3"));
+        assert!(rendered.contains("epic4"));
+        assert!(rendered.lines().all(|line| line.trim() != "..."));
+    }
+
+    fn epic_capacity(
+        id: &str,
+        title: &str,
+        done: usize,
+        ready: usize,
+        in_flight: usize,
+        blocked: usize,
+        inactive: usize,
+    ) -> EpicCapacityReport {
+        let charge_state = crate::cli::presentation::flow::capacity::ChargeState::Discharged;
+        EpicCapacityReport {
+            id: id.to_string(),
+            title: title.to_string(),
+            charge_state,
+            capacity: crate::cli::presentation::flow::capacity::EpicCapacity {
+                ready,
+                in_flight,
+                blocked,
+                inactive,
+                done,
+            },
+        }
+    }
+
+    #[test]
     fn test_render_dependency_chains() {
         let mut board = keel::domain::model::Board::default();
         let story = keel::test_helpers::StoryFactory::new("S1")
@@ -446,5 +655,6 @@ mod tests {
         assert!(rendered.contains("→"));
         assert!(rendered.contains("S1"));
         assert!(rendered.contains("ready"));
+        assert!(!rendered.contains("└──  S1"));
     }
 }
