@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-12T10:46:13.039279932-07:00
+mode: manual
+---
+Verified deterministic structural drift inputs and offline cache behavior via cargo test --lib knowledge_graph_projection_exposes_structural_drift_inputs.

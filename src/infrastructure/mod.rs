@@ -8,6 +8,7 @@ pub mod config;
 pub mod duplicate_ids;
 pub mod frontmatter_mutation;
 pub mod generate;
+pub mod knowledge_graph_store;
 pub mod loader;
 pub mod markdown_sections;
 pub mod parser;

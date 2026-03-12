@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-12T10:46:12.737502857-07:00
+mode: manual
+---
+Verified deterministic entity, artifact, document, source, and knowledge nodes via cargo test --lib knowledge_graph_projection_builds_entity_document_and_code_nodes.

@@ -244,11 +244,17 @@
 |--------|--------|
 | [Canonicalize Voyage Artifact Ordering](epics/VDfhxO64S/voyages/VDfhz9Hl7/) | done |
 
-### [Canonical Knowledge Graph World Map](epics/VDfufyl6w/) (active)
+### [Canonical Knowledge Graph World Map](epics/VDfufyl6w/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Build Knowledge Graph Kernel and Cache](epics/VDfufyl6w/voyages/VDfumi8ha/) | planned |
+| [Build Knowledge Graph Kernel and Cache](epics/VDfufyl6w/voyages/VDfumi8ha/) | done |
+
+### [Interactive Knowledge Graph Surfaces](epics/VDg0dAPVS/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Render Knowledge Graph Command and Drift Surfaces](epics/VDg0dAPVS/voyages/VDg0f0aHW/) | planned |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

@@ -2,6 +2,7 @@
 //! Utility functions shared across the keel crate.
 
 use regex::Regex;
+use sha2::{Digest, Sha256};
 use std::cmp::Ordering;
 use std::path::Path;
 use std::process::Command;
@@ -56,6 +57,17 @@ pub fn hash_file(path: &Path) -> anyhow::Result<String> {
         .unwrap_or("")
         .to_string();
     Ok(hash)
+}
+
+/// Calculate the SHA-256 hash of raw bytes.
+pub fn sha256_hex(bytes: &[u8]) -> String {
+    let digest = Sha256::digest(bytes);
+    let mut rendered = String::with_capacity(digest.len() * 2);
+    for byte in digest {
+        use std::fmt::Write;
+        let _ = write!(&mut rendered, "{byte:02x}");
+    }
+    rendered
 }
 
 /// Returns the width of the string as it would appear in a terminal,

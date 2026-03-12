@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-12T10:46:12.992035221-07:00
+mode: manual
+---
+Verified deterministic knowledge-graph manifest/blob writes and cache reuse via cargo test --lib knowledge_graph_cache_manifest_is_deterministic.

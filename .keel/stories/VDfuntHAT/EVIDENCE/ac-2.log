@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-12T10:46:13.022675574-07:00
+mode: manual
+---
+Verified deterministic structural containment, traceability, provenance, and attachment edges via cargo test --lib knowledge_graph_projection_builds_structural_edges.

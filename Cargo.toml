@@ -61,6 +61,7 @@ tempfile = "3"
 colored = "2"
 crossterm = "0.27"
 txtplot = { git = "https://github.com/rupurt/txtplot" }
+sha2 = "0.10"
 
 [dev-dependencies]
 
