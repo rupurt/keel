@@ -213,17 +213,17 @@
 |--------|--------|
 | [Temporal Routine Gating](epics/VDakmCGYi/voyages/VDcFd5kmn/) | done |
 
-### [Pulse Automation Engine](epics/VDakmG8cH/) (active)
+### [Pulse Automation Engine](epics/VDakmG8cH/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Pulse Automation Execution](epics/VDakmG8cH/voyages/VDcFd5Sop/) | in-progress |
+| [Pulse Automation Execution](epics/VDakmG8cH/voyages/VDcFd5Sop/) | done |
 
 ### [Automation Documentation and Guides](epics/VDakmJodq/) (active)
 
 | Voyage | Status |
 |--------|--------|
-| [Automation Guide Authoring](epics/VDakmJodq/voyages/VDcFd62ny/) | planned |
+| [Automation Guide Authoring](epics/VDakmJodq/voyages/VDcFd62ny/) | in-progress |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

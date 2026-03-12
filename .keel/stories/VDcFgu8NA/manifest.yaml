@@ -1,0 +1,11 @@
+id: VDcFgu8NA
+git_sha: 4a66e0fd1feb956ecf894d9d3f7b6a326c28ccb4
+evidence:
+  EVIDENCE/ac-1.log: 6b7e98b6e810555017d30488d71ef3cf580ba2c2e0a5f3dafdcbcc83720c48e8
+  EVIDENCE/ac-2.log: cb737ebb329305bf6d10eeadc139bdfaefb90a8c7e838a5226aaf1f06c89f304
+  EVIDENCE/ac-3.log: 95ecb0df64223b9e8852ed1e04fc264e447c39b17018cdc873d10adf3d1beb07
+  EVIDENCE/ac-4.log: c537b173be94e7b29f4dba262dcce4e26cc08b1b0ff99cb073cb47cc1e515131
+  EVIDENCE/llm-judge-guide-md-explains-routine-authoring-cadence-fields-target-scope-and-blueprint-expectations.txt: c517d7c2c8d27d368a5b7bfdf5ba6928ec21d750ed5be628cb21e49bee891866
+  EVIDENCE/llm-judge-the-guide-documents-cron-or-systemd-usage-idempotency-expectations-and-unsupported-automation-boundaries.txt: 19116e046195405f9afc32c8f04aa2c48111fb842070ba93b094543459dd8da1
+  ? EVIDENCE/llm-judge-the-guide-includes-an-end-to-end-example-from-routine-definition-through-keel-next-keel-flow-and-keel-pulse.txt
+  : d336ca59129988c8d9ef5562daafb593fb4837d04a4425a7fc5d64fdba03751d

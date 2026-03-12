@@ -23,5 +23,5 @@ index: 32
 **Progress:** 0/1 voyages complete, 0/1 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Automation Guide Authoring](voyages/VDcFd62ny/) | planned | 0/1 |
+| [Automation Guide Authoring](voyages/VDcFd62ny/) | in-progress | 0/1 |
 <!-- END GENERATED -->

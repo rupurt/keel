@@ -91,6 +91,9 @@ Markdown files are the source of truth, but agents should not need to reread the
 
 This keeps the workflow agent-friendly: the CLI provides compact, deterministic summaries for orientation, while still rendering the underlying artifact paths (`PRD.md`, `SRS.md`, `SDD.md`, story `README.md`, and more) when full authored detail is needed.
 
+For recurring-work automation specifically, see [GUIDE.md](GUIDE.md) for the
+routine authoring, `next`, `flow`, and `pulse` workflow.
+
 ### Detection and Verification Techniques
 
 Verification is modeled as a technique bank rather than a single hardcoded test path. Keel supports built-in and custom verification techniques, and the detection engine evaluates project signals such as files, stack hints, and configured commands to determine which techniques are:

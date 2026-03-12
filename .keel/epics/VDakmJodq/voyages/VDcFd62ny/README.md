@@ -1,11 +1,12 @@
 ---
 id: VDcFd62ny
 title: Automation Guide Authoring
-status: planned
+status: in-progress
 epic: VDakmJodq
 created_at: 2026-03-11T19:24:15
 index: 1
 updated_at: 2026-03-11T19:29:45
+started_at: 2026-03-11T22:01:09
 ---
 
 # Automation Guide Authoring
@@ -28,5 +29,5 @@ updated_at: 2026-03-11T19:29:45
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Business Automation Guide](../../../../stories/VDcFgu8NA/README.md) | feat | icebox |
+| [Business Automation Guide](../../../../stories/VDcFgu8NA/README.md) | feat | in-progress |
 <!-- END GENERATED -->

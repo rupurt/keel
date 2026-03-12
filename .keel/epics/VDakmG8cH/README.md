@@ -20,8 +20,8 @@ index: 31
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 2/3 stories done
+**Progress:** 1/1 voyages complete, 3/3 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Pulse Automation Execution](voyages/VDcFd5Sop/) | in-progress | 2/3 |
+| [Pulse Automation Execution](voyages/VDcFd5Sop/) | done | 3/3 |
 <!-- END GENERATED -->

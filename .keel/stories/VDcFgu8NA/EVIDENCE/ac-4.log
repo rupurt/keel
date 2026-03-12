@@ -1,0 +1,24 @@
+---
+recorded_at: 2026-03-11T22:04:43.206609292-07:00
+mode: manual
+files: [".keel/stories/VDcFgu8NA/EVIDENCE/ac-4.log"]
+---
+
+--- File: ac-4.log ---
+Manual review evidence for SRS-NFR-01 / AC-01
+
+- Reviewed GUIDE.md against:
+  - cargo run -- routine new --help
+  - cargo run -- routine list --help
+  - cargo run -- routine show --help
+  - cargo run -- next --help
+  - cargo run -- flow --help
+  - cargo run -- pulse --help
+- Confirmed the guide uses canonical command names:
+  - keel routine new/list/show
+  - keel next --role operator
+  - keel flow
+  - keel pulse
+- Confirmed the guide explicitly rejects removed legacy next flags and does not
+  imply background daemons, hosted schedulers, or fallback command paths.
+

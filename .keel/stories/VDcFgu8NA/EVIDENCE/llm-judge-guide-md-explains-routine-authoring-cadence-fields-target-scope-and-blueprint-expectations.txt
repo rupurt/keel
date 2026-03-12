@@ -1,0 +1,200 @@
+LLM Judge Transcript
+Story: VDcFgu8NA
+Criterion: `GUIDE.md` explains routine authoring, cadence fields, target scope, and blueprint expectations.
+
+Diff:
+.keel/README.md --- Text
+213 |--------|--------|                 213 |--------|--------|
+214 | [Temporal Routine Gating](epics/V 214 | [Temporal Routine Gating](epics/V
+... DakmCGYi/voyages/VDcFd5kmn/) | done ... DakmCGYi/voyages/VDcFd5kmn/) | done
+...  |                                  ...  |
+215                                     215 
+216 ### [Pulse Automation Engine](epics 216 ### [Pulse Automation Engine](epics
+... /VDakmG8cH/) (active)               ... /VDakmG8cH/) (done)
+217                                     217 
+218 | Voyage | Status |                 218 | Voyage | Status |
+219 |--------|--------|                 219 |--------|--------|
+220 | [Pulse Automation Execution](epic 220 | [Pulse Automation Execution](epic
+... s/VDakmG8cH/voyages/VDcFd5Sop/) | i ... s/VDakmG8cH/voyages/VDcFd5Sop/) | d
+... n-progress |                        ... one |
+221                                     221 
+222 ### [Automation Documentation and G 222 ### [Automation Documentation and G
+... uides](epics/VDakmJodq/) (active)   ... uides](epics/VDakmJodq/) (active)
+223                                     223 
+224 | Voyage | Status |                 224 | Voyage | Status |
+225 |--------|--------|                 225 |--------|--------|
+226 | [Automation Guide Authoring](epic 226 | [Automation Guide Authoring](epic
+... s/VDakmJodq/voyages/VDcFd62ny/) | p ... s/VDakmJodq/voyages/VDcFd62ny/) | i
+... lanned |                            ... n-progress |
+227                                     227 
+228 ### [Mission Entity](epics/1vzeJF00 228 ### [Mission Entity](epics/1vzeJF00
+... 0/) (done)                          ... 0/) (done)
+229                                     229 
+
+.keel/epics/VDakmG8cH/README.md --- Text
+20 ## Voyages                           20 ## Voyages
+21                                      21 
+22 <!-- BEGIN GENERATED -->             22 <!-- BEGIN GENERATED -->
+23 **Progress:** 0/1 voyages complete,  23 **Progress:** 1/1 voyages complete, 
+.. 2/3 stories done                     .. 3/3 stories done
+24 | Voyage | Status | Stories |        24 | Voyage | Status | Stories |
+25 |--------|--------|---------|        25 |--------|--------|---------|
+26 | [Pulse Automation Execution](voyag 26 | [Pulse Automation Execution](voyag
+.. es/VDcFd5Sop/) | in-progress | 2/3 | .. es/VDcFd5Sop/) | done | 3/3 |
+27 <!-- END GENERATED -->               27 <!-- END GENERATED -->
+
+.keel/epics/VDakmJodq/README.md --- Text
+23 **Progress:** 0/1 voyages complete,  23 **Progress:** 0/1 voyages complete, 
+.. 0/1 stories done                     .. 0/1 stories done
+24 | Voyage | Status | Stories |        24 | Voyage | Status | Stories |
+25 |--------|--------|---------|        25 |--------|--------|---------|
+26 | [Automation Guide Authoring](voyag 26 | [Automation Guide Authoring](voyag
+.. es/VDcFd62ny/) | planned | 0/1 |     .. es/VDcFd62ny/) | in-progress | 0/1 |
+27 <!-- END GENERATED -->               27 <!-- END GENERATED -->
+
+.keel/epics/VDakmJodq/voyages/VDcFd62ny/README.md --- 1/2 --- Text
+ 1 ---                                   1 ---
+ 2 id: VDcFd62ny                         2 id: VDcFd62ny
+ 3 title: Automation Guide Authoring     3 title: Automation Guide Authoring
+ 4 status: planned                       4 status: in-progress
+ 5 epic: VDakmJodq                       5 epic: VDakmJodq
+ 6 created_at: 2026-03-11T19:24:15       6 created_at: 2026-03-11T19:24:15
+ 7 index: 1                              7 index: 1
+ 8 updated_at: 2026-03-11T19:29:45       8 updated_at: 2026-03-11T19:29:45
+ .                                       9 started_at: 2026-03-11T22:01:09
+ 9 ---                                  10 ---
+10                                      11 
+11 # Automation Guide Authoring         12 # Automation Guide Authoring
+
+.keel/epics/VDakmJodq/voyages/VDcFd62ny/README.md --- 2/2 --- Text
+28                                      29 
+29 | Title | Type | Status |            30 | Title | Type | Status |
+30 |-------|------|--------|            31 |-------|------|--------|
+31 | [Business Automation Guide](../../ 32 | [Business Automation Guide](../../
+.. ../../stories/VDcFgu8NA/README.md) | .. ../../stories/VDcFgu8NA/README.md) |
+..  feat | icebox |                     ..  feat | in-progress |
+32 <!-- END GENERATED -->               33 <!-- END GENERATED -->
+
+.keel/flow_history.json --- JSON
+ 3   "weekly": [                         3   "weekly": [
+ 4     {                                 4     {
+ 5       "week_start": "2026-03-09",     5       "week_start": "2026-03-09",
+ 6       "stories_done": 53,             6       "stories_done": 54,
+ 7       "voyages_done": 14,             7       "voyages_done": 15,
+ 8       "epics_done": 13,               8       "epics_done": 14,
+ 9       "cycle_min_hours": 0.000277777  9       "cycle_min_hours": 0.000277777
+ . 7777777778,                           . 7777777778,
+10       "cycle_median_hours": 0.112361 10       "cycle_median_hours": 0.114444
+.. 1111111111,                          .. 44444444445,
+11       "cycle_max_hours": 1.0,        11       "cycle_max_hours": 1.0,
+12       "acceptance_wait_median_hours" 12       "acceptance_wait_median_hours"
+.. : 0.0033333333333333335,             .. : 0.0033333333333333335,
+13       "voyage_cycle_min_hours": 0.00 13       "voyage_cycle_min_hours": 0.00
+.. 8333333333333333,                    .. 8333333333333333,
+14       "voyage_cycle_median_hours": 0 14       "voyage_cycle_median_hours": 0
+.. .3458333333333333,                   .. .41805555555555557,
+15       "voyage_cycle_max_hours": 4.77 15       "voyage_cycle_max_hours": 4.77
+.. ,                                    .. ,
+16       "epic_cycle_min_hours": 0.0083 16       "epic_cycle_min_hours": 0.0083
+.. 33333333333333,                      .. 33333333333333,
+17       "epic_cycle_median_hours": 0.4 17       "epic_cycle_median_hours": 0.4
+.. 1805555555555557,                    .. 440277777777778,
+18       "epic_cycle_max_hours": 4.77   18       "epic_cycle_max_hours": 4.77
+19     },                               19     },
+20     {                                20     {
+
+.keel/missions/VDakm4zUQ/LOG.md --- Text
+14 14 ## 2026-03-11T19:31:27
+15 15 
+16 16 Planned first voyages for all four mission epics, authored concrete PRDs/SRS/SDDs where needed, and decomposed them into 9 backlog stories. Mission now satisfies the planned-epic activation gate and is ready for operator execution.
+   17 
+   18 ## 2026-03-11T20:30:07
+   19 
+   20 Completed story VDcFgmgKS in commit 4c6b1b2. Added standalone routine bundle and entity contract tests, recorded evidence, and moved the story to done. Refreshing flow to select the next mission slice.
+   21 
+   22 ## 2026-03-11T20:41:06
+   23 
+   24 Completed story VDcFgn0KR in commit dbc0685. Integrated routines into board discovery and filesystem persistence, added zero-routine deterministic behavior, recorded evidence, and moved the story to done. Refreshing flow to select the next mission slice.
+   25 
+   26 ## 2026-03-11T20:53:02
+   27 
+   28 Completed story VDcFgruMk in commit 75e2d7f. Added routine CLI new/list/show and scaffold template, submitted the story, and closed voyage VDcFd11nc. Epic VDakm8eVW is now done through the normal lifecycle cascade. Refreshing flow to identify the next mission slice.
+   29 
+   30 ## 2026-03-11T21:04:17
+   31 
+   32 Completed story VDcFgsiMj in commit 73a4ca8. Added a standalone routine due-state evaluator with injected reference time, recorded evidence, and moved the story to done. Refreshing flow to select the next mission slice.
+   33 
+   34 ## 2026-03-11T21:23:15
+   35 
+   36 Completed story VDcFgsuLw in commit 4358c0b. Added routine-aware next gating plus human and JSON countdown context, submitted the story, and closed voyage VDcFd5kmn. Epic VDakmCGYi is now done through the normal lifecycle cascade. Refreshing flow to identify the next mission slice.
+   37 
+   38 ## 2026-03-11T21:31:54
+   39 
+   40 Completed story VDcFgtsLv in commit 18fd39d. Added the non-interactive pulse command surface with human and JSON cycle summaries, kept the change pre-materialization, and moved the story to done. Refreshing flow to select the next mission slice.
+   41 
+   42 ## 2026-03-11T21:46:29
+   43 
+   44 Completed story VDcFgtHNB in commit 4ccbbe7. Pulse now materializes due routine work exactly once per eligible window with structured created, skipped, and deferred diagnostics. Refreshing flow to select the next mission slice.
+   45 
+   46 ## 2026-03-11T21:59:44
+   47 
+   48 Completed story VDcFgtbNC in commit 4a66e0f. Added scheduled automation visibility to keel flow, reused shared routine materialization state for truthful due-now versus already-materialized output, and closed voyage VDcFd5Sop. Epic VDakmG8cH is now done through the normal lifecycle cascade. Refreshing flow to identify the next mission slice.
+
+.keel/stories/VDcFgu8NA/README.md --- 1/2 --- Text
+ 2 id: VDcFgu8NA                         2 id: VDcFgu8NA
+ 3 title: Business Automation Guide      3 title: Business Automation Guide
+ 4 type: feat                            4 type: feat
+ 5 status: backlog                       5 status: needs-human-verification
+ 6 created_at: 2026-03-11T19:24:30       6 created_at: 2026-03-11T19:24:30
+ 7 updated_at: 2026-03-11T19:29:45       7 updated_at: 2026-03-11T22:05:06
+ 8 operator-signal:                      8 operator-signal: 
+ 9 scope: VDakmJodq/VDcFd62ny            9 scope: VDakmJodq/VDcFd62ny
+10 index: 1                             10 index: 1
+..                                      11 started_at: 2026-03-11T22:01:09
+..                                      12 submitted_at: 2026-03-11T22:05:06
+11 ---                                  13 ---
+12                                      14 
+13 # Business Automation Guide          15 # Business Automation Guide
+
+.keel/stories/VDcFgu8NA/README.md --- 2/2 --- Text
+19                                      21 
+20 ## Acceptance Criteria               22 ## Acceptance Criteria
+21                                      23 
+22 - [ ] [SRS-01/AC-01] `GUIDE.md` expl 24 - [x] [SRS-01/AC-01] `GUIDE.md` expl
+.. ains routine authoring, cadence fiel .. ains routine authoring, cadence fiel
+.. ds, target scope, and blueprint expe .. ds, target scope, and blueprint expe
+.. ctations. <!-- verify: llm-judge, SR .. ctations. <!-- verify: llm-judge, SR
+.. S-01:start:end -->                   .. S-01:start:end, proof: ac-1.log-->
+23 - [ ] [SRS-02/AC-01] The guide inclu 25 - [x] [SRS-02/AC-01] The guide inclu
+.. des an end-to-end example from routi .. des an end-to-end example from routi
+.. ne definition through `keel next`, ` .. ne definition through `keel next`, `
+.. keel flow`, and `keel pulse`. <!-- v .. keel flow`, and `keel pulse`. <!-- v
+.. erify: llm-judge, SRS-02:start:end - .. erify: llm-judge, SRS-02:start:end, 
+.. ->                                   .. proof: ac-2.log-->
+24 - [ ] [SRS-03/AC-01] The guide docum 26 - [x] [SRS-03/AC-01] The guide docum
+.. ents cron or systemd usage, idempote .. ents cron or systemd usage, idempote
+.. ncy expectations, and unsupported au .. ncy expectations, and unsupported au
+.. tomation boundaries. <!-- verify: ll .. tomation boundaries. <!-- verify: ll
+.. m-judge, SRS-03:start:end -->        .. m-judge, SRS-03:start:end, proof: ac
+..                                      .. -3.log-->
+25 - [ ] [SRS-NFR-01/AC-01] Command nam 27 - [x] [SRS-NFR-01/AC-01] Command nam
+.. es and workflow language match suppo .. es and workflow language match suppo
+.. rted CLI behavior and hard-cutover s .. rted CLI behavior and hard-cutover s
+.. emantics. <!-- verify: manual, SRS-N .. emantics. <!-- verify: manual, SRS-N
+.. FR-01:start:end -->                  .. FR-01:start:end, proof: ac-4.log-->
+
+README.md --- Text
+91  91 
+92  92 This keeps the workflow agent-friendly: the CLI provides compact, deterministic summaries for orientation, while still rendering the underlying artifact paths (`PRD.md`, `SRS.md`, `SDD.md`, story `README.md`, and more) when full authored detail is needed.
+93  93 
+..  94 For recurring-work automation specifically, see [GUIDE.md](GUIDE.md) for the
+..  95 routine authoring, `next`, `flow`, and `pulse` workflow.
+..  96 
+94  97 ### Detection and Verification Techniques
+95  98 
+96  99 Verification is modeled as a technique bank rather than a single hardcoded test path. Keel supports built-in and custom verification techniques, and the detection engine evaluates project signals such as files, stack hints, and configured commands to determine which techniques are:
+
+
+
+Result: PASS
+Signature: <KEEL-JUDGE-SIG>
