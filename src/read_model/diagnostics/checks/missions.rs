@@ -163,6 +163,8 @@ pub fn check_mission_completion_evidence(board: &Board) -> Vec<Problem> {
                 .with_check_id(CheckId::MissionMissingChildren),
             );
         }
+
+        problems.extend(missions::check_mission_terminal_children(board, mission));
     }
 
     problems
@@ -540,10 +542,40 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .mission(TestMission::new("M1").status("achieved"))
             .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "E1").status("done"))
             .build();
         let board = load_board(temp.path()).unwrap();
         let problems = check_mission_completion_evidence(&board);
         assert_eq!(problems.len(), 1);
         assert_eq!(problems[0].check_id, CheckId::MissionMissingLogEntries);
+    }
+
+    #[test]
+    fn test_check_mission_completion_evidence_requires_terminal_children() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("achieved"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "E1").status("done"))
+            .bearing(
+                TestBearing::new("B1")
+                    .mission("M1")
+                    .status("ready")
+                    .has_evidence(true)
+                    .has_assessment(true),
+            )
+            .build();
+
+        fs::write(
+            temp.path().join("missions/M1/LOG.md"),
+            "# Mission Log\n\n## 2026-01-01T00:00:00\n\nDid some work.\n",
+        )
+        .unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_mission_completion_evidence(&board);
+
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].check_id, CheckId::MissionNonTerminalChildren);
+        assert!(problems[0].message.contains("bearing B1 (ready)"));
     }
 }

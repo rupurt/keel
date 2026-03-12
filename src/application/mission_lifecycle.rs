@@ -534,7 +534,8 @@ mod tests {
     fn test_mission_achieve_checks_goals() {
         let temp = TestBoardBuilder::new()
             .mission(TestMission::new("M1").title("Mission One").status("active"))
-            .epic(TestEpic::new("E1").mission("M1")) // Epic E1 is NOT done
+            .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "E1").status("done"))
             .build();
 
         let charter_path = temp.path().join("missions/M1/CHARTER.md");
@@ -542,11 +543,12 @@ mod tests {
 ## Goals
 | ID | Description | Verification |
 |----|-------------|--------------|
-| MG-01 | Test goal | board: E1 |
+| MG-01 | Test goal | board: MISSING |
 "#;
         fs::write(charter_path, charter).unwrap();
 
-        // Should fail because E1 is not done
+        // Should fail because the board target is not satisfied even though the
+        // mission's child entities are already terminal.
         let res = MissionLifecycleService::achieve(temp.path(), "M1");
         assert!(res.is_err());
         assert!(res.unwrap_err().to_string().contains("unmet board goals"));
@@ -570,6 +572,7 @@ mod tests {
         let temp = TestBoardBuilder::new()
             .mission(TestMission::new("M1").status("active"))
             .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "E1").status("done"))
             .build();
         let charter_path = temp.path().join("missions/M1/CHARTER.md");
         fs::write(charter_path, "## Goals\n| ID | Description | Verification |\n|----|-------------|--------------|\n| MG-01 | G1 | manual: test |\n").unwrap();
@@ -585,6 +588,60 @@ mod tests {
         // Should now succeed (no board goals, manual goal doesn't block)
         let res = MissionLifecycleService::achieve(temp.path(), "M1");
         assert!(res.is_ok());
+    }
+
+    #[test]
+    fn test_mission_achieve_requires_terminal_children() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "E1").status("done"))
+            .bearing(
+                TestBearing::new("B1")
+                    .mission("M1")
+                    .status("ready")
+                    .has_evidence(true)
+                    .has_assessment(true),
+            )
+            .build();
+
+        let charter_path = temp.path().join("missions/M1/CHARTER.md");
+        fs::write(
+            charter_path,
+            "## Goals\n| ID | Description | Verification |\n|----|-------------|--------------|\n| MG-01 | G1 | manual: test |\n",
+        )
+        .unwrap();
+        MissionLifecycleService::log(temp.path(), "M1", "Did some work").unwrap();
+
+        let res = MissionLifecycleService::achieve(temp.path(), "M1");
+        assert!(res.is_err());
+        let err = res.unwrap_err().to_string();
+        assert!(err.contains("non-terminal child entities"));
+        assert!(err.contains("bearing B1 (ready)"));
+    }
+
+    #[test]
+    fn test_mission_verify_requires_terminal_children() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("achieved"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "E1").status("done"))
+            .bearing(
+                TestBearing::new("B1")
+                    .mission("M1")
+                    .status("ready")
+                    .has_evidence(true)
+                    .has_assessment(true),
+            )
+            .build();
+
+        MissionLifecycleService::log(temp.path(), "M1", "Did some work").unwrap();
+
+        let res = MissionLifecycleService::verify(temp.path(), "M1");
+        assert!(res.is_err());
+        let err = res.unwrap_err().to_string();
+        assert!(err.contains("non-terminal child entities"));
+        assert!(err.contains("bearing B1 (ready)"));
     }
 
     #[test]

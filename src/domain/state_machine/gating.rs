@@ -134,6 +134,12 @@ fn evaluate_mission_achieve(
         ));
     }
 
+    problems.extend(
+        crate::infrastructure::validation::missions::check_mission_terminal_children(
+            board, mission,
+        ),
+    );
+
     problems
 }
 
@@ -168,6 +174,12 @@ fn evaluate_mission_verification(
             ),
         ));
     }
+
+    problems.extend(
+        crate::infrastructure::validation::missions::check_mission_terminal_children(
+            board, mission,
+        ),
+    );
 
     problems
 }

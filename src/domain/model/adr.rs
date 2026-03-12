@@ -38,6 +38,13 @@ impl std::fmt::Display for AdrStatus {
     }
 }
 
+impl AdrStatus {
+    /// ADRs are terminal once they have been decided one way or another.
+    pub fn is_terminal(&self) -> bool {
+        !matches!(self, AdrStatus::Proposed)
+    }
+}
+
 impl std::str::FromStr for AdrStatus {
     type Err = String;
 
@@ -193,6 +200,15 @@ mod tests {
         let yaml = "accepted";
         let status: AdrStatus = serde_yaml::from_str(yaml).unwrap();
         assert_eq!(status, AdrStatus::Accepted);
+    }
+
+    #[test]
+    fn adr_status_terminal_states() {
+        assert!(!AdrStatus::Proposed.is_terminal());
+        assert!(AdrStatus::Accepted.is_terminal());
+        assert!(AdrStatus::Rejected.is_terminal());
+        assert!(AdrStatus::Deprecated.is_terminal());
+        assert!(AdrStatus::Superseded.is_terminal());
     }
 
     #[test]
