@@ -2,14 +2,15 @@
 id: VDcFgu8NA
 title: Business Automation Guide
 type: feat
-status: needs-human-verification
+status: done
 created_at: 2026-03-11T19:24:30
-updated_at: 2026-03-11T22:05:06
+updated_at: 2026-03-11T22:07:16
 operator-signal: 
 scope: VDakmJodq/VDcFd62ny
 index: 1
 started_at: 2026-03-11T22:01:09
 submitted_at: 2026-03-11T22:05:06
+completed_at: 2026-03-11T22:07:16
 ---
 
 # Business Automation Guide

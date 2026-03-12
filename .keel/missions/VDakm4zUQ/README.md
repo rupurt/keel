@@ -1,10 +1,12 @@
 ---
 id: VDakm4zUQ
 title: Temporal Pull and Business Process Automation
-status: active
+status: verified
 created_at: 2026-03-11T13:15:25
-updated_at: 2026-03-11T13:15:51
+updated_at: 2026-03-11T22:08:07
 activated_at: 2026-03-11T13:15:51
+achieved_at: 2026-03-11T22:07:58
+verified_at: 2026-03-11T22:08:07
 ---
 
 # Temporal Pull and Business Process Automation
