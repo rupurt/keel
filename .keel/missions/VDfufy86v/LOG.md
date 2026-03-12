@@ -18,3 +18,7 @@ Planned follow-on epic VDg0dAPVS and voyage VDg0f0aHW to deliver the interactive
 ## 2026-03-12T11:19:03
 
 Completed story VDg1N07jJ with interactive knowledge graph navigation, viewport-safe TTY controls, and clean non-TTY fallback. Mission operator lane now advances to VDg1MxQfg for the explicit static command surface.
+
+## 2026-03-12T14:35:02
+
+Completed story VDg1MxQfg by adding deterministic static knowledge graph flags and renderer path; voyage VDg0f0aHW is now 2/3 stories done and the next operator item is VDg1N0Zib.

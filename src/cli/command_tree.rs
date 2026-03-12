@@ -297,7 +297,27 @@ pub fn build_cli() -> Command {
                 )
                 .subcommand(
                     Command::new("graph")
-                        .about("Visualize the knowledge graph"),
+                        .about("Visualize the knowledge graph")
+                        .arg(
+                            Arg::new("zoom")
+                                .long("zoom")
+                                .value_name("LEVEL")
+                                .value_parser(["world", "delivery", "artifact", "source"])
+                                .default_value("world")
+                                .help("Zoom level to render"),
+                        )
+                        .arg(
+                            Arg::new("focus")
+                                .long("focus")
+                                .value_name("ID")
+                                .help("Center the graph on a specific node branch"),
+                        )
+                        .arg(
+                            Arg::new("static")
+                                .long("static")
+                                .help("Render once and exit even in an interactive terminal")
+                                .action(ArgAction::SetTrue),
+                        ),
                 )
                 .subcommand(
                     Command::new("impact")

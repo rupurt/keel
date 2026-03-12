@@ -33,7 +33,17 @@ pub enum KnowledgeAction {
     /// Explore thematic threads and rising patterns
     Explore,
     /// Visualize the knowledge graph (connections between insights and entities)
-    Graph,
+    Graph {
+        /// Zoom level to render
+        #[arg(long, value_name = "LEVEL", default_value = "world")]
+        zoom: String,
+        /// Center the graph on a specific node branch
+        #[arg(long, value_name = "ID")]
+        focus: Option<String>,
+        /// Render once and exit even in an interactive terminal
+        #[arg(long = "static")]
+        static_output: bool,
+    },
     /// Impact/Drift analysis: identify where knowledge is missing or successfully applied
     Impact,
     /// Prune duplicate knowledge and refresh canonical knowledge files
@@ -56,7 +66,14 @@ pub fn run(board_dir: &Path, action: KnowledgeAction) -> Result<()> {
         }
         KnowledgeAction::Show { id } => show::run(board_dir, &id),
         KnowledgeAction::Explore => explore::run(board_dir),
-        KnowledgeAction::Graph => graph::run(board_dir),
+        KnowledgeAction::Graph {
+            zoom,
+            focus,
+            static_output,
+        } => {
+            let zoom = zoom.parse().map_err(anyhow::Error::msg)?;
+            graph::run(board_dir, zoom, focus.as_deref(), static_output)
+        }
         KnowledgeAction::Impact => impact::run(board_dir),
         KnowledgeAction::Prune => prune::run(board_dir),
     }

@@ -333,6 +333,34 @@ fn cli_parses_knowledge_prune_command() {
 }
 
 #[test]
+fn cli_parses_knowledge_graph_command_with_static_surface_flags() {
+    let matches = crate::cli::build_cli()
+        .try_get_matches_from([
+            "keel",
+            "knowledge",
+            "graph",
+            "--zoom",
+            "artifact",
+            "--focus",
+            "story:S1",
+            "--static",
+        ])
+        .unwrap();
+    assert_eq!(matches.subcommand_name(), Some("knowledge"));
+    let knowledge = matches.subcommand_matches("knowledge").unwrap();
+    let graph = knowledge.subcommand_matches("graph").unwrap();
+    assert_eq!(
+        graph.get_one::<String>("zoom").map(|value| value.as_str()),
+        Some("artifact")
+    );
+    assert_eq!(
+        graph.get_one::<String>("focus").map(|value| value.as_str()),
+        Some("story:S1")
+    );
+    assert!(*graph.get_one::<bool>("static").unwrap());
+}
+
+#[test]
 fn cli_rejects_removed_knowledge_migrate_command() {
     let result = crate::cli::build_cli().try_get_matches_from(["keel", "knowledge", "migrate"]);
     assert!(result.is_err());

@@ -1,0 +1,14 @@
+---
+recorded_at: 2026-03-12T14:31:48.618548032-07:00
+command: cargo test --bin keel knowledge_graph_static_command_renders_deterministic_world_map
+---
+
+running 1 test
+test cli::commands::management::knowledge::graph::tests::knowledge_graph_static_command_renders_deterministic_world_map ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 648 filtered out; finished in 0.03s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running unittests src/main.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-8a8ff4aefdd88aa0)

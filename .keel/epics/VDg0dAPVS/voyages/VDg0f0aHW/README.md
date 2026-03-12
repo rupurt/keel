@@ -25,11 +25,11 @@ started_at: 2026-03-12T11:08:13
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/3 stories complete
+**Progress:** 2/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Add Static Knowledge Graph Command Surface](../../../../stories/VDg1MxQfg/README.md) | feat | backlog |
-| [Add Interactive Knowledge Graph Navigation](../../../../stories/VDg1N07jJ/README.md) | feat | in-progress |
+| [Add Static Knowledge Graph Command Surface](../../../../stories/VDg1MxQfg/README.md) | feat | done |
+| [Add Interactive Knowledge Graph Navigation](../../../../stories/VDg1N07jJ/README.md) | feat | done |
 | [Surface Drift Coefficient In Graph-Adjacent Views](../../../../stories/VDg1N0Zib/README.md) | feat | backlog |
 <!-- END GENERATED -->

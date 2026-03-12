@@ -3,6 +3,7 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::f64::consts::{FRAC_PI_2, TAU};
 use std::fmt::{Display, Write as _};
+use std::str::FromStr;
 
 use colored::Color;
 use txtplot::ChartContext;
@@ -60,6 +61,20 @@ impl Display for KnowledgeGraphZoom {
             Self::Delivery => write!(f, "delivery"),
             Self::Artifact => write!(f, "artifact"),
             Self::Source => write!(f, "source"),
+        }
+    }
+}
+
+impl FromStr for KnowledgeGraphZoom {
+    type Err = String;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value {
+            "world" => Ok(Self::World),
+            "delivery" => Ok(Self::Delivery),
+            "artifact" => Ok(Self::Artifact),
+            "source" => Ok(Self::Source),
+            other => Err(format!("unsupported knowledge graph zoom: {other}")),
         }
     }
 }

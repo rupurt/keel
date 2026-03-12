@@ -33,13 +33,6 @@ struct KnowledgeGraphViewState {
 }
 
 impl KnowledgeGraphViewState {
-    fn new() -> Self {
-        Self {
-            zoom: KnowledgeGraphZoom::World,
-            focus_id: None,
-        }
-    }
-
     fn zoom_in(&mut self) {
         self.zoom = self.zoom.zoom_in();
     }
@@ -143,35 +136,56 @@ impl Drop for KnowledgeGraphTerminalSession {
 }
 
 /// Run the graph command to visualize whole-project knowledge connections.
-pub fn run(board_dir: &Path) -> Result<()> {
-    run_with_dir(board_dir)
+pub fn run(
+    board_dir: &Path,
+    zoom: KnowledgeGraphZoom,
+    focus_id: Option<&str>,
+    static_output: bool,
+) -> Result<()> {
+    run_with_dir(board_dir, zoom, focus_id, static_output)
 }
 
-pub fn run_with_dir(board_dir: &Path) -> Result<()> {
+pub fn run_with_dir(
+    board_dir: &Path,
+    zoom: KnowledgeGraphZoom,
+    focus_id: Option<&str>,
+    static_output: bool,
+) -> Result<()> {
     let projection = load_projection(board_dir)?;
 
-    if should_run_interactive(io::stdin().is_terminal(), io::stdout().is_terminal()) {
-        return run_interactive(projection);
+    if should_run_interactive(
+        static_output,
+        io::stdin().is_terminal(),
+        io::stdout().is_terminal(),
+    ) {
+        return run_interactive(projection, zoom, focus_id);
     }
 
-    let output = build_knowledge_graph_output_with_width(
-        &projection,
-        KnowledgeGraphZoom::World,
-        None,
-        get_terminal_width(),
-    );
+    let output =
+        build_knowledge_graph_output_with_width(&projection, zoom, focus_id, get_terminal_width());
     print!("{output}");
     Ok(())
 }
 
-fn should_run_interactive(stdin_terminal: bool, stdout_terminal: bool) -> bool {
-    stdin_terminal && stdout_terminal
+fn should_run_interactive(
+    static_output: bool,
+    stdin_terminal: bool,
+    stdout_terminal: bool,
+) -> bool {
+    !static_output && stdin_terminal && stdout_terminal
 }
 
-fn run_interactive(projection: KnowledgeGraphProjection) -> Result<()> {
+fn run_interactive(
+    projection: KnowledgeGraphProjection,
+    zoom: KnowledgeGraphZoom,
+    focus_id: Option<&str>,
+) -> Result<()> {
     let mut stdout = io::stdout();
     let _session = KnowledgeGraphTerminalSession::enter(&mut stdout)?;
-    let mut state = KnowledgeGraphViewState::new();
+    let mut state = KnowledgeGraphViewState {
+        zoom,
+        focus_id: focus_id.map(ToOwned::to_owned),
+    };
 
     loop {
         let (width, height) = get_terminal_size();
@@ -350,12 +364,40 @@ source: knowledge/graph.md
             100,
         );
 
-        assert!(should_run_interactive(true, true));
-        assert!(!should_run_interactive(true, false));
+        assert!(should_run_interactive(false, true, true));
+        assert!(!should_run_interactive(false, true, false));
+        assert!(!should_run_interactive(true, true, true));
         assert!(frame.contains("Knowledge Graph"));
         assert!(frame.contains("Controls: +/- zoom"));
         assert!(frame.lines().count() <= 18);
         assert!(fallback.contains("Visible:"));
         assert!(fallback.contains("Mission One"));
+    }
+
+    #[test]
+    fn knowledge_graph_static_command_renders_deterministic_world_map() {
+        let temp = graph_fixture();
+
+        let first_projection = load_projection(temp.path()).unwrap();
+        let first = build_knowledge_graph_output_with_width(
+            &first_projection,
+            KnowledgeGraphZoom::World,
+            None,
+            100,
+        );
+
+        let second_projection = load_projection(temp.path()).unwrap();
+        let second = build_knowledge_graph_output_with_width(
+            &second_projection,
+            KnowledgeGraphZoom::World,
+            None,
+            100,
+        );
+
+        assert_eq!(first, second);
+        assert!(first.contains("Knowledge Graph"));
+        assert!(first.contains("Visible:"));
+        assert!(first.contains("Links:"));
+        assert!(first.contains("Mission One"));
     }
 }

@@ -188,7 +188,14 @@ fn handle_knowledge_command(matches: &ArgMatches) -> Result<()> {
             id: m.get_one::<String>("id").expect("required").clone(),
         },
         ("explore", _) => super::commands::management::knowledge::KnowledgeAction::Explore,
-        ("graph", _) => super::commands::management::knowledge::KnowledgeAction::Graph,
+        ("graph", m) => super::commands::management::knowledge::KnowledgeAction::Graph {
+            zoom: m
+                .get_one::<String>("zoom")
+                .cloned()
+                .unwrap_or_else(|| "world".to_string()),
+            focus: m.get_one::<String>("focus").cloned(),
+            static_output: *m.get_one::<bool>("static").unwrap_or(&false),
+        },
         ("impact", _) => super::commands::management::knowledge::KnowledgeAction::Impact,
         ("prune", _) => super::commands::management::knowledge::KnowledgeAction::Prune,
         (name, _) => return Err(anyhow::anyhow!("Unsupported knowledge subcommand: {name}")),
