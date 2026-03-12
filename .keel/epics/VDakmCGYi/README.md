@@ -20,8 +20,8 @@ index: 30
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 0/2 stories done
+**Progress:** 0/1 voyages complete, 1/2 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Temporal Routine Gating](voyages/VDcFd5kmn/) | in-progress | 0/2 |
+| [Temporal Routine Gating](voyages/VDcFd5kmn/) | in-progress | 1/2 |
 <!-- END GENERATED -->

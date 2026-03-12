@@ -1,0 +1,14 @@
+---
+recorded_at: 2026-03-11T21:20:34.128388968-07:00
+command: cargo test decision_to_json_includes_scheduled_routines_projection --bin keel
+---
+
+running 1 test
+test cli::commands::management::next::tests::decision_to_json_includes_scheduled_routines_projection ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 611 filtered out; finished in 0.00s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.07s
+     Running unittests src/main.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-6b6267650f0e80fa)

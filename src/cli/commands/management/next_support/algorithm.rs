@@ -162,6 +162,16 @@ pub fn calculate_next(
     agent_mode: bool,
     filter: &ItemFilter,
 ) -> Result<NextDecision> {
+    calculate_next_at(board, board_dir, agent_mode, filter, chrono::Utc::now())
+}
+
+pub(crate) fn calculate_next_at(
+    board: &Board,
+    board_dir: &Path,
+    agent_mode: bool,
+    filter: &ItemFilter,
+    _reference_time: chrono::DateTime<chrono::Utc>,
+) -> Result<NextDecision> {
     // 0. Board Health Check (Priority 0)
     // Disabled in tests to allow legacy mock boards to pass without heavy instrumentation.
     #[cfg(not(test))]
@@ -374,6 +384,14 @@ pub fn calculate_next(
 
     // 6. Implementation work selection (agent only)
     if agent_mode {
+        let scheduled_routines = keel::read_model::scheduled_routines::project_scheduled_routines(
+            board,
+            _reference_time,
+            keel::read_model::scheduled_routines::RoutineScheduleFilter {
+                mission_id: filter.mission_id,
+            },
+        );
+
         // 6a. Continue in-progress work (actor-specific)
         let in_progress: Vec<_> = board
             .stories
@@ -398,6 +416,12 @@ pub fn calculate_next(
             .filter(|s| s.status == StoryState::Backlog)
             .filter(|s| {
                 keel::domain::state_machine::invariants::story_workable(s, board, board_dir)
+            })
+            .filter(|s| {
+                !keel::read_model::scheduled_routines::story_is_gated_by_scheduled_routines(
+                    s,
+                    &scheduled_routines,
+                )
             })
             .filter(|s| filter.matches_story(board, s))
             .collect();
@@ -550,9 +574,36 @@ fn is_goal_met(board: &Board, target: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::TimeZone;
     use keel::domain::model::StoryState;
-    use keel::test_helpers::{TestAdr, TestBearing, TestBoardBuilder, TestMission, TestStory};
+    use keel::test_helpers::{
+        TestAdr, TestBearing, TestBoardBuilder, TestEpic, TestMission, TestStory, TestVoyage,
+    };
     use std::fs;
+    use std::path::Path;
+
+    fn write_routine(root: &Path, id: &str, target_scope: &str, cadence_block: &str) {
+        let routine_dir = root.join("routines").join(id);
+        fs::create_dir_all(&routine_dir).unwrap();
+        fs::write(
+            routine_dir.join("README.md"),
+            format!(
+                r#"---
+id: {id}
+title: {id}
+cadence:
+{cadence_block}
+target-scope: {target_scope}
+created_at: 2026-01-01T00:00:00
+updated_at: 2026-01-01T00:00:00
+---
+
+# Blueprint
+"#
+            ),
+        )
+        .unwrap();
+    }
 
     fn assert_human_queue_decision(decision: &NextDecision) {
         match decision {
@@ -665,6 +716,122 @@ mod tests {
                 assert_eq!(d.unmet_goals.len(), 1);
             }
             other => panic!("expected mission decision, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn calculate_next_filters_non_due_routine_scope_before_ranking() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .epic(TestEpic::new("e2"))
+            .voyage(
+                TestVoyage::new("v1", "e1")
+                    .status("planned")
+                    .srs_content("# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req | test |\nEND FUNCTIONAL_REQUIREMENTS"),
+            )
+            .voyage(
+                TestVoyage::new("v2", "e2")
+                    .status("planned")
+                    .srs_content("# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req | test |\nEND FUNCTIONAL_REQUIREMENTS"),
+            )
+            .story(TestStory::new("A1").scope("e1/v1"))
+            .story(TestStory::new("B1").scope("e2/v2"))
+            .build();
+        write_routine(
+            temp.path(),
+            "routine-upcoming",
+            "e1/v1",
+            "  cron: 0 11 * * 1\n  timezone: America/Los_Angeles",
+        );
+
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
+        let next = calculate_next_at(
+            &board,
+            temp.path(),
+            true,
+            &ItemFilter::none(),
+            chrono::Utc.with_ymd_and_hms(2026, 1, 5, 18, 0, 0).unwrap(),
+        )
+        .unwrap();
+
+        match next {
+            NextDecision::Work(d) => assert_eq!(d.story.id(), "B1"),
+            other => panic!("expected work decision, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn calculate_next_keeps_due_routine_scope_in_existing_priority_order() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .epic(TestEpic::new("e2"))
+            .voyage(
+                TestVoyage::new("v1", "e1")
+                    .status("planned")
+                    .srs_content("# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req | test |\nEND FUNCTIONAL_REQUIREMENTS"),
+            )
+            .voyage(
+                TestVoyage::new("v2", "e2")
+                    .status("planned")
+                    .srs_content("# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req | test |\nEND FUNCTIONAL_REQUIREMENTS"),
+            )
+            .story(TestStory::new("A1").scope("e1/v1"))
+            .story(TestStory::new("B1").scope("e2/v2"))
+            .build();
+        write_routine(
+            temp.path(),
+            "routine-due",
+            "e1/v1",
+            "  cron: 0 9 * * 1\n  timezone: America/Los_Angeles",
+        );
+
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
+        let next = calculate_next_at(
+            &board,
+            temp.path(),
+            true,
+            &ItemFilter::none(),
+            chrono::Utc.with_ymd_and_hms(2026, 1, 5, 18, 0, 0).unwrap(),
+        )
+        .unwrap();
+
+        match next {
+            NextDecision::Work(d) => assert_eq!(d.story.id(), "A1"),
+            other => panic!("expected work decision, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn calculate_next_degrades_safely_when_routine_cadence_is_invalid() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(
+                TestVoyage::new("v1", "e1")
+                    .status("planned")
+                    .srs_content("# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req | test |\nEND FUNCTIONAL_REQUIREMENTS"),
+            )
+            .story(TestStory::new("A1").scope("e1/v1"))
+            .build();
+        write_routine(
+            temp.path(),
+            "routine-invalid",
+            "e1/v1",
+            "  timezone: America/Los_Angeles",
+        );
+
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
+        let next = calculate_next_at(
+            &board,
+            temp.path(),
+            true,
+            &ItemFilter::none(),
+            chrono::Utc.with_ymd_and_hms(2026, 1, 5, 18, 0, 0).unwrap(),
+        )
+        .unwrap();
+
+        match next {
+            NextDecision::Work(d) => assert_eq!(d.story.id(), "A1"),
+            other => panic!("expected work decision, got {other:?}"),
         }
     }
 }

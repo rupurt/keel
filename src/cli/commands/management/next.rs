@@ -8,6 +8,7 @@ use anyhow::{Result, bail};
 use owo_colors::OwoColorize;
 use serde::Serialize;
 
+#[allow(unused_imports)] // Re-exported for regression tests and external command callers.
 pub use super::next_support::{ItemFilter, NextDecision, calculate_next, format_decision};
 
 #[cfg(test)]
@@ -24,14 +25,30 @@ use crate::cli::commands::management::story::guidance::{
 };
 use keel::domain::model::Story;
 use keel::infrastructure::loader::load_board;
+use keel::read_model::scheduled_routines::ScheduledRoutineProjection;
 use keel::read_model::workflow_topology::{self, ResolvedWorkflowTopology};
 
 #[derive(Serialize)]
 struct JsonResult {
     decision: String,
     details: JsonDetails,
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    scheduled_routines: Vec<JsonScheduledRoutine>,
     #[serde(skip_serializing_if = "Option::is_none")]
     guidance: Option<CanonicalGuidance>,
+}
+
+#[derive(Serialize)]
+struct JsonScheduledRoutine {
+    id: String,
+    title: String,
+    target_scope: String,
+    state: String,
+    actionable: bool,
+    gating_reason: String,
+    next_eligible_at: Option<chrono::DateTime<chrono::Utc>>,
+    countdown: Option<String>,
+    error: Option<String>,
 }
 
 #[derive(Serialize, Clone)]
@@ -232,6 +249,16 @@ pub(crate) fn calculate_next_for_role(
     parallel: bool,
     actor_role: Option<&keel::domain::model::taxonomy::RoleTaxonomy>,
 ) -> Result<NextDecision> {
+    calculate_next_for_role_at(board, board_dir, parallel, actor_role, chrono::Utc::now())
+}
+
+fn calculate_next_for_role_at(
+    board: &keel::domain::model::Board,
+    board_dir: &Path,
+    parallel: bool,
+    actor_role: Option<&keel::domain::model::taxonomy::RoleTaxonomy>,
+    reference_time: chrono::DateTime<chrono::Utc>,
+) -> Result<NextDecision> {
     let topology = workflow_topology::load_for_board(board_dir)?;
 
     let effective_role = match actor_role {
@@ -261,7 +288,13 @@ pub(crate) fn calculate_next_for_role(
         actor_role: Some(&effective_role),
     };
 
-    calculate_next(board, board_dir, execution_mode, &filter)
+    super::next_support::algorithm::calculate_next_at(
+        board,
+        board_dir,
+        execution_mode,
+        &filter,
+        reference_time,
+    )
 }
 
 /// Run the next command
@@ -273,6 +306,7 @@ pub fn run(
 ) -> Result<()> {
     let board = load_board(board_dir)?;
     let topology = workflow_topology::load_for_board(board_dir)?;
+    let reference_time = chrono::Utc::now();
 
     let effective_role = match actor_role {
         Some(r) => r.clone(),
@@ -313,10 +347,18 @@ pub fn run(
             Some(&effective_role),
             Some(&resolved_context),
             &management_role_example,
+            reference_time,
         );
     }
 
-    let decision = calculate_next_for_role(&board, board_dir, false, Some(&effective_role))?;
+    let decision = calculate_next_for_role_at(
+        &board,
+        board_dir,
+        false,
+        Some(&effective_role),
+        reference_time,
+    )?;
+    let scheduled_routines = scheduled_routines_for_next(&board, reference_time);
 
     let role_context =
         keel::read_model::role_context::resolve_role_context(&topology, &effective_role)
@@ -324,10 +366,19 @@ pub fn run(
             .map(|contract| RoleContextGuidance::from_contract(&effective_role, contract));
 
     if json {
-        let result = decision_to_json(&decision, role_context.as_ref(), &management_role_example);
+        let result = decision_to_json(
+            &decision,
+            &scheduled_routines,
+            role_context.as_ref(),
+            &management_role_example,
+        );
         println!("{}", serde_json::to_string_pretty(&result)?);
     } else {
         println!("{}", format_decision(&decision));
+        let scheduled = render_scheduled_routines_human(&scheduled_routines);
+        if !scheduled.is_empty() {
+            print!("{scheduled}");
+        }
         print_human_guidance(
             guidance_for_decision(&decision, role_context.as_ref(), &management_role_example)
                 .as_ref(),
@@ -395,8 +446,20 @@ fn surface_ranked_knowledge(
     );
 }
 
+fn scheduled_routines_for_next(
+    board: &keel::domain::model::Board,
+    reference_time: chrono::DateTime<chrono::Utc>,
+) -> Vec<ScheduledRoutineProjection> {
+    keel::read_model::scheduled_routines::project_scheduled_routines(
+        board,
+        reference_time,
+        keel::read_model::scheduled_routines::RoutineScheduleFilter::default(),
+    )
+}
+
 fn decision_to_json(
     decision: &NextDecision,
+    scheduled_routines: &[ScheduledRoutineProjection],
     role_context: Option<&RoleContextGuidance>,
     management_role_example: &str,
 ) -> JsonResult {
@@ -471,6 +534,7 @@ fn decision_to_json(
     JsonResult {
         decision: decision_kind(decision).to_string(),
         details,
+        scheduled_routines: json_scheduled_routines(scheduled_routines),
         guidance: guidance_for_decision(decision, role_context, management_role_example),
     }
 }
@@ -621,6 +685,91 @@ fn print_human_guidance(guidance: Option<&CanonicalGuidance>) {
     }
 }
 
+fn render_scheduled_routines_human(scheduled: &[ScheduledRoutineProjection]) -> String {
+    if scheduled.is_empty() {
+        return String::new();
+    }
+
+    let mut out = String::new();
+    out.push_str("\nScheduled routines:\n");
+
+    for routine in scheduled {
+        let line = match routine.state {
+            keel::read_model::scheduled_routines::ScheduledRoutineState::Due => format!(
+                "due now; next run {}{}",
+                routine.countdown.as_deref().unwrap_or("later"),
+                next_eligible_suffix(routine.next_eligible_at)
+            ),
+            keel::read_model::scheduled_routines::ScheduledRoutineState::Upcoming => format!(
+                "next run {}{}",
+                routine.countdown.as_deref().unwrap_or("later"),
+                next_eligible_suffix(routine.next_eligible_at)
+            ),
+            keel::read_model::scheduled_routines::ScheduledRoutineState::Invalid => format!(
+                "invalid cadence: {}",
+                routine.error.as_deref().unwrap_or("unknown error")
+            ),
+        };
+
+        out.push_str(&format!(
+            "  - {} {} [{}] {}\n",
+            crate::cli::style::styled_id(&routine.id),
+            routine.title,
+            crate::cli::style::styled_scope(Some(&routine.target_scope)),
+            line
+        ));
+    }
+
+    out
+}
+
+fn json_scheduled_routines(scheduled: &[ScheduledRoutineProjection]) -> Vec<JsonScheduledRoutine> {
+    scheduled
+        .iter()
+        .map(|routine| JsonScheduledRoutine {
+            id: routine.id.clone(),
+            title: routine.title.clone(),
+            target_scope: routine.target_scope.clone(),
+            state: scheduled_state_label(routine.state).to_string(),
+            actionable: routine.actionable,
+            gating_reason: scheduled_reason_label(routine.gating_reason).to_string(),
+            next_eligible_at: routine.next_eligible_at,
+            countdown: routine.countdown.clone(),
+            error: routine.error.clone(),
+        })
+        .collect()
+}
+
+fn next_eligible_suffix(next_eligible_at: Option<chrono::DateTime<chrono::Utc>>) -> String {
+    next_eligible_at
+        .map(|next| format!(" ({})", next.to_rfc3339()))
+        .unwrap_or_default()
+}
+
+fn scheduled_state_label(
+    state: keel::read_model::scheduled_routines::ScheduledRoutineState,
+) -> &'static str {
+    match state {
+        keel::read_model::scheduled_routines::ScheduledRoutineState::Due => "due",
+        keel::read_model::scheduled_routines::ScheduledRoutineState::Upcoming => "upcoming",
+        keel::read_model::scheduled_routines::ScheduledRoutineState::Invalid => "invalid",
+    }
+}
+
+fn scheduled_reason_label(
+    reason: keel::read_model::scheduled_routines::ScheduledRoutineGatingReason,
+) -> &'static str {
+    match reason {
+        keel::read_model::scheduled_routines::ScheduledRoutineGatingReason::DueNow => "due_now",
+        keel::read_model::scheduled_routines::ScheduledRoutineGatingReason::NotDueUntilNextEligible => {
+            "not_due_until_next_eligible"
+        }
+        keel::read_model::scheduled_routines::ScheduledRoutineGatingReason::InvalidCadence => {
+            "invalid_cadence"
+        }
+    }
+}
+
 fn render_parallel_blockers_human(
     blocked_pairs: &[crate::cli::commands::management::next_support::parallel_threshold::PairwiseBlocker],
 ) -> String {
@@ -646,15 +795,23 @@ fn project_parallel_work<'a>(
     board: &'a keel::domain::model::Board,
     board_dir: &Path,
     actor_role: Option<&keel::domain::model::taxonomy::RoleTaxonomy>,
+    reference_time: chrono::DateTime<chrono::Utc>,
 ) -> ParallelProjection<'a> {
     use keel::domain::state_machine::invariants;
+    use keel::read_model::scheduled_routines::{
+        RoutineScheduleFilter, project_scheduled_routines, story_is_gated_by_scheduled_routines,
+    };
     use keel::read_model::traceability::derive_implementation_dependencies;
+
+    let scheduled_routines =
+        project_scheduled_routines(board, reference_time, RoutineScheduleFilter::default());
 
     // Get all workable stories, optionally filtered by role.
     let mut candidates: Vec<&Story> = board
         .stories
         .values()
         .filter(|s| invariants::story_workable(s, board, board_dir))
+        .filter(|s| !story_is_gated_by_scheduled_routines(s, &scheduled_routines))
         .filter(|s| {
             actor_role
                 .map(|actor| keel::domain::model::taxonomy::actor_matches_story(actor, s))
@@ -731,6 +888,7 @@ fn json_pairwise_blockers(
 
 fn build_parallel_json_result(
     projection: &ParallelProjection<'_>,
+    scheduled_routines: &[ScheduledRoutineProjection],
     role_context: Option<&RoleContextGuidance>,
     _management_role_example: &str,
 ) -> JsonResult {
@@ -775,6 +933,7 @@ fn build_parallel_json_result(
             sequential_chains: sequential_json,
             blocked_pairs: json_pairwise_blockers(&projection.blocked_pairs),
         },
+        scheduled_routines: json_scheduled_routines(scheduled_routines),
         guidance: guidance_for_parallel_ready(&projection.ready, role_context),
     }
 }
@@ -786,12 +945,19 @@ fn run_parallel(
     actor_role: Option<&keel::domain::model::taxonomy::RoleTaxonomy>,
     actor_context: Option<&ResolvedActorContext>,
     management_role_example: &str,
+    reference_time: chrono::DateTime<chrono::Utc>,
 ) -> Result<()> {
-    let projection = project_parallel_work(board, board_dir, actor_role);
+    let projection = project_parallel_work(board, board_dir, actor_role, reference_time);
+    let scheduled_routines = scheduled_routines_for_next(board, reference_time);
     let role_context = actor_context.and_then(|context| context.role_context.as_ref());
 
     if json {
-        let result = build_parallel_json_result(&projection, role_context, management_role_example);
+        let result = build_parallel_json_result(
+            &projection,
+            &scheduled_routines,
+            role_context,
+            management_role_example,
+        );
         println!("{}", serde_json::to_string_pretty(&result)?);
     } else {
         println!("Ready for Work (Parallel Safe):");
@@ -832,6 +998,11 @@ fn run_parallel(
             print!("{blockers_human}");
         }
 
+        let scheduled = render_scheduled_routines_human(&scheduled_routines);
+        if !scheduled.is_empty() {
+            print!("{scheduled}");
+        }
+
         print_human_guidance(guidance_for_parallel_ready(&projection.ready, role_context).as_ref());
     }
 
@@ -857,6 +1028,7 @@ fn parallel_story_with_scope(story: &Story) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::TimeZone;
     use keel::domain::model::Story;
     use keel::domain::model::StoryState;
     use keel::test_helpers::{
@@ -864,6 +1036,30 @@ mod tests {
         TestVoyage, VoyageFactory,
     };
     use std::fs;
+    use std::path::Path;
+
+    fn write_routine(root: &Path, id: &str, target_scope: &str, cadence_block: &str) {
+        let routine_dir = root.join("routines").join(id);
+        fs::create_dir_all(&routine_dir).unwrap();
+        fs::write(
+            routine_dir.join("README.md"),
+            format!(
+                r#"---
+id: {id}
+title: {id}
+cadence:
+{cadence_block}
+target-scope: {target_scope}
+created_at: 2026-01-01T00:00:00
+updated_at: 2026-01-01T00:00:00
+---
+
+# Blueprint
+"#
+            ),
+        )
+        .unwrap();
+    }
 
     #[test]
     fn exit_code_work_is_0() {
@@ -963,7 +1159,7 @@ priority = 50
     fn assert_human_json_guidance_parity(decision: &NextDecision) {
         let guidance = guidance_for_decision(decision, None, "manager");
         let rendered = render_human_guidance(guidance.as_ref());
-        let json = serde_json::to_value(decision_to_json(decision, None, "manager")).unwrap();
+        let json = serde_json::to_value(decision_to_json(decision, &[], None, "manager")).unwrap();
 
         match guidance.as_ref() {
             Some(g) if g.next_step.is_some() => {
@@ -999,7 +1195,7 @@ priority = 50
             warning: None,
         });
 
-        let payload = decision_to_json(&decision, None, "manager");
+        let payload = decision_to_json(&decision, &[], None, "manager");
         let json = serde_json::to_value(payload).unwrap();
 
         assert_eq!(json["decision"], "work");
@@ -1018,7 +1214,7 @@ priority = 50
             warning: None,
         });
 
-        let payload = decision_to_json(&decision, None, "manager");
+        let payload = decision_to_json(&decision, &[], None, "manager");
         let json = serde_json::to_value(payload).unwrap();
 
         assert_eq!(json["decision"], "work");
@@ -1035,7 +1231,7 @@ priority = 50
             stories: vec![make_story("S2")],
         });
 
-        let payload = decision_to_json(&decision, None, "manager");
+        let payload = decision_to_json(&decision, &[], None, "manager");
         let json = serde_json::to_value(payload).unwrap();
 
         assert_eq!(json["decision"], "accept");
@@ -1053,7 +1249,7 @@ priority = 50
             count: 9,
         });
 
-        let payload = decision_to_json(&decision, None, "manager");
+        let payload = decision_to_json(&decision, &[], None, "manager");
         let json = serde_json::to_value(payload).unwrap();
 
         assert_eq!(json["decision"], "blocked");
@@ -1070,7 +1266,7 @@ priority = 50
             suggestions: vec!["Refuel".to_string()],
         });
 
-        let payload = decision_to_json(&decision, None, "manager");
+        let payload = decision_to_json(&decision, &[], None, "manager");
         let json = serde_json::to_value(payload).unwrap();
 
         assert!(json.get("guidance").is_none());
@@ -1085,7 +1281,7 @@ priority = 50
         });
         let role_context = make_role_context("operator/software");
 
-        let payload = decision_to_json(&decision, Some(&role_context), "manager");
+        let payload = decision_to_json(&decision, &[], Some(&role_context), "manager");
         let json = serde_json::to_value(payload).unwrap();
 
         assert_eq!(
@@ -1207,6 +1403,7 @@ priority = 50
                     confidence: 0.5,
                 }],
             },
+            scheduled_routines: vec![],
             guidance: None,
         };
 
@@ -1226,6 +1423,115 @@ priority = 50
         assert_eq!(
             json["details"]["parallel_work"]["blocked_pairs"][0]["confidence"],
             0.5
+        );
+    }
+
+    #[test]
+    fn render_scheduled_routines_human_shows_due_and_countdown_context() {
+        let scheduled = vec![
+            ScheduledRoutineProjection {
+                id: "routine-due".to_string(),
+                title: "Weekly Review".to_string(),
+                target_scope: "E1/V1".to_string(),
+                state: keel::read_model::scheduled_routines::ScheduledRoutineState::Due,
+                actionable: true,
+                gating_reason:
+                    keel::read_model::scheduled_routines::ScheduledRoutineGatingReason::DueNow,
+                next_eligible_at: Some(
+                    chrono::Utc
+                        .with_ymd_and_hms(2026, 1, 12, 17, 0, 0)
+                        .unwrap(),
+                ),
+                countdown: Some("in 6d 23h".to_string()),
+                error: None,
+            },
+            ScheduledRoutineProjection {
+                id: "routine-upcoming".to_string(),
+                title: "Friday Review".to_string(),
+                target_scope: "E1/V1".to_string(),
+                state: keel::read_model::scheduled_routines::ScheduledRoutineState::Upcoming,
+                actionable: false,
+                gating_reason: keel::read_model::scheduled_routines::ScheduledRoutineGatingReason::NotDueUntilNextEligible,
+                next_eligible_at: Some(
+                    chrono::Utc
+                        .with_ymd_and_hms(2026, 1, 5, 19, 0, 0)
+                        .unwrap(),
+                ),
+                countdown: Some("in 1h".to_string()),
+                error: None,
+            },
+        ];
+
+        let rendered = render_scheduled_routines_human(&scheduled);
+
+        assert!(rendered.contains("Scheduled routines:"));
+        assert!(rendered.contains("routine-due"));
+        assert!(rendered.contains("due now"));
+        assert!(rendered.contains("routine-upcoming"));
+        assert!(rendered.contains("next run in 1h"));
+    }
+
+    #[test]
+    fn json_scheduled_routines_includes_gating_metadata() {
+        let scheduled = vec![ScheduledRoutineProjection {
+            id: "routine-upcoming".to_string(),
+            title: "Friday Review".to_string(),
+            target_scope: "E1/V1".to_string(),
+            state: keel::read_model::scheduled_routines::ScheduledRoutineState::Upcoming,
+            actionable: false,
+            gating_reason: keel::read_model::scheduled_routines::ScheduledRoutineGatingReason::NotDueUntilNextEligible,
+            next_eligible_at: Some(
+                chrono::Utc
+                    .with_ymd_and_hms(2026, 1, 5, 19, 0, 0)
+                    .unwrap(),
+            ),
+            countdown: Some("in 1h".to_string()),
+            error: None,
+        }];
+
+        let json = serde_json::to_value(json_scheduled_routines(&scheduled)).unwrap();
+
+        assert_eq!(json[0]["id"], "routine-upcoming");
+        assert_eq!(json[0]["state"], "upcoming");
+        assert_eq!(json[0]["gating_reason"], "not_due_until_next_eligible");
+        assert_eq!(json[0]["countdown"], "in 1h");
+        assert_eq!(json[0]["next_eligible_at"], "2026-01-05T19:00:00Z");
+    }
+
+    #[test]
+    fn decision_to_json_includes_scheduled_routines_projection() {
+        let decision = NextDecision::Work(StoryDecision {
+            story: make_story("SCHED"),
+            is_continuation: false,
+            warning: None,
+        });
+        let scheduled = vec![ScheduledRoutineProjection {
+            id: "routine-upcoming".to_string(),
+            title: "Friday Review".to_string(),
+            target_scope: "E1/V1".to_string(),
+            state: keel::read_model::scheduled_routines::ScheduledRoutineState::Upcoming,
+            actionable: false,
+            gating_reason: keel::read_model::scheduled_routines::ScheduledRoutineGatingReason::NotDueUntilNextEligible,
+            next_eligible_at: Some(
+                chrono::Utc
+                    .with_ymd_and_hms(2026, 1, 5, 19, 0, 0)
+                    .unwrap(),
+            ),
+            countdown: Some("in 1h".to_string()),
+            error: None,
+        }];
+
+        let payload = decision_to_json(&decision, &scheduled, None, "manager");
+        let json = serde_json::to_value(payload).unwrap();
+
+        assert_eq!(json["scheduled_routines"][0]["id"], "routine-upcoming");
+        assert_eq!(
+            json["scheduled_routines"][0]["gating_reason"],
+            "not_due_until_next_eligible"
+        );
+        assert_eq!(
+            json["scheduled_routines"][0]["next_eligible_at"],
+            "2026-01-05T19:00:00Z"
         );
     }
 
@@ -1260,17 +1566,22 @@ priority = 50
         let board_first = keel::infrastructure::loader::load_board(temp.path()).unwrap();
         let board_second = keel::infrastructure::loader::load_board(temp.path()).unwrap();
 
-        let first_projection = project_parallel_work(&board_first, temp.path(), None);
-        let second_projection = project_parallel_work(&board_second, temp.path(), None);
+        let reference_time = chrono::Utc.with_ymd_and_hms(2026, 1, 5, 18, 0, 0).unwrap();
+        let first_projection =
+            project_parallel_work(&board_first, temp.path(), None, reference_time);
+        let second_projection =
+            project_parallel_work(&board_second, temp.path(), None, reference_time);
 
         let first_output = serde_json::to_string_pretty(&build_parallel_json_result(
             &first_projection,
+            &[],
             None,
             "manager",
         ))
         .unwrap();
         let second_output = serde_json::to_string_pretty(&build_parallel_json_result(
             &second_projection,
+            &[],
             None,
             "manager",
         ))
@@ -1315,7 +1626,12 @@ priority = 50
             .build();
 
         let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
-        let projection = project_parallel_work(&board, temp.path(), None);
+        let projection = project_parallel_work(
+            &board,
+            temp.path(),
+            None,
+            chrono::Utc.with_ymd_and_hms(2026, 1, 5, 18, 0, 0).unwrap(),
+        );
 
         let selected_ids: Vec<_> = projection.ready.iter().map(|story| story.id()).collect();
         assert_eq!(selected_ids, vec!["S1", "S3"]);
@@ -1323,8 +1639,13 @@ priority = 50
 
         let blocker = &projection.blocked_pairs[0];
         let human = render_parallel_blockers_human(&projection.blocked_pairs);
-        let json = serde_json::to_value(build_parallel_json_result(&projection, None, "manager"))
-            .expect("json payload");
+        let json = serde_json::to_value(build_parallel_json_result(
+            &projection,
+            &[],
+            None,
+            "manager",
+        ))
+        .expect("json payload");
         let json_blocker = &json["details"]["parallel_work"]["blocked_pairs"][0];
 
         assert_eq!(json_blocker["story_id"], blocker.story_id);
@@ -1337,6 +1658,48 @@ priority = 50
         assert!(human.contains(&blocker.story_id));
         assert!(human.contains(&blocker.blocked_by_story_id));
         assert!(human.contains(blocker.reasons[0].as_str()));
+    }
+
+    #[test]
+    fn project_parallel_work_filters_non_due_routine_scope() {
+        let srs = "# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req1 | test |\nEND FUNCTIONAL_REQUIREMENTS";
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .epic(TestEpic::new("e2"))
+            .voyage(
+                TestVoyage::new("v1", "e1")
+                    .status("planned")
+                    .srs_content(srs),
+            )
+            .voyage(
+                TestVoyage::new("v2", "e2")
+                    .status("planned")
+                    .srs_content(srs),
+            )
+            .story(
+                TestStory::new("A1")
+                    .scope("e1/v1")
+                    .title("Routine Scope Story"),
+            )
+            .story(TestStory::new("B1").scope("e2/v2").title("Ungated Story"))
+            .build();
+        write_routine(
+            temp.path(),
+            "routine-upcoming",
+            "e1/v1",
+            "  cron: 0 11 * * 1\n  timezone: America/Los_Angeles",
+        );
+
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
+        let projection = project_parallel_work(
+            &board,
+            temp.path(),
+            None,
+            chrono::Utc.with_ymd_and_hms(2026, 1, 5, 18, 0, 0).unwrap(),
+        );
+
+        let ready_ids: Vec<_> = projection.ready.iter().map(|story| story.id()).collect();
+        assert_eq!(ready_ids, vec!["B1"]);
     }
 
     #[test]
