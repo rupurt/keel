@@ -24,7 +24,7 @@ Keel uses a flexible, role-based lane topology to route work. This is configured
 
 ### Workflow Defaults
 
-Defines the default roles and lanes used by commands like `keel next` and `keel flow`.
+Defines the default roles and lanes used by commands like `keel next --role <role>` and `keel flow`.
 
 ```toml
 [workflow.defaults]

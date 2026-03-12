@@ -159,9 +159,10 @@ The zero-config topology seeds:
 | `delivery` | `story.backlog`, `story.in-progress` | `operator` | Active delivery work |
 
 Pull commands:
-- `keel next`: management lane only (never returns implementation `Work`).
+- `keel next --role manager`: management lane only (never returns implementation `Work`).
 - `keel next --role <role>`: pull work from the lane associated with the role family.
 - `keel next --role operator`: delivery lane (`in-progress` then `backlog`).
+- `keel next` requires `--role`; there is no implicit management-lane fallback.
 - `keel flow`: visual dashboard using the same queue policy semantics plus topology-resolved lane cards.
 
 Config-driven mapping:
@@ -185,7 +186,7 @@ Verification queue categories are shared across command and flow paths:
 - `HumanBlocked` when queue is `5..20` (blocks human `keel next`).
 - `FlowBlocked` when queue is `> 20` (blocks flow and human `keel next`).
 
-Human-mode `keel next` decision set is constrained to:
+Management-lane `keel next --role <management-role>` decision set is constrained to:
 `decision`, `accept`, `research`, `needs-stories`, `needs-planning`, `blocked`, `empty`.
 It never returns `Work`.
 

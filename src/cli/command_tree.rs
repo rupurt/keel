@@ -11,7 +11,7 @@ Setup
   generate    Regenerate all README files
 
 Management
-  next        Pull the next item using role-based queue routing
+  next        Pull the next item using explicit role-based queue routing
   pulse       Run one non-interactive automation cycle
   topology    Show an epic-scoped topology map
   play        Invite play-driven discovery
@@ -98,13 +98,14 @@ pub fn build_cli() -> Command {
         )
         .subcommand(
             Command::new("next")
-                .about("Pull the next item for the role-selected queue")
+                .about("Pull the next item for an explicit role-selected queue")
                 .hide(true)
                 .arg(
                     Arg::new("role")
                         .long("role")
                         .value_name("TAXONOMY")
-                        .help("Role taxonomy controlling queue selection (e.g., \"manager\" or \"operator/software:infrastructure\")")
+                        .required(true)
+                        .help("Required role taxonomy controlling queue selection (e.g., \"manager\" or \"operator/software:infrastructure\")")
                         .num_args(1),
                 )
                 .arg(

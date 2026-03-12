@@ -56,16 +56,10 @@ pub fn run() -> Result<()> {
         Some(("next", m)) => {
             let json = *m.get_one::<bool>("json").unwrap_or(&false);
             let parallel = *m.get_one::<bool>("parallel").unwrap_or(&false);
-            let role_str = m.get_one::<String>("role");
-            let role =
-                super::commands::management::next::parse_actor_role(role_str.map(String::as_str))?;
+            let role_str = m.get_one::<String>("role").expect("required");
+            let role = super::commands::management::next::parse_actor_role(role_str)?;
 
-            super::commands::management::next::run(
-                &resolve_board_dir()?,
-                json,
-                parallel,
-                role.as_ref(),
-            )
+            super::commands::management::next::run(&resolve_board_dir()?, json, parallel, &role)
         }
         Some(("pulse", m)) => {
             let json = *m.get_one::<bool>("json").unwrap_or(&false);

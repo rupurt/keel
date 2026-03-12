@@ -29,8 +29,9 @@ Use the current canonical command names:
 - `keel flow`
 - `keel pulse`
 
-`keel next` without `--role operator` remains a management-lane command. Do not
-use removed legacy flags such as `--agent` or `--human`.
+`keel next` now requires `--role`. Use `keel next --role manager` for
+management-lane review and `keel next --role operator` for delivery review. Do
+not use removed legacy flags such as `--agent` or `--human`.
 
 ## Author A Routine
 

@@ -904,9 +904,9 @@ mod queue_policy_docs {
     fn command_help_docs_describe_role_based_queue_terms() {
         assert!(
             README_DOC.contains(
-                "`keel next` defaults to management-lane decisions and never returns implementation `Work`."
+                "`keel next --role manager` returns management-lane decisions and never returns implementation `Work`."
             ),
-            "README.md should document the default management lane boundary for `keel next`"
+            "README.md should document the explicit management lane boundary for `keel next`"
         );
         assert!(
             README_DOC.contains(
@@ -915,9 +915,14 @@ mod queue_policy_docs {
             "README.md should document `--role operator` delivery-lane behavior"
         );
         assert!(
+            README_DOC
+                .contains("`keel next` requires `--role`; there is no implicit manager default."),
+            "README.md should document that `keel next` requires an explicit role"
+        );
+        assert!(
             COMMAND_TREE_RS
-                .contains("next        Pull the next item using role-based queue routing"),
-            "CLI help text should describe role-based queue routing for `next`"
+                .contains("next        Pull the next item using explicit role-based queue routing"),
+            "CLI help text should describe explicit role-based queue routing for `next`"
         );
         assert!(
             README_DOC.contains("MANAGEMENT LANE") && README_DOC.contains("DELIVERY LANE"),

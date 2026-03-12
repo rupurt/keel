@@ -65,6 +65,7 @@ mission, enter this workflow only for a concrete planning unit that is blocked o
 requirements, design, or decomposition.
 
 1. **Identify Gaps & Maintain Architectural Integrity**: Use `just keel flow` to find Epics needing tactical decomposition and to detect when delivery is starved by missing management work. Ensure all planning maintains strategic alignment and adheres to active ADRs.
+   - When you need the management pull surface directly, use `just keel next --role manager`. Do not rely on `just keel next`; the role is required.
 2. **Scaffold Planning Unit (Atomic Planning)**: Focus on one strategic or tactical unit at a time. Do not batch-create epics or voyages. Ensure one unit is fully authored and coherent before scaffolding the next.
    - For new strategic work, create an Epic: `just keel epic new "<Title>" --problem "<Problem>"`
    - For tactical decomposition, create a Voyage: `just keel voyage new "<Title>" --epic <epic-id> --goal "<The specific outcome>"`
@@ -265,7 +266,7 @@ Run `just keel --help` for the full command tree. The core commands you should r
 | Discovery | `just keel bearing new <name>` `just keel bearing research <id>` `just keel bearing assess <id>` `just keel bearing list` |
 | Planning | `just keel epic new <name> --problem <problem>` `just keel voyage new <name> --epic <epic-id> --goal <goal>` |
 | Execution | `just keel story new "<title>" [--type <type>] [--epic <epic-id> [--voyage <voyage-id>]]` |
-| Board Ops | `just keel mission next <id>` `just keel next --role operator` `just keel flow` `just keel doctor` `just keel generate` `just keel config show` `just keel mission show <id>` |
+| Board Ops | `just keel mission next <id>` `just keel next --role manager` `just keel next --role operator` `just keel flow` `just keel doctor` `just keel generate` `just keel config show` `just keel mission show <id>` |
 | Lifecycle | Story/voyage/epic transitions in the table below |
 
 ## Story and Milestone State Changes

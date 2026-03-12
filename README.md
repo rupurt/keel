@@ -64,8 +64,9 @@ Keel routes work through configurable workflow lanes using a **pull-based** mode
 └───────────────────────────────────────┴──────────────────────────────────────┘
 ```
 
-- `keel next` defaults to management-lane decisions and never returns implementation `Work`.
+- `keel next --role manager` returns management-lane decisions and never returns implementation `Work`.
 - `keel next --role operator` returns implementation work from the delivery lane (`in-progress` then `backlog`).
+- `keel next` requires `--role`; there is no implicit manager default.
 - `keel flow` uses the same queue policy categories and thresholds as `next` while rendering lane cards from the resolved topology.
 - Topology is fully configurable via `keel.toml`. See [CONFIGURATION.md](CONFIGURATION.md) for details.
 
@@ -85,7 +86,7 @@ That chain is what powers drift prevention. `keel doctor`, `keel audit`, and the
 Markdown files are the source of truth, but agents should not need to reread the whole board on every step. Keel aggregates authored artifacts into read models and summarized CLI surfaces such as:
 
 - `keel epic show`, `keel voyage show`, and `keel story show` for scoped planning and execution context
-- `keel next` and `keel flow` for queue steering
+- `keel next --role <role>` and `keel flow` for queue steering
 - `keel audit` for traceability and proof review
 - `keel knowledge ...` for institutional memory and repeated implementation signals
 

@@ -156,11 +156,9 @@ struct ResolvedActorContext {
     role_context: Option<RoleContextGuidance>,
 }
 
-/// Parse optional actor role taxonomy string for `next` filtering.
-pub fn parse_actor_role(
-    role: Option<&str>,
-) -> Result<Option<keel::domain::model::taxonomy::RoleTaxonomy>> {
-    Ok(role.map(keel::domain::model::taxonomy::parse).transpose()?)
+/// Parse actor role taxonomy string for `next` filtering.
+pub fn parse_actor_role(role: &str) -> Result<keel::domain::model::taxonomy::RoleTaxonomy> {
+    Ok(keel::domain::model::taxonomy::parse(role)?)
 }
 
 pub(crate) fn legacy_next_flag_guidance(args: &[String]) -> Option<String> {
@@ -182,29 +180,6 @@ pub(crate) fn legacy_next_flag_guidance(args: &[String]) -> Option<String> {
         message.push_str(" Do not combine legacy queue flags with `--role`.");
     }
     Some(message)
-}
-
-fn default_actor_context(
-    topology: &ResolvedWorkflowTopology,
-    parallel: bool,
-) -> ResolvedActorContext {
-    let lane = if parallel {
-        topology.default_delivery_lane()
-    } else {
-        topology.default_management_lane()
-    };
-    let queue_lane = if parallel {
-        topology.default_delivery_queue_lane()
-    } else {
-        topology.default_management_queue_lane()
-    };
-
-    ResolvedActorContext {
-        lane_name: lane.name.clone(),
-        queue_lane,
-        supports_parallel: lane.parallel,
-        role_context: None,
-    }
 }
 
 fn parallel_lane_error(topology: &ResolvedWorkflowTopology, lane_name: &str) -> anyhow::Error {
@@ -248,7 +223,7 @@ pub(crate) fn calculate_next_for_role(
     board: &keel::domain::model::Board,
     board_dir: &Path,
     parallel: bool,
-    actor_role: Option<&keel::domain::model::taxonomy::RoleTaxonomy>,
+    actor_role: &keel::domain::model::taxonomy::RoleTaxonomy,
 ) -> Result<NextDecision> {
     calculate_next_for_role_at(board, board_dir, parallel, actor_role, chrono::Utc::now())
 }
@@ -257,15 +232,11 @@ fn calculate_next_for_role_at(
     board: &keel::domain::model::Board,
     board_dir: &Path,
     parallel: bool,
-    actor_role: Option<&keel::domain::model::taxonomy::RoleTaxonomy>,
+    actor_role: &keel::domain::model::taxonomy::RoleTaxonomy,
     reference_time: chrono::DateTime<chrono::Utc>,
 ) -> Result<NextDecision> {
     let topology = workflow_topology::load_for_board(board_dir)?;
-
-    let effective_role = match actor_role {
-        Some(r) => r.clone(),
-        None => keel::domain::model::taxonomy::parse(&topology.defaults.management_role)?,
-    };
+    let effective_role = actor_role.clone();
 
     let actor_topology = topology
         .resolve_actor_context(&effective_role)
@@ -303,16 +274,12 @@ pub fn run(
     board_dir: &Path,
     json: bool,
     parallel: bool,
-    actor_role: Option<&keel::domain::model::taxonomy::RoleTaxonomy>,
+    actor_role: &keel::domain::model::taxonomy::RoleTaxonomy,
 ) -> Result<()> {
     let board = load_board(board_dir)?;
     let topology = workflow_topology::load_for_board(board_dir)?;
     let reference_time = chrono::Utc::now();
-
-    let effective_role = match actor_role {
-        Some(r) => r.clone(),
-        None => keel::domain::model::taxonomy::parse(&topology.defaults.management_role)?,
-    };
+    let effective_role = actor_role.clone();
 
     let actor_topology = topology
         .resolve_actor_context(&effective_role)
@@ -345,20 +312,15 @@ pub fn run(
             &board,
             board_dir,
             json,
-            Some(&effective_role),
+            &effective_role,
             Some(&resolved_context),
             &management_role_example,
             reference_time,
         );
     }
 
-    let decision = calculate_next_for_role_at(
-        &board,
-        board_dir,
-        false,
-        Some(&effective_role),
-        reference_time,
-    )?;
+    let decision =
+        calculate_next_for_role_at(&board, board_dir, false, &effective_role, reference_time)?;
     let scheduled_routines = scheduled_routines_for_next(&board, reference_time);
 
     let role_context =
@@ -920,12 +882,12 @@ fn run_parallel(
     board: &keel::domain::model::Board,
     board_dir: &Path,
     json: bool,
-    actor_role: Option<&keel::domain::model::taxonomy::RoleTaxonomy>,
+    actor_role: &keel::domain::model::taxonomy::RoleTaxonomy,
     actor_context: Option<&ResolvedActorContext>,
     management_role_example: &str,
     reference_time: chrono::DateTime<chrono::Utc>,
 ) -> Result<()> {
-    let projection = project_parallel_work(board, board_dir, actor_role, reference_time);
+    let projection = project_parallel_work(board, board_dir, Some(actor_role), reference_time);
     let scheduled_routines = scheduled_routines_for_next(board, reference_time);
     let role_context = actor_context.and_then(|context| context.role_context.as_ref());
 
@@ -1044,7 +1006,8 @@ updated_at: 2026-01-01T00:00:00
         let temp = TestBoardBuilder::new()
             .story(TestStory::new("S1").status(StoryState::Backlog))
             .build();
-        let result = run(temp.path(), false, false, None);
+        let manager = keel::domain::model::taxonomy::parse("manager").unwrap();
+        let result = run(temp.path(), false, false, &manager);
         assert!(result.is_ok());
     }
 

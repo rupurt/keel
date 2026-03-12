@@ -55,7 +55,7 @@ enum DiagnosticsCommands {
     /// Surface the single most important thing to work on
     Next {
         /// Role taxonomy controlling queue selection (e.g., "manager" or "operator/software:infrastructure")
-        #[arg(long)]
+        #[arg(long, required = true)]
         role: Option<String>,
         /// Output as JSON for scripting
         #[arg(long)]
@@ -1281,8 +1281,14 @@ fn cli_help_displays_entity_subcommands() {
 
 #[test]
 fn cli_parses_next_with_parallel() {
-    let cli = Cli::try_parse_from(["board", "next", "--parallel"]).unwrap();
-    if let Commands::Diagnostics(DiagnosticsCommands::Next { json, parallel, .. }) = cli.command {
+    let cli = Cli::try_parse_from(["board", "next", "--role", "manager", "--parallel"]).unwrap();
+    if let Commands::Diagnostics(DiagnosticsCommands::Next {
+        role,
+        json,
+        parallel,
+    }) = cli.command
+    {
+        assert_eq!(role, Some("manager".to_string()));
         assert!(!json);
         assert!(parallel);
     } else {
@@ -1291,9 +1297,15 @@ fn cli_parses_next_with_parallel() {
 }
 
 #[test]
-fn cli_parses_next_without_parallel() {
-    let cli = Cli::try_parse_from(["board", "next"]).unwrap();
-    if let Commands::Diagnostics(DiagnosticsCommands::Next { json, parallel, .. }) = cli.command {
+fn cli_parses_next_with_required_role() {
+    let cli = Cli::try_parse_from(["board", "next", "--role", "manager"]).unwrap();
+    if let Commands::Diagnostics(DiagnosticsCommands::Next {
+        role,
+        json,
+        parallel,
+    }) = cli.command
+    {
+        assert_eq!(role, Some("manager".to_string()));
         assert!(!json);
         assert!(!parallel);
     } else {
@@ -1303,13 +1315,29 @@ fn cli_parses_next_without_parallel() {
 
 #[test]
 fn cli_parses_next_parallel_with_json() {
-    let cli = Cli::try_parse_from(["board", "next", "--parallel", "--json"]).unwrap();
-    if let Commands::Diagnostics(DiagnosticsCommands::Next { json, parallel, .. }) = cli.command {
+    let cli = Cli::try_parse_from(["board", "next", "--role", "manager", "--parallel", "--json"])
+        .unwrap();
+    if let Commands::Diagnostics(DiagnosticsCommands::Next {
+        role,
+        json,
+        parallel,
+    }) = cli.command
+    {
+        assert_eq!(role, Some("manager".to_string()));
         assert!(json);
         assert!(parallel);
     } else {
         panic!("Expected Next command");
     }
+}
+
+#[test]
+fn cli_rejects_next_without_role() {
+    let err = Cli::try_parse_from(["board", "next"])
+        .expect_err("Expected parse error when --role is missing")
+        .to_string();
+
+    assert!(err.contains("--role"));
 }
 
 // ── Role flag tests ─────────────────────────────────────────────
