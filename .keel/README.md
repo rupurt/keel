@@ -201,13 +201,29 @@
 |--------|--------|
 | [Structural Coherence](epics/VDZcE7gsS/voyages/VDZsp7eAG/) | done |
 
-### [Routine Entity and Blueprints](epics/VDakm8eVW/) (draft)
+### [Routine Entity and Blueprints](epics/VDakm8eVW/) (active)
 
-### [Temporal Gating in Next Algorithm](epics/VDakmCGYi/) (draft)
+| Voyage | Status |
+|--------|--------|
+| [Routine Foundation](epics/VDakm8eVW/voyages/VDcFd11nc/) | planned |
 
-### [Pulse Automation Engine](epics/VDakmG8cH/) (draft)
+### [Temporal Gating in Next Algorithm](epics/VDakmCGYi/) (active)
 
-### [Automation Documentation and Guides](epics/VDakmJodq/) (draft)
+| Voyage | Status |
+|--------|--------|
+| [Temporal Routine Gating](epics/VDakmCGYi/voyages/VDcFd5kmn/) | planned |
+
+### [Pulse Automation Engine](epics/VDakmG8cH/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Pulse Automation Execution](epics/VDakmG8cH/voyages/VDcFd5Sop/) | planned |
+
+### [Automation Documentation and Guides](epics/VDakmJodq/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Automation Guide Authoring](epics/VDakmJodq/voyages/VDcFd62ny/) | planned |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

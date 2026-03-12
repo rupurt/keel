@@ -90,6 +90,12 @@ fn evaluate_mission_activation(
     }
 
     problems.extend(
+        crate::infrastructure::validation::missions::check_mission_planned_epic_readiness(
+            board, mission,
+        ),
+    );
+
+    problems.extend(
         crate::infrastructure::validation::charter::check_mission_charter_readiness(board, mission),
     );
 

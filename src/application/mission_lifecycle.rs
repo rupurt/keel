@@ -361,7 +361,7 @@ fn process_answer(content: &str, answer: &str) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestMission};
+    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestMission, TestVoyage};
     use std::fs;
 
     fn authored_charter(board_target: &str) -> String {
@@ -391,6 +391,7 @@ mod tests {
                     .status("defining"),
             )
             .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "E1").status("planned"))
             .build();
 
         // Add a goal to CHARTER.md manually
@@ -432,6 +433,7 @@ mod tests {
                     .status("defining"),
             )
             .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "E1").status("planned"))
             .build();
 
         // Empty CHARTER.md (no goals)
@@ -452,6 +454,7 @@ mod tests {
                     .status("defining"),
             )
             .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "E1").status("planned"))
             .build();
 
         let charter_path = temp.path().join("missions/M1/CHARTER.md");
@@ -481,6 +484,25 @@ mod tests {
                 .to_string()
                 .contains("mission-specific rules")
         );
+    }
+
+    #[test]
+    fn test_mission_activate_fails_with_only_draft_epics() {
+        let temp = TestBoardBuilder::new()
+            .mission(
+                TestMission::new("M1")
+                    .title("Mission One")
+                    .status("defining"),
+            )
+            .epic(TestEpic::new("E1").mission("M1"))
+            .build();
+
+        let charter_path = temp.path().join("missions/M1/CHARTER.md");
+        fs::write(charter_path, authored_charter("E1")).unwrap();
+
+        let res = MissionLifecycleService::activate(temp.path(), "M1");
+        assert!(res.is_err());
+        assert!(res.unwrap_err().to_string().contains("planned epic"));
     }
 
     #[test]

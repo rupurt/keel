@@ -3,6 +3,7 @@
 pub mod bearings;
 pub mod charter;
 pub mod goals;
+pub mod missions;
 pub mod structural;
 pub mod types;
 
