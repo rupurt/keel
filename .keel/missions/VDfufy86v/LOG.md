@@ -6,3 +6,11 @@
 ## 2026-03-12T10:29:19
 
 Planned epic VDfufyl6w and voyage VDfumi8ha for the canonical knowledge graph, deterministic cache, and drift-cartography work. Story VDfuntHAT is thawed and ready for operator execution as the first kernel/cache slice.
+
+## 2026-03-12T10:47:29
+
+Completed story VDfuntHAT and sealed voyage VDfumi8ha candidate closure; the knowledge graph kernel now exists with deterministic projection, cache manifest/blob storage, and structural drift inputs.
+
+## 2026-03-12T11:05:05
+
+Planned follow-on epic VDg0dAPVS and voyage VDg0f0aHW to deliver the interactive/static knowledge graph surface and drift visibility across graph-adjacent commands; next operator slice is VDg1N07jJ.
