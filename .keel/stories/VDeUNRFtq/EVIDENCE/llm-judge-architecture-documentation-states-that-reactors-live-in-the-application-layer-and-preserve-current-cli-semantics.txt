@@ -1,0 +1,340 @@
+LLM Judge Transcript
+Story: VDeUNRFtq
+Criterion: Architecture documentation states that reactors live in the application layer and preserve current CLI semantics.
+
+Diff:
+.keel/README.md --- 1/2 --- Text
+  8   8 | Bearing | Status | Evidence | Assessment | Readiness | EV | Laid |
+  9   9 |---------|--------|----------|------------|-----------|----|------|
+ 10  10 | [MissionEntity](bearings/1vzeJF000/) | laid | ✓ | ✓ | decision-ready | 3.60 | ✓ |
+ ..  11 | [Simulation Kernel Architecture Research](bearings/VDeRKA7fo/) | ready | ✓ | ✓ | decision-ready | 3.36 | - |
+ 11  12 | [Semantic Search and Ranking in Keel](bearings/1w5H2Bq9L/) | evaluating | ✓ | ✓ | decision-ready | 4.66 | - |
+ 12  13 
+ 13  14 ## Epics
+
+.keel/README.md --- 2/2 --- Text
+219 |--------|--------|                 220 |--------|--------|
+220 | [Pulse Automation Execution](epic 221 | [Pulse Automation Execution](epic
+... s/VDakmG8cH/voyages/VDcFd5Sop/) | d ... s/VDakmG8cH/voyages/VDcFd5Sop/) | d
+... one |                               ... one |
+221                                     222 
+222 ### [Automation Documentation and G 223 ### [Automation Documentation and G
+... uides](epics/VDakmJodq/) (active)   ... uides](epics/VDakmJodq/) (done)
+223                                     224 
+224 | Voyage | Status |                 225 | Voyage | Status |
+225 |--------|--------|                 226 |--------|--------|
+226 | [Automation Guide Authoring](epic 227 | [Automation Guide Authoring](epic
+... s/VDakmJodq/voyages/VDcFd62ny/) | i ... s/VDakmJodq/voyages/VDcFd62ny/) | d
+... n-progress |                        ... one |
+227                                     228 
+...                                     229 ### [Simulation Kernel Core](epics/
+...                                     ... VDeRV9CAo/) (active)
+...                                     230 
+...                                     231 | Voyage | Status |
+...                                     232 |--------|--------|
+...                                     233 | [Explicit Lifecycle Reactors](epi
+...                                     ... cs/VDeRV9CAo/voyages/VDeUIiB3Q/) | 
+...                                     ... in-progress |
+...                                     234 
+228 ### [Mission Entity](epics/1vzeJF00 235 ### [Mission Entity](epics/1vzeJF00
+... 0/) (done)                          ... 0/) (done)
+229                                     236 
+230 | Voyage | Status |                 237 | Voyage | Status |
+
+.keel/epics/VDakmJodq/README.md --- Text
+20 ## Voyages                           20 ## Voyages
+21                                      21 
+22 <!-- BEGIN GENERATED -->             22 <!-- BEGIN GENERATED -->
+23 **Progress:** 0/1 voyages complete,  23 **Progress:** 1/1 voyages complete, 
+.. 0/1 stories done                     .. 1/1 stories done
+24 | Voyage | Status | Stories |        24 | Voyage | Status | Stories |
+25 |--------|--------|---------|        25 |--------|--------|---------|
+26 | [Automation Guide Authoring](voyag 26 | [Automation Guide Authoring](voyag
+.. es/VDcFd62ny/) | in-progress | 0/1 | .. es/VDcFd62ny/) | done | 1/1 |
+27 <!-- END GENERATED -->               27 <!-- END GENERATED -->
+
+.keel/epics/VDakmJodq/voyages/VDcFd62ny/README.md --- Text
+21 |----------|-------------|           21 |----------|-------------|
+22 | [SRS.md](SRS.md) | Requirements an 22 | [SRS.md](SRS.md) | Requirements an
+.. d verification criteria |            .. d verification criteria |
+23 | [SDD.md](SDD.md) | Architecture an 23 | [SDD.md](SDD.md) | Architecture an
+.. d implementation details |           .. d implementation details |
+..                                      24 | [VOYAGE_REPORT.md](VOYAGE_REPORT.m
+..                                      .. d) | Narrative summary of implementa
+..                                      .. tion and evidence |
+..                                      25 | [COMPLIANCE_REPORT.md](COMPLIANCE_
+..                                      .. REPORT.md) | Traceability matrix and
+..                                      ..  verification proof |
+24 <!-- END DOCUMENTS -->               26 <!-- END DOCUMENTS -->
+25                                      27 
+26 ## Stories                           28 ## Stories
+27                                      29 
+28 <!-- BEGIN GENERATED -->             30 <!-- BEGIN GENERATED -->
+29 **Progress:** 0/1 stories complete   31 **Progress:** 1/1 stories complete
+30                                      32 
+31 | Title | Type | Status |            33 | Title | Type | Status |
+32 |-------|------|--------|            34 |-------|------|--------|
+33 | [Business Automation Guide](../../ 35 | [Business Automation Guide](../../
+.. ../../stories/VDcFgu8NA/README.md) | .. ../../stories/VDcFgu8NA/README.md) |
+..  feat | needs-human-verification |   ..  feat | done |
+34 <!-- END GENERATED -->               36 <!-- END GENERATED -->
+
+.keel/stories/VDeUNRFtq/README.md --- 1/2 --- Text
+ 2 id: VDeUNRFtq                         2 id: VDeUNRFtq
+ 3 title: Wire Voyage Completion as a R  3 title: Wire Voyage Completion as a R
+ . eal Event Path                        . eal Event Path
+ 4 type: feat                            4 type: feat
+ 5 status: backlog                       5 status: in-progress
+ 6 created_at: 2026-03-12T04:35:23       6 created_at: 2026-03-12T04:35:23
+ 7 updated_at: 2026-03-12T04:40:07       7 updated_at: 2026-03-12T04:51:49
+ 8 operator-signal:                      8 operator-signal: 
+ 9 scope: VDeRV9CAo/VDeUIiB3Q            9 scope: VDeRV9CAo/VDeUIiB3Q
+10 index: 3                             10 index: 3
+..                                      11 started_at: 2026-03-12T04:51:49
+11 ---                                  12 ---
+12                                      13 
+13 # Wire Voyage Completion as a Real E 14 # Wire Voyage Completion as a Real E
+.. vent Path                            .. vent Path
+
+.keel/stories/VDeUNRFtq/README.md --- 2/2 --- Text
+20                                      21 
+21 ## Acceptance Criteria               22 ## Acceptance Criteria
+22                                      23 
+23 - [ ] [SRS-03/AC-01] Voyage completi 24 - [x] [SRS-03/AC-01] Voyage completi
+.. on is emitted end-to-end and consume .. on is emitted end-to-end and consume
+.. d by an explicit reactor that preser .. d by an explicit reactor that preser
+.. ves current epic-finalization behavi .. ves current epic-finalization behavi
+.. or. <!-- verify: cargo test voyage_c .. or. <!-- verify: cargo test voyage_c
+.. ompleted_event --lib, SRS-03:start:e .. ompleted_event --lib, SRS-03:start:e
+.. nd -->                               .. nd, proof: ac-1.log-->
+24 - [ ] [SRS-04/AC-01] Architecture do 25 - [x] [SRS-04/AC-01] Architecture do
+.. cumentation states that reactors liv .. cumentation states that reactors liv
+.. e in the application layer and prese .. e in the application layer and prese
+.. rve current CLI semantics. <!-- veri .. rve current CLI semantics. <!-- veri
+.. fy: llm-judge, SRS-04:start:end -->  .. fy: llm-judge, SRS-04:start:end, pro
+..                                      .. of: ac-2.log-->
+
+ARCHITECTURE.md --- Text
+277 277 Implementation location:
+278 278 - `src/read_model/traceability.rs`
+279 279 
+... 280 ## Application Reactor Pipeline
+... 281 
+... 282 Cross-aggregate lifecycle automation lives in the application layer, not in CLI
+... 283 adapters or domain entities. The canonical path is:
+... 284 
+... 285 1. A lifecycle service or command adapter completes an existing transition and emits a `DomainEvent`.
+... 286 2. `src/application/process_manager.rs` dispatches that event through explicit application-layer reactors.
+... 287 3. Reactors plan follow-up `ProcessAction`s that reuse the existing lifecycle services.
+... 288 
+... 289 This preserves current CLI semantics: commands remain thin adapters that
+... 290 delegate into application services, while reactor rules stay in
+... 291 `src/application/**` and do not move into `src/cli/**` or `src/domain/**`.
+... 292 
+280 293 ## Flow State Machine
+281 294 
+282 295 Flow health is derived from queue depths and thresholds.
+
+src/application/process_manager.rs --- 1/8 --- Rust
+ 13 #[derive(Debug, Clone, PartialEq, Eq)]
+ 14 enum ProcessAction {
+ 15     StartVoyage { voyage_id: String },
+ 16     CompleteVoyage { voyage_id: String, epic_id: String },
+ 17     CompleteEpic { epic_id: String },
+ 18 }
+ 19 
+
+src/application/process_manager.rs --- 2/8 --- Rust
+147         let board = load_board(board_dir)?;
+148         let actions = self.plan_actions(&board, &event);
+149         for action in actions {
+150             self.execute_action(board_dir, action)?;
+151         }
+152 
+153         Ok(())
+154     }
+155 
+156     fn execute_action(&self, board_dir: &Path, action: ProcessAction) -> Result<()> {
+157         match action {
+158             ProcessAction::StartVoyage { voyage_id } => {
+159                 println!(
+
+src/application/process_manager.rs --- 3/8 --- Rust
+162 162                 );
+163 163                 self.executor.start_voyage(&voyage_id)
+164 164             }
+165 165             ProcessAction::CompleteVoyage { voyage_id, epic_id } => {
+166 166                 println!(
+167 167                     "[process-manager] Auto-completing voyage {} because all stories are done.",
+168 168                     voyage_id
+169 169                 );
+170 170                 self.executor.complete_voyage(&voyage_id)?;
+... 171                 self.handle(
+... 172                     board_dir,
+... 173                     DomainEvent::VoyageCompleted { voyage_id, epic_id },
+... 174                 )
+171 175             }
+172 176             ProcessAction::CompleteEpic { epic_id } => {
+173 177                 println!(
+
+src/application/process_manager.rs --- 4/8 --- Rust
+266 270 
+267 271     vec![ProcessAction::CompleteVoyage {
+268 272         voyage_id: voyage.id().to_string(),
+... 273         epic_id: voyage.epic_id.clone(),
+269 274     }]
+270 275 }
+271 276 
+
+src/application/process_manager.rs --- 5/8 --- Rust
+295 300 
+296 301 #[cfg(test)]
+297 302 mod tests {
+... 303     use std::fs;
+... 304     use std::path::PathBuf;
+298 305     use std::sync::{Arc, Mutex};
+299 306 
+300 307     use super::*;
+301 308     use crate::domain::model::StoryState;
+... 309     use crate::domain::transitions::{TimestampUpdates, update_frontmatter};
+302 310     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+303 311 
+304 312     #[derive(Clone)]
+
+src/application/process_manager.rs --- 6/8 --- Rust
+312 320         actions: Vec<ProcessAction>,
+313 321     }
+... 322 
+... 323     #[derive(Clone)]
+... 324     struct PersistingExecutor {
+... 325         board_dir: PathBuf,
+... 326         calls: Arc<Mutex<Vec<String>>>,
+... 327     }
+314 328 
+315 329     impl ProcessReactor for TestReactor {
+316 330         fn name(&self) -> &'static str {
+
+src/application/process_manager.rs --- 7/8 --- Rust
+352 366         }
+353 367     }
+... 368 
+... 369     impl ProcessActionExecutor for PersistingExecutor {
+... 370         fn start_voyage(&self, voyage_id: &str) -> Result<()> {
+... 371             self.calls
+... 372                 .lock()
+... 373                 .unwrap()
+... 374                 .push(format!("start:{voyage_id}"));
+... 375             Ok(())
+... 376         }
+... 377 
+... 378         fn complete_voyage(&self, voyage_id: &str) -> Result<()> {
+... 379             self.calls
+... 380                 .lock()
+... 381                 .unwrap()
+... 382                 .push(format!("complete:{voyage_id}"));
+... 383 
+... 384             let board = load_board(&self.board_dir)?;
+... 385             let voyage = board.require_voyage(voyage_id)?;
+... 386             let content = fs::read_to_string(&voyage.path)?;
+... 387             let updated = update_frontmatter(
+... 388                 &content,
+... 389                 VoyageState::Done,
+... 390                 &TimestampUpdates::voyage_completed(),
+... 391             )?;
+... 392             fs::write(&voyage.path, updated)?;
+... 393 
+... 394             Ok(())
+... 395         }
+... 396 
+... 397         fn complete_epic(&self, epic_id: &str) -> Result<()> {
+... 398             self.calls
+... 399                 .lock()
+... 400                 .unwrap()
+... 401                 .push(format!("complete_epic:{epic_id}"));
+... 402             Ok(())
+... 403         }
+... 404     }
+354 405 
+355 406     #[test]
+356 407     fn story_started_event_starts_planned_voyage() {
+
+src/application/process_manager.rs --- 8/8 --- Rust
+470 521         assert!(calls.is_empty());
+471 522     }
+... 523 
+... 524     #[test]
+... 525     fn story_accepted_event_emits_voyage_completed_event_for_epic_finalization() {
+... 526         let temp = TestBoardBuilder::new()
+... 527             .epic(TestEpic::new("e1"))
+... 528             .voyage(TestVoyage::new("v1", "e1").status("in-progress"))
+... 529             .voyage(TestVoyage::new("v2", "e1").status("done"))
+... 530             .story(TestStory::new("S1").scope("e1/v1").status(StoryState::Done))
+... 531             .story(TestStory::new("S2").scope("e1/v1").status(StoryState::Done))
+... 532             .build();
+... 533 
+... 534         let calls = Arc::new(Mutex::new(Vec::new()));
+... 535         let manager = DomainProcessManager::new(PersistingExecutor {
+... 536             board_dir: temp.path().to_path_buf(),
+... 537             calls: calls.clone(),
+... 538         });
+... 539 
+... 540         manager
+... 541             .handle(
+... 542                 temp.path(),
+... 543                 DomainEvent::StoryAccepted {
+... 544                     story_id: "S2".to_string(),
+... 545                     scope: Some("e1/v1".to_string()),
+... 546                 },
+... 547             )
+... 548             .unwrap();
+... 549 
+... 550         let calls = calls.lock().unwrap();
+... 551         assert_eq!(calls.as_slice(), ["complete:v1", "complete_epic:e1"]);
+... 552     }
+472 553 
+473 554     #[test]
+474 555     fn voyage_completed_event_noops() {
+
+src/cli/commands/management/voyage/done.rs --- 1/2 --- Rust
+ .  1 use keel::application::domain_events::DomainEvent;
+ .  2 use keel::application::process_manager::{DomainProcessManager, LiveProcessActionExecutor};
+ 1  3 use keel::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
+ .  4 use keel::infrastructure::loader::load_board;
+ 2  5 use keel::infrastructure::storage::filesystem::FileSystemAdapter;
+ 3  6 /// Done voyage command
+ 4  7 use std::path::Path;
+
+src/cli/commands/management/voyage/done.rs --- 2/2 --- Rust
+15 18     different: Option<String>,
+16 19 ) -> Result<()> {
+17 20     let adapter = Arc::new(FileSystemAdapter::new(board_dir));
+.. 21     let board = load_board(board_dir)?;
+.. 22     let voyage = board.require_voyage(id)?;
+.. 23     let epic_id = voyage.epic_id.clone();
+.. 24 
+18 25     let service = Arc::new(VoyageEpicLifecycleService::new(
+19 26         board_dir.to_path_buf(),
+20 27         adapter.clone(),
+21 28         adapter.clone(),
+22 29         adapter.clone(),
+23 30         adapter.clone(),
+24 31     ));
+.. 32     let process_manager =
+.. 33         DomainProcessManager::new(LiveProcessActionExecutor::new(service.clone()));
+25 34 
+26 35     service.complete_voyage(id, well, hard, different)?;
+.. 36     process_manager.handle(
+.. 37         board_dir,
+.. 38         DomainEvent::VoyageCompleted {
+.. 39             voyage_id: id.to_string(),
+.. 40             epic_id,
+.. 41         },
+.. 42     )?;
+27 43 
+28 44     Ok(())
+29 45 }
+
+
+
+Result: PASS
+Signature: <KEEL-JUDGE-SIG>

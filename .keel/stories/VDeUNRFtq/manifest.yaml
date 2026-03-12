@@ -1,0 +1,7 @@
+id: VDeUNRFtq
+git_sha: 3e6ac43d1dbeafc29d9e35192d9c2ed3f45f283b
+evidence:
+  EVIDENCE/ac-1.log: 8d7ce133bed65731a2967fcfe3ae78812cece3c3a845eeb970e23f4cde33fd95
+  EVIDENCE/ac-2.log: 469cc4215bc0ce28c6cf74a3e8c1c25d53c6113fdf65143a46857f33199b3e44
+  ? EVIDENCE/llm-judge-architecture-documentation-states-that-reactors-live-in-the-application-layer-and-preserve-current-cli-semantics.txt
+  : 8f85cc96fe885921820fbcb88a1fdfbe3845f9efcb9737c2bbc8b749854e6d43

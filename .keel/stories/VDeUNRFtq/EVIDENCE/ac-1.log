@@ -1,0 +1,16 @@
+---
+recorded_at: 2026-03-12T04:55:59.048744634-07:00
+command: cargo test voyage_completed_event --lib
+---
+
+running 3 tests
+test application::process_manager::tests::voyage_completed_event_noops ... ok
+test application::process_manager::tests::voyage_completed_event_completes_epic_when_all_voyages_done ... ok
+test application::process_manager::tests::story_accepted_event_emits_voyage_completed_event_for_epic_finalization ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 874 filtered out; finished in 0.01s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.07s
+     Running unittests src/lib.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-2ef2fabeec7cd10a)

@@ -277,6 +277,19 @@ Implementation dependency ordering is derived from SRS traceability:
 Implementation location:
 - `src/read_model/traceability.rs`
 
+## Application Reactor Pipeline
+
+Cross-aggregate lifecycle automation lives in the application layer, not in CLI
+adapters or domain entities. The canonical path is:
+
+1. A lifecycle service or command adapter completes an existing transition and emits a `DomainEvent`.
+2. `src/application/process_manager.rs` dispatches that event through explicit application-layer reactors.
+3. Reactors plan follow-up `ProcessAction`s that reuse the existing lifecycle services.
+
+This preserves current CLI semantics: commands remain thin adapters that
+delegate into application services, while reactor rules stay in
+`src/application/**` and do not move into `src/cli/**` or `src/domain/**`.
+
 ## Flow State Machine
 
 Flow health is derived from queue depths and thresholds.

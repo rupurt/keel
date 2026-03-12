@@ -1,4 +1,7 @@
+use keel::application::domain_events::DomainEvent;
+use keel::application::process_manager::{DomainProcessManager, LiveProcessActionExecutor};
 use keel::application::voyage_epic_lifecycle::VoyageEpicLifecycleService;
+use keel::infrastructure::loader::load_board;
 use keel::infrastructure::storage::filesystem::FileSystemAdapter;
 /// Done voyage command
 use std::path::Path;
@@ -15,15 +18,28 @@ pub fn run(
     different: Option<String>,
 ) -> Result<()> {
     let adapter = Arc::new(FileSystemAdapter::new(board_dir));
-    let service = VoyageEpicLifecycleService::new(
+    let board = load_board(board_dir)?;
+    let voyage = board.require_voyage(id)?;
+    let epic_id = voyage.epic_id.clone();
+
+    let service = Arc::new(VoyageEpicLifecycleService::new(
         board_dir.to_path_buf(),
         adapter.clone(),
         adapter.clone(),
         adapter.clone(),
         adapter.clone(),
-    );
+    ));
+    let process_manager =
+        DomainProcessManager::new(LiveProcessActionExecutor::new(service.clone()));
 
     service.complete_voyage(id, well, hard, different)?;
+    process_manager.handle(
+        board_dir,
+        DomainEvent::VoyageCompleted {
+            voyage_id: id.to_string(),
+            epic_id,
+        },
+    )?;
 
     Ok(())
 }

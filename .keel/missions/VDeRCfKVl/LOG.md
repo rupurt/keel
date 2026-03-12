@@ -22,3 +22,7 @@ Story VDeUNOfrU sealed: explicit reactor registry and deterministic planning ord
 ## 2026-03-12T04:51:01
 
 Story VDeUNP4rV sealed: process_manager lifecycle automation is now split into explicit story-started, story-accepted, and voyage-completed reactors; the malformed AC proof command was corrected and evidence captured; next slice is VDeUNRFtq to emit real voyage.completed events.
+
+## 2026-03-12T04:57:11
+
+Story VDeUNRFtq sealed and voyage VDeUIiB3Q closed: manual and automated voyage completion now emit voyage.completed through the explicit reactor pipeline, architecture docs record application-layer ownership, and Simulation Kernel Core is board-complete.

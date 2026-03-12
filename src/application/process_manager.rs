@@ -13,7 +13,7 @@ use crate::infrastructure::loader::load_board;
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum ProcessAction {
     StartVoyage { voyage_id: String },
-    CompleteVoyage { voyage_id: String },
+    CompleteVoyage { voyage_id: String, epic_id: String },
     CompleteEpic { epic_id: String },
 }
 
@@ -147,13 +147,13 @@ impl<E: ProcessActionExecutor> DomainProcessManager<E> {
         let board = load_board(board_dir)?;
         let actions = self.plan_actions(&board, &event);
         for action in actions {
-            self.execute_action(action)?;
+            self.execute_action(board_dir, action)?;
         }
 
         Ok(())
     }
 
-    fn execute_action(&self, action: ProcessAction) -> Result<()> {
+    fn execute_action(&self, board_dir: &Path, action: ProcessAction) -> Result<()> {
         match action {
             ProcessAction::StartVoyage { voyage_id } => {
                 println!(
@@ -162,12 +162,16 @@ impl<E: ProcessActionExecutor> DomainProcessManager<E> {
                 );
                 self.executor.start_voyage(&voyage_id)
             }
-            ProcessAction::CompleteVoyage { voyage_id } => {
+            ProcessAction::CompleteVoyage { voyage_id, epic_id } => {
                 println!(
                     "[process-manager] Auto-completing voyage {} because all stories are done.",
                     voyage_id
                 );
-                self.executor.complete_voyage(&voyage_id)
+                self.executor.complete_voyage(&voyage_id)?;
+                self.handle(
+                    board_dir,
+                    DomainEvent::VoyageCompleted { voyage_id, epic_id },
+                )
             }
             ProcessAction::CompleteEpic { epic_id } => {
                 println!(
@@ -266,6 +270,7 @@ fn plan_story_accepted_actions(board: &Board, scope: &str) -> Vec<ProcessAction>
 
     vec![ProcessAction::CompleteVoyage {
         voyage_id: voyage.id().to_string(),
+        epic_id: voyage.epic_id.clone(),
     }]
 }
 
@@ -295,10 +300,13 @@ fn plan_voyage_completed_actions(
 
 #[cfg(test)]
 mod tests {
+    use std::fs;
+    use std::path::PathBuf;
     use std::sync::{Arc, Mutex};
 
     use super::*;
     use crate::domain::model::StoryState;
+    use crate::domain::transitions::{TimestampUpdates, update_frontmatter};
     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
 
     #[derive(Clone)]
@@ -310,6 +318,12 @@ mod tests {
         name: &'static str,
         priority: u8,
         actions: Vec<ProcessAction>,
+    }
+
+    #[derive(Clone)]
+    struct PersistingExecutor {
+        board_dir: PathBuf,
+        calls: Arc<Mutex<Vec<String>>>,
     }
 
     impl ProcessReactor for TestReactor {
@@ -340,6 +354,43 @@ mod tests {
                 .lock()
                 .unwrap()
                 .push(format!("complete:{voyage_id}"));
+            Ok(())
+        }
+
+        fn complete_epic(&self, epic_id: &str) -> Result<()> {
+            self.calls
+                .lock()
+                .unwrap()
+                .push(format!("complete_epic:{epic_id}"));
+            Ok(())
+        }
+    }
+
+    impl ProcessActionExecutor for PersistingExecutor {
+        fn start_voyage(&self, voyage_id: &str) -> Result<()> {
+            self.calls
+                .lock()
+                .unwrap()
+                .push(format!("start:{voyage_id}"));
+            Ok(())
+        }
+
+        fn complete_voyage(&self, voyage_id: &str) -> Result<()> {
+            self.calls
+                .lock()
+                .unwrap()
+                .push(format!("complete:{voyage_id}"));
+
+            let board = load_board(&self.board_dir)?;
+            let voyage = board.require_voyage(voyage_id)?;
+            let content = fs::read_to_string(&voyage.path)?;
+            let updated = update_frontmatter(
+                &content,
+                VoyageState::Done,
+                &TimestampUpdates::voyage_completed(),
+            )?;
+            fs::write(&voyage.path, updated)?;
+
             Ok(())
         }
 
@@ -468,6 +519,36 @@ mod tests {
 
         let calls = calls.lock().unwrap();
         assert!(calls.is_empty());
+    }
+
+    #[test]
+    fn story_accepted_event_emits_voyage_completed_event_for_epic_finalization() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("e1"))
+            .voyage(TestVoyage::new("v1", "e1").status("in-progress"))
+            .voyage(TestVoyage::new("v2", "e1").status("done"))
+            .story(TestStory::new("S1").scope("e1/v1").status(StoryState::Done))
+            .story(TestStory::new("S2").scope("e1/v1").status(StoryState::Done))
+            .build();
+
+        let calls = Arc::new(Mutex::new(Vec::new()));
+        let manager = DomainProcessManager::new(PersistingExecutor {
+            board_dir: temp.path().to_path_buf(),
+            calls: calls.clone(),
+        });
+
+        manager
+            .handle(
+                temp.path(),
+                DomainEvent::StoryAccepted {
+                    story_id: "S2".to_string(),
+                    scope: Some("e1/v1".to_string()),
+                },
+            )
+            .unwrap();
+
+        let calls = calls.lock().unwrap();
+        assert_eq!(calls.as_slice(), ["complete:v1", "complete_epic:e1"]);
     }
 
     #[test]
