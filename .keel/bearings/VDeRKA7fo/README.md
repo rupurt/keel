@@ -1,7 +1,7 @@
 ---
 id: VDeRKA7fo
 title: Simulation Kernel Architecture Research
-status: exploring
+status: ready
 mission: VDeRCfKVl
 created_at: 2026-03-12T04:23:15
 index: 2
