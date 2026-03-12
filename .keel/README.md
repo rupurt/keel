@@ -201,17 +201,17 @@
 |--------|--------|
 | [Structural Coherence](epics/VDZcE7gsS/voyages/VDZsp7eAG/) | done |
 
-### [Routine Entity and Blueprints](epics/VDakm8eVW/) (active)
+### [Routine Entity and Blueprints](epics/VDakm8eVW/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Routine Foundation](epics/VDakm8eVW/voyages/VDcFd11nc/) | in-progress |
+| [Routine Foundation](epics/VDakm8eVW/voyages/VDcFd11nc/) | done |
 
 ### [Temporal Gating in Next Algorithm](epics/VDakmCGYi/) (active)
 
 | Voyage | Status |
 |--------|--------|
-| [Temporal Routine Gating](epics/VDakmCGYi/voyages/VDcFd5kmn/) | planned |
+| [Temporal Routine Gating](epics/VDakmCGYi/voyages/VDcFd5kmn/) | in-progress |
 
 ### [Pulse Automation Engine](epics/VDakmG8cH/) (active)
 

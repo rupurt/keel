@@ -1,0 +1,18 @@
+---
+recorded_at: 2026-03-11T21:02:50.196142824-07:00
+command: cargo test evaluate_routine_due_state_is_deterministic_for_identical_reference_time --lib
+---
+
+running 1 test
+test read_model::routine_due_state::tests::evaluate_routine_due_state_is_deterministic_for_identical_reference_time ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 865 filtered out; finished in 0.00s
+
+
+--- stderr ---
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.11s
+     Running unittests src/lib.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-2ef2fabeec7cd10a)

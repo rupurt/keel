@@ -12,6 +12,7 @@ pub mod mission_show;
 pub mod planning_show;
 pub mod queue_policy;
 pub mod role_context;
+pub mod routine_due_state;
 pub mod throughput_history;
 pub mod topology;
 pub mod traceability;
