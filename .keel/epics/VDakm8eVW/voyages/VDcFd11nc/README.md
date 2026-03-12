@@ -25,11 +25,11 @@ started_at: 2026-03-11T20:22:35
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/3 stories complete
+**Progress:** 2/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Routine Bundle Contract](../../../../stories/VDcFgmgKS/README.md) | feat | in-progress |
-| [Routine Board Integration](../../../../stories/VDcFgn0KR/README.md) | feat | backlog |
+| [Routine Bundle Contract](../../../../stories/VDcFgmgKS/README.md) | feat | done |
+| [Routine Board Integration](../../../../stories/VDcFgn0KR/README.md) | feat | done |
 | [Routine CLI Surfaces](../../../../stories/VDcFgruMk/README.md) | feat | backlog |
 <!-- END GENERATED -->

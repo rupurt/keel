@@ -57,6 +57,7 @@ mod tests {
         }
         Board {
             root: PathBuf::from("test"),
+            routines: HashMap::new(),
             stories: story_map,
             epics: HashMap::new(),
             voyages: HashMap::new(),

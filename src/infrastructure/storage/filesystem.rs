@@ -5,7 +5,7 @@ use serde::Serialize;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::domain::model::{Adr, Bearing, Board, Epic, Mission, Story, Voyage};
+use crate::domain::model::{Adr, Bearing, Board, Epic, Mission, Routine, Story, Voyage};
 use crate::domain::port::{
     AdrRepositoryPort, BearingRepositoryPort, BoardRepositoryPort, DocumentServicePort,
     EpicRepositoryPort, StoryRepositoryPort, VoyageRepositoryPort,
@@ -47,6 +47,21 @@ impl FileSystemAdapter {
             .with_context(|| format!("persist entity markdown at {}", path.display()))?;
         Ok(())
     }
+
+    fn persist_routine(&self, routine: &Routine) -> Result<()> {
+        let path = self.resolve_path(&routine.path);
+        let serialized = serde_yaml::to_string(&routine.frontmatter)
+            .with_context(|| format!("serialize routine frontmatter for {}", path.display()))?;
+        let body = routine.blueprint_markdown.trim();
+        let updated = if body.is_empty() {
+            format!("---\n{}---\n", serialized)
+        } else {
+            format!("---\n{}---\n\n{}\n", serialized, body)
+        };
+        fs::write(&path, updated)
+            .with_context(|| format!("persist routine markdown at {}", path.display()))?;
+        Ok(())
+    }
 }
 
 impl BoardStore for FileSystemAdapter {
@@ -56,6 +71,9 @@ impl BoardStore for FileSystemAdapter {
 
     fn save(&self, board: &Board) -> Result<()> {
         // Implement aggregate save by delegating to individual entity persists
+        for routine in board.routines.values() {
+            self.persist_routine(routine)?;
+        }
         for story in board.stories.values() {
             self.persist_frontmatter(&story.path, &story.frontmatter)?;
         }
@@ -71,6 +89,25 @@ impl BoardStore for FileSystemAdapter {
         for adr in board.adrs.values() {
             self.persist_frontmatter(&adr.path, &adr.frontmatter)?;
         }
+        Ok(())
+    }
+}
+
+impl EntityStore<Routine> for FileSystemAdapter {
+    fn get(&self, id: &str) -> Result<Routine> {
+        let board = self.load()?;
+        board.require_routine(id).cloned()
+    }
+    fn put(&self, entity: &Routine) -> Result<()> {
+        self.persist_routine(entity)
+    }
+    fn list(&self) -> Result<Vec<Routine>> {
+        let board = self.load()?;
+        let mut routines: Vec<_> = board.routines.into_values().collect();
+        routines.sort_by(|a, b| a.id().cmp(b.id()));
+        Ok(routines)
+    }
+    fn delete(&self, _id: &str) -> Result<()> {
         Ok(())
     }
 }
@@ -269,6 +306,33 @@ impl DocumentServicePort for FileSystemAdapter {
 mod tests {
     use super::*;
     use crate::test_helpers::TestBoardBuilder;
+    use std::fs;
+
+    fn write_routine(root: &Path, id: &str) {
+        let routine_dir = root.join("routines").join(id);
+        fs::create_dir_all(&routine_dir).unwrap();
+        fs::write(
+            routine_dir.join("README.md"),
+            format!(
+                r#"---
+id: {id}
+title: Weekly Review
+cadence:
+  cron: 0 9 * * 1
+  timezone: America/Los_Angeles
+target-scope: VDakm8eVW/VDcFd11nc
+created_at: 2026-03-11T09:00:00
+updated_at: 2026-03-11T09:30:00
+---
+
+# Blueprint
+
+- Review the open backlog.
+"#
+            ),
+        )
+        .unwrap();
+    }
 
     #[test]
     fn filesystem_board_store() {
@@ -276,6 +340,45 @@ mod tests {
         let adapter = FileSystemAdapter::new(temp.path());
         let board = adapter.load().unwrap();
         assert_eq!(board.root, temp.path());
+    }
+
+    #[test]
+    fn filesystem_board_store_save_persists_routines_alongside_existing_entities() {
+        let temp = TestBoardBuilder::new()
+            .story(crate::test_helpers::TestStory::new("S1"))
+            .build();
+        write_routine(temp.path(), "routine-weekly-review");
+        let adapter = FileSystemAdapter::new(temp.path());
+
+        let mut board = adapter.load().unwrap();
+        let routine = board.routines.get_mut("routine-weekly-review").unwrap();
+        routine.frontmatter.title = "Updated Weekly Review".to_string();
+        routine.blueprint_markdown = "# Blueprint\n\n- Updated blueprint steps.\n".to_string();
+        board.stories.get_mut("S1").unwrap().frontmatter.title = "Updated story title".to_string();
+
+        adapter.save(&board).unwrap();
+
+        let reloaded = adapter.load().unwrap();
+        assert_eq!(
+            reloaded
+                .routines
+                .get("routine-weekly-review")
+                .unwrap()
+                .title(),
+            "Updated Weekly Review"
+        );
+        assert!(
+            reloaded
+                .routines
+                .get("routine-weekly-review")
+                .unwrap()
+                .blueprint_markdown()
+                .contains("Updated blueprint steps.")
+        );
+        assert_eq!(
+            reloaded.stories.get("S1").unwrap().title(),
+            "Updated story title"
+        );
     }
 
     #[test]
@@ -290,5 +393,49 @@ mod tests {
 
         let stories: Vec<Story> = adapter.list().unwrap();
         assert_eq!(stories.len(), 1);
+    }
+
+    #[test]
+    fn filesystem_routine_entity_store_put_reloads_bundle() {
+        let temp = TestBoardBuilder::new().build();
+        write_routine(temp.path(), "routine-weekly-review");
+        let adapter = FileSystemAdapter::new(temp.path());
+
+        let mut routine: Routine = adapter.get("routine-weekly-review").unwrap();
+        routine.frontmatter.title = "Updated Weekly Review".to_string();
+        routine.blueprint_markdown = "# Blueprint\n\n- Updated blueprint steps.\n".to_string();
+
+        adapter.put(&routine).unwrap();
+
+        let reloaded: Routine = adapter.get("routine-weekly-review").unwrap();
+        let board = adapter.load().unwrap();
+
+        assert_eq!(reloaded.title(), "Updated Weekly Review");
+        assert!(
+            reloaded
+                .blueprint_markdown()
+                .contains("Updated blueprint steps.")
+        );
+        assert!(
+            !reloaded
+                .blueprint_markdown()
+                .contains("Review the open backlog.")
+        );
+        assert_eq!(
+            board.routines.get("routine-weekly-review").unwrap().title(),
+            "Updated Weekly Review"
+        );
+    }
+
+    #[test]
+    fn filesystem_routine_entity_store_lists_empty_when_no_routines_exist() {
+        let temp = TestBoardBuilder::new().build();
+        let adapter = FileSystemAdapter::new(temp.path());
+
+        let board = adapter.load().unwrap();
+        let routines: Vec<Routine> = adapter.list().unwrap();
+
+        assert!(board.routines.is_empty());
+        assert!(routines.is_empty());
     }
 }

@@ -1,0 +1,14 @@
+---
+recorded_at: 2026-03-11T20:38:08.394276558-07:00
+command: cargo test filesystem_routine_entity_store_lists_empty_when_no_routines_exist --lib
+---
+
+running 1 test
+test infrastructure::storage::filesystem::tests::filesystem_routine_entity_store_lists_empty_when_no_routines_exist ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 862 filtered out; finished in 0.01s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.06s
+     Running unittests src/lib.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-bec18a36668a42b8)

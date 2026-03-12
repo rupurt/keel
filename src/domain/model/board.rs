@@ -6,14 +6,16 @@ use std::path::PathBuf;
 
 use anyhow::{Result, anyhow};
 
-use super::{Adr, Bearing, Entity, Epic, Mission, Story, StoryState, Voyage};
+use super::{Adr, Bearing, Entity, Epic, Mission, Routine, Story, StoryState, Voyage};
 
-/// The board contains all stories, voyages, epics, bearings, and ADRs
+/// The board contains all routines, stories, voyages, epics, bearings, and ADRs.
 #[derive(Debug, Clone)]
 pub struct Board {
     /// Root directory of the board (.keel)
     #[allow(dead_code)] // Available for path resolution
     pub root: PathBuf,
+    /// All routines indexed by ID
+    pub routines: HashMap<String, Routine>,
     /// All stories indexed by ID
     pub stories: HashMap<String, Story>,
     /// All voyages indexed by ID
@@ -41,6 +43,7 @@ impl Board {
     pub fn new(root: PathBuf) -> Self {
         Self {
             root,
+            routines: HashMap::new(),
             stories: HashMap::new(),
             voyages: HashMap::new(),
             epics: HashMap::new(),
@@ -53,6 +56,11 @@ impl Board {
     /// Find a story by exact ID.
     pub fn find_story(&self, id: &str) -> Option<&Story> {
         self.stories.get(id)
+    }
+
+    /// Find a routine by exact ID.
+    pub fn find_routine(&self, id: &str) -> Option<&Routine> {
+        self.routines.get(id)
     }
 
     /// Find a voyage by exact ID.
@@ -86,6 +94,12 @@ impl Board {
     pub fn require_story(&self, id: &str) -> Result<&Story> {
         self.find_story(id)
             .ok_or_else(|| not_found_error("Story", id, self.stories.values()))
+    }
+
+    /// Require a routine by exact ID, returning an error with nearby ID suggestions if not found.
+    pub fn require_routine(&self, id: &str) -> Result<&Routine> {
+        self.find_routine(id)
+            .ok_or_else(|| not_found_error("Routine", id, self.routines.values()))
     }
 
     /// Require a voyage by exact ID, returning an error with nearby ID suggestions if not found.

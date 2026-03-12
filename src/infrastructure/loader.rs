@@ -1,6 +1,6 @@
 //! Board loader - parallel file loading using rayon
 //!
-//! Loads all stories, voyages, and epics from the board directory.
+//! Loads all routines, stories, voyages, and epics from the board directory.
 
 use std::collections::HashMap;
 use std::fs;
@@ -12,7 +12,8 @@ use walkdir::WalkDir;
 
 use crate::domain::model::{
     Adr, AdrFrontmatter, Bearing, BearingFrontmatter, Board, Epic, EpicFrontmatter, Mission,
-    MissionFrontmatter, Story, StoryFrontmatter, Voyage, VoyageFrontmatter,
+    MissionFrontmatter, Routine, RoutineFrontmatter, Story, StoryFrontmatter, Voyage,
+    VoyageFrontmatter,
 };
 use crate::infrastructure::parser::parse_frontmatter;
 
@@ -56,6 +57,7 @@ pub fn load_entities<T: FromPath>(paths: &[PathBuf]) -> HashMap<String, T> {
 
 /// Load the entire board from disk
 pub fn load_board(board_dir: &Path) -> Result<Board> {
+    let routines = load_routines(board_dir)?;
     let stories = load_stories(board_dir)?;
     let voyages = load_voyages(board_dir)?;
     let mut epics = load_epics(board_dir)?;
@@ -66,6 +68,7 @@ pub fn load_board(board_dir: &Path) -> Result<Board> {
 
     Ok(Board {
         root: board_dir.to_path_buf(),
+        routines,
         stories,
         voyages,
         epics,
@@ -88,6 +91,55 @@ impl FromPath for Story {
     }
     fn entity_name() -> &'static str {
         "story"
+    }
+}
+
+/// Load all routines from routines/*/README.md
+fn load_routines(board_dir: &Path) -> Result<HashMap<String, Routine>> {
+    let routines_dir = board_dir.join("routines");
+    if !routines_dir.exists() {
+        return Ok(HashMap::new());
+    }
+
+    let paths: Vec<_> = fs::read_dir(&routines_dir)?
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().is_dir())
+        .map(|e| e.path().join("README.md"))
+        .filter(|p| p.exists())
+        .collect();
+
+    Ok(load_entities(&paths))
+}
+
+impl FromPath for Routine {
+    fn from_path(path: &Path) -> Result<Self> {
+        let content = fs::read_to_string(path)
+            .with_context(|| format!("Failed to read routine file: {}", path.display()))?;
+        let (mut frontmatter, body): (RoutineFrontmatter, _) = parse_frontmatter(&content)
+            .with_context(|| format!("Failed to parse routine frontmatter: {}", path.display()))?;
+
+        let routine_id = path
+            .parent()
+            .and_then(|p| p.file_name())
+            .and_then(|n| n.to_str())
+            .unwrap_or("")
+            .to_string();
+
+        frontmatter.id = routine_id;
+
+        Ok(Routine::new(
+            frontmatter,
+            body.trim().to_string(),
+            path.to_path_buf(),
+        ))
+    }
+
+    fn entity_id(&self) -> &str {
+        self.id()
+    }
+
+    fn entity_name() -> &'static str {
+        "routine"
     }
 }
 
@@ -383,6 +435,32 @@ mod tests {
     use std::fs;
     use tempfile::TempDir;
 
+    fn write_routine(root: &Path, directory_id: &str, frontmatter_id: &str) {
+        let routine_dir = root.join("routines").join(directory_id);
+        fs::create_dir_all(&routine_dir).unwrap();
+        fs::write(
+            routine_dir.join("README.md"),
+            format!(
+                r#"---
+id: {frontmatter_id}
+title: Weekly Review
+cadence:
+  cron: 0 9 * * 1
+  timezone: America/Los_Angeles
+target-scope: VDakm8eVW/VDcFd11nc
+created_at: 2026-03-11T09:00:00
+updated_at: 2026-03-11T09:30:00
+---
+
+# Blueprint
+
+- Review the open backlog.
+"#
+            ),
+        )
+        .unwrap();
+    }
+
     fn create_test_board() -> TempDir {
         let temp = TempDir::new().unwrap();
         let root = temp.path();
@@ -494,6 +572,38 @@ Voyage description
         assert!(board.stories.is_empty());
         assert!(board.epics.is_empty());
         assert!(board.voyages.is_empty());
+        assert!(board.routines.is_empty());
+    }
+
+    #[test]
+    fn load_board_finds_routines() {
+        let temp = TempDir::new().unwrap();
+        write_routine(
+            temp.path(),
+            "routine-weekly-review",
+            "routine-weekly-review",
+        );
+
+        let board = load_board(temp.path()).unwrap();
+
+        assert_eq!(board.routines.len(), 1);
+        let routine = board.routines.get("routine-weekly-review").unwrap();
+        assert_eq!(routine.id(), "routine-weekly-review");
+        assert_eq!(routine.title(), "Weekly Review");
+        assert_eq!(routine.target_scope(), "VDakm8eVW/VDcFd11nc");
+        assert!(routine.blueprint_markdown().contains("# Blueprint"));
+    }
+
+    #[test]
+    fn load_board_derives_routine_id_from_directory_name() {
+        let temp = TempDir::new().unwrap();
+        write_routine(temp.path(), "routine-weekly-review", "wrong-id");
+
+        let board = load_board(temp.path()).unwrap();
+
+        assert!(board.routines.contains_key("routine-weekly-review"));
+        let routine = board.routines.get("routine-weekly-review").unwrap();
+        assert_eq!(routine.id(), "routine-weekly-review");
     }
 
     #[test]
@@ -561,7 +671,8 @@ Voyage description
         let elapsed = start.elapsed();
 
         println!(
-            "Loaded {} stories, {} voyages, {} epics in {:?}",
+            "Loaded {} routines, {} stories, {} voyages, {} epics in {:?}",
+            board.routines.len(),
             board.stories.len(),
             board.voyages.len(),
             board.epics.len(),
