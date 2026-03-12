@@ -31,8 +31,11 @@ jobs:
       tag-flag: ${{ steps.context.outputs.tag_flag }}
       build_artifacts: ${{ steps.context.outputs.build_artifacts }}
       publishing: ${{ steps.context.outputs.publishing }}
+      publish_homebrew: ${{ steps.context.outputs.publish_homebrew }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      HOMEBREW_TAP_REPO: ${{ vars.HOMEBREW_TAP_REPO }}
+      HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -56,8 +59,10 @@ jobs:
         shell: bash
         run: |
           tag=""
+          tag_flag=""
           build_artifacts=false
           publishing=false
+          publish_homebrew=false
 
           if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
             tag="${GITHUB_REF_NAME}"
@@ -74,16 +79,21 @@ jobs:
             fi
           fi
 
-          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
-
-          if [[ -n "${tag}" ]]; then
-            echo "tag_flag=--tag=${tag}" >> "${GITHUB_OUTPUT}"
-          else
-            echo "tag_flag=" >> "${GITHUB_OUTPUT}"
+          if [[ -n "${HOMEBREW_TAP_REPO:-}" && -n "${HOMEBREW_TAP_TOKEN}" ]]; then
+            publish_homebrew=true
           fi
 
-          echo "publishing=${publishing}" >> "${GITHUB_OUTPUT}"
-          echo "build_artifacts=${build_artifacts}" >> "${GITHUB_OUTPUT}"
+          if [[ -n "${tag}" ]]; then
+            tag_flag="--tag=${tag}"
+          fi
+
+          {
+            echo "tag=${tag}"
+            echo "tag_flag=${tag_flag}"
+            echo "publishing=${publishing}"
+            echo "build_artifacts=${build_artifacts}"
+            echo "publish_homebrew=${publish_homebrew}"
+          } >> "${GITHUB_OUTPUT}"
 
       - id: plan
         shell: bash
@@ -158,9 +168,11 @@ jobs:
         name: Collect artifact paths
         shell: bash
         run: |
-          echo "paths<<EOF" >> "${GITHUB_OUTPUT}"
-          dist print-upload-files-from-manifest --manifest dist-manifest.json >> "${GITHUB_OUTPUT}"
-          echo "EOF" >> "${GITHUB_OUTPUT}"
+          {
+            echo "paths<<EOF"
+            dist print-upload-files-from-manifest --manifest dist-manifest.json
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
 
           cp dist-manifest.json "${BUILD_MANIFEST_NAME}"
 
@@ -259,9 +271,11 @@ jobs:
           dist build ${{ needs.plan.outputs.tag-flag }} --output-format=json --artifacts=global > dist-manifest.json
           echo "dist ran successfully"
 
-          echo "paths<<EOF" >> "${GITHUB_OUTPUT}"
-          jq --raw-output ".upload_files[]" dist-manifest.json >> "${GITHUB_OUTPUT}"
-          echo "EOF" >> "${GITHUB_OUTPUT}"
+          {
+            echo "paths<<EOF"
+            jq --raw-output ".upload_files[]" dist-manifest.json
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
 
           cp dist-manifest.json "${BUILD_MANIFEST_NAME}"
 
@@ -337,6 +351,11 @@ jobs:
           RELEASE_COMMIT: ${{ github.sha }}
         shell: bash
         run: |
+          prerelease_args=()
+          if [[ -n "${PRERELEASE_FLAG}" ]]; then
+            prerelease_args+=("${PRERELEASE_FLAG}")
+          fi
+
           echo "${ANNOUNCEMENT_BODY}" > "${RUNNER_TEMP}/notes.txt"
 
           if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
@@ -344,7 +363,7 @@ jobs:
           else
             gh release create "${RELEASE_TAG}" \
               --target "${RELEASE_COMMIT}" \
-              ${PRERELEASE_FLAG} \
+              "${prerelease_args[@]}" \
               --title "${ANNOUNCEMENT_TITLE}" \
               --notes-file "${RUNNER_TEMP}/notes.txt" \
               artifacts/*
@@ -355,7 +374,7 @@ jobs:
     needs:
       - plan
       - host
-    if: ${{ needs.host.result == 'success' && vars.HOMEBREW_TAP_REPO != '' && secrets.HOMEBREW_TAP_TOKEN != '' }}
+    if: ${{ needs.host.result == 'success' && needs.plan.outputs.publish_homebrew == 'true' }}
     runs-on: ubuntu-22.04
     steps:
       - name: Download release artifacts
