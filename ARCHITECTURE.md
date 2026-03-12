@@ -190,6 +190,25 @@ Management-lane `keel next --role <management-role>` decision set is constrained
 `decision`, `accept`, `research`, `needs-stories`, `needs-planning`, `blocked`, `empty`.
 It never returns `Work`.
 
+## World Map Projection
+
+`keel topology` is not a tree printer. It renders the board as a `subtree-weighted orbit map`.
+
+Projection contract:
+- The world node sits at the center.
+- Concentric rings represent progressively deeper entity layers.
+- Angular span is allocated by subtree weight so larger branches occupy more of the circle.
+- Zoom levels reveal deeper tactical layers in order: `world -> mission -> epic -> voyage -> story`.
+- Focused views preserve the same layout model while filtering to one branch.
+- Interactive mode is the default on a TTY; `--static` keeps the rendering snapshot-friendly for harnesses and logs.
+
+Implementation ownership:
+- `src/read_model/world_map.rs` builds the canonical world-map projection and zoom slices.
+- `src/cli/presentation/topology.rs` lays out and renders the subtree-weighted orbit map.
+- `src/cli/commands/management/topology.rs` owns the interactive terminal loop and static command surface.
+
+This projection gives Keel a stable spatial metaphor for board state: strategic entities stay closer to the center, tactical entities move outward, and denser parts of the board naturally claim more visual territory.
+
 ## Command and Control Architecture
 
 | Layer | Responsibility | Location |

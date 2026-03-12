@@ -87,10 +87,24 @@ Markdown files are the source of truth, but agents should not need to reread the
 
 - `keel epic show`, `keel voyage show`, and `keel story show` for scoped planning and execution context
 - `keel next --role <role>` and `keel flow` for queue steering
+- `keel topology` for a board-wide spatial map of strategic and tactical relationships
 - `keel audit` for traceability and proof review
 - `keel knowledge ...` for institutional memory and repeated implementation signals
 
 This keeps the workflow agent-friendly: the CLI provides compact, deterministic summaries for orientation, while still rendering the underlying artifact paths (`PRD.md`, `SRS.md`, `SDD.md`, story `README.md`, and more) when full authored detail is needed.
+
+### Topology World Map
+
+`keel topology` renders the board as a `subtree-weighted orbit map`.
+
+- The center node is the board world.
+- Concentric rings represent progressively deeper entity layers.
+- Angular span is allocated by subtree weight, so larger branches claim more space.
+- `--zoom` reveals deeper layers from `world` through `story`.
+- `--focus <id>` filters the map to one branch while preserving the same spatial metaphor.
+- On a TTY, `keel topology` is interactive by default; use `--static` for harnesses, logs, and snapshots.
+
+This is meant to be readable as a systems map, not a list dump: the same branch stays visually coherent as you zoom in, and dense areas of the board naturally occupy more of the orbit.
 
 For recurring-work automation specifically, see [GUIDE.md](GUIDE.md) for the
 routine authoring, `next`, `flow`, and `pulse` workflow.
@@ -142,16 +156,20 @@ Setup
   generate    Regenerate all README files
 
 Management
-  next        Surface the single most important thing to work on
+  next        Pull the next item using explicit role-based queue routing
+  pulse       Run one non-interactive automation cycle
+  topology    Show a zoomable world map of the board
   play        Invite play-driven discovery
   audit       Rich evidence/traceability report
   verify      Execute verification proofs
   knowledge   Manage institutional knowledge
+  mission     Mission commands (long-running objectives)
   adr         ADR commands (architecture decisions)
   bearing     Bearing commands (research phase)
   epic        Epic commands
+  routine     Routine commands
   voyage      Voyage commands
-  story       Story commands
+  story       Story commands (new, start, submit, accept, reject, ice, thaw, show, list, link, unlink, record, audit)
 
 Diagnostics
   doctor      Validate board health and optionally fix issues
@@ -174,7 +192,9 @@ Diagnostics
 
 | Command | Purpose |
 |---------|---------|
-| `next` | Pull from the default management lane or route to delivery work with `--role operator` |
+| `next` | Pull from the lane mapped to `--role`; there is no implicit default role |
+| `pulse` | Run one non-interactive automation cycle |
+| `topology` | Render the board as a subtree-weighted orbit map with zoom and focus controls |
 | `play` | Trigger play-driven discovery for a bearing |
 | `audit` | Generate a detailed traceability report for a story |
 | `verify run/recommend/detect` | Execute proofs, inspect detection signals, and review detected+active verification guidance |
@@ -182,9 +202,11 @@ Diagnostics
 | `knowledge explore` | Surface "Rising Patterns" and thematic trends |
 | `knowledge graph` | Visualize connections between insights and entities |
 | `knowledge impact` | Track drift risk and institutionalization progress |
+| `mission show/next/verify` | Mission steering and long-running objective management |
 | `adr new/accept/supersede` | Architecture Decision Record lifecycle |
 | `bearing new/research/lay` | Research and exploration lifecycle |
 | `epic new/done/reopen` | Strategic grouping and PRD management |
+| `routine new/show/list` | Recurring work definitions and automation context |
 | `voyage new/plan/start` | Tactical planning (SRS/SDD) and execution |
 | `story new/start/submit` | Implementation units and acceptance criteria |
 

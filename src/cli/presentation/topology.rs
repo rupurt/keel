@@ -13,8 +13,6 @@ use keel::read_model::world_map::{
 
 const LABEL_NODE_LIMIT: usize = 18;
 const MIN_INTERACTIVE_CHART_HEIGHT: usize = 6;
-const MAX_INTERACTIVE_SUMMARY_LINES: usize = 4;
-
 struct PositionedNode<'a> {
     node: &'a WorldMapNode,
     x: isize,
@@ -81,14 +79,8 @@ fn render_topology_with_mode(
 fn chart_width_for_mode(width: usize, mode: RenderMode) -> usize {
     let available = width.saturating_sub(2).max(1);
     match mode {
-        RenderMode::Static => {
-            if available >= 58 {
-                available.min(118)
-            } else {
-                available
-            }
-        }
-        RenderMode::Interactive { .. } => available.min(118),
+        RenderMode::Static => available,
+        RenderMode::Interactive { .. } => available,
     }
 }
 
@@ -120,8 +112,8 @@ fn default_chart_height(projection: &WorldMapProjection, width: usize) -> usize 
 
 fn interactive_summary_budget(height: usize) -> usize {
     height
-        .saturating_sub(14)
-        .clamp(1, MAX_INTERACTIVE_SUMMARY_LINES)
+        .saturating_sub(MIN_INTERACTIVE_CHART_HEIGHT + 4)
+        .max(1)
 }
 
 fn chart_title(projection: &WorldMapProjection, width: usize) -> String {
@@ -258,24 +250,28 @@ fn render_interactive_summary(
         width,
     ));
 
-    if max_lines >= 3 && !projection.layers.is_empty() {
-        let layers = projection
-            .layers
-            .iter()
-            .map(|layer| {
-                format!(
-                    "{}:{}({})",
-                    layer.depth,
-                    title_case_compound_label(&layer.label),
-                    layer.count
-                )
-            })
-            .collect::<Vec<_>>()
-            .join(" | ");
-        lines.push(truncate_text(&format!("Layers: {layers}"), width));
+    if !projection.layers.is_empty() && lines.len() < max_lines {
+        lines.push(truncate_text("Layers:", width));
+        for layer in &projection.layers {
+            if lines.len() >= max_lines {
+                break;
+            }
+            let layer_text = format!(
+                "  {}. {} ({})",
+                layer.depth,
+                title_case_compound_label(&layer.label),
+                layer.count
+            );
+            let remaining = max_lines - lines.len();
+            lines.extend(
+                wrap_text_lines(&layer_text, width, "     ")
+                    .into_iter()
+                    .take(remaining),
+            );
+        }
     }
 
-    if max_lines >= 4
+    if lines.len() < max_lines
         && let Some(highlight) = projection.highlights.first()
     {
         lines.push(truncate_text(&format!("Highlight: {highlight}"), width));
@@ -302,6 +298,53 @@ fn truncate_text(text: &str, limit: usize) -> String {
         .collect::<String>();
     truncated.push('…');
     truncated
+}
+
+fn wrap_text_lines(text: &str, width: usize, continuation_indent: &str) -> Vec<String> {
+    if width == 0 {
+        return Vec::new();
+    }
+
+    let mut remaining = text.trim();
+    let mut lines = Vec::new();
+    let mut indent = "";
+
+    while !remaining.is_empty() {
+        let available = width.saturating_sub(indent.chars().count());
+        if available == 0 {
+            break;
+        }
+
+        let mut segment = remaining.to_string();
+        if segment.chars().count() > available {
+            let mut split_idx = 0usize;
+            let mut candidate = 0usize;
+            for (idx, ch) in remaining.char_indices() {
+                if remaining[..idx].chars().count() >= available {
+                    break;
+                }
+                if ch.is_whitespace() {
+                    candidate = idx;
+                }
+                split_idx = idx + ch.len_utf8();
+            }
+
+            let take_idx = if candidate > 0 { candidate } else { split_idx };
+            segment = remaining[..take_idx].trim_end().to_string();
+            remaining = remaining[take_idx..].trim_start();
+        } else {
+            remaining = "";
+        }
+
+        lines.push(format!("{indent}{segment}"));
+        indent = continuation_indent;
+    }
+
+    if lines.is_empty() {
+        lines.push(text.chars().take(width).collect());
+    }
+
+    lines
 }
 
 fn layout_positions<'a>(
@@ -575,16 +618,11 @@ fn draw_labels(
             continue;
         }
 
-        let label = truncate_label(&positioned.node.title, 14);
-        let offset_x = if positioned.angle.cos() >= 0.0 {
-            8
-        } else {
-            -((label.chars().count() as isize) * 2 + 8)
-        };
-        let offset_y = if positioned.angle.sin() >= 0.0 { 6 } else { -6 };
+        let label = positioned.node.title.as_str();
+        let (offset_x, offset_y) = label_offsets(positioned.node, label, positioned.angle);
         draw_text_screen(
             chart,
-            &label,
+            label,
             positioned.x + offset_x,
             positioned.y + offset_y,
             Some(node_color(positioned.node)),
@@ -592,8 +630,14 @@ fn draw_labels(
     }
 }
 
-fn truncate_label(text: &str, limit: usize) -> String {
-    truncate_text(text, limit)
+fn label_offsets(node: &WorldMapNode, label: &str, angle: f64) -> (isize, isize) {
+    let horizontal_gap = node_radius(node.kind) * 2 + 4;
+    let offset_x = if angle.cos() >= 0.0 {
+        horizontal_gap
+    } else {
+        -((label.chars().count() as isize) * 2 + horizontal_gap)
+    };
+    (offset_x, 0)
 }
 
 fn title_case_label(label: &str) -> String {
@@ -699,7 +743,9 @@ fn draw_text_screen(
 ) {
     let max_col = chart.canvas.width.saturating_sub(1) as isize;
     let max_row = chart.canvas.height.saturating_sub(1) as isize;
-    let col = (x_px / 2).clamp(0, max_col) as usize;
+    let text_width = text.chars().count() as isize;
+    let max_start_col = (chart.canvas.width as isize - text_width).clamp(0, max_col);
+    let col = (x_px / 2).clamp(0, max_start_col) as usize;
     let row = (y_px / 4).clamp(0, max_row) as usize;
     let x_norm = if chart.canvas.width <= 1 {
         0.0
@@ -835,20 +881,66 @@ mod tests {
     }
 
     #[test]
+    fn interactive_chart_uses_full_available_width_budget() {
+        let chart_width = chart_width_for_mode(160, RenderMode::Interactive { height: 24 });
+
+        assert_eq!(chart_width, 158);
+    }
+
+    #[test]
     fn interactive_summary_truncates_to_viewport_width() {
-        let rendered = render_topology_interactive(&test_projection(), 44, 18);
-        let summary_lines = rendered
-            .lines()
-            .filter(|line| {
-                line.starts_with("Zoom:")
-                    || line.starts_with("Visible:")
-                    || line.starts_with("Layers:")
-                    || line.starts_with("Highlight:")
-            })
-            .collect::<Vec<_>>();
+        let mut projection = test_projection();
+        projection.layers = vec![WorldMapLayer {
+            depth: 1,
+            label: "missions + epics + bearings + voyages + stories".to_string(),
+            count: 5,
+        }];
+
+        let summary = render_interactive_summary(&projection, 44, interactive_summary_budget(18));
+        let summary_lines = summary.lines().collect::<Vec<_>>();
+        let summary_text = summary_lines
+            .join(" ")
+            .split_whitespace()
+            .collect::<Vec<_>>()
+            .join(" ");
 
         assert!(!summary_lines.is_empty());
         assert!(summary_lines.iter().all(|line| line.chars().count() <= 44));
-        assert!(summary_lines.iter().any(|line| line.ends_with('…')));
+        assert!(summary_lines.iter().any(|line| line == &"Layers:"));
+        assert!(summary_text.contains("Missions + Epics + Bearings"));
+        assert!(summary_text.contains("Voyages + Stories"));
+    }
+
+    #[test]
+    fn static_render_keeps_full_node_titles_without_ellipsis() {
+        let mut projection = test_projection();
+        projection.highlights.clear();
+
+        let rendered = render_topology(&projection, 100);
+
+        assert!(rendered.contains("Mission With A Very Long Name"));
+        assert!(!rendered.contains("Mission With A…"));
+    }
+
+    #[test]
+    fn label_offsets_keep_node_labels_inline_with_nodes() {
+        let mission = WorldMapNode {
+            id: "M1".to_string(),
+            title: "Mission One".to_string(),
+            kind: WorldMapNodeKind::Mission,
+            state: "active".to_string(),
+            parent_id: Some("__world__".to_string()),
+            depth: 1,
+            terminal: false,
+            order_index: Some(1),
+            summary: None,
+            timer: None,
+            signals: Vec::new(),
+        };
+
+        let (offset_x, offset_y) = label_offsets(&mission, &mission.title, 0.0);
+
+        assert!(offset_x > 0);
+        assert_eq!(offset_y, 0);
     }
 }
