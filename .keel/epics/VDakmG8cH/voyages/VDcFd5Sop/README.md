@@ -25,11 +25,11 @@ started_at: 2026-03-11T21:24:01
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/3 stories complete
+**Progress:** 1/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Pulse Routine Materialization](../../../../stories/VDcFgtHNB/README.md) | feat | backlog |
+| [Pulse Routine Materialization](../../../../stories/VDcFgtHNB/README.md) | feat | in-progress |
 | [Scheduled Flow Lane Projection](../../../../stories/VDcFgtbNC/README.md) | feat | backlog |
-| [Pulse Command Surface](../../../../stories/VDcFgtsLv/README.md) | feat | in-progress |
+| [Pulse Command Surface](../../../../stories/VDcFgtsLv/README.md) | feat | done |
 <!-- END GENERATED -->

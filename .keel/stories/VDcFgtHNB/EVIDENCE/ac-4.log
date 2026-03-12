@@ -1,0 +1,14 @@
+---
+recorded_at: 2026-03-11T21:44:20.592755351-07:00
+command: cargo test pulse_json_output_is_structured_for_created_skipped_and_deferred_state --bin keel
+---
+
+running 1 test
+test cli::commands::management::pulse::tests::pulse_json_output_is_structured_for_created_skipped_and_deferred_state ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 617 filtered out; finished in 0.01s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.07s
+     Running unittests src/main.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-6b6267650f0e80fa)
