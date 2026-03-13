@@ -2,12 +2,14 @@
 
 use std::collections::BTreeSet;
 use std::fs;
+use std::io::{self, IsTerminal, Write};
 use std::path::Path;
 
 use anyhow::{Context, Result, bail};
 
 use super::play_guidance::{guidance_for_suggest, informational_for_exploration, print_human};
 use keel::infrastructure::markdown_sections::extract_section;
+use keel::infrastructure::utils::slugify;
 
 /// Run the play command
 #[allow(clippy::too_many_arguments)]
@@ -105,6 +107,7 @@ const THEATER_PERSONA_REGISTRY: &[TheaterPersona] = &[
         prompt: "Stage the scene with flair, spectacle, and timing.",
     },
 ];
+const THEATER_PROP_CATEGORIES: &[&str] = &["masks", "hats", "instruments", "costumes", "custom"];
 
 #[derive(Debug, Clone, Copy)]
 struct TheaterTheme {
@@ -288,6 +291,29 @@ mod theater_tests {
         }
 
         assert!(prompts.len() >= 4);
+    }
+
+    #[test]
+    fn suggest_similar_props_uses_partial_matches() {
+        let available = vec![
+            "improviser".to_string(),
+            "jester".to_string(),
+            "playwright".to_string(),
+            "bard".to_string(),
+        ];
+
+        let matches = suggest_similar_props("play", &available);
+        assert_eq!(matches, vec!["playwright"]);
+
+        let empty = suggest_similar_props("unknown", &available);
+        assert!(empty.is_empty());
+    }
+
+    #[test]
+    fn collect_prop_names_is_stable_for_missing_catalog() {
+        let temp = tempfile::tempdir().unwrap();
+        let names = collect_prop_names(temp.path()).unwrap();
+        assert!(names.is_empty());
     }
 }
 
@@ -487,10 +513,7 @@ fn play_with_prop(play_dir: &Path, prop_name: &str, bearing_context: Option<&str
     let prop_path = find_prop_file(&props_dir, prop_name);
 
     let Some(prop_path) = prop_path else {
-        eprintln!("Unknown prop: {}", prop_name);
-        eprintln!("\nAvailable props:");
-        list_available_props(play_dir)?;
-        std::process::exit(1);
+        return handle_unknown_prop(play_dir, prop_name, bearing_context);
     };
 
     let content = fs::read_to_string(&prop_path)?;
@@ -541,6 +564,205 @@ fn play_with_prop(play_dir: &Path, prop_name: &str, bearing_context: Option<&str
     }
 
     Ok(())
+}
+
+fn handle_unknown_prop(
+    play_dir: &Path,
+    prop_name: &str,
+    bearing_context: Option<&str>,
+) -> Result<()> {
+    eprintln!("Unknown prop: {}", prop_name);
+
+    let available = collect_prop_names(play_dir)?;
+    if available.is_empty() {
+        return handle_unknown_prop_when_catalog_empty(play_dir, prop_name, bearing_context);
+    }
+
+    eprintln!("\nAvailable props:");
+    for prop in &available {
+        println!("  {}", prop);
+    }
+
+    let similar = suggest_similar_props(prop_name, &available);
+    if !similar.is_empty() {
+        println!("\nDid you mean one of these?");
+        for prop in similar {
+            println!("  {}", prop);
+        }
+    }
+
+    match prompt_line("Try one of these props (leave blank to start freeform): ") {
+        Some(input) if input.is_empty() => freeform_play(play_dir, None),
+        Some(input) => {
+            let next = input.to_lowercase();
+            if let Some(existing) = available
+                .iter()
+                .find(|name| name.eq_ignore_ascii_case(&next))
+            {
+                return play_with_prop(play_dir, existing, bearing_context);
+            }
+
+            if confirm_prompt(&format!("Create a new prop '{}'? [y/N]: ", input))? {
+                return create_named_prop(play_dir, &input, bearing_context);
+            }
+
+            eprintln!("No match for '{}'.", input);
+            freeform_play(play_dir, None)
+        }
+        None => {
+            eprintln!(
+                "Non-interactive mode: pass a known `--prop` or run `keel play --list-props` first."
+            );
+            bail!("Unknown prop: {prop_name}");
+        }
+    }
+}
+
+fn handle_unknown_prop_when_catalog_empty(
+    play_dir: &Path,
+    prop_name: &str,
+    bearing_context: Option<&str>,
+) -> Result<()> {
+    eprintln!("No props catalog found. Assemble props at .keel/play/props/");
+    if confirm_prompt(&format!(
+        "Create and stage a new prop '{}' now? [y/N]: ",
+        prop_name
+    ))? {
+        return create_named_prop(play_dir, prop_name, bearing_context);
+    }
+
+    eprintln!(
+        "\nStart with an existing prop catalog using `keel play --list-props` for suggestions."
+    );
+    freeform_play(play_dir, None)
+}
+
+fn create_named_prop(
+    play_dir: &Path,
+    requested_name: &str,
+    bearing_context: Option<&str>,
+) -> Result<()> {
+    let category = prompt_or_default(
+        "Select a prop category [masks/hats/instruments/costumes/custom]: ",
+        "custom",
+    )
+    .unwrap_or_else(|| "custom".to_string());
+    let normalized_category = THEATER_PROP_CATEGORIES
+        .iter()
+        .find(|entry| entry.eq_ignore_ascii_case(&category))
+        .copied()
+        .unwrap_or("custom");
+    let prompt = prompt_or_default(
+        &format!(
+            "Give this prop a one-line prompt (blank for default): [{}] ",
+            requested_name
+        ),
+        &format!("Try a fresh perspective with {}.", requested_name),
+    )
+    .unwrap_or_else(|| format!("Try a fresh perspective with {}.", requested_name));
+
+    let name = slugify(requested_name);
+    let prop_dir = play_dir.join("props").join(normalized_category);
+    fs::create_dir_all(&prop_dir)?;
+
+    let mut prop_path = prop_dir.join(format!("{}.md", name));
+    if prop_path.exists() {
+        let mut suffix = 1usize;
+        loop {
+            let candidate = prop_dir.join(format!("{}-{}.md", name, suffix));
+            if !candidate.exists() {
+                prop_path = candidate;
+                break;
+            }
+            suffix += 1;
+        }
+    }
+
+    write_prop_template(&prop_path, requested_name, &prompt)?;
+
+    let created = prop_path
+        .file_stem()
+        .and_then(|stem| stem.to_str())
+        .unwrap_or(requested_name);
+    play_with_prop(play_dir, created, bearing_context)
+}
+
+fn write_prop_template(path: &Path, name: &str, prompt: &str) -> Result<()> {
+    let content = format!(
+        "# {}\n\n**Reframes by:** {}\n\n## Core Prompt\n> {}\n\n## When to Reach\n- Use this prop when you want a new framing angle.\n- Use it to test assumptions and expose hidden dependencies.\n",
+        name, name, prompt
+    );
+    fs::write(path, content)?;
+    Ok(())
+}
+
+fn collect_prop_names(play_dir: &Path) -> Result<Vec<String>> {
+    let props_dir = play_dir.join("props");
+    if !props_dir.exists() {
+        return Ok(Vec::new());
+    }
+
+    let mut names = Vec::new();
+    for entry in fs::read_dir(&props_dir)?.filter_map(Result::ok) {
+        if !entry.path().is_dir() {
+            continue;
+        }
+        for prop_entry in fs::read_dir(entry.path())?.filter_map(Result::ok) {
+            if prop_entry.path().extension().is_none_or(|ext| ext != "md") {
+                continue;
+            }
+            if let Some(name) = prop_entry.path().file_stem().and_then(|stem| stem.to_str()) {
+                names.push(name.to_string());
+            }
+        }
+    }
+
+    names.sort_by_key(|name| name.to_lowercase());
+    names.dedup();
+    Ok(names)
+}
+
+fn suggest_similar_props(requested: &str, available: &[String]) -> Vec<String> {
+    let lowered = requested.to_lowercase();
+    available
+        .iter()
+        .filter(|name| {
+            let probe = name.to_lowercase();
+            probe.contains(&lowered) || lowered.contains(&probe) || probe.starts_with(&lowered)
+        })
+        .cloned()
+        .collect()
+}
+
+fn prompt_line(prompt: &str) -> Option<String> {
+    if !(io::stdin().is_terminal() && io::stdout().is_terminal()) {
+        return None;
+    }
+
+    print!("{}", prompt);
+    io::stdout().flush().ok()?;
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).ok()?;
+    Some(input.trim().to_string())
+}
+
+fn prompt_or_default(prompt: &str, default: &str) -> Option<String> {
+    let response = prompt_line(prompt)?;
+    if response.trim().is_empty() {
+        Some(default.to_string())
+    } else {
+        Some(response)
+    }
+}
+
+fn confirm_prompt(prompt: &str) -> Result<bool> {
+    match prompt_line(prompt) {
+        Some(response) => {
+            let response = response.to_lowercase();
+            Ok(matches!(response.as_str(), "y" | "yes"))
+        }
+        None => Ok(false),
+    }
 }
 
 /// Play a bearing — generate a scenario from its BRIEF.md
