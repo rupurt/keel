@@ -19,6 +19,20 @@ across planning, research, and execution.
 4. **Return Control After Each Unit**: When a worker finishes, the mission steward reviews the result, records the outcome with `just keel mission log <id> --entry "<text>"`, optionally runs `just keel mission digest <id>` for long logs, then reruns board health commands before choosing the next phase.
 5. **Do Not Mix Phases In One Worker**: If the work changes from execution to planning or research, stop and hand off to the matching workflow context instead of continuing in the old one. Parent context reads and directly coupled closure steps are fine; silent mission re-scoping is not. Only parallelize workers when their artifacts and ownership do not overlap.
 
+## Role Orchestration
+
+The mission steward is responsible for role selection and role boundary enforcement.
+
+1. **Start each cycle in Mission mode**: run `just keel mission show <id>`, `just keel flow`, and `just keel mission next [<id>]` before any `just keel next --role ...` command.
+2. **Manager-only phase**: while mission goals are unmet and no execution-ready story exists, run `just keel next --role manager` and perform one atomic planning slice.
+3. **Manager→Operator handoff contract**: when planning completes, include in handoff text all three fields: executable artifact ID (usually a story ID), exact scope boundaries (`mission`, `epic`, `voyage`), and primary verification evidence per acceptance criterion.
+4. **Operator-only phase**: operator runs one ready story slice from start through submit, including required evidence and `.keel` lifecycle artifacts.
+5. **Operator→Manager handoff contract**: on story submit or block, operator must return to mission flow with `just keel mission log <id> --entry "..."`, then rerun `just keel mission next [<id>]` before resuming planning.
+6. **No role drift**: do not continue with stale context across role changes; a role switch is a hard context boundary.
+
+Suggested cadence:
+mission loop -> manager planning -> operator execution -> mission log + reevaluate -> manager or operator.
+
 ## Delivery Workflow (Operator)
 
 **Operational Contract**: Focused operator for evidence-backed delivery.
