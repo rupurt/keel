@@ -166,31 +166,31 @@ pub fn build_cli() -> Command {
         )
         .subcommand(
             Command::new("play")
-                .about("Invite play-driven discovery")
+                .about("Run a marionette-style discovery scene")
                 .hide(true)
                 .arg(
                     Arg::new("bearing")
-                        .help("Bearing ID to generate a play scenario from")
+                        .help("Bearing ID to cast in a discovery scenario")
                         .value_name("BEARING")
                         .index(1),
                 )
                 .arg(
                     Arg::new("prop")
                         .long("prop")
-                        .help("Start with a specific prop equipped")
+                        .help("Start with a specific prop in hand")
                         .num_args(1),
                 )
                 .arg(
                     Arg::new("cross")
                         .long("cross")
-                        .help("Cross two bearings for a paired play session")
+                        .help("Cross two bearings in one paired scene")
                         .num_args(2)
                         .value_names(["id1", "id2"]),
                 )
                 .arg(
                     Arg::new("list_props")
                         .long("list-props")
-                        .help("List available props by category")
+                        .help("List available props and marionette functions by category")
                         .action(ArgAction::SetTrue),
                 )
                 .arg(

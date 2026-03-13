@@ -1,4 +1,4 @@
-//! `keel play` command — invite play-driven discovery
+//! `keel play` command — cue the marionette cast for discovery
 
 use std::collections::BTreeSet;
 use std::fs;
@@ -50,11 +50,11 @@ fn list_available_props(play_dir: &Path) -> Result<()> {
     let props_dir = play_dir.join("props");
 
     if !props_dir.exists() {
-        println!("No props catalog found. Create one at .keel/play/props/");
+        println!("No props catalog found. Assemble props at .keel/play/props/");
         return Ok(());
     }
 
-    println!("🎭 Props (reframing tools)\n");
+    println!("🎭 Marionette props (reframing tools)\n");
 
     let mut found_any = false;
     let mut categories: Vec<_> = fs::read_dir(&props_dir)?
@@ -83,9 +83,9 @@ fn list_available_props(play_dir: &Path) -> Result<()> {
         if !props.is_empty() {
             found_any = true;
             let label = match category_name.as_ref() {
-                "masks" => "Masks (perspective shifts)",
-                "hats" => "Hats (thinking modes)",
-                "instruments" => "Instruments (tempo/energy)",
+                "masks" => "Masks (cast personalities)",
+                "hats" => "Hats (thinking voices)",
+                "instruments" => "Instruments (tempo controls)",
                 "costumes" => "Costumes (context shifts)",
                 _ => &category_name,
             };
@@ -102,7 +102,9 @@ fn list_available_props(play_dir: &Path) -> Result<()> {
     }
 
     if !found_any {
-        println!("  No props found. Add .md files to .keel/play/props/<category>/");
+        println!(
+            "  Empty backstage. Add .md props to .keel/play/props/<category>/ to dress the cast."
+        );
     }
 
     Ok(())
@@ -191,8 +193,8 @@ fn freeform_play(play_dir: &Path, prop_name: Option<&str>) -> Result<()> {
         return play_with_prop(play_dir, name, None);
     }
 
-    println!("🎭 Ready to play?\n");
-    println!("Pick a prop to shift your perspective:\n");
+    println!("🎭 Puppet theater is ready.\n");
+    println!("Pull a prop string and shift perspective:\n");
 
     let props_dir = play_dir.join("props");
     if props_dir.exists() {
@@ -227,7 +229,7 @@ fn freeform_play(play_dir: &Path, prop_name: Option<&str>) -> Result<()> {
     println!("\nStart with:");
     println!("  keel play --prop <name>");
     println!("  keel play <bearing-id>");
-    println!("\nOr describe what's fuzzy and we'll find the right prop.");
+    println!("\nOr describe what's fuzzy and we'll find the right string.");
 
     Ok(())
 }
@@ -255,21 +257,21 @@ fn play_with_prop(play_dir: &Path, prop_name: &str, bearing_context: Option<&str
         .unwrap_or("Unknown Prop");
 
     println!(
-        "🎭 Putting on the {} mask\n",
+        "🎭 Rigging the {} marionette\n",
         title.trim_start_matches("# ")
     );
-    println!("Core prompt: \"{}\"\n", prompt);
+    println!("Marionette cue: \"{}\"\n", prompt);
 
     if let Some(context) = bearing_context {
-        println!("Context: {}\n", context);
+        println!("Stage:\n{}\n", context);
         println!(
-            "Apply the {} lens to this bearing. {} What do you see?\n",
+            "Apply the {} lens to this bearing. {} What do you see from the strings?\n",
             title.trim_start_matches("# "),
             prompt
         );
     } else {
         println!(
-            "What would you like to explore? {} and see where it leads.\n",
+            "What would you like to explore? {} and follow the strings from there.\n",
             prompt
         );
     }
@@ -279,7 +281,7 @@ fn play_with_prop(play_dir: &Path, prop_name: &str, bearing_context: Option<&str
     for line in content.lines() {
         if line.starts_with("## When to Reach") {
             in_when = true;
-            println!("Good for:");
+            println!("Best cue moments:");
             continue;
         }
         if in_when {
@@ -316,7 +318,7 @@ fn play_bearing(
     if let Some(name) = prop_name {
         // Combine prop + bearing context
         println!(
-            "🧭 Bearing: {}\n",
+            "🧭 Bearing onstage: {}\n",
             title.trim_start_matches("# ").trim_end_matches(" — Brief")
         );
         println!("Hypothesis: {}\n", hypothesis.trim());
@@ -324,14 +326,14 @@ fn play_bearing(
     } else {
         // Generate a play invitation from the bearing
         println!(
-            "🧭 Playing with bearing: {}\n",
+            "🧭 Stage direction: {}\n",
             title.trim_start_matches("# ").trim_end_matches(" — Brief")
         );
         println!("{}\n", hypothesis.trim());
 
         // Show open questions as play prompts
         if let Some(questions) = extract_section(&brief, "## Open Questions") {
-            println!("Open questions to play with:");
+            println!("Open questions for the cast:");
             for line in questions.lines() {
                 if line.starts_with("- ") {
                     println!("  {}", line);
@@ -340,7 +342,7 @@ fn play_bearing(
             println!();
         }
 
-        println!("Pick a prop to explore:");
+        println!("Select a marionette prop:");
         println!("  keel play {} --prop improviser", bearing_id);
         println!("  keel play {} --prop jester", bearing_id);
         println!("  keel play {} --prop bard", bearing_id);
@@ -371,14 +373,14 @@ fn run_cross(board_dir: &Path, first: &str, second: &str) -> Result<()> {
         .trim()
         .to_string();
 
-    println!("🧭 Cross-Bearing Play");
+    println!("🧭 Double Act: Cross-Bearing Puppetry");
     println!(
         "{} — {}\n",
         first_title.trim_end_matches(" — Brief"),
         second_title.trim_end_matches(" — Brief")
     );
 
-    println!("Hypotheses:");
+    println!("Act notes:");
     print_side_by_side(
         "1",
         &first_title,
@@ -391,9 +393,9 @@ fn run_cross(board_dir: &Path, first: &str, second: &str) -> Result<()> {
 
     let shared_themes = discover_shared_themes(&first_brief, &second_brief);
     if shared_themes.is_empty() {
-        println!("🎭 Themes at the junction: (none clearly shared)");
+        println!("🎭 Shared rigging at the junction: (none clearly shared)");
     } else {
-        println!("🎭 Shared themes:");
+        println!("🎭 Shared stage cues:");
         for theme in &shared_themes {
             println!("  • {}", theme);
         }
@@ -406,10 +408,10 @@ fn run_cross(board_dir: &Path, first: &str, second: &str) -> Result<()> {
     );
     if shared_themes.is_empty() {
         println!(
-            "Rationale: These two bearings read like different songs; improvise first to find the bridge."
+            "Rationale: These two bearings move on separate clocks; improvise first to find the bridge."
         );
     } else {
-        println!("Rationale: Shared themes suggest this perspective can spotlight the overlap.");
+        println!("Rationale: Shared cues suggest this perspective can spotlight the overlap.");
     }
 
     println!("\n🎭 Bridge prompts:");
@@ -419,7 +421,7 @@ fn run_cross(board_dir: &Path, first: &str, second: &str) -> Result<()> {
     }
 
     println!(
-        "\nTry next:\n  keel play {} --prop {}\n  keel play {} --prop {}",
+        "\nTry the next puppet move:\n  keel play {} --prop {}\n  keel play {} --prop {}",
         first, intersection_mask, second, intersection_mask
     );
 
@@ -605,7 +607,7 @@ fn run_suggest(board_dir: &Path, bearing_id: &str) -> Result<String> {
         .trim_start_matches("# ")
         .trim_end_matches(" — Brief");
 
-    println!("Suggesting a mask for: {}\n", title);
+    println!("Suggesting a stage mask for: {}\n", title);
 
     if *top_score == 0 {
         println!("Recommended: Improviser (default — no strong signals detected)");
@@ -617,7 +619,7 @@ fn run_suggest(board_dir: &Path, bearing_id: &str) -> Result<String> {
 
     println!("Runner-up:   {}", capitalize(runner_up));
     println!(
-        "\nTry:\n  keel play {} --prop {}",
+        "\nTry the next puppet move:\n  keel play {} --prop {}",
         bearing_id,
         top_mask.to_lowercase()
     );
