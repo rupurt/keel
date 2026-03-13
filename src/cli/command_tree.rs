@@ -171,6 +171,7 @@ pub fn build_cli() -> Command {
                     "Examples:
   keel play --theater --theme drama
   keel play --theater --theme comedy --persona standup
+  keel play --theater --theme action --persona shakespeare --mood poetic
   keel play --theater VDlzABC123
   keel play VDlzABC123 --prop bard
   keel play --cross VDlzABC123 VDlzDEF456",
@@ -204,6 +205,12 @@ pub fn build_cli() -> Command {
                     Arg::new("persona")
                         .long("persona")
                         .help("Select a theater persona (for example: neutral, standup, shakespeare)")
+                        .num_args(1),
+                )
+                .arg(
+                    Arg::new("mood")
+                        .long("mood")
+                        .help("Select a theater mood (for example: adaptive, playful, poetic, spectacular, focused)")
                         .num_args(1),
                 )
                 .arg(

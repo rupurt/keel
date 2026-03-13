@@ -23,6 +23,7 @@ pub fn run(
     theater: bool,
     theme: Option<String>,
     persona: Option<String>,
+    mood: Option<String>,
 ) -> Result<()> {
     let play_dir = board_dir.join("play");
 
@@ -44,10 +45,11 @@ pub fn run(
             prop.as_deref(),
             theme.as_deref(),
             persona.as_deref(),
+            mood.as_deref(),
         )?;
         informational_for_exploration()
-    } else if theme.is_some() || persona.is_some() {
-        bail!("`--theme` and `--persona` require `--theater`");
+    } else if theme.is_some() || persona.is_some() || mood.is_some() {
+        bail!("`--theme`, `--persona`, and `--mood` require `--theater`");
     } else if let Some(ids) = cross {
         if ids.len() != 2 {
             bail!("`--cross` requires exactly two bearing IDs");
@@ -75,6 +77,7 @@ pub fn run(
 
 const DEFAULT_THEATER_THEME: &str = "drama";
 const DEFAULT_THEATER_PERSONA: &str = "neutral";
+const DEFAULT_THEATER_MOOD: &str = "adaptive";
 const THEATER_THEME_REGISTRY: &[TheaterTheme] = &[
     TheaterTheme {
         id: "action",
@@ -107,6 +110,38 @@ const THEATER_PERSONA_REGISTRY: &[TheaterPersona] = &[
         prompt: "Stage the scene with flair, spectacle, and timing.",
     },
 ];
+const THEATER_MOOD_REGISTRY: &[TheaterMood] = &[
+    TheaterMood {
+        id: "adaptive",
+        name: "Adaptive",
+        prompt_addendum: "Blend clarity and creativity based on the scene pressure.",
+        preferred_persona: Some("neutral"),
+    },
+    TheaterMood {
+        id: "playful",
+        name: "Playful",
+        prompt_addendum: "Favor wit, surprises, and quick pivots that make the session lively.",
+        preferred_persona: Some("standup"),
+    },
+    TheaterMood {
+        id: "poetic",
+        name: "Poetic",
+        prompt_addendum: "Lean on metaphor, cadence, and imagery while keeping action concrete.",
+        preferred_persona: Some("shakespeare"),
+    },
+    TheaterMood {
+        id: "spectacular",
+        name: "Spectacular",
+        prompt_addendum: "Amplify moments with strong imagery, timing, and clear stage transitions.",
+        preferred_persona: Some("broadway"),
+    },
+    TheaterMood {
+        id: "focused",
+        name: "Focused",
+        prompt_addendum: "Keep things direct, structured, and explicit about the next move.",
+        preferred_persona: Some("neutral"),
+    },
+];
 const THEATER_PROP_CATEGORIES: &[&str] = &["masks", "hats", "instruments", "costumes", "custom"];
 
 #[derive(Debug, Clone, Copy)]
@@ -120,6 +155,13 @@ struct TheaterPersona {
     prompt: &'static str,
 }
 
+struct TheaterMood {
+    id: &'static str,
+    name: &'static str,
+    prompt_addendum: &'static str,
+    preferred_persona: Option<&'static str>,
+}
+
 fn launch_theater(
     board_dir: &Path,
     play_dir: &Path,
@@ -127,21 +169,25 @@ fn launch_theater(
     prop_name: Option<&str>,
     theme: Option<&str>,
     persona: Option<&str>,
+    mood: Option<&str>,
 ) -> Result<()> {
     let selected_theme = resolve_theater_theme(theme)?;
-    let selected_persona = resolve_theater_persona(persona);
+    let selected_mood = resolve_theater_mood(mood);
+    let selected_persona = resolve_theater_persona(persona, selected_mood);
     let selected_theme_profile = find_theme_profile(&selected_theme);
     let selected_theme_label = selected_theme_profile
         .map(|profile| profile.name)
         .unwrap_or(selected_theme.as_str());
+    let selected_cue = compose_theater_cue(selected_persona, selected_mood);
 
     println!("🎭 Keel Theater");
     println!("──────────────────────────────");
     println!("Theme:   {} ({})", selected_theme, selected_theme_label);
+    println!("Mood:    {} ({})", selected_mood.id, selected_mood.name);
     println!("Persona: {}", selected_persona.id);
     println!(
-        "Cue:    [{}] {}",
-        selected_persona.id, selected_persona.prompt
+        "Cue:    [{}:{}] {}",
+        selected_theme, selected_persona.id, selected_cue
     );
     println!("Status:  stage is open");
     println!();
@@ -156,8 +202,8 @@ fn launch_theater(
                 play_dir,
                 prop,
                 Some(&format!(
-                    "Apply this to the {} scene as {} lens.",
-                    selected_theme, selected_persona.id
+                    "Apply this to the {} scene as {} mood and {} lens.",
+                    selected_theme, selected_mood.id, selected_persona.id
                 )),
             )?;
         } else {
@@ -172,8 +218,8 @@ fn launch_theater(
             play_dir,
             prop,
             Some(&format!(
-                "Apply this to a {} scene with {} vibe.",
-                selected_theme, selected_persona.id
+                "Apply this to a {} scene with {} mood and {} lens.",
+                selected_theme, selected_mood.id, selected_persona.id
             )),
         )?;
         return Ok(());
@@ -214,18 +260,70 @@ fn supported_themes() -> String {
         .join(", ")
 }
 
-fn resolve_theater_persona(input: Option<&str>) -> &'static TheaterPersona {
-    let requested = input.unwrap_or(DEFAULT_THEATER_PERSONA).to_lowercase();
-    if let Some(profile) = find_persona_profile(&requested) {
+fn compose_theater_cue(persona: &TheaterPersona, mood: &TheaterMood) -> String {
+    if mood.prompt_addendum.is_empty() {
+        return persona.prompt.to_string();
+    }
+
+    format!(
+        "{} {}",
+        persona.prompt.trim_end_matches('.'),
+        mood.prompt_addendum
+    )
+}
+
+fn resolve_theater_mood(input: Option<&str>) -> &'static TheaterMood {
+    let requested = input.unwrap_or(DEFAULT_THEATER_MOOD).to_lowercase();
+    if let Some(profile) = find_mood_profile(&requested) {
         return profile;
     }
 
     println!(
-        "Unknown persona '{}'. Falling back to {}. Supported personas: {}",
+        "Unknown mood '{}'. Falling back to {}. Supported moods: {}",
         requested,
-        DEFAULT_THEATER_PERSONA,
-        supported_personas()
+        DEFAULT_THEATER_MOOD,
+        supported_moods()
     );
+    &THEATER_MOOD_REGISTRY[0]
+}
+
+fn find_mood_profile(id: &str) -> Option<&'static TheaterMood> {
+    let normalized = id.to_lowercase();
+    THEATER_MOOD_REGISTRY
+        .iter()
+        .find(|entry| entry.id == normalized)
+}
+
+fn supported_moods() -> String {
+    THEATER_MOOD_REGISTRY
+        .iter()
+        .map(|mood| mood.id)
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+fn resolve_theater_persona(input: Option<&str>, mood: &TheaterMood) -> &'static TheaterPersona {
+    if let Some(persona_input) = input {
+        let requested = persona_input.to_lowercase();
+        if let Some(profile) = find_persona_profile(&requested) {
+            return profile;
+        }
+
+        println!(
+            "Unknown persona '{}'. Falling back to {}. Supported personas: {}",
+            requested,
+            DEFAULT_THEATER_PERSONA,
+            supported_personas()
+        );
+    }
+
+    if let Some(mapped_persona) = mood
+        .preferred_persona
+        .and_then(|mapped| find_persona_profile(mapped))
+    {
+        return mapped_persona;
+    }
+
     &THEATER_PERSONA_REGISTRY[0]
 }
 
@@ -268,14 +366,35 @@ mod theater_tests {
     }
 
     #[test]
+    fn theater_mood_registry_is_structured() {
+        assert!(THEATER_MOOD_REGISTRY.len() >= 5);
+        assert_eq!(THEATER_MOOD_REGISTRY[0].id, "adaptive");
+    }
+
+    #[test]
+    fn theater_mood_rejects_unknown_to_default() {
+        let mood = resolve_theater_mood(Some("absent"));
+        assert_eq!(mood.id, DEFAULT_THEATER_MOOD);
+    }
+
+    #[test]
     fn theater_persona_defaults_to_neutral() {
-        let persona = resolve_theater_persona(None);
-        assert_eq!(persona.id, DEFAULT_THEATER_PERSONA);
+        let mood = resolve_theater_mood(Some(DEFAULT_THEATER_MOOD));
+        let persona = resolve_theater_persona(None, mood);
+        assert_eq!(persona.id, "neutral");
+    }
+
+    #[test]
+    fn theater_persona_uses_mood_mapping_when_unspecified() {
+        let mood = resolve_theater_mood(Some("playful"));
+        let persona = resolve_theater_persona(None, mood);
+        assert_eq!(persona.id, "standup");
     }
 
     #[test]
     fn theater_persona_falls_back_on_unknown() {
-        let persona = resolve_theater_persona(Some("pirate"));
+        let mood = resolve_theater_mood(Some("focused"));
+        let persona = resolve_theater_persona(Some("pirate"), mood);
         assert_eq!(persona.id, DEFAULT_THEATER_PERSONA);
     }
 

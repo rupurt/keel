@@ -82,6 +82,7 @@ pub fn run() -> Result<()> {
             let theater = *m.get_one::<bool>("theater").unwrap_or(&false);
             let theme = m.get_one::<String>("theme").cloned();
             let persona = m.get_one::<String>("persona").cloned();
+            let mood = m.get_one::<String>("mood").cloned();
             let cross = m
                 .get_many::<String>("cross")
                 .map(|values| values.cloned().collect());
@@ -97,6 +98,7 @@ pub fn run() -> Result<()> {
                 theater,
                 theme,
                 persona,
+                mood,
             )
         }
         Some(("audit", m)) => {
