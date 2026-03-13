@@ -18,6 +18,7 @@ across planning, research, and execution.
 3. **Pass Primary Sources, Not Just Summaries**: Give each worker the entity IDs, file ownership, verification expectations, lifecycle expectations, and the canonical `show` commands or document paths it must open first.
 4. **Return Control After Each Unit**: When a worker finishes, the mission steward reviews the result, records the outcome with `just keel mission log <id> --entry "<text>"`, optionally runs `just keel mission digest <id>` for long logs, then reruns board health commands before choosing the next phase.
 5. **Do Not Mix Phases In One Worker**: If the work changes from execution to planning or research, stop and hand off to the matching workflow context instead of continuing in the old one. Parent context reads and directly coupled closure steps are fine; silent mission re-scoping is not. Only parallelize workers when their artifacts and ownership do not overlap.
+6. **Enforce Role Boundaries Immediately**: If `mission next` reports a manager item, do not execute operator lifecycle actions on a different role. If it reports operator work, do not run manager planning cycles until execution work is completed and returned.
 
 ## Role Orchestration
 
@@ -25,10 +26,10 @@ The mission steward is responsible for role selection and role boundary enforcem
 
 1. **Start each cycle in Mission mode**: run `just keel mission show <id>`, `just keel flow`, and `just keel mission next [<id>]` before any `just keel next --role ...` command.
 2. **Manager-only phase**: while mission goals are unmet and no execution-ready story exists, run `just keel next --role manager` and perform one atomic planning slice.
-3. **Manager→Operator handoff contract**: when planning completes, include in handoff text all three fields: executable artifact ID (usually a story ID), exact scope boundaries (`mission`, `epic`, `voyage`), and primary verification evidence per acceptance criterion.
-4. **Operator-only phase**: operator runs one ready story slice from start through submit, including required evidence and `.keel` lifecycle artifacts.
-5. **Operator→Manager handoff contract**: on story submit or block, operator must return to mission flow with `just keel mission log <id> --entry "..."`, then rerun `just keel mission next [<id>]` before resuming planning.
-6. **No role drift**: do not continue with stale context across role changes; a role switch is a hard context boundary.
+3. **Manager→Operator handoff contract**: after planning completes, steward must pass one ready artifact (`story`, `voyage`, or `epic`) plus exact scope boundaries and verification path, then exit planning context.
+4. **Operator-only phase**: operator runs exactly one ready story slice from start through submit, including required evidence and `.keel` lifecycle artifacts.
+5. **Operator→Manager handoff contract**: on story submit, needs-human-verification, or block, operator must log with `just keel mission log <id> --entry ...` and return to mission mode before any further action.
+6. **No role drift**: do not continue with stale context across role changes; a role switch is a hard context boundary. If a mismatch is detected, stop and resume in the correct role command path.
 
 Suggested cadence:
 mission loop -> manager planning -> operator execution -> mission log + reevaluate -> manager or operator.

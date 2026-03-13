@@ -117,6 +117,7 @@ pub fn run() -> Result<()> {
         Some(("knowledge", m)) => handle_knowledge_command(m),
         Some(("generate", _)) => super::commands::setup::generate::run(&resolve_board_dir()?),
         Some(("init", _)) => Ok(super::commands::setup::init::run()?),
+        Some(("roadmap", _)) => super::commands::management::roadmap::run(),
         Some(("epic", m)) => handle_epic_command(m),
         Some(("routine", m)) => handle_routine_command(m),
         Some(("voyage", m)) => handle_voyage_command(m),

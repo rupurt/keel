@@ -13,6 +13,7 @@ pub mod knowledge_graph;
 pub mod mission_show;
 pub mod planning_show;
 pub mod queue_policy;
+pub mod roadmap;
 pub mod role_context;
 pub mod routine_due_state;
 pub mod routine_materialization;

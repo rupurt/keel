@@ -25,6 +25,7 @@ Management
   routine     Routine commands
   voyage      Voyage commands
   story       Story commands (new, start, submit, accept, reject, ice, thaw, show, list, link, unlink, record, audit)
+  roadmap     Render the management roadmap
 
 Diagnostics
   doctor      Validate board health and optionally fix issues
@@ -350,6 +351,11 @@ pub fn build_cli() -> Command {
         .subcommand(hidden_subcommand_group::<
             crate::cli::commands::management::story::StoryAction,
         >("story", "Story commands"))
+        .subcommand(
+            Command::new("roadmap")
+                .about("Render the management roadmap")
+                .hide(true),
+        )
         .subcommand(hidden_subcommand_group::<
             crate::cli::commands::setup::config::ConfigAction,
         >("config", "Configuration commands"))

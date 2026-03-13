@@ -155,6 +155,7 @@ fn cli_help_displays_top_level_commands() {
     assert!(help_str.contains("routine"), "Missing routine subcommand");
     assert!(help_str.contains("pulse"), "Missing pulse command");
     assert!(help_str.contains("voyage"), "Missing voyage subcommand");
+    assert!(help_str.contains("roadmap"), "Missing roadmap command");
     assert!(help_str.contains("verify"), "Missing verify command");
 
     // Verify groups (Management section)
@@ -304,6 +305,14 @@ fn cli_parses_topology_command() {
     );
     assert!(*topology.get_one::<bool>("include_done").unwrap());
     assert!(*topology.get_one::<bool>("static").unwrap());
+}
+
+#[test]
+fn cli_parses_roadmap_command() {
+    let matches = crate::cli::build_cli()
+        .try_get_matches_from(["keel", "roadmap"])
+        .unwrap();
+    assert_eq!(matches.subcommand_name(), Some("roadmap"));
 }
 
 #[test]

@@ -268,7 +268,7 @@
 
 | Voyage | Status |
 |--------|--------|
-| [RoadmapMVP](epics/VDiHw85WK/voyages/VDiJfjvVG/) | planned |
+| [RoadmapMVP](epics/VDiHw85WK/voyages/VDiJfjvVG/) | in-progress |
 
 ### [Bearing Research Contract Alignment](epics/VDiHwCUZt/) (draft)
 

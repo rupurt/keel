@@ -1,12 +1,13 @@
 ---
 id: VDiJfjvVG
 title: RoadmapMVP
-status: in-progress
+status: done
 epic: VDiHw85WK
 created_at: 2026-03-12T20:17:57
 index: 1
 updated_at: 2026-03-12T20:18:40
 started_at: 2026-03-12T20:18:41
+completed_at: 2026-03-12T20:41:05
 ---
 
 # RoadmapMVP
@@ -29,5 +30,5 @@ started_at: 2026-03-12T20:18:41
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Add Roadmap Mode](../../../../stories/VDiJkcePZ/README.md) | feat | backlog |
+| [Add Roadmap Mode](../../../../stories/VDiJkcePZ/README.md) | feat | needs-human-verification |
 <!-- END GENERATED -->

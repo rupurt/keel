@@ -13,6 +13,7 @@ mod next_support;
 pub mod play;
 pub(crate) mod play_guidance;
 pub mod pulse;
+pub mod roadmap;
 pub mod routine;
 pub(crate) mod status_filter;
 pub mod story;
