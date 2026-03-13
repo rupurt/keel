@@ -231,6 +231,20 @@ fn cli_parses_mission_next_without_id() {
 }
 
 #[test]
+fn cli_parses_mission_attach() {
+    let cli = Cli::try_parse_from(["board", "mission", "attach", "M1", "B1"]).unwrap();
+    assert!(matches!(
+        cli.command,
+        Commands::Management(ManagementCommands::Mission {
+            action: MissionAction::Attach {
+                mission_id,
+                bearing_id
+            }
+        }) if mission_id == "M1" && bearing_id == "B1"
+    ));
+}
+
+#[test]
 fn cli_parses_mission_next_with_id() {
     let cli = Cli::try_parse_from(["board", "mission", "next", "M1"]).unwrap();
     assert!(matches!(

@@ -3,6 +3,7 @@
 use anyhow::Result;
 use clap::Subcommand;
 
+pub mod attach;
 pub mod list;
 pub mod new;
 pub mod next;
@@ -24,6 +25,13 @@ pub enum MissionAction {
         /// Output as JSON
         #[arg(long)]
         json: bool,
+    },
+    /// Attach a bearing to a mission
+    Attach {
+        /// Mission ID
+        mission_id: String,
+        /// Bearing ID
+        bearing_id: String,
     },
     /// Show next steps across all roles for a mission
     Next {
@@ -85,6 +93,10 @@ pub fn run(action: MissionAction) -> Result<()> {
         MissionAction::New { title } => run_new(&title),
         MissionAction::List => list::run(),
         MissionAction::Show { id, json } => show::run(&id, json),
+        MissionAction::Attach {
+            mission_id,
+            bearing_id,
+        } => attach::run(&mission_id, &bearing_id),
         MissionAction::Next { id } => next::run(id.as_deref()),
         MissionAction::Refine { id, answer } => {
             keel::application::mission_lifecycle::MissionLifecycleService::refine(
