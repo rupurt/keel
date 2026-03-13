@@ -4,6 +4,7 @@ use owo_colors::OwoColorize;
 use std::cmp::Ordering;
 use std::collections::BTreeSet;
 use std::fmt::Write as _;
+use std::fs;
 use std::io::Write;
 use std::path::Path;
 
@@ -64,6 +65,25 @@ fn render_mission_next(board: &Board, board_dir: &Path, mission: &Mission) -> Re
     println!("Next steps for mission {}:", mission.id().bold());
     println!();
 
+    if is_mission_ready_for_achievement(board, mission) {
+        println!(
+            "Mission {} has no open in-flight work and all board-verifiable goals are met.",
+            mission.id().bold()
+        );
+        if mission_has_log_entry(mission) {
+            println!(
+                "Suggested next action: `keel mission achieve {}`.",
+                mission.id()
+            );
+        } else {
+            println!(
+                "Suggested next action: add at least one mission log entry, then run `keel mission achieve {}`.",
+                mission.id()
+            );
+        }
+        return Ok(());
+    }
+
     let mut found_any = false;
 
     for role_name in role_families {
@@ -92,6 +112,31 @@ fn render_mission_next(board: &Board, board_dir: &Path, mission: &Mission) -> Re
     }
 
     Ok(())
+}
+
+fn is_mission_ready_for_achievement(board: &Board, mission: &Mission) -> bool {
+    if mission.status() != MissionStatus::Active {
+        return false;
+    }
+
+    let unmet_goals = mission_unmet_board_goals(board, mission);
+    if !unmet_goals.is_empty() {
+        return false;
+    }
+
+    if board.mission_child_count(mission.id()) == 0 {
+        return false;
+    }
+
+    let summary = mission_work_summary(board, mission, unmet_goals.len());
+    summary.total_open_items() == 0
+}
+
+fn mission_has_log_entry(mission: &Mission) -> bool {
+    let log_path = mission.path.parent().unwrap().join("LOG.md");
+    fs::read_to_string(log_path)
+        .map(|content| content.lines().any(|line| line.starts_with("## ")))
+        .unwrap_or(false)
 }
 
 fn select_mission(board: &Board) -> Option<SelectedMission<'_>> {
@@ -626,6 +671,85 @@ mod tests {
         assert!(message.contains("B1 Payments Research"));
         assert!(message.contains("keel mission new \"Payments\""));
         assert!(message.contains("assign each bearing's `mission:` field"));
+    }
+
+    #[test]
+    fn mission_ready_for_achievement_only_when_no_open_items_and_goal_is_met() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .bearing(TestBearing::new("B1").mission("M1").status("laid"))
+            .story(TestStory::new("S1").status(StoryState::Done))
+            .build();
+
+        write_charter(temp.path(), "M1", "S1");
+
+        let board = load_board(temp.path()).unwrap();
+        let mission = board.require_mission("M1").unwrap();
+
+        assert!(is_mission_ready_for_achievement(&board, mission));
+    }
+
+    #[test]
+    fn mission_ready_for_achievement_requires_active_status_and_no_open_items() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .bearing(TestBearing::new("B1").mission("M1").status("laid"))
+            .bearing(TestBearing::new("B2").mission("M1").status("exploring"))
+            .story(TestStory::new("S1").status(StoryState::Done))
+            .build();
+
+        write_charter(temp.path(), "M1", "S1");
+
+        let board = load_board(temp.path()).unwrap();
+        let mission = board.require_mission("M1").unwrap();
+        assert!(!is_mission_ready_for_achievement(&board, mission));
+    }
+
+    #[test]
+    fn mission_ready_for_achievement_requires_all_board_goals_to_be_met() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .bearing(TestBearing::new("B1").mission("M1").status("laid"))
+            .build();
+
+        write_charter(temp.path(), "M1", "MISSING");
+
+        let board = load_board(temp.path()).unwrap();
+        let mission = board.require_mission("M1").unwrap();
+        assert!(!is_mission_ready_for_achievement(&board, mission));
+    }
+
+    #[test]
+    fn mission_ready_for_achievement_requires_active_mission() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("defining"))
+            .bearing(TestBearing::new("B1").mission("M1").status("laid"))
+            .build();
+
+        write_charter(temp.path(), "M1", "...");
+
+        let board = load_board(temp.path()).unwrap();
+        let mission = board.require_mission("M1").unwrap();
+        assert!(!is_mission_ready_for_achievement(&board, mission));
+    }
+
+    #[test]
+    fn mission_has_log_entry_detects_manual_entry_marker() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+        let mission = board.require_mission("M1").unwrap();
+        assert!(!mission_has_log_entry(mission));
+
+        fs::write(
+            temp.path().join("missions/M1/LOG.md"),
+            "# Mission 1 - Decision Log\n\n## 2026-01-01T00:00:00\n\nCompleted.",
+        )
+        .unwrap();
+
+        assert!(mission_has_log_entry(mission));
     }
 
     #[test]
