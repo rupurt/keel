@@ -29,10 +29,14 @@ pub fn render_annotated_flow(
     let theme = Theme::for_color_mode(Theme::should_use_color(no_color));
 
     // 1. Mission Summary (Long-running Objectives)
-    let mission_summary = render_mission_summary(board, width, &theme);
+    let (mission_summary, use_top_missions) = render_mission_summary(board, width, &theme);
     if !mission_summary.is_empty() {
         writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
-        writeln!(output, "  Active Missions").unwrap();
+        if use_top_missions {
+            writeln!(output, "  Top Missions").unwrap();
+        } else {
+            writeln!(output, "  Active Missions").unwrap();
+        }
         writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
         writeln!(output).unwrap();
         write!(output, "{}", mission_summary).unwrap();
@@ -167,21 +171,24 @@ fn ensure_section_spacing(output: &mut String) {
     }
 }
 
-fn render_mission_summary(board: &Board, _width: usize, theme: &Theme) -> String {
+fn render_mission_summary(board: &Board, _width: usize, theme: &Theme) -> (String, bool) {
+    let (selected_missions, use_top_missions, truncated) = select_missions_for_flow_summary(board);
+    if selected_missions.is_empty() {
+        return (String::new(), false);
+    }
+
     let mut out = String::new();
     let detail_label_width = ["Goals", "Child entities"]
         .into_iter()
         .map(str::len)
         .max()
         .unwrap_or(0);
-    let mut active_missions: Vec<_> = board
-        .missions
-        .values()
-        .filter(|m| m.status() == keel::domain::model::MissionStatus::Active)
-        .collect();
-    active_missions.sort_by_key(|m| m.id());
 
-    for (idx, mission) in active_missions.iter().enumerate() {
+    if truncated {
+        writeln!(out, "  ...").unwrap();
+    }
+
+    for (idx, mission) in selected_missions.iter().enumerate() {
         let charter_path = mission.path.parent().unwrap().join("CHARTER.md");
         let charter_content = std::fs::read_to_string(&charter_path).unwrap_or_default();
         let goals =
@@ -258,12 +265,67 @@ fn render_mission_summary(board: &Board, _width: usize, theme: &Theme) -> String
             label_width = detail_label_width
         )
         .unwrap();
-        if idx + 1 < active_missions.len() {
+        if idx + 1 < selected_missions.len() {
             writeln!(out).unwrap();
         }
     }
 
-    out
+    (out, use_top_missions)
+}
+
+fn select_missions_for_flow_summary(
+    board: &Board,
+) -> (Vec<&keel::domain::model::Mission>, bool, bool) {
+    let mut active_missions: Vec<_> = board
+        .missions
+        .values()
+        .filter(|mission| mission.status() == keel::domain::model::MissionStatus::Active)
+        .collect();
+    if !active_missions.is_empty() {
+        active_missions.sort_by_key(|mission| mission.id());
+        return (active_missions, false, false);
+    }
+
+    let mut fallback_missions: Vec<_> = board
+        .missions
+        .values()
+        .filter(|mission| !mission.status().is_terminal())
+        .collect();
+    let has_more_than_three = fallback_missions.len() > 3;
+    fallback_missions.sort_by(|left, right| {
+        let (left_open, left_total) = mission_strategic_summary(board, left);
+        let (right_open, right_total) = mission_strategic_summary(board, right);
+        right_open
+            .cmp(&left_open)
+            .then_with(|| right_total.cmp(&left_total))
+            .then_with(|| left.id().cmp(right.id()))
+    });
+    fallback_missions.truncate(3);
+
+    (fallback_missions, true, has_more_than_three)
+}
+
+fn mission_strategic_summary(
+    board: &Board,
+    mission: &keel::domain::model::Mission,
+) -> (usize, usize) {
+    let epics = board.epics_for_mission(mission.id());
+    let bearings = board.bearings_for_mission(mission.id());
+    let adrs = board.adrs_for_mission(mission.id());
+    let total = epics.len() + bearings.len() + adrs.len();
+    let open = epics
+        .iter()
+        .filter(|epic| epic.status() != keel::domain::model::EpicState::Done)
+        .count()
+        + bearings
+            .iter()
+            .filter(|bearing| !bearing.is_complete())
+            .count()
+        + adrs
+            .iter()
+            .filter(|adr| !adr.status().is_terminal())
+            .count();
+    (open, total)
 }
 
 fn style_mission_summary_value(
@@ -874,10 +936,57 @@ mod tests {
             .build();
         let board = loader::load_board(temp.path()).unwrap();
 
-        let rendered = render_mission_summary(&board, 100, &Theme::default());
+        let (rendered, _) = render_mission_summary(&board, 100, &Theme::default());
 
         assert!(rendered.starts_with("  Mission:"));
         assert!(!rendered.ends_with("\n\n"));
+    }
+
+    #[test]
+    fn render_mission_summary_uses_top_defining_missions_when_no_active_missions() {
+        let temp = TestBoardBuilder::new()
+            .mission(
+                TestMission::new("M1")
+                    .title("Mission One")
+                    .status("defining"),
+            )
+            .mission(
+                TestMission::new("M2")
+                    .title("Mission Two")
+                    .status("defining"),
+            )
+            .mission(
+                TestMission::new("M3")
+                    .title("Mission Three")
+                    .status("defining"),
+            )
+            .mission(
+                TestMission::new("M4")
+                    .title("Mission Four")
+                    .status("defining"),
+            )
+            .epic(TestEpic::new("E1").title("Mission 1 Epic 1").mission("M1"))
+            .epic(TestEpic::new("E3").title("Mission 2 Epic 1").mission("M2"))
+            .epic(TestEpic::new("E4").title("Mission 2 Epic 2").mission("M2"))
+            .epic(TestEpic::new("E5").title("Mission 2 Epic 3").mission("M2"))
+            .epic(TestEpic::new("E8").title("Mission 4 Epic 1").mission("M4"))
+            .epic(TestEpic::new("E9").title("Mission 4 Epic 2").mission("M4"))
+            .epic(TestEpic::new("E10").title("Mission 4 Epic 3").mission("M4"))
+            .build();
+        let board = loader::load_board(temp.path()).unwrap();
+
+        let (rendered, use_top_missions) = render_mission_summary(&board, 100, &Theme::default());
+        let lines = rendered
+            .lines()
+            .filter(|line| line.contains("Mission:"))
+            .collect::<Vec<_>>();
+
+        assert!(use_top_missions);
+        assert_eq!(lines.len(), 3);
+        assert!(rendered.starts_with("  ..."));
+        assert!(lines[0].contains("M2"));
+        assert!(lines[1].contains("M4"));
+        assert!(lines[2].contains("M1"));
     }
 
     #[test]
@@ -887,7 +996,7 @@ mod tests {
             .build();
         let board = loader::load_board(temp.path()).unwrap();
 
-        let rendered = render_mission_summary(&board, 100, &Theme::default());
+        let (rendered, _) = render_mission_summary(&board, 100, &Theme::default());
         let goals_line = rendered
             .lines()
             .find(|line| line.contains("Goals"))
@@ -923,7 +1032,7 @@ mod tests {
         );
         let board = loader::load_board(temp.path()).unwrap();
 
-        let rendered = render_mission_summary(&board, 100, &Theme::default());
+        let (rendered, _) = render_mission_summary(&board, 100, &Theme::default());
 
         assert!(rendered.contains(&format!("{}", "1/2 board goals met".yellow().bold())));
     }
@@ -943,10 +1052,58 @@ mod tests {
             .build();
         let board = loader::load_board(temp.path()).unwrap();
 
-        let rendered = render_mission_summary(&board, 100, &Theme::default());
+        let (rendered, _) = render_mission_summary(&board, 100, &Theme::default());
 
         assert!(rendered.contains(&format!("{}", "1/1 epics done".green().bold())));
         assert!(rendered.contains(&format!("{}", "0/1 bearings terminal".red().bold())));
+    }
+
+    #[test]
+    fn render_annotated_flow_shows_top_missions_when_no_active_missions() {
+        let temp = TestBoardBuilder::new()
+            .mission(
+                TestMission::new("M1")
+                    .title("Defining Mission One")
+                    .status("defining"),
+            )
+            .mission(
+                TestMission::new("M2")
+                    .title("Defining Mission Two")
+                    .status("defining"),
+            )
+            .mission(
+                TestMission::new("M3")
+                    .title("Defining Mission Three")
+                    .status("defining"),
+            )
+            .mission(
+                TestMission::new("M4")
+                    .title("Defining Mission Four")
+                    .status("defining"),
+            )
+            .epic(TestEpic::new("E1").mission("M1"))
+            .epic(TestEpic::new("E2").mission("M1"))
+            .epic(TestEpic::new("E3").mission("M2"))
+            .epic(TestEpic::new("E4").mission("M2"))
+            .epic(TestEpic::new("E5").mission("M2"))
+            .epic(TestEpic::new("E6").mission("M3"))
+            .build();
+        let board = loader::load_board(temp.path()).unwrap();
+        let metrics = make_test_metrics();
+        let lane_flow = make_test_lane_flow();
+
+        let rendered = render_annotated_flow(
+            &board,
+            &metrics,
+            &lane_flow,
+            &[],
+            &HashMap::new(),
+            100,
+            true,
+        );
+
+        assert!(rendered.contains("  Top Missions"));
+        assert!(rendered.contains("  ..."));
     }
 
     #[test]
