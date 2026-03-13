@@ -11,6 +11,6 @@
 - Do not introduce new external runtime dependencies without explicit approval.
 - No external network calls or non-deterministic data sources in theater session rendering.
 ## Halting Rules
-- DO NOT halt while any MG-* goal has unfinished board work.
-- HALT when all MG-* goals with `board:` verification are satisfied.
-- YIELD to human when only `metric:` or `manual:` goals remain.
+- Stop only when all board-verifiable MG-* goals and delivery gates are complete.
+- Continue while execution artifacts remain or active voyage/story work is pending.
+- Escalate to human only for unresolved manual or external risks.
