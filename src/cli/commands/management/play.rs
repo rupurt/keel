@@ -10,6 +10,7 @@ use super::play_guidance::{guidance_for_suggest, informational_for_exploration, 
 use keel::infrastructure::markdown_sections::extract_section;
 
 /// Run the play command
+#[allow(clippy::too_many_arguments)]
 pub fn run(
     board_dir: &Path,
     bearing_id: Option<String>,
@@ -17,10 +18,35 @@ pub fn run(
     cross: Option<Vec<String>>,
     list_props: bool,
     suggest: Option<String>,
+    theater: bool,
+    theme: Option<String>,
+    persona: Option<String>,
 ) -> Result<()> {
     let play_dir = board_dir.join("play");
 
-    let guidance = if let Some(ids) = cross {
+    let guidance = if theater {
+        if cross.is_some() {
+            bail!("`--theater` cannot be used with `--cross`");
+        }
+        if list_props {
+            bail!("`--theater` cannot be used with `--list-props`");
+        }
+        if suggest.is_some() {
+            bail!("`--theater` cannot be used with `--suggest`");
+        }
+
+        launch_theater(
+            board_dir,
+            &play_dir,
+            bearing_id.as_deref(),
+            prop.as_deref(),
+            theme.as_deref(),
+            persona.as_deref(),
+        )?;
+        informational_for_exploration()
+    } else if theme.is_some() || persona.is_some() {
+        bail!("`--theme` and `--persona` require `--theater`");
+    } else if let Some(ids) = cross {
         if ids.len() != 2 {
             bail!("`--cross` requires exactly two bearing IDs");
         }
@@ -43,6 +69,226 @@ pub fn run(
 
     print_human(guidance.as_ref());
     Ok(())
+}
+
+const DEFAULT_THEATER_THEME: &str = "drama";
+const DEFAULT_THEATER_PERSONA: &str = "neutral";
+const THEATER_THEME_REGISTRY: &[TheaterTheme] = &[
+    TheaterTheme {
+        id: "action",
+        name: "Action",
+    },
+    TheaterTheme {
+        id: "comedy",
+        name: "Comedy",
+    },
+    TheaterTheme {
+        id: "drama",
+        name: "Drama",
+    },
+];
+const THEATER_PERSONA_REGISTRY: &[TheaterPersona] = &[
+    TheaterPersona {
+        id: "neutral",
+        prompt: "Set the stage and focus on the objective.",
+    },
+    TheaterPersona {
+        id: "standup",
+        prompt: "Cue a punchline before the first beat.",
+    },
+    TheaterPersona {
+        id: "shakespeare",
+        prompt: "Speak in verse and turn action into metaphor.",
+    },
+    TheaterPersona {
+        id: "broadway",
+        prompt: "Stage the scene with flair, spectacle, and timing.",
+    },
+];
+
+#[derive(Debug, Clone, Copy)]
+struct TheaterTheme {
+    id: &'static str,
+    name: &'static str,
+}
+
+struct TheaterPersona {
+    id: &'static str,
+    prompt: &'static str,
+}
+
+fn launch_theater(
+    board_dir: &Path,
+    play_dir: &Path,
+    bearing_id: Option<&str>,
+    prop_name: Option<&str>,
+    theme: Option<&str>,
+    persona: Option<&str>,
+) -> Result<()> {
+    let selected_theme = resolve_theater_theme(theme)?;
+    let selected_persona = resolve_theater_persona(persona);
+    let selected_theme_profile = find_theme_profile(&selected_theme);
+    let selected_theme_label = selected_theme_profile
+        .map(|profile| profile.name)
+        .unwrap_or(selected_theme.as_str());
+
+    println!("🎭 Keel Theater");
+    println!("──────────────────────────────");
+    println!("Theme:   {} ({})", selected_theme, selected_theme_label);
+    println!("Persona: {}", selected_persona.id);
+    println!(
+        "Cue:    [{}] {}",
+        selected_persona.id, selected_persona.prompt
+    );
+    println!("Status:  stage is open");
+    println!();
+
+    if let Some(bearing) = bearing_id {
+        println!("📜 Casting bearing: {}", bearing);
+        let brief = load_bearing_brief(board_dir, bearing)?;
+        let title = extract_title(&brief);
+        println!("Title:   {}", title.trim_end_matches(" — Brief"));
+        if let Some(prop) = prop_name {
+            play_with_prop(
+                play_dir,
+                prop,
+                Some(&format!(
+                    "Apply this to the {} scene as {} lens.",
+                    selected_theme, selected_persona.id
+                )),
+            )?;
+        } else {
+            println!("Cue: pick one prop to begin the scene.");
+            println!("  keel play --theater {} --prop improviser", bearing);
+        }
+        return Ok(());
+    }
+
+    if let Some(prop) = prop_name {
+        play_with_prop(
+            play_dir,
+            prop,
+            Some(&format!(
+                "Apply this to a {} scene with {} vibe.",
+                selected_theme, selected_persona.id
+            )),
+        )?;
+        return Ok(());
+    }
+
+    if let Err(err) = freeform_play(play_dir, None) {
+        bail!("failed to start freeform theater session: {}", err);
+    }
+
+    Ok(())
+}
+
+fn resolve_theater_theme(input: Option<&str>) -> Result<String> {
+    let requested = input.unwrap_or(DEFAULT_THEATER_THEME).to_lowercase();
+    if find_theme_profile(&requested).is_some() {
+        return Ok(requested);
+    }
+
+    bail!(
+        "Unsupported theme '{}'. Supported themes: {}",
+        requested,
+        supported_themes()
+    );
+}
+
+fn find_theme_profile(theme: &str) -> Option<&'static TheaterTheme> {
+    let normalized = theme.to_lowercase();
+    THEATER_THEME_REGISTRY
+        .iter()
+        .find(|entry| entry.id == normalized)
+}
+
+fn supported_themes() -> String {
+    THEATER_THEME_REGISTRY
+        .iter()
+        .map(|theme| theme.id)
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+fn resolve_theater_persona(input: Option<&str>) -> &'static TheaterPersona {
+    let requested = input.unwrap_or(DEFAULT_THEATER_PERSONA).to_lowercase();
+    if let Some(profile) = find_persona_profile(&requested) {
+        return profile;
+    }
+
+    println!(
+        "Unknown persona '{}'. Falling back to {}. Supported personas: {}",
+        requested,
+        DEFAULT_THEATER_PERSONA,
+        supported_personas()
+    );
+    &THEATER_PERSONA_REGISTRY[0]
+}
+
+fn find_persona_profile(id: &str) -> Option<&'static TheaterPersona> {
+    let normalized = id.to_lowercase();
+    THEATER_PERSONA_REGISTRY
+        .iter()
+        .find(|entry| entry.id == normalized)
+}
+
+fn supported_personas() -> String {
+    THEATER_PERSONA_REGISTRY
+        .iter()
+        .map(|persona| persona.id)
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+#[cfg(test)]
+mod theater_tests {
+    use super::*;
+
+    #[test]
+    fn theater_theme_uses_default() {
+        let theme = resolve_theater_theme(None).unwrap();
+        assert_eq!(theme, DEFAULT_THEATER_THEME);
+    }
+
+    #[test]
+    fn theater_theme_registry_is_structured() {
+        assert!(THEATER_THEME_REGISTRY.len() >= 3);
+        assert_eq!(THEATER_THEME_REGISTRY[0].id, "action");
+        assert_eq!(THEATER_THEME_REGISTRY[1].id, "comedy");
+        assert_eq!(THEATER_THEME_REGISTRY[2].id, "drama");
+    }
+
+    #[test]
+    fn theater_theme_rejects_unknown() {
+        assert!(resolve_theater_theme(Some("opera")).is_err());
+    }
+
+    #[test]
+    fn theater_persona_defaults_to_neutral() {
+        let persona = resolve_theater_persona(None);
+        assert_eq!(persona.id, DEFAULT_THEATER_PERSONA);
+    }
+
+    #[test]
+    fn theater_persona_falls_back_on_unknown() {
+        let persona = resolve_theater_persona(Some("pirate"));
+        assert_eq!(persona.id, DEFAULT_THEATER_PERSONA);
+    }
+
+    #[test]
+    fn theater_personas_have_distinct_templates() {
+        assert!(THEATER_PERSONA_REGISTRY.len() >= 4);
+
+        let mut prompts = std::collections::BTreeSet::new();
+        for persona in THEATER_PERSONA_REGISTRY {
+            assert!(!persona.id.is_empty());
+            assert!(!persona.prompt.is_empty());
+            prompts.insert(persona.prompt);
+        }
+
+        assert!(prompts.len() >= 4);
+    }
 }
 
 /// List all available props by category

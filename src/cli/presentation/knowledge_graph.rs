@@ -848,6 +848,7 @@ fn draw_double_helix_link(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn draw_helix_strand(
     chart: &mut ChartContext,
     center_x: f64,

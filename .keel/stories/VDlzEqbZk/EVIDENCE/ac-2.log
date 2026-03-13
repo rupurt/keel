@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-13T11:29:17.667832304-07:00
+command: bash -c "! diff -q <(cargo run --quiet -- play --theater --persona shakespeare 2>/dev/null | rg \"^Cue:\") <(cargo run --quiet -- play --theater --persona standup 2>/dev/null | rg \"^Cue:\")"
+---
+Files /dev/fd/63 and /dev/fd/62 differ

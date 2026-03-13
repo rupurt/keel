@@ -1,0 +1,11 @@
+---
+recorded_at: 2026-03-13T11:27:47.556813566-07:00
+command: rg -n "THEATER_THEME_REGISTRY" ../src/cli/commands/management/play.rs
+---
+75:const THEATER_THEME_REGISTRY: &[TheaterTheme] = &[
+174:    THEATER_THEME_REGISTRY.iter().find_map(|entry| {
+184:    THEATER_THEME_REGISTRY
+218:        assert!(THEATER_THEME_REGISTRY.len() >= 3);
+219:        assert_eq!(THEATER_THEME_REGISTRY[0].id, "action");
+220:        assert_eq!(THEATER_THEME_REGISTRY[1].id, "comedy");
+221:        assert_eq!(THEATER_THEME_REGISTRY[2].id, "drama");

@@ -1,0 +1,27 @@
+---
+recorded_at: 2026-03-13T11:26:12.188236488-07:00
+command: cargo run --quiet -- play --help
+---
+Run a marionette-style discovery scene
+
+Usage: keel play [OPTIONS] [BEARING]
+
+Arguments:
+  [BEARING]  Bearing ID to cast in a discovery scenario
+
+Options:
+      --prop <prop>        Start with a specific prop in hand
+      --theater            Launch the theater runtime and render the scene setup
+      --theme <theme>      Select a theater theme (for example: drama, comedy, action)
+      --persona <persona>  Select a theater persona (for example: neutral, standup, shakespeare)
+      --cross <id1> <id2>  Cross two bearings in one paired scene
+      --list-props         List available props and marionette functions by category
+      --suggest <suggest>  Suggest a mask for a bearing based on its content
+  -h, --help               Print help
+
+Examples:
+  keel play --theater --theme drama
+  keel play --theater --theme comedy --persona standup
+  keel play --theater VDlzABC123
+  keel play VDlzABC123 --prop bard
+  keel play --cross VDlzABC123 VDlzDEF456

@@ -20,11 +20,14 @@ Create a richer human-oriented interactive layer for keel play with theater-styl
 
 ### In Scope
 
-- [SCOPE-01] The smallest end-to-end change needed to address the problem statement.
+- [SCOPE-01] Add a theater interaction path for `keel play --theater`.
+- [SCOPE-02] Build a session theme registry with selectable comedy, drama, and action profiles.
+- [SCOPE-03] Add distinct persona output styles including stand-up comedy and Shakespeare-inspired Broadway.
 
 ### Out of Scope
 
-- [SCOPE-02] Follow-on improvements or adjacent work that is not required for the first outcome.
+- [SCOPE-04] Changing output behavior for non-`play` commands.
+- [SCOPE-05] External network services for content generation.
 
 ## Requirements
 

@@ -167,6 +167,14 @@ pub fn build_cli() -> Command {
         .subcommand(
             Command::new("play")
                 .about("Run a marionette-style discovery scene")
+                .after_help(
+                    "Examples:
+  keel play --theater --theme drama
+  keel play --theater --theme comedy --persona standup
+  keel play --theater VDlzABC123
+  keel play VDlzABC123 --prop bard
+  keel play --cross VDlzABC123 VDlzDEF456",
+                )
                 .hide(true)
                 .arg(
                     Arg::new("bearing")
@@ -178,6 +186,24 @@ pub fn build_cli() -> Command {
                     Arg::new("prop")
                         .long("prop")
                         .help("Start with a specific prop in hand")
+                        .num_args(1),
+                )
+                .arg(
+                    Arg::new("theater")
+                        .long("theater")
+                        .help("Launch the theater runtime and render the scene setup")
+                        .action(ArgAction::SetTrue),
+                )
+                .arg(
+                    Arg::new("theme")
+                        .long("theme")
+                        .help("Select a theater theme (for example: drama, comedy, action)")
+                        .num_args(1),
+                )
+                .arg(
+                    Arg::new("persona")
+                        .long("persona")
+                        .help("Select a theater persona (for example: neutral, standup, shakespeare)")
                         .num_args(1),
                 )
                 .arg(

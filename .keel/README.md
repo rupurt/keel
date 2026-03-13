@@ -284,11 +284,11 @@
 
 ### [Accelerated Bearing Source Capture](epics/VDiHwULir/) (draft)
 
-### [Theater Play Experience](epics/VDlzCqxr9/) (draft)
+### [Theater Play Experience](epics/VDlzCqxr9/) (active)
 
 | Voyage | Status |
 |--------|--------|
-| [Theater Play Runtime and Themes](epics/VDlzCqxr9/voyages/VDlzEF2OP/) | draft |
+| [Theater Play Runtime and Themes](epics/VDlzCqxr9/voyages/VDlzEF2OP/) | in-progress |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

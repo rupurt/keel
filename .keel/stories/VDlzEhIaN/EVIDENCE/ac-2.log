@@ -1,0 +1,20 @@
+---
+recorded_at: 2026-03-13T11:26:13.941799658-07:00
+command: cargo run --quiet -- play --theater --theme comedy --persona shakespeare
+---
+🎭 Keel Theater
+──────────────────────────────
+Theme:   comedy
+Persona: shakespeare
+Status:  stage is open
+
+🎭 Puppet theater is ready.
+
+Pull a prop string and shift perspective:
+
+
+Start with:
+  keel play --prop <name>
+  keel play <bearing-id>
+
+Or describe what's fuzzy and we'll find the right string.

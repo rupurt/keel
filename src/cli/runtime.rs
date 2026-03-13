@@ -79,6 +79,9 @@ pub fn run() -> Result<()> {
         Some(("play", m)) => {
             let bearing = m.get_one::<String>("bearing").cloned();
             let prop = m.get_one::<String>("prop").cloned();
+            let theater = *m.get_one::<bool>("theater").unwrap_or(&false);
+            let theme = m.get_one::<String>("theme").cloned();
+            let persona = m.get_one::<String>("persona").cloned();
             let cross = m
                 .get_many::<String>("cross")
                 .map(|values| values.cloned().collect());
@@ -91,6 +94,9 @@ pub fn run() -> Result<()> {
                 cross,
                 list_props,
                 suggest,
+                theater,
+                theme,
+                persona,
             )
         }
         Some(("audit", m)) => {

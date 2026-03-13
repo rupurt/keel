@@ -1,0 +1,8 @@
+---
+recorded_at: 2026-03-13T11:30:07.846006054-07:00
+command: bash -c "cargo run --quiet -- play --theater --persona neutral 2>/dev/null | rg \"^Cue:\" && cargo run --quiet -- play --theater --persona standup 2>/dev/null | rg \"^Cue:\" && cargo run --quiet -- play --theater --persona shakespeare 2>/dev/null | rg \"^Cue:\" && cargo run --quiet -- play --theater --persona broadway 2>/dev/null | rg \"^Cue:\""
+---
+Cue:    [neutral] Set the stage and focus on the objective.
+Cue:    [standup] Cue a punchline before the first beat.
+Cue:    [shakespeare] Speak in verse and turn action into metaphor.
+Cue:    [broadway] Stage the scene with flair, spectacle, and timing.
