@@ -250,11 +250,17 @@
 |--------|--------|
 | [Build Knowledge Graph Kernel and Cache](epics/VDfufyl6w/voyages/VDfumi8ha/) | done |
 
-### [Interactive Knowledge Graph Surfaces](epics/VDg0dAPVS/) (active)
+### [Interactive Knowledge Graph Surfaces](epics/VDg0dAPVS/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Render Knowledge Graph Command and Drift Surfaces](epics/VDg0dAPVS/voyages/VDg0f0aHW/) | in-progress |
+| [Render Knowledge Graph Command and Drift Surfaces](epics/VDg0dAPVS/voyages/VDg0f0aHW/) | done |
+
+### [HEAD-relative Show Selector Resolution](epics/VDhtrxgW6/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Resolve HEAD Show Selectors](epics/VDhtrxgW6/voyages/VDhtzKSNF/) | planned |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
