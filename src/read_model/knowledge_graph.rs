@@ -25,6 +25,7 @@ pub enum KnowledgeGraphNodeKind {
     Adr,
     Voyage,
     Story,
+    Routine,
     Artifact,
     Knowledge,
     ProjectDoc,
@@ -547,6 +548,7 @@ fn graph_node_kind(kind: crate::read_model::board_graph::BoardNodeKind) -> Knowl
         crate::read_model::board_graph::BoardNodeKind::Adr => KnowledgeGraphNodeKind::Adr,
         crate::read_model::board_graph::BoardNodeKind::Voyage => KnowledgeGraphNodeKind::Voyage,
         crate::read_model::board_graph::BoardNodeKind::Story => KnowledgeGraphNodeKind::Story,
+        crate::read_model::board_graph::BoardNodeKind::Routine => KnowledgeGraphNodeKind::Routine,
     }
 }
 
@@ -559,6 +561,7 @@ fn graph_node_id(id: &BoardNodeId) -> String {
         BoardNodeId::Adr(id) => format!("adr:{id}"),
         BoardNodeId::Voyage(id) => format!("voyage:{id}"),
         BoardNodeId::Story(id) => format!("story:{id}"),
+        BoardNodeId::Routine(id) => format!("routine:{id}"),
     }
 }
 
@@ -603,6 +606,11 @@ fn path_for_board_node(board: &Board, id: &BoardNodeId) -> PathBuf {
             .stories
             .get(id)
             .map(|story| story.path.clone())
+            .unwrap_or_else(|| board.root.join("README.md")),
+        BoardNodeId::Routine(id) => board
+            .routines
+            .get(id)
+            .map(|routine| routine.path.clone())
             .unwrap_or_else(|| board.root.join("README.md")),
     }
 }
@@ -683,6 +691,7 @@ fn artifact_owner_id(board: &Board, path: &Path) -> Option<String> {
         ["epics", _epic_id, "voyages", voyage_id, ..] => Some(format!("voyage:{voyage_id}")),
         ["epics", epic_id, ..] => Some(format!("epic:{epic_id}")),
         ["stories", story_id, ..] => Some(format!("story:{story_id}")),
+        ["routines", routine_id, ..] => Some(format!("routine:{routine_id}")),
         ["bearings", bearing_id, ..] => Some(format!("bearing:{bearing_id}")),
         ["adrs", filename] => Some(format!("adr:{}", filename.trim_end_matches(".md"))),
         _ => None,
@@ -722,6 +731,7 @@ fn build_structural_drift_inputs(
                     | KnowledgeGraphNodeKind::Adr
                     | KnowledgeGraphNodeKind::Voyage
                     | KnowledgeGraphNodeKind::Story
+                    | KnowledgeGraphNodeKind::Routine
             )
         })
         .map(|node| node.id.clone())

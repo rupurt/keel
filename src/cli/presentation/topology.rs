@@ -200,7 +200,7 @@ fn render_summary(projection: &WorldMapProjection) -> String {
     writeln!(out).unwrap();
     writeln!(
         out,
-        "Legend: missions, epics, bearings, ADRs, voyages, and stories occupy progressively deeper rings; dim nodes are terminal."
+        "Legend: missions, epics, bearings, ADRs, voyages, and stories occupy progressively deeper rings; routines float outside their target scope as pulsing buoys; dim nodes are terminal."
     )
     .unwrap();
 
@@ -460,7 +460,7 @@ fn assign_child_positions<'a>(
             angle_span * weight as f64 / total_weight as f64
         };
         let angle = cursor + child_span / 2.0;
-        let radius = radius_step * child.depth as f64;
+        let radius = radius_step * child.depth as f64 + buoy_radius_offset(child, radius_step);
         let x = center_x as f64 + radius * angle.cos();
         let y = center_y as f64 + radius * angle.sin();
 
@@ -498,6 +498,14 @@ fn assign_child_positions<'a>(
     let _ = nodes;
 }
 
+fn buoy_radius_offset(node: &WorldMapNode, radius_step: f64) -> f64 {
+    if node.kind == WorldMapNodeKind::Routine {
+        radius_step * 0.38
+    } else {
+        0.0
+    }
+}
+
 fn subtree_weight(
     id: &str,
     child_map: &HashMap<String, Vec<&WorldMapNode>>,
@@ -530,7 +538,11 @@ fn draw_orbits(
     let mut depth_radii: BTreeMap<usize, Vec<isize>> = projection
         .nodes
         .iter()
-        .filter(|node| node.kind != WorldMapNodeKind::World && node.depth > 0)
+        .filter(|node| {
+            node.kind != WorldMapNodeKind::World
+                && node.kind != WorldMapNodeKind::Routine
+                && node.depth > 0
+        })
         .filter_map(|node| positions.get(&node.id))
         .fold(BTreeMap::new(), |mut acc, position| {
             let dx = position.x - center_x;
@@ -581,6 +593,7 @@ fn draw_nodes(
         let color = node_color(positioned.node);
         let radius = node_radius(positioned.node.kind);
         draw_circle_filled_screen(chart, positioned.x, positioned.y, radius, Some(color));
+        draw_buoy_pulse(chart, positioned.x, positioned.y, positioned.node);
 
         if projection
             .focus
@@ -595,6 +608,42 @@ fn draw_nodes(
                 Some(Color::BrightYellow),
             );
         }
+    }
+}
+
+fn draw_buoy_pulse(
+    chart: &mut ChartContext,
+    center_x: isize,
+    center_y: isize,
+    node: &WorldMapNode,
+) {
+    let Some(color) = buoy_pulse_color(node) else {
+        return;
+    };
+
+    for radius in buoy_pulse_radii(node) {
+        draw_circle_screen(chart, center_x, center_y, *radius, Some(color));
+    }
+}
+
+fn buoy_pulse_color(node: &WorldMapNode) -> Option<Color> {
+    if node.kind != WorldMapNodeKind::Routine {
+        return None;
+    }
+
+    match node.state.as_str() {
+        "due" => Some(Color::BrightYellow),
+        "invalid" => Some(Color::BrightRed),
+        "upcoming" => Some(Color::BrightCyan),
+        _ => Some(Color::Cyan),
+    }
+}
+
+fn buoy_pulse_radii(node: &WorldMapNode) -> &'static [isize] {
+    match node.state.as_str() {
+        "due" | "invalid" => &[3, 5],
+        "upcoming" => &[3],
+        _ => &[2],
     }
 }
 
@@ -634,6 +683,7 @@ fn draw_labels(
             .as_ref()
             .is_some_and(|focus| focus.id == positioned.node.id)
             || !positioned.node.signals.is_empty()
+            || (positioned.node.kind == WorldMapNodeKind::Routine && !dense_map)
             || (!positioned.node.terminal && positioned.node.depth <= 2)
             || (!dense_map && positioned.node.depth == 1)
             || (label_all && positioned.node.depth == deepest_visible_depth);
@@ -792,6 +842,7 @@ fn kind_sort_rank(kind: WorldMapNodeKind) -> u8 {
         WorldMapNodeKind::Adr => 4,
         WorldMapNodeKind::Voyage => 5,
         WorldMapNodeKind::Story => 6,
+        WorldMapNodeKind::Routine => 7,
     }
 }
 
@@ -814,6 +865,12 @@ fn node_color(node: &WorldMapNode) -> Color {
                 Color::White
             }
         }
+        WorldMapNodeKind::Routine => match node.state.as_str() {
+            "due" => Color::BrightYellow,
+            "invalid" => Color::BrightRed,
+            "upcoming" => Color::BrightCyan,
+            _ => Color::Cyan,
+        },
     }
 }
 
@@ -824,6 +881,7 @@ fn node_radius(kind: WorldMapNodeKind) -> isize {
         WorldMapNodeKind::Epic | WorldMapNodeKind::Bearing | WorldMapNodeKind::Adr => 2,
         WorldMapNodeKind::Voyage => 2,
         WorldMapNodeKind::Story => 1,
+        WorldMapNodeKind::Routine => 1,
     }
 }
 
@@ -1005,5 +1063,85 @@ mod tests {
 
         assert!(rendered.contains("Drift Radar: 0.41 (elevated)"));
         assert!(rendered.contains("entities 3/5 | knowledge 1/2 | source 4/7 | docs 2/3"));
+    }
+
+    #[test]
+    fn routine_buoys_render_outside_their_parent_ring() {
+        let projection = WorldMapProjection {
+            zoom: TopologyZoom::Story,
+            focus: None,
+            nodes: vec![
+                WorldMapNode {
+                    id: "__world__".to_string(),
+                    title: "Keel World".to_string(),
+                    kind: WorldMapNodeKind::World,
+                    state: "live".to_string(),
+                    parent_id: None,
+                    depth: 0,
+                    terminal: false,
+                    order_index: Some(0),
+                    summary: None,
+                    timer: None,
+                    signals: Vec::new(),
+                },
+                WorldMapNode {
+                    id: "V1".to_string(),
+                    title: "Voyage One".to_string(),
+                    kind: WorldMapNodeKind::Voyage,
+                    state: "in-progress".to_string(),
+                    parent_id: Some("__world__".to_string()),
+                    depth: 1,
+                    terminal: false,
+                    order_index: Some(1),
+                    summary: None,
+                    timer: None,
+                    signals: Vec::new(),
+                },
+                WorldMapNode {
+                    id: "S1".to_string(),
+                    title: "Story One".to_string(),
+                    kind: WorldMapNodeKind::Story,
+                    state: "backlog".to_string(),
+                    parent_id: Some("V1".to_string()),
+                    depth: 2,
+                    terminal: false,
+                    order_index: Some(1),
+                    summary: None,
+                    timer: None,
+                    signals: Vec::new(),
+                },
+                WorldMapNode {
+                    id: "R1".to_string(),
+                    title: "Weekly Review".to_string(),
+                    kind: WorldMapNodeKind::Routine,
+                    state: "due".to_string(),
+                    parent_id: Some("V1".to_string()),
+                    depth: 2,
+                    terminal: false,
+                    order_index: Some(2),
+                    summary: Some("targets E1/V1".to_string()),
+                    timer: Some("due now".to_string()),
+                    signals: vec!["due now".to_string()],
+                },
+            ],
+            links: vec![],
+            kind_counts: vec![],
+            layers: vec![],
+            highlights: vec![],
+            drift: sample_drift(),
+        };
+
+        let chart = ChartContext::new(120, 24);
+        let positions = layout_positions(&projection, &chart);
+        let center_x = (chart.canvas.pixel_width() / 2) as isize;
+        let center_y = (chart.canvas.pixel_height() / 2) as isize;
+        let story = positions.get("S1").unwrap();
+        let routine = positions.get("R1").unwrap();
+        let story_radius =
+            (((story.x - center_x).pow(2) + (story.y - center_y).pow(2)) as f64).sqrt();
+        let routine_radius =
+            (((routine.x - center_x).pow(2) + (routine.y - center_y).pow(2)) as f64).sqrt();
+
+        assert!(routine_radius > story_radius);
     }
 }

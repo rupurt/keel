@@ -1096,7 +1096,9 @@ fn depth_for_kind(kind: KnowledgeGraphNodeKind) -> usize {
         KnowledgeGraphNodeKind::Epic
         | KnowledgeGraphNodeKind::Bearing
         | KnowledgeGraphNodeKind::Adr => 2,
-        KnowledgeGraphNodeKind::Voyage | KnowledgeGraphNodeKind::Story => 3,
+        KnowledgeGraphNodeKind::Voyage
+        | KnowledgeGraphNodeKind::Story
+        | KnowledgeGraphNodeKind::Routine => 3,
         KnowledgeGraphNodeKind::Artifact
         | KnowledgeGraphNodeKind::Knowledge
         | KnowledgeGraphNodeKind::ProjectDoc => 4,
@@ -1113,10 +1115,11 @@ fn kind_sort_rank(kind: KnowledgeGraphNodeKind) -> u8 {
         KnowledgeGraphNodeKind::Adr => 4,
         KnowledgeGraphNodeKind::Voyage => 5,
         KnowledgeGraphNodeKind::Story => 6,
-        KnowledgeGraphNodeKind::Artifact => 7,
-        KnowledgeGraphNodeKind::Knowledge => 8,
-        KnowledgeGraphNodeKind::ProjectDoc => 9,
-        KnowledgeGraphNodeKind::SourceFile => 10,
+        KnowledgeGraphNodeKind::Routine => 7,
+        KnowledgeGraphNodeKind::Artifact => 8,
+        KnowledgeGraphNodeKind::Knowledge => 9,
+        KnowledgeGraphNodeKind::ProjectDoc => 10,
+        KnowledgeGraphNodeKind::SourceFile => 11,
     }
 }
 
@@ -1133,6 +1136,7 @@ fn node_color(node: &KnowledgeGraphViewNode) -> Color {
         KnowledgeGraphNodeKind::Adr => Color::BrightMagenta,
         KnowledgeGraphNodeKind::Voyage => Color::BrightGreen,
         KnowledgeGraphNodeKind::Story => Color::White,
+        KnowledgeGraphNodeKind::Routine => Color::BrightCyan,
         KnowledgeGraphNodeKind::Artifact => Color::Cyan,
         KnowledgeGraphNodeKind::Knowledge => Color::Yellow,
         KnowledgeGraphNodeKind::ProjectDoc => Color::Magenta,
@@ -1148,7 +1152,8 @@ fn node_radius(kind: KnowledgeGraphNodeKind) -> isize {
         | KnowledgeGraphNodeKind::Bearing
         | KnowledgeGraphNodeKind::Adr
         | KnowledgeGraphNodeKind::Voyage
-        | KnowledgeGraphNodeKind::Story => 2,
+        | KnowledgeGraphNodeKind::Story
+        | KnowledgeGraphNodeKind::Routine => 2,
         KnowledgeGraphNodeKind::Artifact
         | KnowledgeGraphNodeKind::Knowledge
         | KnowledgeGraphNodeKind::ProjectDoc
@@ -1174,6 +1179,7 @@ fn singular_label(kind: KnowledgeGraphNodeKind) -> &'static str {
         KnowledgeGraphNodeKind::Adr => "ADR",
         KnowledgeGraphNodeKind::Voyage => "voyage",
         KnowledgeGraphNodeKind::Story => "story",
+        KnowledgeGraphNodeKind::Routine => "routine",
         KnowledgeGraphNodeKind::Artifact => "artifact",
         KnowledgeGraphNodeKind::Knowledge => "knowledge unit",
         KnowledgeGraphNodeKind::ProjectDoc => "project doc",
@@ -1190,6 +1196,7 @@ fn plural_label(kind: KnowledgeGraphNodeKind) -> &'static str {
         KnowledgeGraphNodeKind::Adr => "ADRs",
         KnowledgeGraphNodeKind::Voyage => "voyages",
         KnowledgeGraphNodeKind::Story => "stories",
+        KnowledgeGraphNodeKind::Routine => "routines",
         KnowledgeGraphNodeKind::Artifact => "artifacts",
         KnowledgeGraphNodeKind::Knowledge => "knowledge units",
         KnowledgeGraphNodeKind::ProjectDoc => "project docs",

@@ -304,6 +304,11 @@ fn path_for_node(board: &Board, node_id: &BoardNodeId) -> std::path::PathBuf {
             .get(id)
             .map(|story| story.path.clone())
             .unwrap_or_else(|| board.root.join("README.md")),
+        BoardNodeId::Routine(id) => board
+            .routines
+            .get(id)
+            .map(|routine| routine.path.clone())
+            .unwrap_or_else(|| board.root.join("README.md")),
     }
 }
 
@@ -316,6 +321,7 @@ fn describe_node_ref(node_id: &BoardNodeId) -> String {
         BoardNodeId::Adr(id) => format!("adr {id}"),
         BoardNodeId::Voyage(id) => format!("voyage {id}"),
         BoardNodeId::Story(id) => format!("story {id}"),
+        BoardNodeId::Routine(id) => format!("routine {id}"),
     }
 }
 

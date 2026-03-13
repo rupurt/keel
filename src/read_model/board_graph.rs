@@ -3,7 +3,7 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::fs;
 
-use crate::domain::model::{Board, Epic, Story, Voyage, VoyageState};
+use crate::domain::model::{Board, Epic, Routine, Story, Voyage, VoyageState};
 use crate::infrastructure::utils::cmp_optional_index_then_id;
 use crate::infrastructure::verification::parse_ac_references;
 
@@ -18,6 +18,7 @@ pub enum BoardNodeKind {
     Adr,
     Voyage,
     Story,
+    Routine,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -29,6 +30,7 @@ pub enum BoardNodeId {
     Adr(String),
     Voyage(String),
     Story(String),
+    Routine(String),
 }
 
 impl BoardNodeId {
@@ -41,6 +43,7 @@ impl BoardNodeId {
             Self::Adr(_) => BoardNodeKind::Adr,
             Self::Voyage(_) => BoardNodeKind::Voyage,
             Self::Story(_) => BoardNodeKind::Story,
+            Self::Routine(_) => BoardNodeKind::Routine,
         }
     }
 
@@ -52,7 +55,8 @@ impl BoardNodeId {
             | Self::Bearing(id)
             | Self::Adr(id)
             | Self::Voyage(id)
-            | Self::Story(id) => id,
+            | Self::Story(id)
+            | Self::Routine(id) => id,
         }
     }
 }
@@ -201,6 +205,18 @@ pub fn build_board_graph(board: &Board) -> BoardGraph {
         });
     }
 
+    for routine in sorted_routines(board) {
+        nodes.push(BoardGraphNode {
+            id: BoardNodeId::Routine(routine.id().to_string()),
+            title: routine.title().to_string(),
+            kind: BoardNodeKind::Routine,
+            state: "scheduled".to_string(),
+            terminal: false,
+            order_index: None,
+            declared_parent: routine_declared_parent(routine),
+        });
+    }
+
     let known_ids: BTreeSet<_> = nodes.iter().map(|node| node.id.clone()).collect();
     let mut edges = BTreeSet::new();
     let mut dangling_edges = BTreeSet::new();
@@ -322,6 +338,19 @@ pub fn build_board_graph(board: &Board) -> BoardGraph {
                 BoardEdgeKind::GovernedBy,
             );
         }
+    }
+
+    for routine in sorted_routines(board) {
+        let routine_id = BoardNodeId::Routine(routine.id().to_string());
+        let parent = routine_declared_parent(routine).unwrap_or(BoardNodeId::Board);
+        add_edge(
+            &known_ids,
+            &mut edges,
+            &mut dangling_edges,
+            parent,
+            routine_id,
+            BoardEdgeKind::Contains,
+        );
     }
 
     for (story_id, dependency_ids) in derive_story_dependencies(board) {
@@ -548,6 +577,19 @@ fn story_declared_parent(story: &Story) -> Option<BoardNodeId> {
     }
 }
 
+fn routine_declared_parent(routine: &Routine) -> Option<BoardNodeId> {
+    let target_scope = routine.target_scope().trim();
+    if target_scope.is_empty() {
+        return None;
+    }
+
+    if let Some((_, voyage_id)) = target_scope.split_once('/') {
+        return Some(BoardNodeId::Voyage(voyage_id.to_string()));
+    }
+
+    Some(BoardNodeId::Epic(target_scope.to_string()))
+}
+
 fn derive_story_dependencies(board: &Board) -> BTreeMap<String, Vec<String>> {
     let mut dependencies = BTreeMap::<String, Vec<String>>::new();
     let mut scope_to_requirements: HashMap<String, HashMap<String, Vec<String>>> = HashMap::new();
@@ -688,6 +730,12 @@ fn sorted_stories(board: &Board) -> Vec<&Story> {
     stories
 }
 
+fn sorted_routines(board: &Board) -> Vec<&Routine> {
+    let mut routines: Vec<_> = board.routines.values().collect();
+    routines.sort_by(|left, right| left.id().cmp(right.id()));
+    routines
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -695,6 +743,31 @@ mod tests {
     use crate::test_helpers::{
         TestAdr, TestBearing, TestBoardBuilder, TestEpic, TestMission, TestStory, TestVoyage,
     };
+    use std::fs;
+
+    fn write_routine(root: &std::path::Path, id: &str, target_scope: &str) {
+        let routine_dir = root.join("routines").join(id);
+        fs::create_dir_all(&routine_dir).unwrap();
+        fs::write(
+            routine_dir.join("README.md"),
+            format!(
+                r#"---
+id: {id}
+title: Weekly Review
+cadence:
+  cron: 0 9 * * 1
+  timezone: America/Los_Angeles
+target-scope: {target_scope}
+created_at: 2026-03-12T09:00:00
+updated_at: 2026-03-12T09:00:00
+---
+
+# Blueprint
+"#
+            ),
+        )
+        .unwrap();
+    }
 
     #[test]
     fn board_graph_builds_typed_relationships() {
@@ -729,6 +802,7 @@ mod tests {
                     .body("## Acceptance Criteria\n\n- [ ] [SRS-01/AC-01] build graph"),
             )
             .build();
+        write_routine(temp.path(), "routine-weekly-review", "epic-1/01-graph");
 
         let board = load_board(temp.path()).unwrap();
         let graph = build_board_graph(&board);
@@ -764,6 +838,11 @@ mod tests {
                 .node(&BoardNodeId::Story("STORY-01".to_string()))
                 .is_some()
         );
+        assert!(
+            graph
+                .node(&BoardNodeId::Routine("routine-weekly-review".to_string()))
+                .is_some()
+        );
 
         assert_eq!(
             graph.children(&BoardNodeId::Mission("M1".to_string())),
@@ -779,7 +858,10 @@ mod tests {
         );
         assert_eq!(
             graph.children(&BoardNodeId::Voyage("01-graph".to_string())),
-            &[BoardNodeId::Story("STORY-01".to_string())]
+            &[
+                BoardNodeId::Story("STORY-01".to_string()),
+                BoardNodeId::Routine("routine-weekly-review".to_string()),
+            ]
         );
         assert_eq!(
             graph.outgoing(

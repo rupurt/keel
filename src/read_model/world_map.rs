@@ -5,7 +5,7 @@ use std::fmt;
 use std::str::FromStr;
 
 use anyhow::{Result, anyhow};
-use chrono::{NaiveDateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 
 use crate::domain::model::{Board, Epic, Mission, Story, Voyage};
 use crate::infrastructure::utils::{cmp_optional_index_then_id, pluralize};
@@ -14,6 +14,10 @@ use crate::read_model::board_graph::{
 };
 use crate::read_model::knowledge_graph::{DriftSurfaceSummary, project_structural_drift_summary};
 use crate::read_model::planning_show;
+use crate::read_model::scheduled_routines::{
+    RoutineScheduleFilter, ScheduledRoutineProjection, ScheduledRoutineState,
+    project_scheduled_routines,
+};
 
 const WORLD_NODE_ID: &str = "__world__";
 const HIGHLIGHT_LIMIT: usize = 8;
@@ -100,6 +104,7 @@ pub enum WorldMapNodeKind {
     Adr,
     Voyage,
     Story,
+    Routine,
 }
 
 impl WorldMapNodeKind {
@@ -112,6 +117,7 @@ impl WorldMapNodeKind {
             Self::Adr => "ADR",
             Self::Voyage => "voyage",
             Self::Story => "story",
+            Self::Routine => "routine",
         }
     }
 
@@ -124,6 +130,7 @@ impl WorldMapNodeKind {
             Self::Adr => "ADRs",
             Self::Voyage => "voyages",
             Self::Story => "stories",
+            Self::Routine => "routines",
         }
     }
 
@@ -136,6 +143,7 @@ impl WorldMapNodeKind {
             Self::Adr => 4,
             Self::Voyage => 5,
             Self::Story => 6,
+            Self::Routine => 7,
         }
     }
 }
@@ -235,6 +243,12 @@ where
     let reference_time = options
         .reference_time
         .unwrap_or_else(|| Utc::now().naive_utc());
+    let schedule_reference = DateTime::<Utc>::from_naive_utc_and_offset(reference_time, Utc);
+    let scheduled_routines =
+        project_scheduled_routines(board, schedule_reference, RoutineScheduleFilter::default())
+            .into_iter()
+            .map(|routine| (routine.id.clone(), routine))
+            .collect::<HashMap<_, _>>();
     let graph = build(board);
     let mut nodes = BTreeMap::new();
     let id_index: HashMap<_, _> = graph
@@ -247,7 +261,7 @@ where
         let world_id = world_node_id(&node.id);
         nodes.insert(
             world_id,
-            build_world_map_node(board, &graph, node, reference_time)?,
+            build_world_map_node(board, &graph, &scheduled_routines, node, reference_time)?,
         );
     }
 
@@ -322,6 +336,7 @@ where
 fn build_world_map_node(
     board: &Board,
     graph: &BoardGraph,
+    scheduled_routines: &HashMap<String, ScheduledRoutineProjection>,
     node: &BoardGraphNode,
     reference_time: NaiveDateTime,
 ) -> Result<WorldMapNode> {
@@ -333,12 +348,13 @@ fn build_world_map_node(
         _ => 1,
     };
 
-    let (title, kind, summary, timer, signals) = match &node.id {
+    let (title, kind, state, summary, timer, signals) = match &node.id {
         BoardNodeId::Board => (
             "Keel World".to_string(),
             WorldMapNodeKind::World,
+            node.state.clone(),
             Some(format!(
-                "{} {}, {} {}, {} {}, {} {}, {} {}, {} {}",
+                "{} {}, {} {}, {} {}, {} {}, {} {}, {} {}, {} {}",
                 board.missions.len(),
                 pluralize(board.missions.len(), "mission", "missions"),
                 board.epics.len(),
@@ -351,6 +367,8 @@ fn build_world_map_node(
                 pluralize(board.voyages.len(), "voyage", "voyages"),
                 board.stories.len(),
                 pluralize(board.stories.len(), "story", "stories"),
+                board.routines.len(),
+                pluralize(board.routines.len(), "routine", "routines"),
             )),
             None,
             Vec::new(),
@@ -363,6 +381,7 @@ fn build_world_map_node(
             (
                 node.title.clone(),
                 world_node_kind(node.kind),
+                node.state.clone(),
                 Some(mission_summary(board, mission)),
                 mission_timer(mission, reference_time),
                 Vec::new(),
@@ -377,6 +396,7 @@ fn build_world_map_node(
             (
                 node.title.clone(),
                 world_node_kind(node.kind),
+                node.state.clone(),
                 Some(format!(
                     "{open_voyages}/{total_voyages} open {}",
                     pluralize(total_voyages, "voyage", "voyages")
@@ -388,6 +408,7 @@ fn build_world_map_node(
         BoardNodeId::Bearing(_) | BoardNodeId::Adr(_) => (
             node.title.clone(),
             world_node_kind(node.kind),
+            node.state.clone(),
             None,
             None,
             Vec::new(),
@@ -401,6 +422,7 @@ fn build_world_map_node(
             (
                 node.title.clone(),
                 world_node_kind(node.kind),
+                node.state.clone(),
                 Some(format!(
                     "{open_stories}/{total_stories} open {}",
                     pluralize(total_stories, "story", "stories")
@@ -417,9 +439,25 @@ fn build_world_map_node(
             (
                 node.title.clone(),
                 world_node_kind(node.kind),
+                node.state.clone(),
                 Some(story_scope_summary(story)),
                 None,
                 story_signals(graph, story)?,
+            )
+        }
+        BoardNodeId::Routine(id) => {
+            let routine = board
+                .routines
+                .get(id)
+                .expect("graph routine nodes must resolve against the board");
+            let scheduled = scheduled_routines.get(id);
+            (
+                node.title.clone(),
+                world_node_kind(node.kind),
+                routine_state_label(scheduled),
+                Some(format!("targets {}", routine.target_scope())),
+                routine_timer(scheduled),
+                routine_signals(scheduled),
             )
         }
     };
@@ -428,7 +466,7 @@ fn build_world_map_node(
         id,
         title,
         kind,
-        state: node.state.clone(),
+        state,
         parent_id,
         depth,
         terminal: node.terminal,
@@ -447,7 +485,8 @@ fn world_node_id(id: &BoardNodeId) -> String {
         | BoardNodeId::Bearing(id)
         | BoardNodeId::Adr(id)
         | BoardNodeId::Voyage(id)
-        | BoardNodeId::Story(id) => id.clone(),
+        | BoardNodeId::Story(id)
+        | BoardNodeId::Routine(id) => id.clone(),
     }
 }
 
@@ -460,6 +499,7 @@ fn world_node_kind(kind: BoardNodeKind) -> WorldMapNodeKind {
         BoardNodeKind::Adr => WorldMapNodeKind::Adr,
         BoardNodeKind::Voyage => WorldMapNodeKind::Voyage,
         BoardNodeKind::Story => WorldMapNodeKind::Story,
+        BoardNodeKind::Routine => WorldMapNodeKind::Routine,
     }
 }
 
@@ -503,6 +543,42 @@ fn voyage_timer(voyage: &Voyage, reference_time: NaiveDateTime) -> Option<String
         .or(voyage.frontmatter.created_at)?;
     let end = voyage.frontmatter.completed_at.unwrap_or(reference_time);
     compact_elapsed(start, end)
+}
+
+fn routine_state_label(scheduled: Option<&ScheduledRoutineProjection>) -> String {
+    match scheduled.map(|routine| routine.state) {
+        Some(ScheduledRoutineState::Due) => "due".to_string(),
+        Some(ScheduledRoutineState::Upcoming) => "upcoming".to_string(),
+        Some(ScheduledRoutineState::Invalid) => "invalid".to_string(),
+        None => "scheduled".to_string(),
+    }
+}
+
+fn routine_timer(scheduled: Option<&ScheduledRoutineProjection>) -> Option<String> {
+    match scheduled {
+        Some(routine) => match routine.state {
+            ScheduledRoutineState::Due => Some("due now".to_string()),
+            ScheduledRoutineState::Upcoming => routine.countdown.clone(),
+            ScheduledRoutineState::Invalid => Some("invalid cadence".to_string()),
+        },
+        None => None,
+    }
+}
+
+fn routine_signals(scheduled: Option<&ScheduledRoutineProjection>) -> Vec<String> {
+    match scheduled {
+        Some(routine) => match routine.state {
+            ScheduledRoutineState::Due => vec!["due now".to_string()],
+            ScheduledRoutineState::Invalid => vec![
+                routine
+                    .error
+                    .clone()
+                    .unwrap_or_else(|| "invalid cadence".to_string()),
+            ],
+            ScheduledRoutineState::Upcoming => Vec::new(),
+        },
+        None => Vec::new(),
+    }
 }
 
 fn compact_elapsed(start: NaiveDateTime, end: NaiveDateTime) -> Option<String> {
@@ -906,12 +982,38 @@ fn compare_nodes(left: &WorldMapNode, right: &WorldMapNode) -> std::cmp::Orderin
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::TimeZone;
     use std::cell::Cell;
+    use std::fs;
+    use std::path::Path;
 
     use crate::domain::model::StoryState;
     use crate::test_helpers::{
         TestBearing, TestBoardBuilder, TestEpic, TestMission, TestStory, TestVoyage,
     };
+
+    fn write_routine(root: &Path, id: &str, target_scope: &str, cadence_block: &str) {
+        let routine_dir = root.join("routines").join(id);
+        fs::create_dir_all(&routine_dir).unwrap();
+        fs::write(
+            routine_dir.join("README.md"),
+            format!(
+                r#"---
+id: {id}
+title: {id}
+cadence:
+{cadence_block}
+target-scope: {target_scope}
+created_at: 2026-01-01T00:00:00
+updated_at: 2026-01-01T00:00:00
+---
+
+# Blueprint
+"#
+            ),
+        )
+        .unwrap();
+    }
 
     fn world_fixture() -> tempfile::TempDir {
         TestBoardBuilder::new()
@@ -1009,6 +1111,56 @@ mod tests {
                 .iter()
                 .any(|signal| signal.contains("blocked by S1"))
         );
+    }
+
+    #[test]
+    fn story_zoom_surfaces_targeted_routines_with_due_state() {
+        let temp = world_fixture();
+        write_routine(
+            temp.path(),
+            "routine-weekly-review",
+            "E1/V1",
+            "  cron: 0 9 * * 1\n  timezone: America/Los_Angeles",
+        );
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+
+        let projection = build_world_map_projection(
+            &board,
+            WorldMapBuildOptions {
+                zoom: TopologyZoom::Story,
+                focus_id: Some("V1"),
+                include_done: false,
+                reference_time: Some(
+                    chrono::Utc
+                        .with_ymd_and_hms(2026, 1, 5, 18, 0, 0)
+                        .unwrap()
+                        .naive_utc(),
+                ),
+            },
+        )
+        .unwrap();
+
+        let routine = projection
+            .nodes
+            .iter()
+            .find(|node| node.id == "routine-weekly-review")
+            .expect("routine should be visible on the story zoom");
+
+        assert_eq!(routine.kind, WorldMapNodeKind::Routine);
+        assert_eq!(routine.parent_id.as_deref(), Some("V1"));
+        assert_eq!(routine.state, "due");
+        assert_eq!(routine.timer.as_deref(), Some("due now"));
+        assert!(
+            routine
+                .signals
+                .iter()
+                .any(|signal| signal.contains("due now"))
+        );
+        assert!(projection.links.iter().any(|link| {
+            link.kind == WorldMapLinkKind::Hierarchy
+                && link.from_id == "V1"
+                && link.to_id == "routine-weekly-review"
+        }));
     }
 
     #[test]
