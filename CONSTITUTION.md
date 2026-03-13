@@ -1,27 +1,24 @@
-# Keel Constitution
+# Keel Constitution: The Simulator Philosophy
 
 > Minimize drift through planning, execution, and verification.
 
-This document captures the foundational principles of how keel operates: the human-agent collaboration model, decision hierarchy, and governance boundaries that keep autonomous delivery aligned.
+This document captures the foundational principles of how Keel operates as an **Agentic SDLC Simulator**: the human-agent collaboration model, the resolution hierarchy, and the formal boundaries that keep autonomous delivery aligned.
 
-## Document Hierarchy
+## The Resolution Hierarchy
 
-Keel documentation is intentionally layered:
+Decisions in the simulator flow through a hierarchy of resolution, each level defining the physics for the next:
 
-```
-ADRs -> CONSTITUTION.md -> ARCHITECTURE.md -> Planning documents (PRD/SRS/SDD/stories)
-```
-
-- **ADRs** define binding architectural decisions.
-- **CONSTITUTION.md** defines collaboration philosophy and governance intent.
-- **ARCHITECTURE.md** defines implementation structure and executable constraints.
-- **Planning documents** define scoped work that must comply with all upstream layers.
+1. **ADRs** define the binding architectural physics.
+2. **CONSTITUTION** defines the collaboration philosophy and intent.
+3. **FORMAL RULES** define the executable engine invariants.
+4. **ARCHITECTURE** defines the physical source layout and boundaries.
+5. **PLANNING** (PRD/SRS/SDD) defines the scoped mission work.
 
 ## Core Belief
 
-**Humans decide architecture. Agents execute implementation. Verification confirms alignment.**
+**Humans author the physics. Agents execute within the simulation. Verification confirms the state.**
 
-The goal is not to remove humans from software development, but to place human judgment where it matters most: architectural decisions, strategic direction, and acceptance of completed work. Everything else can be delegated to agents operating within well-defined constraints.
+The goal is not to remove humans from software development, but to place human judgment where it matters most: defining architectural constraints, strategic direction, and accepting the final state. Everything else is delegated to agents operating within these high-fidelity rules.
 
 ## The Collaboration Model
 
@@ -138,46 +135,46 @@ Like a well-designed program that allocates all memory at startup, **voyage deco
 
 Agents don't discover work at runtime — they execute pre-planned, pre-allocated work.
 
-## The Circuit Model
+## The Engine Power Model
 
-The system operates like an electrical circuit with two power sources:
+The engine operates like a circuit with two power sources:
 
 ```
 ╔═══════════════════════════════════════════════════════════════════════╗
-║                         THE KEEL CIRCUIT                              ║
+║                         THE KEEL ENGINE                               ║
 ╠═══════════════════════════════════════════════════════════════════════╣
 ║                                                                       ║
 ║  [HUMAN] ════════════════════════════════════════╗  HIGH VOLTAGE      ║
-║     │                                            ║  (sporadic)        ║
+║     │                                            ║  (Strategic)       ║
 ║     │    ┌──────────────────────────────────┐    ║                    ║
-║     ├───►│ ADR GATE                         │◄───╝                    ║
+║     ├───►│ PHYSICS GATE (ADR)               │◄───╝                    ║
 ║     │    └──────────────┬───────────────────┘                         ║
 ║     │                   │                                             ║
 ║     │                   ▼                                             ║
 ║     │    ┌──────────────────────────────────┐                         ║
-║     │    │ epic → voyage → stories          │◄───╗                    ║
+║     │    │ mission → voyage → story         │◄───╗                    ║
 ║     │    └──────────────┬───────────────────┘    ║                    ║
 ║     │                   │                        ║                    ║
 ║     │                   ▼                        ║  CONSTANT VOLTAGE  ║
-║     │    ┌──────────────────────────────────┐    ║  (always on)       ║
-║     ├───►│ ACCEPT GATE                      │    ║                    ║
+║     │    ┌──────────────────────────────────┐    ║  (Implementation)  ║
+║     ├───►│ STATE GATE (ACCEPT)              │    ║                    ║
 ║     │    └──────────────┬───────────────────┘    ║                    ║
 ║     │                   │                        ║                    ║
 ║     │                   ▼                        ║                    ║
-║     │               [done]                       ║                    ║
+║     │               [verified]                   ║                    ║
 ║     │                                            ║                    ║
 ║  [HUMAN]                                     [AGENT]                  ║
 ║                                                                       ║
 ╚═══════════════════════════════════════════════════════════════════════╝
 ```
 
-**Agent voltage** is constant — when work is available, agents execute. This pushes work through the pipeline and charges the accept queue.
+**Agent voltage** is constant — when the physics allow, agents execute implementation. This pushes work through the pipeline.
 
-**Human voltage** is high but sporadic — humans pull when ready. This voltage opens gates that agents cannot open: ADR decisions and acceptance.
+**Human voltage** is high but strategic — humans author the physics (ADRs) and calibrate the state (Acceptance).
 
-The circuit requires both:
-- Without agent voltage → nothing reaches the accept queue
-- Without human voltage → work accumulates at gates, flow stops
+The simulator requires both:
+- Without implementation voltage → no state is produced.
+- Without strategic voltage → work accumulates at gates, and the simulation halts.
 
 Gates are the key constraint. They're where human judgment is irreplaceable. Everything else flows with agent voltage alone.
 

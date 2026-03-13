@@ -3,34 +3,35 @@
 use clap::{Arg, ArgAction, Command, Subcommand};
 
 const HELP_GROUPS: &str = r#"
-These are common Keel commands:
+The Ramping Path (Your Moves):
 
-Setup
-  init        Initialize a new keel board in the current directory
-  config      Configuration commands
-  generate    Regenerate all README files
-
-Management
-  next        Pull the next item using explicit role-based queue routing
-  pulse       Run one non-interactive automation cycle
-  topology    Show a zoomable world map of the board
-  play        Invite play-driven discovery
-  audit       Rich evidence/traceability report
-  verify      Execute verification proofs
-  knowledge   Manage institutional knowledge
-  mission     Mission commands (long-running objectives)
-  adr         ADR commands (architecture decisions)
-  bearing     Bearing commands (research phase)
-  epic        Epic commands
-  routine     Routine commands
-  voyage      Voyage commands
-  story       Story commands (new, start, submit, accept, reject, ice, thaw, show, list, link, unlink, record, audit)
-  roadmap     Render the management roadmap
-
-Diagnostics
+1. The Fixer (Learning by Healing)
   doctor      Validate board health and optionally fix issues
   flow        Show workflow lane dashboard from configured topology
-  throughput  Show weekly throughput and timing sparklines
+
+2. The Operator (Learning by Building)
+  next        Pull the next move with exactly three bullets (--status)
+  story       Implementation units and acceptance criteria
+  verify      Execute verification proofs
+  audit       Rich evidence/traceability report
+
+3. The Architect (Learning by Constraining)
+  mission     Strategic objectives and charters
+  epic        Strategic grouping and PRD management
+  voyage      Tactical planning (SRS/SDD) and execution
+  adr         Architecture Decision Records (The Physics)
+
+Discovery & Automation:
+  play        Invite play-driven discovery (The Sandbox)
+  bearing     Research phase and fog reduction
+  knowledge   Manage institutional memory
+  pulse       Run one non-interactive automation cycle
+  topology    Show a zoomable world map of the board
+
+Setup:
+  init        Initialize a new keel board
+  config      Configuration and technique inventory
+  generate    Regenerate board artifacts
 "#;
 
 fn hidden_subcommand_group<T>(name: &'static str, about: &'static str) -> Command

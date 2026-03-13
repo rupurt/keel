@@ -505,7 +505,7 @@ fn print_selected_mission(selected: &SelectedMission<'_>) {
     );
 
     if let Some(outstanding) = render_outstanding_summary(&selected.summary) {
-        println!("Outstanding: {outstanding}");
+        println!("Simulation State: {outstanding}");
     }
 
     println!();

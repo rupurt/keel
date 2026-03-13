@@ -109,6 +109,14 @@ const THEATER_PERSONA_REGISTRY: &[TheaterPersona] = &[
         id: "broadway",
         prompt: "Stage the scene with flair, spectacle, and timing.",
     },
+    TheaterPersona {
+        id: "student",
+        prompt: "Ask questions to clarify comprehension of the formal rules and constraints.",
+    },
+    TheaterPersona {
+        id: "interrogator",
+        prompt: "Identify gaps in evidence and challenge assumptions through aggressive inquiry.",
+    },
 ];
 const THEATER_MOOD_REGISTRY: &[TheaterMood] = &[
     TheaterMood {
@@ -140,6 +148,12 @@ const THEATER_MOOD_REGISTRY: &[TheaterMood] = &[
         name: "Focused",
         prompt_addendum: "Keep things direct, structured, and explicit about the next move.",
         preferred_persona: Some("neutral"),
+    },
+    TheaterMood {
+        id: "inquiry",
+        name: "Inquiry",
+        prompt_addendum: "Turn the session into a formal inquiry of facts, rules, and logic.",
+        preferred_persona: Some("student"),
     },
 ];
 const THEATER_PROP_CATEGORIES: &[&str] = &["masks", "hats", "instruments", "costumes", "custom"];
