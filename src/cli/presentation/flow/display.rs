@@ -289,8 +289,15 @@ fn select_missions_for_flow_summary(
     let mut fallback_missions: Vec<_> = board
         .missions
         .values()
-        .filter(|mission| !mission.status().is_terminal())
+        .filter(|mission| mission.status() == keel::domain::model::MissionStatus::Defining)
         .collect();
+    if fallback_missions.is_empty() {
+        fallback_missions = board
+            .missions
+            .values()
+            .filter(|mission| !mission.status().is_terminal())
+            .collect();
+    }
     let has_more_than_three = fallback_missions.len() > 3;
     fallback_missions.sort_by(|left, right| {
         let (left_open, left_total) = mission_strategic_summary(board, left);
@@ -987,6 +994,46 @@ mod tests {
         assert!(lines[0].contains("M2"));
         assert!(lines[1].contains("M4"));
         assert!(lines[2].contains("M1"));
+    }
+
+    #[test]
+    fn select_missions_for_flow_summary_prefers_defining_missions() {
+        let temp = TestBoardBuilder::new()
+            .mission(
+                TestMission::new("M1")
+                    .title("Defining Mission")
+                    .status("defining"),
+            )
+            .mission(
+                TestMission::new("M2")
+                    .title("Achieved Mission")
+                    .status("achieved"),
+            )
+            .mission(
+                TestMission::new("M3")
+                    .title("Defining Mission Two")
+                    .status("defining"),
+            )
+            .mission(
+                TestMission::new("M4")
+                    .title("Paused Mission")
+                    .status("paused"),
+            )
+            .mission(
+                TestMission::new("M5")
+                    .title("Defining Mission Three")
+                    .status("defining"),
+            )
+            .build();
+        let board = loader::load_board(temp.path()).unwrap();
+
+        let (missions, use_top_missions, has_more_than_three) =
+            select_missions_for_flow_summary(&board);
+
+        assert!(use_top_missions);
+        assert!(!has_more_than_three);
+        let mission_ids: Vec<_> = missions.iter().map(|mission| mission.id()).collect();
+        assert_eq!(mission_ids, vec!["M1", "M3", "M5"]);
     }
 
     #[test]
