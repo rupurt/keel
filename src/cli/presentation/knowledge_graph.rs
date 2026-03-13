@@ -21,6 +21,9 @@ const MIN_INTERACTIVE_CHART_HEIGHT: usize = 8;
 const MAX_INTERACTIVE_SUMMARY_LINES: usize = 4;
 const LABEL_SIZE_MIN_RATIO: f64 = 0.45;
 const LABEL_SIZE_MIN_CHARS: usize = 6;
+const HELIX_STEPS: usize = 30;
+const HELIX_TWISTS: f64 = 6.0;
+const HELIX_AMPLITUDE: f64 = 1.8;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum KnowledgeGraphZoom {
@@ -777,8 +780,124 @@ fn draw_links(
             KnowledgeGraphViewLinkKind::Traceability => Some(Color::BrightBlue),
             KnowledgeGraphViewLinkKind::Knowledge => Some(Color::BrightYellow),
         };
-        chart.canvas.line_screen(from.x, from.y, to.x, to.y, color);
+
+        if let Some(color) = color {
+            if should_render_source_zoom_double_helix(
+                projection.zoom,
+                from.node,
+                to.node,
+                link.kind,
+            ) {
+                draw_double_helix_link(chart, from, to, color);
+            } else {
+                chart
+                    .canvas
+                    .line_screen(from.x, from.y, to.x, to.y, Some(color));
+            }
+        }
     }
+}
+
+fn should_render_source_zoom_double_helix(
+    zoom: KnowledgeGraphZoom,
+    from: &KnowledgeGraphViewNode,
+    to: &KnowledgeGraphViewNode,
+    kind: KnowledgeGraphViewLinkKind,
+) -> bool {
+    if zoom != KnowledgeGraphZoom::Source {
+        return false;
+    }
+
+    if kind == KnowledgeGraphViewLinkKind::Hierarchy {
+        return false;
+    }
+
+    is_source_ring_transition(from.kind, to.kind)
+}
+
+fn is_source_ring_transition(left: KnowledgeGraphNodeKind, right: KnowledgeGraphNodeKind) -> bool {
+    (left == KnowledgeGraphNodeKind::Knowledge && right == KnowledgeGraphNodeKind::SourceFile)
+        || (left == KnowledgeGraphNodeKind::SourceFile
+            && right == KnowledgeGraphNodeKind::Knowledge)
+}
+
+fn draw_double_helix_link(
+    chart: &mut ChartContext,
+    from: &PositionedNode<'_>,
+    to: &PositionedNode<'_>,
+    color: Color,
+) {
+    let center_x = (chart.canvas.pixel_width() / 2) as f64;
+    let center_y = (chart.canvas.pixel_height() / 2) as f64;
+
+    let from_dx = from.x as f64 - center_x;
+    let from_dy = from.y as f64 - center_y;
+    let to_dx = to.x as f64 - center_x;
+    let to_dy = to.y as f64 - center_y;
+
+    let r1 = (from_dx * from_dx + from_dy * from_dy).sqrt();
+    let r2 = (to_dx * to_dx + to_dy * to_dy).sqrt();
+    let a1 = from_dy.atan2(from_dx);
+    let a2 = to_dy.atan2(to_dx);
+    let span = angle_span(a1, a2);
+
+    for phase in [0.0_f64, std::f64::consts::PI] {
+        draw_helix_strand(
+            chart, center_x, center_y, from.x, from.y, to.x, to.y, r1, r2, a1, span, phase, color,
+        );
+    }
+}
+
+fn draw_helix_strand(
+    chart: &mut ChartContext,
+    center_x: f64,
+    center_y: f64,
+    from_x: isize,
+    from_y: isize,
+    to_x: isize,
+    to_y: isize,
+    r1: f64,
+    r2: f64,
+    start_angle: f64,
+    angle_span: f64,
+    phase: f64,
+    color: Color,
+) {
+    let mut prev = (from_x, from_y);
+
+    for step in 1..=HELIX_STEPS {
+        let ratio = step as f64 / HELIX_STEPS as f64;
+        let angle = start_angle + angle_span * ratio;
+        let radius = r1 + (r2 - r1) * ratio;
+        let wave = (ratio * TAU * HELIX_TWISTS + phase).sin();
+        let normal_x = -angle.sin();
+        let normal_y = angle.cos();
+
+        let x =
+            (center_x + radius * angle.cos() + normal_x * wave * HELIX_AMPLITUDE).round() as isize;
+        let y =
+            (center_y + radius * angle.sin() + normal_y * wave * HELIX_AMPLITUDE).round() as isize;
+        let mut point_x = x;
+        let mut point_y = y;
+
+        if step == HELIX_STEPS {
+            point_x = to_x;
+            point_y = to_y;
+        }
+
+        chart
+            .canvas
+            .line_screen(prev.0, prev.1, point_x, point_y, Some(color));
+        prev = (point_x, point_y);
+    }
+}
+
+fn angle_span(from_angle: f64, to_angle: f64) -> f64 {
+    let mut span = (to_angle - from_angle).rem_euclid(TAU);
+    if span > std::f64::consts::PI {
+        span -= TAU;
+    }
+    span
 }
 
 fn draw_nodes(
@@ -1446,6 +1565,55 @@ mod tests {
         assert_eq!(mid.intensity, txtplot::TextIntensity::Normal);
         assert_eq!(outer.intensity, txtplot::TextIntensity::Dim);
         assert_eq!(terminal.intensity, txtplot::TextIntensity::Normal);
+    }
+
+    #[test]
+    fn source_zoom_double_helix_only_renders_between_source_and_knowledge_links() {
+        let build_node = |kind: KnowledgeGraphNodeKind| KnowledgeGraphViewNode {
+            id: format!("n:{kind:?}"),
+            title: format!("{kind:?}"),
+            kind,
+            state: None,
+            parent_id: None,
+            depth: 5,
+            terminal: false,
+            signal_count: 0,
+        };
+
+        let knowledge = build_node(KnowledgeGraphNodeKind::Knowledge);
+        let source = build_node(KnowledgeGraphNodeKind::SourceFile);
+        let artifact = build_node(KnowledgeGraphNodeKind::Artifact);
+
+        assert!(should_render_source_zoom_double_helix(
+            KnowledgeGraphZoom::Source,
+            &knowledge,
+            &source,
+            KnowledgeGraphViewLinkKind::Knowledge,
+        ));
+        assert!(should_render_source_zoom_double_helix(
+            KnowledgeGraphZoom::Source,
+            &source,
+            &knowledge,
+            KnowledgeGraphViewLinkKind::Knowledge,
+        ));
+        assert!(!should_render_source_zoom_double_helix(
+            KnowledgeGraphZoom::Artifact,
+            &knowledge,
+            &source,
+            KnowledgeGraphViewLinkKind::Knowledge,
+        ));
+        assert!(!should_render_source_zoom_double_helix(
+            KnowledgeGraphZoom::Source,
+            &knowledge,
+            &source,
+            KnowledgeGraphViewLinkKind::Hierarchy,
+        ));
+        assert!(!should_render_source_zoom_double_helix(
+            KnowledgeGraphZoom::Source,
+            &knowledge,
+            &artifact,
+            KnowledgeGraphViewLinkKind::Knowledge,
+        ));
     }
 
     #[test]
