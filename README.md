@@ -41,10 +41,11 @@ Use this order when authoring or reviewing decisions:
 
 1. ADRs (`.keel/adrs/`) — binding architectural decisions
 2. [CONSTITUTION.md](CONSTITUTION.md) — collaboration philosophy and governance intent
-3. [ARCHITECTURE.md](ARCHITECTURE.md) — implementation structure and technical constraints
-4. [CONFIGURATION.md](CONFIGURATION.md) — role-based and config-driven topology
-5. [RELEASE.md](RELEASE.md) — release capabilities and overview
-6. Planning artifacts (`PRD.md` → `SRS.md`/`SDD.md` → story `README.md`) — scoped executable work
+3. [FORMAL_RULES.md](FORMAL_RULES.md) — operational invariants and engine constraints
+4. [ARCHITECTURE.md](ARCHITECTURE.md) — implementation structure and technical constraints
+5. [CONFIGURATION.md](CONFIGURATION.md) — role-based and config-driven topology
+6. [RELEASE.md](RELEASE.md) — release capabilities and overview
+7. Planning artifacts (`PRD.md` → `SRS.md`/`SDD.md` → story `README.md`) — scoped executable work
 
 ## Core Concepts & Architecture
 
