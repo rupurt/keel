@@ -256,11 +256,27 @@
 |--------|--------|
 | [Render Knowledge Graph Command and Drift Surfaces](epics/VDg0dAPVS/voyages/VDg0f0aHW/) | done |
 
-### [HEAD-relative Show Selector Resolution](epics/VDhtrxgW6/) (active)
+### [HEAD-relative Show Selector Resolution](epics/VDhtrxgW6/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Resolve HEAD Show Selectors](epics/VDhtrxgW6/voyages/VDhtzKSNF/) | in-progress |
+| [Resolve HEAD Show Selectors](epics/VDhtrxgW6/voyages/VDhtzKSNF/) | done |
+
+### [Mission Bearing Lineage](epics/VDiDhXVKy/) (draft)
+
+### [Test Epic Name](epics/VDiHvZvJS/) (draft)
+
+### [Horizon and Roadmap View](epics/VDiHw85WK/) (draft)
+
+### [Bearing Research Contract Alignment](epics/VDiHwCUZt/) (draft)
+
+### [Strict Deterministic Board Generation](epics/VDiHwGwe5/) (draft)
+
+### [Dependency-Aware Bearing Prioritization](epics/VDiHwLLfY/) (draft)
+
+### [Research-Preserving Bearing Promotion](epics/VDiHwPniZ/) (draft)
+
+### [Accelerated Bearing Source Capture](epics/VDiHwULir/) (draft)
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
