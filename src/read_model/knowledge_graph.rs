@@ -102,6 +102,107 @@ impl StructuralDriftInputs {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub enum DriftFacetKind {
+    EntityArtifacts,
+    KnowledgeProvenance,
+    SourceAttachments,
+    ProjectDocs,
+}
+
+impl DriftFacetKind {
+    pub fn short_label(self) -> &'static str {
+        match self {
+            Self::EntityArtifacts => "entities",
+            Self::KnowledgeProvenance => "knowledge",
+            Self::SourceAttachments => "source",
+            Self::ProjectDocs => "docs",
+        }
+    }
+
+    pub fn missing_label(self, missing: usize) -> String {
+        match self {
+            Self::EntityArtifacts => pluralized_gap(
+                missing,
+                "entity lacks an authored artifact",
+                "entities lack authored artifacts",
+            ),
+            Self::KnowledgeProvenance => pluralized_gap(
+                missing,
+                "knowledge unit lacks source provenance",
+                "knowledge units lack source provenance",
+            ),
+            Self::SourceAttachments => pluralized_gap(
+                missing,
+                "source file lacks graph attachment",
+                "source files lack graph attachments",
+            ),
+            Self::ProjectDocs => pluralized_gap(
+                missing,
+                "project doc is unlinked",
+                "project docs are unlinked",
+            ),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DriftFacetSummary {
+    pub kind: DriftFacetKind,
+    pub covered: usize,
+    pub total: usize,
+}
+
+impl DriftFacetSummary {
+    pub fn missing(&self) -> usize {
+        self.total.saturating_sub(self.covered)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct DriftSurfaceSummary {
+    pub coefficient: f64,
+    pub facets: Vec<DriftFacetSummary>,
+}
+
+impl DriftSurfaceSummary {
+    pub fn severity_label(&self) -> &'static str {
+        match self.coefficient {
+            value if value < 0.15 => "aligned",
+            value if value < 0.35 => "watch",
+            value if value < 0.60 => "elevated",
+            _ => "severe",
+        }
+    }
+
+    pub fn hotspot_messages(&self, limit: usize) -> Vec<String> {
+        let mut hotspots = self
+            .facets
+            .iter()
+            .filter(|facet| facet.missing() > 0)
+            .map(|facet| {
+                (
+                    facet.missing(),
+                    facet.kind,
+                    facet.kind.missing_label(facet.missing()),
+                )
+            })
+            .collect::<Vec<_>>();
+        hotspots.sort_by(|left, right| {
+            right
+                .0
+                .cmp(&left.0)
+                .then_with(|| left.1.cmp(&right.1))
+                .then_with(|| left.2.cmp(&right.2))
+        });
+        hotspots
+            .into_iter()
+            .take(limit)
+            .map(|(_, _, message)| message)
+            .collect()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct KnowledgeGraphProjection {
     pub schema_version: u32,
@@ -144,6 +245,17 @@ pub fn build_knowledge_graph_projection(board: &Board) -> Result<KnowledgeGraphP
         edges,
         drift_inputs,
     })
+}
+
+pub fn build_structural_drift_summary(
+    projection: &KnowledgeGraphProjection,
+) -> DriftSurfaceSummary {
+    build_structural_drift_summary_from_inputs(&projection.drift_inputs)
+}
+
+pub fn project_structural_drift_summary(board: &Board) -> Result<DriftSurfaceSummary> {
+    let projection = build_knowledge_graph_projection(board)?;
+    Ok(build_structural_drift_summary(&projection))
 }
 
 pub fn projection_input_hashes(
@@ -685,6 +797,43 @@ fn coverage_gap(covered: usize, total: usize) -> f64 {
     }
 }
 
+fn build_structural_drift_summary_from_inputs(
+    inputs: &StructuralDriftInputs,
+) -> DriftSurfaceSummary {
+    DriftSurfaceSummary {
+        coefficient: inputs.structural_drift_coefficient(),
+        facets: vec![
+            DriftFacetSummary {
+                kind: DriftFacetKind::EntityArtifacts,
+                covered: inputs.entities_with_artifacts,
+                total: inputs.total_entities,
+            },
+            DriftFacetSummary {
+                kind: DriftFacetKind::KnowledgeProvenance,
+                covered: inputs.knowledge_with_source_attachments,
+                total: inputs.total_knowledge_units,
+            },
+            DriftFacetSummary {
+                kind: DriftFacetKind::SourceAttachments,
+                covered: inputs.source_files_with_attachments,
+                total: inputs.total_source_files,
+            },
+            DriftFacetSummary {
+                kind: DriftFacetKind::ProjectDocs,
+                covered: inputs.linked_project_docs,
+                total: inputs.total_project_docs,
+            },
+        ],
+    }
+}
+
+fn pluralized_gap(count: usize, singular: &str, plural: &str) -> String {
+    match count {
+        1 => format!("1 {singular}"),
+        _ => format!("{count} {plural}"),
+    }
+}
+
 fn relative_to(root: &Path, path: &Path) -> Option<String> {
     path.strip_prefix(root)
         .ok()
@@ -940,5 +1089,23 @@ source: knowledge/semantic.md
         assert!(drift.total_source_files >= 2);
         assert!(drift.source_files_without_attachments >= 1);
         assert!(drift.structural_drift_coefficient() > 0.0);
+    }
+
+    #[test]
+    fn graph_drift_surfaces_remain_offline_without_semantic_cache() {
+        let temp = build_fixture(&[], &[("S1", 1)]);
+        fs::write(temp.path().join("src/orphan.rs"), "pub fn orphan() {}\n").unwrap();
+        let cache_dir = temp.path().join("cache/knowledge-graph");
+        if cache_dir.exists() {
+            fs::remove_dir_all(&cache_dir).unwrap();
+        }
+        let board = load_board(temp.path()).unwrap();
+
+        let first = project_structural_drift_summary(&board).unwrap();
+        let second = project_structural_drift_summary(&board).unwrap();
+
+        assert_eq!(first, second);
+        assert!(first.coefficient > 0.0);
+        assert!(!cache_dir.exists());
     }
 }

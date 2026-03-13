@@ -6,6 +6,7 @@ use std::fs;
 use crate::domain::model::{Board, Mission};
 use crate::infrastructure::validation::charter;
 use crate::infrastructure::validation::charter::ParsedMissionGoal;
+use crate::read_model::knowledge_graph::{DriftSurfaceSummary, project_structural_drift_summary};
 
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct MissionShowProjection {
@@ -14,6 +15,7 @@ pub struct MissionShowProjection {
     pub status: String,
     pub goals: Vec<ParsedMissionGoal>,
     pub child_entities: MissionChildren,
+    pub drift: DriftSurfaceSummary,
     pub log_summary: Option<String>,
     pub operator_signal: Option<String>,
 }
@@ -76,6 +78,7 @@ pub fn build_projection(board: &Board, mission: &Mission) -> Result<MissionShowP
     let log_path = mission_dir.join("LOG.md");
     let log_content = fs::read_to_string(&log_path).unwrap_or_default();
     let log_summary = extract_latest_log_entry(&log_content);
+    let drift = project_structural_drift_summary(board)?;
 
     Ok(MissionShowProjection {
         id: mission.id().to_string(),
@@ -87,6 +90,7 @@ pub fn build_projection(board: &Board, mission: &Mission) -> Result<MissionShowP
             bearings,
             adrs,
         },
+        drift,
         log_summary,
         operator_signal: mission.frontmatter.operator_signal.clone(),
     })

@@ -17,7 +17,7 @@ use keel::read_model::world_map::{
     build_world_map_projection,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 struct TopologySnapshot {
     projection: WorldMapProjection,
     output: String,
@@ -337,9 +337,40 @@ fn build_interactive_topology_snapshot_with_size(
 mod tests {
     use super::*;
     use keel::domain::model::StoryState;
+    use keel::read_model::knowledge_graph::{
+        DriftFacetKind, DriftFacetSummary, DriftSurfaceSummary,
+    };
     use keel::test_helpers::{
         TestBearing, TestBoardBuilder, TestEpic, TestMission, TestStory, TestVoyage,
     };
+
+    fn sample_drift() -> DriftSurfaceSummary {
+        DriftSurfaceSummary {
+            coefficient: 0.0,
+            facets: vec![
+                DriftFacetSummary {
+                    kind: DriftFacetKind::EntityArtifacts,
+                    covered: 0,
+                    total: 0,
+                },
+                DriftFacetSummary {
+                    kind: DriftFacetKind::KnowledgeProvenance,
+                    covered: 0,
+                    total: 0,
+                },
+                DriftFacetSummary {
+                    kind: DriftFacetKind::SourceAttachments,
+                    covered: 0,
+                    total: 0,
+                },
+                DriftFacetSummary {
+                    kind: DriftFacetKind::ProjectDocs,
+                    covered: 0,
+                    total: 0,
+                },
+            ],
+        }
+    }
 
     fn topology_fixture() -> tempfile::TempDir {
         TestBoardBuilder::new()
@@ -519,6 +550,7 @@ mod tests {
                 kind_counts: Vec::new(),
                 layers: Vec::new(),
                 highlights: Vec::new(),
+                drift: sample_drift(),
             },
             output: "line one\nline two".to_string(),
         };

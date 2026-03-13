@@ -13,6 +13,7 @@ use crate::domain::state_machine::invariants;
 use crate::infrastructure::verification::parser::{
     Comparison, parse_ac_references, parse_verify_annotations,
 };
+use crate::read_model::knowledge_graph::{DriftSurfaceSummary, project_structural_drift_summary};
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct PlanningDocSummary {
@@ -64,6 +65,7 @@ impl VerificationRollup {
 pub struct EpicShowProjection {
     pub doc: PlanningDocSummary,
     pub scope_drift: Vec<ScopeDriftRow>,
+    pub drift: DriftSurfaceSummary,
     pub requirement_coverage: Vec<EpicRequirementCoverageRow>,
     pub total_voyages: usize,
     pub done_voyages: usize,
@@ -130,11 +132,12 @@ pub struct RequirementRow {
     pub verification: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct VoyageShowProjection {
     pub goal: Option<String>,
     pub scope: ScopeSummary,
     pub scope_drift: Vec<ScopeDriftRow>,
+    pub drift: DriftSurfaceSummary,
     pub requirements: Vec<RequirementRow>,
     pub done_stories: usize,
     pub total_stories: usize,
@@ -321,6 +324,7 @@ pub fn build_epic_show_projection(board: &Board, epic: &Epic) -> Result<EpicShow
     } else {
         None
     };
+    let drift = project_structural_drift_summary(board)?;
 
     let mut verification = VerificationRollup::default();
     for story in stories {
@@ -386,6 +390,7 @@ pub fn build_epic_show_projection(board: &Board, epic: &Epic) -> Result<EpicShow
     Ok(EpicShowProjection {
         doc,
         scope_drift,
+        drift,
         requirement_coverage,
         total_voyages: voyages.len(),
         done_voyages,
@@ -535,11 +540,13 @@ pub fn build_voyage_show_projection(
         .count();
     let total_functional_requirements = functional_rows.len();
     let total_non_functional_requirements = non_functional_rows.len();
+    let drift = project_structural_drift_summary(board)?;
 
     Ok(VoyageShowProjection {
         goal,
         scope,
         scope_drift,
+        drift,
         done_stories,
         total_stories,
         done_functional_requirements,
@@ -2225,6 +2232,7 @@ Operators need reliable planning summaries.
         let EpicShowProjection {
             doc,
             scope_drift,
+            drift,
             requirement_coverage,
             total_voyages,
             done_voyages,
@@ -2239,6 +2247,7 @@ Operators need reliable planning summaries.
         let _ = (
             doc,
             scope_drift,
+            drift,
             requirement_coverage,
             total_voyages,
             done_voyages,
@@ -2255,6 +2264,7 @@ Operators need reliable planning summaries.
             goal,
             scope,
             scope_drift,
+            drift,
             requirements,
             done_stories,
             total_stories,
@@ -2269,6 +2279,7 @@ Operators need reliable planning summaries.
             goal,
             scope,
             scope_drift,
+            drift,
             requirements,
             done_stories,
             total_stories,

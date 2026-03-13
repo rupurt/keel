@@ -12,6 +12,7 @@ use crate::infrastructure::utils::{cmp_optional_index_then_id, pluralize};
 use crate::read_model::board_graph::{
     BoardEdgeKind, BoardGraph, BoardGraphNode, BoardNodeId, BoardNodeKind, build_board_graph,
 };
+use crate::read_model::knowledge_graph::{DriftSurfaceSummary, project_structural_drift_summary};
 use crate::read_model::planning_show;
 
 const WORLD_NODE_ID: &str = "__world__";
@@ -189,7 +190,7 @@ pub struct WorldMapLayer {
     pub count: usize,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct WorldMapProjection {
     pub zoom: TopologyZoom,
     pub focus: Option<WorldMapFocus>,
@@ -198,6 +199,7 @@ pub struct WorldMapProjection {
     pub kind_counts: Vec<WorldMapKindCount>,
     pub layers: Vec<WorldMapLayer>,
     pub highlights: Vec<String>,
+    pub drift: DriftSurfaceSummary,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -303,6 +305,7 @@ where
     let layers = visible_layers(&visible_nodes);
     let links = visible_links(&graph, &visible_ids, options.zoom);
     let highlights = highlight_lines(&visible_nodes, &focus);
+    let drift = project_structural_drift_summary(board)?;
 
     Ok(WorldMapProjection {
         zoom: options.zoom,
@@ -312,6 +315,7 @@ where
         kind_counts,
         layers,
         highlights,
+        drift,
     })
 }
 

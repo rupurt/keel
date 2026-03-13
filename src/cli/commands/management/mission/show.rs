@@ -3,6 +3,7 @@
 use anyhow::Result;
 use owo_colors::OwoColorize;
 
+use crate::cli::presentation::drift_surface::render_drift_show_section;
 use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::style;
 use keel::infrastructure::loader::load_board;
@@ -25,8 +26,14 @@ pub fn run(id: &str, json: bool) -> Result<()> {
 }
 
 fn render_human_output(projection: &MissionShowProjection) {
-    let width = crate::cli::presentation::terminal::get_terminal_width();
+    build_document(
+        projection,
+        crate::cli::presentation::terminal::get_terminal_width(),
+    )
+    .print();
+}
 
+fn build_document(projection: &MissionShowProjection, width: usize) -> ShowDocument {
     let metadata = ShowKeyValues::new()
         .with_min_label_width(9)
         .row("Title:", format!("{}", projection.title.bold()))
@@ -108,6 +115,8 @@ fn render_human_output(projection: &MissionShowProjection) {
     }
     sections.push(children_section);
 
+    sections.push(render_drift_show_section(&projection.drift));
+
     // LOG Summary Section
     let mut log_section = ShowSection::new("Latest Log Entry");
     if let Some(log_summary) = &projection.log_summary {
@@ -118,5 +127,68 @@ fn render_human_output(projection: &MissionShowProjection) {
     sections.push(log_section);
 
     document.push_sections_spaced(sections);
-    document.print();
+    document
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use keel::read_model::knowledge_graph::{
+        DriftFacetKind, DriftFacetSummary, DriftSurfaceSummary,
+    };
+    use keel::read_model::mission_show::{EntitySummary, MissionChildren};
+
+    fn sample_projection() -> MissionShowProjection {
+        MissionShowProjection {
+            id: "M1".to_string(),
+            title: "Mission One".to_string(),
+            status: "active".to_string(),
+            goals: Vec::new(),
+            child_entities: MissionChildren {
+                epics: vec![EntitySummary {
+                    id: "E1".to_string(),
+                    title: "Epic One".to_string(),
+                    status: "active".to_string(),
+                }],
+                bearings: Vec::new(),
+                adrs: Vec::new(),
+            },
+            drift: DriftSurfaceSummary {
+                coefficient: 0.41,
+                facets: vec![
+                    DriftFacetSummary {
+                        kind: DriftFacetKind::EntityArtifacts,
+                        covered: 3,
+                        total: 5,
+                    },
+                    DriftFacetSummary {
+                        kind: DriftFacetKind::KnowledgeProvenance,
+                        covered: 1,
+                        total: 2,
+                    },
+                    DriftFacetSummary {
+                        kind: DriftFacetKind::SourceAttachments,
+                        covered: 4,
+                        total: 7,
+                    },
+                    DriftFacetSummary {
+                        kind: DriftFacetKind::ProjectDocs,
+                        covered: 2,
+                        total: 3,
+                    },
+                ],
+            },
+            log_summary: Some("2026-03-12T17:00:00 - Latest".to_string()),
+            operator_signal: None,
+        }
+    }
+
+    #[test]
+    fn mission_show_renders_structural_drift_section() {
+        let rendered = build_document(&sample_projection(), 100).render();
+
+        assert!(rendered.contains("Structural Drift"));
+        assert!(rendered.contains("0.41 (elevated)"));
+        assert!(rendered.contains("Coverage:"));
+    }
 }

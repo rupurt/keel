@@ -7,6 +7,9 @@ use std::fmt::Write as _;
 use colored::Color;
 use txtplot::ChartContext;
 
+use crate::cli::presentation::drift_surface::{
+    render_drift_context, render_drift_coverage, render_drift_overview,
+};
 use keel::read_model::world_map::{
     WorldMapLinkKind, WorldMapNode, WorldMapNodeKind, WorldMapProjection,
 };
@@ -168,6 +171,16 @@ fn render_summary(projection: &WorldMapProjection) -> String {
         }
     )
     .unwrap();
+    writeln!(
+        out,
+        "{} | {}",
+        render_drift_overview("Drift Radar", &projection.drift),
+        render_drift_coverage(&projection.drift)
+    )
+    .unwrap();
+    if let Some(context) = render_drift_context(&projection.drift, 2) {
+        writeln!(out, "Context: {context}").unwrap();
+    }
 
     if !projection.layers.is_empty() {
         writeln!(out).unwrap();
@@ -247,6 +260,16 @@ fn render_interactive_summary(
                 visible
             }
         ),
+        width,
+    ));
+    lines.push(truncate_text(
+        &match render_drift_context(&projection.drift, 1) {
+            Some(context) => format!(
+                "{} | {context}",
+                render_drift_overview("Drift Radar", &projection.drift)
+            ),
+            None => render_drift_overview("Drift Radar", &projection.drift),
+        },
         width,
     ));
 
@@ -807,9 +830,40 @@ fn node_radius(kind: WorldMapNodeKind) -> isize {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use keel::read_model::knowledge_graph::{
+        DriftFacetKind, DriftFacetSummary, DriftSurfaceSummary,
+    };
     use keel::read_model::world_map::{
         TopologyZoom, WorldMapKindCount, WorldMapLayer, WorldMapLink, WorldMapNode,
     };
+
+    fn sample_drift() -> DriftSurfaceSummary {
+        DriftSurfaceSummary {
+            coefficient: 0.41,
+            facets: vec![
+                DriftFacetSummary {
+                    kind: DriftFacetKind::EntityArtifacts,
+                    covered: 3,
+                    total: 5,
+                },
+                DriftFacetSummary {
+                    kind: DriftFacetKind::KnowledgeProvenance,
+                    covered: 1,
+                    total: 2,
+                },
+                DriftFacetSummary {
+                    kind: DriftFacetKind::SourceAttachments,
+                    covered: 4,
+                    total: 7,
+                },
+                DriftFacetSummary {
+                    kind: DriftFacetKind::ProjectDocs,
+                    covered: 2,
+                    total: 3,
+                },
+            ],
+        }
+    }
 
     fn test_projection() -> WorldMapProjection {
         WorldMapProjection {
@@ -860,6 +914,7 @@ mod tests {
             highlights: vec![String::from(
                 "mission Mission With A Very Long Name (active) · 12h 30m · 1/2 open strategic entities",
             )],
+            drift: sample_drift(),
         }
     }
 
@@ -942,5 +997,13 @@ mod tests {
 
         assert!(offset_x > 0);
         assert_eq!(offset_y, 0);
+    }
+
+    #[test]
+    fn static_render_surfaces_drift_radar_summary() {
+        let rendered = render_topology(&test_projection(), 120);
+
+        assert!(rendered.contains("Drift Radar: 0.41 (elevated)"));
+        assert!(rendered.contains("entities 3/5 | knowledge 1/2 | source 4/7 | docs 2/3"));
     }
 }

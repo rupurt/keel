@@ -20,7 +20,7 @@ use keel::read_model::knowledge_graph::{
     KnowledgeGraphProjection, build_knowledge_graph_projection, projection_input_hashes,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 struct KnowledgeGraphSnapshot {
     projection: KnowledgeGraphViewProjection,
     output: String,

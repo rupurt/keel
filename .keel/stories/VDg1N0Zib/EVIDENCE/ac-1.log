@@ -1,0 +1,16 @@
+---
+recorded_at: 2026-03-12T17:42:58.626796010-07:00
+command: cargo test --bin keel graph_drift_surfaces_reuse_canonical_projection
+---
+
+running 1 test
+test command_regression_tests::graph_drift_surfaces_reuse_canonical_projection ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 656 filtered out; finished in 0.06s
+
+
+--- stderr ---
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running unittests src/main.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-8a8ff4aefdd88aa0)

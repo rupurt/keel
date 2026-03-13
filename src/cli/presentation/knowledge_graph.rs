@@ -8,8 +8,12 @@ use std::str::FromStr;
 use colored::Color;
 use txtplot::ChartContext;
 
+use crate::cli::presentation::drift_surface::{
+    render_drift_context, render_drift_coverage, render_drift_overview,
+};
 use keel::read_model::knowledge_graph::{
-    KnowledgeGraphEdgeKind, KnowledgeGraphNodeKind, KnowledgeGraphProjection,
+    DriftSurfaceSummary, KnowledgeGraphEdgeKind, KnowledgeGraphNodeKind, KnowledgeGraphProjection,
+    build_structural_drift_summary,
 };
 
 const LABEL_NODE_LIMIT: usize = 20;
@@ -79,12 +83,13 @@ impl FromStr for KnowledgeGraphZoom {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct KnowledgeGraphViewProjection {
     pub zoom: KnowledgeGraphZoom,
     pub focus: Option<KnowledgeGraphFocus>,
     pub nodes: Vec<KnowledgeGraphViewNode>,
     pub links: Vec<KnowledgeGraphViewLink>,
+    pub drift: DriftSurfaceSummary,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -246,6 +251,7 @@ pub fn build_knowledge_graph_view(
         focus,
         nodes,
         links: links.into_iter().collect(),
+        drift: build_structural_drift_summary(projection),
     }
 }
 
@@ -385,6 +391,16 @@ fn render_summary(projection: &KnowledgeGraphViewProjection) -> String {
     )
     .unwrap();
     writeln!(out, "Links: {}", render_link_counts(projection)).unwrap();
+    writeln!(
+        out,
+        "{} | {}",
+        render_drift_overview("Drift", &projection.drift),
+        render_drift_coverage(&projection.drift)
+    )
+    .unwrap();
+    if let Some(context) = render_drift_context(&projection.drift, 2) {
+        writeln!(out, "Context: {context}").unwrap();
+    }
 
     let layers = layer_summaries(projection);
     if !layers.is_empty() {
@@ -425,19 +441,27 @@ fn render_interactive_summary(
             &format!("Visible: {}", render_kind_counts(&kind_counts(projection))),
             width,
         ),
+        truncate_text(
+            &match render_drift_context(&projection.drift, 1) {
+                Some(context) => format!(
+                    "{} | {context}",
+                    render_drift_overview("Drift", &projection.drift)
+                ),
+                None => render_drift_overview("Drift", &projection.drift),
+            },
+            width,
+        ),
     ];
 
-    if max_lines >= 3 {
-        lines.push(truncate_text(
-            &format!("Links: {}", render_link_counts(projection)),
-            width,
-        ));
-    }
-
-    if max_lines >= 4
-        && let Some(highlight) = highlight(projection)
-    {
-        lines.push(truncate_text(&format!("Highlight: {highlight}"), width));
+    if max_lines >= 4 {
+        if let Some(highlight) = highlight(projection) {
+            lines.push(truncate_text(&format!("Highlight: {highlight}"), width));
+        } else {
+            lines.push(truncate_text(
+                &format!("Links: {}", render_link_counts(projection)),
+                width,
+            ));
+        }
     }
 
     lines
@@ -1311,5 +1335,30 @@ mod tests {
 
         assert!(rendered.lines().count() <= 18);
         assert!(rendered.contains("Knowledge Graph"));
+    }
+
+    #[test]
+    fn static_render_surfaces_structural_drift_summary() {
+        let mut projection = sample_projection();
+        projection.drift_inputs = StructuralDriftInputs {
+            total_entities: 5,
+            entities_with_artifacts: 3,
+            entities_without_artifacts: 2,
+            total_knowledge_units: 2,
+            knowledge_with_source_attachments: 1,
+            knowledge_without_source_attachments: 1,
+            total_source_files: 7,
+            source_files_with_attachments: 4,
+            source_files_without_attachments: 3,
+            total_project_docs: 3,
+            linked_project_docs: 2,
+            unlinked_project_docs: 1,
+        };
+        let view = build_knowledge_graph_view(&projection, KnowledgeGraphZoom::Source, None);
+        let rendered = render_knowledge_graph(&view, 120);
+
+        assert!(rendered.contains("Drift: 0.42 (elevated)"));
+        assert!(rendered.contains("entities 3/5 | knowledge 1/2 | source 4/7 | docs 2/3"));
+        assert!(rendered.contains("Context: 3 source files lack graph attachments"));
     }
 }

@@ -44,7 +44,7 @@ The mission now has a deterministic knowledge graph kernel, but there is no inte
 |----|-------------|-------|----------|-----------|
 | FR-01 | Implement `keel knowledge graph` as an interactive whole-project world map backed by the canonical knowledge-graph projection. | GOAL-01, GOAL-03 | must | The mission needs a real exploration surface, not just the underlying graph substrate. |
 | FR-02 | Provide a deterministic `--static` knowledge-graph rendering suitable for harnesses, snapshots, and low-context review. | GOAL-01, GOAL-03 | must | The graph must be usable in automation and documentation flows, not only on live TTYs. |
-| FR-03 | Surface the structural drift coefficient and supporting mismatch context inside graph-adjacent read surfaces, including topology and show-style experiences. | GOAL-02, GOAL-03 | must | Drift only changes behavior when people can actually see it during routine command use. |
+| FR-03 | Surface the structural drift coefficient and supporting mismatch context inside graph-adjacent read surfaces, including a distinct topology radar treatment and compact show-style summaries. | GOAL-02, GOAL-03 | must | Drift only changes behavior when people can actually see it during routine command use. |
 | FR-04 | Reuse shared graph/drift read models from topology/show-style commands rather than introducing command-local relationship logic. | GOAL-02, GOAL-03 | should | The graph effort only pays off if adjacent surfaces stop rebuilding their own partial views. |
 | FR-05 | Preserve semantic proximity as advisory only and keep interactive rendering correct when semantic cache data is absent or stale. | GOAL-01, GOAL-03 | must | The UI should remain useful and deterministic even before embedding work arrives. |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
@@ -79,7 +79,7 @@ The mission now has a deterministic knowledge graph kernel, but there is no inte
 | Question/Risk | Owner | Status |
 |---------------|-------|--------|
 | How much detail should the interactive graph reveal at each zoom level before the view becomes noisy? | Epic owner | Open |
-| Which show-style commands should surface the drift coefficient first to maximize value without clutter? | Epic owner | Open |
+| Which show-style commands should surface the drift coefficient first to maximize value without clutter? | Epic owner | Resolved: start with mission, epic, and voyage show commands plus topology |
 | Whether a single voyage can land the first graph surface and drift visibility cleanly, or whether a follow-on voyage will be needed after the first story set. | Epic owner | Open |
 
 ## Success Criteria

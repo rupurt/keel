@@ -27,8 +27,8 @@ Goal: Ship the first interactive/static keel knowledge graph experience and thre
 |----|-------------|-------|--------|--------------|
 | SRS-01 | The voyage must add `keel knowledge graph` as a whole-project renderer that reads exclusively from the canonical knowledge-graph projection and supports interactive navigation when a TTY is available. | SCOPE-01 | FR-01 | automated |
 | SRS-02 | The command must provide a deterministic `--static` mode that renders a stable whole-project graph summary suitable for harnesses, snapshots, and low-context review. | SCOPE-02 | FR-02 | automated |
-| SRS-03 | The voyage must surface the structural drift coefficient and supporting mismatch context in graph-adjacent surfaces, including the knowledge-graph command and reused topology/show-style experiences. | SCOPE-03, SCOPE-04 | FR-03 | automated |
-| SRS-04 | Topology/show-style commands touched by this work must reuse shared graph/drift read models rather than adding command-local relationship scanners. | SCOPE-04 | FR-04 | automated |
+| SRS-03 | The voyage must surface the structural drift coefficient and supporting mismatch context in graph-adjacent surfaces, including the knowledge-graph command, a distinct topology radar treatment, and reused show-style experiences. | SCOPE-03, SCOPE-04 | FR-03 | automated |
+| SRS-04 | Topology/show-style commands touched by this work must reuse shared graph/drift read models rather than adding command-local relationship scanners, with mission, epic, and voyage show commands in the first delivery set. | SCOPE-04 | FR-04 | automated |
 | SRS-05 | Interactive and static graph rendering must remain structurally correct when semantic cache artifacts are absent, stale, or intentionally omitted. | SCOPE-01, SCOPE-02 | FR-05 | automated |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 

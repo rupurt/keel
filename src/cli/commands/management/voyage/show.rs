@@ -5,6 +5,7 @@ use std::path::Path;
 use anyhow::Result;
 use owo_colors::OwoColorize;
 
+use crate::cli::presentation::drift_surface::render_drift_show_section;
 use crate::cli::presentation::duration::render_completed_with_length;
 use crate::cli::presentation::planning_lineage;
 use crate::cli::presentation::progress::render_count_bar;
@@ -72,7 +73,9 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
 
     let mut document = ShowDocument::new();
     document.push_header(metadata, Some(width));
-    document.push_sections_spaced(voyage_sections(&report));
+    let mut sections = voyage_sections(&report);
+    sections.push(render_drift_show_section(&report.drift));
+    document.push_sections_spaced(sections);
     document.push_spacer();
     document.push_lines(requirement_matrix_lines(&report));
     document.push_spacer();
@@ -166,10 +169,41 @@ mod tests {
     use chrono::NaiveDate;
     use keel::domain::model::StoryState;
     use keel::domain::state_machine::invariants::{ScopeLineageIssue, ScopeLineageIssueKind};
+    use keel::read_model::knowledge_graph::{
+        DriftFacetKind, DriftFacetSummary, DriftSurfaceSummary,
+    };
     use keel::read_model::planning_show::{
         RequirementCompletion, RequirementKind, RequirementRow, ScopeDriftRow, StoryRef,
     };
     use keel::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+
+    fn sample_drift_summary() -> DriftSurfaceSummary {
+        DriftSurfaceSummary {
+            coefficient: 0.41,
+            facets: vec![
+                DriftFacetSummary {
+                    kind: DriftFacetKind::EntityArtifacts,
+                    covered: 3,
+                    total: 5,
+                },
+                DriftFacetSummary {
+                    kind: DriftFacetKind::KnowledgeProvenance,
+                    covered: 1,
+                    total: 2,
+                },
+                DriftFacetSummary {
+                    kind: DriftFacetKind::SourceAttachments,
+                    covered: 4,
+                    total: 7,
+                },
+                DriftFacetSummary {
+                    kind: DriftFacetKind::ProjectDocs,
+                    covered: 2,
+                    total: 3,
+                },
+            ],
+        }
+    }
 
     #[test]
     fn voyage_duration_rendering_formats_elapsed_time() {
@@ -401,6 +435,7 @@ mod tests {
             goal: None,
             scope: Default::default(),
             scope_drift: Vec::new(),
+            drift: sample_drift_summary(),
             requirements: vec![
                 RequirementRow {
                     id: "SRS-NFR-01".to_string(),
@@ -454,6 +489,7 @@ mod tests {
             goal: None,
             scope: Default::default(),
             scope_drift: Vec::new(),
+            drift: sample_drift_summary(),
             requirements: vec![
                 RequirementRow {
                     id: "SRS-01".to_string(),
@@ -519,6 +555,7 @@ mod tests {
                     kind: ScopeLineageIssueKind::OutOfScopeContradiction,
                 },
             }],
+            drift: sample_drift_summary(),
             requirements: Vec::new(),
             done_stories: 0,
             total_stories: 0,
@@ -550,6 +587,7 @@ mod tests {
             goal: Some("Render voyage summaries.".to_string()),
             scope: Default::default(),
             scope_drift: Vec::new(),
+            drift: sample_drift_summary(),
             requirements: vec![RequirementRow {
                 id: "SRS-01".to_string(),
                 description: "Render grouped requirement output".to_string(),
@@ -580,5 +618,17 @@ mod tests {
         let requirements_idx = rendered.find("Functional Requirements").unwrap();
         let progress_idx = rendered.find("Progress").unwrap();
         assert!(requirements_idx < progress_idx);
+    }
+
+    #[test]
+    fn voyage_show_renders_structural_drift_section() {
+        let section = render_drift_show_section(&sample_drift_summary());
+        let mut document = ShowDocument::new();
+        document.push_sections_spaced([section]);
+        let rendered = document.render();
+
+        assert!(rendered.contains("Structural Drift"));
+        assert!(rendered.contains("0.41 (elevated)"));
+        assert!(rendered.contains("Coverage:"));
     }
 }

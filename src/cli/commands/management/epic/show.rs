@@ -3,6 +3,7 @@
 use anyhow::Result;
 use owo_colors::OwoColorize;
 
+use crate::cli::presentation::drift_surface::render_drift_show_section;
 use crate::cli::presentation::duration::render_completed_with_length;
 use crate::cli::presentation::planning_lineage;
 use crate::cli::presentation::progress::render_count_bar;
@@ -66,6 +67,7 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     let mut document = ShowDocument::new();
     document.push_header(metadata, Some(width));
     let mut sections = render_planning_sections(&report);
+    sections.push(render_drift_show_section(&report.drift));
     sections.extend([
         render_requirement_coverage(&report),
         render_press_release(epic),
@@ -353,9 +355,40 @@ mod tests {
     use keel::domain::model::StoryState;
     use keel::domain::state_machine::invariants::{ScopeLineageIssue, ScopeLineageIssueKind};
     use keel::infrastructure::loader::load_board;
+    use keel::read_model::knowledge_graph::{
+        DriftFacetKind, DriftFacetSummary, DriftSurfaceSummary,
+    };
     use keel::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
     use std::fs;
     use std::path::Path;
+
+    fn sample_drift_summary() -> DriftSurfaceSummary {
+        DriftSurfaceSummary {
+            coefficient: 0.41,
+            facets: vec![
+                DriftFacetSummary {
+                    kind: DriftFacetKind::EntityArtifacts,
+                    covered: 3,
+                    total: 5,
+                },
+                DriftFacetSummary {
+                    kind: DriftFacetKind::KnowledgeProvenance,
+                    covered: 1,
+                    total: 2,
+                },
+                DriftFacetSummary {
+                    kind: DriftFacetKind::SourceAttachments,
+                    covered: 4,
+                    total: 7,
+                },
+                DriftFacetSummary {
+                    kind: DriftFacetKind::ProjectDocs,
+                    covered: 2,
+                    total: 3,
+                },
+            ],
+        }
+    }
 
     fn replace_frontmatter_timestamp(path: &Path, key: &str, value: &str) {
         let content = fs::read_to_string(path).unwrap();
@@ -665,6 +698,7 @@ More details.
                 ..planning_show::PlanningDocSummary::default()
             },
             scope_drift: Vec::new(),
+            drift: sample_drift_summary(),
             requirement_coverage: Vec::new(),
             total_voyages: 0,
             done_voyages: 0,
@@ -703,6 +737,7 @@ More details.
                 ..planning_show::PlanningDocSummary::default()
             },
             scope_drift: Vec::new(),
+            drift: sample_drift_summary(),
             requirement_coverage: Vec::new(),
             total_voyages: 0,
             done_voyages: 0,
@@ -739,6 +774,7 @@ More details.
                 verification_strategy: vec!["FR-01: cargo test".to_string()],
             },
             scope_drift: Vec::new(),
+            drift: sample_drift_summary(),
             requirement_coverage: vec![planning_show::EpicRequirementCoverageRow {
                 id: "FR-01".to_string(),
                 description: "Keep requirement details in the dedicated coverage section."
@@ -785,6 +821,7 @@ More details.
                 ..planning_show::PlanningDocSummary::default()
             },
             scope_drift: Vec::new(),
+            drift: sample_drift_summary(),
             requirement_coverage: Vec::new(),
             total_voyages: 0,
             done_voyages: 0,
@@ -821,6 +858,7 @@ More details.
         let report = EpicShowProjection {
             doc: planning_show::PlanningDocSummary::default(),
             scope_drift: Vec::new(),
+            drift: sample_drift_summary(),
             requirement_coverage: vec![
                 planning_show::EpicRequirementCoverageRow {
                     id: "FR-01".to_string(),
@@ -943,6 +981,7 @@ Teams cannot see whether goals are actually covered by PRD requirements.
                     kind: ScopeLineageIssueKind::UnknownScopeRef,
                 },
             }],
+            drift: sample_drift_summary(),
             requirement_coverage: Vec::new(),
             total_voyages: 0,
             done_voyages: 0,
@@ -967,5 +1006,18 @@ Teams cannot see whether goals are actually covered by PRD requirements.
         assert!(!rendered.contains("Scope Coverage:"));
         assert!(rendered.contains("Scope Drift"));
         assert!(rendered.contains("SCOPE-02"));
+    }
+
+    #[test]
+    fn epic_show_renders_structural_drift_section() {
+        let section = render_drift_show_section(&sample_drift_summary());
+        let mut document = ShowDocument::new();
+        document.push_sections_spaced([section]);
+        let rendered = document.render();
+
+        assert!(rendered.contains("Structural Drift"));
+        assert!(rendered.contains("Coefficient:"));
+        assert!(rendered.contains("0.41 (elevated)"));
+        assert!(rendered.contains("Coverage:"));
     }
 }

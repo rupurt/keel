@@ -4,9 +4,21 @@
 //! transitions) so refactors preserve observed behavior.
 
 use crate::cli::commands::management::next::NextDecision;
+use crate::cli::presentation::drift_surface::{
+    render_drift_coverage, render_drift_overview, render_drift_show_section,
+};
+use crate::cli::presentation::knowledge_graph::{
+    KnowledgeGraphZoom, build_knowledge_graph_view, render_knowledge_graph,
+};
+use crate::cli::presentation::show::ShowDocument;
+use crate::cli::presentation::topology::render_topology;
 use keel::domain::model::StoryState;
 use keel::domain::policy::queue::{FLOW_VERIFY_BLOCK_THRESHOLD, HUMAN_NEXT_VERIFY_BLOCK_THRESHOLD};
-use keel::test_helpers::{TestBoardBuilder, TestStory};
+use keel::read_model::knowledge_graph::{
+    build_knowledge_graph_projection, build_structural_drift_summary,
+};
+use keel::read_model::world_map::{TopologyZoom, WorldMapBuildOptions, build_world_map_projection};
+use keel::test_helpers::{TestBoardBuilder, TestEpic, TestMission, TestStory, TestVoyage};
 use std::fs;
 
 fn board_with_verification_and_ready(verify_count: usize, ready_count: usize) -> tempfile::TempDir {
@@ -20,6 +32,56 @@ fn board_with_verification_and_ready(verify_count: usize, ready_count: usize) ->
         builder = builder.story(TestStory::new(&id).status(StoryState::Backlog));
     }
     builder.build()
+}
+
+fn graph_drift_fixture() -> tempfile::TempDir {
+    let temp = TestBoardBuilder::new()
+        .mission(TestMission::new("M1").title("Mission One").status("active"))
+        .epic(TestEpic::new("E1").title("Epic One").mission("M1"))
+        .voyage(TestVoyage::new("V1", "E1").title("Voyage One").status("planned"))
+        .story(
+            TestStory::new("S1")
+                .title("Story One")
+                .scope("E1/V1")
+                .status(StoryState::Done)
+                .body(
+                    "# Summary\n\nGraph drift.\n\n## Acceptance Criteria\n\n- [x] [SRS-01/AC-01] done <!-- verify: manual, SRS-01:start:end -->\n",
+                ),
+        )
+        .build();
+
+    fs::create_dir_all(temp.path().join("knowledge")).unwrap();
+    fs::write(
+        temp.path().join("knowledge/graph.md"),
+        r#"---
+source_type: Adhoc
+source: knowledge/graph.md
+---
+
+### 1AbCdE241: Drift Surfaces Reuse Canonical Projections
+
+| Field | Value |
+|-------|-------|
+| **Category** | architecture |
+| **Context** | drift |
+| **Insight** | Reuse one drift summary across graph-adjacent surfaces |
+| **Suggested Action** | Avoid command-local scanners |
+| **Applies To** | src/orphan.rs |
+| **Linked Knowledge IDs** |  |
+| **Observed At** | 2026-03-12T00:00:00Z |
+| **Score** | 0.90 |
+| **Confidence** | 0.95 |
+| **Applied** |  |
+"#,
+    )
+    .unwrap();
+    fs::write(temp.path().join("README.md"), "# Project README\n").unwrap();
+    fs::write(temp.path().join("ARCHITECTURE.md"), "# Architecture\n").unwrap();
+    fs::create_dir_all(temp.path().join("src")).unwrap();
+    fs::write(temp.path().join("src/lib.rs"), "pub mod orphan;\n").unwrap();
+    fs::write(temp.path().join("src/orphan.rs"), "pub fn orphan() {}\n").unwrap();
+
+    temp
 }
 
 #[test]
@@ -108,4 +170,62 @@ fn regression_story_lifecycle_command_chain_reaches_done() {
     let content = fs::read_to_string(temp.path().join("stories/REGCHAIN1/README.md")).unwrap();
     assert!(content.contains("submitted_at:"));
     assert!(content.contains("completed_at:"));
+}
+
+#[test]
+fn graph_drift_surfaces_reuse_canonical_projection() {
+    let temp = graph_drift_fixture();
+    let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
+    let mission = board.require_mission("M1").unwrap();
+    let epic = board.require_epic("E1").unwrap();
+    let voyage = board.require_voyage("V1").unwrap();
+
+    let graph_projection = build_knowledge_graph_projection(&board).unwrap();
+    let drift = build_structural_drift_summary(&graph_projection);
+    let expected_overview = render_drift_overview("Drift", &drift);
+    let expected_radar = render_drift_overview("Drift Radar", &drift);
+    let expected_coverage = render_drift_coverage(&drift);
+
+    let graph_render = render_knowledge_graph(
+        &build_knowledge_graph_view(&graph_projection, KnowledgeGraphZoom::Source, None),
+        120,
+    );
+    assert!(graph_render.contains(&expected_overview));
+    assert!(graph_render.contains(&expected_coverage));
+
+    let topology_projection = build_world_map_projection(
+        &board,
+        WorldMapBuildOptions {
+            zoom: TopologyZoom::Story,
+            focus_id: None,
+            include_done: true,
+            reference_time: None,
+        },
+    )
+    .unwrap();
+    let topology_render = render_topology(&topology_projection, 120);
+    assert!(topology_render.contains(&expected_radar));
+    assert!(topology_render.contains(&expected_coverage));
+
+    let mission_projection =
+        keel::read_model::mission_show::build_projection(&board, mission).unwrap();
+    let epic_projection =
+        keel::read_model::planning_show::build_epic_show_projection(&board, epic).unwrap();
+    let voyage_projection =
+        keel::read_model::planning_show::build_voyage_show_projection(&board, voyage).unwrap();
+    for summary in [
+        mission_projection.drift,
+        epic_projection.drift,
+        voyage_projection.drift,
+    ] {
+        let mut document = ShowDocument::new();
+        document.push_sections_spaced([render_drift_show_section(&summary)]);
+        let rendered = document.render();
+        assert!(rendered.contains(&format!(
+            "{:.2} ({})",
+            drift.coefficient,
+            drift.severity_label()
+        )));
+        assert!(rendered.contains(&expected_coverage));
+    }
 }
