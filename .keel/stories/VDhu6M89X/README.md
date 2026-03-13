@@ -2,12 +2,14 @@
 id: VDhu6M89X
 title: Wire HEAD Syntax Into Show Commands
 type: feat
-status: backlog
+status: done
 created_at: 2026-03-12T18:36:23
-updated_at: 2026-03-12T18:39:50
+updated_at: 2026-03-12T19:37:00
 operator-signal: 
 scope: VDhtrxgW6/VDhtzKSNF
 index: 2
+started_at: 2026-03-12T19:31:59
+completed_at: 2026-03-12T19:37:00
 ---
 
 # Wire HEAD Syntax Into Show Commands
@@ -18,6 +20,6 @@ Adopt the shared HEAD-selector path in the supported show commands so users can 
 
 ## Acceptance Criteria
 
-- [ ] [SRS-03/AC-01] Mission, epic, voyage, and story show commands resolve HEAD-relative selectors through the shared selector path while preserving exact-ID behavior. <!-- verify: cargo test --bin keel head_show_commands_resolve_management_entities, SRS-03:start:end -->
-- [ ] [SRS-03/AC-02] Bearing, ADR, and routine show commands resolve HEAD-relative selectors through the same shared selector path while preserving exact-ID behavior. <!-- verify: cargo test --bin keel head_show_commands_resolve_governance_entities, SRS-03:start:end -->
-- [ ] [SRS-04/AC-01] Empty-set and out-of-range failures surface actionable, deterministic errors for the affected show commands. <!-- verify: cargo test --bin keel head_show_commands_report_selector_errors, SRS-04:start:end -->
+- [x] [SRS-03/AC-01] Mission, epic, voyage, and story show commands resolve HEAD-relative selectors through the shared selector path while preserving exact-ID behavior. <!-- verify: cargo test --bin keel head_show_commands_resolve_management_entities, SRS-03:start:end, proof: ac-1.log-->
+- [x] [SRS-03/AC-02] Bearing, ADR, and routine show commands resolve HEAD-relative selectors through the same shared selector path while preserving exact-ID behavior. <!-- verify: cargo test --bin keel head_show_commands_resolve_governance_entities, SRS-03:start:end, proof: ac-2.log-->
+- [x] [SRS-04/AC-01] Empty-set and out-of-range failures surface actionable, deterministic errors for the affected show commands. <!-- verify: cargo test --bin keel head_show_commands_report_selector_errors, SRS-04:start:end, proof: ac-3.log-->

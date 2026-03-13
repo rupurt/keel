@@ -13,6 +13,7 @@ use keel::domain::model::{Board, Epic};
 use keel::infrastructure::loader::load_board;
 use keel::infrastructure::utils::cmp_optional_index_then_id;
 use keel::read_model::planning_show::{self, EpicShowProjection};
+use keel::read_model::show_selector::{ShowEntityKind, resolve_show_selector};
 
 use std::fs;
 use std::path::Path;
@@ -37,7 +38,8 @@ pub fn run(id: &str) -> Result<()> {
 /// Show epic details with an explicit board directory
 pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     let board = load_board(board_dir)?;
-    let epic = board.require_epic(id)?;
+    let resolved_id = resolve_show_selector(board_dir, &board, ShowEntityKind::Epic, id)?;
+    let epic = board.require_epic(&resolved_id)?;
     let report = build_epic_show_report(&board, epic)?;
     let width = crate::cli::presentation::terminal::get_terminal_width();
 

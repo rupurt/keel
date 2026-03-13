@@ -16,6 +16,7 @@ use keel::read_model::bearing_show::{
     self, BearingAssessmentSummary, BearingBriefSummary, BearingEvidenceSourceSummary,
     BearingEvidenceSummary,
 };
+use keel::read_model::show_selector::{ShowEntityKind, resolve_show_selector};
 
 use super::guidance::{informational_for_show, print_human};
 use super::{classify_fog, format_factor};
@@ -33,10 +34,16 @@ const SECTION_EXCERPT_LIMITS: ShowExcerptLimits = ShowExcerptLimits {
 /// Show detailed bearing information.
 pub fn run(pattern: &str) -> Result<()> {
     let board_dir = find_board_dir()?;
-    let board = load_board(&board_dir)?;
+    run_with_dir(&board_dir, pattern)
+}
+
+/// Show detailed bearing information with an explicit board directory.
+pub fn run_with_dir(board_dir: &Path, pattern: &str) -> Result<()> {
+    let board = load_board(board_dir)?;
     let (config, _source) = load_config();
     let weights = config.current_weights();
-    let bearing = board.require_bearing(pattern)?;
+    let resolved_id = resolve_show_selector(board_dir, &board, ShowEntityKind::Bearing, pattern)?;
+    let bearing = board.require_bearing(&resolved_id)?;
     let bearing_dir = bearing.path.parent().unwrap_or(&bearing.path);
 
     let readme_content = fs::read_to_string(&bearing.path).unwrap_or_default();
@@ -65,7 +72,7 @@ pub fn run(pattern: &str) -> Result<()> {
         bearing.frontmatter.status,
         BearingStatus::Exploring | BearingStatus::Parked
     ) {
-        let fog = classify_fog(&board_dir, bearing);
+        let fog = classify_fog(board_dir, bearing);
         metadata.push_row("Fog:", fog.as_banner().to_string());
     }
 

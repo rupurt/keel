@@ -15,6 +15,7 @@ use crate::cli::style;
 use keel::domain::model::{Board, Voyage};
 use keel::infrastructure::loader::load_board;
 use keel::read_model::planning_show::{self, VoyageShowProjection};
+use keel::read_model::show_selector::{ShowEntityKind, resolve_show_selector};
 
 const GOAL_PLACEHOLDER: &str = "(goal not authored yet)";
 const SCOPE_PLACEHOLDER: &str = "(scope not authored in SRS.md yet)";
@@ -30,7 +31,8 @@ pub fn run(id: &str) -> Result<()> {
 /// Show voyage details with an explicit board directory.
 pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     let board = load_board(board_dir)?;
-    let voyage = board.require_voyage(id)?;
+    let resolved_id = resolve_show_selector(board_dir, &board, ShowEntityKind::Voyage, id)?;
+    let voyage = board.require_voyage(&resolved_id)?;
     let report = build_voyage_show_report(&board, voyage)?;
     let width = crate::cli::presentation::terminal::get_terminal_width();
 

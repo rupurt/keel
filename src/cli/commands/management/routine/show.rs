@@ -9,6 +9,7 @@ use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::style;
 use keel::domain::model::Routine;
 use keel::infrastructure::loader::load_board;
+use keel::read_model::show_selector::{ShowEntityKind, resolve_show_selector};
 
 /// Show routine details.
 pub fn run(id: &str) -> Result<()> {
@@ -19,7 +20,8 @@ pub fn run(id: &str) -> Result<()> {
 /// Show routine details with an explicit board directory.
 pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     let board = load_board(board_dir)?;
-    let routine = board.require_routine(id)?;
+    let resolved_id = resolve_show_selector(board_dir, &board, ShowEntityKind::Routine, id)?;
+    let routine = board.require_routine(&resolved_id)?;
     print!("{}", render_routine_show(routine)?);
     Ok(())
 }

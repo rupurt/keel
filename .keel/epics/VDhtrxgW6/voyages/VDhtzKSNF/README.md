@@ -25,11 +25,11 @@ started_at: 2026-03-12T19:13:20
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/3 stories complete
+**Progress:** 1/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Add HEAD Selector Parsing And Stable Order Resolution](../../../../stories/VDhu6JN89/README.md) | feat | in-progress |
-| [Wire HEAD Syntax Into Show Commands](../../../../stories/VDhu6M89X/README.md) | feat | backlog |
+| [Add HEAD Selector Parsing And Stable Order Resolution](../../../../stories/VDhu6JN89/README.md) | feat | done |
+| [Wire HEAD Syntax Into Show Commands](../../../../stories/VDhu6M89X/README.md) | feat | in-progress |
 | [Lock HEAD Show Contracts With Regressions](../../../../stories/VDhu6Mh9V/README.md) | feat | backlog |
 <!-- END GENERATED -->

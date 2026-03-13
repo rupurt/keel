@@ -2,19 +2,27 @@
 
 use anyhow::Result;
 use owo_colors::OwoColorize;
+use std::path::Path;
 
 use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::style;
 use keel::infrastructure::config::find_board_dir;
 use keel::infrastructure::loader::load_board;
+use keel::read_model::show_selector::{ShowEntityKind, resolve_show_selector};
 
 use super::guidance;
 
 /// Show details for a specific ADR.
 pub fn run(pattern: &str) -> Result<()> {
     let board_dir = find_board_dir()?;
-    let board = load_board(&board_dir)?;
-    let adr = board.require_adr(pattern)?;
+    run_with_dir(&board_dir, pattern)
+}
+
+/// Show details for a specific ADR with an explicit board directory.
+pub fn run_with_dir(board_dir: &Path, pattern: &str) -> Result<()> {
+    let board = load_board(board_dir)?;
+    let resolved_id = resolve_show_selector(board_dir, &board, ShowEntityKind::Adr, pattern)?;
+    let adr = board.require_adr(&resolved_id)?;
 
     let mut metadata = ShowKeyValues::new()
         .with_min_label_width(9)

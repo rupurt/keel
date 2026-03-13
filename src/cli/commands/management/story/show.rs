@@ -10,6 +10,7 @@ use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::style;
 use keel::infrastructure::loader::load_board;
 use keel::read_model::planning_show::{self, EvidenceReport};
+use keel::read_model::show_selector::{ShowEntityKind, resolve_show_selector};
 
 const NO_EVIDENCE_DIR_PLACEHOLDER: &str = "(EVIDENCE directory not found)";
 const NO_SUPPLEMENTARY_PLACEHOLDER: &str = "(no supplementary artifacts)";
@@ -30,7 +31,8 @@ pub fn run(id: &str) -> Result<()> {
 /// Run the show story command with an explicit board directory
 pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     let board = load_board(board_dir)?;
-    let story = board.require_story(id)?;
+    let resolved_id = resolve_show_selector(board_dir, &board, ShowEntityKind::Story, id)?;
+    let story = board.require_story(&resolved_id)?;
     let projection = planning_show::build_story_show_projection(story)?;
 
     let width = crate::cli::presentation::terminal::get_terminal_width();

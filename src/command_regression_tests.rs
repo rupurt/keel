@@ -18,6 +18,7 @@ use keel::read_model::knowledge_graph::{
     build_knowledge_graph_projection, build_structural_drift_summary,
 };
 use keel::read_model::world_map::{TopologyZoom, WorldMapBuildOptions, build_world_map_projection};
+use keel::test_helpers::{TestAdr, TestBearing};
 use keel::test_helpers::{TestBoardBuilder, TestEpic, TestMission, TestStory, TestVoyage};
 use std::fs;
 
@@ -80,6 +81,67 @@ source: knowledge/graph.md
     fs::create_dir_all(temp.path().join("src")).unwrap();
     fs::write(temp.path().join("src/lib.rs"), "pub mod orphan;\n").unwrap();
     fs::write(temp.path().join("src/orphan.rs"), "pub fn orphan() {}\n").unwrap();
+
+    temp
+}
+
+fn write_routine(root: &std::path::Path, id: &str, title: &str, target_scope: &str) {
+    let routine_dir = root.join("routines").join(id);
+    fs::create_dir_all(&routine_dir).unwrap();
+    fs::write(
+        routine_dir.join("README.md"),
+        format!(
+            r#"---
+id: {id}
+title: {title}
+cadence:
+  cron: 0 9 * * 1
+target-scope: {target_scope}
+created_at: 2026-03-11T09:00:00
+updated_at: 2026-03-11T09:30:00
+---
+
+# Blueprint
+
+- Review the open backlog.
+"#
+        ),
+    )
+    .unwrap();
+}
+
+fn head_show_fixture() -> tempfile::TempDir {
+    let temp = TestBoardBuilder::new()
+        .mission(TestMission::new("M2").title("Mission Two").status("active"))
+        .mission(TestMission::new("M1").title("Mission One").status("active"))
+        .epic(TestEpic::new("E2").title("Epic Two").mission("M2"))
+        .epic(TestEpic::new("E1").title("Epic One").mission("M1"))
+        .voyage(TestVoyage::new("V2", "E2").index(2).status("planned"))
+        .voyage(TestVoyage::new("V1", "E1").index(1).status("in-progress"))
+        .story(
+            TestStory::new("S2")
+                .scope("E2/V2")
+                .index(2)
+                .status(StoryState::Backlog),
+        )
+        .story(
+            TestStory::new("S1")
+                .scope("E1/V1")
+                .index(1)
+                .status(StoryState::InProgress),
+        )
+        .bearing(TestBearing::new("B2").title("Bearing Two").status("ready"))
+        .bearing(
+            TestBearing::new("B1")
+                .title("Bearing One")
+                .status("exploring"),
+        )
+        .adr(TestAdr::new("ADR-002").status("accepted"))
+        .adr(TestAdr::new("ADR-001").status("proposed"))
+        .build();
+
+    write_routine(temp.path(), "routine-zeta", "Zeta Review", "E2/V2");
+    write_routine(temp.path(), "routine-alpha", "Alpha Review", "E1/V1");
 
     temp
 }
@@ -228,4 +290,71 @@ fn graph_drift_surfaces_reuse_canonical_projection() {
         )));
         assert!(rendered.contains(&expected_coverage));
     }
+}
+
+#[test]
+fn head_show_commands_resolve_management_entities() {
+    let temp = head_show_fixture();
+
+    crate::cli::commands::management::mission::show::run_with_dir(temp.path(), "HEAD", false)
+        .unwrap();
+    crate::cli::commands::management::mission::show::run_with_dir(temp.path(), "M2", false)
+        .unwrap();
+
+    crate::cli::commands::management::epic::show::run_with_dir(temp.path(), "HEAD").unwrap();
+    crate::cli::commands::management::epic::show::run_with_dir(temp.path(), "E2").unwrap();
+
+    crate::cli::commands::management::voyage::show::run_with_dir(temp.path(), "HEAD").unwrap();
+    crate::cli::commands::management::voyage::show::run_with_dir(temp.path(), "V2").unwrap();
+
+    crate::cli::commands::management::story::show::run_with_dir(temp.path(), "HEAD").unwrap();
+    crate::cli::commands::management::story::show::run_with_dir(temp.path(), "S2").unwrap();
+}
+
+#[test]
+fn head_show_commands_resolve_governance_entities() {
+    let temp = head_show_fixture();
+
+    crate::cli::commands::management::bearing::show::run_with_dir(temp.path(), "HEAD").unwrap();
+    crate::cli::commands::management::bearing::show::run_with_dir(temp.path(), "B2").unwrap();
+
+    crate::cli::commands::management::adr::show::run_with_dir(temp.path(), "HEAD").unwrap();
+    crate::cli::commands::management::adr::show::run_with_dir(temp.path(), "ADR-002").unwrap();
+
+    crate::cli::commands::management::routine::show::run_with_dir(temp.path(), "HEAD").unwrap();
+    crate::cli::commands::management::routine::show::run_with_dir(temp.path(), "routine-zeta")
+        .unwrap();
+}
+
+#[test]
+fn head_show_commands_report_selector_errors() {
+    let empty = TestBoardBuilder::new().build();
+    let err =
+        crate::cli::commands::management::mission::show::run_with_dir(empty.path(), "HEAD", false)
+            .unwrap_err();
+    assert_eq!(
+        err.to_string(),
+        "No missions available for selector `HEAD`."
+    );
+
+    let fixture = TestBoardBuilder::new()
+        .epic(TestEpic::new("E1"))
+        .voyage(TestVoyage::new("V1", "E1").status("planned"))
+        .story(TestStory::new("S1").scope("E1/V1").index(1))
+        .build();
+    let err = crate::cli::commands::management::story::show::run_with_dir(fixture.path(), "HEAD~")
+        .unwrap_err();
+    assert_eq!(
+        err.to_string(),
+        "Selector `HEAD~` is out of range for stories (available: 1)."
+    );
+
+    let fixture = head_show_fixture();
+    let err =
+        crate::cli::commands::management::routine::show::run_with_dir(fixture.path(), "HEAD~3")
+            .unwrap_err();
+    assert_eq!(
+        err.to_string(),
+        "Unsupported HEAD selector syntax `HEAD~3`. Supported forms: exact IDs, HEAD, HEAD~, HEAD~~, HEAD^"
+    );
 }

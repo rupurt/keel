@@ -2,18 +2,26 @@
 
 use anyhow::Result;
 use owo_colors::OwoColorize;
+use std::path::Path;
 
 use crate::cli::presentation::drift_surface::render_drift_show_section;
 use crate::cli::presentation::show::{ShowDocument, ShowKeyValues, ShowSection};
 use crate::cli::style;
 use keel::infrastructure::loader::load_board;
 use keel::read_model::mission_show::{self, MissionShowProjection};
+use keel::read_model::show_selector::{ShowEntityKind, resolve_show_selector};
 
 /// Show mission details
 pub fn run(id: &str, json: bool) -> Result<()> {
     let board_dir = keel::infrastructure::config::find_board_dir()?;
-    let board = load_board(&board_dir)?;
-    let mission = board.require_mission(id)?;
+    run_with_dir(&board_dir, id, json)
+}
+
+/// Show mission details with an explicit board directory.
+pub fn run_with_dir(board_dir: &Path, id: &str, json: bool) -> Result<()> {
+    let board = load_board(board_dir)?;
+    let resolved_id = resolve_show_selector(board_dir, &board, ShowEntityKind::Mission, id)?;
+    let mission = board.require_mission(&resolved_id)?;
     let projection = mission_show::build_projection(&board, mission)?;
 
     if json {
