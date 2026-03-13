@@ -16,6 +16,8 @@ use keel::read_model::world_map::{
 
 const LABEL_NODE_LIMIT: usize = 18;
 const MIN_INTERACTIVE_CHART_HEIGHT: usize = 6;
+const LABEL_SIZE_MIN_RATIO: f64 = 0.45;
+const LABEL_SIZE_MIN_CHARS: usize = 6;
 struct PositionedNode<'a> {
     node: &'a WorldMapNode,
     x: isize,
@@ -691,15 +693,107 @@ fn draw_labels(
             continue;
         }
 
-        let label = positioned.node.title.as_str();
-        let (offset_x, offset_y) = label_offsets(positioned.node, label, positioned.angle);
+        let label = depth_label_text(
+            positioned.node.title.as_str(),
+            positioned.node.depth,
+            deepest_visible_depth,
+        );
+        let color = depth_label_color(
+            positioned.node,
+            deepest_visible_depth,
+            node_color(positioned.node),
+        );
+        let (offset_x, offset_y) = label_offsets(positioned.node, &label, positioned.angle);
         draw_text_screen(
             chart,
-            label,
+            &label,
             positioned.x + offset_x,
             positioned.y + offset_y,
-            Some(node_color(positioned.node)),
+            Some(color),
         );
+    }
+}
+
+fn depth_label_text(label: &str, depth: usize, max_depth: usize) -> String {
+    if label.is_empty() || max_depth <= 1 || depth == 0 {
+        return label.to_string();
+    }
+
+    let char_count = label.chars().count();
+    let max_chars = depth_label_max_chars(char_count, depth, max_depth);
+    if char_count <= max_chars {
+        return label.to_string();
+    }
+
+    let visible_chars = max_chars.saturating_sub(1);
+    let visible_chars = if visible_chars == 0 { 1 } else { visible_chars };
+
+    let mut clipped = label.chars().take(visible_chars).collect::<String>();
+    clipped.push('…');
+    clipped
+}
+
+fn depth_label_max_chars(char_count: usize, depth: usize, max_depth: usize) -> usize {
+    if char_count <= LABEL_SIZE_MIN_CHARS || max_depth <= 1 || depth == 0 {
+        return char_count;
+    }
+
+    let span = (max_depth.saturating_sub(1)).max(1) as f64;
+    let ratio = LABEL_SIZE_MIN_RATIO
+        + ((depth.saturating_sub(1) as f64 / span) * (1.0 - LABEL_SIZE_MIN_RATIO));
+    let ratio = ratio.clamp(LABEL_SIZE_MIN_RATIO, 1.0);
+    let minimum_chars = LABEL_SIZE_MIN_CHARS.min(char_count);
+    let scaled = (char_count as f64 * ratio).round() as usize;
+
+    scaled.clamp(minimum_chars, char_count)
+}
+
+fn depth_label_color(node: &WorldMapNode, max_depth: usize, base_color: Color) -> Color {
+    if node.terminal {
+        return base_color;
+    }
+    if max_depth <= 1 || node.depth == 0 {
+        return base_color;
+    }
+
+    let span = (max_depth.saturating_sub(1)).max(1) as f64;
+    let depth_ratio = (node.depth.saturating_sub(1) as f64 / span).clamp(0.0, 1.0);
+    if depth_ratio <= (1.0 / 3.0) {
+        emphasize_label_color(base_color)
+    } else if depth_ratio <= (2.0 / 3.0) {
+        base_color
+    } else {
+        de_emphasize_label_color(base_color)
+    }
+}
+
+fn emphasize_label_color(color: Color) -> Color {
+    match color {
+        Color::Black => Color::BrightBlack,
+        Color::Red => Color::BrightRed,
+        Color::Green => Color::BrightGreen,
+        Color::Yellow => Color::BrightYellow,
+        Color::Blue => Color::BrightBlue,
+        Color::Magenta => Color::BrightMagenta,
+        Color::Cyan => Color::BrightCyan,
+        Color::White => Color::BrightWhite,
+        Color::BrightBlack => Color::BrightBlack,
+        Color::BrightWhite => Color::BrightWhite,
+        _ => color,
+    }
+}
+
+fn de_emphasize_label_color(color: Color) -> Color {
+    match color {
+        Color::BrightBlack => Color::BrightBlack,
+        Color::BrightRed => Color::Red,
+        Color::BrightGreen => Color::Green,
+        Color::BrightYellow => Color::Yellow,
+        Color::BrightBlue => Color::Blue,
+        Color::BrightMagenta => Color::Magenta,
+        Color::BrightCyan => Color::Cyan,
+        Color::BrightWhite => Color::White,
+        _ => color,
     }
 }
 
@@ -1055,6 +1149,33 @@ mod tests {
 
         assert!(offset_x > 0);
         assert_eq!(offset_y, 0);
+    }
+
+    #[test]
+    fn depth_label_text_uses_more_characters_for_outer_rings() {
+        let title = "Mission With A Very Long Name";
+        let max_depth = 4;
+        let inner = depth_label_text(title, 1, max_depth);
+        let outer = depth_label_text(title, max_depth, max_depth);
+        let chars = title.chars().count();
+
+        assert!(inner.chars().count() < chars);
+        assert_eq!(outer, title);
+        assert!(inner.len() <= outer.len());
+    }
+
+    #[test]
+    fn depth_label_max_chars_increases_monotonic() {
+        let title_len = 24;
+        let max_depth = 4;
+
+        let inner_chars = depth_label_max_chars(title_len, 1, max_depth);
+        let mid_chars = depth_label_max_chars(title_len, 2, max_depth);
+        let outer_chars = depth_label_max_chars(title_len, max_depth, max_depth);
+
+        assert!(inner_chars <= mid_chars);
+        assert!(mid_chars <= outer_chars);
+        assert!(outer_chars <= title_len);
     }
 
     #[test]
