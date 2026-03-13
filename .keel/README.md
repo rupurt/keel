@@ -262,11 +262,11 @@
 |--------|--------|
 | [Resolve HEAD Show Selectors](epics/VDhtrxgW6/voyages/VDhtzKSNF/) | done |
 
-### [Mission Bearing Lineage](epics/VDiDhXVKy/) (active)
+### [Mission Bearing Lineage](epics/VDiDhXVKy/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [AttachMissionBearingCommand](epics/VDiDhXVKy/voyages/VDiV5sPFH/) | in-progress |
+| [AttachMissionBearingCommand](epics/VDiDhXVKy/voyages/VDiV5sPFH/) | done |
 
 ### [Horizon and Roadmap View](epics/VDiHw85WK/) (done)
 

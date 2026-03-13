@@ -20,8 +20,8 @@ index: 39
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 0/1 stories done
+**Progress:** 1/1 voyages complete, 1/1 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [AttachMissionBearingCommand](voyages/VDiV5sPFH/) | in-progress | 0/1 |
+| [AttachMissionBearingCommand](voyages/VDiV5sPFH/) | done | 1/1 |
 <!-- END GENERATED -->
