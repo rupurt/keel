@@ -1,14 +1,12 @@
 ---
-id: VDiHw85WK
-title: Horizon and Roadmap View
-mission: VDiBh1orx
-created_at: 2026-03-12T20:11:03
-index: 41
+id: 1w5H2Bq9L
+title: Semantic Search and Ranking in Keel
+created_at: 2026-03-12T21:02:13
 ---
 
-# Horizon and Roadmap View
+# Semantic Search and Ranking in Keel
 
-> Add an explicit roadmap mode with priority, dependencies, and proceed/park posture.
+ > Implementing semantic search and ranking will make large Keel boards easier to navigate by surfacing semantically related artifacts instead of only keyword matches.
 
 ## Documents
 
@@ -20,8 +18,7 @@ index: 41
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/1 voyages complete, 1/1 stories done
+**Progress:** 0/0 voyages complete, 0/0 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [RoadmapMVP](voyages/VDiJfjvVG/) | done | 1/1 |
 <!-- END GENERATED -->

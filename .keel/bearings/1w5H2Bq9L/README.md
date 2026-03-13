@@ -1,8 +1,10 @@
 ---
 id: 1w5H2Bq9L
 title: Semantic Search and Ranking in Keel
-status: evaluating
+status: laid
 created_at: 2026-03-04T12:00:00
+laid_at: 2026-03-12T21:02:13
+epic: 1w5H2Bq9L
 ---
 
 # Semantic Search and Ranking in Keel
