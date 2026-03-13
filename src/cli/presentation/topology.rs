@@ -5,7 +5,7 @@ use std::f64::consts::{FRAC_PI_2, TAU};
 use std::fmt::Write as _;
 
 use colored::Color;
-use txtplot::ChartContext;
+use txtplot::{ChartContext, TextStyle};
 
 use crate::cli::presentation::drift_surface::{
     render_drift_context, render_drift_coverage, render_drift_overview,
@@ -675,7 +675,7 @@ fn draw_labels(
                 "Keel World",
                 positioned.x - 10,
                 positioned.y - 2,
-                Some(Color::White),
+                TextStyle::new().with_foreground(Color::White).bold(),
             );
             continue;
         }
@@ -698,7 +698,7 @@ fn draw_labels(
             positioned.node.depth,
             deepest_visible_depth,
         );
-        let color = depth_label_color(
+        let style = depth_label_style(
             positioned.node,
             deepest_visible_depth,
             node_color(positioned.node),
@@ -709,7 +709,7 @@ fn draw_labels(
             &label,
             positioned.x + offset_x,
             positioned.y + offset_y,
-            Some(color),
+            style,
         );
     }
 }
@@ -748,53 +748,27 @@ fn depth_label_max_chars(char_count: usize, depth: usize, max_depth: usize) -> u
     scaled.clamp(minimum_chars, char_count)
 }
 
-fn depth_label_color(node: &WorldMapNode, max_depth: usize, base_color: Color) -> Color {
+fn depth_label_style(node: &WorldMapNode, max_depth: usize, base_color: Color) -> TextStyle {
     if node.terminal {
-        return base_color;
+        return TextStyle::new().with_foreground(base_color);
     }
     if max_depth <= 1 || node.depth == 0 {
-        return base_color;
+        return TextStyle::new().with_foreground(base_color);
     }
 
     let span = (max_depth.saturating_sub(1)).max(1) as f64;
     let depth_ratio = (node.depth.saturating_sub(1) as f64 / span).clamp(0.0, 1.0);
+    let mut style = TextStyle::new().with_foreground(base_color);
+
     if depth_ratio <= (1.0 / 3.0) {
-        emphasize_label_color(base_color)
+        style = style.bold();
     } else if depth_ratio <= (2.0 / 3.0) {
-        base_color
+        style = style.normal();
     } else {
-        de_emphasize_label_color(base_color)
+        style = style.dim();
     }
-}
 
-fn emphasize_label_color(color: Color) -> Color {
-    match color {
-        Color::Black => Color::BrightBlack,
-        Color::Red => Color::BrightRed,
-        Color::Green => Color::BrightGreen,
-        Color::Yellow => Color::BrightYellow,
-        Color::Blue => Color::BrightBlue,
-        Color::Magenta => Color::BrightMagenta,
-        Color::Cyan => Color::BrightCyan,
-        Color::White => Color::BrightWhite,
-        Color::BrightBlack => Color::BrightBlack,
-        Color::BrightWhite => Color::BrightWhite,
-        _ => color,
-    }
-}
-
-fn de_emphasize_label_color(color: Color) -> Color {
-    match color {
-        Color::BrightBlack => Color::BrightBlack,
-        Color::BrightRed => Color::Red,
-        Color::BrightGreen => Color::Green,
-        Color::BrightYellow => Color::Yellow,
-        Color::BrightBlue => Color::Blue,
-        Color::BrightMagenta => Color::Magenta,
-        Color::BrightCyan => Color::Cyan,
-        Color::BrightWhite => Color::White,
-        _ => color,
-    }
+    style
 }
 
 fn label_offsets(node: &WorldMapNode, label: &str, angle: f64) -> (isize, isize) {
@@ -906,7 +880,7 @@ fn draw_text_screen(
     text: &str,
     x_px: isize,
     y_px: isize,
-    color: Option<Color>,
+    style: TextStyle,
 ) {
     let max_col = chart.canvas.width.saturating_sub(1) as isize;
     let max_row = chart.canvas.height.saturating_sub(1) as isize;
@@ -924,7 +898,7 @@ fn draw_text_screen(
     } else {
         1.0 - row as f64 / (chart.canvas.height - 1) as f64
     };
-    chart.text(text, x_norm, y_norm, color);
+    chart.text_styled(text, x_norm, y_norm, style);
 }
 
 fn kind_sort_rank(kind: WorldMapNodeKind) -> u8 {
@@ -1176,6 +1150,33 @@ mod tests {
         assert!(inner_chars <= mid_chars);
         assert!(mid_chars <= outer_chars);
         assert!(outer_chars <= title_len);
+    }
+
+    #[test]
+    fn depth_label_style_maps_depth_to_text_weight() {
+        let build_node = |depth: usize, terminal: bool| WorldMapNode {
+            id: format!("n:{depth}"),
+            title: format!("Node {depth}"),
+            kind: WorldMapNodeKind::Mission,
+            state: "active".to_string(),
+            parent_id: Some("parent".to_string()),
+            depth,
+            terminal,
+            order_index: Some(1),
+            summary: None,
+            timer: None,
+            signals: Vec::new(),
+        };
+
+        let inner = depth_label_style(&build_node(1, false), 5, Color::BrightCyan);
+        let mid = depth_label_style(&build_node(3, false), 5, Color::BrightCyan);
+        let outer = depth_label_style(&build_node(5, false), 5, Color::BrightCyan);
+        let terminal = depth_label_style(&build_node(5, true), 5, Color::BrightCyan);
+
+        assert_eq!(inner.intensity, txtplot::TextIntensity::Bold);
+        assert_eq!(mid.intensity, txtplot::TextIntensity::Normal);
+        assert_eq!(outer.intensity, txtplot::TextIntensity::Dim);
+        assert_eq!(terminal.intensity, txtplot::TextIntensity::Normal);
     }
 
     #[test]
