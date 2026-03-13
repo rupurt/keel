@@ -312,14 +312,7 @@ fn render_knowledge_graph_with_mode(
 fn chart_width_for_mode(width: usize, mode: RenderMode) -> usize {
     let available = width.saturating_sub(2).max(1);
     match mode {
-        RenderMode::Static => {
-            if available >= 58 {
-                available.min(118)
-            } else {
-                available
-            }
-        }
-        RenderMode::Interactive { .. } => available.min(118),
+        RenderMode::Static | RenderMode::Interactive { .. } => available,
     }
 }
 
@@ -338,23 +331,13 @@ fn chart_height_for_mode(
 }
 
 fn default_chart_height(projection: &KnowledgeGraphViewProjection, width: usize) -> usize {
-    match projection.zoom {
-        KnowledgeGraphZoom::Source => 28,
-        KnowledgeGraphZoom::Artifact => {
-            if width >= 120 {
-                24
-            } else {
-                22
-            }
-        }
-        _ => {
-            if width >= 120 {
-                22
-            } else {
-                18
-            }
-        }
-    }
+    let scaled = width.max(1) / 4;
+    let base = match projection.zoom {
+        KnowledgeGraphZoom::Source => 10,
+        KnowledgeGraphZoom::Artifact => 6,
+        _ => 4,
+    };
+    (scaled + base).max(10)
 }
 
 fn interactive_summary_budget(height: usize) -> usize {
@@ -1342,6 +1325,25 @@ mod tests {
 
         assert!(rendered.lines().count() <= 18);
         assert!(rendered.contains("Knowledge Graph"));
+    }
+
+    #[test]
+    fn chart_width_uses_available_space() {
+        assert_eq!(chart_width_for_mode(160, RenderMode::Static), 158);
+        assert_eq!(
+            chart_width_for_mode(160, RenderMode::Interactive { height: 20 }),
+            158
+        );
+    }
+
+    #[test]
+    fn static_chart_height_scales_with_terminal_width() {
+        let projection =
+            build_knowledge_graph_view(&sample_projection(), KnowledgeGraphZoom::Source, None);
+        let small = default_chart_height(&projection, 80);
+        let large = default_chart_height(&projection, 160);
+
+        assert!(large > small);
     }
 
     #[test]
