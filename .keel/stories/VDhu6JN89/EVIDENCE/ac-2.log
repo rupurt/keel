@@ -1,0 +1,19 @@
+---
+recorded_at: 2026-03-12T19:20:27.520620916-07:00
+command: cargo test --lib head_selector_ordering
+---
+
+running 2 tests
+test read_model::show_selector::tests::head_selector_ordering_reports_empty_and_out_of_range_errors_deterministically ... ok
+test read_model::show_selector::tests::head_selector_ordering_uses_canonical_list_semantics_for_each_entity_type ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 912 filtered out; finished in 0.01s
+
+
+--- stderr ---
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.18s
+     Running unittests src/lib.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-91f00e5c964d2a6a)

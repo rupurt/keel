@@ -23,5 +23,5 @@ mission: VDhth6uBq
 **Progress:** 0/1 voyages complete, 0/3 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Resolve HEAD Show Selectors](voyages/VDhtzKSNF/) | planned | 0/3 |
+| [Resolve HEAD Show Selectors](voyages/VDhtzKSNF/) | in-progress | 0/3 |
 <!-- END GENERATED -->

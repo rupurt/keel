@@ -17,6 +17,7 @@ pub mod role_context;
 pub mod routine_due_state;
 pub mod routine_materialization;
 pub mod scheduled_routines;
+pub mod show_selector;
 pub mod throughput_history;
 pub mod topology;
 pub mod traceability;

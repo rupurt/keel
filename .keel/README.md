@@ -260,7 +260,7 @@
 
 | Voyage | Status |
 |--------|--------|
-| [Resolve HEAD Show Selectors](epics/VDhtrxgW6/voyages/VDhtzKSNF/) | planned |
+| [Resolve HEAD Show Selectors](epics/VDhtrxgW6/voyages/VDhtzKSNF/) | in-progress |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

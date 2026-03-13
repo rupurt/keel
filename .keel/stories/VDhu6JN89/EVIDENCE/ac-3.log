@@ -1,0 +1,14 @@
+---
+recorded_at: 2026-03-12T19:20:27.643246356-07:00
+command: cargo test --lib head_selector_determinism
+---
+
+running 1 test
+test read_model::show_selector::tests::head_selector_determinism_resolves_same_targets_on_equivalent_boards ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 913 filtered out; finished in 0.02s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running unittests src/lib.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-91f00e5c964d2a6a)
