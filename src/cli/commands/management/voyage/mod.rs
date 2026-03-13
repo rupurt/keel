@@ -70,7 +70,7 @@ pub enum VoyageAction {
     },
     /// Show voyage details
     Show {
-        /// Voyage ID
+        /// Voyage ID or HEAD selector (HEAD, HEAD~, HEAD~~, HEAD^)
         id: String,
     },
     /// Show a voyage markdown document

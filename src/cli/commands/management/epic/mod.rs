@@ -26,7 +26,7 @@ pub enum EpicAction {
     },
     /// Show epic details
     Show {
-        /// Epic ID
+        /// Epic ID or HEAD selector (HEAD, HEAD~, HEAD~~, HEAD^)
         id: String,
     },
     /// Show an epic markdown document

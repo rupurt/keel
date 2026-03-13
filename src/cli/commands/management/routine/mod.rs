@@ -24,7 +24,7 @@ pub enum RoutineAction {
     List,
     /// Show routine details
     Show {
-        /// Routine ID
+        /// Routine ID or HEAD selector (HEAD, HEAD~, HEAD~~, HEAD^)
         id: String,
     },
 }

@@ -31,7 +31,7 @@ pub enum AdrAction {
     },
     /// Show ADR details
     Show {
-        /// ADR ID
+        /// ADR ID or HEAD selector (HEAD, HEAD~, HEAD~~, HEAD^)
         id: String,
     },
     /// Show an ADR markdown document

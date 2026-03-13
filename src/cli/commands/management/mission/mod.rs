@@ -19,7 +19,7 @@ pub enum MissionAction {
     List,
     /// Show mission details
     Show {
-        /// Mission ID
+        /// Mission ID or HEAD selector (HEAD, HEAD~, HEAD~~, HEAD^)
         id: String,
         /// Output as JSON
         #[arg(long)]

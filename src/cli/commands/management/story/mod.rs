@@ -99,7 +99,7 @@ pub enum StoryAction {
     },
     /// Show story details
     Show {
-        /// Story ID
+        /// Story ID or HEAD selector (HEAD, HEAD~, HEAD~~, HEAD^)
         id: String,
     },
     /// Show a story markdown document

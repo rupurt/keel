@@ -77,7 +77,7 @@ pub enum BearingAction {
     },
     /// Show bearing details
     Show {
-        /// Bearing ID
+        /// Bearing ID or HEAD selector (HEAD, HEAD~, HEAD~~, HEAD^)
         id: String,
     },
     /// Show a bearing markdown document

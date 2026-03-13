@@ -17,6 +17,7 @@ use keel::domain::policy::queue::{FLOW_VERIFY_BLOCK_THRESHOLD, HUMAN_NEXT_VERIFY
 use keel::read_model::knowledge_graph::{
     build_knowledge_graph_projection, build_structural_drift_summary,
 };
+use keel::read_model::show_selector::{ShowEntityKind, ordered_show_ids, resolve_show_selector};
 use keel::read_model::world_map::{TopologyZoom, WorldMapBuildOptions, build_world_map_projection};
 use keel::test_helpers::{TestAdr, TestBearing};
 use keel::test_helpers::{TestBoardBuilder, TestEpic, TestMission, TestStory, TestVoyage};
@@ -144,6 +145,13 @@ fn head_show_fixture() -> tempfile::TempDir {
     write_routine(temp.path(), "routine-alpha", "Alpha Review", "E1/V1");
 
     temp
+}
+
+fn command_help(args: &[&str]) -> String {
+    crate::cli::build_cli()
+        .try_get_matches_from(args.iter().copied())
+        .unwrap_err()
+        .to_string()
 }
 
 #[test]
@@ -357,4 +365,94 @@ fn head_show_commands_report_selector_errors() {
         err.to_string(),
         "Unsupported HEAD selector syntax `HEAD~3`. Supported forms: exact IDs, HEAD, HEAD~, HEAD~~, HEAD^"
     );
+}
+
+#[test]
+fn head_show_commands_reject_invalid_syntax() {
+    let temp = head_show_fixture();
+    let expected = "Unsupported HEAD selector syntax `HEAD~3`. Supported forms: exact IDs, HEAD, HEAD~, HEAD~~, HEAD^";
+
+    let cases = [
+        crate::cli::commands::management::mission::show::run_with_dir(temp.path(), "HEAD~3", false)
+            .unwrap_err()
+            .to_string(),
+        crate::cli::commands::management::epic::show::run_with_dir(temp.path(), "HEAD~3")
+            .unwrap_err()
+            .to_string(),
+        crate::cli::commands::management::voyage::show::run_with_dir(temp.path(), "HEAD~3")
+            .unwrap_err()
+            .to_string(),
+        crate::cli::commands::management::story::show::run_with_dir(temp.path(), "HEAD~3")
+            .unwrap_err()
+            .to_string(),
+        crate::cli::commands::management::bearing::show::run_with_dir(temp.path(), "HEAD~3")
+            .unwrap_err()
+            .to_string(),
+        crate::cli::commands::management::adr::show::run_with_dir(temp.path(), "HEAD~3")
+            .unwrap_err()
+            .to_string(),
+        crate::cli::commands::management::routine::show::run_with_dir(temp.path(), "HEAD~3")
+            .unwrap_err()
+            .to_string(),
+    ];
+
+    for actual in cases {
+        assert_eq!(actual, expected);
+    }
+}
+
+#[test]
+fn head_show_contract_matches_default_list_order() {
+    let temp = head_show_fixture();
+    let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
+
+    let expectations = [
+        (ShowEntityKind::Mission, vec!["M1", "M2"]),
+        (ShowEntityKind::Epic, vec!["E1", "E2"]),
+        (ShowEntityKind::Voyage, vec!["V1", "V2"]),
+        (ShowEntityKind::Story, vec!["S1", "S2"]),
+        (ShowEntityKind::Bearing, vec!["B1", "B2"]),
+        (ShowEntityKind::Adr, vec!["ADR-001", "ADR-002"]),
+        (
+            ShowEntityKind::Routine,
+            vec!["routine-alpha", "routine-zeta"],
+        ),
+    ];
+
+    for (kind, expected) in expectations {
+        let expected_ids = expected.into_iter().map(str::to_string).collect::<Vec<_>>();
+        assert_eq!(ordered_show_ids(temp.path(), &board, kind), expected_ids);
+        assert_eq!(
+            resolve_show_selector(temp.path(), &board, kind, "HEAD").unwrap(),
+            expected_ids[0]
+        );
+        assert_eq!(
+            resolve_show_selector(temp.path(), &board, kind, "HEAD~").unwrap(),
+            expected_ids[1]
+        );
+        assert_eq!(
+            resolve_show_selector(temp.path(), &board, kind, "HEAD^").unwrap(),
+            expected_ids[1]
+        );
+    }
+}
+
+#[test]
+fn head_show_guidance_contract() {
+    let expected = "ID or HEAD selector (HEAD, HEAD~, HEAD~~, HEAD^)";
+
+    for help in [
+        command_help(&["keel", "mission", "show", "--help"]),
+        command_help(&["keel", "epic", "show", "--help"]),
+        command_help(&["keel", "voyage", "show", "--help"]),
+        command_help(&["keel", "story", "show", "--help"]),
+        command_help(&["keel", "bearing", "show", "--help"]),
+        command_help(&["keel", "adr", "show", "--help"]),
+        command_help(&["keel", "routine", "show", "--help"]),
+    ] {
+        assert!(
+            help.contains(expected),
+            "show help should advertise the supported HEAD selector forms: {help}"
+        );
+    }
 }
