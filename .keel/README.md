@@ -9,6 +9,7 @@
 |---------|--------|----------|------------|-----------|----|------|
 | [MissionEntity](bearings/1vzeJF000/) | laid | ✓ | ✓ | decision-ready | 3.60 | ✓ |
 | [Simulation Kernel Architecture Research](bearings/VDeRKA7fo/) | laid | ✓ | ✓ | decision-ready | 3.36 | ✓ |
+| [TUI Compact Layout Research](bearings/VDmdk1uib/) | exploring | ✓ | ✓ | repair evidence | - | - |
 | [Semantic Search and Ranking in Keel](bearings/1w5H2Bq9L/) | laid | ✓ | ✓ | decision-ready | 4.66 | ✓ |
 
 ## Epics
@@ -284,11 +285,17 @@
 
 ### [Accelerated Bearing Source Capture](epics/VDiHwULir/) (draft)
 
-### [Theater Play Experience](epics/VDlzCqxr9/) (active)
+### [Theater Play Experience](epics/VDlzCqxr9/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Theater Play Runtime and Themes](epics/VDlzCqxr9/voyages/VDlzEF2OP/) | in-progress |
+| [Theater Play Runtime and Themes](epics/VDlzCqxr9/voyages/VDlzEF2OP/) | done |
+
+### [Compact Status And Mission Drilldown](epics/VDm4ld6EX/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Implement CLI and Status Rendering](epics/VDm4ld6EX/voyages/VDmcsuJx4/) | in-progress |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

@@ -186,6 +186,258 @@ pub fn calculate_next(
     calculate_next_at(board, board_dir, agent_mode, filter, chrono::Utc::now())
 }
 
+/// Calculate all possible next actions across all categories.
+pub fn calculate_all_decisions(
+    board: &Board,
+    board_dir: &Path,
+    agent_mode: bool,
+    filter: &ItemFilter,
+) -> Result<Vec<NextDecision>> {
+    let mut decisions = Vec::new();
+    let _reference_time = chrono::Utc::now();
+
+    // 0. Board Health Check
+    #[cfg(not(test))]
+    {
+        let report = keel::read_model::diagnostics::validate(board_dir)?;
+        if report.total_errors() > 0 || report.total_warnings() > 0 {
+            let has_fixes = report.all_problems().iter().any(|p| p.fix.is_some());
+            decisions.push(NextDecision::Diagnostics {
+                report,
+                suggested_command: if has_fixes {
+                    "keel doctor --fix".to_string()
+                } else {
+                    "keel doctor".to_string()
+                },
+            });
+        }
+    }
+
+    let metrics = keel::read_model::flow_status::project(board);
+    let queue_policy_snapshot = queue_policy::project(&metrics);
+
+    // 1. Check for blocking verification backlog (human only)
+    if !agent_mode && queue_policy_snapshot.verification.blocks_human_next() {
+        let ready = board
+            .stories
+            .values()
+            .filter(|s| filter.matches_story(board, s))
+            .find(|s| s.status == StoryState::NeedsHumanVerification)
+            .cloned();
+
+        if let Some(ready) = ready {
+            decisions.push(NextDecision::Blocked(BlockedDecision {
+                story: ready,
+                count: metrics.verification.count,
+            }));
+        }
+    }
+
+    // 2. Check for proposed ADRs (human only)
+    if !agent_mode {
+        let adrs: Vec<_> = board
+            .adrs
+            .values()
+            .filter(|a| a.status() == keel::domain::model::AdrStatus::Proposed)
+            .filter(|a| filter.matches_adr(board, a))
+            .cloned()
+            .collect();
+
+        if !adrs.is_empty() {
+            let blocked_stories: Vec<_> = board
+                .stories
+                .values()
+                .filter(|s| s.status == StoryState::Backlog)
+                .filter(|s| {
+                    s.frontmatter
+                        .governed_by
+                        .iter()
+                        .any(|id| adrs.iter().any(|a| a.id() == id))
+                })
+                .cloned()
+                .collect();
+
+            decisions.push(NextDecision::Decision(AdrDecision {
+                adrs,
+                blocked_stories,
+            }));
+        }
+    }
+
+    // 3. Acceptance (human only)
+    if !agent_mode {
+        let stories: Vec<_> = board
+            .stories
+            .values()
+            .filter(|s| s.status == StoryState::NeedsHumanVerification)
+            .filter(|s| filter.matches_story(board, s))
+            .cloned()
+            .collect();
+
+        if !stories.is_empty() {
+            decisions.push(NextDecision::Accept(AcceptDecision { stories }));
+        }
+    }
+
+    // 4. Research (human only)
+    if !agent_mode {
+        let bearings: Vec<_> = board
+            .bearings
+            .values()
+            .filter(|b| {
+                matches!(
+                    b.frontmatter.status,
+                    keel::domain::model::BearingStatus::Exploring
+                        | keel::domain::model::BearingStatus::Evaluating
+                )
+            })
+            .filter(|b| filter.matches_bearing(board, b))
+            .cloned()
+            .collect();
+
+        if !bearings.is_empty() {
+            decisions.push(NextDecision::Research(ResearchDecision { bearings }));
+        }
+    }
+
+    // 5. Strategy: Decompose or Plan (human only)
+    if !agent_mode {
+        let mut needs_prd = Vec::new();
+        let mut needs_stories = Vec::new();
+        let mut needs_planning = Vec::new();
+
+        for epic in board
+            .epics
+            .values()
+            .filter(|e| e.status() == keel::domain::model::EpicState::Draft)
+            .filter(|e| {
+                filter
+                    .mission_id
+                    .map(|id| e.frontmatter.mission.as_deref() == Some(id))
+                    .unwrap_or(true)
+            })
+            .cloned()
+        {
+            let prd_path = epic.path.parent().unwrap().join("PRD.md");
+            if !keel::infrastructure::validation::structural::check_epic_prd_authored_content(
+                &prd_path,
+            )
+            .is_empty()
+            {
+                needs_prd.push(epic);
+            }
+        }
+
+        if !needs_prd.is_empty() {
+            decisions.push(NextDecision::NeedsPRD(NeedsPRDDecision {
+                epics: needs_prd,
+            }));
+        }
+
+        for voyage in board
+            .voyages
+            .values()
+            .filter(|v| v.status() == keel::domain::state_machine::voyage::VoyageState::Draft)
+            .filter(|v| filter.matches_voyage(board, v))
+            .cloned()
+        {
+            let story_count = board.stories_for_voyage(&voyage).len();
+            match queue_policy::classify_draft_voyage(story_count) {
+                DraftVoyageQueueCategory::NeedsStories => needs_stories.push(voyage),
+                DraftVoyageQueueCategory::NeedsPlanning => needs_planning.push(voyage),
+            }
+        }
+
+        if !needs_stories.is_empty() {
+            decisions.push(NextDecision::NeedsStories(DecomposeDecision {
+                voyages: needs_stories,
+            }));
+        }
+
+        if !needs_planning.is_empty() {
+            decisions.push(NextDecision::NeedsPlanning(DecomposeDecision {
+                voyages: needs_planning,
+            }));
+        }
+    }
+
+    // 6. Implementation work selection (agent only)
+    if agent_mode {
+        let in_progress: Vec<_> = board
+            .stories
+            .values()
+            .filter(|s| s.status == StoryState::InProgress)
+            .filter(|s| filter.matches_story(board, s))
+            .collect();
+
+        for story in in_progress {
+            decisions.push(NextDecision::Work(StoryDecision {
+                story: (*story).clone(),
+                is_continuation: true,
+                warning: None,
+            }));
+        }
+
+        let scheduled_routines = keel::read_model::scheduled_routines::project_scheduled_routines(
+            board,
+            _reference_time,
+            keel::read_model::scheduled_routines::RoutineScheduleFilter {
+                mission_id: filter.mission_id,
+            },
+        );
+
+        let deps = keel::read_model::traceability::derive_implementation_dependencies(board);
+        let workable_backlog: Vec<_> = board
+            .stories
+            .values()
+            .filter(|s| s.status == StoryState::Backlog)
+            .filter(|s| {
+                keel::domain::state_machine::invariants::story_workable(s, board, board_dir)
+            })
+            .filter(|s| {
+                !keel::read_model::scheduled_routines::story_is_gated_by_scheduled_routines(
+                    s,
+                    &scheduled_routines,
+                )
+            })
+            .filter(|s| filter.matches_story(board, s))
+            .collect();
+
+        let mut candidates: Vec<_> = workable_backlog
+            .iter()
+            .copied()
+            .filter(|s| {
+                deps.get(s.id()).is_none_or(|dep_ids| {
+                    dep_ids.iter().all(|id| {
+                        board
+                            .stories
+                            .get(id)
+                            .map(|dep| dep.status == StoryState::Done)
+                            .unwrap_or(false)
+                    })
+                })
+            })
+            .collect();
+
+        candidates.sort_by(|a, b| compare_work_item_ids(a.id(), b.id()));
+
+        for story in candidates {
+            decisions.push(NextDecision::Work(StoryDecision {
+                story: (*story).clone(),
+                is_continuation: false,
+                warning: None,
+            }));
+        }
+    }
+
+    // 7. Mission Steering (Shared)
+    for mission_decision in actionable_mission_decisions(board, filter) {
+        decisions.push(NextDecision::Mission(mission_decision));
+    }
+
+    Ok(decisions)
+}
+
 pub(crate) fn calculate_next_at(
     board: &Board,
     board_dir: &Path,

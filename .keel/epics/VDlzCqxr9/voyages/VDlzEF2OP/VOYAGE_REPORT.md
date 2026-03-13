@@ -51,6 +51,14 @@ Add persona and session-type adapters for stand-up comedy and Shakespeare/Broadw
 - [x] [SRS-03/AC-01] Add at least four personas (`standup`, `shakespeare`, `broadway`, `neutral`) with distinct narration templates. <!-- verify: bash -c "cargo run --quiet -- play --theater --persona neutral 2>/dev/null | rg '^Cue:' && cargo run --quiet -- play --theater --persona standup 2>/dev/null | rg '^Cue:' && cargo run --quiet -- play --theater --persona shakespeare 2>/dev/null | rg '^Cue:' && cargo run --quiet -- play --theater --persona broadway 2>/dev/null | rg '^Cue:'", SRS-03:start:end, proof: ac-1.log -->
 - [x] [SRS-03/AC-02] `keel play --theater --persona shakespeare` emits a style-marked line distinct from `--persona standup`. <!-- verify: bash -c "! diff -q <(cargo run --quiet -- play --theater --persona shakespeare 2>/dev/null | rg '^Cue:') <(cargo run --quiet -- play --theater --persona standup 2>/dev/null | rg '^Cue:')", SRS-03:start:end, proof: ac-2.log -->
 
+#### Implementation Insights
+- **VDm4ld6lA: Fail-safes should produce progressive recovery actions**
+  - Insight: Hard failures (`exit 1`) are avoidable for recoverable user mistakes; a staged fallback (prompt alternatives, then fallback mode) preserves flow and reduces repeated support friction.
+  - Suggested Action: For interactive commands, implement recovery branches that keep the previous state, surface actionable options, and only fail on explicit user opt-out.
+  - Applies To: `src/cli/commands/management/play.rs` and other user-facing error paths
+  - Category: process
+
+
 #### Verified Evidence
 - [ac-1.log](../../../../stories/VDlzEqbZk/EVIDENCE/ac-1.log)
 - [ac-2.log](../../../../stories/VDlzEqbZk/EVIDENCE/ac-2.log)

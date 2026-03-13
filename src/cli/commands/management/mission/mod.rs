@@ -37,6 +37,12 @@ pub enum MissionAction {
     Next {
         /// Mission ID (omit to auto-select the highest-priority actionable mission)
         id: Option<String>,
+        /// Show a compact three-bullet status summary
+        #[arg(long)]
+        status: bool,
+        /// Show an extended report with novel findings and strategic unblockers
+        #[arg(long)]
+        extended: bool,
     },
     /// Refine mission charter (elicitation)
     Refine {
@@ -97,7 +103,11 @@ pub fn run(action: MissionAction) -> Result<()> {
             mission_id,
             bearing_id,
         } => attach::run(&mission_id, &bearing_id),
-        MissionAction::Next { id } => next::run(id.as_deref()),
+        MissionAction::Next {
+            id,
+            status,
+            extended,
+        } => next::run(id.as_deref(), status, extended),
         MissionAction::Refine { id, answer } => {
             keel::application::mission_lifecycle::MissionLifecycleService::refine(
                 &board_dir,

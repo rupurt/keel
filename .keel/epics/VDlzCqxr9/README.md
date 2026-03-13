@@ -20,8 +20,8 @@ index: 47
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 2/3 stories done
+**Progress:** 1/1 voyages complete, 3/3 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Theater Play Runtime and Themes](voyages/VDlzEF2OP/) | in-progress | 2/3 |
+| [Theater Play Runtime and Themes](voyages/VDlzEF2OP/) | done | 3/3 |
 <!-- END GENERATED -->

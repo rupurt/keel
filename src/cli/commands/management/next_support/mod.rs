@@ -10,7 +10,7 @@ pub mod staleness;
 pub use algorithm::{
     AcceptDecision, AdrDecision, BlockedDecision, DecomposeDecision, EmptyDecision, ItemFilter,
     MissionDecision, MissionsDecision, NeedsPRDDecision, NextDecision, ResearchDecision,
-    StoryDecision, VerifyMissionDecision, calculate_next,
+    StoryDecision, VerifyMissionDecision, calculate_all_decisions, calculate_next,
 };
 pub use format::format_decision;
 // pub use staleness::staleness_score;

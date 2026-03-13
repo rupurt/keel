@@ -11,7 +11,9 @@ use std::path::Path;
 use crate::cli::commands::management::next_support::algorithm::{
     MissionWorkSummary, mission_unmet_board_goals, mission_work_summary,
 };
-use crate::cli::commands::management::next_support::{ItemFilter, calculate_next, format_decision};
+use crate::cli::commands::management::next_support::{
+    ItemFilter, NextDecision, calculate_all_decisions, calculate_next, format_decision,
+};
 use keel::domain::model::{Bearing, Board, Mission, MissionStatus};
 use keel::infrastructure::loader::load_board;
 use keel::read_model::knowledge::{
@@ -26,7 +28,7 @@ struct SelectedMission<'a> {
 }
 
 /// Run the mission next command
-pub fn run(mission_id: Option<&str>) -> Result<()> {
+pub fn run(mission_id: Option<&str>, status: bool, extended: bool) -> Result<()> {
     let board_dir = keel::infrastructure::config::find_board_dir()?;
     let board = load_board(&board_dir)?;
 
@@ -35,10 +37,22 @@ pub fn run(mission_id: Option<&str>) -> Result<()> {
         if mission.status() == MissionStatus::Verified {
             flush_and_exit(1);
         }
+        if status {
+            return render_compact_status(&board, &board_dir, mission);
+        }
+        if extended {
+            return render_extended_status(&board, &board_dir, mission);
+        }
         return render_mission_next(&board, &board_dir, mission);
     }
 
     if let Some(selected) = select_mission(&board) {
+        if status {
+            return render_compact_status(&board, &board_dir, selected.mission);
+        }
+        if extended {
+            return render_extended_status(&board, &board_dir, selected.mission);
+        }
         print_selected_mission(&selected);
         return render_mission_next(&board, &board_dir, selected.mission);
     }
@@ -53,6 +67,303 @@ pub fn run(mission_id: Option<&str>) -> Result<()> {
         format_no_actionable_mission_message(&pending, &patterns, &paused, &orphaned_bearings)
     );
     flush_and_exit(1);
+}
+
+fn render_extended_status(board: &Board, board_dir: &Path, mission: &Mission) -> Result<()> {
+    println!("{}", "Compact Status".bold().underline());
+    render_compact_status(board, board_dir, mission)?;
+    println!();
+
+    let topology = workflow_topology::load_for_board(board_dir)?;
+    let mut role_families: BTreeSet<String> = topology.roles.keys().cloned().collect();
+    role_families.insert(topology.management_role_example().to_string());
+    role_families.insert(topology.delivery_role_example().to_string());
+
+    let mut unblockers = Vec::new();
+    let mut seen_unblockers = BTreeSet::new();
+
+    for role_name in role_families {
+        let role_taxonomy = keel::domain::model::taxonomy::parse(&role_name)?;
+        for agent_mode in [true, false] {
+            let filter = ItemFilter {
+                mission_id: Some(mission.id()),
+                actor_role: Some(&role_taxonomy),
+            };
+
+            let decisions = calculate_all_decisions(board, board_dir, agent_mode, &filter)?;
+            for decision in decisions {
+                if is_strategic_unblocker(&decision) {
+                    let formatted = format_decision(&decision);
+                    if seen_unblockers.insert(formatted.clone()) {
+                        unblockers.push(formatted);
+                    }
+                }
+            }
+        }
+    }
+
+    if !unblockers.is_empty() {
+        println!("{}", "Strategic Unblockers (Human Queue)".bold().yellow().underline());
+        for unblocker in unblockers {
+            println!("{}", unblocker.trim());
+        }
+        println!();
+    }
+
+    // "Novel Findings" - derived from bottleneck analysis
+    let metrics = keel::read_model::flow_status::project(board);
+    let policy = keel::read_model::queue_policy::project(&metrics);
+
+    println!("{}", "Novel Findings & Bottlenecks".bold().cyan().underline());
+    let mut findings_found = false;
+
+    if policy.verification.blocks_human_next() {
+        println!("• {} The verification queue ({} items) is starving the agent flow.", "Bottleneck:".bold().red(), metrics.verification.count);
+        println!("  Suggestion: Accept or reject pending stories to reopen the implementation lane.");
+        findings_found = true;
+    }
+
+    if policy.agent == keel::domain::policy::queue::AgentQueueCategory::Starved && !policy.has_planning_work {
+        println!("• {} Agent has no ready work and no planning is in progress.", "Observation:".bold().yellow());
+        println!("  Suggestion: Decompose voyages or refine the backlog to generate new stories.");
+        findings_found = true;
+    }
+
+    // Mission-specific findings
+    let unmet_goals = mission_unmet_board_goals(board, mission);
+    let summary = mission_work_summary(board, mission, unmet_goals.len());
+
+    if summary.total_open_items() > 10 {
+        println!("• {} Mission has a high volume of open work ({} items).", "Capacity Warning:".bold().yellow(), summary.total_open_items());
+        println!("  Suggestion: Focus on closing existing stories before adding more scope.");
+        findings_found = true;
+    }
+
+    if summary.unmet_goals == 1 && summary.total_open_items() < 3 {
+        println!("• {} Mission is approaching completion.", "Opportunity:".bold().green());
+        println!("  Current state: 1 goal remaining with only {} items of work left.", summary.total_open_items());
+        findings_found = true;
+    }
+
+    if !findings_found {
+        println!("• Flow is healthy; no critical bottlenecks detected.");
+    }
+
+    Ok(())
+}
+
+fn is_strategic_unblocker(decision: &NextDecision) -> bool {
+    matches!(
+        decision,
+        NextDecision::Decision(_)
+            | NextDecision::NeedsPRD(_)
+            | NextDecision::NeedsPlanning(_)
+            | NextDecision::NeedsStories(_)
+            | NextDecision::VerifyMission(_)
+            | NextDecision::Accept(_)
+            | NextDecision::Diagnostics { .. }
+    )
+}
+
+fn render_compact_status(board: &Board, board_dir: &Path, mission: &Mission) -> Result<()> {
+    if is_mission_ready_for_achievement(board, mission) {
+        println!("• Mission {} is complete.", mission.id().bold());
+        if mission_has_log_entry(mission) {
+            println!("• Run `keel mission achieve {}`.", mission.id());
+        } else {
+            println!("• Add a mission log entry first.");
+        }
+        println!("• No other active work remains.");
+        return Ok(());
+    }
+
+    let topology = workflow_topology::load_for_board(board_dir)?;
+    let mut role_families: BTreeSet<String> = topology.roles.keys().cloned().collect();
+    role_families.insert(topology.management_role_example().to_string());
+    role_families.insert(topology.delivery_role_example().to_string());
+
+    let mut bullets = Vec::new();
+    let mut seen_texts = BTreeSet::new();
+
+    // 1. Diagnostics (highest priority)
+    let doctor_report = keel::read_model::diagnostics::validate(board_dir)?;
+    if !doctor_report.all_problems().is_empty() {
+        for problem in doctor_report.all_problems().iter().take(3) {
+            let text = format!("{}: {}", problem.severity, problem.message);
+            if seen_texts.insert(text.clone()) {
+                bullets.push((0, text));
+            }
+        }
+    }
+
+    // 2. Work items across all roles
+    for role_name in role_families {
+        let role_taxonomy = keel::domain::model::taxonomy::parse(&role_name)?;
+        let _actor_context = topology.resolve_actor_context(&role_taxonomy)?;
+
+        // Check both manager and agent perspectives for this role
+        for agent_mode in [true, false] {
+            let filter = ItemFilter {
+                mission_id: Some(mission.id()),
+                actor_role: Some(&role_taxonomy),
+            };
+
+            let decisions = calculate_all_decisions(board, board_dir, agent_mode, &filter)?;
+            for decision in decisions {
+                add_decision_to_bullets(&decision, &mut bullets, &mut seen_texts);
+            }
+        }
+    }
+
+    // 3. Mission-wide steering if we still need bullets
+    if bullets.len() < 3 {
+        let filter = ItemFilter {
+            mission_id: Some(mission.id()),
+            actor_role: None,
+        };
+        let decisions = calculate_all_decisions(board, board_dir, false, &filter)?;
+        for decision in decisions {
+            add_decision_to_bullets(&decision, &mut bullets, &mut seen_texts);
+        }
+    }
+
+    // Sort by priority and take top 3
+    bullets.sort_by_key(|b| b.0);
+
+    if bullets.is_empty() {
+        println!("• No actionable next steps found.");
+        println!("• Check mission status or backlog.");
+        println!("• Run `keel mission show {}` for details.", mission.id());
+    } else {
+        for (_, bullet) in bullets.into_iter().take(3) {
+            println!("• {bullet}");
+        }
+    }
+
+    Ok(())
+}
+
+fn add_decision_to_bullets(
+    decision: &NextDecision,
+    bullets: &mut Vec<(i32, String)>,
+    seen_texts: &mut BTreeSet<String>,
+) {
+    match decision {
+        NextDecision::Work(d) => {
+            let verb = if d.is_continuation {
+                "Continue".bold().cyan().to_string()
+            } else {
+                "Start".bold().green().to_string()
+            };
+            let text = format!(
+                "{} {} {}",
+                verb,
+                crate::cli::style::styled_story_id(d.story.id()),
+                d.story.title().bold()
+            );
+            if seen_texts.insert(text.clone()) {
+                bullets.push((1, text));
+            }
+        }
+        NextDecision::Decision(d) => {
+            if let Some(adr) = d.adrs.first() {
+                let text = format!(
+                    "Review ADR {} {}",
+                    crate::cli::style::styled_story_id(adr.id()),
+                    adr.title().bold()
+                );
+                if seen_texts.insert(text.clone()) {
+                    bullets.push((2, text));
+                }
+            }
+        }
+        NextDecision::Accept(d) => {
+            if let Some(story) = d.stories.first() {
+                let text = format!(
+                    "Accept {} {}",
+                    crate::cli::style::styled_story_id(story.id()),
+                    story.title().bold()
+                );
+                if seen_texts.insert(text.clone()) {
+                    bullets.push((3, text));
+                }
+            }
+        }
+        NextDecision::NeedsStories(d) => {
+            if let Some(voyage) = d.voyages.first() {
+                let text = format!(
+                    "Decompose voyage {} {}",
+                    crate::cli::style::styled_story_id(voyage.id()),
+                    voyage.title().bold()
+                );
+                if seen_texts.insert(text.clone()) {
+                    bullets.push((4, text));
+                }
+            }
+        }
+        NextDecision::NeedsPlanning(d) => {
+            if let Some(voyage) = d.voyages.first() {
+                let text = format!(
+                    "Plan voyage {} {}",
+                    crate::cli::style::styled_story_id(voyage.id()),
+                    voyage.title().bold()
+                );
+                if seen_texts.insert(text.clone()) {
+                    bullets.push((5, text));
+                }
+            }
+        }
+        NextDecision::NeedsPRD(d) => {
+            if let Some(epic) = d.epics.first() {
+                let text = format!(
+                    "Draft PRD for epic {} {}",
+                    crate::cli::style::styled_story_id(epic.id()),
+                    epic.title().bold()
+                );
+                if seen_texts.insert(text.clone()) {
+                    bullets.push((6, text));
+                }
+            }
+        }
+        NextDecision::VerifyMission(d) => {
+            if let Some(mission) = d.missions.first() {
+                let text = format!(
+                    "Verify mission {} {}",
+                    crate::cli::style::styled_story_id(mission.id()),
+                    mission.title().bold()
+                );
+                if seen_texts.insert(text.clone()) {
+                    bullets.push((7, text));
+                }
+            }
+        }
+        NextDecision::Research(d) => {
+            if let Some(bearing) = d.bearings.first() {
+                let text = format!(
+                    "Research bearing {} {}",
+                    crate::cli::style::styled_story_id(bearing.id()),
+                    bearing.title().bold()
+                );
+                if seen_texts.insert(text.clone()) {
+                    bullets.push((8, text));
+                }
+            }
+        }
+        NextDecision::Mission(d) => {
+            let text = d.suggestion.clone();
+            if seen_texts.insert(text.clone()) {
+                bullets.push((9, text));
+            }
+        }
+        NextDecision::Empty(d) => {
+            if let Some(suggestion) = d.suggestions.first() {
+                if seen_texts.insert(suggestion.clone()) {
+                    bullets.push((10, suggestion.clone()));
+                }
+            }
+        }
+        _ => {}
+    }
 }
 
 fn render_mission_next(board: &Board, board_dir: &Path, mission: &Mission) -> Result<()> {
