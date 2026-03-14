@@ -1,5 +1,5 @@
 {
-  "hash": "1d7b366578446d563f4cac407626307bfb88813d8c3c17b3a8c68e108ee7965e",
+  "hash": "24c813699193a8b162cc5cbad880d5b3aa4cacc5263fab270fb92f93b689bbbf",
   "report": {
     "story_checks": [
       {
@@ -369,46 +369,13 @@
       {
         "id": "epic-structure",
         "name": "Epic structure",
-        "problems": [
-          {
-            "severity": "Error",
-            "path": "/home/alex/workspace/spoke-sh/keel/.keel/epics/VDmdk1uib/README.md",
-            "message": "contains unresolved scaffold/default text (pattern: {{problem}})",
-            "fix": {
-              "ClearPlaceholder": {
-                "path": "/home/alex/workspace/spoke-sh/keel/.keel/epics/VDmdk1uib/README.md",
-                "pattern": "{{problem}}"
-              }
-            },
-            "scope": null,
-            "category": null,
-            "check_id": "Unknown"
-          },
-          {
-            "severity": "Error",
-            "path": "/home/alex/workspace/spoke-sh/keel/.keel/epics/VDmdk1uib/PRD.md",
-            "message": "PRD section 'Scope' must include at least one canonical 'In Scope' [SCOPE-*] bullet",
-            "fix": null,
-            "scope": null,
-            "category": null,
-            "check_id": "EpicPrdAuthoredContent"
-          },
-          {
-            "severity": "Error",
-            "path": "/home/alex/workspace/spoke-sh/keel/.keel/epics/VDmdk1uib/PRD.md",
-            "message": "PRD section 'Scope' must include at least one canonical 'Out of Scope' [SCOPE-*] bullet",
-            "fix": null,
-            "scope": null,
-            "category": null,
-            "check_id": "EpicPrdAuthoredContent"
-          }
-        ],
+        "problems": [],
         "evaluations": 49,
         "duration": {
           "secs": 0,
           "nanos": 0
         },
-        "passed": false,
+        "passed": true,
         "disabled": false
       },
       {
@@ -830,23 +797,13 @@
       {
         "id": "workflow-graph-integrity",
         "name": "Graph integrity",
-        "problems": [
-          {
-            "severity": "Error",
-            "path": "/home/alex/workspace/spoke-sh/keel/.keel/epics/VDm4ld6EX/README.md",
-            "message": "graph integrity: terminal epic VDm4ld6EX still contains non-terminal descendants [routine daily-status-surface-progress (scheduled)]. Terminal parents must not retain unfinished descendants.",
-            "fix": null,
-            "scope": "VDm4ld6EX",
-            "category": "Coherence",
-            "check_id": "WorkflowGraphIntegrity"
-          }
-        ],
+        "problems": [],
         "evaluations": 374,
         "duration": {
           "secs": 0,
           "nanos": 0
         },
-        "passed": false,
+        "passed": true,
         "disabled": false
       },
       {
@@ -862,15 +819,15 @@
         "disabled": false
       }
     ],
-    "drift_coefficient": 0.2,
-    "estimated_remediation_hours": 4.0,
+    "drift_coefficient": 0.0,
+    "estimated_remediation_hours": 0.0,
     "last_checked_at": {
-      "secs_since_epoch": 1773454445,
-      "nanos_since_epoch": 600272875
+      "secs_since_epoch": 1773454801,
+      "nanos_since_epoch": 139315288
     }
   },
   "last_poked_at": {
-    "secs_since_epoch": 1773454445,
-    "nanos_since_epoch": 600326048
+    "secs_since_epoch": 1773454801,
+    "nanos_since_epoch": 139361757
   }
 }

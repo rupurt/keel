@@ -297,6 +297,12 @@
 |--------|--------|
 | [Implement CLI and Status Rendering](epics/VDm4ld6EX/voyages/VDmcsuJx4/) | done |
 
+### [Interactive Inquiry Persona](epics/VDo4OmYow/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Implement Inquiry Personas](epics/VDo4OmYow/voyages/VDo4Ugi5v/) | in-progress |
+
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
 | Voyage | Status |
