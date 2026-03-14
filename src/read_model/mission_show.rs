@@ -13,6 +13,7 @@ pub struct MissionShowProjection {
     pub id: String,
     pub title: String,
     pub status: String,
+    pub archetype: String,
     pub goals: Vec<ParsedMissionGoal>,
     pub child_entities: MissionChildren,
     pub drift: DriftSurfaceSummary,
@@ -84,6 +85,7 @@ pub fn build_projection(board: &Board, mission: &Mission) -> Result<MissionShowP
         id: mission.id().to_string(),
         title: mission.title().to_string(),
         status: mission.status().to_string(),
+        archetype: mission.archetype.as_str().to_string(),
         goals,
         child_entities: MissionChildren {
             epics,

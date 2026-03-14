@@ -1,11 +1,12 @@
 ---
 id: VDoBLEiaF
 title: Realize High-Density Views
-status: planned
+status: in-progress
 epic: VDmdk1uib
 created_at: 2026-03-13T20:22:29
 index: 1
 updated_at: 2026-03-13T20:23:19
+started_at: 2026-03-13T20:28:21
 ---
 
 # Realize High-Density Views

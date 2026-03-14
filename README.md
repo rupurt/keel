@@ -37,6 +37,21 @@ We believe that planning should be preceded by exploration. Keel encourages **Pl
 
 ---
 
+## ⚙️ Technical Core
+
+### Queue Routing & The Simulation Loop
+The engine uses a 2-queue pull model to prevent "Strategic Fog":
+
+- **MANAGEMENT LANE**: `keel next --role manager` returns management-lane decisions and never returns implementation `Work`.
+- **DELIVERY LANE**: `keel next --role operator` returns implementation work from the delivery lane (`in-progress` then `backlog`).
+
+**Constraint**: `keel next` requires `--role`; there is no implicit manager default.
+
+### Key Simulation Commands
+- next        Pull the next item using explicit role-based queue routing
+- flow        Show workflow lane dashboard from configured topology
+- doctor      Validate board health and optionally fix issues
+
 ## ⚖️ The Physics: Formal Rules
 
 Keel is governed by a strict set of operational invariants. These rules ensure that as the simulation grows in complexity, it never drifts into chaos.

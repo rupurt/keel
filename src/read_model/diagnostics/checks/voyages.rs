@@ -474,7 +474,7 @@ mod tests {
         )
         .unwrap();
 
-        let report = validate(temp.path()).unwrap();
+        let report = validate(temp.path()).unwrap().0;
         let scope_check = report
             .voyage_checks
             .iter()
@@ -749,7 +749,7 @@ mod tests {
             ))
             .build();
 
-        let report = validate(temp.path()).unwrap();
+        let report = validate(temp.path()).unwrap().0;
         let findings: Vec<_> = report
             .voyage_checks
             .iter()

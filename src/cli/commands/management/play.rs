@@ -331,10 +331,7 @@ fn resolve_theater_persona(input: Option<&str>, mood: &TheaterMood) -> &'static 
         );
     }
 
-    if let Some(mapped_persona) = mood
-        .preferred_persona
-        .and_then(|mapped| find_persona_profile(mapped))
-    {
+    if let Some(mapped_persona) = mood.preferred_persona.and_then(find_persona_profile) {
         return mapped_persona;
     }
 

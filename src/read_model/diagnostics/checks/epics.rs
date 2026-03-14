@@ -342,7 +342,7 @@ mod tests {
         )
         .unwrap();
 
-        let report = validate(temp.path()).unwrap();
+        let report = validate(temp.path()).unwrap().0;
         let goal_check = report
             .epic_checks
             .iter()

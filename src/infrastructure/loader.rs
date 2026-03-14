@@ -415,10 +415,27 @@ impl FromPath for Mission {
         frontmatter.id = mission_id;
 
         let mission_dir = path.parent().unwrap();
-        let has_charter = mission_dir.join("CHARTER.md").exists();
+        let charter_path = mission_dir.join("CHARTER.md");
+        let has_charter = charter_path.exists();
         let has_log = mission_dir.join("LOG.md").exists();
 
-        Ok(Mission::new(frontmatter, path, has_charter, has_log))
+        let archetype = if has_charter {
+            if let Ok(content) = fs::read_to_string(&charter_path) {
+                crate::infrastructure::validation::charter::parse_mission_archetype(&content)
+            } else {
+                crate::domain::model::MissionArchetype::default()
+            }
+        } else {
+            crate::domain::model::MissionArchetype::default()
+        };
+
+        Ok(Mission::new(
+            frontmatter,
+            path,
+            archetype,
+            has_charter,
+            has_log,
+        ))
     }
     fn entity_id(&self) -> &str {
         self.id()

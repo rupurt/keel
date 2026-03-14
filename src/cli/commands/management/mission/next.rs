@@ -103,7 +103,13 @@ fn render_extended_status(board: &Board, board_dir: &Path, mission: &Mission) ->
     }
 
     if !unblockers.is_empty() {
-        println!("{}", "Strategic Unblockers (Human Queue)".bold().yellow().underline());
+        println!(
+            "{}",
+            "Strategic Unblockers (Human Queue)"
+                .bold()
+                .yellow()
+                .underline()
+        );
         for unblocker in unblockers {
             println!("{}", unblocker.trim());
         }
@@ -114,17 +120,31 @@ fn render_extended_status(board: &Board, board_dir: &Path, mission: &Mission) ->
     let metrics = keel::read_model::flow_status::project(board);
     let policy = keel::read_model::queue_policy::project(&metrics);
 
-    println!("{}", "Novel Findings & Bottlenecks".bold().cyan().underline());
+    println!(
+        "{}",
+        "Novel Findings & Bottlenecks".bold().cyan().underline()
+    );
     let mut findings_found = false;
 
     if policy.verification.blocks_human_next() {
-        println!("• {} The verification queue ({} items) is starving the agent flow.", "Bottleneck:".bold().red(), metrics.verification.count);
-        println!("  Suggestion: Accept or reject pending stories to reopen the implementation lane.");
+        println!(
+            "• {} The verification queue ({} items) is starving the agent flow.",
+            "Bottleneck:".bold().red(),
+            metrics.verification.count
+        );
+        println!(
+            "  Suggestion: Accept or reject pending stories to reopen the implementation lane."
+        );
         findings_found = true;
     }
 
-    if policy.agent == keel::domain::policy::queue::AgentQueueCategory::Starved && !policy.has_planning_work {
-        println!("• {} Agent has no ready work and no planning is in progress.", "Observation:".bold().yellow());
+    if policy.agent == keel::domain::policy::queue::AgentQueueCategory::Starved
+        && !policy.has_planning_work
+    {
+        println!(
+            "• {} Agent has no ready work and no planning is in progress.",
+            "Observation:".bold().yellow()
+        );
         println!("  Suggestion: Decompose voyages or refine the backlog to generate new stories.");
         findings_found = true;
     }
@@ -134,14 +154,24 @@ fn render_extended_status(board: &Board, board_dir: &Path, mission: &Mission) ->
     let summary = mission_work_summary(board, mission, unmet_goals.len());
 
     if summary.total_open_items() > 10 {
-        println!("• {} Mission has a high volume of open work ({} items).", "Capacity Warning:".bold().yellow(), summary.total_open_items());
+        println!(
+            "• {} Mission has a high volume of open work ({} items).",
+            "Capacity Warning:".bold().yellow(),
+            summary.total_open_items()
+        );
         println!("  Suggestion: Focus on closing existing stories before adding more scope.");
         findings_found = true;
     }
 
     if summary.unmet_goals == 1 && summary.total_open_items() < 3 {
-        println!("• {} Mission is approaching completion.", "Opportunity:".bold().green());
-        println!("  Current state: 1 goal remaining with only {} items of work left.", summary.total_open_items());
+        println!(
+            "• {} Mission is approaching completion.",
+            "Opportunity:".bold().green()
+        );
+        println!(
+            "  Current state: 1 goal remaining with only {} items of work left.",
+            summary.total_open_items()
+        );
         findings_found = true;
     }
 
@@ -187,7 +217,7 @@ fn render_compact_status(board: &Board, board_dir: &Path, mission: &Mission) -> 
 
     // 1. Diagnostics (highest priority)
     let (doctor_report, is_fresh) = keel::read_model::diagnostics::validate(board_dir)?;
-    
+
     if doctor_report.drift_coefficient > 0.1 {
         let text = format!(
             "{} Simulation Drift: {:.2} (Estimated remediation: {:.1}h){}",
@@ -198,7 +228,11 @@ fn render_compact_status(board: &Board, board_dir: &Path, mission: &Mission) -> 
             },
             doctor_report.drift_coefficient,
             doctor_report.estimated_remediation_hours,
-            if is_fresh { " [fresh]".dimmed().to_string() } else { "".to_string() }
+            if is_fresh {
+                " [fresh]".dimmed().to_string()
+            } else {
+                "".to_string()
+            }
         );
         bullets.push((0, text));
     }
@@ -372,12 +406,13 @@ fn add_decision_to_bullets(
             }
         }
         NextDecision::Empty(d) => {
-            if let Some(suggestion) = d.suggestions.first() {
-                if seen_texts.insert(suggestion.clone()) {
-                    bullets.push((10, suggestion.clone()));
-                }
+            if let Some(suggestion) = d.suggestions.first()
+                && seen_texts.insert(suggestion.clone())
+            {
+                bullets.push((10, suggestion.clone()));
             }
         }
+
         _ => {}
     }
 }

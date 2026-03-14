@@ -1631,7 +1631,7 @@ mod tests {
             )
             .build();
 
-        let report = validate(temp.path()).unwrap();
+        let report = validate(temp.path()).unwrap().0;
         let coherence_problems: Vec<_> = report
             .story_checks
             .iter()

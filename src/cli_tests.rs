@@ -158,14 +158,14 @@ fn cli_help_displays_top_level_commands() {
     assert!(help_str.contains("roadmap"), "Missing roadmap command");
     assert!(help_str.contains("verify"), "Missing verify command");
 
-    // Verify groups (Management section)
+    // Verify groups (The Ramping Path section)
     let diag_section = help_str
-        .find("Management")
-        .expect("Missing Management section");
+        .find("The Ramping Path")
+        .expect("Missing The Ramping Path section");
     let after_diag = &help_str[diag_section..];
     assert!(
         after_diag.contains("verify"),
-        "verify command not in Management section of help groups"
+        "verify command not in The Ramping Path section of help groups"
     );
 }
 
@@ -225,7 +225,7 @@ fn cli_parses_mission_next_without_id() {
     assert!(matches!(
         cli.command,
         Commands::Management(ManagementCommands::Mission {
-            action: MissionAction::Next { id: None }
+            action: MissionAction::Next { id: None, .. }
         })
     ));
 }
@@ -250,7 +250,7 @@ fn cli_parses_mission_next_with_id() {
     assert!(matches!(
         cli.command,
         Commands::Management(ManagementCommands::Mission {
-            action: MissionAction::Next { id: Some(id) }
+            action: MissionAction::Next { id: Some(id), .. }
         }) if id == "M1"
     ));
 }

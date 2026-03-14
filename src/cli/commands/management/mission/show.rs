@@ -43,11 +43,15 @@ fn render_human_output(projection: &MissionShowProjection) {
 
 fn build_document(projection: &MissionShowProjection, width: usize) -> ShowDocument {
     let metadata = ShowKeyValues::new()
-        .with_min_label_width(9)
+        .with_min_label_width(11)
         .row("Title:", format!("{}", projection.title.bold()))
         .row(
             "Status:",
             style::styled_mission_status(&projection.status.parse().unwrap()),
+        )
+        .row(
+            "Archetype:",
+            format!("{}", projection.archetype.bold().bright_magenta()),
         )
         .row_optional(
             "Signal:",
@@ -151,6 +155,7 @@ mod tests {
             id: "M1".to_string(),
             title: "Mission One".to_string(),
             status: "active".to_string(),
+            archetype: "Strategic".to_string(),
             goals: Vec::new(),
             child_entities: MissionChildren {
                 epics: vec![EntitySummary {

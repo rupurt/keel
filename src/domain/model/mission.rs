@@ -13,6 +13,46 @@ use serde::{Deserialize, Serialize};
 use super::{Entity, deserialize_strict_datetime};
 use crate::domain::state_machine::mission::MissionStatus;
 
+/// Mission archetype category
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub enum MissionArchetype {
+    /// Large-scale value shifts or architectural foundations
+    #[default]
+    Strategic,
+    /// Purely focused on reaching/maintaining Zero Drift
+    Maintenance,
+    /// Dominated by Bearings and Play; focuses on reducing the fog of war
+    Exploratory,
+    /// Explicitly graduates conclusive research into Planned implementation work
+    Bridging,
+}
+
+impl MissionArchetype {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Strategic => "Strategic",
+            Self::Maintenance => "Maintenance",
+            Self::Exploratory => "Exploratory",
+            Self::Bridging => "Bridging",
+        }
+    }
+
+    pub fn parse(s: &str) -> Option<Self> {
+        let lower = s.to_ascii_lowercase();
+        if lower.contains("strategic") {
+            Some(Self::Strategic)
+        } else if lower.contains("maintenance") || lower.contains("healing") {
+            Some(Self::Maintenance)
+        } else if lower.contains("exploratory") || lower.contains("discovery") {
+            Some(Self::Exploratory)
+        } else if lower.contains("bridging") || lower.contains("realization") {
+            Some(Self::Bridging)
+        } else {
+            None
+        }
+    }
+}
+
 /// Mission frontmatter from YAML
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -51,6 +91,8 @@ pub struct Mission {
     pub frontmatter: MissionFrontmatter,
     /// Path to the mission README.md
     pub path: PathBuf,
+    /// Mission archetype
+    pub archetype: MissionArchetype,
     /// Whether CHARTER.md exists in the mission directory
     pub has_charter: bool,
     /// Whether LOG.md exists in the mission directory
@@ -62,12 +104,14 @@ impl Mission {
     pub fn new(
         frontmatter: MissionFrontmatter,
         path: impl Into<PathBuf>,
+        archetype: MissionArchetype,
         has_charter: bool,
         has_log: bool,
     ) -> Self {
         Self {
             frontmatter,
             path: path.into(),
+            archetype,
             has_charter,
             has_log,
         }
@@ -206,11 +250,18 @@ status: defining
             operator_signal: None,
         };
 
-        let mission = Mission::new(fm, "/test/missions/test-mission/README.md", true, false);
+        let mission = Mission::new(
+            fm,
+            "/test/missions/test-mission/README.md",
+            MissionArchetype::Strategic,
+            true,
+            false,
+        );
 
         assert_eq!(mission.id(), "test-mission");
         assert_eq!(mission.title(), "Test Mission");
         assert_eq!(mission.status(), MissionStatus::Defining);
+        assert_eq!(mission.archetype, MissionArchetype::Strategic);
         assert!(mission.has_charter);
         assert!(!mission.has_log);
     }
@@ -229,7 +280,13 @@ status: defining
             operator_signal: None,
         };
 
-        let mission = Mission::new(fm, "/board/missions/m1/README.md", true, true);
+        let mission = Mission::new(
+            fm,
+            "/board/missions/m1/README.md",
+            MissionArchetype::Strategic,
+            true,
+            true,
+        );
         assert_eq!(
             Entity::path(&mission),
             Path::new("/board/missions/m1/README.md")

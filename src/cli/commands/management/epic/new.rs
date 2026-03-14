@@ -313,12 +313,14 @@ mod tests {
         )
         .unwrap();
 
-        let report = keel::read_model::diagnostics::validate(board_dir).unwrap();
+        let report = keel::read_model::diagnostics::validate(board_dir)
+            .unwrap()
+            .0;
         let failures: Vec<_> = report
             .epic_checks
             .iter()
             .filter(|check| !check.passed)
-            .map(|check| check.name)
+            .map(|check| check.name.clone())
             .collect();
 
         assert!(

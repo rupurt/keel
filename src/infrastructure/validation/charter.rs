@@ -3,7 +3,7 @@
 use std::fs;
 
 use super::{CheckId, GapCategory, Problem};
-use crate::domain::model::{Board, Mission};
+use crate::domain::model::{Board, Mission, MissionArchetype};
 use crate::infrastructure::markdown_sections::extract_section;
 use crate::infrastructure::validation::structural;
 
@@ -12,6 +12,19 @@ const DEFAULT_HALTING_RULES: [&str; 3] = [
     "halt when all mg-* goals with board: verification are satisfied",
     "yield to human when only metric: or manual: goals remain",
 ];
+
+/// Parse mission archetype from CHARTER.md content
+pub fn parse_mission_archetype(content: &str) -> MissionArchetype {
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if let Some(rest) = trimmed.strip_prefix("**Archetype:**")
+            && let Some(archetype) = MissionArchetype::parse(rest.trim())
+        {
+            return archetype;
+        }
+    }
+    MissionArchetype::default()
+}
 
 /// Mission goal verification type
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]

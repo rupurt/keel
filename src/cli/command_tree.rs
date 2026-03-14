@@ -10,7 +10,7 @@ The Ramping Path (Your Moves):
   flow        Show workflow lane dashboard from configured topology
 
 2. The Operator (Learning by Building)
-  next        Pull the next move with exactly three bullets (--status)
+  next        Pull the next item using explicit role-based queue routing
   story       Implementation units and acceptance criteria
   verify      Execute verification proofs
   audit       Rich evidence/traceability report
@@ -19,7 +19,9 @@ The Ramping Path (Your Moves):
   mission     Strategic objectives and charters
   epic        Strategic grouping and PRD management
   voyage      Tactical planning (SRS/SDD) and execution
+  routine     Scheduled strategic work (Routines)
   adr         Architecture Decision Records (The Physics)
+  roadmap     Strategic management timeline
 
 Discovery & Automation:
   play        Invite play-driven discovery (The Sandbox)

@@ -27,7 +27,7 @@ pub use board::Board;
 pub use entity::Entity;
 pub use epic::{Epic, EpicFrontmatter, EpicState};
 pub use manifest::Manifest;
-pub use mission::{Mission, MissionFrontmatter};
+pub use mission::{Mission, MissionArchetype, MissionFrontmatter};
 #[allow(unused_imports)] // Priority may be used for voyages in future
 pub use priority::Priority;
 pub use routine::{Routine, RoutineCadence, RoutineFrontmatter};

@@ -57,8 +57,10 @@ pub fn calculate_board_hash(board_dir: &Path) -> Result<String> {
 
     // Strategy: only hash direct children metadata and the root itself.
     // This is much faster than a recursive walk and covers most 'pokes'.
-    let dirs = ["stories", "epics", "missions", "bearings", "adrs", "routines"];
-    
+    let dirs = [
+        "stories", "epics", "missions", "bearings", "adrs", "routines",
+    ];
+
     // Hash root metadata
     if let Ok(metadata) = board_dir.metadata() {
         update_hasher_with_metadata(&mut hasher, board_dir, &metadata);
@@ -83,7 +85,17 @@ pub fn calculate_board_hash(board_dir: &Path) -> Result<String> {
                 }
 
                 if entry_path.is_dir() {
-                    let key_docs = ["README.md", "PRD.md", "SRS.md", "SDD.md", "BRIEF.md", "EVIDENCE.md", "ASSESSMENT.md", "CHARTER.md", "LOG.md"];
+                    let key_docs = [
+                        "README.md",
+                        "PRD.md",
+                        "SRS.md",
+                        "SDD.md",
+                        "BRIEF.md",
+                        "EVIDENCE.md",
+                        "ASSESSMENT.md",
+                        "CHARTER.md",
+                        "LOG.md",
+                    ];
                     for doc in key_docs {
                         let doc_path = entry_path.join(doc);
                         if let Ok(metadata) = doc_path.metadata() {
@@ -101,10 +113,10 @@ pub fn calculate_board_hash(board_dir: &Path) -> Result<String> {
 fn update_hasher_with_metadata(hasher: &mut Sha256, path: &Path, metadata: &fs::Metadata) {
     hasher.update(path.to_string_lossy().as_bytes());
     hasher.update(metadata.len().to_le_bytes());
-    if let Ok(mtime) = metadata.modified() {
-        if let Ok(duration) = mtime.duration_since(SystemTime::UNIX_EPOCH) {
-            hasher.update(duration.as_secs().to_le_bytes());
-            hasher.update(duration.subsec_nanos().to_le_bytes());
-        }
+    if let Ok(mtime) = metadata.modified()
+        && let Ok(duration) = mtime.duration_since(SystemTime::UNIX_EPOCH)
+    {
+        hasher.update(duration.as_secs().to_le_bytes());
+        hasher.update(duration.subsec_nanos().to_le_bytes());
     }
 }

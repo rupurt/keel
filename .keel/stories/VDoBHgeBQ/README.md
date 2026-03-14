@@ -2,12 +2,13 @@
 id: VDoBHgeBQ
 title: Label Mission as Bridging Archetype
 type: feat
-status: backlog
+status: in-progress
 created_at: 2026-03-13T20:22:16
-updated_at: 2026-03-13T20:23:19
+updated_at: 2026-03-13T20:28:21
 operator-signal: 
 scope: VDmdk1uib/VDoBLEiaF
 index: 1
+started_at: 2026-03-13T20:28:21
 ---
 
 # Label Mission as Bridging Archetype
