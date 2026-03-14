@@ -40,7 +40,7 @@ fn build_pulse_output_with_dir_at(
     }
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 struct PulseCycleOutput {
     mode: &'static str,
     evaluated: usize,
@@ -48,9 +48,26 @@ struct PulseCycleOutput {
     skipped: usize,
     deferred: usize,
     routines: Vec<PulseRoutineSummary>,
+    /// Simulation health metrics
+    health: Option<PulseHealthMetrics>,
+    /// Activity metrics (heartrate)
+    activity: Option<PulseActivityMetrics>,
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
+struct PulseHealthMetrics {
+    drift_coefficient: f64,
+    remediation_hours: f64,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq)]
+struct PulseActivityMetrics {
+    sparkline: String,
+    daily_avg: f64,
+    weekly_total: usize,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq)]
 struct PulseRoutineSummary {
     id: String,
     title: String,
@@ -64,7 +81,7 @@ struct PulseRoutineSummary {
     error: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 enum PulseRoutineOutcome {
     Created,
@@ -72,7 +89,7 @@ enum PulseRoutineOutcome {
     Deferred,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 enum PulseRoutineReason {
     Materialized,
@@ -136,6 +153,25 @@ fn build_pulse_cycle(board_dir: &Path, reference_time: DateTime<Utc>) -> Result<
         .filter(|routine| matches!(routine.outcome, PulseRoutineOutcome::Deferred))
         .count();
 
+    // 4. Calculate Health
+    let (report, _) = keel::read_model::diagnostics::validate(board_dir)?;
+    let health = Some(PulseHealthMetrics {
+        drift_coefficient: report.drift_coefficient,
+        remediation_hours: report.estimated_remediation_hours,
+    });
+
+    // 5. Calculate Activity (EKG)
+    let history = keel::read_model::throughput_history::project_default(&board);
+    let activity = if let Some(weekly) = history.weekly.first() {
+        Some(PulseActivityMetrics {
+            sparkline: render_sparkline(&history),
+            daily_avg: weekly.stories_done as f64 / 7.0,
+            weekly_total: weekly.stories_done,
+        })
+    } else {
+        None
+    };
+
     Ok(PulseCycleOutput {
         mode: "materialize",
         evaluated: routines.len(),
@@ -143,7 +179,43 @@ fn build_pulse_cycle(board_dir: &Path, reference_time: DateTime<Utc>) -> Result<
         skipped,
         deferred,
         routines,
+        health,
+        activity,
     })
+}
+
+fn render_sparkline(history: &keel::read_model::throughput_history::ThroughputHistory) -> String {
+    let mut values: Vec<f64> = history
+        .weekly
+        .iter()
+        .take(12)
+        .rev()
+        .map(|w| w.stories_done as f64)
+        .collect();
+
+    if values.is_empty() {
+        return "·".repeat(12);
+    }
+
+    // Pad if less than 12 weeks
+    while values.len() < 12 {
+        values.insert(0, 0.0);
+    }
+
+    let max = values.iter().fold(0.0f64, |a, &b| a.max(b));
+    let ticks = [' ', ' ', '▂', '▃', '▄', '▅', '▆', '▇', '█'];
+
+    values
+        .iter()
+        .map(|&v| {
+            if max == 0.0 {
+                '·'
+            } else {
+                let i = (v / max * (ticks.len() - 1) as f64).round() as usize;
+                ticks[i]
+            }
+        })
+        .collect()
 }
 
 fn map_pulse_routine(
@@ -379,13 +451,45 @@ fn render_blueprint_block(blueprint: &str) -> String {
 }
 
 fn render_pulse_human(cycle: &PulseCycleOutput) -> String {
-    let mut lines = vec![
-        "Pulse cycle".to_string(),
-        format!("  Evaluated: {}", cycle.evaluated),
-        format!("  Created:  {}", cycle.created),
-        format!("  Skipped:  {}", cycle.skipped),
-        format!("  Deferred: {}", cycle.deferred),
-    ];
+    use owo_colors::OwoColorize;
+    let mut lines = Vec::new();
+
+    lines.push(String::new());
+    lines.push(format!("  {}", "Simulation Heartbeat".bold().underline()));
+
+    // 1. Activity (The EKG)
+    if let Some(activity) = &cycle.activity {
+        lines.push(format!(
+            "  Activity:  {}  {:.1} stories/day avg ({} this week)",
+            activity.sparkline.bold().cyan(),
+            activity.daily_avg,
+            activity.weekly_total
+        ));
+    }
+
+    // 2. Health (The Physical)
+    if let Some(health) = &cycle.health {
+        let status = if health.drift_coefficient > 0.5 {
+            "Critical".bold().red().to_string()
+        } else if health.drift_coefficient > 0.1 {
+            "Elevated".bold().yellow().to_string()
+        } else {
+            "Healthy".bold().green().to_string()
+        };
+
+        lines.push(format!(
+            "  Health:    {} (Drift: {:.2}, Debt: {:.1}h)",
+            status, health.drift_coefficient, health.remediation_hours
+        ));
+    }
+
+    // 3. Work (The Volume)
+    lines.push(format!(
+        "  Volume:    {} routines evaluated ({} created, {} skipped)",
+        cycle.evaluated.bold().cyan(),
+        cycle.created.bold().green(),
+        cycle.skipped.bold().yellow()
+    ));
 
     append_outcome_section(
         &mut lines,
