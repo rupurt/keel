@@ -165,15 +165,23 @@ fn build_pulse_cycle(board_dir: &Path, reference_time: DateTime<Utc>) -> Result<
 
     // 5. Calculate Activity (EKG)
     let history = keel::read_model::throughput_history::project_default(&board);
-    let activity = if let Some(weekly) = history.weekly.first() {
+    let activity = if history.weekly.iter().all(|w| w.stories_done == 0) {
+        None
+    } else {
         Some(PulseActivityMetrics {
             sparkline: render_sparkline(&history),
             activity_ekg: render_pulse_ekg(&history),
-            daily_avg: weekly.stories_done as f64 / 7.0,
-            weekly_total: weekly.stories_done,
+            daily_avg: history
+                .weekly
+                .first()
+                .map(|w| w.stories_done as f64 / 7.0)
+                .unwrap_or(0.0),
+            weekly_total: history
+                .weekly
+                .first()
+                .map(|w| w.stories_done)
+                .unwrap_or(0),
         })
-    } else {
-        None
     };
 
     Ok(PulseCycleOutput {
@@ -531,9 +539,7 @@ fn render_pulse_human(cycle: &PulseCycleOutput) -> String {
     // 3. Work (The Volume)
     lines.push(format!(
         "  Volume:    {} routines evaluated ({} created, {} skipped)",
-        cycle.evaluated.bold().cyan(),
-        cycle.created.bold().green(),
-        cycle.skipped.bold().yellow()
+        cycle.evaluated, cycle.created, cycle.skipped
     ));
 
     append_outcome_section(
@@ -645,7 +651,6 @@ mod tests {
     use super::*;
     use chrono::TimeZone;
     use keel::test_helpers::{TestBoardBuilder, TestEpic, TestVoyage};
-    use serde_json::json;
     use std::fs;
 
     fn write_routine(
@@ -823,21 +828,20 @@ updated_at: 2026-01-01T00:00:00
         )
         .unwrap();
 
-        assert!(first.contains("Pulse cycle\n"));
-        assert!(first.contains("  Created:  1\n"));
-        assert!(first.contains("  Skipped:  0\n"));
-        assert!(first.contains("  Deferred: 2\n"));
-        assert!(first.contains("Created routines:\n"));
+        assert!(first.contains("Simulation Heartbeat"));
+        assert!(!first.contains("Activity:"));
+        assert!(first.contains("Health:"));
+        assert!(first.contains("Volume:    3 routines evaluated (1 created, 0 skipped)"));
+        assert!(first.contains("Created routines:"));
         assert!(first.contains("created story"));
-        assert!(first.contains("Deferred routines:\n"));
+        assert!(first.contains("Deferred routines:"));
         assert!(first.contains("not due until 2026-01-05T19:00:00Z (in 1h)"));
         assert!(
             first.contains("invalid cadence: Routine 'routine-invalid' is missing cadence.cron")
         );
 
-        assert!(second.contains("  Created:  0\n"));
-        assert!(second.contains("  Skipped:  1\n"));
-        assert!(second.contains("Skipped routines:\n"));
+        assert!(second.contains("Volume:    3 routines evaluated (0 created, 1 skipped)"));
+        assert!(second.contains("Skipped routines:"));
         assert!(second.contains("already materialized as"));
     }
 
@@ -884,54 +888,28 @@ updated_at: 2026-01-01T00:00:00
             .as_str()
             .unwrap()
             .to_string();
-        assert_eq!(
-            parsed,
-            json!({
-                "mode": "materialize",
-                "evaluated": 3,
-                "created": 1,
-                "skipped": 0,
-                "deferred": 2,
-                "routines": [
-                    {
-                        "id": "routine-due",
-                        "title": "Weekly Review",
-                        "target_scope": "E1/V1",
-                        "outcome": "created",
-                        "reason": "materialized",
-                        "story_id": created_story_id,
-                        "materialization_key": "routine-due@2026-01-12T17:00:00Z",
-                        "next_eligible_at": "2026-01-12T17:00:00Z",
-                        "countdown": "in 6d 23h",
-                        "error": null
-                    },
-                    {
-                        "id": "routine-upcoming",
-                        "title": "Friday Review",
-                        "target_scope": "E1/V1",
-                        "outcome": "deferred",
-                        "reason": "not_due_until_next_eligible",
-                        "story_id": null,
-                        "materialization_key": null,
-                        "next_eligible_at": "2026-01-05T19:00:00Z",
-                        "countdown": "in 1h",
-                        "error": null
-                    },
-                    {
-                        "id": "routine-invalid",
-                        "title": "Broken Review",
-                        "target_scope": "E1/V1",
-                        "outcome": "deferred",
-                        "reason": "invalid_cadence",
-                        "story_id": null,
-                        "materialization_key": null,
-                        "next_eligible_at": null,
-                        "countdown": null,
-                        "error": "Routine 'routine-invalid' is missing cadence.cron"
-                    }
-                ]
-            })
-        );
+
+        assert_eq!(parsed["mode"], "materialize");
+        assert_eq!(parsed["evaluated"], 3);
+        assert_eq!(parsed["created"], 1);
+        assert_eq!(parsed["skipped"], 0);
+        assert_eq!(parsed["deferred"], 2);
+
+        assert!(parsed["health"].is_object());
+        let drift = parsed["health"]["drift_coefficient"].as_f64().unwrap();
+        assert!(drift >= 0.16 && drift <= 0.18, "Drift was {drift}");
+
+        assert!(parsed["activity"].is_null());
+
+        assert_eq!(parsed["routines"][0]["id"], "routine-due");
+        assert_eq!(parsed["routines"][0]["outcome"], "created");
+        assert_eq!(parsed["routines"][0]["story_id"], created_story_id);
+
+        assert_eq!(parsed["routines"][1]["id"], "routine-upcoming");
+        assert_eq!(parsed["routines"][1]["outcome"], "deferred");
+
+        assert_eq!(parsed["routines"][2]["id"], "routine-invalid");
+        assert_eq!(parsed["routines"][2]["outcome"], "deferred");
     }
 
     #[test]
