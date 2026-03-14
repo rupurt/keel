@@ -186,7 +186,23 @@ fn render_compact_status(board: &Board, board_dir: &Path, mission: &Mission) -> 
     let mut seen_texts = BTreeSet::new();
 
     // 1. Diagnostics (highest priority)
-    let doctor_report = keel::read_model::diagnostics::validate(board_dir)?;
+    let (doctor_report, is_fresh) = keel::read_model::diagnostics::validate(board_dir)?;
+    
+    if doctor_report.drift_coefficient > 0.1 {
+        let text = format!(
+            "{} Simulation Drift: {:.2} (Estimated remediation: {:.1}h){}",
+            if doctor_report.drift_coefficient > 0.5 {
+                "Critical".bold().red().to_string()
+            } else {
+                "Elevated".bold().yellow().to_string()
+            },
+            doctor_report.drift_coefficient,
+            doctor_report.estimated_remediation_hours,
+            if is_fresh { " [fresh]".dimmed().to_string() } else { "".to_string() }
+        );
+        bullets.push((0, text));
+    }
+
     if !doctor_report.all_problems().is_empty() {
         for problem in doctor_report.all_problems().iter().take(3) {
             let text = format!("{}: {}", problem.severity, problem.message);

@@ -1,5 +1,6 @@
 //! Board health diagnostics engine
 
+pub mod cache;
 pub mod catalog;
 pub mod checks;
 pub mod fixes;
@@ -30,8 +31,8 @@ fn configured_check(
     let disabled = doctor_config.is_disabled(id);
     let passed = problems.is_empty();
     CheckResult {
-        id,
-        name,
+        id: id.to_string(),
+        name: name.to_string(),
         evaluations,
         problems: if disabled { Vec::new() } else { problems },
         duration: Duration::from_millis(0),
@@ -40,17 +41,22 @@ fn configured_check(
     }
 }
 
-/// Run all health checks and return a full report
-pub fn validate(board_dir: &Path) -> Result<DoctorReport> {
+/// Run all health checks and return a full report with a freshness signal
+pub fn validate(board_dir: &Path) -> Result<(DoctorReport, bool)> {
     // Prefer config from the board directory itself or its parent (project root)
     let (config, source) = crate::infrastructure::config::load_config_from(board_dir);
     if source != crate::infrastructure::config::ConfigSource::Defaults {
-        return validate_with_config(board_dir, &config);
+        return validate_with_config_internal(board_dir, &config);
     }
 
     let project_root = board_dir.parent().unwrap_or(board_dir);
     let (config, _) = crate::infrastructure::config::load_config_from(project_root);
-    validate_with_config(board_dir, &config)
+    validate_with_config_internal(board_dir, &config)
+}
+
+/// Legacy compatibility for single report return
+pub fn validate_report(board_dir: &Path) -> Result<DoctorReport> {
+    Ok(validate(board_dir)?.0)
 }
 
 /// Run all health checks with a specific configuration
@@ -58,6 +64,18 @@ pub fn validate_with_config(
     board_dir: &Path,
     config: &crate::infrastructure::config::Config,
 ) -> Result<DoctorReport> {
+    Ok(validate_with_config_internal(board_dir, config)?.0)
+}
+
+fn validate_with_config_internal(
+    board_dir: &Path,
+    config: &crate::infrastructure::config::Config,
+) -> Result<(DoctorReport, bool)> {
+    let current_hash = cache::calculate_board_hash(board_dir)?;
+    if let Some((cached, _)) = cache::load_cache(board_dir, &current_hash) {
+        return Ok((cached, true));
+    }
+
     let board = load_board(board_dir)?;
     let doctor_config = &config.doctor;
 
@@ -687,7 +705,7 @@ pub fn validate_with_config(
         topology_problems,
     ));
 
-    Ok(DoctorReport {
+    let mut report = DoctorReport {
         story_checks,
         voyage_checks,
         epic_checks,
@@ -695,5 +713,15 @@ pub fn validate_with_config(
         bearing_checks,
         mission_checks,
         workflow_checks,
-    })
+        drift_coefficient: 0.0,
+        estimated_remediation_hours: 0.0,
+        last_checked_at: std::time::SystemTime::now(),
+    };
+
+    report.calculate_drift();
+
+    // Save to cache
+    let _ = cache::save_cache(board_dir, current_hash, report.clone());
+
+    Ok((report, false))
 }

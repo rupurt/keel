@@ -199,7 +199,7 @@ pub fn calculate_all_decisions(
     // 0. Board Health Check
     #[cfg(not(test))]
     {
-        let report = keel::read_model::diagnostics::validate(board_dir)?;
+        let report = keel::read_model::diagnostics::validate_report(board_dir)?;
         if report.total_errors() > 0 || report.total_warnings() > 0 {
             let has_fixes = report.all_problems().iter().any(|p| p.fix.is_some());
             decisions.push(NextDecision::Diagnostics {
@@ -449,7 +449,7 @@ pub(crate) fn calculate_next_at(
     // Disabled in tests to allow legacy mock boards to pass without heavy instrumentation.
     #[cfg(not(test))]
     {
-        let report = keel::read_model::diagnostics::validate(board_dir)?;
+        let report = keel::read_model::diagnostics::validate_report(board_dir)?;
         let has_errors = report.total_errors() > 0;
 
         if has_errors {

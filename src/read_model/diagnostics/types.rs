@@ -1,12 +1,11 @@
 //! Types for board health diagnostics
 
-use serde::Serialize;
 use std::time::Duration;
 
 pub use crate::infrastructure::validation::{CheckId, Fix, GapCategory, Problem, Severity};
 
 /// Full board health report
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, serde::Serialize, serde::Deserialize, Clone)]
 pub struct DoctorReport {
     pub story_checks: Vec<CheckResult>,
     pub voyage_checks: Vec<CheckResult>,
@@ -15,6 +14,12 @@ pub struct DoctorReport {
     pub bearing_checks: Vec<CheckResult>,
     pub mission_checks: Vec<CheckResult>,
     pub workflow_checks: Vec<CheckResult>,
+    /// Simulation drift coefficient (0.0 to 1.0)
+    pub drift_coefficient: f64,
+    /// Estimated hours to reach zero drift
+    pub estimated_remediation_hours: f64,
+    /// When this report was generated
+    pub last_checked_at: std::time::SystemTime,
 }
 
 impl DoctorReport {
@@ -54,13 +59,26 @@ impl DoctorReport {
             .flat_map(|c| &c.problems)
             .collect()
     }
+
+    /// Calculate drift based on problem volume and severity.
+    pub fn calculate_drift(&mut self) {
+        let errors = self.total_errors();
+        let warnings = self.total_warnings();
+
+        // Heuristic: Each error adds 0.05, each warning adds 0.01
+        // Capped at 1.0 (Full Chaos)
+        self.drift_coefficient = ((errors as f64 * 0.05) + (warnings as f64 * 0.01)).min(1.0);
+
+        // Heuristic: Each error takes 1 hour, each warning takes 0.2 hours
+        self.estimated_remediation_hours = (errors as f64 * 1.0) + (warnings as f64 * 0.2);
+    }
 }
 
 /// Result of a single health check category
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, serde::Serialize, serde::Deserialize, Clone)]
 pub struct CheckResult {
-    pub id: &'static str,
-    pub name: &'static str,
+    pub id: String,
+    pub name: String,
     pub problems: Vec<Problem>,
     pub evaluations: usize,
     pub duration: Duration,

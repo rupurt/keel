@@ -1,8 +1,8 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 /// Severity of a validation problem.
-#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum Severity {
     /// Must be rejected by runtime transition paths.
     Error,
@@ -27,7 +27,7 @@ impl std::fmt::Display for Severity {
 ///
 /// This type is used by both `keel doctor` for reporting and the transition
 /// engine for gating.
-#[derive(Debug, Serialize, Clone, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct Problem {
     /// Problem severity.
     pub severity: Severity,
@@ -104,7 +104,7 @@ impl Problem {
     }
 }
 
-#[derive(Debug, Serialize, Clone, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub enum Fix {
     MigrateAnnotationToTest {
         path: PathBuf,
@@ -142,7 +142,7 @@ pub enum Fix {
     },
 }
 
-#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum GapCategory {
     #[allow(dead_code)]
     Structural,
@@ -156,7 +156,7 @@ pub enum GapCategory {
     Convention,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq, Hash, Default)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash, Default)]
 pub enum CheckId {
     #[default]
     Unknown,

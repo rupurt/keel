@@ -7,7 +7,7 @@ use std::path::Path;
 use std::time::Instant;
 
 use keel::read_model::diagnostics::fixes::run_fixes;
-use keel::read_model::diagnostics::validate;
+use keel::read_model::diagnostics::validate_report as validate;
 
 /// Run the doctor command
 pub fn run(board_dir: &Path, fix: bool, _evidence: bool, _watch: bool, _quick: bool) -> Result<()> {
