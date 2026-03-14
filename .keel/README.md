@@ -297,11 +297,11 @@
 |--------|--------|
 | [Implement CLI and Status Rendering](epics/VDm4ld6EX/voyages/VDmcsuJx4/) | done |
 
-### [Interactive Inquiry Persona](epics/VDo4OmYow/) (active)
+### [Interactive Inquiry Persona](epics/VDo4OmYow/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Implement Inquiry Personas](epics/VDo4OmYow/voyages/VDo4Ugi5v/) | in-progress |
+| [Implement Inquiry Personas](epics/VDo4OmYow/voyages/VDo4Ugi5v/) | done |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
@@ -314,5 +314,9 @@
 
 ### [Semantic Search and Ranking in Keel](epics/1w5H2Bq9L/) (draft)
 
-### [TUI Compact Layout Research](epics/VDmdk1uib/) (draft)
+### [TUI Compact Layout Research](epics/VDmdk1uib/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Realize High-Density Views](epics/VDmdk1uib/voyages/VDoBLEiaF/) | planned |
 

@@ -21,15 +21,17 @@ completed_at: 2026-03-13T20:04:20
 |----------|-------------|
 | [SRS.md](SRS.md) | Requirements and verification criteria |
 | [SDD.md](SDD.md) | Architecture and implementation details |
+| [VOYAGE_REPORT.md](VOYAGE_REPORT.md) | Narrative summary of implementation and evidence |
+| [COMPLIANCE_REPORT.md](COMPLIANCE_REPORT.md) | Traceability matrix and verification proof |
 <!-- END DOCUMENTS -->
 
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/2 stories complete
+**Progress:** 2/2 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Implement Student Persona](../../../../stories/VDo4enOxE/README.md) | feat | done |
-| [Implement Interrogator Persona](../../../../stories/VDo4es60G/README.md) | feat | needs-human-verification |
+| [Implement Interrogator Persona](../../../../stories/VDo4es60G/README.md) | feat | done |
 <!-- END GENERATED -->

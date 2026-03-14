@@ -22,11 +22,13 @@ Current status reports are too verbose for quick checks.
 
 ### In Scope
 
-- [SCOPE-01] Implement compact status layouts based on research findings.
+- [SCOPE-01] Add Archetype labeling to missions.
+- [SCOPE-02] Implement High-Density `story show` layout.
+- [SCOPE-03] Implement High-Density `voyage show` layout.
 
 ### Out of Scope
 
-- [SCOPE-02] Redesigning the full terminal dashboard.
+- [SCOPE-04] Full TUI dashboard rewrite.
 
 ## Requirements
 

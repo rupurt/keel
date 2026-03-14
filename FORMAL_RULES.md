@@ -39,7 +39,15 @@ When querying with `--status`, the engine MUST:
 - Use **action-oriented** language (e.g., "Review ADR," "Start Story").
 - Style IDs and Titles consistently to minimize cognitive load.
 
-## 6. Winning Conditions
+## 6. Mission Archetypes
+To prevent "Strategic Fog," every mission must align with one of four archetypes:
+
+- **Strategic (Foundation):** Large-scale value shifts or architectural foundations.
+- **Maintenance (Healing):** Purely focused on reaching/maintaining Zero Drift.
+- **Exploratory (Discovery):** Dominated by `Bearings` and `Play`; focuses on reducing the fog of war.
+- **Bridging (Realization):** Explicitly graduates conclusive research (Graduated Bearings) into `Planned` implementation work.
+
+## 7. Winning Conditions
 A mission is considered **Achieved** only when:
 - All `board:`-verifiable goals in the `CHARTER.md` are met.
 - There is no remaining `open` work (Stories, Voyages, Epics) linked to the mission.

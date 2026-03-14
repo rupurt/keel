@@ -1,6 +1,7 @@
 ---
 id: VDmdk1uib
 title: TUI Compact Layout Research
+mission: VDoBHbrAK
 created_at: 2026-03-13T19:01:12
 ---
 
@@ -18,7 +19,8 @@ created_at: 2026-03-13T19:01:12
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/0 voyages complete, 0/0 stories done
+**Progress:** 0/1 voyages complete, 0/2 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
+| [Realize High-Density Views](voyages/VDoBLEiaF/) | planned | 0/2 |
 <!-- END GENERATED -->
