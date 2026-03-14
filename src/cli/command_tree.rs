@@ -89,9 +89,9 @@ pub fn build_cli() -> Command {
                         .action(ArgAction::SetTrue),
                 )
                 .arg(
-                    Arg::new("show-routines")
-                        .long("show-routines")
-                        .help("Show scheduled routines in the flow output")
+                    Arg::new("hide-routines")
+                        .long("hide-routines")
+                        .help("Hide scheduled routines in the flow output")
                         .action(ArgAction::SetTrue),
                 ),
         )

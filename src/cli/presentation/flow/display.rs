@@ -89,14 +89,16 @@ pub fn render_annotated_flow(
     let cap_render = render_epic_capacities(&cap_map, &theme);
     if !cap_render.is_empty() {
         ensure_section_spacing(&mut output);
-        writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
-        writeln!(output, "  Strategic Capacity").unwrap();
-        writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
-        writeln!(output).unwrap();
+        writeln!(
+            output,
+            "  Strategic Capacity ⚡ {}",
+            "───────────────".dimmed()
+        )
+        .unwrap();
         writeln!(output, "{}", cap_render).unwrap();
         if !has_actionable_capacity {
             writeln!(output).unwrap();
-            writeln!(output, "  {}", strategic_capacity_guidance(board, metrics)).unwrap();
+            writeln!(output, "    {}", strategic_capacity_guidance(board, metrics)).unwrap();
         }
     }
 

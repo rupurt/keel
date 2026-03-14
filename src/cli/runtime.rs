@@ -47,8 +47,8 @@ pub fn run() -> Result<()> {
         }
         Some(("flow", m)) => {
             let no_color = *m.get_one::<bool>("no_color").unwrap_or(&false);
-            let show_routines = *m.get_one::<bool>("show-routines").unwrap_or(&false);
-            super::commands::diagnostics::flow::run(&resolve_board_dir()?, no_color, show_routines)
+            let hide_routines = *m.get_one::<bool>("hide-routines").unwrap_or(&false);
+            super::commands::diagnostics::flow::run(&resolve_board_dir()?, no_color, !hide_routines)
         }
         Some(("throughput", m)) => {
             let no_color = *m.get_one::<bool>("no_color").unwrap_or(&false);
