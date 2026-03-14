@@ -6,7 +6,9 @@ use std::path::Path;
 
 use anyhow::{Context, Result, anyhow};
 use chrono::{DateTime, SecondsFormat, Utc};
+use colored::Color;
 use serde::Serialize;
+use txtplot::ChartContext;
 
 use keel::domain::model::{AdrStatus, Board, StoryFrontmatter, StoryState, StoryType};
 use keel::infrastructure::loader::load_board;
@@ -63,6 +65,7 @@ struct PulseHealthMetrics {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 struct PulseActivityMetrics {
     sparkline: String,
+    activity_ekg: String,
     daily_avg: f64,
     weekly_total: usize,
 }
@@ -165,6 +168,7 @@ fn build_pulse_cycle(board_dir: &Path, reference_time: DateTime<Utc>) -> Result<
     let activity = if let Some(weekly) = history.weekly.first() {
         Some(PulseActivityMetrics {
             sparkline: render_sparkline(&history),
+            activity_ekg: render_pulse_ekg(&history),
             daily_avg: weekly.stories_done as f64 / 7.0,
             weekly_total: weekly.stories_done,
         })
@@ -216,6 +220,48 @@ fn render_sparkline(history: &keel::read_model::throughput_history::ThroughputHi
             }
         })
         .collect()
+}
+
+fn render_pulse_ekg(history: &keel::read_model::throughput_history::ThroughputHistory) -> String {
+    let values: Vec<f64> = history
+        .weekly
+        .iter()
+        .take(12)
+        .rev()
+        .map(|w| w.stories_done as f64)
+        .collect();
+
+    if values.is_empty() {
+        return "·".repeat(12);
+    }
+
+    let width = 48;
+    let height = 10;
+    let mut chart = ChartContext::new(width, height);
+
+    let max = values.iter().fold(0.0f64, |a, &b| a.max(b));
+    let x_scale = (width - 1) as f64 / (values.len() - 1) as f64;
+    let y_scale = if max > 0.0 {
+        (height - 1) as f64 / max
+    } else {
+        1.0
+    };
+
+    for i in 0..values.len() - 1 {
+        let x1 = (i as f64 * x_scale).round() as isize;
+        let y1 = (height as f64 - 1.0 - (values[i] * y_scale)).round() as isize;
+        let x2 = ((i + 1) as f64 * x_scale).round() as isize;
+        let y2 = (height as f64 - 1.0 - (values[i + 1] * y_scale)).round() as isize;
+
+        chart.canvas.line_screen(x1, y1, x2, y2, Some(Color::Cyan));
+    }
+
+    let rendered = chart.canvas.render_with_options(true, None);
+    rendered
+        .lines()
+        .map(|line| format!("  {}", line))
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 fn map_pulse_routine(
@@ -460,11 +506,10 @@ fn render_pulse_human(cycle: &PulseCycleOutput) -> String {
     // 1. Activity (The EKG)
     if let Some(activity) = &cycle.activity {
         lines.push(format!(
-            "  Activity:  {}  {:.1} stories/day avg ({} this week)",
-            activity.sparkline.bold().cyan(),
-            activity.daily_avg,
-            activity.weekly_total
+            "  Activity:  {:.1} stories/day avg ({} this week)",
+            activity.daily_avg, activity.weekly_total
         ));
+        lines.push(activity.activity_ekg.clone());
     }
 
     // 2. Health (The Physical)
