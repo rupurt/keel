@@ -303,6 +303,8 @@
 |--------|--------|
 | [Implement Inquiry Personas](epics/VDo4OmYow/voyages/VDo4Ugi5v/) | done |
 
+### [Project Operations](epics/VDseuzIFg/) (draft)
+
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
 | Voyage | Status |
