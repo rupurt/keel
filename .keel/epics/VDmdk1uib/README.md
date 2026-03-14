@@ -6,7 +6,7 @@ created_at: 2026-03-13T19:01:12
 
 # TUI Compact Layout Research
 
-> {{problem}}
+> Users need a high-density status interface to maintain comprehension without scrolling.
 
 ## Documents
 

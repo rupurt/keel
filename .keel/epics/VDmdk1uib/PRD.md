@@ -22,11 +22,11 @@ Current status reports are too verbose for quick checks.
 
 ### In Scope
 
-- Deliver the bearing-backed capability slice for this epic.
+- [SCOPE-01] Implement compact status layouts based on research findings.
 
 ### Out of Scope
 
-- Unrelated platform-wide refactors outside bearing findings.
+- [SCOPE-02] Redesigning the full terminal dashboard.
 
 ## Requirements
 

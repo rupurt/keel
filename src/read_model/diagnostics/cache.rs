@@ -74,11 +74,22 @@ pub fn calculate_board_hash(board_dir: &Path) -> Result<String> {
             update_hasher_with_metadata(&mut hasher, &dir_path, &metadata);
         }
 
-        // Hash immediate children metadata
+        // Hash immediate children metadata and key docs within them
         if let Ok(entries) = fs::read_dir(&dir_path) {
             for entry in entries.filter_map(|e| e.ok()) {
+                let entry_path = entry.path();
                 if let Ok(metadata) = entry.metadata() {
-                    update_hasher_with_metadata(&mut hasher, &entry.path(), &metadata);
+                    update_hasher_with_metadata(&mut hasher, &entry_path, &metadata);
+                }
+
+                if entry_path.is_dir() {
+                    let key_docs = ["README.md", "PRD.md", "SRS.md", "SDD.md", "BRIEF.md", "EVIDENCE.md", "ASSESSMENT.md", "CHARTER.md", "LOG.md"];
+                    for doc in key_docs {
+                        let doc_path = entry_path.join(doc);
+                        if let Ok(metadata) = doc_path.metadata() {
+                            update_hasher_with_metadata(&mut hasher, &doc_path, &metadata);
+                        }
+                    }
                 }
             }
         }
