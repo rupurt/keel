@@ -18,6 +18,7 @@ id: VDmdk1uib
 ### Findings
 
 - Three bullets are sufficient for quick status. [SRC-01]
+- The framing of a "Ramping Path" provides a clear onboarding journey for new developers. [SRC-02]
 
 ### Opportunity Cost
 

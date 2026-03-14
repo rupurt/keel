@@ -20,8 +20,8 @@ index: 48
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 0/2 stories done
+**Progress:** 1/1 voyages complete, 2/2 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Implement CLI and Status Rendering](voyages/VDmcsuJx4/) | in-progress | 0/2 |
+| [Implement CLI and Status Rendering](voyages/VDmcsuJx4/) | done | 2/2 |
 <!-- END GENERATED -->

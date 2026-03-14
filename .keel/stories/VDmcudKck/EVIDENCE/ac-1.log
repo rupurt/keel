@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-13T18:59:33.195823807-07:00
+mode: manual
+---
+Verified --status flag parsing and dispatch in MissionAction::Next. Command 'keel mission next --status' executes without error and triggers the compact renderer.

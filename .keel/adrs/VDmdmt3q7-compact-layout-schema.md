@@ -3,7 +3,7 @@ id: VDmdmt3q7
 index: 1
 title: Compact Layout Schema
 mission: VDmciJIno
-status: proposed
+status: accepted
 context: null
 applies-to: []
 supersedes: []

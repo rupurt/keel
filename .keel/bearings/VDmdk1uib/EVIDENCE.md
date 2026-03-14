@@ -9,6 +9,7 @@ id: VDmdk1uib
 | ID | Class | Provenance | Location | Observed / Published | Retrieved | Authority | Freshness | Notes |
 |----|-------|------------|----------|----------------------|-----------|-----------|-----------|-------|
 | SRC-01 | manual | manual:source | src/cli/commands/management/mission/next.rs | 2026-03-13 | 2026-03-13 | high | high | Analysis of current next-step logic |
+| SRC-02 | manual | manual:source | README.md | 2026-03-13 | 2026-03-13 | high | high | Implicit Ramping Path framing |
 
 ## Technical Research
 

@@ -1,10 +1,11 @@
 ---
 id: VDmciJIno
 title: Implement Compact Status for Mission Next
-status: active
+status: achieved
 created_at: 2026-03-13T13:58:40
-updated_at: 2026-03-13T13:59:34
+updated_at: 2026-03-13T19:01:20
 activated_at: 2026-03-13T13:59:34
+achieved_at: 2026-03-13T19:01:20
 ---
 
 # Implement Compact Status for Mission Next
