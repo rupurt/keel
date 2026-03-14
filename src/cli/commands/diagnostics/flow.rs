@@ -11,20 +11,21 @@ use keel::read_model::scheduled_routines::{RoutineScheduleFilter, project_schedu
 use keel::read_model::{flow_status, workflow_lane_flow, workflow_topology};
 
 /// Run the flow command
-pub fn run(board_dir: &std::path::Path, no_color: bool) -> Result<()> {
-    let output = build_output(board_dir, no_color)?;
+pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool) -> Result<()> {
+    let output = build_output(board_dir, no_color, show_routines)?;
     println!("{}", output);
 
     Ok(())
 }
 
-fn build_output(board_dir: &std::path::Path, no_color: bool) -> Result<String> {
-    build_output_at(board_dir, no_color, Utc::now())
+fn build_output(board_dir: &std::path::Path, no_color: bool, show_routines: bool) -> Result<String> {
+    build_output_at(board_dir, no_color, show_routines, Utc::now())
 }
 
 fn build_output_at(
     board_dir: &std::path::Path,
     no_color: bool,
+    show_routines: bool,
     reference_time: DateTime<Utc>,
 ) -> Result<String> {
     let board = load_board(board_dir)?;
@@ -45,6 +46,7 @@ fn build_output_at(
         &materialized_by_key,
         width,
         no_color,
+        show_routines,
     ))
 }
 
@@ -86,7 +88,7 @@ updated_at: 2026-01-01T00:00:00
     #[test]
     fn test_flow_run() {
         let temp = TestBoardBuilder::new().build();
-        let result = build_output(temp.path(), true);
+        let result = build_output(temp.path(), true, true);
         assert!(result.is_ok());
     }
 
@@ -145,7 +147,7 @@ priority = 100
         )
         .unwrap();
 
-        let output = build_output(temp.path(), true).unwrap();
+        let output = build_output(temp.path(), true, true).unwrap();
         let review = output.find("review (1) [p300]").unwrap();
         let delivery = output.find("delivery (1) [p200]").unwrap();
         let research = output.find("research (1) [p100]").unwrap();
@@ -240,7 +242,7 @@ updated_at: 2026-01-05T18:00:00
     fn build_output_omits_flow_assessment_section() {
         let temp = TestBoardBuilder::new().build();
 
-        let output = build_output(temp.path(), true).unwrap();
+        let output = build_output(temp.path(), true, true).unwrap();
         assert!(!output.contains("  Flow Assessment:"));
         assert!(!output.contains("  Suggested:"));
     }
@@ -251,7 +253,7 @@ updated_at: 2026-01-05T18:00:00
             .mission(TestMission::new("M1").title("Mission One").status("active"))
             .build();
 
-        let output = build_output(temp.path(), true).unwrap();
+        let output = build_output(temp.path(), true, true).unwrap();
         assert!(!output.contains("Governance"));
         assert!(!output.contains("Research"));
         assert!(!output.contains("Planning"));

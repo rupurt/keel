@@ -24,6 +24,7 @@ pub fn render_annotated_flow(
     materialized_by_key: &HashMap<String, String>,
     width: usize,
     no_color: bool,
+    show_routines: bool,
 ) -> String {
     let mut output = String::new();
     let theme = Theme::for_color_mode(Theme::should_use_color(no_color));
@@ -48,15 +49,31 @@ pub fn render_annotated_flow(
     write!(output, "{}", lane_boxes).unwrap();
 
     // 3. Scheduled Capacity
-    let scheduled_capacity =
-        render_scheduled_capacity(scheduled, materialized_by_key, width, &theme);
-    if !scheduled_capacity.is_empty() {
+    if show_routines {
         ensure_section_spacing(&mut output);
-        writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
-        writeln!(output, "  Scheduled Capacity").unwrap();
-        writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
-        writeln!(output).unwrap();
-        writeln!(output, "{}", scheduled_capacity).unwrap();
+        writeln!(
+            output,
+            "  Scheduled Capacity 🕒 {}",
+            "───────────────".dimmed()
+        )
+        .unwrap();
+
+        if scheduled.is_empty() {
+            writeln!(output, "    {}", "No routines configured.".dimmed()).unwrap();
+        } else {
+            for routine in scheduled {
+                writeln!(
+                    output,
+                    "    {} {} {}",
+                    "•".dimmed(),
+                    routine.id.bold().cyan(),
+                    format!("({})", routine.title).dimmed()
+                )
+                .unwrap();
+                let line = render_scheduled_capacity_line(routine, materialized_by_key);
+                writeln!(output, "        {}", line).unwrap();
+            }
+        }
     }
 
     // 4. Execution Capacity (Strategic Throughput)
@@ -867,6 +884,7 @@ mod tests {
             &scheduled,
             &materialized_by_key,
             100,
+            true,
             true,
         );
 

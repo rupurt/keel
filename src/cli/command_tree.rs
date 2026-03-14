@@ -87,6 +87,12 @@ pub fn build_cli() -> Command {
                         .long("no-color")
                         .help("Disable color output (also respects NO_COLOR env var)")
                         .action(ArgAction::SetTrue),
+                )
+                .arg(
+                    Arg::new("show-routines")
+                        .long("show-routines")
+                        .help("Show scheduled routines in the flow output")
+                        .action(ArgAction::SetTrue),
                 ),
         )
         .subcommand(
