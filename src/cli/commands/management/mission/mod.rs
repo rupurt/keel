@@ -25,6 +25,9 @@ pub enum MissionAction {
         /// Output as JSON
         #[arg(long)]
         json: bool,
+        /// Render a compact three-bullet summary
+        #[arg(long, short)]
+        compact: bool,
     },
     /// Attach a bearing to a mission
     Attach {
@@ -98,7 +101,7 @@ pub fn run(action: MissionAction) -> Result<()> {
     match action {
         MissionAction::New { title } => run_new(&title),
         MissionAction::List => list::run(),
-        MissionAction::Show { id, json } => show::run(&id, json),
+        MissionAction::Show { id, json, compact } => show::run(&id, json, compact),
         MissionAction::Attach {
             mission_id,
             bearing_id,

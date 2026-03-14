@@ -23,17 +23,23 @@ const SCOPE_DRIFT_PLACEHOLDER: &str = "(no scope drift detected)";
 const REQUIREMENTS_PLACEHOLDER: &str = "(no requirements found in SRS.md)";
 
 /// Show voyage details
-pub fn run(id: &str) -> Result<()> {
+pub fn run(id: &str, compact: bool) -> Result<()> {
     let board_dir = keel::infrastructure::config::find_board_dir()?;
-    run_with_dir(&board_dir, id)
+    run_with_dir(&board_dir, id, compact)
 }
 
 /// Show voyage details with an explicit board directory.
-pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
+pub fn run_with_dir(board_dir: &Path, id: &str, compact: bool) -> Result<()> {
     let board = load_board(board_dir)?;
     let resolved_id = resolve_show_selector(board_dir, &board, ShowEntityKind::Voyage, id)?;
     let voyage = board.require_voyage(&resolved_id)?;
     let report = build_voyage_show_report(&board, voyage)?;
+
+    if compact {
+        println!("{}", render_compact_summary(voyage, &report));
+        return Ok(());
+    }
+
     let width = crate::cli::presentation::terminal::get_terminal_width();
 
     let mut metadata = ShowKeyValues::new()
@@ -85,6 +91,41 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     document.print();
 
     Ok(())
+}
+
+fn render_compact_summary(
+    voyage: &keel::domain::model::Voyage,
+    report: &planning_show::VoyageShowProjection,
+) -> String {
+    use owo_colors::OwoColorize;
+
+    let mut bullets = Vec::new();
+    bullets.push(format!(
+        "{} {}",
+        "Status:".bold(),
+        style::styled_voyage_stage(&voyage.status())
+    ));
+    bullets.push(format!(
+        "{} {}",
+        "Stories:".bold(),
+        render_count_bar(report.done_stories, report.total_stories, 15, None),
+    ));
+    bullets.push(format!(
+        "{} {}",
+        "Reqs:".bold(),
+        render_count_bar(
+            report.done_functional_requirements,
+            report.total_functional_requirements,
+            15,
+            Some("(func)"),
+        ),
+    ));
+
+    bullets
+        .into_iter()
+        .map(|b| format!("• {}", b))
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 fn build_voyage_show_report(board: &Board, voyage: &Voyage) -> Result<VoyageShowProjection> {

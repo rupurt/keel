@@ -12,13 +12,13 @@ use keel::read_model::mission_show::{self, MissionShowProjection};
 use keel::read_model::show_selector::{ShowEntityKind, resolve_show_selector};
 
 /// Show mission details
-pub fn run(id: &str, json: bool) -> Result<()> {
+pub fn run(id: &str, json: bool, compact: bool) -> Result<()> {
     let board_dir = keel::infrastructure::config::find_board_dir()?;
-    run_with_dir(&board_dir, id, json)
+    run_with_dir(&board_dir, id, json, compact)
 }
 
 /// Show mission details with an explicit board directory.
-pub fn run_with_dir(board_dir: &Path, id: &str, json: bool) -> Result<()> {
+pub fn run_with_dir(board_dir: &Path, id: &str, json: bool, compact: bool) -> Result<()> {
     let board = load_board(board_dir)?;
     let resolved_id = resolve_show_selector(board_dir, &board, ShowEntityKind::Mission, id)?;
     let mission = board.require_mission(&resolved_id)?;
@@ -26,6 +26,11 @@ pub fn run_with_dir(board_dir: &Path, id: &str, json: bool) -> Result<()> {
 
     if json {
         println!("{}", serde_json::to_string_pretty(&projection)?);
+        return Ok(());
+    }
+
+    if compact {
+        println!("{}", render_compact_summary(&projection));
         return Ok(());
     }
 
@@ -140,6 +145,38 @@ fn build_document(projection: &MissionShowProjection, width: usize) -> ShowDocum
 
     document.push_sections_spaced(sections);
     document
+}
+
+fn render_compact_summary(projection: &MissionShowProjection) -> String {
+    use owo_colors::OwoColorize;
+
+    let mut bullets = Vec::new();
+    bullets.push(format!(
+        "{} {}",
+        "Status:".bold(),
+        style::styled_mission_status(&projection.status.parse().unwrap()),
+    ));
+    bullets.push(format!(
+        "{} {}",
+        "Archetype:".bold(),
+        projection.archetype.bold().bright_magenta()
+    ));
+
+    let epics = projection.child_entities.epics.len();
+    let bearings = projection.child_entities.bearings.len();
+
+    bullets.push(format!(
+        "{} {} epics, {} bearings",
+        "Scope:".bold(),
+        epics.to_string().cyan(),
+        bearings.to_string().cyan()
+    ));
+
+    bullets
+        .into_iter()
+        .map(|b| format!("• {}", b))
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 #[cfg(test)]

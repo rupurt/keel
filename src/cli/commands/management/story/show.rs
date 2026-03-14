@@ -23,17 +23,22 @@ struct StoryHeading<'a> {
 }
 
 /// Run the show story command
-pub fn run(id: &str) -> Result<()> {
+pub fn run(id: &str, compact: bool) -> Result<()> {
     let board_dir = keel::infrastructure::config::find_board_dir()?;
-    run_with_dir(&board_dir, id)
+    run_with_dir(&board_dir, id, compact)
 }
 
 /// Run the show story command with an explicit board directory
-pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
+pub fn run_with_dir(board_dir: &Path, id: &str, compact: bool) -> Result<()> {
     let board = load_board(board_dir)?;
     let resolved_id = resolve_show_selector(board_dir, &board, ShowEntityKind::Story, id)?;
     let story = board.require_story(&resolved_id)?;
     let projection = planning_show::build_story_show_projection(story)?;
+
+    if compact {
+        println!("{}", render_compact_summary(story, &projection));
+        return Ok(());
+    }
 
     let width = crate::cli::presentation::terminal::get_terminal_width();
     let mut metadata = ShowKeyValues::new().with_min_label_width(9);
@@ -96,6 +101,50 @@ pub fn run_with_dir(board_dir: &Path, id: &str) -> Result<()> {
     document.print();
 
     Ok(())
+}
+
+fn render_compact_summary(
+    story: &keel::domain::model::Story,
+    projection: &planning_show::StoryShowProjection,
+) -> String {
+    use owo_colors::OwoColorize;
+
+    let mut bullets = Vec::new();
+    let status_line = format!(
+        "{} {}",
+        "Status:    ".bold(),
+        style::styled_story_status(&story.status)
+    );
+    let progress_line = format!(
+        "{} {}",
+        "Progress:  ".bold(),
+        style::progress_bar(
+            projection.checked_criteria,
+            projection.total_criteria,
+            20,
+            None,
+        )
+    );
+
+    let next_step = match story.status {
+        keel::domain::model::StoryState::InProgress => {
+            format!("{} `keel story submit {}`", "Next:".bold(), story.id())
+        }
+        keel::domain::model::StoryState::NeedsHumanVerification => {
+            format!("{} `keel story accept {}`", "Next:".bold(), story.id())
+        }
+        _ => "".to_string(),
+    };
+
+    bullets.push(status_line);
+    bullets.push(progress_line);
+    bullets.push(next_step);
+
+    bullets
+        .into_iter()
+        .map(|b| format!("• {}", b))
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 #[cfg(test)]

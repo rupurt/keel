@@ -2,12 +2,13 @@
 id: VDoBOkYsL
 title: Implement High Density Story Show
 type: feat
-status: backlog
+status: in-progress
 created_at: 2026-03-13T20:22:43
-updated_at: 2026-03-13T20:23:19
+updated_at: 2026-03-14T09:04:49
 operator-signal: 
 scope: VDmdk1uib/VDoBLEiaF
 index: 1
+started_at: 2026-03-14T09:04:49
 ---
 
 # Implement High Density Story Show

@@ -72,6 +72,9 @@ pub enum VoyageAction {
     Show {
         /// Voyage ID or HEAD selector (HEAD, HEAD~, HEAD~~, HEAD^)
         id: String,
+        /// Render a compact three-bullet summary
+        #[arg(long, short)]
+        compact: bool,
     },
     /// Show a voyage markdown document
     File {
@@ -110,7 +113,7 @@ pub fn run(board_dir: &Path, action: VoyageAction) -> Result<()> {
             hard,
             different,
         } => done::run(board_dir, &id, well, hard, different),
-        VoyageAction::Show { id } => show::run(&id),
+        VoyageAction::Show { id, compact } => show::run(&id, compact),
         VoyageAction::File { id, file, raw } => {
             crate::cli::commands::management::voyage::file::run(&id, &file, raw)
         }

@@ -101,6 +101,9 @@ pub enum StoryAction {
     Show {
         /// Story ID or HEAD selector (HEAD, HEAD~, HEAD~~, HEAD^)
         id: String,
+        /// Render a compact three-bullet summary
+        #[arg(long, short)]
+        compact: bool,
     },
     /// Show a story markdown document
     File {
@@ -185,7 +188,7 @@ pub fn run(action: StoryAction) -> Result<()> {
         StoryAction::Reject { id, reason } => reject::run(&find_board_dir()?, &id, &reason),
         StoryAction::Ice { id } => ice::run(&find_board_dir()?, &id),
         StoryAction::Thaw { id } => thaw::run(&find_board_dir()?, &id),
-        StoryAction::Show { id } => show::run(&id),
+        StoryAction::Show { id, compact } => show::run(&id, compact),
         StoryAction::File { id, file, raw } => {
             crate::cli::commands::management::story::file::run(&id, &file, raw)
         }

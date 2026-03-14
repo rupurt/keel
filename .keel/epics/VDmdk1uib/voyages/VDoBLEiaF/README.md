@@ -25,10 +25,11 @@ started_at: 2026-03-13T20:28:21
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/2 stories complete
+**Progress:** 0/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Label Mission as Bridging Archetype](../../../../stories/VDoBHgeBQ/README.md) | feat | backlog |
-| [Implement High Density Story Show](../../../../stories/VDoBOkYsL/README.md) | feat | backlog |
+| [Label Mission as Bridging Archetype](../../../../stories/VDoBHgeBQ/README.md) | feat | in-progress |
+| [Implement High Density Story Show](../../../../stories/VDoBOkYsL/README.md) | feat | in-progress |
+| [Implement High Density Voyage Show](../../../../stories/VDrHGSLNL/README.md) | feat | icebox |
 <!-- END GENERATED -->

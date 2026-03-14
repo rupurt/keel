@@ -24,6 +24,7 @@ Goal: Translate research findings into high-density TUI show surfaces
 |----|-------------|-------|--------|--------------|
 | SRS-01 | Mission show surface displays its Archetype. | SCOPE-01 | FR-01 | manual |
 | SRS-02 | Story show view includes a three-bullet high-density summary. | SCOPE-02 | FR-01 | manual |
+| SRS-03 | Voyage show view includes a three-bullet high-density summary. | SCOPE-03 | FR-01 | manual |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ## Non-Functional Requirements
