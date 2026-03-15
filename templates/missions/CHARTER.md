@@ -1,5 +1,7 @@
 # {{title}} - Charter
 
+Archetype: {{archetype}}
+
 ## Goals
 
 | ID | Description | Verification |

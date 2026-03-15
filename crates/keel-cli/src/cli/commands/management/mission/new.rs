@@ -79,7 +79,11 @@ fn new_mission(board_dir: &Path, title: &str) -> Result<String> {
     // Render CHARTER.md template
     let charter_content = template_rendering::render(
         templates::mission::CHARTER,
-        &[("id", &mission_id), ("title", title)],
+        &[
+            ("id", &mission_id),
+            ("title", title),
+            ("archetype", "Strategic"),
+        ],
     );
 
     // Write CHARTER.md
