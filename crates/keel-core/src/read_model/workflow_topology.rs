@@ -474,7 +474,7 @@ fn seeded_management_lane() -> LaneConfig {
             "story.needs-human-verification".to_string(),
             "voyage.draft".to_string(),
         ],
-        exclude: Vec::new(),
+        exclude: vec!["bearing.laid".to_string()],
         parallel: false,
         manual_accept: true,
         priority: 100,
