@@ -34,6 +34,10 @@ Setup:
   init        Initialize a new keel board
   config      Configuration and technique inventory
   generate    Regenerate board artifacts
+
+Comms:
+  ping        Send a message to the inbox
+  poke        Respond to or re-evaluate a ping in the inbox
 "#;
 
 fn hidden_subcommand_group<T>(name: &'static str, about: &'static str) -> Command
@@ -328,6 +332,19 @@ pub fn build_cli() -> Command {
             Command::new("init")
                 .about("Initialize a new keel board in the current directory")
                 .hide(true),
+        )
+        .subcommand(
+            Command::new("ping")
+                .about("Send a message to the inbox")
+                .hide(true)
+                .arg(Arg::new("message").required(true).help("The message to send")),
+        )
+        .subcommand(
+            Command::new("poke")
+                .about("Respond to or re-evaluate a ping in the inbox")
+                .hide(true)
+                .arg(Arg::new("id").required(true).help("The ID of the ping"))
+                .arg(Arg::new("message").help("Optional pong message to send")),
         )
         .subcommand(
             Command::new("knowledge")

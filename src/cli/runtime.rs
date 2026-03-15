@@ -128,6 +128,15 @@ pub fn run() -> Result<()> {
             _ => unreachable!("verify subcommand required"),
         },
         Some(("knowledge", m)) => handle_knowledge_command(m),
+        Some(("ping", m)) => {
+            let message = m.get_one::<String>("message").expect("required").clone();
+            super::commands::comms::ping::run(&resolve_board_dir()?, &message)
+        }
+        Some(("poke", m)) => {
+            let id = m.get_one::<String>("id").expect("required").clone();
+            let message = m.get_one::<String>("message").cloned();
+            super::commands::comms::poke::run(&resolve_board_dir()?, &id, message.as_deref())
+        }
         Some(("generate", _)) => super::commands::setup::generate::run(&resolve_board_dir()?),
         Some(("init", _)) => Ok(super::commands::setup::init::run()?),
         Some(("roadmap", _)) => super::commands::management::roadmap::run(),

@@ -1,5 +1,6 @@
 //! Board command implementations
 
+pub mod comms;
 pub mod diagnostics;
 pub mod management;
 pub mod setup;
