@@ -20,8 +20,8 @@ index: 43
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 0/2 stories done
+**Progress:** 1/1 voyages complete, 2/2 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Canonical Serialization](voyages/VDuc2GPCN/) | in-progress | 0/2 |
+| [Canonical Serialization](voyages/VDuc2GPCN/) | done | 2/2 |
 <!-- END GENERATED -->

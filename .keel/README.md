@@ -277,11 +277,11 @@
 
 ### [Bearing Research Contract Alignment](epics/VDiHwCUZt/) (draft)
 
-### [Strict Deterministic Board Generation](epics/VDiHwGwe5/) (active)
+### [Strict Deterministic Board Generation](epics/VDiHwGwe5/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Canonical Serialization](epics/VDiHwGwe5/voyages/VDuc2GPCN/) | in-progress |
+| [Canonical Serialization](epics/VDiHwGwe5/voyages/VDuc2GPCN/) | done |
 
 ### [Dependency-Aware Bearing Prioritization](epics/VDiHwLLfY/) (draft)
 
