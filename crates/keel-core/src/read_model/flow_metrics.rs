@@ -1,5 +1,6 @@
 //! Canonical flow metrics projection shared by diagnostics and queue policy.
 
+use chrono::{DateTime, Utc};
 use crate::domain::model::{Board, EpicState, StoryState, VoyageState};
 use crate::read_model::execution_queue;
 
@@ -21,6 +22,7 @@ pub struct ExecutionMetrics {
     pub backlog_blocked_count: usize,
     pub in_progress_count: usize,
     pub active_voyages_count: usize,
+    pub recently_completed_count: usize,
 }
 
 #[derive(Debug, Default)]
@@ -54,7 +56,7 @@ pub struct GovernanceMetrics {
 }
 
 /// Calculate board-wide flow metrics.
-pub fn calculate_metrics(board: &Board) -> FlowMetrics {
+pub fn calculate_metrics(board: &Board, reference_time: DateTime<Utc>) -> FlowMetrics {
     let mut metrics = FlowMetrics::default();
 
     // 1. Execution
@@ -77,6 +79,20 @@ pub fn calculate_metrics(board: &Board) -> FlowMetrics {
         .voyages
         .values()
         .filter(|v| v.status() == VoyageState::InProgress)
+        .count();
+
+    // Recently completed (last 15 minutes)
+    let recent_threshold = reference_time - chrono::Duration::minutes(15);
+    metrics.execution.recently_completed_count = board
+        .stories
+        .values()
+        .filter(|s| s.status == StoryState::Done)
+        .filter(|s| {
+            s.frontmatter
+                .completed_at
+                .map(|dt| dt >= recent_threshold.naive_utc())
+                .unwrap_or(false)
+        })
         .count();
 
     // 2. Planning
@@ -173,7 +189,7 @@ mod tests {
             .story(TestStory::new("S3").status(StoryState::Done))
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
-        let m = calculate_metrics(&board);
+        let m = calculate_metrics(&board, Utc::now());
 
         assert_eq!(m.execution.in_progress_count, 1);
         assert_eq!(m.execution.backlog_count, 1);
@@ -208,7 +224,7 @@ mod tests {
             )
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
-        let m = calculate_metrics(&board);
+        let m = calculate_metrics(&board, Utc::now());
 
         assert_eq!(m.execution.backlog_count, 2);
         assert_eq!(m.execution.backlog_ready_count, 1);
@@ -233,7 +249,7 @@ mod tests {
             )
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
-        let m = calculate_metrics(&board);
+        let m = calculate_metrics(&board, Utc::now());
 
         assert_eq!(m.execution.backlog_count, 1);
         assert_eq!(m.execution.backlog_ready_count, 0);
@@ -248,7 +264,7 @@ mod tests {
             .voyage(TestVoyage::new("v2", "e1").status("planned"))
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
-        let m = calculate_metrics(&board);
+        let m = calculate_metrics(&board, Utc::now());
 
         assert_eq!(m.execution.active_voyages_count, 1);
         assert_eq!(m.planning.planned_count, 1);
@@ -261,7 +277,7 @@ mod tests {
             .voyage(TestVoyage::new("v1", "e1").status("draft"))
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
-        let m = calculate_metrics(&board);
+        let m = calculate_metrics(&board, Utc::now());
 
         assert_eq!(m.planning.draft_count, 1);
     }
@@ -272,7 +288,7 @@ mod tests {
             .epic(TestEpic::new("e1")) // Draft epic with no voyages
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
-        let m = calculate_metrics(&board);
+        let m = calculate_metrics(&board, Utc::now());
 
         assert_eq!(m.planning.epics_needing_voyages, 1);
     }
@@ -285,7 +301,7 @@ mod tests {
             .adr(TestAdr::new("A2").status("accepted"))
             .build();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
-        let m = calculate_metrics(&board);
+        let m = calculate_metrics(&board, Utc::now());
 
         assert_eq!(m.governance.proposed_count, 1);
         assert_eq!(m.governance.accepted_count, 1);
