@@ -161,23 +161,19 @@ pub fn render_epic_capacities(
         }
     }
     max_width += 2; // buffer
+    let status_width = 10;
 
     let mut output = String::new();
-    let header = format!("     {: <w$} STATUS", "EPIC", w = max_width);
-    writeln!(output, "{header}").unwrap();
-    let ellipsis_width = centered_ellipsis_width(max_width, &header);
+    let header = format!(
+        "     {: <w$} {:<sw$} CAPACITY",
+        "EPIC",
+        "STATUS",
+        w = max_width,
+        sw = status_width
+    );
+    writeln!(output, "{}", header.dimmed()).unwrap();
 
-    let first_visible_completed = visible
-        .iter()
-        .position(|cap| is_completed_epic(cap))
-        .filter(|_| clipped_completed_epics(&sorted));
-
-    for (idx, cap) in visible.iter().enumerate() {
-        if Some(idx) == first_visible_completed {
-            writeln!(output, "{:indent$}...", "", indent = ellipsis_width).unwrap();
-            writeln!(output).unwrap();
-        }
-
+    for cap in visible {
         let emoji = match cap.charge_state {
             crate::cli::presentation::flow::capacity::ChargeState::Blocked => "🔴",
             crate::cli::presentation::flow::capacity::ChargeState::Discharged => "⚪",
@@ -188,18 +184,18 @@ pub fn render_epic_capacities(
         };
 
         let epic = board.epics.get(&cap.id).unwrap();
-        let status = {
+        let status_str = epic.status().to_string();
+        let status_styled = {
             let stage = epic.status();
             match stage {
                 keel::domain::model::EpicState::Active => {
                     if cap.capacity.in_flight > 0 {
-                        format!("{}", stage.green())
+                        format!("{}", status_str.green())
                     } else {
-                        format!("{}", stage.yellow())
+                        format!("{}", status_str.yellow())
                     }
                 }
-                keel::domain::model::EpicState::Draft => format!("{}", stage.dimmed()),
-                keel::domain::model::EpicState::Done => format!("{}", stage.dimmed()),
+                _ => format!("{}", status_str.dimmed()),
             }
         };
 
@@ -221,10 +217,12 @@ pub fn render_epic_capacities(
             },
         );
 
+        let status_padded = pad_to_width(&status_styled, status_width);
+
         writeln!(
             output,
             "  {} {} {} {}",
-            emoji, epic_padded, status, bar,
+            emoji, epic_padded, status_padded, bar,
         )
         .unwrap();
     }
