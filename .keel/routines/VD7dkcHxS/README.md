@@ -4,7 +4,7 @@ title: Explore Speculative Decoding for Transit Messages
 cadence:
   cron: 0 0 * * 1
   timezone: UTC
-target-scope: VDmdk1uib
+target-scope: VDiHwGwe5
 created_at: 2026-03-14T08:52:09
 updated_at: 2026-03-14T08:52:09
 ---
