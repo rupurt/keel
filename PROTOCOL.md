@@ -1,0 +1,57 @@
+# PROTOCOL.md: The Keel Communications Protocol
+
+The Keel CLI implements an asynchronous communication layer through the `ping` and `poke` commands. This system allows the workflow engine to field requests, route messages, and provide either synchronous automated responses or facilitate asynchronous offline interactions.
+
+This document defines the expected message structures, the routing logic, and the lifecycle of an inbox message.
+
+## 1. The Inbox Lifecycle
+
+All communication is routed through the `.keel/inbox/` directory.
+
+1. **Submission:** A user or agent invokes `keel ping "<message>"`.
+2. **Evaluation:** The engine evaluates the message against its **Routing Rules**.
+3. **Response (Sync vs. Async):**
+   - **Synchronous (`pong`):** If a routing rule matches, the engine immediately responds via `stdout`, marks the message as `ponged`, and saves the state to the inbox.
+   - **Asynchronous (Pending):** If no routing rule matches, the engine returns only the generated **Ping ID** (e.g., `VDtzUxoCp`) to `stdout`. The message is saved to the inbox in a `pending` state.
+4. **Resolution (`poke`):** A pending message can be resolved later using `keel poke <id> "[message]"`.
+   - If a manual message is provided, it acts as the response, marking the ping as `ponged`.
+   - If no manual message is provided, the engine re-evaluates the original message against the current routing rules (which may have been updated).
+
+## 2. Message Format
+
+Messages are persisted as JSON files within `.keel/inbox/<id>.json`.
+
+**Schema (`PingMessage`):**
+```json
+{
+  "id": "VDtzUxoCp",
+  "message": "The original message content.",
+  "timestamp": "2026-03-15T03:00:00Z",
+  "status": "pending | ponged",
+  "pong_message": "The response message, or null if pending."
+}
+```
+- **`id`**: A globally unique identifier generated using Keel's standard ID generation (e.g., `VD...`).
+- **`status`**: The current state of the interaction (`pending` or `ponged`).
+- **`pong_message`**: The recorded response, ensuring historical traceability of the communication.
+
+## 3. Routing Rules
+
+When a `ping` (or parameter-less `poke`) is executed, the engine attempts to match the message content to a set of predefined rules to trigger a synchronous **auto-pong**.
+
+Currently, the routing rules are simple substring matches (case-insensitive):
+
+| Match Condition (contains word) | Synchronous Response (Pong) |
+| :--- | :--- |
+| `"ping"` | `pong` |
+| `"hello"` or `"hi"` | `Hello! I am keel. How can I help?` |
+| `"help"` | `I am a workflow engine. Try running `keel doctor` or `keel flow`.` |
+
+*If a message does not match any of these conditions, it falls through to the Asynchronous track and requires a future `poke`.*
+
+## 4. Expanding the Protocol
+
+As Keel's capabilities grow, the routing rules will be expanded to support more complex interactions:
+- **Regex/Semantic Matching:** Moving beyond simple word inclusion to understand intent.
+- **Action Triggers:** Allowing a `ping` to synchronously trigger engine operations (e.g., "ping: status" running `keel flow`).
+- **Agent Handoffs:** Routing pending messages to specific sub-agents or workflow lanes for evaluation during `keel pulse`.
