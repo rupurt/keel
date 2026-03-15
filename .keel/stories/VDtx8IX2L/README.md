@@ -2,14 +2,14 @@
 id: VDtx8IX2L
 title: Daily Status Surface Progress
 type: feat
-status: backlog
+status: done
 scope: VDmdk1uib
 milestone: null
 created_at: 2026-03-15T03:03:41
-updated_at: 2026-03-15T03:03:41
-started_at: null
-completed_at: null
-submitted_at: null
+updated_at: 2026-03-14T22:38:59
+started_at: 2026-03-14T22:37:56
+completed_at: 2026-03-14T22:38:59
+submitted_at: 2026-03-14T22:38:50
 index: 1
 governed-by: []
 blocked_by: []
@@ -27,7 +27,7 @@ Materialized from routine `daily-status-surface-progress` for eligible window en
 
 ## Acceptance Criteria
 
-- [ ] [SRS-ROUTINE/AC-01] Complete the authored routine blueprint for this eligible window.
+- [x] [SRS-ROUTINE/AC-01] Complete the authored routine blueprint for this eligible window. <!-- verify: manual, SRS-ROUTINE:start, SRS-ROUTINE:end -->
 
 ## Routine Provenance
 
