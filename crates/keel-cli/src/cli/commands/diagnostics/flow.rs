@@ -12,27 +12,27 @@ use keel::read_model::{flow_status, workflow_lane_flow, workflow_topology};
 
 /// Run the flow command
 pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, scene: bool) -> Result<()> {
+    let board = load_board(board_dir)?;
+    let topology = workflow_topology::load_for_board(board_dir)?;
+    let lane_flow = workflow_lane_flow::project(&board, &topology);
+    let metrics = flow_status::project(&board, chrono::Utc::now());
+    let report = keel::read_model::diagnostics::validate_report(board_dir)?;
+    let healthy = report.total_errors() == 0;
+    
+    // System is autonomous if no tasks are pending in manual_accept lanes
+    let needs_human_input = lane_flow.lanes.iter().any(|lane| lane.manual_accept && lane.total_count > 0);
+    let autonomous = !needs_human_input;
+
+    let in_progress = metrics.execution.in_progress_count;
+    let recently_completed = metrics.execution.recently_completed_count;
+
+    let (config, _) = keel::infrastructure::config::load_config();
+    use chrono::Timelike;
+    let current_hour = chrono::Local::now().hour() as u8;
+    let within_working_hours = current_hour >= config.workflow.working_hours_start && current_hour < config.workflow.working_hours_end;
+    let is_circuit_enabled = config.workflow.open_for_work && within_working_hours;
+
     if scene {
-        let board = load_board(board_dir)?;
-        let topology = workflow_topology::load_for_board(board_dir)?;
-        let lane_flow = workflow_lane_flow::project(&board, &topology);
-        let metrics = flow_status::project(&board, chrono::Utc::now());
-        let report = keel::read_model::diagnostics::validate_report(board_dir)?;
-        let healthy = report.total_errors() == 0;
-        
-        // System is autonomous if no tasks are pending in manual_accept lanes
-        let needs_human_input = lane_flow.lanes.iter().any(|lane| lane.manual_accept && lane.total_count > 0);
-        let autonomous = !needs_human_input;
-
-        let in_progress = metrics.execution.in_progress_count;
-        let recently_completed = metrics.execution.recently_completed_count;
-
-        let (config, _) = keel::infrastructure::config::load_config();
-        use chrono::Timelike;
-        let current_hour = chrono::Local::now().hour() as u8;
-        let within_working_hours = current_hour >= config.workflow.working_hours_start && current_hour < config.workflow.working_hours_end;
-        let is_circuit_enabled = config.workflow.open_for_work && within_working_hours;
-
         use owo_colors::OwoColorize;
         if !is_circuit_enabled {
             let mut circuit = String::new();
@@ -43,17 +43,19 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
             circuit.push_str("    └───(     )───  <-- CIRCUIT OPEN (OFF THE CLOCK / DISABLED)\n");
             circuit.push_str("         \\___/\n");
             println!("{}", circuit.dimmed());
+            return Err(anyhow::anyhow!("Circuit is open (disabled or off the clock)"));
         } else if autonomous {
             let mut circuit = String::new();
             circuit.push_str("\n    ┌───[BATTERY]───┐\n");
             circuit.push_str("    │               │\n");
-            
+
             if !healthy {
                 circuit.push_str("    │   [XX][XX]    │  <-- CAPACITORS BLOWN (SYSTEM UNHEALTHY)\n");
                 circuit.push_str("    │    * SPARKS * │\n");
                 circuit.push_str("    └───( X / X )───┘\n");
                 println!("{}", circuit.red().bold());
                 println!("Run `keel doctor` to repair the circuit.");
+                return Err(anyhow::anyhow!("Short circuit: System is unhealthy"));
             } else {
                 // Render capacitor bank if work volume is high
                 if in_progress > 3 {
@@ -78,6 +80,7 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
                 } else {
                     circuit.push_str("         \\___/  <-- SYSTEM IDLE (LIGHT OFF - BATTERY DEAD, POKE TO WAKE)\n");
                     println!("{}", circuit.dimmed());
+                    return Err(anyhow::anyhow!("System is idle: Battery is dead"));
                 }
             }
         } else {
@@ -164,12 +167,26 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
                     println!("  ... and {} more", blocking_items.len() - 5);
                 }
             }
+            return Err(anyhow::anyhow!("System is idle: Human input required"));
         }
         return Ok(());
     }
 
     let output = build_output(board_dir, no_color, show_routines)?;
     println!("{}", output);
+
+    if !is_circuit_enabled {
+        return Err(anyhow::anyhow!("Circuit is open (disabled or off the clock)"));
+    }
+    if !healthy {
+        return Err(anyhow::anyhow!("Short circuit: System is unhealthy"));
+    }
+    if !autonomous {
+        return Err(anyhow::anyhow!("System is idle: Human input required"));
+    }
+    if recently_completed == 0 {
+        return Err(anyhow::anyhow!("System is idle: Battery is dead"));
+    }
 
     Ok(())
 }
