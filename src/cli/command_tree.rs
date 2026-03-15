@@ -337,7 +337,7 @@ pub fn build_cli() -> Command {
             Command::new("ping")
                 .about("Send a message to the inbox")
                 .hide(true)
-                .arg(Arg::new("message").required(true).help("The message to send"))
+                .arg(Arg::new("message").required(true).help("The message to send").num_args(1..))
                 .arg(
                     Arg::new("json")
                         .long("json")
@@ -350,7 +350,7 @@ pub fn build_cli() -> Command {
                 .about("Respond to or re-evaluate a ping in the inbox")
                 .hide(true)
                 .arg(Arg::new("id").required(true).help("The ID of the ping"))
-                .arg(Arg::new("message").help("Optional pong message to send"))
+                .arg(Arg::new("message").help("Optional pong message to send").num_args(1..))
                 .arg(
                     Arg::new("json")
                         .long("json")

@@ -129,13 +129,20 @@ pub fn run() -> Result<()> {
         },
         Some(("knowledge", m)) => handle_knowledge_command(m),
         Some(("ping", m)) => {
-            let message = m.get_one::<String>("message").expect("required").clone();
+            let message = m
+                .get_many::<String>("message")
+                .expect("required")
+                .map(|s| s.as_str())
+                .collect::<Vec<_>>()
+                .join(" ");
             let json = *m.get_one::<bool>("json").unwrap_or(&false);
             super::commands::comms::ping::run(&resolve_board_dir()?, &message, json)
         }
         Some(("poke", m)) => {
             let id = m.get_one::<String>("id").expect("required").clone();
-            let message = m.get_one::<String>("message").cloned();
+            let message = m
+                .get_many::<String>("message")
+                .map(|vals| vals.map(|s| s.as_str()).collect::<Vec<_>>().join(" "));
             let json = *m.get_one::<bool>("json").unwrap_or(&false);
             super::commands::comms::poke::run(&resolve_board_dir()?, &id, message.as_deref(), json)
         }
