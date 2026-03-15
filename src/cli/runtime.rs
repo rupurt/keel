@@ -67,7 +67,8 @@ pub fn run() -> Result<()> {
         }
         Some(("pulse", m)) => {
             let json = *m.get_one::<bool>("json").unwrap_or(&false);
-            super::commands::management::pulse::run(json)
+            let scene = *m.get_one::<bool>("scene").unwrap_or(&false);
+            super::commands::management::pulse::run(json, scene)
         }
         Some(("topology", m)) => {
             let zoom = m

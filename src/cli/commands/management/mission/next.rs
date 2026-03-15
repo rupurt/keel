@@ -28,7 +28,14 @@ struct SelectedMission<'a> {
 }
 
 /// Run the mission next command
-pub fn run(mission_id: Option<&str>, status: bool, extended: bool) -> Result<()> {
+pub fn run(mission_id: Option<&str>, status: bool, extended: bool, scene: bool) -> Result<()> {
+    if scene {
+        // Render a basic radar. We could optionally calculate exactly how many items are available
+        // to set the signal count, but for now we just show a full radar as a visual indicator.
+        println!("{}", crate::cli::presentation::scene::render_radar(3));
+        return Ok(());
+    }
+
     let board_dir = keel::infrastructure::config::find_board_dir()?;
     let board = load_board(&board_dir)?;
 

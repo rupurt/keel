@@ -22,24 +22,23 @@ use keel::read_model::scheduled_routines::{
 };
 
 /// Run the pulse command.
-pub fn run(json: bool) -> Result<()> {
+pub fn run(json: bool, scene: bool) -> Result<()> {
     let board_dir = keel::infrastructure::config::find_board_dir()?;
-    let output = build_pulse_output_with_dir_at(&board_dir, json, Utc::now())?;
+    let cycle = build_pulse_cycle(&board_dir, Utc::now())?;
+    
+    if scene {
+        let created_any = cycle.routines.iter().any(|r| r.outcome == PulseRoutineOutcome::Created);
+        println!("{}", crate::cli::presentation::scene::render_gears(created_any));
+        return Ok(());
+    }
+
+    let output = if json {
+        format!("{}\n", serde_json::to_string_pretty(&cycle)?)
+    } else {
+        render_pulse_human(&cycle)
+    };
     print!("{output}");
     Ok(())
-}
-
-fn build_pulse_output_with_dir_at(
-    board_dir: &Path,
-    json: bool,
-    reference_time: DateTime<Utc>,
-) -> Result<String> {
-    let cycle = build_pulse_cycle(board_dir, reference_time)?;
-    if json {
-        Ok(format!("{}\n", serde_json::to_string_pretty(&cycle)?))
-    } else {
-        Ok(render_pulse_human(&cycle))
-    }
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
@@ -652,6 +651,19 @@ mod tests {
     use chrono::TimeZone;
     use keel::test_helpers::{TestBoardBuilder, TestEpic, TestVoyage};
     use std::fs;
+
+    fn build_pulse_output_with_dir_at(
+        board_dir: &Path,
+        json: bool,
+        reference_time: DateTime<Utc>,
+    ) -> Result<String> {
+        let cycle = build_pulse_cycle(board_dir, reference_time)?;
+        if json {
+            Ok(format!("{}\n", serde_json::to_string_pretty(&cycle)?))
+        } else {
+            Ok(render_pulse_human(&cycle))
+        }
+    }
 
     fn write_routine(
         root: &Path,

@@ -46,6 +46,9 @@ pub enum MissionAction {
         /// Show an extended report with novel findings and strategic unblockers
         #[arg(long)]
         extended: bool,
+        /// Render a visual representation of the current board scene
+        #[arg(long)]
+        scene: bool,
     },
     /// Refine mission charter (elicitation)
     Refine {
@@ -110,7 +113,8 @@ pub fn run(action: MissionAction) -> Result<()> {
             id,
             status,
             extended,
-        } => next::run(id.as_deref(), status, extended),
+            scene,
+        } => next::run(id.as_deref(), status, extended, scene),
         MissionAction::Refine { id, answer } => {
             keel::application::mission_lifecycle::MissionLifecycleService::refine(
                 &board_dir,

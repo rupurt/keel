@@ -152,6 +152,12 @@ pub fn build_cli() -> Command {
                         .long("json")
                         .help("Output as JSON for scripting")
                         .action(ArgAction::SetTrue),
+                )
+                .arg(
+                    Arg::new("scene")
+                        .long("scene")
+                        .help("Render a visual representation of the current board scene")
+                        .action(ArgAction::SetTrue),
                 ),
         )
         .subcommand(
