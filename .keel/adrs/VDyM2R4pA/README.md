@@ -25,10 +25,15 @@ As Keel evolves into a multi-agent workflow engine, we need an intuitive mental 
 We adopt an **Electrical Circuit & Physiological** metaphor for Keel's systemic state. The core primitives are:
 
 1. **The Battery (Strategic Energy):**
-   - Recharged by completing strategic capacity (e.g., closing Voyages and Epics).
-   - Provides the energy required to run the automated engine loop.
+   - Recharged by completing strategic capacity (e.g., closing Voyages and Epics) or by any state-mutating activity in the board.
+   - Provides the energy required to run the automated engine loop. 
+   - A single battery decays over time (configurable `battery_decay_minutes`), returning the system to idle if it is not receiving active attention.
 
-2. **The Capacitor (Human Attention / Burst Capacity):**
+2. **Battery Packs (Queues):**
+   - Queues of ready work represent additional battery packs plugged into the engine. 
+   - If too many battery packs (unbounded queues) get plugged in simultaneously, it creates a risk of **Circuit Overload**, requiring system governors to shed load or increase limits.
+
+3. **The Capacitor (Human Attention / Burst Capacity):**
    - Represents the buffer for human verification and interaction.
    - When the project accumulates excess energy (more batteries than it can hold), it discharges to power external signals (see Lighthouse).
 
