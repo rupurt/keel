@@ -81,8 +81,8 @@ pub fn calculate_metrics(board: &Board, reference_time: DateTime<Utc>) -> FlowMe
         .filter(|v| v.status() == VoyageState::InProgress)
         .count();
 
-    // Recently completed (last 15 minutes)
-    let recent_threshold = reference_time - chrono::Duration::minutes(15);
+    // Recently completed (last 1 minute)
+    let recent_threshold = reference_time - chrono::Duration::minutes(1);
     metrics.execution.recently_completed_count = board
         .stories
         .values()
