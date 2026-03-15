@@ -1,29 +1,22 @@
 ---
-id: VDtx8IW2K
+id: VDuknDnI2
 title: Bridge Engine And VCS Via Auto Staging
 type: feat
-status: in-progress
+status: backlog
 scope: VDseuzIFg
-milestone: null
-created_at: 2026-03-15T03:03:41
-updated_at: 2026-03-14T23:24:18
-started_at: 2026-03-14T23:24:18
-completed_at: null
-submitted_at: null
-index: 2
-governed-by: []
-blocked_by: []
-role: null
+created_at: 2026-03-15T06:20:57
+updated_at: 2026-03-15T06:20:57
+index: 7
 operator-signal: pulse
 ---
 
-<!-- keel:pulse-materialization: bridge-engine-and-vcs-via-auto-staging@2026-03-16T00:00:00Z -->
+<!-- keel:pulse-materialization: VDz8zh8q2@2026-03-16T00:00:00Z -->
 
 # Bridge Engine And VCS Via Auto Staging
 
 ## Summary
 
-Materialized from routine `bridge-engine-and-vcs-via-auto-staging` for eligible window ending `2026-03-16T00:00:00Z`.
+Materialized from routine `VDz8zh8q2` for eligible window ending `2026-03-16T00:00:00Z`.
 
 ## Acceptance Criteria
 
@@ -31,7 +24,7 @@ Materialized from routine `bridge-engine-and-vcs-via-auto-staging` for eligible 
 
 ## Routine Provenance
 
-- Routine: `bridge-engine-and-vcs-via-auto-staging`
+- Routine: `VDz8zh8q2`
 - Target scope: `VDseuzIFg`
 - Eligible window ends: `2026-03-16T00:00:00Z`
 

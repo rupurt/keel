@@ -1,29 +1,23 @@
 ---
-id: VDtx8IX2M
+id: VDuknDmHz
 title: Eliminate Report Tail Friction
 type: feat
 status: in-progress
 scope: VDseuzIFg
-milestone: null
-created_at: 2026-03-15T03:03:41
-updated_at: 2026-03-14T23:24:19
-started_at: 2026-03-14T23:24:19
-completed_at: null
-submitted_at: null
-index: 3
-governed-by: []
-blocked_by: []
-role: null
+created_at: 2026-03-15T06:20:57
+updated_at: 2026-03-14T23:24:20
+index: 4
 operator-signal: pulse
+started_at: 2026-03-14T23:24:20
 ---
 
-<!-- keel:pulse-materialization: eliminate-report-tail-friction@2026-03-16T00:00:00Z -->
+<!-- keel:pulse-materialization: VDVGSjq3Q@2026-03-16T00:00:00Z -->
 
 # Eliminate Report Tail Friction
 
 ## Summary
 
-Materialized from routine `eliminate-report-tail-friction` for eligible window ending `2026-03-16T00:00:00Z`.
+Materialized from routine `VDVGSjq3Q` for eligible window ending `2026-03-16T00:00:00Z`.
 
 ## Acceptance Criteria
 
@@ -31,7 +25,7 @@ Materialized from routine `eliminate-report-tail-friction` for eligible window e
 
 ## Routine Provenance
 
-- Routine: `eliminate-report-tail-friction`
+- Routine: `VDVGSjq3Q`
 - Target scope: `VDseuzIFg`
 - Eligible window ends: `2026-03-16T00:00:00Z`
 
