@@ -1,0 +1,115 @@
+# INSTRUCTIONS.md
+
+Procedural instructions and workflow guidance for agents and operators working with Keel.
+
+## The Tactical Loop
+
+Keel is an engine with strict constraints. Your job is to perform "tactical moves" that push work through the state machine while eliminating drift.
+
+Every session follows this deterministic cycle:
+
+1.  **Mission Orientation**: Start by running `keel mission next --status`. This gives you the top 3 high-signal moves required by the engine. Check `just keel flow --scene` to quickly visualize if the workflow is autonomous or blocked waiting for human input.
+2.  **Role Selection**: Identify if you are a `manager` (planning/decisions) or an `operator` (implementation). Do not drift across these roles in a single atomic change.
+3.  **Execute Move**: Perform exactly ONE move (e.g., plan a voyage, implement a story, fix a diagnostic).
+4.  **Seal Move**: Close the loop with `story submit`, `voyage plan`, or `bearing lay`. This mutates the `.keel` state.
+5.  **Log & Commit**: Record your move in the mission `LOG.md` and create a single atomic [Conventional Commit](https://www.conventionalcommits.org/).
+
+## Primary Workflows
+
+### Operator (Implementation)
+Focus on **evidence-backed delivery**.
+- **Context**: `keel story show <id>` and `keel voyage show <id>`.
+- **Action**: Implement requirements, record proofs with `keel story record`, and `submit`.
+- **Constraint**: Every AC must have a proof.
+
+### Manager (Planning)
+Focus on **strategic alignment and unblocking**.
+- **Context**: `keel epic show <id>` and `keel flow`.
+- **Action**: Author `PRD.md`, `SRS.md`, `SDD.md`, and decompose stories.
+- **Constraint**: Move voyages from `draft` to `planned` only when requirements are coherent.
+
+### Explorer (Research)
+Focus on **technical discovery and fog reduction**.
+- **Context**: `keel bearing list`.
+- **Action**: Fill `BRIEF.md`, collect `EVIDENCE.md`, and `assess`.
+- **Constraint**: Graduate to epics only when research is conclusive.
+
+## Global Hygiene Checklist
+
+Apply these checks to **every change** before finalizing work:
+
+1. **Doctor Check**: `just keel doctor` must pass with zero warnings or errors. (Tip: use `just keel doctor --scene` for a visual pulse check of board health).
+2. **Quality Check**: `just quality` must be clean (formatting and linting).
+3. **Verification**: `just test` and `just doctest` must pass 100%.
+4. **Lifecycle Before Commit**: Run board-mutating lifecycle commands before the atomic commit when they generate or rewrite `.keel` artifacts (for example `story submit`, `voyage plan`, `voyage done`, `bearing assess`, `bearing lay`). After the transition, inspect `git status` and include the resulting `.keel` churn in the same commit.
+5. **Atomic Commits**: Commit once per logical unit of work. Use [Conventional Commits](https://www.conventionalcommits.org/):
+   - `feat:` (new feature)
+   - `fix:` (bug fix)
+   - `docs:` (documentation)
+   - `refactor:` (code change, no behavior change)
+   - `test:` (adding/updating tests)
+   - `chore:` (build/tooling)
+6. **Mission Loop Discipline**: For mission-driven work, return to the mission steward loop after every completed story, planning unit, or bearing instead of continuing ad hoc from the last worker context.
+7. **Knowledge Quality Bar**: Prefer no new knowledge over low-signal knowledge. A new knowledge entry should be novel, reusable across stories, and materially reduce future drift; otherwise link existing knowledge or omit capture entirely.
+
+## Compatibility Policy (Hard Cutover)
+
+At this stage of development, this repository uses a **hard cutover** policy by default.
+
+1. **No Backward Compatibility by Default**: Do not add compatibility aliases, dual-write logic, soft-deprecated schema fields, or fallback parsing for legacy formats unless a story explicitly requires it.
+2. **Replace, Don’t Bridge**: When introducing a new canonical token, field, command behavior, or document contract, remove the old path in the same change slice.
+3. **Fail Fast in Validation**: `keel doctor` and transition gates should treat legacy or unfilled scaffold patterns as hard failures when they violate the new contract.
+4. **Single Canonical Path**: Keep one source of truth for rendering, parsing, and validation; avoid parallel implementations meant only to preserve old behavior.
+5. **Migration Is Explicit Work**: If existing board artifacts need updates, handle that in a dedicated migration pass/story instead of embedding runtime compatibility logic.
+
+## Commands
+
+### Command execution model (DRY)
+
+Use one path for each concern:
+
+- `just ...` for repo/build/test workflows.
+- `just keel ...` for all board/workflow operations.
+
+### `just` workflow commands
+
+| Command | Purpose |
+|---------|---------|
+| `just` | List available recipes |
+| `just setup` | Install helper tooling (`cargo-nextest`, `cargo-llvm-cov`) |
+| `just build` | Alias to `just build-debug` |
+| `just build-debug` | Build debug artifact and copy to `target/debug/keel` |
+| `just build-release` | Build release artifact and copy to `target/release/keel` |
+| `just run` | Run the CLI |
+| `just test` | Run test suite (uses nextest if available) |
+| `just doctest` | Run doc tests (nextest does not support these) |
+| `just quality` | Run formatting and clippy checks |
+| `just coverage` | Produce `coverage/lcov.info` |
+| `just pre-commit` | Run quality + tests |
+
+### `just keel` board workflow commands
+
+Run `just keel --help` for the full command tree. The core commands you should rely on:
+
+| Category | Commands |
+|----------|----------|
+| Discovery | `just keel bearing new <name>` `just keel bearing research <id>` `just keel bearing assess <id>` `just keel bearing list` |
+| Planning | `just keel epic new <name> --problem <problem>` `just keel voyage new <name> --epic <epic-id> --goal <goal>` |
+| Execution | `just keel story new "<title>" [--type <type>] [--epic <epic-id> [--voyage <voyage-id>]]` |
+| Board Ops | `just keel mission next [<id>]` `just keel next --role manager` `just keel next --role operator` `just keel flow` `just keel doctor` `just keel generate` `just keel config show` `just keel mission show <id>` |
+| Lifecycle | Story/voyage/epic transitions in the table below |
+
+## Story and Milestone State Changes
+
+Use CLI commands only; do not move `.keel` files manually.
+
+| Action | Command |
+|--------|---------|
+| Start | `just keel story start <id>` |
+| Reflect | `just keel story reflect <id>` |
+| Submit | `just keel story submit <id>` |
+| Reject | `just keel story reject <id> "reason"` |
+| Accept | `just keel story accept <id> --role manager` |
+| Ice | `just keel story ice <id>` |
+| Thaw | `just keel story thaw <id>` |
+| Voyage done | `just keel voyage done <id>` |
