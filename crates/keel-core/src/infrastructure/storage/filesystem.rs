@@ -51,9 +51,9 @@ impl FileSystemAdapter {
         // body
         let body = body.trim();
         let updated = if body.is_empty() {
-            format!("---\n{}---\n", serialized.trim())
+            format!("---\n{}\n---\n", serialized.trim())
         } else {
-            format!("---\n{}---\n\n{}\n", serialized.trim(), body)
+            format!("---\n{}\n---\n\n{}\n", serialized.trim(), body)
         };
 
         fs::write(&path, updated)
@@ -67,9 +67,9 @@ impl FileSystemAdapter {
             .with_context(|| format!("serialize routine frontmatter for {}", path.display()))?;
         let body = routine.blueprint_markdown.trim();
         let updated = if body.is_empty() {
-            format!("---\n{}---\n", serialized.trim())
+            format!("---\n{}\n---\n", serialized.trim())
         } else {
-            format!("---\n{}---\n\n{}\n", serialized.trim(), body)
+            format!("---\n{}\n---\n\n{}\n", serialized.trim(), body)
         };
         fs::write(&path, updated)
             .with_context(|| format!("persist routine markdown at {}", path.display()))?;
