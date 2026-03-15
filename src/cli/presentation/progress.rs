@@ -44,3 +44,29 @@ mod tests {
         assert!(rendered.contains("(stories)"));
     }
 }
+
+pub fn render_capacity_bar(
+    done: usize,
+    in_flight: usize,
+    ready: usize,
+    width: usize,
+) -> String {
+    let total = done + in_flight + ready;
+    if total == 0 {
+        return format!("[{}]", " ".repeat(width));
+    }
+
+    let done_width = (done as f64 / total as f64 * width as f64).round() as usize;
+    let in_flight_width = (in_flight as f64 / total as f64 * width as f64).round() as usize;
+    let ready_width = (ready as f64 / total as f64 * width as f64).round() as usize;
+
+    let mut bar = String::new();
+    bar.push_str(&"▓".repeat(done_width));
+    bar.push_str(&"▒".repeat(in_flight_width));
+    bar.push_str(&"░".repeat(ready_width));
+
+    let remaining = width.saturating_sub(bar.len());
+    bar.push_str(&" ".repeat(remaining));
+
+    format!("[{}]", bar)
+}

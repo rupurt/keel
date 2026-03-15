@@ -189,16 +189,17 @@ pub fn render_epic_capacities(
         let epic_label = format!("{} {}", id_styled, cap.title);
         let epic_padded = pad_to_width(&epic_label, max_width);
 
+        let bar = crate::cli::presentation::progress::render_capacity_bar(
+            cap.capacity.done,
+            cap.capacity.in_flight,
+            cap.capacity.ready,
+            15,
+        );
+
         writeln!(
             output,
-            "  {} {} [D:{:>2} R:{:>2} F:{:>2} B:{:>2} I:{:>2}]",
-            emoji,
-            epic_padded,
-            cap.capacity.done,
-            cap.capacity.ready,
-            cap.capacity.in_flight,
-            cap.capacity.blocked,
-            cap.capacity.inactive
+            "  {} {} {}",
+            emoji, epic_padded, bar,
         )
         .unwrap();
     }
@@ -463,11 +464,10 @@ mod tests {
         let theme = Theme::default();
         let rendered = render_epic_capacities(&capacities, &theme);
         assert!(rendered.contains("epic1"));
-        assert!(rendered.contains("STATUS"));
-        assert!(rendered.contains("[D: 1 R: 1 F: 1 B: 0 I: 0]"));
-        assert!(!rendered.contains("█"));
-        assert!(!rendered.contains("▒"));
-        assert!(!rendered.contains("░"));
+        assert!(rendered.contains("EPIC"));
+        assert!(rendered.contains("▓"));
+        assert!(rendered.contains("▒"));
+        assert!(rendered.contains("░"));
     }
 
     #[test]
