@@ -67,12 +67,14 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
                 circuit.push_str("    │               │\n");
                 circuit.push_str("    └───( \\ / )─────┘\n");
                 
-                if in_progress > 0 {
-                    circuit.push_str("         \\_/_/  <-- SYSTEM AUTONOMOUS (LIGHT ON)\n");
-                    println!("{}", circuit.yellow().bold());
-                } else if recently_completed > 0 {
-                    circuit.push_str("         \\_/_/  <-- SYSTEM IDLE (LIGHT DIM)\n");
-                    println!("{}", circuit.yellow().dimmed());
+                if recently_completed > 0 {
+                    if in_progress > 0 {
+                        circuit.push_str("         \\_/_/  <-- SYSTEM AUTONOMOUS (LIGHT ON)\n");
+                        println!("{}", circuit.yellow().bold());
+                    } else {
+                        circuit.push_str("         \\_/_/  <-- SYSTEM IDLE (LIGHT DIM)\n");
+                        println!("{}", circuit.yellow().dimmed());
+                    }
                 } else {
                     circuit.push_str("         \\___/  <-- SYSTEM IDLE (LIGHT OFF)\n");
                     println!("{}", circuit.dimmed());
