@@ -2,13 +2,13 @@
 id: VDtx8IW2K
 title: Bridge Engine And VCS Via Auto Staging
 type: feat
-status: needs-human-verification
+status: done
 scope: VDseuzIFg
 milestone: null
 created_at: 2026-03-15T03:03:41
-updated_at: 2026-03-15T07:15:33
+updated_at: 2026-03-15T13:40:19
 started_at: 2026-03-14T23:24:18
-completed_at: null
+completed_at: 2026-03-15T13:40:19
 submitted_at: 2026-03-15T07:15:33
 index: 2
 governed-by: []
