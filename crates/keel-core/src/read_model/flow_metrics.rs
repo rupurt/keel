@@ -81,8 +81,10 @@ pub fn calculate_metrics(board: &Board, reference_time: DateTime<Utc>) -> FlowMe
         .filter(|v| v.status() == VoyageState::InProgress)
         .count();
 
-    // Recently active (last 30 minutes) - acts as battery charge
-    let recent_threshold = reference_time - chrono::Duration::minutes(30);
+    // Recently active - acts as battery charge
+    let (config, _) = crate::infrastructure::config::load_config();
+    let battery_decay = config.workflow.battery_decay_minutes;
+    let recent_threshold = reference_time - chrono::Duration::minutes(battery_decay as i64);
     metrics.execution.recently_completed_count = board
         .stories
         .values()
