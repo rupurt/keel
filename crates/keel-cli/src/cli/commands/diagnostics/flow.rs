@@ -17,6 +17,8 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
         let topology = workflow_topology::load_for_board(board_dir)?;
         let lane_flow = workflow_lane_flow::project(&board, &topology);
         let metrics = flow_status::project(&board, chrono::Utc::now());
+        let report = keel::read_model::diagnostics::validate_report(board_dir)?;
+        let healthy = report.total_errors() == 0;
         
         // System is autonomous if no tasks are pending in manual_accept lanes
         let needs_human_input = lane_flow.lanes.iter().any(|lane| lane.manual_accept && lane.total_count > 0);
@@ -31,27 +33,35 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
             circuit.push_str("\n    ┌───[BATTERY]───┐\n");
             circuit.push_str("    │               │\n");
             
-            // Render capacitor bank if work volume is high
-            if in_progress > 3 {
-                circuit.push_str("    │   [||][||]    │  <-- CAPACITOR BANK ACTIVE\n");
-            } else if in_progress > 0 {
-                circuit.push_str("    │     [||]      │  <-- CAPACITOR CHARGING\n");
+            if !healthy {
+                circuit.push_str("    │   [XX][XX]    │  <-- CAPACITORS BLOWN (SYSTEM UNHEALTHY)\n");
+                circuit.push_str("    │    * SPARKS * │\n");
+                circuit.push_str("    └───( X / X )───┘\n");
+                println!("{}", circuit.red().bold());
+                println!("Run `keel doctor` to repair the circuit.");
             } else {
+                // Render capacitor bank if work volume is high
+                if in_progress > 3 {
+                    circuit.push_str("    │   [||][||]    │  <-- CAPACITOR BANK ACTIVE\n");
+                } else if in_progress > 0 {
+                    circuit.push_str("    │     [||]      │  <-- CAPACITOR CHARGING\n");
+                } else {
+                    circuit.push_str("    │               │\n");
+                }
+                
                 circuit.push_str("    │               │\n");
-            }
-            
-            circuit.push_str("    │               │\n");
-            circuit.push_str("    └───( \\ / )─────┘\n");
-            
-            if in_progress > 0 {
-                circuit.push_str("         \\_/_/  <-- SYSTEM AUTONOMOUS (LIGHT ON)\n");
-                println!("{}", circuit.yellow().bold());
-            } else if recently_completed > 0 {
-                circuit.push_str("         \\_/_/  <-- SYSTEM IDLE (LIGHT DIM)\n");
-                println!("{}", circuit.yellow().dimmed());
-            } else {
-                circuit.push_str("         \\___/  <-- SYSTEM IDLE (LIGHT OFF)\n");
-                println!("{}", circuit.dimmed());
+                circuit.push_str("    └───( \\ / )─────┘\n");
+                
+                if in_progress > 0 {
+                    circuit.push_str("         \\_/_/  <-- SYSTEM AUTONOMOUS (LIGHT ON)\n");
+                    println!("{}", circuit.yellow().bold());
+                } else if recently_completed > 0 {
+                    circuit.push_str("         \\_/_/  <-- SYSTEM IDLE (LIGHT DIM)\n");
+                    println!("{}", circuit.yellow().dimmed());
+                } else {
+                    circuit.push_str("         \\___/  <-- SYSTEM IDLE (LIGHT OFF)\n");
+                    println!("{}", circuit.dimmed());
+                }
             }
         } else {
             let circuit = r#"
