@@ -148,22 +148,47 @@ pub fn render_epic_capacities(
     capacities: &HashMap<String, EpicCapacityReport>,
     _theme: &Theme,
 ) -> String {
-    let mut sorted: Vec<_> = capacities.values().collect();
-    sorted.sort_by_key(|c| c.id.clone());
-    let visible = visible_epic_capacities(&sorted);
+    let mut out = String::new();
+    let mut draft_epics: Vec<_> = capacities
+        .values()
+        .filter(|epic| epic.status == keel::domain::model::EpicState::Draft)
+        .cloned()
+        .collect();
+    let mut active_epics: Vec<_> = capacities
+        .values()
+        .filter(|epic| epic.status == keel::domain::model::EpicState::Active)
+        .cloned()
+        .collect();
+    let mut done_epics: Vec<_> = capacities
+        .values()
+        .filter(|epic| epic.status == keel::domain::model::EpicState::Done)
+        .cloned()
+        .collect();
 
-    // Calculate max label width for alignment
-    let mut max_width = 15; // default minimum
-    for cap in &visible {
+    if draft_epics.is_empty() && active_epics.is_empty() && done_epics.is_empty() {
+        return out;
+    }
+
+    draft_epics.sort_by_key(|e| e.index);
+    active_epics.sort_by_key(|e| e.index);
+    done_epics.sort_by_key(|e| e.index);
+    done_epics.reverse();
+
+    let all_epics = draft_epics
+        .iter()
+        .chain(active_epics.iter())
+        .chain(done_epics.iter());
+
+    let mut max_width = 15;
+    for cap in all_epics {
         let label_width = cap.id.len() + 1 + cap.title.len();
         if label_width > max_width {
             max_width = label_width;
         }
     }
-    max_width += 2; // buffer
+    max_width += 2;
     let status_width = 10;
 
-    let mut output = String::new();
     let header = format!(
         "     {: <w$} {:<sw$} CAPACITY",
         "EPIC",
@@ -171,63 +196,101 @@ pub fn render_epic_capacities(
         w = max_width,
         sw = status_width
     );
-    writeln!(output, "{}", header.dimmed()).unwrap();
+    writeln!(out, "{}", header.dimmed()).unwrap();
 
-    for cap in visible {
-        let emoji = match cap.charge_state {
-            crate::cli::presentation::flow::capacity::ChargeState::Blocked => "🔴",
-            crate::cli::presentation::flow::capacity::ChargeState::Discharged => "⚪",
-            crate::cli::presentation::flow::capacity::ChargeState::Trickle => "💡",
-            crate::cli::presentation::flow::capacity::ChargeState::Charged => "🔋",
-            crate::cli::presentation::flow::capacity::ChargeState::Supercharged => "⚡",
-            crate::cli::presentation::flow::capacity::ChargeState::Overloaded => "🔥",
-        };
-
-        let epic = board.epics.get(&cap.id).unwrap();
-        let status_str = epic.status().to_string();
-        let status_styled = {
-            let stage = epic.status();
-            match stage {
-                keel::domain::model::EpicState::Active => {
-                    if cap.capacity.in_flight > 0 {
-                        format!("{}", status_str.green())
-                    } else {
-                        format!("{}", status_str.yellow())
-                    }
-                }
-                _ => format!("{}", status_str.dimmed()),
-            }
-        };
-
-        let id_styled = crate::cli::style::styled_epic_id(&cap.id);
-        let epic_label = format!("{} {}", id_styled, cap.title);
-        let epic_padded = pad_to_width(&epic_label, max_width);
-
-        let bar = crate::cli::presentation::progress::render_capacity_bar(
-            cap.capacity.done,
-            cap.capacity.in_flight,
-            cap.capacity.ready,
-            15,
-            if cap.capacity.in_flight > 0 {
-                Some(owo_colors::AnsiColors::Green)
-            } else if cap.capacity.ready > 0 {
-                Some(owo_colors::AnsiColors::Yellow)
-            } else {
-                None
-            },
-        );
-
-        let status_padded = pad_to_width(&status_styled, status_width);
-
+    // Render Drafts (clipped)
+    let draft_len = draft_epics.len();
+    if draft_len > COMPLETED_EPIC_RENDER_LIMIT {
         writeln!(
-            output,
-            "  {} {} {} {}",
-            emoji, epic_padded, status_padded, bar,
+            out,
+            "  ... ({} more draft epics)",
+            draft_len - COMPLETED_EPIC_RENDER_LIMIT
         )
         .unwrap();
     }
+    for epic in draft_epics.iter().take(COMPLETED_EPIC_RENDER_LIMIT) {
+        writeln!(out, "{}", render_epic_line(board, epic, max_width, status_width, theme)).unwrap();
+    }
 
-    output
+    // Separator
+    if !draft_epics.is_empty() && !active_epics.is_empty() {
+        writeln!(out).unwrap();
+    }
+
+    // Render Actives (never clipped)
+    for epic in &active_epics {
+        writeln!(out, "{}", render_epic_line(board, epic, max_width, status_width, theme)).unwrap();
+    }
+
+    // Separator
+    if (!draft_epics.is_empty() || !active_epics.is_empty()) && !done_epics.is_empty() {
+       writeln!(out, "  ...").unwrap();
+    }
+
+    // Render Dones (clipped)
+    for epic in done_epics.iter().take(COMPLETED_EPIC_RENDER_LIMIT) {
+        writeln!(out, "{}", render_epic_line(board, epic, max_width, status_width, theme)).unwrap();
+    }
+
+    out
+}
+
+fn render_epic_line(
+    board: &keel::domain::model::Board,
+    cap: &EpicCapacityReport,
+    epic_width: usize,
+    status_width: usize,
+    theme: &Theme,
+) -> String {
+    let emoji = match cap.charge_state {
+        crate::cli::presentation::flow::capacity::ChargeState::Blocked => "🔴",
+        crate::cli::presentation::flow::capacity::ChargeState::Discharged => "⚪",
+        crate::cli::presentation::flow::capacity::ChargeState::Trickle => "💡",
+        crate::cli::presentation::flow::capacity::ChargeState::Charged => "🔋",
+        crate::cli::presentation::flow::capacity::ChargeState::Supercharged => "⚡",
+        crate::cli::presentation::flow::capacity::ChargeState::Overloaded => "🔥",
+    };
+
+    let epic = board.epics.get(&cap.id).unwrap();
+    let status_str = epic.status().to_string();
+    let status_styled = {
+        let stage = epic.status();
+        match stage {
+            keel::domain::model::EpicState::Active => {
+                if cap.capacity.in_flight > 0 {
+                    format!("{}", status_str.green())
+                } else {
+                    format!("{}", status_str.yellow())
+                }
+            }
+            _ => format!("{}", status_str.dimmed()),
+        }
+    };
+
+    let id_styled = crate::cli::style::styled_epic_id(&cap.id);
+    let epic_label = format!("{} {}", id_styled, cap.title);
+    let epic_padded = pad_to_width(&epic_label, epic_width);
+
+    let bar = crate::cli::presentation::progress::render_capacity_bar(
+        cap.capacity.done,
+        cap.capacity.in_flight,
+        cap.capacity.ready,
+        15,
+        if cap.capacity.in_flight > 0 {
+            Some(owo_colors::AnsiColors::Green)
+        } else if cap.capacity.ready > 0 {
+            Some(owo_colors::AnsiColors::Yellow)
+        } else {
+            None
+        },
+    );
+
+    let status_padded = pad_to_width(&status_styled, status_width);
+
+    format!(
+        "  {} {} {} {}",
+        emoji, epic_padded, status_padded, bar,
+    )
 }
 
 fn centered_ellipsis_width(max_width: usize, header: &str) -> usize {

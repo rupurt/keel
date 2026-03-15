@@ -28,6 +28,8 @@ pub struct EpicCapacity {
 pub struct EpicCapacityReport {
     pub id: String,
     pub title: String,
+    pub status: crate::domain::model::EpicState,
+    pub index: Option<u32>,
     pub charge_state: ChargeState,
     pub capacity: EpicCapacity,
 }
@@ -53,6 +55,8 @@ pub fn project(board: &Board) -> SystemCapacity {
             EpicCapacityReport {
                 id: epic.id().to_string(),
                 title: epic.frontmatter.title.clone(),
+                status: epic.status(),
+                index: epic.frontmatter.index,
                 charge_state: ChargeState::Discharged,
                 capacity: EpicCapacity {
                     ready: 0,
