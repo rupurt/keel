@@ -38,19 +38,23 @@ impl std::fmt::Display for EpicState {
 pub struct EpicFrontmatter {
     pub id: String,
     pub title: String,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     /// Source bearing ID when this epic is laid from a bearing
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bearing: Option<String>,
     /// Mission ID this epic belongs to
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub mission: Option<String>,
     /// Ordering within the board (lower = earlier)
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub index: Option<u32>,
     /// Creation datetime
-    #[serde(default, deserialize_with = "deserialize_strict_datetime")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_strict_datetime",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub created_at: Option<NaiveDateTime>,
 }
 

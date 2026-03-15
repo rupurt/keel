@@ -65,22 +65,46 @@ pub struct MissionFrontmatter {
     #[serde(default)]
     pub status: MissionStatus,
     /// Creation date
-    #[serde(default, deserialize_with = "deserialize_strict_datetime")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_strict_datetime",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub created_at: Option<NaiveDateTime>,
     /// Last update date
-    #[serde(default, deserialize_with = "deserialize_strict_datetime")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_strict_datetime",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub updated_at: Option<NaiveDateTime>,
     /// Date mission was activated (Defining → Active)
-    #[serde(default, deserialize_with = "deserialize_strict_datetime")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_strict_datetime",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub activated_at: Option<NaiveDateTime>,
     /// Date mission was achieved (Active → Achieved)
-    #[serde(default, deserialize_with = "deserialize_strict_datetime")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_strict_datetime",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub achieved_at: Option<NaiveDateTime>,
     /// Date mission was verified (Achieved → Verified)
-    #[serde(default, deserialize_with = "deserialize_strict_datetime")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_strict_datetime",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub verified_at: Option<NaiveDateTime>,
     /// Optional signal from the operator
-    #[serde(default, rename = "operator-signal")]
+    #[serde(
+        default,
+        rename = "operator-signal",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub operator_signal: Option<String>,
 }
 

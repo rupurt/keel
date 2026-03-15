@@ -23,11 +23,23 @@ pub struct RoutineFrontmatter {
     pub cadence: RoutineCadence,
     #[serde(rename = "target-scope")]
     pub target_scope: String,
-    #[serde(default, deserialize_with = "deserialize_strict_datetime")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_strict_datetime",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub created_at: Option<NaiveDateTime>,
-    #[serde(default, deserialize_with = "deserialize_strict_datetime")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_strict_datetime",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub updated_at: Option<NaiveDateTime>,
-    #[serde(default, rename = "operator-signal")]
+    #[serde(
+        default,
+        rename = "operator-signal",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub operator_signal: Option<String>,
 }
 

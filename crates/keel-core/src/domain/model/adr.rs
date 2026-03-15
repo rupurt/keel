@@ -71,31 +71,51 @@ pub struct AdrFrontmatter {
     #[serde(default)]
     pub status: AdrStatus,
     /// Primary bounded context this ADR applies to (e.g., "work-management")
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub context: Option<String>,
     /// Additional scopes this ADR applies to (e.g., ["all"], ["state-machines"])
-    #[serde(default, rename = "applies-to")]
+    #[serde(
+        default,
+        rename = "applies-to",
+        skip_serializing_if = "Vec::is_empty"
+    )]
     pub applies_to: Vec<String>,
     /// Mission ID this ADR belongs to
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub mission: Option<String>,
     /// ADR IDs that this decision supersedes
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub supersedes: Vec<String>,
     /// ADR ID that superseded this decision (if superseded)
-    #[serde(default, rename = "superseded-by")]
+    #[serde(
+        default,
+        rename = "superseded-by",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub superseded_by: Option<String>,
     /// Reason for rejection (if rejected)
-    #[serde(default, rename = "rejection-reason")]
+    #[serde(
+        default,
+        rename = "rejection-reason",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub rejection_reason: Option<String>,
     /// Reason for deprecation (if deprecated)
-    #[serde(default, rename = "deprecation-reason")]
+    #[serde(
+        default,
+        rename = "deprecation-reason",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub deprecation_reason: Option<String>,
     /// Date the decision was made
-    #[serde(default, deserialize_with = "deserialize_strict_datetime")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_strict_datetime",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub decided_at: Option<NaiveDateTime>,
     /// Ordering within the board (lower = earlier)
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub index: Option<u32>,
 }
 

@@ -24,39 +24,67 @@ pub struct StoryFrontmatter {
     #[serde(rename = "type")]
     pub story_type: StoryType,
     pub status: StoryState,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub scope: Option<String>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub milestone: Option<String>,
     /// Creation datetime
-    #[serde(default, deserialize_with = "deserialize_strict_datetime")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_strict_datetime",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub created_at: Option<NaiveDateTime>,
     /// Last update datetime
-    #[serde(default, deserialize_with = "deserialize_strict_datetime")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_strict_datetime",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub updated_at: Option<NaiveDateTime>,
     /// First start datetime
-    #[serde(default, deserialize_with = "deserialize_strict_datetime")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_strict_datetime",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub started_at: Option<NaiveDateTime>,
     /// Completion datetime
-    #[serde(default, deserialize_with = "deserialize_strict_datetime")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_strict_datetime",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub completed_at: Option<NaiveDateTime>,
     /// Datetime submitted for acceptance
-    #[serde(default, deserialize_with = "deserialize_strict_datetime")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_strict_datetime",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub submitted_at: Option<NaiveDateTime>,
     /// Index number for ordering within scope (lower = earlier)
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub index: Option<u32>,
     /// ADR IDs that govern this story's implementation
-    #[serde(default, rename = "governed-by")]
+    #[serde(
+        default,
+        rename = "governed-by",
+        skip_serializing_if = "Vec::is_empty"
+    )]
     pub governed_by: Vec<String>,
     /// Story IDs that should not be run in parallel with this story
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub blocked_by: Vec<String>,
     /// Role taxonomy string specifying required actor capabilities
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub role: Option<String>,
     /// Optional signal from the operator (separate from evidence)
-    #[serde(default, rename = "operator-signal")]
+    #[serde(
+        default,
+        rename = "operator-signal",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub operator_signal: Option<String>,
 }
 

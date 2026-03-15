@@ -12,29 +12,49 @@ use super::{Entity, VoyageState, deserialize_strict_datetime};
 pub struct VoyageFrontmatter {
     pub id: String,
     pub title: String,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub goal: Option<String>,
     #[serde(default)]
     pub status: VoyageState,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub epic: Option<String>,
     /// Ordering within the epic (lower = earlier)
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub index: Option<u32>,
     /// Creation datetime
-    #[serde(default, deserialize_with = "deserialize_strict_datetime")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_strict_datetime",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub created_at: Option<NaiveDateTime>,
     /// Last update datetime
-    #[serde(default, deserialize_with = "deserialize_strict_datetime")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_strict_datetime",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub updated_at: Option<NaiveDateTime>,
     /// First start datetime
-    #[serde(default, deserialize_with = "deserialize_strict_datetime")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_strict_datetime",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub started_at: Option<NaiveDateTime>,
     /// Completion datetime
-    #[serde(default, deserialize_with = "deserialize_strict_datetime")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_strict_datetime",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub completed_at: Option<NaiveDateTime>,
     /// Optional signal from the operator
-    #[serde(default, rename = "operator-signal")]
+    #[serde(
+        default,
+        rename = "operator-signal",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub operator_signal: Option<String>,
 }
 
