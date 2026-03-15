@@ -54,6 +54,31 @@ fn init_board(root: &Path, config: &Config) -> Result<()> {
         );
     }
 
+    // Append to .gitignore if it exists
+    let gitignore_path = root.join(".gitignore");
+    if gitignore_path.exists() {
+        if let Ok(content) = std::fs::read_to_string(&gitignore_path) {
+            let mut appends = Vec::new();
+            if !content.contains(".keel/inbox/") {
+                appends.push(".keel/inbox/");
+            }
+            if !content.contains(".keel/cache/") {
+                appends.push(".keel/cache/");
+            }
+            if !appends.is_empty() {
+                let append_str = format!("\n# Keel ignored artifacts\n{}\n", appends.join("\n"));
+                if let Err(e) = std::fs::OpenOptions::new().append(true).open(&gitignore_path).and_then(|mut f| {
+                    use std::io::Write;
+                    f.write_all(append_str.as_bytes())
+                }) {
+                    eprintln!("Warning: Failed to append to .gitignore: {}", e);
+                } else {
+                    println!("Appended ignored paths to .gitignore");
+                }
+            }
+        }
+    }
+
     println!("Initialized keel board in {}", board_path.display());
     println!("Created subdirectories:");
     for dir in INIT_SUBDIRS {

@@ -16,6 +16,8 @@ coverage
 
 # Keel
 keel.toml
+.keel/inbox/
+.keel/cache/
 
 .gemini/
 gha-creds-*.json
