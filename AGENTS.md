@@ -8,7 +8,7 @@ Keel is an engine with strict constraints (see [FORMAL_RULES.md](FORMAL_RULES.md
 
 Every session follows this deterministic cycle:
 
-1.  **Mission Orientation**: Start by running `keel mission next --status`. This gives you the top 3 high-signal moves required by the engine.
+1.  **Mission Orientation**: Start by running `keel mission next --status`. This gives you the top 3 high-signal moves required by the engine. Check `just keel flow --scene` to quickly visualize if the workflow is autonomous or blocked waiting for human input.
 2.  **Role Selection**: Identify if you are a `manager` (planning/decisions) or an `operator` (implementation). Do not drift across these roles in a single atomic change.
 3.  **Execute Move**: Perform exactly ONE move (e.g., plan a voyage, implement a story, fix a diagnostic).
 4.  **Seal Move**: Close the loop with `story submit`, `voyage plan`, or `bearing lay`. This mutates the `.keel` state.
@@ -47,7 +47,7 @@ Focus on **technical discovery and fog reduction**.
 
 Apply these checks to **every change** before finalizing work:
 
-1. **Doctor Check**: `just keel doctor` must pass with zero warnings or errors.
+1. **Doctor Check**: `just keel doctor` must pass with zero warnings or errors. (Tip: use `just keel doctor --scene` for a visual pulse check of board health).
 2. **Quality Check**: `just quality` must be clean (formatting and linting).
 3. **Verification**: `just test` and `just doctest` must pass 100%.
 4. **Lifecycle Before Commit**: Run board-mutating lifecycle commands before the atomic commit when they generate or rewrite `.keel` artifacts (for example `story submit`, `voyage plan`, `voyage done`, `bearing assess`, `bearing lay`). After the transition, inspect `git status` and include the resulting `.keel` churn in the same commit.
