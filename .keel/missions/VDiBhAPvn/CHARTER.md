@@ -1,5 +1,6 @@
 # Strict Deterministic Board Generation - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

@@ -1,5 +1,6 @@
 # Dependency-Aware Bearing Prioritization - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

@@ -1,5 +1,6 @@
 # HEAD Syntax For Show Commands - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

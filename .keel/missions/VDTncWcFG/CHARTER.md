@@ -1,5 +1,6 @@
 # Role Based Management and Execution - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

@@ -1,5 +1,6 @@
 # Integrate Board Diagnostics into Pull-System Steering - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

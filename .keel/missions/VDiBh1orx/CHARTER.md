@@ -1,5 +1,6 @@
 # Horizon and Roadmap View - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

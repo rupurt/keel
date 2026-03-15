@@ -1,5 +1,6 @@
 # Bearing Research Contract Alignment - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

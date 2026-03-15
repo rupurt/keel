@@ -1,5 +1,6 @@
 # Implement Compact Status for Mission Next - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

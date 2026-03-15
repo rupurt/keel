@@ -1,5 +1,6 @@
 # Marionette Puppet Theater Rigging Data Model - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

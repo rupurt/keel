@@ -1,5 +1,6 @@
 # Simulation Kernel and Reactive Architecture - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

@@ -1,5 +1,6 @@
 # Temporal Pull and Business Process Automation - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

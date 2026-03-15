@@ -1,5 +1,6 @@
 # Keel Lib Interface and Hexagonal Refactor - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

@@ -1,5 +1,6 @@
 # Add Keel Play Theater Mode - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

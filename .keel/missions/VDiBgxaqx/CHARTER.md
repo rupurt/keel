@@ -1,5 +1,6 @@
 # First-Class Mission Bearing Lineage - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

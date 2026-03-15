@@ -1,5 +1,6 @@
 # Canonical Board Graph and Scoped Regeneration - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

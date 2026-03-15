@@ -1,5 +1,6 @@
 # Configurable Role and Lane Topology - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

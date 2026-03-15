@@ -1,5 +1,6 @@
 # Accelerated Bearing Source Capture - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

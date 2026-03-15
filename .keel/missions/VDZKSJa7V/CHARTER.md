@@ -1,5 +1,6 @@
 # Formalize VSDD and Harden Verification Infrastructure - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

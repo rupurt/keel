@@ -1,5 +1,6 @@
 # Marionette Control Dynamics and Force Simulation - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

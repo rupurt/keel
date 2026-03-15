@@ -1,5 +1,6 @@
 # Board Coherence Restoration - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

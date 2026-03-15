@@ -1,5 +1,6 @@
 # Knowledge Graph and Drift Cartography - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

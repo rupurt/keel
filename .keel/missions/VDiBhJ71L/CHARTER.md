@@ -1,5 +1,6 @@
 # Research-Preserving Bearing Promotion - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

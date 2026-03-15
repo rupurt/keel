@@ -1,5 +1,6 @@
 # Marionette Play Telemetry and Scoring - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |

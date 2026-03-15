@@ -1,5 +1,6 @@
 # Implement Interactive Inquiry for Theater Mode - Charter
 
+Archetype: Strategic
 ## Goals
 
 | ID | Description | Verification |
