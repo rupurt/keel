@@ -27,7 +27,7 @@ Materialized from routine `bridge-engine-and-vcs-via-auto-staging` for eligible 
 
 ## Acceptance Criteria
 
-- [ ] [SRS-ROUTINE/AC-01] Complete the authored routine blueprint for this eligible window.
+- [x] [SRS-ROUTINE/AC-01] Complete the authored routine blueprint for this eligible window. <!-- verify: manual, SRS-ROUTINE:start, SRS-ROUTINE:end -->
 
 ## Routine Provenance
 

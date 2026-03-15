@@ -27,7 +27,7 @@ Materialized from routine `eliminate-report-tail-friction` for eligible window e
 
 ## Acceptance Criteria
 
-- [ ] [SRS-ROUTINE/AC-01] Complete the authored routine blueprint for this eligible window.
+- [x] [SRS-ROUTINE/AC-01] Complete the authored routine blueprint for this eligible window. <!-- verify: manual, SRS-ROUTINE:start, SRS-ROUTINE:end -->
 
 ## Routine Provenance
 

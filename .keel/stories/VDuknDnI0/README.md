@@ -21,7 +21,7 @@ Materialized from routine `VDdStLhma` for eligible window ending `2026-03-16T00:
 
 ## Acceptance Criteria
 
-- [ ] [SRS-ROUTINE/AC-01] Complete the authored routine blueprint for this eligible window.
+- [x] [SRS-ROUTINE/AC-01] Complete the authored routine blueprint for this eligible window. <!-- verify: manual, SRS-ROUTINE:start, SRS-ROUTINE:end -->
 
 ## Routine Provenance
 
