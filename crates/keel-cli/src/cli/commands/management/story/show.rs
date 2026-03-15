@@ -110,34 +110,51 @@ fn render_compact_summary(
     use owo_colors::OwoColorize;
 
     let mut bullets = Vec::new();
-    let status_line = format!(
-        "{} {}",
-        "Status:    ".bold(),
-        style::styled_story_status(&story.status)
-    );
-    let progress_line = format!(
-        "{} {}",
-        "Progress:  ".bold(),
-        style::progress_bar(
-            projection.checked_criteria,
-            projection.total_criteria,
-            20,
-            None,
-        )
-    );
 
+    // Bullet 1: Status and Type
+    bullets.push(format!(
+        "{} {} ({})",
+        "Status:".bold(),
+        style::styled_story_status(&story.status),
+        style::styled_type(&story.story_type())
+    ));
+
+    // Bullet 2: Progress summary
+    if projection.total_criteria > 0 {
+        bullets.push(format!(
+            "{} {}/{} criteria met",
+            "Progress:".bold(),
+            projection.checked_criteria.to_string().green(),
+            projection.total_criteria
+        ));
+    } else {
+        bullets.push(format!(
+            "{} No acceptance criteria defined",
+            "Progress:".bold()
+        ));
+    }
+
+    // Bullet 3: Next Move
     let next_step = match story.status {
+        keel::domain::model::StoryState::Backlog => {
+            format!("{} `keel story start {}`", "Next:".bold(), story.id())
+        }
         keel::domain::model::StoryState::InProgress => {
             format!("{} `keel story submit {}`", "Next:".bold(), story.id())
         }
         keel::domain::model::StoryState::NeedsHumanVerification => {
-            format!("{} `keel story accept {}`", "Next:".bold(), story.id())
+            format!("{} `keel story accept {}` --role manager", "Next:".bold(), story.id())
         }
-        _ => "".to_string(),
+        keel::domain::model::StoryState::Rejected => {
+            format!(
+                "{} `keel story start {}` (restart)",
+                "Next:".bold(),
+                story.id()
+            )
+        }
+        keel::domain::model::StoryState::Done => "All criteria satisfied and verified.".to_string(),
+        _ => "No actionable next step found.".to_string(),
     };
-
-    bullets.push(status_line);
-    bullets.push(progress_line);
     bullets.push(next_step);
 
     bullets

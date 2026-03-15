@@ -100,26 +100,41 @@ fn render_compact_summary(
     use owo_colors::OwoColorize;
 
     let mut bullets = Vec::new();
+
+    // Bullet 1: Status and Epic
     bullets.push(format!(
-        "{} {}",
+        "{} {} (Epic: {})",
         "Status:".bold(),
-        style::styled_voyage_stage(&voyage.status())
+        style::styled_voyage_stage(&voyage.status()),
+        style::styled_epic_id(&voyage.epic_id)
     ));
+
+    // Bullet 2: Progress summary
     bullets.push(format!(
-        "{} {}",
-        "Stories:".bold(),
-        render_count_bar(report.done_stories, report.total_stories, 15, None),
+        "{} {}/{} stories done, {}/{} requirements met",
+        "Progress:".bold(),
+        report.done_stories.to_string().green(),
+        report.total_stories,
+        report.done_functional_requirements.to_string().green(),
+        report.total_functional_requirements
     ));
-    bullets.push(format!(
-        "{} {}",
-        "Reqs:".bold(),
-        render_count_bar(
-            report.done_functional_requirements,
-            report.total_functional_requirements,
-            15,
-            Some("(func)"),
-        ),
-    ));
+
+    // Bullet 3: Next Move
+    let next_step = match voyage.status() {
+        keel::domain::state_machine::voyage::VoyageState::Draft => {
+            format!("{} Author planning in SRS.md / SDD.md", "Next:".bold())
+        }
+        keel::domain::state_machine::voyage::VoyageState::Planned => {
+            format!("{} `keel voyage start {}`", "Next:".bold(), voyage.id())
+        }
+        keel::domain::state_machine::voyage::VoyageState::InProgress => {
+            format!("{} Continue implementation of remaining stories", "Next:".bold())
+        }
+        keel::domain::state_machine::voyage::VoyageState::Done => {
+            "All voyage requirements satisfied and stories completed.".to_string()
+        }
+    };
+    bullets.push(next_step);
 
     bullets
         .into_iter()
