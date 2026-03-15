@@ -146,7 +146,7 @@ pub fn classify_stories(
 pub fn render_epic_capacities(
     board: &keel::domain::model::Board,
     capacities: &HashMap<String, EpicCapacityReport>,
-    _theme: &Theme,
+    theme: &Theme,
 ) -> String {
     let mut out = String::new();
     let mut draft_epics: Vec<_> = capacities
@@ -240,7 +240,7 @@ fn render_epic_line(
     cap: &EpicCapacityReport,
     epic_width: usize,
     status_width: usize,
-    theme: &Theme,
+    _theme: &Theme,
 ) -> String {
     let emoji = match cap.charge_state {
         crate::cli::presentation::flow::capacity::ChargeState::Blocked => "🔴",
