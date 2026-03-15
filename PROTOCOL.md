@@ -49,7 +49,39 @@ Currently, the routing rules are simple substring matches (case-insensitive):
 
 *If a message does not match any of these conditions, it falls through to the Asynchronous track and requires a future `poke`.*
 
-## 4. Expanding the Protocol
+## 4. JSONIN and JSONOUT Data Contracts
+
+As a primary interface for autonomous agents and external scripts, Keel implements strict `JSONOUT` and potential `JSONIN` data contracts. These are separate from human-readable CLI outputs and guarantee structured predictability.
+
+### JSONOUT: Engine to Agent
+Whenever a command is invoked with `--json` (e.g., `keel pulse --json`, `keel next --json`, `keel verify run --json`), the standard out is guaranteed to be a single, parseable JSON payload representing the complete return state.
+
+- **Predictable Schemas**: Changes to `--json` output schemas must be treated as breaking changes. 
+- **Example (`keel pulse --json`)**:
+  ```json
+  {
+    "mode": "materialize",
+    "evaluated": 3,
+    "created": 1,
+    "skipped": 0,
+    "deferred": 2,
+    "routines": [
+      {
+        "id": "routine-due",
+        "outcome": "created",
+        "story_id": "VDtx8IW2K"
+      }
+    ]
+  }
+  ```
+
+### JSONIN: Agent to Engine
+While most inputs to Keel are simple strings and flags (like `keel ping "hello"`), the protocol anticipates `JSONIN` payloads for complex configurations, bulk operations, or structured responses (like piping an LLM's structured JSON output directly to a state-mutating command).
+
+- **The Inbox as JSONIN**: The `.keel/inbox/<id>.json` file itself represents our first JSONIN construct. When an agent creates or modifies a ping file directly, it must conform to the `PingMessage` schema defined above.
+- **Future Support**: We plan to support piping JSON directly into commands (e.g., `cat payload.json | keel poke <id> --json-in`) to allow agents to pass rich contextual data structures instead of flat strings.
+
+## 5. Expanding the Protocol
 
 As Keel's capabilities grow, the routing rules will be expanded to support more complex interactions:
 - **Regex/Semantic Matching:** Moving beyond simple word inclusion to understand intent.
