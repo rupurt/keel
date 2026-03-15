@@ -129,3 +129,30 @@ fn test_routine_serialization_order() {
     let s = serde_yaml::to_string(&fm).unwrap();
     assert_eq!(s, "id: R1\ntitle: Routine 1\ncadence: null\ntarget-scope: E1\n");
 }
+
+#[test]
+fn test_canonical_markdown_formatting() {
+    let fm = MissionFrontmatter {
+        id: "M1".to_string(),
+        title: "Mission 1".to_string(),
+        status: MissionStatus::Defining,
+        created_at: None,
+        updated_at: None,
+        activated_at: None,
+        achieved_at: None,
+        verified_at: None,
+        operator_signal: None,
+    };
+    let serialized = serde_yaml::to_string(&fm).unwrap();
+    let body = "# My Body";
+    
+    // Logic from filesystem.rs
+    let body = body.trim();
+    let updated = if body.is_empty() {
+        format!("---\n{}\n---\n", serialized.trim())
+    } else {
+        format!("---\n{}\n---\n\n{}\n", serialized.trim(), body)
+    };
+
+    assert_eq!(updated, "---\nid: M1\ntitle: Mission 1\nstatus: defining\n---\n\n# My Body\n");
+}
