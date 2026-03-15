@@ -111,7 +111,7 @@ pub fn run() -> Result<()> {
         }
         Some(("audit", m)) => {
             let id = m.get_one::<String>("id").cloned();
-            super::commands::management::story::audit::run(&resolve_board_dir()?, id.as_deref())
+            super::commands::management::story::audit::run(&ctx, &resolve_board_dir()?, id.as_deref())
         }
         Some(("verify", m)) => match m.subcommand() {
             Some(("run", run_m)) => {
@@ -130,7 +130,7 @@ pub fn run() -> Result<()> {
             }
             _ => unreachable!("verify subcommand required"),
         },
-        Some(("knowledge", m)) => handle_knowledge_command(m),
+        Some(("knowledge", m)) => handle_knowledge_command(&ctx, m),
         Some(("ping", m)) => {
             let message = m
                 .get_many::<String>("message")
@@ -152,14 +152,14 @@ pub fn run() -> Result<()> {
         Some(("generate", _)) => super::commands::setup::generate::run(&resolve_board_dir()?),
         Some(("init", _)) => Ok(super::commands::setup::init::run()?),
         Some(("roadmap", _)) => super::commands::management::roadmap::run(),
-        Some(("epic", m)) => handle_epic_command(m),
-        Some(("routine", m)) => handle_routine_command(m),
-        Some(("voyage", m)) => handle_voyage_command(m),
-        Some(("story", m)) => handle_story_command(m),
-        Some(("bearing", m)) => handle_bearing_command(m),
-        Some(("adr", m)) => handle_adr_command(m),
+        Some(("epic", m)) => handle_epic_command(&ctx, m),
+        Some(("routine", m)) => handle_routine_command(&ctx, m),
+        Some(("voyage", m)) => handle_voyage_command(&ctx, m),
+        Some(("story", m)) => handle_story_command(&ctx, m),
+        Some(("bearing", m)) => handle_bearing_command(&ctx, m),
+        Some(("adr", m)) => handle_adr_command(&ctx, m),
         Some(("mission", m)) => handle_mission_command(&ctx, m),
-        Some(("config", m)) => handle_config_command(m),
+        Some(("config", m)) => handle_config_command(&ctx, m),
         None => {
             let mut cli = build_cli();
             cli.print_long_help()?;
@@ -170,38 +170,39 @@ pub fn run() -> Result<()> {
     }
 }
 
-fn handle_epic_command(matches: &ArgMatches) -> Result<()> {
-    super::commands::management::epic::run(parse_subcommand_action(matches)?)
+fn handle_epic_command(ctx: &spoke_auth::ExecutionContext, matches: &ArgMatches) -> Result<()> {
+    super::commands::management::epic::run(ctx, parse_subcommand_action(matches)?)
 }
 
-fn handle_voyage_command(matches: &ArgMatches) -> Result<()> {
+fn handle_voyage_command(ctx: &spoke_auth::ExecutionContext, matches: &ArgMatches) -> Result<()> {
     super::commands::management::voyage::run(
+        ctx,
         &resolve_board_dir()?,
         parse_subcommand_action(matches)?,
     )
 }
 
-fn handle_routine_command(matches: &ArgMatches) -> Result<()> {
-    super::commands::management::routine::run(parse_subcommand_action(matches)?)
+fn handle_routine_command(ctx: &spoke_auth::ExecutionContext, matches: &ArgMatches) -> Result<()> {
+    super::commands::management::routine::run(ctx, parse_subcommand_action(matches)?)
 }
 
-fn handle_story_command(matches: &ArgMatches) -> Result<()> {
-    super::commands::management::story::run(parse_subcommand_action(matches)?)
+fn handle_story_command(ctx: &spoke_auth::ExecutionContext, matches: &ArgMatches) -> Result<()> {
+    super::commands::management::story::run(ctx, parse_subcommand_action(matches)?)
 }
 
-fn handle_bearing_command(matches: &ArgMatches) -> Result<()> {
-    super::commands::management::bearing::run(parse_subcommand_action(matches)?)
+fn handle_bearing_command(ctx: &spoke_auth::ExecutionContext, matches: &ArgMatches) -> Result<()> {
+    super::commands::management::bearing::run(ctx, parse_subcommand_action(matches)?)
 }
 
-fn handle_adr_command(matches: &ArgMatches) -> Result<()> {
-    super::commands::management::adr::run(parse_subcommand_action(matches)?)
+fn handle_adr_command(ctx: &spoke_auth::ExecutionContext, matches: &ArgMatches) -> Result<()> {
+    super::commands::management::adr::run(ctx, parse_subcommand_action(matches)?)
 }
 
 fn handle_mission_command(ctx: &spoke_auth::ExecutionContext, matches: &ArgMatches) -> Result<()> {
     super::commands::management::mission::run(ctx, parse_subcommand_action(matches)?)
 }
 
-fn handle_knowledge_command(matches: &ArgMatches) -> Result<()> {
+fn handle_knowledge_command(ctx: &spoke_auth::ExecutionContext, matches: &ArgMatches) -> Result<()> {
     let command = matches
         .subcommand()
         .ok_or_else(|| anyhow::anyhow!("Missing knowledge subcommand"))?;
@@ -236,11 +237,11 @@ fn handle_knowledge_command(matches: &ArgMatches) -> Result<()> {
         (name, _) => return Err(anyhow::anyhow!("Unsupported knowledge subcommand: {name}")),
     };
 
-    super::commands::management::knowledge::run(&resolve_board_dir()?, action)
+    super::commands::management::knowledge::run(ctx, &resolve_board_dir()?, action)
 }
 
-fn handle_config_command(matches: &ArgMatches) -> Result<()> {
-    super::commands::setup::config::run(parse_subcommand_action(matches)?)
+fn handle_config_command(ctx: &spoke_auth::ExecutionContext, matches: &ArgMatches) -> Result<()> {
+    super::commands::setup::config::run(ctx, parse_subcommand_action(matches)?)
 }
 
 fn parse_subcommand_action<T>(matches: &ArgMatches) -> Result<T>

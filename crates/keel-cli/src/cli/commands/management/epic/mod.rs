@@ -48,7 +48,7 @@ pub enum EpicAction {
 }
 
 /// Run an epic action through the epic interface adapter.
-pub fn run(action: EpicAction) -> Result<()> {
+pub fn run(_ctx: &spoke_auth::ExecutionContext, action: EpicAction) -> Result<()> {
     match action {
         EpicAction::New { name, problem } => new::run(&name, &problem),
         EpicAction::Show { id } => show::run(&id),

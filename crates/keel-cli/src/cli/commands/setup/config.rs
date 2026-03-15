@@ -31,7 +31,7 @@ pub enum ConfigAction {
 }
 
 /// Run a config action through the configuration interface adapter.
-pub fn run(action: ConfigAction) -> Result<()> {
+pub fn run(_ctx: &spoke_auth::ExecutionContext, action: ConfigAction) -> Result<()> {
     match action {
         ConfigAction::Show { json } => run_show(json),
         ConfigAction::Mode { name } => run_mode(name),

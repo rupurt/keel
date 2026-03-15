@@ -10,6 +10,8 @@ mod cli;
 mod cli_tests;
 #[cfg(test)]
 mod command_regression_tests;
+#[cfg(test)]
+mod drift_tests;
 
 use anyhow::Result;
 

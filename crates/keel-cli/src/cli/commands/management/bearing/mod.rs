@@ -243,7 +243,7 @@ pub fn run_new(name: &str) -> Result<()> {
 }
 
 /// Run a bearing action through the bearing interface adapter.
-pub fn run(action: BearingAction) -> Result<()> {
+pub fn run(_ctx: &spoke_auth::ExecutionContext, action: BearingAction) -> Result<()> {
     match action {
         BearingAction::New { name } => run_new(&name),
         BearingAction::Research {

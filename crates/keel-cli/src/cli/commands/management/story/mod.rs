@@ -169,7 +169,7 @@ pub enum StoryAction {
 }
 
 /// Run a story action through the story interface adapter.
-pub fn run(action: StoryAction) -> Result<()> {
+pub fn run(ctx: &spoke_auth::ExecutionContext, action: StoryAction) -> Result<()> {
     match action {
         StoryAction::New {
             title,
@@ -178,16 +178,16 @@ pub fn run(action: StoryAction) -> Result<()> {
             voyage,
         } => new::run(&title, &r#type, epic.as_deref(), voyage.as_deref()),
         StoryAction::Start { id, expect_version } => {
-            start::run(&find_board_dir()?, &id, expect_version)
+            start::run(ctx, &find_board_dir()?, &id, expect_version)
         }
-        StoryAction::Submit { id } => submit::run(&find_board_dir()?, &id),
+        StoryAction::Submit { id } => submit::run(ctx, &find_board_dir()?, &id),
         StoryAction::Accept { id, role, reflect } => {
-            accept::run(&find_board_dir()?, &id, &role, reflect.as_deref())
+            accept::run(ctx, &find_board_dir()?, &id, &role, reflect.as_deref())
         }
-        StoryAction::Reflect { id } => reflect::run(&find_board_dir()?, &id),
-        StoryAction::Reject { id, reason } => reject::run(&find_board_dir()?, &id, &reason),
-        StoryAction::Ice { id } => ice::run(&find_board_dir()?, &id),
-        StoryAction::Thaw { id } => thaw::run(&find_board_dir()?, &id),
+        StoryAction::Reflect { id } => reflect::run(ctx, &find_board_dir()?, &id),
+        StoryAction::Reject { id, reason } => reject::run(ctx, &find_board_dir()?, &id, &reason),
+        StoryAction::Ice { id } => ice::run(ctx, &find_board_dir()?, &id),
+        StoryAction::Thaw { id } => thaw::run(ctx, &find_board_dir()?, &id),
         StoryAction::Show { id, compact } => show::run(&id, compact),
         StoryAction::File { id, file, raw } => {
             crate::cli::commands::management::story::file::run(&id, &file, raw)
@@ -207,6 +207,6 @@ pub fn run(action: StoryAction) -> Result<()> {
             judge,
             files,
         } => record::run(&find_board_dir()?, id, ac, cmd, msg, judge, files),
-        StoryAction::Audit { id } => audit::run(&find_board_dir()?, Some(&id)),
+        StoryAction::Audit { id } => audit::run(ctx, &find_board_dir()?, Some(&id)),
     }
 }

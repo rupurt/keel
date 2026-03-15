@@ -81,7 +81,7 @@ use keel::infrastructure::templates;
 use keel::infrastructure::utils::slugify;
 
 /// Run an ADR action through the ADR interface adapter.
-pub fn run(action: AdrAction) -> Result<()> {
+pub fn run(_ctx: &spoke_auth::ExecutionContext, action: AdrAction) -> Result<()> {
     match action {
         AdrAction::New {
             title,

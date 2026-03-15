@@ -15,7 +15,7 @@ use keel::read_model::evidence::{self, EvidenceEntry};
 use keel::read_model::planning_show;
 
 /// Run the audit command
-pub fn run(board_dir: &Path, id: Option<&str>) -> Result<()> {
+pub fn run(_ctx: &spoke_auth::ExecutionContext, board_dir: &Path, id: Option<&str>) -> Result<()> {
     let result: Result<Option<_>> = (|| {
         let board = load_board(board_dir)?;
 
@@ -476,7 +476,7 @@ mod tests {
             .story(TestStory::new("S1").scope("epic1/v1"))
             .build();
 
-        let result = run(temp.path(), None);
+        let result = run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), None);
         assert!(result.is_ok());
     }
 
@@ -484,7 +484,7 @@ mod tests {
     fn test_audit_run_story() {
         let temp = TestBoardBuilder::new().story(TestStory::new("S1")).build();
 
-        let result = run(temp.path(), Some("S1"));
+        let result = run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), Some("S1"));
         assert!(result.is_ok());
     }
 
@@ -496,7 +496,7 @@ mod tests {
             .story(TestStory::new("S1").scope("epic1/v1"))
             .build();
 
-        let result = run(temp.path(), Some("v1"));
+        let result = run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), Some("v1"));
         assert!(result.is_ok());
     }
 
@@ -508,7 +508,7 @@ mod tests {
             .story(TestStory::new("S1").scope("epic1/v1"))
             .build();
 
-        let result = run(temp.path(), Some("epic1"));
+        let result = run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), Some("epic1"));
         assert!(result.is_ok());
     }
 
@@ -516,7 +516,7 @@ mod tests {
     fn test_audit_run_not_found() {
         let temp = TestBoardBuilder::new().build();
 
-        let result = run(temp.path(), Some("NONEXISTENT"));
+        let result = run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), Some("NONEXISTENT"));
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
         assert!(err.contains("Entity not found: NONEXISTENT"));
@@ -544,7 +544,7 @@ mod tests {
         // Add reflection
         fs::write(story_dir.join("REFLECT.md"), "### L001: Some reflection").unwrap();
 
-        let result = run(temp.path(), Some("S1"));
+        let result = run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), Some("S1"));
         assert!(result.is_ok());
     }
 }

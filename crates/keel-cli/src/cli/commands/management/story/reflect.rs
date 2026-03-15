@@ -16,7 +16,7 @@ use super::guidance::{
 };
 
 /// Run the reflect command
-pub fn run(board_dir: &Path, id: &str) -> Result<()> {
+pub fn run(_ctx: &spoke_auth::ExecutionContext, board_dir: &Path, id: &str) -> Result<()> {
     run_impl(board_dir, id)
         .map_err(|err| error_with_recovery(StoryLifecycleAction::Reflect, id, err))
 }
@@ -100,7 +100,7 @@ mod tests {
         fs::create_dir_all(temp.path().join("stories/SREF01/EVIDENCE")).unwrap();
         let reflect_path = temp.path().join("stories/SREF01/REFLECT.md");
 
-        run(temp.path(), "SREF01").unwrap();
+        run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "SREF01").unwrap();
 
         assert!(reflect_path.exists(), "REFLECT.md should be created");
 
@@ -121,7 +121,7 @@ mod tests {
             )
             .build();
 
-        let err = run(temp.path(), "SREF02").unwrap_err().to_string();
+        let err = run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "SREF02").unwrap_err().to_string();
         assert!(err.contains("Cannot create REFLECT.md"));
         assert!(err.contains("backlog"));
         assert!(err.contains("Recovery step:"));
@@ -140,7 +140,7 @@ mod tests {
         let reflect_path = temp.path().join("stories/SREF03/REFLECT.md");
         fs::write(&reflect_path, "# Existing").unwrap();
 
-        let err = run(temp.path(), "SREF03").unwrap_err().to_string();
+        let err = run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "SREF03").unwrap_err().to_string();
         assert!(err.contains("REFLECT.md already exists"));
     }
 }

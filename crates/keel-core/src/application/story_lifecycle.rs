@@ -48,7 +48,7 @@ impl StoryLifecycleService {
         }
     }
     /// Start a story (backlog/rejected -> in-progress).
-    pub fn start(&self, id: &str, version: Option<u64>) -> Result<()> {
+    pub fn start(&self, ctx: &spoke_auth::ExecutionContext, id: &str, version: Option<u64>) -> Result<()> {
         let board_dir = &self.board_dir;
         let board = self.board_store.load()?;
 
@@ -98,6 +98,15 @@ impl StoryLifecycleService {
             },
         )?;
 
+        match &ctx.actor {
+            spoke_auth::Actor::LocalSystem { os_user } => {
+                println!("Story {} started by local system user '{}'", id, os_user);
+            }
+            spoke_auth::Actor::Authenticated { identity, role } => {
+                println!("Story {} started by authenticated actor '{}' ({})", id, identity, role);
+            }
+        }
+
         let result = execute(board_dir, story.id(), &transitions::START)?;
         if story.frontmatter.started_at.is_none() {
             let now = Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
@@ -123,7 +132,7 @@ impl StoryLifecycleService {
     }
 
     /// Submit a story (in-progress -> needs-human-verification or done).
-    pub fn submit(&self, id: &str) -> Result<()> {
+    pub fn submit(&self, ctx: &spoke_auth::ExecutionContext, id: &str) -> Result<()> {
         let board_dir = &self.board_dir;
         let board = self.board_store.load()?;
         let story = self.story_store.get(id)?;
@@ -142,6 +151,15 @@ impl StoryLifecycleService {
                 intent,
                 &enforcement.blocking_problems
             )));
+        }
+
+        match &ctx.actor {
+            spoke_auth::Actor::LocalSystem { os_user } => {
+                println!("Story {} submitted by local system user '{}'", id, os_user);
+            }
+            spoke_auth::Actor::Authenticated { identity, role } => {
+                println!("Story {} submitted by authenticated actor '{}' ({})", id, identity, role);
+            }
         }
 
         knowledge_context::surface_ranked_knowledge(
@@ -199,7 +217,7 @@ impl StoryLifecycleService {
     }
 
     /// Accept a story (needs-human-verification -> done).
-    pub fn accept(&self, id: &str, actor_role: &RoleTaxonomy, reflect: Option<&str>) -> Result<()> {
+    pub fn accept(&self, ctx: &spoke_auth::ExecutionContext, id: &str, actor_role: &RoleTaxonomy, reflect: Option<&str>) -> Result<()> {
         let board_dir = &self.board_dir;
         let board = self.board_store.load()?;
         let story = self.story_store.get(id)?;
@@ -254,6 +272,15 @@ impl StoryLifecycleService {
 
         let result = execute(board_dir, story.id(), &transitions::ACCEPT)?;
 
+        match &ctx.actor {
+            spoke_auth::Actor::LocalSystem { os_user } => {
+                println!("Story {} accepted by local system user '{}'", id, os_user);
+            }
+            spoke_auth::Actor::Authenticated { identity, role } => {
+                println!("Story {} accepted by authenticated actor '{}' ({})", id, identity, role);
+            }
+        }
+
         println!("Accepted: {}", result.story.id());
         if reflect.is_some() {
             println!(
@@ -279,7 +306,7 @@ impl StoryLifecycleService {
     }
 
     /// Reject a story (needs-human-verification -> rejected).
-    pub fn reject(&self, id: &str, reason: &str) -> Result<()> {
+    pub fn reject(&self, ctx: &spoke_auth::ExecutionContext, id: &str, reason: &str) -> Result<()> {
         let board_dir = &self.board_dir;
         let board = self.board_store.load()?;
         let story = self.story_store.get(id)?;
@@ -302,6 +329,15 @@ impl StoryLifecycleService {
         let result = execute(board_dir, story.id(), &transitions::REJECT)?;
         append_rejection(&result.story.path, reason)?;
 
+        match &ctx.actor {
+            spoke_auth::Actor::LocalSystem { os_user } => {
+                println!("Story {} rejected by local system user '{}'", id, os_user);
+            }
+            spoke_auth::Actor::Authenticated { identity, role } => {
+                println!("Story {} rejected by authenticated actor '{}' ({})", id, identity, role);
+            }
+        }
+
         println!("Rejected: {}", result.story.filename());
         println!("  Reason: {}", reason);
 
@@ -309,7 +345,7 @@ impl StoryLifecycleService {
     }
 
     /// Move a story to icebox.
-    pub fn ice(&self, id: &str) -> Result<()> {
+    pub fn ice(&self, ctx: &spoke_auth::ExecutionContext, id: &str) -> Result<()> {
         let board_dir = &self.board_dir;
         let board = self.board_store.load()?;
         let story = self.story_store.get(id)?;
@@ -331,13 +367,22 @@ impl StoryLifecycleService {
 
         let result = execute(board_dir, story.id(), &transitions::ICE)?;
 
+        match &ctx.actor {
+            spoke_auth::Actor::LocalSystem { os_user } => {
+                println!("Story {} iced by local system user '{}'", id, os_user);
+            }
+            spoke_auth::Actor::Authenticated { identity, role } => {
+                println!("Story {} iced by authenticated actor '{}' ({})", id, identity, role);
+            }
+        }
+
         println!("Iced: {}", result.story.filename());
 
         Ok(())
     }
 
     /// Move a story from icebox to backlog.
-    pub fn thaw(&self, id: &str) -> Result<()> {
+    pub fn thaw(&self, ctx: &spoke_auth::ExecutionContext, id: &str) -> Result<()> {
         let board_dir = &self.board_dir;
         let board = self.board_store.load()?;
         let story = self.story_store.get(id)?;
@@ -358,6 +403,15 @@ impl StoryLifecycleService {
         }
 
         let result = execute(board_dir, story.id(), &transitions::THAW)?;
+
+        match &ctx.actor {
+            spoke_auth::Actor::LocalSystem { os_user } => {
+                println!("Story {} thawed by local system user '{}'", id, os_user);
+            }
+            spoke_auth::Actor::Authenticated { identity, role } => {
+                println!("Story {} thawed by authenticated actor '{}' ({})", id, identity, role);
+            }
+        }
 
         println!("Thawed: {}", result.story.filename());
 
@@ -582,6 +636,7 @@ mod tests {
 
         let err = service
             .accept(
+                &spoke_auth::ExecutionContext::new_local("test".into()),
                 "MANUAL01",
                 &crate::domain::model::taxonomy::parse("operator").unwrap(),
                 None,
@@ -623,6 +678,7 @@ mod tests {
 
         service
             .accept(
+                &spoke_auth::ExecutionContext::new_local("test".into()),
                 "MANUAL02",
                 &crate::domain::model::taxonomy::parse("manager").unwrap(),
                 None,
@@ -706,7 +762,7 @@ mod tests {
         )
         .unwrap();
 
-        let err = service.submit("NEW000001").unwrap_err().to_string();
+        let err = service.submit(&spoke_auth::ExecutionContext::new_local("test".into()), "NEW000001").unwrap_err().to_string();
         assert!(err.contains("too similar to existing knowledge"));
         assert!(err.contains("1AbCdE239"));
     }
@@ -764,6 +820,7 @@ The guard should run before acceptance completes.
 
         service
             .accept(
+                &spoke_auth::ExecutionContext::new_local("test".into()),
                 "DONE00001",
                 &crate::domain::model::taxonomy::parse("manager").unwrap(),
                 None,

@@ -844,10 +844,10 @@ mod queue_policy_docs {
         FLOW_VERIFY_BLOCK_THRESHOLD, HUMAN_NEXT_VERIFY_BLOCK_THRESHOLD,
     };
 
-    const ARCHITECTURE_DOC: &str = include_str!("../ARCHITECTURE.md");
-    const README_DOC: &str = include_str!("../README.md");
-    const MAIN_RS: &str = include_str!("main.rs");
-    const COMMAND_TREE_RS: &str = include_str!("cli/command_tree.rs");
+    const ARCHITECTURE_DOC: &str = include_str!("../../../ARCHITECTURE.md");
+    const README_DOC: &str = include_str!("../../../README.md");
+    const MAIN_RS: &str = include_str!("../../keel-cli/src/main.rs");
+    const COMMAND_TREE_RS: &str = include_str!("../../keel-cli/src/cli/command_tree.rs");
 
     #[test]
     fn architecture_thresholds_match_policy_constants() {

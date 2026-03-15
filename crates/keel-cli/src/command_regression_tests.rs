@@ -219,7 +219,7 @@ fn regression_story_lifecycle_command_chain_reaches_done() {
         )
         .build();
 
-    crate::cli::commands::management::story::start::run(temp.path(), "REGCHAIN1", None).unwrap();
+    crate::cli::commands::management::story::start::run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "REGCHAIN1", None).unwrap();
 
     let evidence_dir = temp.path().join("stories/REGCHAIN1/EVIDENCE");
     fs::create_dir_all(&evidence_dir).unwrap();
@@ -229,8 +229,8 @@ fn regression_story_lifecycle_command_chain_reaches_done() {
     )
     .unwrap();
 
-    crate::cli::commands::management::story::submit::run(temp.path(), "REGCHAIN1").unwrap();
-    crate::cli::commands::management::story::accept::run(temp.path(), "REGCHAIN1", "manager", None)
+    crate::cli::commands::management::story::submit::run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "REGCHAIN1").unwrap();
+    crate::cli::commands::management::story::accept::run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "REGCHAIN1", "manager", None)
         .unwrap();
 
     let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
@@ -304,19 +304,19 @@ fn graph_drift_surfaces_reuse_canonical_projection() {
 fn head_show_commands_resolve_management_entities() {
     let temp = head_show_fixture();
 
-    crate::cli::commands::management::mission::show::run_with_dir(temp.path(), "HEAD", false)
+    crate::cli::commands::management::mission::show::run_with_dir(temp.path(), "HEAD", false, false)
         .unwrap();
-    crate::cli::commands::management::mission::show::run_with_dir(temp.path(), "M2", false)
+    crate::cli::commands::management::mission::show::run_with_dir(temp.path(), "M2", false, false)
         .unwrap();
 
     crate::cli::commands::management::epic::show::run_with_dir(temp.path(), "HEAD").unwrap();
     crate::cli::commands::management::epic::show::run_with_dir(temp.path(), "E2").unwrap();
 
-    crate::cli::commands::management::voyage::show::run_with_dir(temp.path(), "HEAD").unwrap();
-    crate::cli::commands::management::voyage::show::run_with_dir(temp.path(), "V2").unwrap();
+    crate::cli::commands::management::voyage::show::run_with_dir(temp.path(), "HEAD", false).unwrap();
+    crate::cli::commands::management::voyage::show::run_with_dir(temp.path(), "V2", false).unwrap();
 
-    crate::cli::commands::management::story::show::run_with_dir(temp.path(), "HEAD").unwrap();
-    crate::cli::commands::management::story::show::run_with_dir(temp.path(), "S2").unwrap();
+    crate::cli::commands::management::story::show::run_with_dir(temp.path(), "HEAD", false).unwrap();
+    crate::cli::commands::management::story::show::run_with_dir(temp.path(), "S2", false).unwrap();
 }
 
 #[test]
@@ -338,7 +338,7 @@ fn head_show_commands_resolve_governance_entities() {
 fn head_show_commands_report_selector_errors() {
     let empty = TestBoardBuilder::new().build();
     let err =
-        crate::cli::commands::management::mission::show::run_with_dir(empty.path(), "HEAD", false)
+        crate::cli::commands::management::mission::show::run_with_dir(empty.path(), "HEAD", false, false)
             .unwrap_err();
     assert_eq!(
         err.to_string(),
@@ -350,7 +350,7 @@ fn head_show_commands_report_selector_errors() {
         .voyage(TestVoyage::new("V1", "E1").status("planned"))
         .story(TestStory::new("S1").scope("E1/V1").index(1))
         .build();
-    let err = crate::cli::commands::management::story::show::run_with_dir(fixture.path(), "HEAD~")
+    let err = crate::cli::commands::management::story::show::run_with_dir(fixture.path(), "HEAD~", false)
         .unwrap_err();
     assert_eq!(
         err.to_string(),
@@ -373,16 +373,16 @@ fn head_show_commands_reject_invalid_syntax() {
     let expected = "Unsupported HEAD selector syntax `HEAD~3`. Supported forms: exact IDs, HEAD, HEAD~, HEAD~~, HEAD^";
 
     let cases = [
-        crate::cli::commands::management::mission::show::run_with_dir(temp.path(), "HEAD~3", false)
+        crate::cli::commands::management::mission::show::run_with_dir(temp.path(), "HEAD~3", false, false)
             .unwrap_err()
             .to_string(),
         crate::cli::commands::management::epic::show::run_with_dir(temp.path(), "HEAD~3")
             .unwrap_err()
             .to_string(),
-        crate::cli::commands::management::voyage::show::run_with_dir(temp.path(), "HEAD~3")
+        crate::cli::commands::management::voyage::show::run_with_dir(temp.path(), "HEAD~3", false)
             .unwrap_err()
             .to_string(),
-        crate::cli::commands::management::story::show::run_with_dir(temp.path(), "HEAD~3")
+        crate::cli::commands::management::story::show::run_with_dir(temp.path(), "HEAD~3", false)
             .unwrap_err()
             .to_string(),
         crate::cli::commands::management::bearing::show::run_with_dir(temp.path(), "HEAD~3")

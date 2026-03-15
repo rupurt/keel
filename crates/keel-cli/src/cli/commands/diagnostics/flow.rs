@@ -215,6 +215,7 @@ priority = 100
         let output = build_output_at(
             temp.path(),
             true,
+            false,
             Utc.with_ymd_and_hms(2026, 1, 5, 18, 0, 0).unwrap(),
         )
         .unwrap();
@@ -265,6 +266,7 @@ updated_at: 2026-01-05T18:00:00
         let output = build_output_at(
             temp.path(),
             true,
+            false,
             Utc.with_ymd_and_hms(2026, 1, 5, 18, 0, 0).unwrap(),
         )
         .unwrap();

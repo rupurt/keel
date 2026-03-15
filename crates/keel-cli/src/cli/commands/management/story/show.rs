@@ -399,7 +399,7 @@ mod tests {
             )
             .build();
 
-        run_with_dir(temp.path(), "FEAT0001").unwrap();
+        run_with_dir(temp.path(), "FEAT0001", false).unwrap();
     }
 
     #[test]

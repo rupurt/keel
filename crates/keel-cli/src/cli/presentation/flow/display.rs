@@ -1002,6 +1002,7 @@ mod tests {
             &HashMap::new(),
             72,
             true,
+            true,
         );
 
         for rendered in [wide, narrow] {

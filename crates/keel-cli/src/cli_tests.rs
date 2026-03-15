@@ -584,7 +584,7 @@ fn cli_parses_story_thaw() {
 fn cli_parses_story_show() {
     let cli = Cli::try_parse_from(["board", "story", "show", "FEAT0001"]).unwrap();
     if let Commands::Management(ManagementCommands::Story {
-        action: StoryAction::Show { id },
+        action: StoryAction::Show { id, compact: _ },
     }) = cli.command
     {
         assert_eq!(id, "FEAT0001");
@@ -1224,7 +1224,7 @@ fn cli_parses_voyage_done_with_flags() {
 fn cli_parses_voyage_show() {
     let cli = Cli::try_parse_from(["board", "voyage", "show", "07"]).unwrap();
     if let Commands::Management(ManagementCommands::Voyage {
-        action: VoyageAction::Show { id },
+        action: VoyageAction::Show { id, compact: _ },
     }) = cli.command
     {
         assert_eq!(id, "07");

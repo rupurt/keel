@@ -30,7 +30,7 @@ pub enum RoutineAction {
 }
 
 /// Run a routine action through the routine interface adapter.
-pub fn run(action: RoutineAction) -> Result<()> {
+pub fn run(_ctx: &spoke_auth::ExecutionContext, action: RoutineAction) -> Result<()> {
     match action {
         RoutineAction::New {
             title,

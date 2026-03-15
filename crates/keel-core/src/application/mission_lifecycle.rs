@@ -561,7 +561,7 @@ mod tests {
 
         // Should fail because the board target is not satisfied even though the
         // mission's child entities are already terminal.
-        let res = MissionLifecycleService::achieve(temp.path(), "M1");
+        let res = MissionLifecycleService::achieve(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "M1");
         assert!(res.is_err());
         assert!(res.unwrap_err().to_string().contains("unmet board goals"));
     }
@@ -576,7 +576,7 @@ mod tests {
         fs::write(charter_path, "## Goals\n| ID | Description | Verification |\n|----|-------------|--------------|\n| MG-01 | G1 | manual: test |\n").unwrap();
 
         // Should fail because no children
-        let res = MissionLifecycleService::achieve(temp.path(), "M1");
+        let res = MissionLifecycleService::achieve(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "M1");
         assert!(res.is_err());
         assert!(res.unwrap_err().to_string().contains("no child entities"));
 
@@ -590,7 +590,7 @@ mod tests {
         fs::write(charter_path, "## Goals\n| ID | Description | Verification |\n|----|-------------|--------------|\n| MG-01 | G1 | manual: test |\n").unwrap();
 
         // Should fail because no log entries
-        let res = MissionLifecycleService::achieve(temp.path(), "M1");
+        let res = MissionLifecycleService::achieve(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "M1");
         assert!(res.is_err());
         assert!(res.unwrap_err().to_string().contains("one entry in LOG.md"));
 
@@ -598,7 +598,7 @@ mod tests {
         MissionLifecycleService::log(temp.path(), "M1", "Did some work").unwrap();
 
         // Should now succeed (no board goals, manual goal doesn't block)
-        let res = MissionLifecycleService::achieve(temp.path(), "M1");
+        let res = MissionLifecycleService::achieve(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "M1");
         assert!(res.is_ok());
     }
 
@@ -625,7 +625,7 @@ mod tests {
         .unwrap();
         MissionLifecycleService::log(temp.path(), "M1", "Did some work").unwrap();
 
-        let res = MissionLifecycleService::achieve(temp.path(), "M1");
+        let res = MissionLifecycleService::achieve(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "M1");
         assert!(res.is_err());
         let err = res.unwrap_err().to_string();
         assert!(err.contains("non-terminal child entities"));

@@ -5,7 +5,7 @@ use anyhow::Result;
 use spoke_auth::ExecutionContext;
 use std::path::Path;
 
-pub fn run(ctx: &ExecutionContext, board_dir: &Path, id: &str, manual_pong: Option<&str>, json: bool) -> Result<()> {
+pub fn run(_ctx: &ExecutionContext, board_dir: &Path, id: &str, manual_pong: Option<&str>, json: bool) -> Result<()> {
     let mut ping = load_ping(board_dir, id)?;
 
     if ping.status == PingStatus::Ponged {

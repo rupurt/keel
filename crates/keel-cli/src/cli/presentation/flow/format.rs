@@ -529,14 +529,37 @@ mod tests {
         assert_eq!(results[2].3, vec!["S2".to_string()]);
     }
 
+    fn build_epic(id: &str) -> keel::domain::model::Epic {
+        keel::domain::model::Epic {
+            frontmatter: keel::domain::model::EpicFrontmatter {
+                id: id.to_string(),
+                title: id.to_string(),
+                description: None,
+                bearing: None,
+                mission: None,
+                index: None,
+                created_at: Some(chrono::Utc::now().naive_utc()),
+            },
+            path: std::path::PathBuf::from(format!("epics/{}/README.md", id)),
+            status: keel::domain::model::EpicState::Active,
+        }
+    }
+
     #[test]
     fn test_render_epic_capacities() {
+        let mut board = keel::domain::model::Board::default();
+        board.epics.insert(
+            "epic1".to_string(),
+            build_epic("epic1"),
+        );
         let mut capacities = HashMap::new();
         capacities.insert(
             "epic1".to_string(),
             EpicCapacityReport {
+                index: Some(1),
                 id: "epic1".to_string(),
                 title: "Epic 1".to_string(),
+                status: keel::domain::model::EpicState::Active,
                 charge_state: crate::cli::presentation::flow::capacity::ChargeState::Charged,
                 capacity: crate::cli::presentation::flow::capacity::EpicCapacity {
                     ready: 1,
@@ -582,7 +605,11 @@ mod tests {
             ),
         ]);
 
-        let board = keel::domain::model::Board::default();
+        let mut board = keel::domain::model::Board::default();
+        board.epics.insert("epic1".to_string(), build_epic("epic1"));
+        board.epics.insert("epic2".to_string(), build_epic("epic2"));
+        board.epics.insert("epic3".to_string(), build_epic("epic3"));
+        board.epics.insert("epic4".to_string(), build_epic("epic4"));
         let rendered = render_epic_capacities(&board, &capacities, &theme);
 
         assert!(!rendered.contains("epic1"));
@@ -646,7 +673,11 @@ mod tests {
             ),
         ]);
 
-        let board = keel::domain::model::Board::default();
+        let mut board = keel::domain::model::Board::default();
+        board.epics.insert("epic1".to_string(), build_epic("epic1"));
+        board.epics.insert("epic2".to_string(), build_epic("epic2"));
+        board.epics.insert("epic3".to_string(), build_epic("epic3"));
+        board.epics.insert("epic4".to_string(), build_epic("epic4"));
         let rendered = render_epic_capacities(&board, &capacities, &theme);
 
         assert!(!rendered.contains("epic1"));
@@ -681,7 +712,11 @@ mod tests {
             ),
         ]);
 
-        let board = keel::domain::model::Board::default();
+        let mut board = keel::domain::model::Board::default();
+        board.epics.insert("epic1".to_string(), build_epic("epic1"));
+        board.epics.insert("epic2".to_string(), build_epic("epic2"));
+        board.epics.insert("epic3".to_string(), build_epic("epic3"));
+        board.epics.insert("epic4".to_string(), build_epic("epic4"));
         let rendered = render_epic_capacities(&board, &capacities, &theme);
 
         assert!(rendered.contains("epic1"));
@@ -702,6 +737,7 @@ mod tests {
     ) -> EpicCapacityReport {
         let charge_state = crate::cli::presentation::flow::capacity::ChargeState::Discharged;
         EpicCapacityReport {
+            index: Some(1),
             id: id.to_string(),
             title: title.to_string(),
             status: if done > 0 && ready == 0 && in_flight == 0 && blocked == 0 {
