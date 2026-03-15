@@ -143,6 +143,7 @@ pub fn classify_stories(
 }
 
 pub fn render_epic_capacities(
+    board: &keel::domain::model::Board,
     capacities: &HashMap<String, EpicCapacityReport>,
     _theme: &Theme,
 ) -> String {
@@ -185,6 +186,22 @@ pub fn render_epic_capacities(
             crate::cli::presentation::flow::capacity::ChargeState::Overloaded => "🔥",
         };
 
+        let epic = board.epics.get(&cap.id).unwrap();
+        let status = {
+            let stage = epic.status();
+            match stage {
+                keel::domain::model::EpicState::Active => {
+                    if cap.capacity.in_flight > 0 {
+                        format!("{}", stage.green())
+                    } else {
+                        format!("{}", stage.yellow())
+                    }
+                }
+                keel::domain::model::EpicState::Draft => format!("{}", stage.dimmed()),
+                keel::domain::model::EpicState::Done => format!("{}", stage.dimmed()),
+            }
+        };
+
         let id_styled = crate::cli::style::styled_epic_id(&cap.id);
         let epic_label = format!("{} {}", id_styled, cap.title);
         let epic_padded = pad_to_width(&epic_label, max_width);
@@ -198,8 +215,8 @@ pub fn render_epic_capacities(
 
         writeln!(
             output,
-            "  {} {} {}",
-            emoji, epic_padded, bar,
+            "  {} {} {} {}",
+            emoji, epic_padded, status, bar,
         )
         .unwrap();
     }
@@ -462,9 +479,9 @@ mod tests {
             },
         );
         let theme = Theme::default();
-        let rendered = render_epic_capacities(&capacities, &theme);
+        let rendered = render_epic_capacities(&board, &capacities, &theme);
         assert!(rendered.contains("epic1"));
-        assert!(rendered.contains("EPIC"));
+        assert!(rendered.contains("active"));
         assert!(rendered.contains("▓"));
         assert!(rendered.contains("▒"));
         assert!(rendered.contains("░"));
@@ -496,7 +513,8 @@ mod tests {
             ),
         ]);
 
-        let rendered = render_epic_capacities(&capacities, &theme);
+        let board = keel::domain::model::Board::default();
+        let rendered = render_epic_capacities(&board, &capacities, &theme);
 
         assert!(!rendered.contains("epic1"));
         assert!(!rendered.contains("epic2"));
@@ -559,7 +577,8 @@ mod tests {
             ),
         ]);
 
-        let rendered = render_epic_capacities(&capacities, &theme);
+        let board = keel::domain::model::Board::default();
+        let rendered = render_epic_capacities(&board, &capacities, &theme);
 
         assert!(!rendered.contains("epic1"));
         assert!(!rendered.contains("epic2"));
@@ -593,7 +612,8 @@ mod tests {
             ),
         ]);
 
-        let rendered = render_epic_capacities(&capacities, &theme);
+        let board = keel::domain::model::Board::default();
+        let rendered = render_epic_capacities(&board, &capacities, &theme);
 
         assert!(rendered.contains("epic1"));
         assert!(rendered.contains("epic2"));

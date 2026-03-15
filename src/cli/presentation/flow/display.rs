@@ -86,7 +86,7 @@ pub fn render_annotated_flow(
         .map(|report| (report.id.clone(), report))
         .collect::<std::collections::HashMap<_, _>>();
 
-    let cap_render = render_epic_capacities(&cap_map, &theme);
+    let cap_render = render_epic_capacities(board, &cap_map, &theme);
     if !cap_render.is_empty() {
         ensure_section_spacing(&mut output);
         writeln!(
