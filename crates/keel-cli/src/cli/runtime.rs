@@ -142,12 +142,13 @@ pub fn run() -> Result<()> {
             super::commands::comms::ping::run(&ctx, &resolve_board_dir()?, &message, json)
         }
         Some(("poke", m)) => {
-            let id = m.get_one::<String>("id").expect("required").clone();
+            let id = m.get_one::<String>("id");
             let message = m
                 .get_many::<String>("message")
                 .map(|vals| vals.map(|s| s.as_str()).collect::<Vec<_>>().join(" "));
             let json = *m.get_one::<bool>("json").unwrap_or(&false);
-            super::commands::comms::poke::run(&ctx, &resolve_board_dir()?, &id, message.as_deref(), json)
+            let is_self = m.get_flag("self");
+            super::commands::comms::poke::run(&ctx, &resolve_board_dir()?, id.map(|s| s.as_str()), message.as_deref(), is_self, json)
         }
         Some(("generate", _)) => super::commands::setup::generate::run(&resolve_board_dir()?),
         Some(("init", _)) => Ok(super::commands::setup::init::run()?),

@@ -354,10 +354,11 @@ pub fn build_cli() -> Command {
         )
         .subcommand(
             Command::new("poke")
-                .about("Respond to or re-evaluate a ping in the inbox")
+                .about("Respond to or re-evaluate a ping in the inbox or spark the system")
                 .hide(true)
-                .arg(Arg::new("id").required(true).help("The ID of the ping"))
-                .arg(Arg::new("message").help("Optional pong message to send").num_args(1..))
+                .arg(Arg::new("message").help("Message to the system or a specific ping").num_args(1..))
+                .arg(Arg::new("id").long("id").help("The ID of the ping if targeting a specific one"))
+                .arg(Arg::new("self").long("self").help("Explicitly poke the system").action(ArgAction::SetTrue))
                 .arg(
                     Arg::new("json")
                         .long("json")

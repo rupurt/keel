@@ -34,6 +34,15 @@ Focus on **technical discovery and fog reduction**.
 - **Action**: Fill `BRIEF.md`, collect `EVIDENCE.md`, and `assess`.
 - **Constraint**: Graduate to epics only when research is conclusive.
 
+## Human Interaction & Pokes
+
+Keel's autonomous flow is governed by a physical battery metaphor. If the system is IDLE (LIGHT OFF) due to battery decay, it requires a "spark" to resume autonomy.
+
+If a human user pokes you (e.g., "I'm poking you", "Wake up"), you MUST:
+1.  **Energize the System**: Immediately execute `keel poke "Human interaction in chat"`. This physically mutates the board state and recharges the battery, signaling the engine to resume autonomous flow.
+2.  **Autonomous Scan**: Run `keel mission next --status` and `keel pulse` to identify any new work that has become ready or materialized.
+3.  **Visual Confirmation**: Run `keel flow --scene` to verify the light is now ON and the circuit is closed.
+
 ## Global Hygiene Checklist
 
 Apply these checks to **every change** before finalizing work:

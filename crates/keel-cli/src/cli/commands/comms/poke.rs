@@ -5,7 +5,28 @@ use anyhow::Result;
 use spoke_auth::ExecutionContext;
 use std::path::Path;
 
-pub fn run(_ctx: &ExecutionContext, board_dir: &Path, id: &str, manual_pong: Option<&str>, json: bool) -> Result<()> {
+pub fn run(
+    _ctx: &ExecutionContext,
+    board_dir: &Path,
+    id: Option<&str>,
+    manual_pong: Option<&str>,
+    is_self: bool,
+    json: bool,
+) -> Result<()> {
+    if id.is_none() || is_self {
+        // System poke - sparks the circuit
+        let heartbeat_path = board_dir.join("heartbeat");
+        std::fs::write(&heartbeat_path, manual_pong.unwrap_or(""))?;
+
+        if json {
+            println!(r#"{{"status": "poked", "message": "System energized"}}"#);
+        } else {
+            println!("System poked. Energy restored.");
+        }
+        return Ok(());
+    }
+
+    let id = id.unwrap();
     let mut ping = load_ping(board_dir, id)?;
 
     if ping.status == PingStatus::Ponged {

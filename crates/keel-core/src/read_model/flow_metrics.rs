@@ -85,16 +85,67 @@ pub fn calculate_metrics(board: &Board, reference_time: DateTime<Utc>) -> FlowMe
     let (config, _) = crate::infrastructure::config::load_config();
     let battery_decay = config.workflow.battery_decay_minutes;
     let recent_threshold = reference_time - chrono::Duration::minutes(battery_decay as i64);
-    metrics.execution.recently_completed_count = board
-        .stories
-        .values()
-        .filter(|s| {
-            let activity_time = s.frontmatter.updated_at.or(s.frontmatter.completed_at).or(s.frontmatter.created_at);
-            activity_time
-                .map(|dt| dt >= recent_threshold.naive_utc())
-                .unwrap_or(false)
-        })
-        .count();
+    let threshold_naive = recent_threshold.naive_utc();
+
+    let mut latest_activity: Option<chrono::NaiveDateTime> = None;
+
+    // Check stories
+    for s in board.stories.values() {
+        let dt = s.frontmatter.updated_at.or(s.frontmatter.completed_at).or(s.frontmatter.created_at);
+        if let Some(dt) = dt {
+            if latest_activity.map_or(true, |lat| dt > lat) {
+                latest_activity = Some(dt);
+            }
+        }
+    }
+
+    // Check voyages
+    for v in board.voyages.values() {
+        let dt = v.frontmatter.updated_at.or(v.frontmatter.completed_at).or(v.frontmatter.created_at);
+        if let Some(dt) = dt {
+            if latest_activity.map_or(true, |lat| dt > lat) {
+                latest_activity = Some(dt);
+            }
+        }
+    }
+
+    // Check epics
+    for e in board.epics.values() {
+        let dt = e.frontmatter.created_at; // Epics only have created_at currently?
+        if let Some(dt) = dt {
+            if latest_activity.map_or(true, |lat| dt > lat) {
+                latest_activity = Some(dt);
+            }
+        }
+    }
+
+    // Check missions
+    for m in board.missions.values() {
+        let dt = m.frontmatter.updated_at.or(m.frontmatter.created_at);
+        if let Some(dt) = dt {
+            if latest_activity.map_or(true, |lat| dt > lat) {
+                latest_activity = Some(dt);
+            }
+        }
+    }
+
+    // Check system heartbeat (poke)
+    let heartbeat_path = board.root.join("heartbeat");
+    if let Ok(metadata) = std::fs::metadata(&heartbeat_path) {
+        if let Ok(mtime) = metadata.modified() {
+            let dt: chrono::DateTime<chrono::Utc> = mtime.into();
+            let naive = dt.naive_utc();
+            if latest_activity.map_or(true, |lat| naive > lat) {
+                latest_activity = Some(naive);
+            }
+        }
+    }
+
+    metrics.execution.recently_completed_count = if let Some(latest) = latest_activity {
+        if latest >= threshold_naive { 1 } else { 0 }
+    } else {
+        0
+    };
 
     // 2. Planning
     metrics.planning.draft_count = board
