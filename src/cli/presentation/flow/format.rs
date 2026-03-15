@@ -615,6 +615,11 @@ mod tests {
         EpicCapacityReport {
             id: id.to_string(),
             title: title.to_string(),
+            status: if done > 0 && ready == 0 && in_flight == 0 && blocked == 0 {
+                keel::domain::model::EpicState::Done
+            } else {
+                keel::domain::model::EpicState::Active
+            },
             charge_state,
             capacity: crate::cli::presentation::flow::capacity::EpicCapacity {
                 ready,
