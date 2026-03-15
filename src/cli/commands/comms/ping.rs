@@ -27,9 +27,9 @@ pub fn run(board_dir: &Path, message: &str, json: bool) -> Result<()> {
         println!("{}", serde_json::to_string_pretty(&ping)?);
     } else {
         if ping.status == PingStatus::Ponged {
-            println!("{}", ping.pong_message.as_ref().unwrap());
+            println!("[{}] {}", ping.id, ping.pong_message.as_ref().unwrap());
         } else {
-            println!("{}", ping.id);
+            println!("[{}]", ping.id);
         }
     }
 

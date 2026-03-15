@@ -4,11 +4,15 @@ use super::{PingStatus, check_auto_pong, load_ping, save_ping};
 use anyhow::Result;
 use std::path::Path;
 
-pub fn run(board_dir: &Path, id: &str, manual_pong: Option<&str>) -> Result<()> {
+pub fn run(board_dir: &Path, id: &str, manual_pong: Option<&str>, json: bool) -> Result<()> {
     let mut ping = load_ping(board_dir, id)?;
 
     if ping.status == PingStatus::Ponged {
-        println!("Ping {} has already been ponged.", id);
+        if json {
+            println!("{}", serde_json::to_string_pretty(&ping)?);
+        } else {
+            println!("[{}] {}", id, ping.pong_message.as_ref().unwrap());
+        }
         return Ok(());
     }
 
@@ -20,9 +24,16 @@ pub fn run(board_dir: &Path, id: &str, manual_pong: Option<&str>) -> Result<()> 
         ping.status = PingStatus::Ponged;
         ping.pong_message = Some(pong.clone());
         save_ping(board_dir, &ping)?;
-        println!("{}", pong);
+    }
+
+    if json {
+        println!("{}", serde_json::to_string_pretty(&ping)?);
     } else {
-        // Still no response
+        if ping.status == PingStatus::Ponged {
+            println!("[{}] {}", ping.id, ping.pong_message.as_ref().unwrap());
+        } else {
+            println!("[{}]", ping.id);
+        }
     }
 
     Ok(())

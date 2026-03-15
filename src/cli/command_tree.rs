@@ -350,7 +350,13 @@ pub fn build_cli() -> Command {
                 .about("Respond to or re-evaluate a ping in the inbox")
                 .hide(true)
                 .arg(Arg::new("id").required(true).help("The ID of the ping"))
-                .arg(Arg::new("message").help("Optional pong message to send")),
+                .arg(Arg::new("message").help("Optional pong message to send"))
+                .arg(
+                    Arg::new("json")
+                        .long("json")
+                        .help("Output as JSON for scripting")
+                        .action(ArgAction::SetTrue),
+                ),
         )
         .subcommand(
             Command::new("knowledge")

@@ -136,7 +136,8 @@ pub fn run() -> Result<()> {
         Some(("poke", m)) => {
             let id = m.get_one::<String>("id").expect("required").clone();
             let message = m.get_one::<String>("message").cloned();
-            super::commands::comms::poke::run(&resolve_board_dir()?, &id, message.as_deref())
+            let json = *m.get_one::<bool>("json").unwrap_or(&false);
+            super::commands::comms::poke::run(&resolve_board_dir()?, &id, message.as_deref(), json)
         }
         Some(("generate", _)) => super::commands::setup::generate::run(&resolve_board_dir()?),
         Some(("init", _)) => Ok(super::commands::setup::init::run()?),
