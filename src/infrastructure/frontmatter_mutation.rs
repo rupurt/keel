@@ -39,20 +39,59 @@ pub fn apply(content: &str, mutations: &[Mutation]) -> String {
     let mut in_frontmatter = false;
     let mut delimiter_count = 0;
     let mut handled = HashSet::new();
+    let mut handled_subs = HashSet::new();
+
+    // Map of top-level section -> list of nested mutations
+    let mut nested_mutations: std::collections::HashMap<String, Vec<(String, String)>> = 
+        std::collections::HashMap::new();
+    
+    for m in mutations {
+        if let Mutation::Set { key, value } = m {
+            if let Some((section, subkey)) = key.split_once('.') {
+                nested_mutations.entry(section.to_string())
+                    .or_default()
+                    .push((subkey.to_string(), value.clone()));
+            }
+        }
+    }
+
+    let mut current_section: Option<String> = None;
 
     for line in content.lines() {
         if line == "---" {
             delimiter_count += 1;
             in_frontmatter = delimiter_count == 1;
 
-            // Inject missing keys before the closing frontmatter delimiter.
             if delimiter_count == 2 {
-                for mutation in mutations {
-                    if handled.contains(mutation.key()) {
-                        continue;
+                // If we were in a section, finish it before closing
+                if let Some(section) = &current_section {
+                    if let Some(subs) = nested_mutations.get(section) {
+                        for (subkey, value) in subs {
+                            let full_key = format!("{}.{}", section, subkey);
+                            if !handled_subs.contains(&full_key) {
+                                result.push_str(&format!("  {subkey}: {value}\n"));
+                                handled_subs.insert(full_key);
+                            }
+                        }
                     }
+                }
+
+                // Inject missing top-level keys
+                for mutation in mutations {
                     if let Mutation::Set { key, value } = mutation {
-                        result.push_str(&format!("{key}: {value}\n"));
+                        if !key.contains('.') && !handled.contains(key) {
+                            result.push_str(&format!("{key}: {value}\n"));
+                        }
+                    }
+                }
+                
+                // Inject entirely missing sections
+                for (section, subs) in &nested_mutations {
+                    if !handled.contains(section) {
+                        result.push_str(&format!("{section}:\n"));
+                        for (subkey, value) in subs {
+                            result.push_str(&format!("  {subkey}: {value}\n"));
+                        }
                     }
                 }
             }
@@ -62,15 +101,47 @@ pub fn apply(content: &str, mutations: &[Mutation]) -> String {
             continue;
         }
 
-        if in_frontmatter
-            && let Some(key) = frontmatter_key(line)
-            && let Some(mutation) = lookup_mutation(mutations, key)
-        {
-            handled.insert(mutation.key().to_string());
-            if let Mutation::Set { key, value } = mutation {
-                result.push_str(&format!("{key}: {value}\n"));
+        if in_frontmatter {
+            if let Some(key) = frontmatter_key(line) {
+                // We are starting a NEW top-level key. 
+                // If we were in a section, inject any missing subkeys for THAT section now.
+                if let Some(prev_section) = &current_section {
+                    if let Some(subs) = nested_mutations.get(prev_section) {
+                        for (subkey, value) in subs {
+                            let full_key = format!("{}.{}", prev_section, subkey);
+                            if !handled_subs.contains(&full_key) {
+                                result.push_str(&format!("  {subkey}: {value}\n"));
+                                handled_subs.insert(full_key);
+                            }
+                        }
+                    }
+                }
+
+                current_section = Some(key.to_string());
+                
+                if let Some(mutation) = lookup_mutation(mutations, key) {
+                    handled.insert(key.to_string());
+                    if let Mutation::Set { key, value } = mutation {
+                        result.push_str(&format!("{key}: {value}\n"));
+                    }
+                    continue;
+                }
+            } else if line.starts_with("  ") && let Some(section) = &current_section {
+                // We are inside a section
+                if let Some(subs) = nested_mutations.get(section) {
+                    let trimmed = line.trim();
+                    if let Some((subkey, _)) = trimmed.split_once(':') {
+                        let subkey = subkey.trim();
+                        if let Some((_, value)) = subs.iter().find(|(k, _)| k == subkey) {
+                            let full_key = format!("{}.{}", section, subkey);
+                            result.push_str(&format!("  {subkey}: {value}\n"));
+                            handled_subs.insert(full_key);
+                            handled.insert(section.clone()); // Mark section as partially handled
+                            continue;
+                        }
+                    }
+                }
             }
-            continue;
         }
 
         result.push_str(line);
