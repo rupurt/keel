@@ -1,5 +1,5 @@
 {
-  "hash": "f1555a8703ab5892cbc88696cb58ebbc37dba4b35e6c051c373ebd289632e3e7",
+  "hash": "3bb6d1f2b4123aee6fd18467a120acb9ffe752f1c2f59f7f19b19df426046dcc",
   "report": {
     "story_checks": [
       {
@@ -836,12 +836,12 @@
     "drift_coefficient": 0.0,
     "estimated_remediation_hours": 0.0,
     "last_checked_at": {
-      "secs_since_epoch": 1773543955,
-      "nanos_since_epoch": 825548809
+      "secs_since_epoch": 1773544511,
+      "nanos_since_epoch": 28600238
     }
   },
   "last_poked_at": {
-    "secs_since_epoch": 1773543955,
-    "nanos_since_epoch": 825595860
+    "secs_since_epoch": 1773544511,
+    "nanos_since_epoch": 28657168
   }
 }
