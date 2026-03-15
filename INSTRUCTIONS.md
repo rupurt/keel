@@ -51,6 +51,7 @@ Apply these checks to **every change** before finalizing work:
    - `chore:` (build/tooling)
 6. **Mission Loop Discipline**: For mission-driven work, return to the mission steward loop after every completed story, planning unit, or bearing instead of continuing ad hoc from the last worker context.
 7. **Knowledge Quality Bar**: Prefer no new knowledge over low-signal knowledge. A new knowledge entry should be novel, reusable across stories, and materially reduce future drift; otherwise link existing knowledge or omit capture entirely.
+8. **Config Completeness**: Whenever introducing a new property to the configuration struct (`keel::infrastructure::config::Config`), you MUST immediately update `keel config show` (`crates/keel-cli/src/cli/commands/setup/config.rs`) to render it. The `config show` command is the definitive binding of runtime configuration visibility.
 
 ## Compatibility Policy (Hard Cutover)
 

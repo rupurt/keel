@@ -98,6 +98,8 @@ struct ConfigShowRoleOverridePayload {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 struct ConfigShowWorkflowPayload {
+    max_active_missions: usize,
+    open_for_work: bool,
     defaults: ConfigShowWorkflowDefaultsPayload,
     roles: Vec<ConfigShowRoleFamilyPayload>,
     lanes: Vec<ConfigShowLanePayload>,
@@ -209,6 +211,8 @@ fn build_show_payload(
         project_root: project_root.display().to_string(),
         board_dir: config.board_dir().to_string(),
         workflow: ConfigShowWorkflowPayload {
+            max_active_missions: config.workflow.max_active_missions,
+            open_for_work: config.workflow.open_for_work,
             defaults: ConfigShowWorkflowDefaultsPayload {
                 management_role: defaults.management_role,
                 delivery_role: defaults.delivery_role,
@@ -281,6 +285,16 @@ fn render_show_payload(payload: &ConfigShowPayload) -> Vec<String> {
     lines.push(format!("# Configuration source: {}", payload.source));
     lines.push(format!("project_root = \"{}\"", payload.project_root));
     lines.push(format!("board_dir = \"{}\"", payload.board_dir));
+    lines.push(String::new());
+    lines.push("[workflow]".to_string());
+    lines.push(format!(
+        "max_active_missions = {}",
+        payload.workflow.max_active_missions
+    ));
+    lines.push(format!(
+        "open_for_work = {}",
+        payload.workflow.open_for_work
+    ));
     lines.push(String::new());
     lines.push("[workflow.defaults]".to_string());
     lines.push(format!(
