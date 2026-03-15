@@ -1,13 +1,12 @@
 ---
-id: VDseuzIFg
-title: Project Operations
-created_at: 2026-03-14T14:45:04
-index: 50
+id: VDupml7OG
+title: Collaborative Cryptographic Primitives Over Adversarial Transport
+created_at: 2026-03-14T23:49:40
 ---
 
-# Project Operations
+# Collaborative Cryptographic Primitives Over Adversarial Transport
 
-> The keel engine repository lacks a dedicated scope for tracking and automating its own internal maintenance and operational routines.
+> Design and implement collaborative cryptographic primitives to enable consensus-free coordination over adversarial transports.
 
 ## Documents
 
@@ -19,7 +18,7 @@ index: 50
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/0 voyages complete, 1/7 stories done
+**Progress:** 0/0 voyages complete, 0/0 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
 <!-- END GENERATED -->

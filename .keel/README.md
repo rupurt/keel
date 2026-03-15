@@ -10,6 +10,7 @@
 | [MissionEntity](bearings/1vzeJF000/) | laid | ✓ | ✓ | decision-ready | 3.60 | ✓ |
 | [Simulation Kernel Architecture Research](bearings/VDeRKA7fo/) | laid | ✓ | ✓ | decision-ready | 3.36 | ✓ |
 | [TUI Compact Layout Research](bearings/VDmdk1uib/) | laid | ✓ | ✓ | decision-ready | 7.50 | ✓ |
+| [Collaborative Cryptographic Primitives Over Adversarial Transport](bearings/VDupml7OG/) | laid | ✓ | ✓ | decision-ready | 1.80 | ✓ |
 | [Semantic Search and Ranking in Keel](bearings/1w5H2Bq9L/) | laid | ✓ | ✓ | decision-ready | 4.66 | ✓ |
 
 ## Epics
@@ -325,4 +326,6 @@
 | Voyage | Status |
 |--------|--------|
 | [Realize High-Density Views](epics/VDmdk1uib/voyages/VDoBLEiaF/) | done |
+
+### [Collaborative Cryptographic Primitives Over Adversarial Transport](epics/VDupml7OG/) (draft)
 
