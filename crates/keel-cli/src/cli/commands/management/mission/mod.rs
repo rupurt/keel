@@ -99,7 +99,7 @@ pub enum MissionAction {
 }
 
 /// Run a mission action
-pub fn run(action: MissionAction) -> Result<()> {
+pub fn run(ctx: &spoke_auth::ExecutionContext, action: MissionAction) -> Result<()> {
     let board_dir = keel::infrastructure::config::find_board_dir()?;
     match action {
         MissionAction::New { title } => run_new(&title),
@@ -129,7 +129,7 @@ pub fn run(action: MissionAction) -> Result<()> {
             keel::application::mission_lifecycle::MissionLifecycleService::pause(&board_dir, &id)
         }
         MissionAction::Achieve { id } => {
-            keel::application::mission_lifecycle::MissionLifecycleService::achieve(&board_dir, &id)
+            keel::application::mission_lifecycle::MissionLifecycleService::achieve(ctx, &board_dir, &id)
         }
         MissionAction::Verify { id } => {
             keel::application::mission_lifecycle::MissionLifecycleService::verify(&board_dir, &id)

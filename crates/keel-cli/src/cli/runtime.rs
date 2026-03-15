@@ -19,6 +19,9 @@ pub fn run() -> Result<()> {
     }
     let matches = build_cli().get_matches_from(raw_args);
 
+    let auth_file = matches.get_one::<std::path::PathBuf>("auth-file").map(|p| p.as_path());
+    let ctx = spoke_auth::load_auth_context(auth_file)?;
+
     match matches.subcommand() {
         Some(("doctor", m)) => {
             let fix = *m.get_one::<bool>("fix").unwrap_or(&false);
@@ -136,7 +139,7 @@ pub fn run() -> Result<()> {
                 .collect::<Vec<_>>()
                 .join(" ");
             let json = *m.get_one::<bool>("json").unwrap_or(&false);
-            super::commands::comms::ping::run(&resolve_board_dir()?, &message, json)
+            super::commands::comms::ping::run(&ctx, &resolve_board_dir()?, &message, json)
         }
         Some(("poke", m)) => {
             let id = m.get_one::<String>("id").expect("required").clone();
@@ -144,7 +147,7 @@ pub fn run() -> Result<()> {
                 .get_many::<String>("message")
                 .map(|vals| vals.map(|s| s.as_str()).collect::<Vec<_>>().join(" "));
             let json = *m.get_one::<bool>("json").unwrap_or(&false);
-            super::commands::comms::poke::run(&resolve_board_dir()?, &id, message.as_deref(), json)
+            super::commands::comms::poke::run(&ctx, &resolve_board_dir()?, &id, message.as_deref(), json)
         }
         Some(("generate", _)) => super::commands::setup::generate::run(&resolve_board_dir()?),
         Some(("init", _)) => Ok(super::commands::setup::init::run()?),
@@ -155,7 +158,7 @@ pub fn run() -> Result<()> {
         Some(("story", m)) => handle_story_command(m),
         Some(("bearing", m)) => handle_bearing_command(m),
         Some(("adr", m)) => handle_adr_command(m),
-        Some(("mission", m)) => handle_mission_command(m),
+        Some(("mission", m)) => handle_mission_command(&ctx, m),
         Some(("config", m)) => handle_config_command(m),
         None => {
             let mut cli = build_cli();
@@ -194,8 +197,8 @@ fn handle_adr_command(matches: &ArgMatches) -> Result<()> {
     super::commands::management::adr::run(parse_subcommand_action(matches)?)
 }
 
-fn handle_mission_command(matches: &ArgMatches) -> Result<()> {
-    super::commands::management::mission::run(parse_subcommand_action(matches)?)
+fn handle_mission_command(ctx: &spoke_auth::ExecutionContext, matches: &ArgMatches) -> Result<()> {
+    super::commands::management::mission::run(ctx, parse_subcommand_action(matches)?)
 }
 
 fn handle_knowledge_command(matches: &ArgMatches) -> Result<()> {

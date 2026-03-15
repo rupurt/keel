@@ -43,7 +43,7 @@ impl MissionLifecycleService {
         Ok(())
     }
 
-    pub fn achieve(board_dir: &Path, id: &str) -> Result<()> {
+    pub fn achieve(ctx: &spoke_auth::ExecutionContext, board_dir: &Path, id: &str) -> Result<()> {
         let board = load_board(board_dir)?;
         let mission = board.require_mission(id)?;
 
@@ -87,7 +87,19 @@ impl MissionLifecycleService {
             ));
         }
 
+        // Apply mutation
         execute(board_dir, id, &mission_transitions::ACHIEVE)?;
+
+        // Audit log the actor
+        match &ctx.actor {
+            spoke_auth::Actor::LocalSystem { os_user } => {
+                Self::log(board_dir, id, &format!("Mission achieved by local system user '{}'", os_user))?;
+            }
+            spoke_auth::Actor::Authenticated { identity, role } => {
+                Self::log(board_dir, id, &format!("Mission achieved by authenticated actor '{}' ({})", identity, role))?;
+            }
+        }
+
         println!("Achieved mission: {}", id);
         Ok(())
     }

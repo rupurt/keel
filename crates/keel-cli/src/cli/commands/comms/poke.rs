@@ -2,9 +2,10 @@
 
 use super::{PingStatus, check_auto_pong, load_ping, save_ping};
 use anyhow::Result;
+use spoke_auth::ExecutionContext;
 use std::path::Path;
 
-pub fn run(board_dir: &Path, id: &str, manual_pong: Option<&str>, json: bool) -> Result<()> {
+pub fn run(ctx: &ExecutionContext, board_dir: &Path, id: &str, manual_pong: Option<&str>, json: bool) -> Result<()> {
     let mut ping = load_ping(board_dir, id)?;
 
     if ping.status == PingStatus::Ponged {

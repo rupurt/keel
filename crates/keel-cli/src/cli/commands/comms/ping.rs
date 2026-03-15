@@ -5,8 +5,9 @@ use anyhow::Result;
 use chrono::Utc;
 use std::path::Path;
 use keel::infrastructure::story_id::generate_story_id;
+use spoke_auth::ExecutionContext;
 
-pub fn run(board_dir: &Path, message: &str, json: bool) -> Result<()> {
+pub fn run(ctx: &ExecutionContext, board_dir: &Path, message: &str, json: bool) -> Result<()> {
     let id = generate_story_id(); // Reuse ID generation for standard ID format
     let mut ping = PingMessage {
         id: id.clone(),

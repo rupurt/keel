@@ -53,6 +53,13 @@ pub fn build_cli() -> Command {
         .version(env!("CARGO_PKG_VERSION"))
         .after_help(HELP_GROUPS)
         .disable_help_subcommand(true)
+        .arg(
+            Arg::new("auth-file")
+                .long("auth-file")
+                .global(true)
+                .help("Path to a JWT file to authenticate the actor")
+                .value_parser(clap::value_parser!(std::path::PathBuf)),
+        )
         .subcommand(
             Command::new("doctor")
                 .about("Validate board health and optionally fix issues")
