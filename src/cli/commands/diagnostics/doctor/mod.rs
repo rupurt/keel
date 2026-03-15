@@ -10,9 +10,33 @@ use keel::read_model::diagnostics::fixes::run_fixes;
 use keel::read_model::diagnostics::validate_report as validate;
 
 /// Run the doctor command
-pub fn run(board_dir: &Path, fix: bool, _evidence: bool, _watch: bool, _quick: bool) -> Result<()> {
+pub fn run(board_dir: &Path, fix: bool, _evidence: bool, _watch: bool, _quick: bool, scene: bool) -> Result<()> {
     let _start = Instant::now();
     let report = validate(board_dir)?;
+
+    let errors = report.total_errors();
+    let warnings = report.total_warnings();
+
+    if scene {
+        use owo_colors::OwoColorize;
+        let passed = errors == 0 && warnings == 0;
+        if passed {
+            let ekg = r#"
+    /\         /\         /\    
+ __/  \  _  __/  \  _  __/  \  _
+       \/         \/         \/ 
+"#;
+            println!("{}", ekg.green());
+        } else {
+            let ekg = r#"
+                                
+ _______________________________
+                                
+"#;
+            println!("{}", ekg.red());
+        }
+        return Ok(());
+    }
 
     render::print_report(&report);
 

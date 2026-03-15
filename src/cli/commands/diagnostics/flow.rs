@@ -11,7 +11,41 @@ use keel::read_model::scheduled_routines::{RoutineScheduleFilter, project_schedu
 use keel::read_model::{flow_status, workflow_lane_flow, workflow_topology};
 
 /// Run the flow command
-pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool) -> Result<()> {
+pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, scene: bool) -> Result<()> {
+    if scene {
+        let board = load_board(board_dir)?;
+        let topology = workflow_topology::load_for_board(board_dir)?;
+        let lane_flow = workflow_lane_flow::project(&board, &topology);
+        
+        // System is autonomous if no tasks are pending in manual_accept lanes
+        let needs_human_input = lane_flow.lanes.iter().any(|lane| lane.manual_accept && lane.total_count > 0);
+        let autonomous = !needs_human_input;
+
+        use owo_colors::OwoColorize;
+        if autonomous {
+            let circuit = r#"
+    ┌───[BATTERY]───┐
+    │               │
+    │               │
+    │               │
+    └───( \ / )─────┘
+         \_/_/  <-- SYSTEM AUTONOMOUS (LIGHT ON)
+"#;
+            println!("{}", circuit.yellow());
+        } else {
+            let circuit = r#"
+    ┌───[BATTERY]───┐
+    │               │
+    │              / 
+    │             /
+    └───(     )───  <-- HUMAN INPUT REQUIRED (LIGHT OFF)
+         \___/
+"#;
+            println!("{}", circuit.dimmed());
+        }
+        return Ok(());
+    }
+
     let output = build_output(board_dir, no_color, show_routines)?;
     println!("{}", output);
 

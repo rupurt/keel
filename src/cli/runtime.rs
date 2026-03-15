@@ -25,12 +25,14 @@ pub fn run() -> Result<()> {
             let evidence = *m.get_one::<bool>("evidence").unwrap_or(&false);
             let watch = *m.get_one::<bool>("watch").unwrap_or(&false);
             let quick = *m.get_one::<bool>("quick").unwrap_or(&false);
+            let scene = *m.get_one::<bool>("scene").unwrap_or(&false);
             match super::commands::diagnostics::doctor::run(
                 &resolve_board_dir()?,
                 fix,
                 evidence,
                 watch,
                 quick,
+                scene,
             ) {
                 Ok(_) => Ok(()),
                 Err(e) => {
@@ -48,7 +50,8 @@ pub fn run() -> Result<()> {
         Some(("flow", m)) => {
             let no_color = *m.get_one::<bool>("no_color").unwrap_or(&false);
             let hide_routines = *m.get_one::<bool>("hide-routines").unwrap_or(&false);
-            super::commands::diagnostics::flow::run(&resolve_board_dir()?, no_color, !hide_routines)
+            let scene = *m.get_one::<bool>("scene").unwrap_or(&false);
+            super::commands::diagnostics::flow::run(&resolve_board_dir()?, no_color, !hide_routines, scene)
         }
         Some(("throughput", m)) => {
             let no_color = *m.get_one::<bool>("no_color").unwrap_or(&false);

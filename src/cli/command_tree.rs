@@ -76,6 +76,12 @@ pub fn build_cli() -> Command {
                         .long("quick")
                         .help("Quick mode: run fast structural checks only (SRS-08, SRS-09)")
                         .action(ArgAction::SetTrue),
+                )
+                .arg(
+                    Arg::new("scene")
+                        .long("scene")
+                        .help("Render a visual representation of the current board scene")
+                        .action(ArgAction::SetTrue),
                 ),
         )
         .subcommand(
@@ -92,6 +98,12 @@ pub fn build_cli() -> Command {
                     Arg::new("hide-routines")
                         .long("hide-routines")
                         .help("Hide scheduled routines in the flow output")
+                        .action(ArgAction::SetTrue),
+                )
+                .arg(
+                    Arg::new("scene")
+                        .long("scene")
+                        .help("Render a visual representation of the current board scene")
                         .action(ArgAction::SetTrue),
                 ),
         )
