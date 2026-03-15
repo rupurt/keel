@@ -292,6 +292,17 @@ fn render_compact_status(board: &Board, board_dir: &Path, mission: &Mission) -> 
         println!("• Check mission status or backlog.");
         println!("• Run `keel mission show {}` for details.", mission.id());
     } else {
+        // Ensure exactly 3 bullets if possible
+        if bullets.len() < 3 {
+            bullets.push((10, "Progress existing mission-scoped epics".to_string()));
+        }
+        if bullets.len() < 3 {
+            bullets.push((
+                11,
+                format!("Run `keel mission show {}` for context", mission.id()),
+            ));
+        }
+
         for (_, bullet) in bullets.into_iter().take(3) {
             println!("• {bullet}");
         }
@@ -425,6 +436,10 @@ fn add_decision_to_bullets(
 }
 
 fn render_mission_next(board: &Board, board_dir: &Path, mission: &Mission) -> Result<()> {
+    println!("{}", "Status Summary".bold().underline());
+    render_compact_status(board, board_dir, mission)?;
+    println!();
+
     let topology = workflow_topology::load_for_board(board_dir)?;
 
     let mut role_families: BTreeSet<String> = topology.roles.keys().cloned().collect();
