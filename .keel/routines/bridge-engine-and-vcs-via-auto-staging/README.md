@@ -2,6 +2,8 @@
 id: bridge-engine-and-vcs-via-auto-staging
 title: Bridge Engine And VCS Via Auto Staging
 cadence:
+  cron: "0 0 * * *"
+  timezone: UTC
   deadline: 48h
 target-scope: VDseuzIFg
 created_at: 2026-03-14T14:45:00

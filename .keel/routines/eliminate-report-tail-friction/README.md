@@ -2,6 +2,8 @@
 id: eliminate-report-tail-friction
 title: Eliminate Report Tail Friction
 cadence:
+  cron: "0 0 * * *"
+  timezone: UTC
   deadline: 24h
 target-scope: VDseuzIFg
 created_at: 2026-03-14T14:45:00

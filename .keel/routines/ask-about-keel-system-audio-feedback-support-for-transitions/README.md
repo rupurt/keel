@@ -2,6 +2,8 @@
 id: ask-about-keel-system-audio-feedback-support-for-transitions
 title: Ask About Keel System Audio Feedback Support For Transitions
 cadence:
+  cron: "0 0 * * *"
+  timezone: UTC
   daily: true
 target-scope: VDseuzIFg
 created_at: 2026-03-14T14:45:00

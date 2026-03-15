@@ -1,5 +1,5 @@
 {
-  "hash": "8e6c8e9e0ea1ecf3940d9f84ad29bbb997a17aaa2ffa6abda4fa6eb893303674",
+  "hash": "909d7a3dc269b78ef2f9f5ae160b980cd4cdaf8dee46cac92bfc37e44c66e748",
   "report": {
     "story_checks": [
       {
@@ -793,6 +793,20 @@
         "disabled": false
       }
     ],
+    "routine_checks": [
+      {
+        "id": "routine-cadence",
+        "name": "Routine cadence",
+        "problems": [],
+        "evaluations": 5,
+        "duration": {
+          "secs": 0,
+          "nanos": 0
+        },
+        "passed": true,
+        "disabled": false
+      }
+    ],
     "workflow_checks": [
       {
         "id": "workflow-graph-integrity",
@@ -822,12 +836,12 @@
     "drift_coefficient": 0.0,
     "estimated_remediation_hours": 0.0,
     "last_checked_at": {
-      "secs_since_epoch": 1773525340,
-      "nanos_since_epoch": 371106227
+      "secs_since_epoch": 1773542742,
+      "nanos_since_epoch": 316912817
     }
   },
   "last_poked_at": {
-    "secs_since_epoch": 1773525340,
-    "nanos_since_epoch": 371166964
+    "secs_since_epoch": 1773542742,
+    "nanos_since_epoch": 316980768
   }
 }
