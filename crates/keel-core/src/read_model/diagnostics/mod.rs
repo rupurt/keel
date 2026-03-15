@@ -13,6 +13,7 @@ use std::sync::LazyLock;
 use std::time::Duration;
 
 use crate::domain::model::AC_REQ_RE;
+use crate::domain::model::StoryState;
 use crate::infrastructure::loader::load_board;
 pub use types::{CheckResult, DoctorReport};
 
@@ -724,6 +725,15 @@ fn validate_with_config_internal(
         "Workflow topology",
         1, // Single topology to check
         topology_problems,
+    ));
+
+    let overload_problems = checks::stories::check_circuit_overload(&board, config.workflow.max_battery_packs);
+    workflow_checks.push(configured_check(
+        doctor_config,
+        "workflow-circuit-overload",
+        "Circuit Overload (Max Battery Packs)",
+        board.stories.values().filter(|s| s.status == StoryState::Backlog).count(),
+        overload_problems,
     ));
 
     let mut report = DoctorReport {

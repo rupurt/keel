@@ -1335,6 +1335,45 @@ pub fn check_active_story_coherence(board: &Board) -> Vec<Problem> {
     problems
 }
 
+/// Check that the number of ready backlog stories does not exceed the `max_battery_packs` limit.
+pub fn check_circuit_overload(board: &Board, max_battery_packs: usize) -> Vec<Problem> {
+    let mut problems = Vec::new();
+
+    let ready_stories: Vec<_> = board
+        .stories
+        .values()
+        .filter(|s| s.status == StoryState::Backlog)
+        // Ready stories are backlog stories that are not blocked by dependencies
+        .filter(|s| {
+            s.frontmatter
+                .blocked_by
+                .iter()
+                .all(|dep_id| match board.stories.get(dep_id) {
+                    Some(dep) => dep.status == StoryState::Done,
+                    None => true, // Ignore missing dependencies for this specific check
+                })
+        })
+        .collect();
+
+    if ready_stories.len() > max_battery_packs {
+        problems.push(Problem {
+            severity: Severity::Warning,
+            path: board.root.clone(), // Attach to the whole board
+            message: format!(
+                "Circuit Overload: Too many battery packs ({} ready stories) plugged in. Maximum allowed is {}.",
+                ready_stories.len(),
+                max_battery_packs
+            ),
+            fix: None,
+            scope: None,
+            category: None,
+            check_id: CheckId::Unknown, // Generic ID until assigned
+        });
+    }
+
+    problems
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

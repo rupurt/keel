@@ -99,6 +99,7 @@ struct ConfigShowRoleOverridePayload {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 struct ConfigShowWorkflowPayload {
     max_active_missions: usize,
+    max_battery_packs: usize,
     open_for_work: bool,
     working_hours_start: u8,
     working_hours_end: u8,
@@ -215,6 +216,7 @@ fn build_show_payload(
         board_dir: config.board_dir().to_string(),
         workflow: ConfigShowWorkflowPayload {
             max_active_missions: config.workflow.max_active_missions,
+            max_battery_packs: config.workflow.max_battery_packs,
             open_for_work: config.workflow.open_for_work,
             working_hours_start: config.workflow.working_hours_start,
             working_hours_end: config.workflow.working_hours_end,
@@ -296,6 +298,10 @@ fn render_show_payload(payload: &ConfigShowPayload) -> Vec<String> {
     lines.push(format!(
         "max_active_missions = {}",
         payload.workflow.max_active_missions
+    ));
+    lines.push(format!(
+        "max_battery_packs = {}",
+        payload.workflow.max_battery_packs
     ));
     lines.push(format!(
         "open_for_work = {}",

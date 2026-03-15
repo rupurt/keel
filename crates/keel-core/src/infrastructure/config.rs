@@ -213,6 +213,10 @@ pub fn default_battery_decay_minutes() -> u32 {
     30
 }
 
+pub fn default_max_battery_packs() -> usize {
+    5
+}
+
 /// Workflow-level configuration.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct WorkflowConfig {
@@ -223,6 +227,11 @@ pub struct WorkflowConfig {
     /// Represents the Circuit Breaker "max amperage".
     #[serde(default = "default_max_active_missions")]
     pub max_active_missions: usize,
+    
+    /// The maximum number of ready stories allowed in the backlog before triggering an overload.
+    /// Represents plugged-in queue load.
+    #[serde(default = "default_max_battery_packs")]
+    pub max_battery_packs: usize,
     
     /// The main switch for the engine. If false, the engine does not perform work.
     #[serde(default = "default_open_for_work")]
@@ -246,6 +255,7 @@ impl Default for WorkflowConfig {
         Self {
             defaults: WorkflowDefaultsConfig::default(),
             max_active_missions: default_max_active_missions(),
+            max_battery_packs: default_max_battery_packs(),
             open_for_work: default_open_for_work(),
             working_hours_start: default_working_hours_start(),
             working_hours_end: default_working_hours_end(),
