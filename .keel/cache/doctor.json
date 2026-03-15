@@ -1,12 +1,12 @@
 {
-  "hash": "909d7a3dc269b78ef2f9f5ae160b980cd4cdaf8dee46cac92bfc37e44c66e748",
+  "hash": "f1555a8703ab5892cbc88696cb58ebbc37dba4b35e6c051c373ebd289632e3e7",
   "report": {
     "story_checks": [
       {
         "id": "story-id-uniqueness",
         "name": "ID uniqueness",
         "problems": [],
-        "evaluations": 229,
+        "evaluations": 233,
         "duration": {
           "secs": 0,
           "nanos": 0
@@ -18,7 +18,7 @@
         "id": "story-id-consistency",
         "name": "ID consistency",
         "problems": [],
-        "evaluations": 229,
+        "evaluations": 233,
         "duration": {
           "secs": 0,
           "nanos": 0
@@ -30,7 +30,7 @@
         "id": "story-title-convention",
         "name": "Title convention",
         "problems": [],
-        "evaluations": 229,
+        "evaluations": 233,
         "duration": {
           "secs": 0,
           "nanos": 0
@@ -42,7 +42,7 @@
         "id": "story-acceptance-criteria-completion",
         "name": "Acceptance criteria completion",
         "problems": [],
-        "evaluations": 229,
+        "evaluations": 233,
         "duration": {
           "secs": 0,
           "nanos": 0
@@ -54,7 +54,7 @@
         "id": "story-verification-annotations",
         "name": "Verification annotations",
         "problems": [],
-        "evaluations": 229,
+        "evaluations": 233,
         "duration": {
           "secs": 0,
           "nanos": 0
@@ -66,7 +66,7 @@
         "id": "story-srs-traceability",
         "name": "SRS traceability",
         "problems": [],
-        "evaluations": 229,
+        "evaluations": 233,
         "duration": {
           "secs": 0,
           "nanos": 0
@@ -78,7 +78,7 @@
         "id": "story-implementation-dependency-cycles",
         "name": "Implementation dependency cycles",
         "problems": [],
-        "evaluations": 229,
+        "evaluations": 233,
         "duration": {
           "secs": 0,
           "nanos": 0
@@ -90,7 +90,7 @@
         "id": "story-parallel-conflict-coherence",
         "name": "Parallel conflict coherence",
         "problems": [],
-        "evaluations": 229,
+        "evaluations": 233,
         "duration": {
           "secs": 0,
           "nanos": 0
@@ -102,7 +102,7 @@
         "id": "story-scoped-evidence-coverage",
         "name": "Scoped evidence coverage",
         "problems": [],
-        "evaluations": 229,
+        "evaluations": 233,
         "duration": {
           "secs": 0,
           "nanos": 0
@@ -114,7 +114,7 @@
         "id": "story-frontmatter-drift",
         "name": "Story frontmatter drift",
         "problems": [],
-        "evaluations": 229,
+        "evaluations": 233,
         "duration": {
           "secs": 0,
           "nanos": 0
@@ -126,7 +126,7 @@
         "id": "story-reflection-coherence",
         "name": "Reflection coherence",
         "problems": [],
-        "evaluations": 229,
+        "evaluations": 233,
         "duration": {
           "secs": 0,
           "nanos": 0
@@ -138,7 +138,7 @@
         "id": "story-active-story-coherence",
         "name": "Active story coherence",
         "problems": [],
-        "evaluations": 229,
+        "evaluations": 233,
         "duration": {
           "secs": 0,
           "nanos": 0
@@ -150,7 +150,7 @@
         "id": "story-terminal-artifact-coherence",
         "name": "Terminal artifact coherence",
         "problems": [],
-        "evaluations": 229,
+        "evaluations": 233,
         "duration": {
           "secs": 0,
           "nanos": 0
@@ -162,7 +162,7 @@
         "id": "story-knowledge-catalog-integrity",
         "name": "Knowledge catalog integrity",
         "problems": [],
-        "evaluations": 229,
+        "evaluations": 233,
         "duration": {
           "secs": 0,
           "nanos": 0
@@ -174,7 +174,7 @@
         "id": "story-verification-manifest-integrity",
         "name": "Verification manifest integrity",
         "problems": [],
-        "evaluations": 229,
+        "evaluations": 233,
         "duration": {
           "secs": 0,
           "nanos": 0
@@ -186,7 +186,7 @@
         "id": "story-date-consistency",
         "name": "Story date consistency",
         "problems": [],
-        "evaluations": 229,
+        "evaluations": 233,
         "duration": {
           "secs": 0,
           "nanos": 0
@@ -812,7 +812,7 @@
         "id": "workflow-graph-integrity",
         "name": "Graph integrity",
         "problems": [],
-        "evaluations": 385,
+        "evaluations": 389,
         "duration": {
           "secs": 0,
           "nanos": 0
@@ -836,12 +836,12 @@
     "drift_coefficient": 0.0,
     "estimated_remediation_hours": 0.0,
     "last_checked_at": {
-      "secs_since_epoch": 1773542742,
-      "nanos_since_epoch": 316912817
+      "secs_since_epoch": 1773543955,
+      "nanos_since_epoch": 825548809
     }
   },
   "last_poked_at": {
-    "secs_since_epoch": 1773542742,
-    "nanos_since_epoch": 316980768
+    "secs_since_epoch": 1773543955,
+    "nanos_since_epoch": 825595860
   }
 }
