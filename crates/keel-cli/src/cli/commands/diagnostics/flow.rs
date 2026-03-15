@@ -76,7 +76,7 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
                         println!("{}", circuit.yellow().dimmed());
                     }
                 } else {
-                    circuit.push_str("         \\___/  <-- SYSTEM IDLE (LIGHT OFF)\n");
+                    circuit.push_str("         \\___/  <-- SYSTEM IDLE (LIGHT OFF - BATTERY DEAD, POKE TO WAKE)\n");
                     println!("{}", circuit.dimmed());
                 }
             }
