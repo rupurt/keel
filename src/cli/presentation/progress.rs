@@ -1,6 +1,7 @@
 //! Shared progress rendering helpers for show surfaces.
 
 use crate::cli::style;
+use owo_colors::OwoColorize;
 
 pub fn render_count_bar(
     done: usize,
@@ -50,6 +51,7 @@ pub fn render_capacity_bar(
     in_flight: usize,
     ready: usize,
     width: usize,
+    color: Option<owo_colors::AnsiColors>,
 ) -> String {
     let total = done + in_flight + ready;
     if total == 0 {
@@ -61,11 +63,17 @@ pub fn render_capacity_bar(
     let ready_width = (ready as f64 / total as f64 * width as f64).round() as usize;
 
     let mut bar = String::new();
-    bar.push_str(&"▓".repeat(done_width));
-    bar.push_str(&"▒".repeat(in_flight_width));
-    bar.push_str(&"░".repeat(ready_width));
+    if let Some(color) = color {
+        bar.push_str(&"▓".color(color).to_string().repeat(done_width));
+        bar.push_str(&"▒".color(color).to_string().repeat(in_flight_width));
+        bar.push_str(&"░".color(color).to_string().repeat(ready_width));
+    } else {
+        bar.push_str(&"▓".repeat(done_width));
+        bar.push_str(&"▒".repeat(in_flight_width));
+        bar.push_str(&"░".repeat(ready_width));
+    }
 
-    let remaining = width.saturating_sub(bar.len());
+    let remaining = width.saturating_sub(done_width + in_flight_width + ready_width);
     bar.push_str(&" ".repeat(remaining));
 
     format!("[{}]", bar)

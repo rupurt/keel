@@ -3,6 +3,7 @@
 use owo_colors::OwoColorize;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write;
+use ansi_escape_sequences::strip_ansi;
 
 pub use super::capacity::EpicCapacityReport;
 use crate::cli::presentation::theme::Theme;
@@ -25,7 +26,7 @@ pub struct VoyageDepSummary {
 }
 
 pub fn pad_to_width(s: &str, target_width: usize) -> String {
-    let current_width = keel::infrastructure::utils::visible_width(s);
+    let current_width = strip_ansi(s).len();
     if current_width >= target_width {
         s.to_string()
     } else {
@@ -211,6 +212,13 @@ pub fn render_epic_capacities(
             cap.capacity.in_flight,
             cap.capacity.ready,
             15,
+            if cap.capacity.in_flight > 0 {
+                Some(owo_colors::AnsiColors::Green)
+            } else if cap.capacity.ready > 0 {
+                Some(owo_colors::AnsiColors::Yellow)
+            } else {
+                None
+            },
         );
 
         writeln!(
