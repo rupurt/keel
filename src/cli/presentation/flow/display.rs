@@ -3,6 +3,7 @@
 use owo_colors::OwoColorize;
 use std::collections::HashMap;
 use std::fmt::Write;
+use chrono::Utc;
 
 use super::box_component::BoxComponent;
 use super::format::render_epic_capacities;
@@ -29,18 +30,21 @@ pub fn render_annotated_flow(
     let mut output = String::new();
     let theme = Theme::for_color_mode(Theme::should_use_color(no_color));
 
-    // 1. Mission Summary (Long-running Objectives)
-    let (mission_summary, use_top_missions) = render_mission_summary(board, width, &theme);
-    if !mission_summary.is_empty() {
+    // 1. Command Directives (Admiral's Inbox)
+    let directives = render_command_directives(
+        board,
+        scheduled,
+        materialized_by_key,
+        width,
+        &theme,
+        show_routines,
+    );
+    if !directives.is_empty() {
         writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
-        if use_top_missions {
-            writeln!(output, "  Top Missions").unwrap();
-        } else {
-            writeln!(output, "  Active Missions").unwrap();
-        }
+        writeln!(output, "  Command Directives ⚓").unwrap();
         writeln!(output, "{}", style::rule(width, Some(&theme))).unwrap();
         writeln!(output).unwrap();
-        write!(output, "{}", mission_summary).unwrap();
+        write!(output, "{}", directives).unwrap();
     }
 
     // 2. Queue Handoff (Configured Workflow Lanes)
@@ -48,35 +52,7 @@ pub fn render_annotated_flow(
     let lane_boxes = render_lane_boxes(lane_flow, width, &theme);
     write!(output, "{}", lane_boxes).unwrap();
 
-    // 3. Scheduled Capacity
-    if show_routines {
-        ensure_section_spacing(&mut output);
-        writeln!(
-            output,
-            "  Scheduled Capacity 🕒 {}",
-            "───────────────".dimmed()
-        )
-        .unwrap();
-
-        if scheduled.is_empty() {
-            writeln!(output, "    {}", "No routines configured.".dimmed()).unwrap();
-        } else {
-            for routine in scheduled {
-                writeln!(
-                    output,
-                    "    {} {} {}",
-                    "•".dimmed(),
-                    routine.id.bold().cyan(),
-                    format!("({})", routine.title).dimmed()
-                )
-                .unwrap();
-                let line = render_scheduled_capacity_line(routine, materialized_by_key);
-                writeln!(output, "        {}", line).unwrap();
-            }
-        }
-    }
-
-    // 4. Execution Capacity (Strategic Throughput)
+    // 3. Execution Capacity (Strategic Throughput)
     let capacity = crate::cli::presentation::flow::capacity::calculate_system_capacity(board);
     let has_actionable_capacity = strategic_capacity_available(&capacity.epics);
     let cap_map = capacity
@@ -182,6 +158,91 @@ pub fn render_annotated_flow(
     }
 
     output
+}
+
+fn render_command_directives(
+    board: &Board,
+    scheduled: &[ScheduledRoutineProjection],
+    materialized_by_key: &HashMap<String, String>,
+    width: usize,
+    theme: &Theme,
+    show_routines: bool,
+) -> String {
+    let mut out = String::new();
+
+    // 1. High-Priority Tasking (Routines)
+    if show_routines {
+        let tasking = render_high_priority_tasking(scheduled, materialized_by_key, theme);
+        if !tasking.is_empty() {
+            writeln!(out, "  {}", "High-Priority Tasking".bold().yellow()).unwrap();
+            write!(out, "{}", tasking).unwrap();
+            writeln!(out).unwrap();
+        }
+    }
+
+    // 2. Mission Objectives
+    let (mission_summary, _) = render_mission_summary(board, width, theme);
+    if !mission_summary.is_empty() {
+        writeln!(out, "  {}", "Mission Objectives".bold().cyan()).unwrap();
+        write!(out, "{}", mission_summary).unwrap();
+    }
+
+    out
+}
+
+fn render_high_priority_tasking(
+    scheduled: &[ScheduledRoutineProjection],
+    materialized_by_key: &HashMap<String, String>,
+    _theme: &Theme,
+) -> String {
+    let mut out = String::new();
+    let mut high_priority: Vec<_> = scheduled
+        .iter()
+        .filter(|r| {
+            matches!(
+                r.state,
+                ScheduledRoutineState::Due | ScheduledRoutineState::Invalid
+            )
+        })
+        .collect();
+
+    // Also include upcoming routines due in the next 24 hours
+    let mut upcoming: Vec<_> = scheduled
+        .iter()
+        .filter(|r| {
+            if let ScheduledRoutineState::Upcoming = r.state {
+                if let Some(eligible) = r.next_eligible_at {
+                    return eligible.signed_duration_since(Utc::now()).num_hours() < 24;
+                }
+            }
+            false
+        })
+        .collect();
+
+    high_priority.sort_by_key(|r| r.id.clone());
+    upcoming.sort_by_key(|r| r.next_eligible_at);
+
+    for routine in high_priority.into_iter().chain(upcoming) {
+        let status = match routine.state {
+            ScheduledRoutineState::Due => "DUE".bold().yellow().to_string(),
+            ScheduledRoutineState::Invalid => "INVALID".bold().red().to_string(),
+            ScheduledRoutineState::Upcoming => "UPCOMING".bold().yellow().to_string(),
+        };
+
+        writeln!(
+            out,
+            "    {} {} {} {}",
+            "•".dimmed(),
+            routine.id.bold().cyan(),
+            status,
+            format!("({})", routine.title).dimmed()
+        )
+        .unwrap();
+        let line = render_scheduled_capacity_line(routine, materialized_by_key);
+        writeln!(out, "        {}", line).unwrap();
+    }
+
+    out
 }
 
 fn ensure_section_spacing(output: &mut String) {
@@ -370,10 +431,6 @@ fn style_mission_summary_value(
 
     if completed == total {
         return value.green().bold().to_string();
-    }
-
-    if completed == 0 {
-        return value.red().bold().to_string();
     }
 
     value.yellow().bold().to_string()
@@ -827,6 +884,7 @@ mod tests {
             &HashMap::new(),
             100,
             false,
+            true,
         );
         assert!(rendered.contains("management (0) [p100]"));
         assert!(rendered.contains("delivery (0) [p50]"));
@@ -933,6 +991,7 @@ mod tests {
             &scheduled,
             &HashMap::new(),
             100,
+            true,
             true,
         );
         let narrow = render_annotated_flow(
@@ -1167,6 +1226,7 @@ mod tests {
             &HashMap::new(),
             100,
             true,
+            true,
         );
 
         assert!(rendered.contains("  Top Missions"));
@@ -1189,6 +1249,7 @@ mod tests {
             &[],
             &HashMap::new(),
             100,
+            true,
             true,
         );
 
@@ -1218,6 +1279,7 @@ mod tests {
             &[],
             &HashMap::new(),
             100,
+            true,
             true,
         );
 
@@ -1260,6 +1322,7 @@ mod tests {
             &[],
             &HashMap::new(),
             100,
+            true,
             true,
         );
 
