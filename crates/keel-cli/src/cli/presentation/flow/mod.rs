@@ -34,5 +34,5 @@ pub use throughput::calculate_throughput;
 pub fn calculate_flow_state(
     board: &keel::domain::model::Board,
 ) -> keel::read_model::flow_metrics::FlowMetrics {
-    keel::read_model::flow_metrics::calculate_metrics(board)
+    keel::read_model::flow_metrics::calculate_metrics(board, chrono::Utc::now())
 }

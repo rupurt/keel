@@ -577,6 +577,7 @@ mod tests {
                 backlog_blocked_count: 0,
                 in_progress_count: 2,
                 active_voyages_count: 1,
+                recently_completed_count: 0,
             },
             verification: VerificationMetrics {
                 count: 1,

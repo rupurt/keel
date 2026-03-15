@@ -16,22 +16,43 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
         let board = load_board(board_dir)?;
         let topology = workflow_topology::load_for_board(board_dir)?;
         let lane_flow = workflow_lane_flow::project(&board, &topology);
+        let metrics = flow_status::project(&board, chrono::Utc::now());
         
         // System is autonomous if no tasks are pending in manual_accept lanes
         let needs_human_input = lane_flow.lanes.iter().any(|lane| lane.manual_accept && lane.total_count > 0);
         let autonomous = !needs_human_input;
 
+        let in_progress = metrics.execution.in_progress_count;
+        let recently_completed = metrics.execution.recently_completed_count;
+
         use owo_colors::OwoColorize;
         if autonomous {
-            let circuit = r#"
-    ┌───[BATTERY]───┐
-    │               │
-    │               │
-    │               │
-    └───( \ / )─────┘
-         \_/_/  <-- SYSTEM AUTONOMOUS (LIGHT ON)
-"#;
-            println!("{}", circuit.yellow());
+            let mut circuit = String::new();
+            circuit.push_str("\n    ┌───[BATTERY]───┐\n");
+            circuit.push_str("    │               │\n");
+            
+            // Render capacitor bank if work volume is high
+            if in_progress > 3 {
+                circuit.push_str("    │   [||][||]    │  <-- CAPACITOR BANK ACTIVE\n");
+            } else if in_progress > 0 {
+                circuit.push_str("    │     [||]      │  <-- CAPACITOR CHARGING\n");
+            } else {
+                circuit.push_str("    │               │\n");
+            }
+            
+            circuit.push_str("    │               │\n");
+            circuit.push_str("    └───( \\ / )─────┘\n");
+            
+            if in_progress > 0 {
+                circuit.push_str("         \\_/_/  <-- SYSTEM AUTONOMOUS (LIGHT ON)\n");
+                println!("{}", circuit.yellow().bold());
+            } else if recently_completed > 0 {
+                circuit.push_str("         \\_/_/  <-- SYSTEM IDLE (LIGHT DIM)\n");
+                println!("{}", circuit.yellow().dimmed());
+            } else {
+                circuit.push_str("         \\___/  <-- SYSTEM IDLE (LIGHT OFF)\n");
+                println!("{}", circuit.dimmed());
+            }
         } else {
             let circuit = r#"
     ┌───[BATTERY]───┐
@@ -65,7 +86,7 @@ fn build_output_at(
     let board = load_board(board_dir)?;
     let width = get_terminal_width();
 
-    let metrics = flow_status::project(&board);
+    let metrics = flow_status::project(&board, chrono::Utc::now());
     let topology = workflow_topology::load_for_board(board_dir)?;
     let lane_flow = workflow_lane_flow::project(&board, &topology);
     let scheduled =

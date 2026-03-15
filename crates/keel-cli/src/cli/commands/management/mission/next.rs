@@ -124,7 +124,7 @@ fn render_extended_status(board: &Board, board_dir: &Path, mission: &Mission) ->
     }
 
     // "Novel Findings" - derived from bottleneck analysis
-    let metrics = keel::read_model::flow_status::project(board);
+    let metrics = keel::read_model::flow_status::project(board, chrono::Utc::now());
     let policy = keel::read_model::queue_policy::project(&metrics);
 
     println!(

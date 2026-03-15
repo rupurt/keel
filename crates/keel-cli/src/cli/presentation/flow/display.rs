@@ -751,6 +751,7 @@ mod tests {
                 backlog_blocked_count: 0,
                 in_progress_count: 2,
                 active_voyages_count: 2,
+                recently_completed_count: 0,
             },
             planning: PlanningMetrics {
                 draft_count: 1,

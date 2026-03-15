@@ -213,7 +213,7 @@ pub fn calculate_all_decisions(
         }
     }
 
-    let metrics = keel::read_model::flow_status::project(board);
+    let metrics = keel::read_model::flow_status::project(board, chrono::Utc::now());
     let queue_policy_snapshot = queue_policy::project(&metrics);
 
     // 1. Check for blocking verification backlog (human only)
@@ -488,7 +488,7 @@ pub(crate) fn calculate_next_at(
         }
     }
 
-    let metrics = keel::read_model::flow_status::project(board);
+    let metrics = keel::read_model::flow_status::project(board, chrono::Utc::now());
     let queue_policy_snapshot = queue_policy::project(&metrics);
 
     // 1. Check for blocking verification backlog (human only)

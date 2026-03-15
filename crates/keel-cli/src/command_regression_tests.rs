@@ -171,7 +171,7 @@ fn regression_next_and_flow_align_on_human_blocked_boundary() {
         "human next should be blocked at policy threshold"
     );
 
-    let metrics = keel::read_model::flow_metrics::calculate_metrics(&board);
+    let metrics = keel::read_model::flow_metrics::calculate_metrics(&board, chrono::Utc::now());
     let health = crate::cli::presentation::flow::bottleneck::analyze_two_actor_health(&metrics);
     assert!(
         health.action_summary.to_lowercase().contains("blocked"),
@@ -196,7 +196,7 @@ fn regression_next_and_flow_align_on_flow_blocked_boundary() {
         "human next should be blocked when flow is verify-blocked"
     );
 
-    let metrics = keel::read_model::flow_metrics::calculate_metrics(&board);
+    let metrics = keel::read_model::flow_metrics::calculate_metrics(&board, chrono::Utc::now());
     let health = crate::cli::presentation::flow::bottleneck::analyze_two_actor_health(&metrics);
     assert!(
         health
