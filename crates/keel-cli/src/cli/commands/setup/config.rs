@@ -102,6 +102,7 @@ struct ConfigShowWorkflowPayload {
     open_for_work: bool,
     working_hours_start: u8,
     working_hours_end: u8,
+    battery_decay_minutes: u32,
     defaults: ConfigShowWorkflowDefaultsPayload,
     roles: Vec<ConfigShowRoleFamilyPayload>,
     lanes: Vec<ConfigShowLanePayload>,
@@ -217,6 +218,7 @@ fn build_show_payload(
             open_for_work: config.workflow.open_for_work,
             working_hours_start: config.workflow.working_hours_start,
             working_hours_end: config.workflow.working_hours_end,
+            battery_decay_minutes: config.workflow.battery_decay_minutes,
             defaults: ConfigShowWorkflowDefaultsPayload {
                 management_role: defaults.management_role,
                 delivery_role: defaults.delivery_role,
@@ -306,6 +308,10 @@ fn render_show_payload(payload: &ConfigShowPayload) -> Vec<String> {
     lines.push(format!(
         "working_hours_end = {}",
         payload.workflow.working_hours_end
+    ));
+    lines.push(format!(
+        "battery_decay_minutes = {}",
+        payload.workflow.battery_decay_minutes
     ));
     lines.push(String::new());
     lines.push("[workflow.defaults]".to_string());

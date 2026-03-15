@@ -209,6 +209,10 @@ pub fn default_working_hours_end() -> u8 {
     17
 }
 
+pub fn default_battery_decay_minutes() -> u32 {
+    30
+}
+
 /// Workflow-level configuration.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct WorkflowConfig {
@@ -231,6 +235,10 @@ pub struct WorkflowConfig {
     /// Hour of the day (0-23) the system stops working autonomously (default: 17)
     #[serde(default = "default_working_hours_end")]
     pub working_hours_end: u8,
+
+    /// Number of minutes before the circuit battery decays to zero after the last state transition
+    #[serde(default = "default_battery_decay_minutes")]
+    pub battery_decay_minutes: u32,
 }
 
 impl Default for WorkflowConfig {
@@ -241,6 +249,7 @@ impl Default for WorkflowConfig {
             open_for_work: default_open_for_work(),
             working_hours_start: default_working_hours_start(),
             working_hours_end: default_working_hours_end(),
+            battery_decay_minutes: default_battery_decay_minutes(),
         }
     }
 }
