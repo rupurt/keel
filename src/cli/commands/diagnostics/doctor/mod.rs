@@ -34,6 +34,7 @@ pub fn run(board_dir: &Path, fix: bool, _evidence: bool, _watch: bool, _quick: b
                                 
 "#;
             println!("{}", ekg.red());
+            println!("Run `keel doctor` to diagnose the flatline.");
         }
         return Ok(());
     }
