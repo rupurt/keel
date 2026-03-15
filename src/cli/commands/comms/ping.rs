@@ -6,7 +6,7 @@ use chrono::Utc;
 use std::path::Path;
 use keel::infrastructure::story_id::generate_story_id;
 
-pub fn run(board_dir: &Path, message: &str) -> Result<()> {
+pub fn run(board_dir: &Path, message: &str, json: bool) -> Result<()> {
     let id = generate_story_id(); // Reuse ID generation for standard ID format
     let mut ping = PingMessage {
         id: id.clone(),
@@ -19,11 +19,19 @@ pub fn run(board_dir: &Path, message: &str) -> Result<()> {
     if let Some(pong) = check_auto_pong(message) {
         ping.status = PingStatus::Ponged;
         ping.pong_message = Some(pong.clone());
-        println!("{}", pong);
-    } else {
-        println!("{}", id); // If no response, print the ID so the user knows what to poke
     }
 
     save_ping(board_dir, &ping)?;
+
+    if json {
+        println!("{}", serde_json::to_string_pretty(&ping)?);
+    } else {
+        if ping.status == PingStatus::Ponged {
+            println!("{}", ping.pong_message.as_ref().unwrap());
+        } else {
+            println!("{}", ping.id);
+        }
+    }
+
     Ok(())
 }

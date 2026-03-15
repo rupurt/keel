@@ -337,7 +337,13 @@ pub fn build_cli() -> Command {
             Command::new("ping")
                 .about("Send a message to the inbox")
                 .hide(true)
-                .arg(Arg::new("message").required(true).help("The message to send")),
+                .arg(Arg::new("message").required(true).help("The message to send"))
+                .arg(
+                    Arg::new("json")
+                        .long("json")
+                        .help("Output as JSON for scripting")
+                        .action(ArgAction::SetTrue),
+                ),
         )
         .subcommand(
             Command::new("poke")
