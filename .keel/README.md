@@ -316,9 +316,9 @@
 
 ### [Semantic Search and Ranking in Keel](epics/1w5H2Bq9L/) (draft)
 
-### [TUI Compact Layout Research](epics/VDmdk1uib/) (active)
+### [TUI Compact Layout Research](epics/VDmdk1uib/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Realize High-Density Views](epics/VDmdk1uib/voyages/VDoBLEiaF/) | in-progress |
+| [Realize High-Density Views](epics/VDmdk1uib/voyages/VDoBLEiaF/) | done |
 
