@@ -42,7 +42,20 @@ impl FileSystemAdapter {
             .with_context(|| format!("parse entity frontmatter at {}", path.display()))?;
         let serialized = serde_yaml::to_string(frontmatter)
             .with_context(|| format!("serialize frontmatter for {}", path.display()))?;
-        let updated = format!("---\n{}---\n{}", serialized, body);
+
+        // Canonical formatting:
+        // ---
+        // frontmatter
+        // ---
+        //
+        // body
+        let body = body.trim();
+        let updated = if body.is_empty() {
+            format!("---\n{}---\n", serialized.trim())
+        } else {
+            format!("---\n{}---\n\n{}\n", serialized.trim(), body)
+        };
+
         fs::write(&path, updated)
             .with_context(|| format!("persist entity markdown at {}", path.display()))?;
         Ok(())
@@ -54,9 +67,9 @@ impl FileSystemAdapter {
             .with_context(|| format!("serialize routine frontmatter for {}", path.display()))?;
         let body = routine.blueprint_markdown.trim();
         let updated = if body.is_empty() {
-            format!("---\n{}---\n", serialized)
+            format!("---\n{}---\n", serialized.trim())
         } else {
-            format!("---\n{}---\n\n{}\n", serialized, body)
+            format!("---\n{}---\n\n{}\n", serialized.trim(), body)
         };
         fs::write(&path, updated)
             .with_context(|| format!("persist routine markdown at {}", path.display()))?;
