@@ -303,8 +303,11 @@ fn collect_adr_paths(board_dir: &Path) -> Vec<PathBuf> {
     if let Ok(entries) = fs::read_dir(&adrs_dir) {
         for entry in entries.flatten() {
             let path = entry.path();
-            if path.extension().is_some_and(|extension| extension == "md") {
-                paths.push(path);
+            if path.is_dir() {
+                let readme_path = path.join("README.md");
+                if readme_path.exists() {
+                    paths.push(readme_path);
+                }
             }
         }
     }

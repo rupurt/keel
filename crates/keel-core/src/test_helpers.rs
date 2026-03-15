@@ -347,8 +347,7 @@ impl TestAdr {
 
     /// Generate filename for this ADR.
     fn filename(&self) -> String {
-        let slug = self.title.to_lowercase().replace(' ', "-");
-        format!("{}-{}.md", self.id, slug)
+        format!("{}/README.md", self.id)
     }
 
     /// Generate full content for this ADR.
@@ -802,6 +801,9 @@ Test harness epic problem statement.
             fs::create_dir_all(&adrs_dir).unwrap();
             for adr in &self.adrs {
                 let adr_path = adrs_dir.join(adr.filename());
+                if let Some(parent) = adr_path.parent() {
+                    fs::create_dir_all(parent).unwrap();
+                }
                 fs::write(adr_path, adr.content()).unwrap();
             }
         }

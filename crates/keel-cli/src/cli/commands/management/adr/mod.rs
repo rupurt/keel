@@ -78,7 +78,6 @@ use keel::infrastructure::frontmatter_mutation::{Mutation, apply};
 use keel::infrastructure::loader::load_board;
 use keel::infrastructure::template_rendering;
 use keel::infrastructure::templates;
-use keel::infrastructure::utils::slugify;
 
 /// Run an ADR action through the ADR interface adapter.
 pub fn run(_ctx: &spoke_auth::ExecutionContext, action: AdrAction) -> Result<()> {
@@ -162,14 +161,13 @@ fn new_adr(
     // Generate random ID and calculate index
     let id = keel::infrastructure::story_id::generate_story_id();
     let index = next_adr_index(&board);
-    let slug = slugify(title);
     let date = Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
     let context_value = format_context_value(context);
     let applies_to_value = format_applies_to_value(applies_to);
 
-    // Build filename
-    let filename = format!("{}-{}.md", id, slug);
-    let adr_path = board_dir.join("adrs").join(&filename);
+    // Build path
+    let adr_dir = board_dir.join("adrs").join(&id);
+    let adr_path = adr_dir.join("README.md");
 
     // Check if file already exists
     if adr_path.exists() {
@@ -191,18 +189,17 @@ fn new_adr(
         ],
     );
 
-    // Ensure adrs directory exists
-    let adrs_dir = board_dir.join("adrs");
-    if !adrs_dir.exists() {
-        fs::create_dir_all(&adrs_dir)
-            .with_context(|| format!("Failed to create adrs directory: {}", adrs_dir.display()))?;
+    // Ensure adr directory exists
+    if !adr_dir.exists() {
+        fs::create_dir_all(&adr_dir)
+            .with_context(|| format!("Failed to create adrs directory: {}", adr_dir.display()))?;
     }
 
     // Write file
     fs::write(&adr_path, content)
         .with_context(|| format!("Failed to write ADR: {}", adr_path.display()))?;
 
-    println!("Created: {}", filename);
+    println!("Created: adrs/{}/README.md", id);
     println!("  ID: {}", id);
     println!("  Status: proposed");
 
@@ -489,12 +486,12 @@ mod tests {
 
     fn create_test_board(temp: &TempDir) -> PathBuf {
         let root = temp.path();
-        let adrs_dir = root.join("adrs");
-        fs::create_dir_all(&adrs_dir).unwrap();
+        let adr_dir = root.join("adrs").join("1vkqtsHH1");
+        fs::create_dir_all(&adr_dir).unwrap();
 
         // Create an existing ADR
         fs::write(
-            adrs_dir.join("1vkqtsHH1-test-decision.md"),
+            adr_dir.join("README.md"),
             r#"---
 id: 1vkqtsHH1
 index: 1
@@ -553,6 +550,8 @@ decided_at: 2026-01-15T00:00:00
         let adr_path = fs::read_dir(&adrs_dir)
             .unwrap()
             .map(|entry| entry.unwrap().path())
+            .filter(|path| path.is_dir())
+            .map(|path| path.join("README.md"))
             .find(|path| {
                 fs::read_to_string(path)
                     .unwrap()

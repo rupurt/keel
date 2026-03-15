@@ -343,18 +343,19 @@ impl FromPath for Bearing {
     }
 }
 
-/// Load all ADRs from adrs/*.md
+/// Load all ADRs from adrs/*/README.md
 fn load_adrs(board_dir: &Path) -> Result<HashMap<String, Adr>> {
     let adrs_dir = board_dir.join("adrs");
     if !adrs_dir.exists() {
         return Ok(HashMap::new());
     }
 
-    // Find all ADR markdown files
+    // Find all ADR README.md files
     let adr_paths: Vec<_> = fs::read_dir(&adrs_dir)?
         .filter_map(|e| e.ok())
-        .filter(|e| e.path().extension().is_some_and(|ext| ext == "md"))
-        .map(|e| e.path())
+        .filter(|e| e.path().is_dir())
+        .map(|e| e.path().join("README.md"))
+        .filter(|p| p.exists())
         .collect();
 
     Ok(load_entities(&adr_paths))

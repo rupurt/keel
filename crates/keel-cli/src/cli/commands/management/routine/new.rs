@@ -11,7 +11,7 @@ use keel::domain::model::Board;
 use keel::infrastructure::loader::load_board;
 use keel::infrastructure::template_rendering;
 use keel::infrastructure::templates;
-use keel::infrastructure::utils::{is_title_case, slugify};
+use keel::infrastructure::utils::is_title_case;
 
 /// Create a new routine.
 pub fn run(title: &str, target_scope: &str, cadence: &[String]) -> Result<PathBuf> {
@@ -36,13 +36,7 @@ fn new_routine(
     let board = load_board(board_dir)?;
     validate_target_scope(&board, target_scope)?;
 
-    let routine_id = slugify(title);
-    if routine_id.is_empty() {
-        return Err(anyhow!(
-            "Routine title '{}' does not produce a valid ID",
-            title
-        ));
-    }
+    let routine_id = keel_core::infrastructure::story_id::generate_story_id();
 
     let routine_dir = board_dir.join("routines").join(&routine_id);
     if routine_dir.exists() {
@@ -171,18 +165,12 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(
-            path,
-            temp.path()
-                .join("routines")
-                .join("weekly-review")
-                .join("README.md")
-        );
+        assert!(path.to_string_lossy().contains("/routines/VD"));
         assert!(path.exists());
         assert!(!path.parent().unwrap().join("BLUEPRINT.md").exists());
 
         let content = fs::read_to_string(path).unwrap();
-        assert!(content.contains("id: weekly-review"));
+        assert!(content.contains("id: VD"));
         assert!(content.contains("title: Weekly Review"));
         assert!(content.contains("cadence:"));
         assert!(content.contains("cron:"));

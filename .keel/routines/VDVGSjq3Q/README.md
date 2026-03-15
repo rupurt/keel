@@ -1,5 +1,5 @@
 ---
-id: eliminate-report-tail-friction
+id: VDVGSjq3Q
 title: Eliminate Report Tail Friction
 cadence:
   cron: "0 0 * * *"

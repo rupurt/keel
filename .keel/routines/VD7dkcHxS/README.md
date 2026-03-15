@@ -1,5 +1,5 @@
 ---
-id: explore-speculative-decoding-for-transit-messages
+id: VD7dkcHxS
 title: Explore Speculative Decoding for Transit Messages
 cadence:
   cron: 0 0 * * 1
