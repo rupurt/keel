@@ -27,8 +27,23 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
         let in_progress = metrics.execution.in_progress_count;
         let recently_completed = metrics.execution.recently_completed_count;
 
+        let (config, _) = keel::infrastructure::config::load_config();
+        use chrono::Timelike;
+        let current_hour = chrono::Local::now().hour() as u8;
+        let within_working_hours = current_hour >= config.workflow.working_hours_start && current_hour < config.workflow.working_hours_end;
+        let is_circuit_enabled = config.workflow.open_for_work && within_working_hours;
+
         use owo_colors::OwoColorize;
-        if autonomous {
+        if !is_circuit_enabled {
+            let mut circuit = String::new();
+            circuit.push_str("\n    ┌───[       ]───┐\n");
+            circuit.push_str("    │               │\n");
+            circuit.push_str("    │              / \n");
+            circuit.push_str("    │             /\n");
+            circuit.push_str("    └───(     )───  <-- CIRCUIT OPEN (OFF THE CLOCK / DISABLED)\n");
+            circuit.push_str("         \\___/\n");
+            println!("{}", circuit.dimmed());
+        } else if autonomous {
             let mut circuit = String::new();
             circuit.push_str("\n    ┌───[BATTERY]───┐\n");
             circuit.push_str("    │               │\n");

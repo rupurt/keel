@@ -100,6 +100,8 @@ struct ConfigShowRoleOverridePayload {
 struct ConfigShowWorkflowPayload {
     max_active_missions: usize,
     open_for_work: bool,
+    working_hours_start: u8,
+    working_hours_end: u8,
     defaults: ConfigShowWorkflowDefaultsPayload,
     roles: Vec<ConfigShowRoleFamilyPayload>,
     lanes: Vec<ConfigShowLanePayload>,
@@ -213,6 +215,8 @@ fn build_show_payload(
         workflow: ConfigShowWorkflowPayload {
             max_active_missions: config.workflow.max_active_missions,
             open_for_work: config.workflow.open_for_work,
+            working_hours_start: config.workflow.working_hours_start,
+            working_hours_end: config.workflow.working_hours_end,
             defaults: ConfigShowWorkflowDefaultsPayload {
                 management_role: defaults.management_role,
                 delivery_role: defaults.delivery_role,
@@ -294,6 +298,14 @@ fn render_show_payload(payload: &ConfigShowPayload) -> Vec<String> {
     lines.push(format!(
         "open_for_work = {}",
         payload.workflow.open_for_work
+    ));
+    lines.push(format!(
+        "working_hours_start = {}",
+        payload.workflow.working_hours_start
+    ));
+    lines.push(format!(
+        "working_hours_end = {}",
+        payload.workflow.working_hours_end
     ));
     lines.push(String::new());
     lines.push("[workflow.defaults]".to_string());

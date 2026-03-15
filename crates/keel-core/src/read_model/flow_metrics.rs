@@ -81,15 +81,14 @@ pub fn calculate_metrics(board: &Board, reference_time: DateTime<Utc>) -> FlowMe
         .filter(|v| v.status() == VoyageState::InProgress)
         .count();
 
-    // Recently completed (last 1 minute)
+    // Recently active (last 30 minutes) - acts as battery charge
     let recent_threshold = reference_time - chrono::Duration::minutes(30);
     metrics.execution.recently_completed_count = board
         .stories
         .values()
-        .filter(|s| s.status == StoryState::Done)
         .filter(|s| {
-            s.frontmatter
-                .completed_at
+            let activity_time = s.frontmatter.updated_at.or(s.frontmatter.completed_at).or(s.frontmatter.created_at);
+            activity_time
                 .map(|dt| dt >= recent_threshold.naive_utc())
                 .unwrap_or(false)
         })

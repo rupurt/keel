@@ -23,6 +23,38 @@ use keel::read_model::scheduled_routines::{
 
 /// Run the pulse command.
 pub fn run(json: bool, scene: bool) -> Result<()> {
+    let (config, _) = keel::infrastructure::config::load_config();
+    use chrono::Timelike;
+    let current_hour = chrono::Local::now().hour() as u8;
+    let within_working_hours = current_hour >= config.workflow.working_hours_start && current_hour < config.workflow.working_hours_end;
+    let is_circuit_enabled = config.workflow.open_for_work && within_working_hours;
+
+    if !is_circuit_enabled {
+        if scene {
+            println!("{}", crate::cli::presentation::scene::render_gears(false));
+            return Ok(());
+        }
+        
+        let cycle = PulseCycleOutput {
+            mode: "disabled",
+            evaluated: 0,
+            created: 0,
+            skipped: 0,
+            deferred: 0,
+            routines: vec![],
+            health: None,
+            activity: None,
+        };
+
+        let output = if json {
+            format!("{}\n", serde_json::to_string_pretty(&cycle)?)
+        } else {
+            render_pulse_human(&cycle)
+        };
+        print!("{output}");
+        return Ok(());
+    }
+
     let board_dir = keel::infrastructure::config::find_board_dir()?;
     let cycle = build_pulse_cycle(&board_dir, Utc::now())?;
     

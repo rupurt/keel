@@ -193,11 +193,56 @@ impl Default for WorkflowDefaultsConfig {
     }
 }
 
+pub fn default_max_active_missions() -> usize {
+    1
+}
+
+pub fn default_open_for_work() -> bool {
+    true
+}
+
+pub fn default_working_hours_start() -> u8 {
+    9
+}
+
+pub fn default_working_hours_end() -> u8 {
+    17
+}
+
 /// Workflow-level configuration.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct WorkflowConfig {
     #[serde(default)]
     pub defaults: WorkflowDefaultsConfig,
+    
+    /// The maximum number of missions that can be active at the same time.
+    /// Represents the Circuit Breaker "max amperage".
+    #[serde(default = "default_max_active_missions")]
+    pub max_active_missions: usize,
+    
+    /// The main switch for the engine. If false, the engine does not perform work.
+    #[serde(default = "default_open_for_work")]
+    pub open_for_work: bool,
+
+    /// Hour of the day (0-23) the system starts working autonomously (default: 9)
+    #[serde(default = "default_working_hours_start")]
+    pub working_hours_start: u8,
+
+    /// Hour of the day (0-23) the system stops working autonomously (default: 17)
+    #[serde(default = "default_working_hours_end")]
+    pub working_hours_end: u8,
+}
+
+impl Default for WorkflowConfig {
+    fn default() -> Self {
+        Self {
+            defaults: WorkflowDefaultsConfig::default(),
+            max_active_missions: default_max_active_missions(),
+            open_for_work: default_open_for_work(),
+            working_hours_start: default_working_hours_start(),
+            working_hours_end: default_working_hours_end(),
+        }
+    }
 }
 
 impl WorkflowConfig {
