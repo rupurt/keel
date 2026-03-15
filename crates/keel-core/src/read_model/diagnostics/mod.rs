@@ -693,6 +693,15 @@ fn validate_with_config_internal(
         routine_cadence_problems,
     ));
 
+    let routine_id_problems = checks::routines::check_routine_id_consistency(&board);
+    routine_checks.push(configured_check(
+        doctor_config,
+        "routine-id-consistency",
+        "ID consistency",
+        board.routines.len(),
+        routine_id_problems,
+    ));
+
     // 8. Workflow Checks
     let graph_integrity_problems = checks::graph::check_workflow_graph_integrity(&board);
     workflow_checks.push(configured_check(

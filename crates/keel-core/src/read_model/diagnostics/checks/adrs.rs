@@ -22,7 +22,16 @@ pub fn scan_adr_files(board_dir: &Path) -> Result<(Vec<Problem>, usize)> {
     for entry in fs::read_dir(&adrs_dir)? {
         let entry = entry?;
         let path = entry.path();
-        if path.extension().is_some_and(|e| e == "md") {
+
+        if path.is_dir() {
+            let readme = path.join("README.md");
+            if readme.exists() {
+                adr_count += 1;
+                if let Some(problem) = check_adr_file(&readme) {
+                    problems.push(problem);
+                }
+            }
+        } else if path.extension().is_some_and(|e| e == "md") {
             adr_count += 1;
             if let Some(problem) = check_adr_file(&path) {
                 problems.push(problem);
@@ -264,7 +273,18 @@ pub fn check_adr_id_consistency(board: &Board) -> Vec<Problem> {
 
         let frontmatter_id = adr.id();
 
-        if !filename.starts_with(frontmatter_id) {
+        // If using bundle directory structure (README.md), check the directory name
+        let effective_name = if filename == "README.md" {
+            adr.path
+                .parent()
+                .and_then(|p| p.file_name())
+                .and_then(|n| n.to_str())
+                .unwrap_or(filename)
+        } else {
+            filename
+        };
+
+        if !effective_name.starts_with(frontmatter_id) {
             let old_path = adr.path.clone();
             let mut new_filename = frontmatter_id.to_string();
             // Try to keep the slug if present
@@ -286,7 +306,7 @@ pub fn check_adr_id_consistency(board: &Board) -> Vec<Problem> {
                 path: adr.path.clone(),
                 message: format!(
                     "filename '{}' does not start with frontmatter id '{}'",
-                    filename, frontmatter_id
+                    effective_name, frontmatter_id
                 ),
                 fix: Some(Fix::RenameFile { old_path, new_path }),
                 scope: adr.frontmatter.context.clone(),
