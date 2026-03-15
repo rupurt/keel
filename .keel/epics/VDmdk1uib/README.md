@@ -19,7 +19,7 @@ created_at: 2026-03-13T19:01:12
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/1 voyages complete, 3/4 stories done
+**Progress:** 1/1 voyages complete, 4/4 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
 | [Realize High-Density Views](voyages/VDoBLEiaF/) | done | 3/3 |
