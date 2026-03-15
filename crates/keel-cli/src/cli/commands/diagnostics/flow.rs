@@ -71,8 +71,82 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
     │             /
     └───(     )───  <-- HUMAN INPUT REQUIRED (LIGHT OFF)
          \___/
-"#;
+"#
+            .to_string();
+
+            let mut blocking_items = Vec::new();
+            for lane in &lane_flow.lanes {
+                if lane.manual_accept && lane.total_count > 0 {
+                    for source in &lane.source_counts {
+                        if source.count > 0 {
+                            // Extract the specific entity types/states from the source string (e.g. "story.needs-human-verification")
+                            let items: Vec<_> = match source.source.as_str() {
+                                "story.needs-human-verification" => board
+                                    .stories
+                                    .values()
+                                    .filter(|s| {
+                                        s.status == keel::domain::model::StoryState::NeedsHumanVerification
+                                    })
+                                    .map(|s| format!("Story {}", s.id()))
+                                    .collect(),
+                                "mission.achieved" => board
+                                    .missions
+                                    .values()
+                                    .filter(|m| {
+                                        m.status() == keel::domain::model::MissionStatus::Achieved
+                                    })
+                                    .map(|m| format!("Mission {}", m.id()))
+                                    .collect(),
+                                "voyage.draft" => board
+                                    .voyages
+                                    .values()
+                                    .filter(|v| {
+                                        v.status() == keel::domain::state_machine::voyage::VoyageState::Draft
+                                    })
+                                    .map(|v| format!("Voyage {}", v.id()))
+                                    .collect(),
+                                "bearing.exploring" => board
+                                    .bearings
+                                    .values()
+                                    .filter(|b| {
+                                        b.status() == keel::domain::model::BearingStatus::Exploring
+                                    })
+                                    .map(|b| format!("Bearing {}", b.id()))
+                                    .collect(),
+                                "bearing.evaluating" => board
+                                    .bearings
+                                    .values()
+                                    .filter(|b| {
+                                        b.status() == keel::domain::model::BearingStatus::Evaluating
+                                    })
+                                    .map(|b| format!("Bearing {}", b.id()))
+                                    .collect(),
+                                "bearing.ready" => board
+                                    .bearings
+                                    .values()
+                                    .filter(|b| {
+                                        b.status() == keel::domain::model::BearingStatus::Ready
+                                    })
+                                    .map(|b| format!("Bearing {}", b.id()))
+                                    .collect(),
+                                _ => vec![],
+                            };
+                            blocking_items.extend(items);
+                        }
+                    }
+                }
+            }
+
             println!("{}", circuit.dimmed());
+            if !blocking_items.is_empty() {
+                println!("Items requiring human input:");
+                for item in blocking_items.iter().take(5) {
+                    println!("  - {}", item.yellow());
+                }
+                if blocking_items.len() > 5 {
+                    println!("  ... and {} more", blocking_items.len() - 5);
+                }
+            }
         }
         return Ok(());
     }
