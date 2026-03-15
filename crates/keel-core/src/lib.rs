@@ -10,5 +10,8 @@ pub mod read_model;
 
 pub use domain::port::{BoardStore, EntityStore};
 
+#[cfg(test)]
+mod serialization_test;
+
 #[doc(hidden)]
 pub mod test_helpers;
