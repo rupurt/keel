@@ -30,14 +30,14 @@ Discovery & Automation:
   pulse       Run one non-interactive automation cycle
   topology    Show a zoomable world map of the board
 
+Comms:
+  ping        Send a message to the inbox
+  poke        Respond to or re-evaluate a ping in the inbox
+
 Setup:
   init        Initialize a new keel board
   config      Configuration and technique inventory
   generate    Regenerate board artifacts
-
-Comms:
-  ping        Send a message to the inbox
-  poke        Respond to or re-evaluate a ping in the inbox
 "#;
 
 fn hidden_subcommand_group<T>(name: &'static str, about: &'static str) -> Command
