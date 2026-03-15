@@ -21,11 +21,24 @@ pub fn run(board_dir: &Path, fix: bool, _evidence: bool, _watch: bool, _quick: b
         use owo_colors::OwoColorize;
         let passed = errors == 0 && warnings == 0;
         if passed {
-            let ekg = r#"
+            let board = keel::infrastructure::loader::load_board(board_dir)?;
+            let metrics = keel::read_model::flow_status::project(&board, chrono::Utc::now());
+            let in_progress = metrics.execution.in_progress_count;
+
+            let ekg = if in_progress > 0 {
+                // Tachycardia pulse (high volume)
+                r#"
+  /\  /\  /\  /\  /\  /\  /\  /\
+ /  \/  \/  \/  \/  \/  \/  \/  \
+"#
+            } else {
+                // Normal pulse
+                r#"
     /\         /\         /\    
  __/  \  _  __/  \  _  __/  \  _
        \/         \/         \/ 
-"#;
+"#
+            };
             println!("{}", ekg.green());
         } else {
             let ekg = r#"
