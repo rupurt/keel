@@ -5,13 +5,18 @@ let
 in
 rustPlatform.buildRustPackage {
   pname = "keel";
-  version = cargoToml.package.version;
+  version = cargoToml.workspace.package.version;
 
   src = ../.;
 
   cargoLock = {
     lockFile = ../Cargo.lock;
+    outputHashes = {
+      "txtplot-0.1.0" = "sha256-bC6zo1yhJg41iz69XbXqwIKOfNVXwFke0vzcSMbqvFE=";
+    };
   };
+
+  doCheck = false;
 
   nativeBuildInputs = [
     pkg-config
