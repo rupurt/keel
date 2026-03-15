@@ -733,11 +733,33 @@ dependencies = [
  "ansi-escape-sequences",
  "anyhow",
  "chrono",
- "chrono-tz",
  "clap",
  "colored",
- "croner",
  "crossterm",
+ "dirs",
+ "keel-core",
+ "owo-colors",
+ "regex",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "spoke-auth",
+ "syntect",
+ "tempfile",
+ "terminal_size 0.4.3",
+ "toml",
+ "txtplot",
+]
+
+[[package]]
+name = "keel-core"
+version = "0.1.0"
+dependencies = [
+ "ansi-escape-sequences",
+ "anyhow",
+ "chrono",
+ "chrono-tz",
+ "croner",
  "ctrlc",
  "dirs",
  "notify 8.2.0",
@@ -749,11 +771,9 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "sha2",
- "syntect",
+ "spoke-auth",
  "tempfile",
- "terminal_size 0.4.3",
  "toml",
- "txtplot",
  "wait-timeout",
  "walkdir",
 ]
@@ -1382,6 +1402,16 @@ name = "smallvec"
 version = "1.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
+
+[[package]]
+name = "spoke-auth"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "strsim"

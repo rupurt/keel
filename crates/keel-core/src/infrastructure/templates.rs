@@ -6,67 +6,67 @@
 /// Epic templates
 pub mod epic {
     /// Epic README template
-    pub const README: &str = include_str!("../../templates/epic/[name]/README.md");
+    pub const README: &str = include_str!("../../../../templates/epic/[name]/README.md");
     /// Epic PRD template
-    pub const PRD: &str = include_str!("../../templates/epic/[name]/PRD.md");
+    pub const PRD: &str = include_str!("../../../../templates/epic/[name]/PRD.md");
     /// Press Release template (Working Backwards)
-    pub const PRESS_RELEASE: &str = include_str!("../../templates/epic/[name]/PRESS_RELEASE.md");
+    pub const PRESS_RELEASE: &str = include_str!("../../../../templates/epic/[name]/PRESS_RELEASE.md");
 }
 
 /// Voyage templates
 pub mod voyage {
     /// Voyage README template
-    pub const README: &str = include_str!("../../templates/epic/[name]/voyages/[name]/README.md");
+    pub const README: &str = include_str!("../../../../templates/epic/[name]/voyages/[name]/README.md");
     /// Voyage SRS template
-    pub const SRS: &str = include_str!("../../templates/epic/[name]/voyages/[name]/SRS.md");
+    pub const SRS: &str = include_str!("../../../../templates/epic/[name]/voyages/[name]/SRS.md");
     /// Voyage SDD template
-    pub const SDD: &str = include_str!("../../templates/epic/[name]/voyages/[name]/SDD.md");
+    pub const SDD: &str = include_str!("../../../../templates/epic/[name]/voyages/[name]/SDD.md");
     /// Voyage Report template
-    pub const REPORT: &str = include_str!("../../templates/voyage/VOYAGE_REPORT.md");
+    pub const REPORT: &str = include_str!("../../../../templates/voyage/VOYAGE_REPORT.md");
     /// Voyage Compliance Report template
-    pub const COMPLIANCE: &str = include_str!("../../templates/voyage/COMPLIANCE_REPORT.md");
+    pub const COMPLIANCE: &str = include_str!("../../../../templates/voyage/COMPLIANCE_REPORT.md");
 }
 
 /// Story templates
 pub mod story {
     /// Story template
-    pub const STORY: &str = include_str!("../../templates/stories/[id]/README.md");
+    pub const STORY: &str = include_str!("../../../../templates/stories/[id]/README.md");
     /// Story reflection template
-    pub const REFLECT: &str = include_str!("../../templates/stories/[id]/REFLECT.md");
+    pub const REFLECT: &str = include_str!("../../../../templates/stories/[id]/REFLECT.md");
 }
 
 /// Routine templates
 pub mod routine {
     /// Routine README template
-    pub const README: &str = include_str!("../../templates/routines/[id]/README.md");
+    pub const README: &str = include_str!("../../../../templates/routines/[id]/README.md");
 }
 
 /// Bearing templates
 pub mod bearing {
     /// Bearing README template
-    pub const README: &str = include_str!("../../templates/bearings/README.md");
+    pub const README: &str = include_str!("../../../../templates/bearings/README.md");
     /// Bearing BRIEF template
-    pub const BRIEF: &str = include_str!("../../templates/bearings/BRIEF.md");
+    pub const BRIEF: &str = include_str!("../../../../templates/bearings/BRIEF.md");
     /// Bearing EVIDENCE template
-    pub const EVIDENCE: &str = include_str!("../../templates/bearings/EVIDENCE.md");
+    pub const EVIDENCE: &str = include_str!("../../../../templates/bearings/EVIDENCE.md");
     /// Bearing ASSESSMENT template
-    pub const ASSESSMENT: &str = include_str!("../../templates/bearings/ASSESSMENT.md");
+    pub const ASSESSMENT: &str = include_str!("../../../../templates/bearings/ASSESSMENT.md");
 }
 
 /// Mission templates
 pub mod mission {
     /// Mission README template
-    pub const README: &str = include_str!("../../templates/missions/README.md");
+    pub const README: &str = include_str!("../../../../templates/missions/README.md");
     /// Mission CHARTER template
-    pub const CHARTER: &str = include_str!("../../templates/missions/CHARTER.md");
+    pub const CHARTER: &str = include_str!("../../../../templates/missions/CHARTER.md");
     /// Mission LOG template
-    pub const LOG: &str = include_str!("../../templates/missions/LOG.md");
+    pub const LOG: &str = include_str!("../../../../templates/missions/LOG.md");
 }
 
 /// ADR templates
 pub mod adr {
     /// ADR template
-    pub const ADR: &str = include_str!("../../templates/adrs/ADR.md");
+    pub const ADR: &str = include_str!("../../../../templates/adrs/ADR.md");
 }
 
 #[cfg(test)]

@@ -12,5 +12,7 @@ pub use domain::port::{BoardStore, EntityStore};
 
 #[cfg(test)]
 mod architecture_contract_tests;
+#[cfg(test)]
+mod drift_tests;
 #[doc(hidden)]
 pub mod test_helpers;

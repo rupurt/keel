@@ -1,0 +1,16 @@
+[package]
+name = "spoke-auth"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Shared authentication and authorization constructs for spoke.sh projects"
+publish = false
+
+[dependencies]
+anyhow.workspace = true
+chrono.workspace = true
+serde.workspace = true
+serde_json.workspace = true
