@@ -230,4 +230,5 @@ pub enum CheckId {
     MissionNonTerminalChildren,
     WorkflowGraphIntegrity,
     WorkflowTopology,
+    RoutineInvalidCadence,
 }

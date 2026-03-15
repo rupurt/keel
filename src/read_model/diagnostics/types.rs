@@ -13,6 +13,7 @@ pub struct DoctorReport {
     pub adr_checks: Vec<CheckResult>,
     pub bearing_checks: Vec<CheckResult>,
     pub mission_checks: Vec<CheckResult>,
+    pub routine_checks: Vec<CheckResult>,
     pub workflow_checks: Vec<CheckResult>,
     /// Simulation drift coefficient (0.0 to 1.0)
     pub drift_coefficient: f64,
@@ -30,6 +31,7 @@ impl DoctorReport {
             && self.adr_checks.iter().all(|c| c.passed)
             && self.bearing_checks.iter().all(|c| c.passed)
             && self.mission_checks.iter().all(|c| c.passed)
+            && self.routine_checks.iter().all(|c| c.passed)
             && self.workflow_checks.iter().all(|c| c.passed)
     }
 
@@ -55,6 +57,7 @@ impl DoctorReport {
             .chain(&self.adr_checks)
             .chain(&self.bearing_checks)
             .chain(&self.mission_checks)
+            .chain(&self.routine_checks)
             .chain(&self.workflow_checks)
             .flat_map(|c| &c.problems)
             .collect()

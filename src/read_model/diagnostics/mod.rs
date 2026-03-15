@@ -681,7 +681,19 @@ fn validate_with_config_internal(
         mission_evidence_problems,
     ));
 
-    // 7. Workflow Checks
+    let mut routine_checks = Vec::new();
+
+    // 7. Routine Checks
+    let routine_cadence_problems = checks::routines::check_routine_cadence(&board);
+    routine_checks.push(configured_check(
+        doctor_config,
+        "routine-cadence",
+        "Routine cadence",
+        board.routines.len(),
+        routine_cadence_problems,
+    ));
+
+    // 8. Workflow Checks
     let graph_integrity_problems = checks::graph::check_workflow_graph_integrity(&board);
     workflow_checks.push(configured_check(
         doctor_config,
@@ -712,6 +724,7 @@ fn validate_with_config_internal(
         adr_checks,
         bearing_checks,
         mission_checks,
+        routine_checks,
         workflow_checks,
         drift_coefficient: 0.0,
         estimated_remediation_hours: 0.0,

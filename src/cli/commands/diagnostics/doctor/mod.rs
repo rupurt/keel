@@ -17,6 +17,11 @@ pub fn run(board_dir: &Path, fix: bool, _evidence: bool, _watch: bool, _quick: b
     render::print_report(&report);
 
     if fix {
+        // Invalidate the diagnostics cache to ensure fixes are applied to fresh data
+        let cache_path = keel::read_model::diagnostics::cache::cache_path(board_dir);
+        if cache_path.exists() {
+            let _ = std::fs::remove_file(cache_path);
+        }
         run_fixes(board_dir, &report)?;
     }
 

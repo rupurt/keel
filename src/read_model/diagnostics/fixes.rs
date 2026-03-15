@@ -11,14 +11,26 @@ use std::path::Path;
 pub fn run_fixes(board_dir: &Path, report: &DoctorReport) -> Result<()> {
     let board = load_board(board_dir)?;
 
-    for check in &report.story_checks {
-        for problem in &check.problems {
-            if let Some(fix) = &problem.fix {
-                apply_fix(board_dir, &board, fix)?;
+    let all_checks = [
+        &report.story_checks,
+        &report.voyage_checks,
+        &report.epic_checks,
+        &report.adr_checks,
+        &report.bearing_checks,
+        &report.mission_checks,
+        &report.routine_checks,
+        &report.workflow_checks,
+    ];
+
+    for checks in all_checks {
+        for check in checks {
+            for problem in &check.problems {
+                if let Some(fix) = &problem.fix {
+                    apply_fix(board_dir, &board, fix)?;
+                }
             }
         }
     }
-    // ... repeat for other check types if they have fixes ...
 
     Ok(())
 }

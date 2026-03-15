@@ -6,6 +6,7 @@ pub mod epics;
 pub mod evidence;
 pub mod graph;
 pub mod missions;
+pub mod routines;
 pub mod stories;
 pub mod voyages;
 pub mod workflow;
