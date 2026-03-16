@@ -452,6 +452,7 @@ mod tests {
                 epic: None,
                 mission: None,
                 goals: None,
+                depends_on: None,
             },
             path: std::path::PathBuf::from("path"),
             has_evidence: false,

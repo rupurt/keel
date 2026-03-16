@@ -1,0 +1,15 @@
+---
+recorded_at: 2026-03-16T04:54:43.992669746-07:00
+command: cargo test -p keel-core bearing_frontmatter_deserializes_depends_on
+---
+
+running 1 test
+test domain::model::bearing::tests::bearing_frontmatter_deserializes_depends_on ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 913 filtered out; finished in 0.00s
+
+
+--- stderr ---
+   Compiling keel-core v0.1.0 (/home/alex/workspace/spoke-sh/keel/crates/keel-core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 9.59s
+     Running unittests src/lib.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel_core-9d282d422cbb62b8)

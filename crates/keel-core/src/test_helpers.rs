@@ -85,6 +85,7 @@ pub struct TestBearing {
     pub epic: Option<String>,
     pub goals: Option<Vec<String>>,
     pub mission: Option<String>,
+    pub depends_on: Option<Vec<String>>,
 }
 
 impl Default for TestMission {
@@ -404,6 +405,7 @@ impl Default for TestBearing {
             epic: None,
             goals: None,
             mission: None,
+            depends_on: None,
         }
     }
 }
@@ -453,6 +455,11 @@ impl TestBearing {
 
     pub fn mission(mut self, mission: &str) -> Self {
         self.mission = Some(mission.to_string());
+        self
+    }
+
+    pub fn depends_on(mut self, deps: Vec<&str>) -> Self {
+        self.depends_on = Some(deps.into_iter().map(|d| d.to_string()).collect());
         self
     }
 }
@@ -513,6 +520,14 @@ fn render_fixture_bearing_readme(bearing: &TestBearing) -> String {
         && !goals.is_empty()
     {
         mutations.push(Mutation::set("goals", format!("[{}]", goals.join(", "))));
+    }
+    if let Some(deps) = &bearing.depends_on
+        && !deps.is_empty()
+    {
+        mutations.push(Mutation::set(
+            "depends_on",
+            format!("[{}]", deps.join(", ")),
+        ));
     }
 
     template_rendering::render_with_mutations(
@@ -1117,6 +1132,7 @@ impl BearingFactory {
                 epic: self.epic,
                 mission: None,
                 goals: self.goals,
+                depends_on: None,
             },
             path: PathBuf::from(format!("{}.md", self.id)),
             has_evidence: self.has_evidence,

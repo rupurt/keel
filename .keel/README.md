@@ -292,7 +292,7 @@
 
 | Voyage | Status |
 |--------|--------|
-| [Bearing Dependency Primitives](epics/VDiHwLLfY/voyages/VE1vAyNzt/) | planned |
+| [Bearing Dependency Primitives](epics/VDiHwLLfY/voyages/VE1vAyNzt/) | in-progress |
 
 ### [Research-Preserving Bearing Promotion](epics/VDiHwPniZ/) (draft)
 

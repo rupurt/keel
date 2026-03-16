@@ -90,6 +90,9 @@ pub struct BearingFrontmatter {
     /// Goal references from BRIEF.md Success Criteria linked to the target epic
     #[serde(default)]
     pub goals: Option<Vec<String>>,
+    /// Bearing IDs this bearing depends on (must be researched first)
+    #[serde(default)]
+    pub depends_on: Option<Vec<String>>,
 }
 
 /// A bearing with its frontmatter and file location
@@ -288,6 +291,25 @@ title: Test Bearing
         assert!(fm.decline_reason.is_none());
         assert!(fm.epic.is_none());
         assert!(fm.goals.is_none());
+        assert!(fm.depends_on.is_none());
+    }
+
+    #[test]
+    fn bearing_frontmatter_deserializes_depends_on() {
+        let yaml = r#"
+id: brg-b
+title: Bearing B
+status: exploring
+depends_on:
+  - brg-a
+  - brg-c
+"#;
+        let fm: BearingFrontmatter = serde_yaml::from_str(yaml).unwrap();
+
+        assert_eq!(
+            fm.depends_on.as_deref(),
+            Some(vec!["brg-a".to_string(), "brg-c".to_string()].as_slice())
+        );
     }
 
     #[test]
@@ -344,6 +366,7 @@ title: Test Bearing
                 epic: None,
                 mission: None,
                 goals: None,
+                depends_on: None,
             },
             path: PathBuf::from("test"),
             has_evidence: evidence,

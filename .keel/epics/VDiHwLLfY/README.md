@@ -23,5 +23,5 @@ index: 44
 **Progress:** 0/1 voyages complete, 0/3 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Bearing Dependency Primitives](voyages/VE1vAyNzt/) | planned | 0/3 |
+| [Bearing Dependency Primitives](voyages/VE1vAyNzt/) | in-progress | 0/3 |
 <!-- END GENERATED -->

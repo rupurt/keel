@@ -229,6 +229,7 @@ mod tests {
                 epic: None,
                 mission: None,
                 goals: None,
+                depends_on: None,
             },
             path: PathBuf::from(format!("{}.md", id)),
             has_evidence: true,
