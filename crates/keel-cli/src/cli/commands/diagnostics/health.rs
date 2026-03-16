@@ -14,10 +14,22 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
     let metrics = flow_status::project(&board, chrono::Utc::now());
     let passed = report.passed();
     
+    // 1. Kinetic Load (Active work)
+    let _kinetic_load = metrics.verification.count + metrics.execution.in_progress_count;
+    
+    // 2. Strategic Congestion (Top-heavy backlog)
+    // Congested if many draft epics (> 5) or many incomplete missions (> 3)
+    let draft_epics = board.epics.values().filter(|e| e.status() == keel::domain::model::EpicState::Draft).count();
+    let strategic_congested = draft_epics > 5 || metrics.incomplete_missions_count > 3;
+    
+    // 3. Operational Fatigue (Operational noise)
+    // Fatigued if many due routines (> 3) or too much unlinked governance
+    let operational_fatigue = metrics.due_routines_count > 3 || metrics.governance.proposed_count > 5;
+
     let width = get_terminal_width();
     
     if scene {
-        render_med_bay_scene(&report, &metrics, width);
+        render_med_bay_scene(&report, &metrics, strategic_congested, operational_fatigue, width);
     } else {
         println!("\n    {} SUBSYSTEM STATUS REPORT", " HEALTH ".on_green().black().bold());
         
@@ -32,8 +44,17 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
         print_category("Pacemaker", &report.pacemaker_checks);
         print_category("Delivery", &report.delivery_checks);
         
-        if passed {
+        if strategic_congested {
+            println!("    ! {: <10} {}", "Strategy", "CONGESTED".yellow().bold());
+        }
+        if operational_fatigue {
+            println!("    ! {: <10} {}", "Ops", "FATIGUE".red().bold());
+        }
+        
+        if passed && !strategic_congested && !operational_fatigue {
             println!("\n    {} System is 100% healthy.", "✓".green().bold());
+        } else if passed {
+            println!("\n    ! System is nominal but under pressure.");
         } else {
             println!("\n    {} System has issues. Run `keel doctor` for details.", "✗".red().bold());
         }
@@ -55,6 +76,8 @@ fn print_category(name: &str, results: &[keel::read_model::diagnostics::types::C
 fn render_med_bay_scene(
     report: &keel::read_model::diagnostics::types::DoctorReport,
     metrics: &keel::read_model::flow_metrics::FlowMetrics,
+    strategic_congested: bool,
+    operational_fatigue: bool,
     width: usize,
 ) {
     println!("\n    ┌{}┐", "─".repeat(width.saturating_sub(6)));
@@ -66,17 +89,15 @@ fn render_med_bay_scene(
     println!("    └{}┘", "─".repeat(width.saturating_sub(6)));
 
     let passed = report.passed();
-    let verify_count = metrics.verification.count;
-    let in_progress_count = metrics.execution.in_progress_count;
-    let total_load = verify_count + in_progress_count;
+    let _kinetic_load = metrics.verification.count + metrics.execution.in_progress_count;
 
     let (heart_rate, status_label, status_color) = if !passed {
         ("140 BPM", "CRITICAL", owo_colors::AnsiColors::Red)
-    } else if total_load > 15 {
+    } else if kinetic_load > 15 || (strategic_congested && kinetic_load > 8) {
         ("120 BPM", "OVERLOAD", owo_colors::AnsiColors::Red)
-    } else if total_load > 7 {
+    } else if kinetic_load > 7 || strategic_congested || operational_fatigue {
         ("100 BPM", "ELEVATED", owo_colors::AnsiColors::Yellow)
-    } else if total_load > 3 {
+    } else if kinetic_load > 3 {
         ("85 BPM", "STRESSED", owo_colors::AnsiColors::Cyan)
     } else {
         ("72 BPM", "STABLE", owo_colors::AnsiColors::Green)
@@ -88,7 +109,7 @@ fn render_med_bay_scene(
     scene.push_str("             |                                          |\n");
 
     // High Res Heartbeat pulse (EKG)
-    if !passed || total_load > 15 {
+    if !passed || kinetic_load > 15 {
         scene.push_str(&format!(
             "             |   {}{}   |\n",
             "/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\".red().bold(),
@@ -98,7 +119,7 @@ fn render_med_bay_scene(
             "             |   {}   |\n",
             "!! ALARM !! ALARM !! ALARM !! ALARM !!".red().bold()
         ));
-    } else if total_load > 7 {
+    } else if kinetic_load > 7 || strategic_congested {
         scene.push_str(&format!(
             "             |   {}   |\n",
             "_/^\\___/^\\___/^\\___/^\\___/^\\___/^\\___/^\\_".yellow().bold()
@@ -122,13 +143,13 @@ fn render_med_bay_scene(
     let hr_line = format!(" HR: {}   STATUS: {}", heart_rate.bold(), status_label.color(status_color).bold());
     scene.push_str(&format!("             | {} |\n", hr_line.pad_to_width(40)));
 
-    let pressure_label = if total_load > 15 {
+    let pressure_label = if kinetic_load > 15 {
         "MAXIMUM".red().bold().to_string()
-    } else if total_load > 7 {
+    } else if kinetic_load > 7 {
         "HIGH".yellow().bold().to_string()
-    } else if total_load > 3 {
+    } else if kinetic_load > 3 {
         "MODERATE".cyan().to_string()
-    } else if total_load > 0 {
+    } else if kinetic_load > 0 {
         "NORMAL".green().to_string()
     } else {
         "IDLE".dimmed().to_string()
@@ -136,6 +157,13 @@ fn render_med_bay_scene(
 
     let pressure_line = format!(" BP: PRESSURE: {}", pressure_label);
     scene.push_str(&format!("             | {} |\n", pressure_line.pad_to_width(40)));
+    
+    let state_line = format!(
+        " SC: {}   OF: {}", 
+        if strategic_congested { "CONGESTED".yellow().bold().to_string() } else { "OPTIMAL".dimmed().to_string() },
+        if operational_fatigue { "FATIGUE".red().bold().to_string() } else { "CALM".dimmed().to_string() }
+    );
+    scene.push_str(&format!("             | {} |\n", state_line.pad_to_width(40)));
     scene.push_str("             '------------------------------------------'\n");
 
     // Add secondary medical visuals (Life Support / IV)

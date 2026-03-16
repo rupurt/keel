@@ -12,6 +12,8 @@ pub struct FlowMetrics {
     pub research: ResearchMetrics,
     pub verification: VerificationMetrics,
     pub governance: GovernanceMetrics,
+    pub incomplete_missions_count: usize,
+    pub due_routines_count: usize,
     pub done_count: usize,
 }
 
@@ -232,6 +234,33 @@ pub fn calculate_metrics(board: &Board, reference_time: DateTime<Utc>) -> FlowMe
         .values()
         .filter(|s| s.status == StoryState::Done)
         .count();
+
+    // 7. Pressure Signals
+    metrics.incomplete_missions_count = board
+        .missions
+        .values()
+        .filter(|m| {
+            matches!(
+                m.status(),
+                crate::domain::state_machine::mission::MissionStatus::Defining
+                    | crate::domain::state_machine::mission::MissionStatus::Active
+            )
+        })
+        .count();
+
+    metrics.due_routines_count = crate::read_model::scheduled_routines::project_scheduled_routines(
+        board,
+        reference_time,
+        crate::read_model::scheduled_routines::RoutineScheduleFilter::default(),
+    )
+    .iter()
+    .filter(|r| {
+        matches!(
+            r.state,
+            crate::read_model::scheduled_routines::ScheduledRoutineState::Due
+        )
+    })
+    .count();
 
     metrics
 }

@@ -121,16 +121,29 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
         visual.push_str(
             "    | [ PEGBOARD ]                                                        |\n",
         );
+        
+        let active_epics = metrics.planning.planned_count + metrics.execution.active_voyages_count;
+        let draft_epics = metrics.planning.draft_count;
+        let congestion_ratio = if active_epics > 0 { draft_epics as f64 / active_epics as f64 } else { draft_epics as f64 };
+        
         let pegboard = format!(
-            "M:{} E:{} B:{} A:{}",
+            "M:{} E:{}/{} B:{} A:{}",
             board.missions.len(),
-            board.epics.len(),
+            draft_epics,
+            active_epics,
             board.bearings.len(),
             board.adrs.len()
         );
+        
+        let congestion_styled = if congestion_ratio > 2.0 {
+            pegboard.yellow().bold().to_string()
+        } else {
+            pegboard.dimmed().to_string()
+        };
+
         visual.push_str(&format!(
             "    |  .  .  .  .  .  .  .  {}  .  .  .  .  .  |\n",
-            pegboard.dimmed().to_string().pad_to_width(33)
+            congestion_styled.pad_to_width(33)
         ));
         visual.push_str(
             "    |_____________________________________________________________________|\n",
@@ -138,9 +151,16 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
         visual.push_str(
             "    |                                                                     |\n",
         );
-        visual.push_str(
-            "    |  [ DRILL PRESS ]                                     [ ANVIL ]      |\n",
-        );
+        
+        let operational_fatigue = metrics.governance.proposed_count > 5;
+        let drill_label = if operational_fatigue { "NOISY" } else { "DRILL PRESS" };
+        let anvil_label = if operational_fatigue { "CLANGING" } else { "ANVIL" };
+
+        visual.push_str(&format!(
+            "    |  [ {: <11} ]                                     [ {: <7} ]      |\n",
+            if operational_fatigue { drill_label.red().bold().to_string() } else { drill_label.to_string() },
+            if operational_fatigue { anvil_label.red().bold().to_string() } else { anvil_label.to_string() }
+        ));
         visual.push_str(
             "    |         _|_                                            _ _          |\n",
         );
