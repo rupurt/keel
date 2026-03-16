@@ -20,7 +20,8 @@ index: 45
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/0 voyages complete, 0/0 stories done
+**Progress:** 0/1 voyages complete, 0/2 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
+| [Evidence and Risk Carry-Through](voyages/VE22wWzeD/) | planned | 0/2 |
 <!-- END GENERATED -->

@@ -288,13 +288,17 @@
 |--------|--------|
 | [Canonical Serialization](epics/VDiHwGwe5/voyages/VDuc2GPCN/) | done |
 
-### [Dependency-Aware Bearing Prioritization](epics/VDiHwLLfY/) (active)
+### [Dependency-Aware Bearing Prioritization](epics/VDiHwLLfY/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Bearing Dependency Primitives](epics/VDiHwLLfY/voyages/VE1vAyNzt/) | in-progress |
+| [Bearing Dependency Primitives](epics/VDiHwLLfY/voyages/VE1vAyNzt/) | done |
 
-### [Research-Preserving Bearing Promotion](epics/VDiHwPniZ/) (draft)
+### [Research-Preserving Bearing Promotion](epics/VDiHwPniZ/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Evidence and Risk Carry-Through](epics/VDiHwPniZ/voyages/VE22wWzeD/) | planned |
 
 ### [Accelerated Bearing Source Capture](epics/VDiHwULir/) (draft)
 
