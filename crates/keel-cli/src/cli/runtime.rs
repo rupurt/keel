@@ -110,7 +110,7 @@ pub fn run() -> Result<()> {
             let focus_id = m.get_one::<String>("focus").map(|value| value.as_str());
             let static_output = *m.get_one::<bool>("static").unwrap_or(&false);
             super::commands::management::topology::run(zoom, focus_id, false, static_output)
-        }
+        },
         Some(("play", m)) => {
             let bearing = m.get_one::<String>("bearing").cloned();
             let prop = m.get_one::<String>("prop").cloned();
