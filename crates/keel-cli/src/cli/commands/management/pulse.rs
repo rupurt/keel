@@ -427,7 +427,11 @@ fn create_materialized_story(
         )
     })?;
 
-    let timestamp = reference_time.naive_utc();
+    use chrono::Timelike;
+    let timestamp = reference_time
+        .naive_utc()
+        .with_nanosecond(0)
+        .unwrap_or_else(|| reference_time.naive_utc());
     let frontmatter = StoryFrontmatter {
         id: story_id.clone(),
         title: routine.title.clone(),

@@ -47,7 +47,7 @@ If a human user pokes you (e.g., "I'm poking you", "Wake up"), you MUST:
 
 Apply these checks to **every change** before finalizing work:
 
-1. **Doctor Check**: `just keel doctor` must pass with zero warnings or errors. (Tip: use `just keel doctor --scene` for a visual pulse check of board health).
+1. **Doctor First**: `just keel doctor` is the ultimate source of truth for board integrity. You MUST run the doctor at the start of every session. If the doctor reports errors or "Short Circuits", you MUST prioritize fixing those diagnostic orders before attempting any other work or architectural changes.
 2. **Quality Check**: `just quality` must be clean (formatting and linting).
 3. **Verification**: `just test` and `just doctest` must pass 100%.
 4. **Lifecycle Before Commit**: Run board-mutating lifecycle commands before the atomic commit when they generate or rewrite `.keel` artifacts (for example `story submit`, `voyage plan`, `voyage done`, `bearing assess`, `bearing lay`). After the transition, inspect `git status` and include the resulting `.keel` churn in the same commit.
