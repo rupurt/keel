@@ -49,17 +49,35 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
     let width = get_terminal_width();
     
     if scene {
+        let healthy = health.passed();
+        let recently_completed = metrics.execution.recently_completed_count;
+        let energized = recently_completed > 0;
+
         println!("\n    ┌{}┐", "─".repeat(width.saturating_sub(6)));
         println!("    │ {: <width$} │", "THE WORKBENCH".bold(), width = width.saturating_sub(8));
         println!("    └{}┘", "─".repeat(width.saturating_sub(6)));
 
+        // Work Lamp visual
+        let lamp_color = if energized { owo_colors::AnsiColors::Yellow } else { owo_colors::AnsiColors::White };
+        let lamp_style = if energized { "(*)" } else { "( )" };
+        let lamp_label = if energized { "THE LIGHT IS ON" } else { "LIGHT IS OFF (POKE TO WAKE)" };
+        
+        let mut visual = String::new();
+        visual.push_str("             | \n");
+        visual.push_str("           __|__\n");
+        if energized {
+            visual.push_str(&format!("          / {: <3} \\   <-- {}\n", lamp_style.color(lamp_color).bold(), lamp_label.color(lamp_color).bold()));
+        } else {
+            visual.push_str(&format!("          / {: <3} \\   <-- {}\n", lamp_style.dimmed(), lamp_label.dimmed()));
+        }
+        visual.push_str("          \\_____/\n");
+        
         // Higher Fidelity Workbench visual
-        let mut bench = String::new();
-        bench.push_str("    ._____________________________________________________________________.\n");
-        bench.push_str("    |                                                                     |\n");
-        bench.push_str("    | [ PEGBOARD ]  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  |\n");
-        bench.push_str("    |_____________________________________________________________________|\n");
-        bench.push_str("    |                                                                     |\n");
+        visual.push_str("    ._____________________________________________________________________.\n");
+        visual.push_str("    |                                                                     |\n");
+        visual.push_str("    | [ PEGBOARD ]  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  |\n");
+        visual.push_str("    |_____________________________________________________________________|\n");
+        visual.push_str("    |                                                                     |\n");
         
         let occupancy = (human_items.len() as f64 / 10.0).min(1.0);
         let bar_width = 40;
@@ -73,12 +91,12 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
             }
         }
         
-        bench.push_str(&format!("    |   [ {} ]   <-- BENCH WIP ({})        |\n", items_on_bench.yellow(), human_items.len()));
-        bench.push_str("    |_____________________________________________________________________|\n");
-        bench.push_str("    |                                                                     |\n");
-        bench.push_str("    |   [ VICE ]                                          [  OIL CAN  ]   |\n");
-        bench.push_str("    |_____________________________________________________________________|\n");
-        bench.push_str("      | |                                                               | |\n");
+        visual.push_str(&format!("    |   [ {} ]   <-- BENCH WIP ({})        |\n", items_on_bench.yellow(), human_items.len()));
+        visual.push_str("    |_____________________________________________________________________|\n");
+        visual.push_str("    |                                                                     |\n");
+        visual.push_str("    |   [ VICE ]                                          [  OIL CAN  ]   |\n");
+        visual.push_str("    |_____________________________________________________________________|\n");
+        visual.push_str("      | |                                                               | |\n");
         
         // Deterministic sawdust based on drift
         let drift = health.drift_coefficient;
@@ -100,13 +118,13 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
         }
         floor.push_str("      | |\n");
         
-        bench.push_str(&floor);
-        let label = if drift > 0.5 { "SHOP ENTROPY (SEVERE)" } else { "SHOP SAWDUST (DRIFT)" };
-        bench.push_str(&format!("      | |         {: ^40}      | |\n", label.dimmed()));
-        bench.push_str("     _|_|_                                                           _|_|_\n");
-        bench.push_str("    |_____|                                                         |_____|\n");
+        visual.push_str(&floor);
+        let label = if !healthy { "SYSTEM UNHEALTHY (BROKEN TOOLS)" } else if drift > 0.5 { "SHOP ENTROPY (SEVERE)" } else { "SHOP SAWDUST (DRIFT)" };
+        visual.push_str(&format!("      | |         {: ^40}      | |\n", label.dimmed()));
+        visual.push_str("     _|_|_                                                           _|_|_\n");
+        visual.push_str("    |_____|                                                         |_____|\n");
         
-        println!("{}", bench);
+        println!("{}", visual);
 
         if !human_items.is_empty() {
             println!("    REQUIRED DECISIONS:");
