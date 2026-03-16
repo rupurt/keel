@@ -133,6 +133,12 @@ pub fn build_cli() -> Command {
         .subcommand(
             Command::new("workshop")
                 .about("Focus on items requiring human attention (The Workbench)")
+                .arg(
+                    Arg::new("scene")
+                        .long("scene")
+                        .action(ArgAction::SetTrue)
+                        .help("Render the workshop as a visual scene"),
+                )
                 .hide(true),
         )
         .subcommand(

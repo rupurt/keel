@@ -1293,8 +1293,6 @@ mod tests {
         );
 
         let lines = rendered.lines().collect::<Vec<_>>();
-        for (i, line) in lines.iter().enumerate() {
-        }
         let header_index = lines
             .iter()
             .position(|line| strip_ansi(line).contains("Command Directives"))
