@@ -310,6 +310,12 @@
 
 ### [Project Operations](epics/VDseuzIFg/) (draft)
 
+### [WorkshopEpic](epics/VDzwuRiEW/) (draft)
+
+| Voyage | Status |
+|--------|--------|
+| [WorkshopVoyage](epics/VDzwuRiEW/voyages/VDzwxr8XC/) | draft |
+
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
 | Voyage | Status |

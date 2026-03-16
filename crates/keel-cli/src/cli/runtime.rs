@@ -56,6 +56,9 @@ pub fn run() -> Result<()> {
             let scene = *m.get_one::<bool>("scene").unwrap_or(&false);
             super::commands::diagnostics::flow::run(&resolve_board_dir()?, no_color, !hide_routines, scene)
         }
+        Some(("workshop", _)) => {
+            super::commands::diagnostics::workshop::run(&resolve_board_dir()?)
+        }
         Some(("throughput", m)) => {
             let no_color = *m.get_one::<bool>("no_color").unwrap_or(&false);
             super::commands::diagnostics::throughput::run(&resolve_board_dir()?, no_color)

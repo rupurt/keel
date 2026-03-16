@@ -46,133 +46,113 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
             circuit.push_str("                      \\___________/\n");
             println!("{}", circuit.dimmed());
             return Err(anyhow::anyhow!("Circuit is open (disabled or off the clock)"));
-        } else if autonomous {
+        }
+
+        if !healthy {
             let mut circuit = String::new();
             circuit.push_str("\n    ┌───────────────────────────[ BATTERY ]───────────────────────────┐\n");
             circuit.push_str("    │                                                                 │\n");
-            
-            let ready_backlog = metrics.execution.backlog_ready_count;
-            let mut packs_visual = String::new();
-            for _ in 0..ready_backlog.min(20) {
-                packs_visual.push('█');
-            }
-            if !packs_visual.is_empty() {
-                let label = format!("<-- {} BATTERY PACKS PLUGGED IN", ready_backlog);
-                circuit.push_str(&format!("    │   [ {: <20} ]  {: <36}│\n", packs_visual, label));
-            } else {
-                circuit.push_str("    │                                                                 │\n");
-            }
+            circuit.push_str("    │                                                                 │\n");
+            circuit.push_str("    │          [ XX ][ XX ]       [ XX ][ XX ]                        │\n");
+            circuit.push_str("    │          <-- CAPACITORS BLOWN (SYSTEM UNHEALTHY)                │\n");
+            circuit.push_str("    │               * SPARKS *                                        │\n");
+            circuit.push_str("    └───────────────(   X       X   )─────────────────────────────────┘\n");
+            println!("{}", circuit.red().bold());
+            println!("Run `keel doctor` to repair the circuit.");
+            return Err(anyhow::anyhow!("Short circuit: System is unhealthy"));
+        }
 
-            if !healthy {
-                circuit.push_str("    │                                                                 │\n");
-                circuit.push_str("    │          [ XX ][ XX ]       [ XX ][ XX ]                        │\n");
-                circuit.push_str("    │          <-- CAPACITORS BLOWN (SYSTEM UNHEALTHY)                │\n");
-                circuit.push_str("    │               * SPARKS *                                        │\n");
-                circuit.push_str("    └───────────────(   X       X   )─────────────────────────────────┘\n");
-                println!("{}", circuit.red().bold());
-                println!("Run `keel doctor` to repair the circuit.");
-                return Err(anyhow::anyhow!("Short circuit: System is unhealthy"));
+        let energized = recently_completed > 0;
+        if !energized {
+            let mut circuit = String::new();
+            circuit.push_str("\n    ┌───────────────────────────[ BATTERY ]───────────────────────────┐\n");
+            circuit.push_str("    │                                                                 │\n");
+            circuit.push_str("    │                                                                 │\n");
+            circuit.push_str("    └───────────────( \\             / )   ───                         \n");
+            circuit.push_str("                     \\ \\           / /   <-- CORD UNPLUGGED           \n");
+            circuit.push_str("                      \\ \\_ _ _ _ _/ /        (POKE TO WAKE)           \n");
+            circuit.push_str("                       \\___________/                                  \n");
+            println!("{}", circuit.dimmed());
+            return Err(anyhow::anyhow!("System is idle: Cord unplugged (poke to wake)"));
+        }
+
+        // System is healthy and energized - Light is ON
+        let mut circuit = String::new();
+        circuit.push_str("\n    ┌───────────────────────────[ BATTERY ]───────────────────────────┐\n");
+        circuit.push_str("    │                                                                 │\n");
+        
+        let ready_backlog = metrics.execution.backlog_ready_count;
+        let mut packs_visual = String::new();
+        for _ in 0..ready_backlog.min(20) {
+            packs_visual.push('█');
+        }
+        if !packs_visual.is_empty() {
+            let label = format!("<-- {} BATTERY PACKS PLUGGED IN", ready_backlog);
+            circuit.push_str(&format!("    │   [ {: <20} ]  {: <36}│\n", packs_visual, label));
+        } else {
+            circuit.push_str("    │                                                                 │\n");
+        }
+
+        circuit.push_str("    │                                                                 │\n");
+        // Render capacitor bank based on work volume
+        if in_progress > 3 {
+            circuit.push_str("    │          [ || ][ || ]       [ || ][ || ]                        │\n");
+            circuit.push_str("    │          <-- CAPACITOR BANK ACTIVE (HIGH LOAD)                  │\n");
+        } else if in_progress > 0 {
+            circuit.push_str("    │                     [ || ][ || ]                                │\n");
+            circuit.push_str("    │                 <-- CAPACITORS CHARGING                         │\n");
+        } else {
+            circuit.push_str("    │                                                                 │\n");
+            circuit.push_str("    │                                                                 │\n");
+        }
+        
+        circuit.push_str("    │                                                                 │\n");
+        circuit.push_str("    └───────────────( \\             / )───────────────────────────────┘\n");
+        circuit.push_str("                     \\ \\           / /\n");
+
+        if autonomous {
+            if in_progress > 0 || ready_backlog > 0 {
+                circuit.push_str("                      \\ \\_ _ _ _ _/ /  <-- SYSTEM AUTONOMOUS (LIGHT ON)\n");
+                circuit.push_str("                       \\___________/\n");
+                println!("{}", circuit.yellow().bold());
             } else {
-                circuit.push_str("    │                                                                 │\n");
-                // Render capacitor bank based on work volume
-                if in_progress > 3 {
-                    circuit.push_str("    │          [ || ][ || ]       [ || ][ || ]                        │\n");
-                    circuit.push_str("    │          <-- CAPACITOR BANK ACTIVE (HIGH LOAD)                  │\n");
-                } else if in_progress > 0 {
-                    circuit.push_str("    │                     [ || ][ || ]                                │\n");
-                    circuit.push_str("    │                 <-- CAPACITORS CHARGING                         │\n");
-                } else {
-                    circuit.push_str("    │                                                                 │\n");
-                    circuit.push_str("    │                                                                 │\n");
-                }
-                
-                circuit.push_str("    │                                                                 │\n");
-                
-                if recently_completed > 0 {
-                    circuit.push_str("    └───────────────( \\             / )───────────────────────────────┘\n");
-                    circuit.push_str("                     \\ \\           / /\n");
-                    if in_progress > 0 || ready_backlog > 0 {
-                        circuit.push_str("                      \\ \\_ _ _ _ _/ /  <-- SYSTEM AUTONOMOUS (LIGHT ON)\n");
-                        circuit.push_str("                       \\___________/\n");
-                        println!("{}", circuit.yellow().bold());
-                    } else {
-                        circuit.push_str("                      \\ \\_ _ _ _ _/ /  <-- SYSTEM IDLE (LIGHT DIM)\n");
-                        circuit.push_str("                       \\___________/\n");
-                        println!("{}", circuit.yellow().dimmed());
-                    }
-                } else {
-                    circuit.push_str("    └───────────────( \\             / )   ───                         \n");
-                    circuit.push_str("                     \\ \\           / /   <-- CORD UNPLUGGED           \n");
-                    circuit.push_str("                      \\ \\_ _ _ _ _/ /        (POKE TO WAKE)           \n");
-                    circuit.push_str("                       \\___________/                                  \n");
-                    println!("{}", circuit.dimmed());
-                    return Err(anyhow::anyhow!("System is idle: Cord unplugged (poke to wake)"));
-                }
+                circuit.push_str("                      \\ \\_ _ _ _ _/ /  <-- SYSTEM IDLE (LIGHT DIM)\n");
+                circuit.push_str("                       \\___________/\n");
+                println!("{}", circuit.yellow().dimmed());
             }
         } else {
-            let mut circuit = String::new();
-            circuit.push_str("\n    ┌───────────────────────────[ BATTERY ]───────────────────────────┐\n");
-            circuit.push_str("    │                                                                 │\n");
-            circuit.push_str("    │                                /                                │\n");
-            circuit.push_str("    │                               /                                 │\n");
-            circuit.push_str("    │                              /                                  │\n");
-            circuit.push_str("    └───────────────(               )─────────────────────────────────┘\n");
-            circuit.push_str("                     \\             /   <-- HUMAN INPUT REQUIRED (LIGHT OFF)\n");
-            circuit.push_str("                      \\___________/\n");
-
+            circuit.push_str("                      \\ \\_ _ _ _ _/ /  <-- WORKSHOP BUSY (LIGHT ON)\n");
+            circuit.push_str("                       \\___________/\n");
+            println!("{}", circuit.yellow().bold());
+            
             let mut blocking_items = Vec::new();
             for lane in &lane_flow.lanes {
                 if lane.manual_accept && lane.total_count > 0 {
                     for source in &lane.source_counts {
                         if source.count > 0 {
-                            // Extract the specific entity types/states from the source string (e.g. "story.needs-human-verification")
                             let items: Vec<_> = match source.source.as_str() {
-                                "story.needs-human-verification" => board
-                                    .stories
-                                    .values()
-                                    .filter(|s| {
-                                        s.status == keel::domain::model::StoryState::NeedsHumanVerification
-                                    })
+                                "story.needs-human-verification" => board.stories.values()
+                                    .filter(|s| s.status == keel::domain::model::StoryState::NeedsHumanVerification)
                                     .map(|s| format!("Story {}", s.id()))
                                     .collect(),
-                                "mission.achieved" => board
-                                    .missions
-                                    .values()
-                                    .filter(|m| {
-                                        m.status() == keel::domain::model::MissionStatus::Achieved
-                                    })
+                                "mission.achieved" => board.missions.values()
+                                    .filter(|m| m.status() == keel::domain::model::MissionStatus::Achieved)
                                     .map(|m| format!("Mission {}", m.id()))
                                     .collect(),
-                                "voyage.draft" => board
-                                    .voyages
-                                    .values()
-                                    .filter(|v| {
-                                        v.status() == keel::domain::state_machine::voyage::VoyageState::Draft
-                                    })
+                                "voyage.draft" => board.voyages.values()
+                                    .filter(|v| v.status() == keel::domain::state_machine::voyage::VoyageState::Draft)
                                     .map(|v| format!("Voyage {}", v.id()))
                                     .collect(),
-                                "bearing.exploring" => board
-                                    .bearings
-                                    .values()
-                                    .filter(|b| {
-                                        b.status() == keel::domain::model::BearingStatus::Exploring
-                                    })
+                                "bearing.exploring" => board.bearings.values()
+                                    .filter(|b| b.status() == keel::domain::model::BearingStatus::Exploring)
                                     .map(|b| format!("Bearing {}", b.id()))
                                     .collect(),
-                                "bearing.evaluating" => board
-                                    .bearings
-                                    .values()
-                                    .filter(|b| {
-                                        b.status() == keel::domain::model::BearingStatus::Evaluating
-                                    })
+                                "bearing.evaluating" => board.bearings.values()
+                                    .filter(|b| b.status() == keel::domain::model::BearingStatus::Evaluating)
                                     .map(|b| format!("Bearing {}", b.id()))
                                     .collect(),
-                                "bearing.ready" => board
-                                    .bearings
-                                    .values()
-                                    .filter(|b| {
-                                        b.status() == keel::domain::model::BearingStatus::Ready
-                                    })
+                                "bearing.ready" => board.bearings.values()
+                                    .filter(|b| b.status() == keel::domain::model::BearingStatus::Ready)
                                     .map(|b| format!("Bearing {}", b.id()))
                                     .collect(),
                                 _ => vec![],
@@ -183,17 +163,15 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
                 }
             }
 
-            println!("{}", circuit.dimmed());
             if !blocking_items.is_empty() {
-                println!("Items requiring human input:");
-                for item in blocking_items.iter().take(5) {
+                println!("\nRun `keel workshop` to clear the bench:");
+                for item in blocking_items.iter().take(3) {
                     println!("  - {}", item.yellow());
                 }
-                if blocking_items.len() > 5 {
-                    println!("  ... and {} more", blocking_items.len() - 5);
+                if blocking_items.len() > 3 {
+                    println!("  ... and {} more", blocking_items.len() - 3);
                 }
             }
-            return Err(anyhow::anyhow!("System is idle: Human input required"));
         }
         return Ok(());
     }

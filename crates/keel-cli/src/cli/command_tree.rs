@@ -10,6 +10,7 @@ The Ramping Path (Your Moves):
   flow        Show workflow lane dashboard from configured topology
 
 2. The Operator (Learning by Building)
+  workshop    Focus on items requiring human attention (The Workbench)
   next        Pull the next item using explicit role-based queue routing
   story       Implementation units and acceptance criteria
   verify      Execute verification proofs
@@ -128,6 +129,11 @@ pub fn build_cli() -> Command {
                         .help("Disable color output (also respects NO_COLOR env var)")
                         .action(ArgAction::SetTrue),
                 ),
+        )
+        .subcommand(
+            Command::new("workshop")
+                .about("Focus on items requiring human attention (The Workbench)")
+                .hide(true),
         )
         .subcommand(
             Command::new("next")
