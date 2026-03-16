@@ -88,6 +88,7 @@ fn validate_with_config_internal(
     let mut mission_checks = Vec::new();
     let mut workflow_checks = Vec::new();
     let mut pacemaker_checks = Vec::new();
+    let mut delivery_checks = Vec::new();
 
     // 1. Story Checks
     let (story_file_problems, story_count) = checks::stories::scan_story_files(board_dir)?;
@@ -754,6 +755,25 @@ fn validate_with_config_internal(
         pacemaker_problems,
     ));
 
+    // 10. Delivery Checks
+    let liquidity_problems = checks::delivery::check_delivery_liquidity(&board);
+    delivery_checks.push(configured_check(
+        doctor_config,
+        "delivery-liquidity",
+        "Backlog liquidity",
+        board.stories.values().filter(|s| s.status == StoryState::Backlog).count(),
+        liquidity_problems,
+    ));
+
+    let blockage_problems = checks::delivery::check_delivery_blockages(&board);
+    delivery_checks.push(configured_check(
+        doctor_config,
+        "delivery-blockages",
+        "Active blockages",
+        board.stories.values().filter(|s| s.status == StoryState::InProgress).count(),
+        blockage_problems,
+    ));
+
     let mut report = DoctorReport {
         story_checks,
         voyage_checks,
@@ -764,6 +784,7 @@ fn validate_with_config_internal(
         routine_checks,
         workflow_checks,
         pacemaker_checks,
+        delivery_checks,
         drift_coefficient: 0.0,
         estimated_remediation_hours: 0.0,
         last_checked_at: std::time::SystemTime::now(),

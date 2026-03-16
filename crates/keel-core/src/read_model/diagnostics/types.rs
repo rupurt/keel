@@ -16,6 +16,7 @@ pub struct DoctorReport {
     pub routine_checks: Vec<CheckResult>,
     pub workflow_checks: Vec<CheckResult>,
     pub pacemaker_checks: Vec<CheckResult>,
+    pub delivery_checks: Vec<CheckResult>,
     /// Simulation drift coefficient (0.0 to 1.0)
     pub drift_coefficient: f64,
     /// Estimated hours to reach zero drift
@@ -35,6 +36,7 @@ impl DoctorReport {
             && self.routine_checks.iter().all(|c| c.passed)
             && self.workflow_checks.iter().all(|c| c.passed)
             && self.pacemaker_checks.iter().all(|c| c.passed)
+            && self.delivery_checks.iter().all(|c| c.passed)
     }
 
     pub fn total_errors(&self) -> usize {
@@ -62,6 +64,7 @@ impl DoctorReport {
             .chain(&self.routine_checks)
             .chain(&self.workflow_checks)
             .chain(&self.pacemaker_checks)
+            .chain(&self.delivery_checks)
             .flat_map(|c| &c.problems)
             .collect()
     }

@@ -66,22 +66,24 @@ Apply these checks to **every change** before finalizing work:
    - **VITAL**: Missions (Strategic achievement)
    - **AUTONOMIC**: Routines (Cadence, materialization)
    - **CIRCULATORY**: Workflow (Graph integrity, topology)
+   - **PACEMAKER**: Heartbeat (System energization and commit stability)
+   - **KINETIC**: Delivery (Backlog liquidity, execution capacity)
 3. **Pacemaker Protocol**: The system's heartbeat (.keel/heartbeat) is its pacemaker. You MUST ensure the pacemaker is stable (committed) before concluding any unit of work. Uncommitted energy is a signal of an open tactical loop and will trigger a CRITICAL status in the Med-Bay bio-scan.
 4. **Gardening First**: You MUST tend to the garden (fixing `doctor` errors, discharging automated backlog, and resolving structural drift) BEFORE notifying the human operator or requesting input. 
 5. **Notification Threshold**: Only request human intervention when you reach a "Manual Lane" that requires design direction or a decision on application behavior (e.g., assessing a Bearing, planning a Voyage, or human verification of a complex Story).
 6. **Quality Check**: `just quality` must be clean (formatting and linting).
-3. **Verification**: `just test` and `just doctest` must pass 100%.
-4. **Lifecycle Before Commit**: Run board-mutating lifecycle commands before the atomic commit when they generate or rewrite `.keel` artifacts (for example `story submit`, `voyage plan`, `voyage done`, `bearing assess`, `bearing lay`). After the transition, inspect `git status` and include the resulting `.keel` churn in the same commit.
-5. **Atomic Commits**: Commit once per logical unit of work. Use [Conventional Commits](https://www.conventionalcommits.org/):
+7. **Verification**: `just test` and `just doctest` must pass 100%.
+8. **Lifecycle Before Commit**: Run board-mutating lifecycle commands before the atomic commit when they generate or rewrite `.keel` artifacts (for example `story submit`, `voyage plan`, `voyage done`, `bearing assess`, `bearing lay`). After the transition, inspect `git status` and include the resulting `.keel` churn in the same commit.
+9. **Atomic Commits**: Commit once per logical unit of work. Use [Conventional Commits](https://www.conventionalcommits.org/):
    - `feat:` (new feature)
    - `fix:` (bug fix)
    - `docs:` (documentation)
    - `refactor:` (code change, no behavior change)
    - `test:` (adding/updating tests)
    - `chore:` (build/tooling)
-6. **Mission Loop Discipline**: For mission-driven work, return to the mission steward loop after every completed story, planning unit, or bearing instead of continuing ad hoc from the last worker context.
-7. **Knowledge Quality Bar**: Prefer no new knowledge over low-signal knowledge. A new knowledge entry should be novel, reusable across stories, and materially reduce future drift; otherwise link existing knowledge or omit capture entirely.
-8. **Config Completeness**: Whenever introducing a new property to the configuration struct (`keel::infrastructure::config::Config`), you MUST immediately update `keel config show` (`crates/keel-cli/src/cli/commands/setup/config.rs`) to render it. The `config show` command is the definitive binding of runtime configuration visibility.
+10. **Mission Loop Discipline**: For mission-driven work, return to the mission steward loop after every completed story, planning unit, or bearing instead of continuing ad hoc from the last worker context.
+11. **Knowledge Quality Bar**: Prefer no new knowledge over low-signal knowledge. A new knowledge entry should be novel, reusable across stories, and materially reduce future drift; otherwise link existing knowledge or omit capture entirely.
+12. **Config Completeness**: Whenever introducing a new property to the configuration struct (`keel::infrastructure::config::Config`), you MUST immediately update `keel config show` (`crates/keel-cli/src/cli/commands/setup/config.rs`) to render it. The `config show` command is the definitive binding of runtime configuration visibility.
 
 ## Compatibility Policy (Hard Cutover)
 
