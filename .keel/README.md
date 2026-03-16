@@ -294,13 +294,17 @@
 |--------|--------|
 | [Bearing Dependency Primitives](epics/VDiHwLLfY/voyages/VE1vAyNzt/) | done |
 
-### [Research-Preserving Bearing Promotion](epics/VDiHwPniZ/) (active)
+### [Research-Preserving Bearing Promotion](epics/VDiHwPniZ/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Evidence and Risk Carry-Through](epics/VDiHwPniZ/voyages/VE22wWzeD/) | in-progress |
+| [Evidence and Risk Carry-Through](epics/VDiHwPniZ/voyages/VE22wWzeD/) | done |
 
-### [Accelerated Bearing Source Capture](epics/VDiHwULir/) (draft)
+### [Accelerated Bearing Source Capture](epics/VDiHwULir/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [URL-Aware Capture Defaults](epics/VDiHwULir/voyages/VE26NBIKc/) | planned |
 
 ### [Theater Play Experience](epics/VDlzCqxr9/) (done)
 
