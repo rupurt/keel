@@ -165,12 +165,12 @@ mod tests {
         )
         .unwrap();
 
-        assert!(path.to_string_lossy().contains("/routines/VD"));
+        assert!(path.to_string_lossy().contains("/routines/VE"));
         assert!(path.exists());
         assert!(!path.parent().unwrap().join("BLUEPRINT.md").exists());
 
         let content = fs::read_to_string(path).unwrap();
-        assert!(content.contains("id: VD"));
+        assert!(content.contains("id: VE"));
         assert!(content.contains("title: Weekly Review"));
         assert!(content.contains("cadence:"));
         assert!(content.contains("cron:"));
