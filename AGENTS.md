@@ -6,6 +6,10 @@ Shared guidance for AI agents working with this repository.
 
 Keel is an engine with strict constraints (see [FORMAL_RULES.md](FORMAL_RULES.md)). Your primary responsibility is to execute tactical moves that advance the board state while maintaining 100% integrity.
 
+### Core Principles
+1. **Gardening First**: You MUST tend to the garden (fixing `doctor` errors, discharging automated backlog, and resolving structural drift) BEFORE notifying the human operator or requesting input. 
+2. **Notification Discipline**: Ping the human operator ONLY when you need input on design direction or how the application behaves. Resolve technical drift and tactical moves autonomously.
+
 ### Session Start & Human Interaction
 When a human user opens the chat or "pokes" you (e.g., "Wake up", "I'm poking you"), you MUST immediately energize the system and orient yourself by following the **Human Interaction & Pokes** workflow in [INSTRUCTIONS.md](INSTRUCTIONS.md):
 1.  **Energize**: Run `just keel poke "Human interaction in chat"`.
