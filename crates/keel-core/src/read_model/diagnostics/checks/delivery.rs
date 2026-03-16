@@ -6,7 +6,9 @@ use crate::infrastructure::validation::{CheckId, Problem, Severity};
 /// Check for delivery liquidity (ready stories)
 pub fn check_delivery_liquidity(board: &Board) -> Vec<Problem> {
     let mut problems = Vec::new();
-    let ready_count = board.stories.values()
+    let ready_count = board
+        .stories
+        .values()
         .filter(|s| s.status == StoryState::Backlog)
         .count();
 
@@ -28,7 +30,9 @@ pub fn check_delivery_liquidity(board: &Board) -> Vec<Problem> {
 /// Check for blocked delivery capacity
 pub fn check_delivery_blockages(board: &Board) -> Vec<Problem> {
     let mut problems = Vec::new();
-    let blocked_count = board.stories.values()
+    let blocked_count = board
+        .stories
+        .values()
         .filter(|s| s.status == StoryState::InProgress && !s.frontmatter.blocked_by.is_empty())
         .count();
 
@@ -36,7 +40,10 @@ pub fn check_delivery_blockages(board: &Board) -> Vec<Problem> {
         problems.push(Problem {
             severity: Severity::Warning,
             path: board.root.join("stories"),
-            message: format!("High delivery friction: {} stories are currently blocked in-progress.", blocked_count),
+            message: format!(
+                "High delivery friction: {} stories are currently blocked in-progress.",
+                blocked_count
+            ),
             fix: None,
             scope: None,
             category: None,

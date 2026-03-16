@@ -586,6 +586,8 @@ mod tests {
                 items: vec![("s1".to_string(), 3)],
             },
             done_count: 10,
+            due_routines_count: 0,
+            incomplete_missions_count: 0,
         }
     }
 

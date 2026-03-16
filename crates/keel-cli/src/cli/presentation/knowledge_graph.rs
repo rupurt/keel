@@ -1344,7 +1344,15 @@ fn is_terminal_state(state: Option<&str>) -> bool {
     matches!(
         state,
         Some(
-            "done" | "verified" | "laid" | "accepted" | "rejected" | "iced" | "parked" | "declined" | "stable"
+            "done"
+                | "verified"
+                | "laid"
+                | "accepted"
+                | "rejected"
+                | "iced"
+                | "parked"
+                | "declined"
+                | "stable"
         )
     )
 }

@@ -582,6 +582,42 @@ Fixture evidence indicates the direction is feasible enough for tests.
     )
 }
 
+fn render_fixture_bearing_assessment(bearing: &TestBearing) -> String {
+    format!(
+        r#"# {} — Assessment
+
+## Scoring Factors
+
+| Factor | Score | Notes |
+|--------|-------|-------|
+| Feasibility | 4 | Fixture scoring factor |
+
+## Findings
+
+Fixture findings for test bearing {}.
+
+## Opportunity Cost
+
+Fixture opportunity cost analysis.
+
+## Dependencies
+
+- No external dependencies for fixture.
+
+## Alternatives Considered
+
+- Status quo (baseline).
+
+## Recommendation
+
+- [x] Proceed
+- [ ] Park
+- [ ] Decline
+"#,
+        bearing.title, bearing.id
+    )
+}
+
 impl TestBoardBuilder {
     /// Create a new test board builder.
     pub fn new() -> Self {
@@ -839,7 +875,11 @@ Test harness epic problem statement.
                 }
                 // ASSESSMENT.md
                 if bearing.has_assessment {
-                    fs::write(bearing_dir.join("ASSESSMENT.md"), "# ASSESSMENT\n").unwrap();
+                    fs::write(
+                        bearing_dir.join("ASSESSMENT.md"),
+                        render_fixture_bearing_assessment(bearing),
+                    )
+                    .unwrap();
                 }
             }
         }

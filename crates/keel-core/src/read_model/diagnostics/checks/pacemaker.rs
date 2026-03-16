@@ -23,7 +23,8 @@ pub fn check_pacemaker_stability(board: &Board) -> Vec<Problem> {
         problems.push(Problem {
             severity: Severity::Error,
             path: board.root.join("heartbeat"),
-            message: "Pacemaker missing. System cannot be energized without .keel/heartbeat.".to_string(),
+            message: "Pacemaker missing. System cannot be energized without .keel/heartbeat."
+                .to_string(),
             fix: None,
             scope: None,
             category: None,

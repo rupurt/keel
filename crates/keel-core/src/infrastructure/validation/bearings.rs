@@ -249,6 +249,110 @@ How will we know if this research was valuable?
     }
 
     #[test]
+    fn doctor_flags_missing_evidence_sections() {
+        let temp = TestBoardBuilder::new()
+            .bearing(TestBearing::new("BRG-01"))
+            .build();
+
+        // Write EVIDENCE.md missing all required sections
+        fs::write(
+            temp.path().join("bearings/BRG-01/EVIDENCE.md"),
+            "---\nid: BRG-01\n---\n\n# BRG-01 — Evidence\n\n## Sources\n\nNo sources yet.\n",
+        )
+        .unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_bearing_content_sections(&board);
+
+        for heading in ["## Feasibility", "## Key Findings", "## Unknowns"] {
+            assert!(
+                problems
+                    .iter()
+                    .any(|p| p.message.contains("EVIDENCE.md section")
+                        && p.message.contains(heading)),
+                "expected a problem for missing {}",
+                heading
+            );
+        }
+    }
+
+    #[test]
+    fn doctor_flags_missing_assessment_sections() {
+        let temp = TestBoardBuilder::new()
+            .bearing(TestBearing::new("BRG-01"))
+            .build();
+
+        // Write ASSESSMENT.md missing all required sections
+        fs::write(
+            temp.path().join("bearings/BRG-01/ASSESSMENT.md"),
+            "# BRG-01 — Assessment\n\nSome notes.\n",
+        )
+        .unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_bearing_content_sections(&board);
+
+        for heading in [
+            "## Scoring Factors",
+            "## Findings",
+            "## Opportunity Cost",
+            "## Dependencies",
+            "## Alternatives Considered",
+            "## Recommendation",
+        ] {
+            assert!(
+                problems
+                    .iter()
+                    .any(|p| p.message.contains("ASSESSMENT.md section")
+                        && p.message.contains(heading)),
+                "expected a problem for missing {}",
+                heading
+            );
+        }
+    }
+
+    #[test]
+    fn doctor_accepts_complete_evidence_and_assessment() {
+        let temp = TestBoardBuilder::new()
+            .bearing(
+                TestBearing::new("BRG-01")
+                    .has_evidence(true)
+                    .has_assessment(true),
+            )
+            .build();
+
+        // Fixture builder now writes complete EVIDENCE.md and ASSESSMENT.md
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_bearing_content_sections(&board);
+
+        let evidence_problems: Vec<_> = problems
+            .iter()
+            .filter(|p| p.message.contains("EVIDENCE.md section"))
+            .collect();
+        assert!(
+            evidence_problems.is_empty(),
+            "expected no EVIDENCE.md section errors, got: {:?}",
+            evidence_problems
+                .iter()
+                .map(|p| &p.message)
+                .collect::<Vec<_>>()
+        );
+
+        let assessment_problems: Vec<_> = problems
+            .iter()
+            .filter(|p| p.message.contains("ASSESSMENT.md section"))
+            .collect();
+        assert!(
+            assessment_problems.is_empty(),
+            "expected no ASSESSMENT.md section errors, got: {:?}",
+            assessment_problems
+                .iter()
+                .map(|p| &p.message)
+                .collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
     fn doctor_accepts_authored_bearing_brief_sections() {
         let temp = TestBoardBuilder::new()
             .bearing(TestBearing::new("BRG-01"))

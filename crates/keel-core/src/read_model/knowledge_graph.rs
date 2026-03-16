@@ -551,7 +551,9 @@ fn graph_node_kind(kind: crate::read_model::board_graph::BoardNodeKind) -> Knowl
         crate::read_model::board_graph::BoardNodeKind::Voyage => KnowledgeGraphNodeKind::Voyage,
         crate::read_model::board_graph::BoardNodeKind::Story => KnowledgeGraphNodeKind::Story,
         crate::read_model::board_graph::BoardNodeKind::Routine => KnowledgeGraphNodeKind::Routine,
-        crate::read_model::board_graph::BoardNodeKind::Heartbeat => KnowledgeGraphNodeKind::Heartbeat,
+        crate::read_model::board_graph::BoardNodeKind::Heartbeat => {
+            KnowledgeGraphNodeKind::Heartbeat
+        }
     }
 }
 

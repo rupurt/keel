@@ -132,7 +132,8 @@ pub fn run(
 
         // System is healthy and energized - Light is ON
         let mut circuit = String::new();
-        circuit.push_str("\n    .───────────────────────────[ POWER ]───────────────────────────.\n");
+        circuit
+            .push_str("\n    .───────────────────────────[ POWER ]───────────────────────────.\n");
         circuit.push_str("    │                                                               │\n");
 
         let ready_backlog = metrics.execution.backlog_ready_count;
@@ -146,28 +147,37 @@ pub fn run(
         }
 
         let power_line = format!(
-            "  [ {} ]  <-- {}",
-            packs_visual,
-            format!("{} BATTERY PACKS PLUGGED IN", ready_backlog)
+            "  [ {} ]  <-- {} BATTERY PACKS PLUGGED IN",
+            packs_visual, ready_backlog
         );
-        circuit.push_str(&format!(
-            "    │{} │\n",
-            power_line.pad_to_width(62)
-        ));
-        circuit.push_str("    │  `───────────────────────────────────────────────────────────'  │\n");
+        circuit.push_str(&format!("    │{} │\n", power_line.pad_to_width(62)));
+        circuit
+            .push_str("    │  `───────────────────────────────────────────────────────────'  │\n");
         circuit.push_str("    │          |                                         |          │\n");
         circuit.push_str("    │      .───┴───.                                 .───┴───.      │\n");
 
         // Render capacitor bank based on work volume
         if in_progress > 3 {
-            circuit.push_str("    │      |[ || ]| [ HIGH LOAD ]           [ ACTIVE ] |[ || ]|     │\n");
-            circuit.push_str("    │      |[ || ]|  ( !!! )                 ( !!! )   |[ || ]|     │\n");
+            circuit.push_str(
+                "    │      |[ || ]| [ HIGH LOAD ]           [ ACTIVE ] |[ || ]|     │\n",
+            );
+            circuit.push_str(
+                "    │      |[ || ]|  ( !!! )                 ( !!! )   |[ || ]|     │\n",
+            );
         } else if in_progress > 0 {
-            circuit.push_str("    │      |[ || ]| [ CHARGING ]             [ STABLE ] |[    ]|     │\n");
-            circuit.push_str("    │      |[ || ]|  ( ... )                 ( ... )   |[    ]|     │\n");
+            circuit.push_str(
+                "    │      |[ || ]| [ CHARGING ]             [ STABLE ] |[    ]|     │\n",
+            );
+            circuit.push_str(
+                "    │      |[ || ]|  ( ... )                 ( ... )   |[    ]|     │\n",
+            );
         } else {
-            circuit.push_str("    │      |[    ]| [ IDLE ]                 [ READY ]  |[    ]|     │\n");
-            circuit.push_str("    │      |[    ]|  ( zzz )                 ( ooo )   |[    ]|     │\n");
+            circuit.push_str(
+                "    │      |[    ]| [ IDLE ]                 [ READY ]  |[    ]|     │\n",
+            );
+            circuit.push_str(
+                "    │      |[    ]|  ( zzz )                 ( ooo )   |[    ]|     │\n",
+            );
         }
 
         circuit.push_str("    │      '───────'                                 '───────'      │\n");
@@ -180,19 +190,22 @@ pub fn run(
                 circuit.push_str(
                     "                      \\ \\___________________/ /  <-- SYSTEM AUTONOMOUS\n",
                 );
-                circuit.push_str("                       \\_____________________/        (LIGHT ON)\n");
+                circuit.push_str(
+                    "                       \\_____________________/        (LIGHT ON)\n",
+                );
                 println!("{}", circuit.yellow().bold());
             } else {
                 circuit.push_str(
                     "                      \\ \\___________________/ /  <-- SYSTEM IDLE\n",
                 );
-                circuit.push_str("                       \\_____________________/        (LIGHT DIM)\n");
+                circuit.push_str(
+                    "                       \\_____________________/        (LIGHT DIM)\n",
+                );
                 println!("{}", circuit.yellow().dimmed());
             }
         } else {
-            circuit.push_str(
-                "                      \\ \\___________________/ /  <-- WORKSHOP BUSY\n",
-            );
+            circuit
+                .push_str("                      \\ \\___________________/ /  <-- WORKSHOP BUSY\n");
             circuit.push_str("                       \\_____________________/        (LIGHT ON)\n");
             println!("{}", circuit.yellow().bold());
 

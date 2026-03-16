@@ -761,7 +761,11 @@ fn validate_with_config_internal(
         doctor_config,
         "delivery-liquidity",
         "Backlog liquidity",
-        board.stories.values().filter(|s| s.status == StoryState::Backlog).count(),
+        board
+            .stories
+            .values()
+            .filter(|s| s.status == StoryState::Backlog)
+            .count(),
         liquidity_problems,
     ));
 
@@ -770,7 +774,11 @@ fn validate_with_config_internal(
         doctor_config,
         "delivery-blockages",
         "Active blockages",
-        board.stories.values().filter(|s| s.status == StoryState::InProgress).count(),
+        board
+            .stories
+            .values()
+            .filter(|s| s.status == StoryState::InProgress)
+            .count(),
         blockage_problems,
     ));
 

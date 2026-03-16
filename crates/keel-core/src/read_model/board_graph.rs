@@ -1084,21 +1084,25 @@ updated_at: 2026-03-12T09:00:00
     #[test]
     fn board_graph_includes_pacemaker() {
         let temp = TestBoardBuilder::new().build();
-        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
-        // loader should find heartbeat if it exists, but TestBoardBuilder doesn't create one by default.
-        // Actually TestBoardBuilder::build calls load_board? No, it returns TempDir.
-        
-        // I'll manually create a heartbeat file.
+        let _board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+
+        // Manually create a heartbeat file (TestBoardBuilder doesn't create one by default).
         fs::write(temp.path().join("heartbeat"), "test").unwrap();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
         assert!(board.heartbeat.is_some());
 
         let graph = build_board_graph(&board);
-        let hb_node = graph.nodes().iter().find(|n| n.id == BoardNodeId::Heartbeat);
+        let hb_node = graph
+            .nodes()
+            .iter()
+            .find(|n| n.id == BoardNodeId::Heartbeat);
         assert!(hb_node.is_some(), "Heartbeat node should be in graph");
-        
+
         let incoming = graph.incoming(&BoardNodeId::Heartbeat, BoardEdgeKind::Contains);
-        assert!(!incoming.is_empty(), "Heartbeat should have a containment parent");
+        assert!(
+            !incoming.is_empty(),
+            "Heartbeat should have a containment parent"
+        );
         assert_eq!(incoming[0], BoardNodeId::Board);
     }
 }

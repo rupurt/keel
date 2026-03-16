@@ -1,8 +1,8 @@
 //! Health command - subsystem status check and bio-scan (The Med-Bay)
 
-use anyhow::Result;
 use crate::cli::presentation::terminal::get_terminal_width;
 use crate::cli::style::VisualPadding;
+use anyhow::Result;
 use keel::infrastructure::loader::load_board;
 use keel::read_model::{diagnostics, flow_status};
 use owo_colors::OwoColorize;
@@ -13,23 +13,37 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
     let report = diagnostics::validate_report(board_dir)?;
     let metrics = flow_status::project(&board, chrono::Utc::now());
     let passed = report.passed();
-    
+
     // 1. Strategic Congestion (Top-heavy backlog)
     // Congested if many draft epics (> 5) or many incomplete missions (> 3)
-    let draft_epics = board.epics.values().filter(|e| e.status() == keel::domain::model::EpicState::Draft).count();
+    let draft_epics = board
+        .epics
+        .values()
+        .filter(|e| e.status() == keel::domain::model::EpicState::Draft)
+        .count();
     let strategic_congested = draft_epics > 5 || metrics.incomplete_missions_count > 3;
-    
+
     // 3. Operational Fatigue (Operational noise)
     // Fatigued if many due routines (> 3) or too much unlinked governance
-    let operational_fatigue = metrics.due_routines_count > 3 || metrics.governance.proposed_count > 5;
+    let operational_fatigue =
+        metrics.due_routines_count > 3 || metrics.governance.proposed_count > 5;
 
     let width = get_terminal_width();
-    
+
     if scene {
-        render_med_bay_scene(&report, &metrics, strategic_congested, operational_fatigue, width);
+        render_med_bay_scene(
+            &report,
+            &metrics,
+            strategic_congested,
+            operational_fatigue,
+            width,
+        );
     } else {
-        println!("\n    {} SUBSYSTEM STATUS REPORT", " HEALTH ".on_green().black().bold());
-        
+        println!(
+            "\n    {} SUBSYSTEM STATUS REPORT",
+            " HEALTH ".on_green().black().bold()
+        );
+
         print_category("Stories", &report.story_checks);
         print_category("Voyages", &report.voyage_checks);
         print_category("Epics", &report.epic_checks);
@@ -40,20 +54,23 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
         print_category("Workflow", &report.workflow_checks);
         print_category("Pacemaker", &report.pacemaker_checks);
         print_category("Delivery", &report.delivery_checks);
-        
+
         if strategic_congested {
             println!("    ! {: <10} {}", "Strategy", "CONGESTED".yellow().bold());
         }
         if operational_fatigue {
             println!("    ! {: <10} {}", "Ops", "FATIGUE".red().bold());
         }
-        
+
         if passed && !strategic_congested && !operational_fatigue {
             println!("\n    {} System is 100% healthy.", "✓".green().bold());
         } else if passed {
             println!("\n    ! System is nominal but under pressure.");
         } else {
-            println!("\n    {} System has issues. Run `keel doctor` for details.", "✗".red().bold());
+            println!(
+                "\n    {} System has issues. Run `keel doctor` for details.",
+                "✗".red().bold()
+            );
         }
     }
 
@@ -66,7 +83,11 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
 
 fn print_category(name: &str, results: &[keel::read_model::diagnostics::types::CheckResult]) {
     let passed = results.iter().all(|c| c.passed);
-    let marker = if passed { "✓".green().to_string() } else { "✗".red().to_string() };
+    let marker = if passed {
+        "✓".green().to_string()
+    } else {
+        "✗".red().to_string()
+    };
     println!("    • {: <10} {}", name, marker);
 }
 
@@ -109,7 +130,9 @@ fn render_med_bay_scene(
     if !passed || kinetic_load > 15 {
         scene.push_str(&format!(
             "             |   {}{}   |\n",
-            "/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\".red().bold(),
+            "/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\"
+                .red()
+                .bold(),
             "/\\".red().bold()
         ));
         scene.push_str(&format!(
@@ -119,25 +142,31 @@ fn render_med_bay_scene(
     } else if kinetic_load > 7 || strategic_congested {
         scene.push_str(&format!(
             "             |   {}   |\n",
-            "_/^\\___/^\\___/^\\___/^\\___/^\\___/^\\___/^\\_".yellow().bold()
+            "_/^\\___/^\\___/^\\___/^\\___/^\\___/^\\___/^\\_"
+                .yellow()
+                .bold()
         ));
         scene.push_str(&format!(
             "             |   {}   |\n",
-            "\\_/   \\_/   \\_/   \\_/   \\_/   \\_/   \\_/   \\".yellow().bold()
+            "\\_/   \\_/   \\_/   \\_/   \\_/   \\_/   \\_/   \\"
+                .yellow()
+                .bold()
         ));
     } else {
         scene.push_str(&format!(
             "             |   {}   |\n",
             "__/\x1b[1;32m^\x1b[0m\\________/\x1b[1;32m^\x1b[0m\\________/\x1b[1;32m^\x1b[0m\\________/\x1b[1;32m^\x1b[0m\\__".green()
         ));
-        scene.push_str(&format!(
-            "             |  /      \\______/      \\______/      \\____/  |\n"
-        ));
+        scene.push_str("             |  /      \\______/      \\______/      \\____/  |\n");
     }
 
     scene.push_str("             |__________________________________________|\n");
-    
-    let hr_line = format!(" HR: {}   STATUS: {}", heart_rate.bold(), status_label.color(status_color).bold());
+
+    let hr_line = format!(
+        " HR: {}   STATUS: {}",
+        heart_rate.bold(),
+        status_label.color(status_color).bold()
+    );
     scene.push_str(&format!("             | {} |\n", hr_line.pad_to_width(40)));
 
     let pressure_label = if kinetic_load > 15 {
@@ -153,26 +182,48 @@ fn render_med_bay_scene(
     };
 
     let pressure_line = format!(" BP: PRESSURE: {}", pressure_label);
-    scene.push_str(&format!("             | {} |\n", pressure_line.pad_to_width(40)));
-    
+    scene.push_str(&format!(
+        "             | {} |\n",
+        pressure_line.pad_to_width(40)
+    ));
+
     let state_line = format!(
-        " SC: {}   OF: {}", 
-        if strategic_congested { "CONGESTED".yellow().bold().to_string() } else { "OPTIMAL".dimmed().to_string() },
-        if operational_fatigue { "FATIGUE".red().bold().to_string() } else { "CALM".dimmed().to_string() }
+        " SC: {}   OF: {}",
+        if strategic_congested {
+            "CONGESTED".yellow().bold().to_string()
+        } else {
+            "OPTIMAL".dimmed().to_string()
+        },
+        if operational_fatigue {
+            "FATIGUE".red().bold().to_string()
+        } else {
+            "CALM".dimmed().to_string()
+        }
     );
-    scene.push_str(&format!("             | {} |\n", state_line.pad_to_width(40)));
+    scene.push_str(&format!(
+        "             | {} |\n",
+        state_line.pad_to_width(40)
+    ));
     scene.push_str("             '------------------------------------------'\n");
 
     // Add secondary medical visuals (Life Support / IV)
     scene.push_str("                 | |                            | |\n");
     scene.push_str("              [ LIFE SUPPORT ]               [ NEURAL SCAN ]\n");
-    
-    let o2_val = if passed { "98% ".green().to_string() } else { "82% ".red().bold().to_string() };
-    let state_val = if passed { "SYNC".green().to_string() } else { "FOG ".yellow().to_string() };
-    
+
+    let o2_val = if passed {
+        "98% ".green().to_string()
+    } else {
+        "82% ".red().bold().to_string()
+    };
+    let state_val = if passed {
+        "SYNC".green().to_string()
+    } else {
+        "FOG ".yellow().to_string()
+    };
+
     let o2_line = format!("|  O2: {} |", o2_val);
     let state_line = format!("|  STATE: {} |", state_val);
-    
+
     scene.push_str(&format!(
         "              {}               {} \n",
         o2_line.pad_to_width(12),
@@ -184,7 +235,7 @@ fn render_med_bay_scene(
     println!("{}", scene);
 
     println!("    SCANNING SUBSYSTEMS...");
-    
+
     let categories = [
         ("NEURAL", &report.story_checks),
         ("MOTOR", &report.voyage_checks),
@@ -200,7 +251,11 @@ fn render_med_bay_scene(
 
     for (name, results) in categories {
         let cat_passed = results.iter().all(|c| c.passed);
-        let color = if cat_passed { owo_colors::AnsiColors::Green } else { owo_colors::AnsiColors::Red };
+        let color = if cat_passed {
+            owo_colors::AnsiColors::Green
+        } else {
+            owo_colors::AnsiColors::Red
+        };
         let status = if cat_passed { "NOMINAL" } else { "FAILURE" };
         println!("      - {: <12} [ {} ]", name, status.color(color).bold());
     }

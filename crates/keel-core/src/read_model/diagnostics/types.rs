@@ -101,7 +101,9 @@ impl CheckResult {
     }
 
     pub fn has_warnings(&self) -> bool {
-        self.problems.iter().any(|p| p.severity == Severity::Warning)
+        self.problems
+            .iter()
+            .any(|p| p.severity == Severity::Warning)
     }
 }
 

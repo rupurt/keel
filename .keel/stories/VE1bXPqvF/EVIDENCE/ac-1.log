@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-16T04:26:24.109782088-07:00
+mode: manual
+---
+Tests doctor_flags_missing_evidence_sections, doctor_flags_missing_assessment_sections, and doctor_accepts_complete_evidence_and_assessment verify the diagnostic engine flags missing required sections in EVIDENCE.md and ASSESSMENT.md as errors.

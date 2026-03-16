@@ -25,11 +25,11 @@ started_at: 2026-03-16T03:38:25
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/3 stories complete
+**Progress:** 1/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Align Templates and Parsing Logic](../../../../stories/VE1bVusKZ/README.md) | feat | needs-human-verification |
-| [Update Diagnostic Engine for Strict Contract](../../../../stories/VE1bXPqvF/README.md) | feat | backlog |
+| [Align Templates and Parsing Logic](../../../../stories/VE1bVusKZ/README.md) | feat | done |
+| [Update Diagnostic Engine for Strict Contract](../../../../stories/VE1bXPqvF/README.md) | feat | in-progress |
 | [Refine CLI Projections for Bearings](../../../../stories/VE1bXV3wS/README.md) | feat | backlog |
 <!-- END GENERATED -->

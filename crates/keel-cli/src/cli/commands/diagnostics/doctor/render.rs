@@ -29,22 +29,46 @@ pub fn print_report(report: &DoctorReport) {
 
 fn render_pathology_summary(report: &DoctorReport) {
     println!("{}", "[ SYSTEMS PATHOLOGY ]".bold().cyan());
-    
+
     // Define the higher-level subsystem groups
-    let core_passed = report.mission_checks.iter().all(|c| !c.has_errors()) && report.pacemaker_checks.iter().all(|c| !c.has_errors());
-    let strategy_passed = report.epic_checks.iter().all(|c| !c.has_errors()) && report.bearing_checks.iter().all(|c| !c.has_errors()) && report.adr_checks.iter().all(|c| !c.has_errors());
-    let execution_passed = report.voyage_checks.iter().all(|c| !c.has_errors()) && report.story_checks.iter().all(|c| !c.has_errors()) && report.routine_checks.iter().all(|c| !c.has_errors());
-    let flow_passed = report.workflow_checks.iter().all(|c| !c.has_errors()) && report.delivery_checks.iter().all(|c| !c.has_errors());
+    let core_passed = report.mission_checks.iter().all(|c| !c.has_errors())
+        && report.pacemaker_checks.iter().all(|c| !c.has_errors());
+    let strategy_passed = report.epic_checks.iter().all(|c| !c.has_errors())
+        && report.bearing_checks.iter().all(|c| !c.has_errors())
+        && report.adr_checks.iter().all(|c| !c.has_errors());
+    let execution_passed = report.voyage_checks.iter().all(|c| !c.has_errors())
+        && report.story_checks.iter().all(|c| !c.has_errors())
+        && report.routine_checks.iter().all(|c| !c.has_errors());
+    let flow_passed = report.workflow_checks.iter().all(|c| !c.has_errors())
+        && report.delivery_checks.iter().all(|c| !c.has_errors());
 
-    let get_status = |passed: bool| if passed { "NOMINAL".green().bold().to_string() } else { "CRITICAL".red().bold().to_string() };
+    let get_status = |passed: bool| {
+        if passed {
+            "NOMINAL".green().bold().to_string()
+        } else {
+            "CRITICAL".red().bold().to_string()
+        }
+    };
 
-    println!("  ┌─ CORE      [{}] (Vital, Pacemaker)", get_status(core_passed));
+    println!(
+        "  ┌─ CORE      [{}] (Vital, Pacemaker)",
+        get_status(core_passed)
+    );
     println!("  │");
-    println!("  ├─ STRATEGY  [{}] (Strategic, Sensory, Skeletal)", get_status(strategy_passed));
+    println!(
+        "  ├─ STRATEGY  [{}] (Strategic, Sensory, Skeletal)",
+        get_status(strategy_passed)
+    );
     println!("  │");
-    println!("  ├─ EXECUTION [{}] (Motor, Neural, Autonomic)", get_status(execution_passed));
+    println!(
+        "  ├─ EXECUTION [{}] (Motor, Neural, Autonomic)",
+        get_status(execution_passed)
+    );
     println!("  │");
-    println!("  └─ FLOW      [{}] (Circulatory, Kinetic)", get_status(flow_passed));
+    println!(
+        "  └─ FLOW      [{}] (Circulatory, Kinetic)",
+        get_status(flow_passed)
+    );
 }
 
 fn print_section(name: &str, checks: &[CheckResult]) {
@@ -68,7 +92,7 @@ fn print_section(name: &str, checks: &[CheckResult]) {
         } else {
             "✓".green().to_string()
         };
-        
+
         println!("  {} {} ({} checks)", status, check.name, check.evaluations);
         for prob in &check.problems {
             let sev = match prob.severity {
