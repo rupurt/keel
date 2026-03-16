@@ -23,6 +23,7 @@ The Ramping Path (Your Moves):
   routine     Scheduled strategic work (Routines)
   adr         Architecture Decision Records (The Physics)
   roadmap     Strategic management timeline
+  finance     Work capital and system solvency (The Vault)
 
 Discovery & Automation:
   play        Invite play-driven discovery (The Sandbox)
@@ -487,6 +488,17 @@ pub fn build_cli() -> Command {
         .subcommand(
             Command::new("roadmap")
                 .about("Render the management roadmap")
+                .hide(true),
+        )
+        .subcommand(
+            Command::new("finance")
+                .about("Work capital and system solvency (The Vault)")
+                .arg(
+                    Arg::new("scene")
+                        .long("scene")
+                        .action(ArgAction::SetTrue)
+                        .help("Render the financial state as a visual scene"),
+                )
                 .hide(true),
         )
         .subcommand(hidden_subcommand_group::<

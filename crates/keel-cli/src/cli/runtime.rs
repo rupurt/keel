@@ -190,6 +190,10 @@ pub fn run() -> Result<()> {
         Some(("bearing", m)) => handle_bearing_command(&ctx, m),
         Some(("adr", m)) => handle_adr_command(&ctx, m),
         Some(("mission", m)) => handle_mission_command(&ctx, m),
+        Some(("finance", m)) => {
+            let scene = *m.get_one::<bool>("scene").unwrap_or(&false);
+            super::commands::diagnostics::finance::run(&resolve_board_dir()?, scene)
+        }
         Some(("config", m)) => handle_config_command(&ctx, m),
         None => {
             let mut cli = build_cli();
