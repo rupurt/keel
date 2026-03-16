@@ -65,6 +65,7 @@ mod tests {
             bearings: HashMap::new(),
             adrs: HashMap::new(),
             missions: HashMap::new(),
+            watches: HashMap::new(),
         }
     }
 

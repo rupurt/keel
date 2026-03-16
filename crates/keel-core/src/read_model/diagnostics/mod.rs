@@ -693,6 +693,15 @@ fn validate_with_config_internal(
         mission_evidence_problems,
     ));
 
+    let mission_watch_problems = checks::missions::check_mission_watches(&board);
+    mission_checks.push(configured_check(
+        doctor_config,
+        "mission-watch-constraint",
+        "Watch constraints",
+        board.missions.len(),
+        mission_watch_problems,
+    ));
+
     let mut routine_checks = Vec::new();
 
     // 7. Routine Checks

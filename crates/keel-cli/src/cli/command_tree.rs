@@ -495,6 +495,9 @@ pub fn build_cli() -> Command {
             crate::cli::commands::management::voyage::VoyageAction,
         >("voyage", "Voyage commands"))
         .subcommand(hidden_subcommand_group::<
+            crate::cli::commands::management::watch::WatchAction,
+        >("watch", "Watch (time constraint) commands"))
+        .subcommand(hidden_subcommand_group::<
             crate::cli::commands::management::story::StoryAction,
         >("story", "Story commands"))
         .subcommand(

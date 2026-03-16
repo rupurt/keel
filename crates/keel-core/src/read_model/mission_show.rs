@@ -19,6 +19,15 @@ pub struct MissionShowProjection {
     pub drift: DriftSurfaceSummary,
     pub log_summary: Option<String>,
     pub operator_signal: Option<String>,
+    pub watch: Option<WatchSummary>,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct WatchSummary {
+    pub id: String,
+    pub title: String,
+    pub limit_hours: u32,
+    pub current_hour: u32,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -81,6 +90,26 @@ pub fn build_projection(board: &Board, mission: &Mission) -> Result<MissionShowP
     let log_summary = extract_latest_log_entry(&log_content);
     let drift = project_structural_drift_summary(board)?;
 
+    // Populate watch summary if exists
+    let watch = if let Some(watch_id) = &mission.frontmatter.watch {
+        board.find_watch(watch_id).map(|w| {
+            let current_hour = mission
+                .frontmatter
+                .activated_at
+                .map(|a| (chrono::Utc::now().naive_utc() - a).num_hours() as u32)
+                .unwrap_or(0);
+
+            WatchSummary {
+                id: w.id().to_string(),
+                title: w.title().to_string(),
+                limit_hours: w.limit_hours(),
+                current_hour,
+            }
+        })
+    } else {
+        None
+    };
+
     Ok(MissionShowProjection {
         id: mission.id().to_string(),
         title: mission.title().to_string(),
@@ -95,6 +124,7 @@ pub fn build_projection(board: &Board, mission: &Mission) -> Result<MissionShowP
         drift,
         log_summary,
         operator_signal: mission.frontmatter.operator_signal.clone(),
+        watch,
     })
 }
 

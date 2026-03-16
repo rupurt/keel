@@ -31,6 +31,8 @@ pub struct TestMission {
     pub id: String,
     pub title: String,
     pub status: String,
+    pub watch: Option<String>,
+    pub activated_at: Option<chrono::NaiveDateTime>,
 }
 
 /// Configuration for a test story.
@@ -94,6 +96,8 @@ impl Default for TestMission {
             id: "M1".to_string(),
             title: "Test Mission".to_string(),
             status: "defining".to_string(),
+            watch: None,
+            activated_at: None,
         }
     }
 }
@@ -113,6 +117,16 @@ impl TestMission {
 
     pub fn status(mut self, status: &str) -> Self {
         self.status = status.to_string();
+        self
+    }
+
+    pub fn watch(mut self, watch: &str) -> Self {
+        self.watch = Some(watch.to_string());
+        self
+    }
+
+    pub fn activated_at(mut self, dt: chrono::NaiveDateTime) -> Self {
+        self.activated_at = Some(dt);
         self
     }
 }
@@ -780,7 +794,18 @@ Test harness epic problem statement.
             let mission_dir = root.join("missions").join(&mission.id);
             fs::create_dir_all(&mission_dir).unwrap();
 
-            let readme = template_rendering::render(
+            let mut mutations = Vec::new();
+            if let Some(ref watch) = mission.watch {
+                mutations.push(Mutation::set("watch", watch.clone()));
+            }
+            if let Some(activated_at) = mission.activated_at {
+                mutations.push(Mutation::set(
+                    "activated_at",
+                    activated_at.format("%Y-%m-%dT%H:%M:%S").to_string(),
+                ));
+            }
+
+            let readme = template_rendering::render_with_mutations(
                 templates::mission::README,
                 &[
                     ("id", &mission.id),
@@ -789,6 +814,7 @@ Test harness epic problem statement.
                     ("updated_at", FIXED_DATETIME),
                     ("status", &mission.status),
                 ],
+                &mutations,
             );
             fs::write(mission_dir.join("README.md"), readme).unwrap();
 

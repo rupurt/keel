@@ -17,6 +17,7 @@ mod story;
 mod story_type;
 pub mod taxonomy;
 mod voyage;
+mod watch;
 
 pub use crate::domain::state_machine::mission::MissionStatus;
 pub use crate::domain::state_machine::story::StoryState;
@@ -36,6 +37,7 @@ pub use routine::{Routine, RoutineCadence, RoutineFrontmatter};
 pub use story::{AC_REQ_RE, Story, StoryFrontmatter};
 pub use story_type::StoryType;
 pub use voyage::{Voyage, VoyageFrontmatter};
+pub use watch::{Watch, WatchFrontmatter};
 
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Deserializer};

@@ -59,6 +59,10 @@ fn build_document(projection: &MissionShowProjection, width: usize) -> ShowDocum
             format!("{}", projection.archetype.bold().bright_magenta()),
         )
         .row_optional(
+            "Watch:",
+            projection.watch.as_ref().map(|w| w.id.clone()),
+        )
+        .row_optional(
             "Signal:",
             projection
                 .operator_signal
@@ -70,6 +74,20 @@ fn build_document(projection: &MissionShowProjection, width: usize) -> ShowDocum
     document.push_header(metadata, Some(width));
 
     let mut sections = Vec::new();
+
+    // Watch Section
+    if let Some(watch) = &projection.watch {
+        let mut watch_section = ShowSection::new("Watch Constraint");
+        let watch_scene = crate::cli::presentation::scene::render_watch(watch.current_hour);
+        watch_section.push_lines(watch_scene.lines().map(|s| s.to_string()));
+        watch_section.push_lines([format!(
+            "  {} - {}h limit (currently {}h elapsed)",
+            watch.title.bold(),
+            watch.limit_hours,
+            watch.current_hour
+        )]);
+        sections.push(watch_section);
+    }
 
     // Goals Section
     let mut goals_section = ShowSection::new("Goals");
@@ -230,6 +248,7 @@ mod tests {
             },
             log_summary: Some("2026-03-12T17:00:00 - Latest".to_string()),
             operator_signal: None,
+            watch: None,
         }
     }
 

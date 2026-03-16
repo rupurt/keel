@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use anyhow::{Result, anyhow};
 
-use super::{Adr, Bearing, Entity, Epic, Heartbeat, Mission, Routine, Story, StoryState, Voyage};
+use super::{Adr, Bearing, Entity, Epic, Heartbeat, Mission, Routine, Story, StoryState, Voyage, Watch};
 
 /// The board contains all routines, stories, voyages, epics, bearings, and ADRs.
 #[derive(Debug, Clone)]
@@ -31,6 +31,8 @@ pub struct Board {
     pub adrs: HashMap<String, Adr>,
     /// All missions indexed by ID
     pub missions: HashMap<String, Mission>,
+    /// All watches indexed by ID
+    pub watches: HashMap<String, Watch>,
 }
 
 impl Default for Board {
@@ -53,6 +55,7 @@ impl Board {
             bearings: HashMap::new(),
             adrs: HashMap::new(),
             missions: HashMap::new(),
+            watches: HashMap::new(),
         }
     }
 
@@ -91,6 +94,11 @@ impl Board {
     #[allow(dead_code)]
     pub fn find_mission(&self, id: &str) -> Option<&Mission> {
         self.missions.get(id)
+    }
+
+    /// Find a watch by exact ID.
+    pub fn find_watch(&self, id: &str) -> Option<&Watch> {
+        self.watches.get(id)
     }
 
     /// Require a story by exact ID, returning an error with nearby ID suggestions if not found.
@@ -136,6 +144,12 @@ impl Board {
             .ok_or_else(|| not_found_error("Mission", id, self.missions.values()))
     }
 
+    /// Require a watch by exact ID, returning an error with nearby ID suggestions if not found.
+    pub fn require_watch(&self, id: &str) -> Result<&Watch> {
+        self.find_watch(id)
+            .ok_or_else(|| not_found_error("Watch", id, self.watches.values()))
+    }
+
     /// Get all epics belonging to a mission
     pub fn epics_for_mission(&self, mission_id: &str) -> Vec<&Epic> {
         self.epics
@@ -157,6 +171,14 @@ impl Board {
         self.adrs
             .values()
             .filter(|a| a.frontmatter.mission.as_deref() == Some(mission_id))
+            .collect()
+    }
+
+    /// Get all missions linked to a specific watch
+    pub fn missions_for_watch(&self, watch_id: &str) -> Vec<&Mission> {
+        self.missions
+            .values()
+            .filter(|m| m.frontmatter.watch.as_deref() == Some(watch_id))
             .collect()
     }
 

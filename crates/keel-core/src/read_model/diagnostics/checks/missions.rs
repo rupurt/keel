@@ -57,6 +57,61 @@ pub fn check_mission_goals(board: &Board) -> Vec<Problem> {
     problems
 }
 
+/// Check mission watch constraints
+pub fn check_mission_watches(board: &Board) -> Vec<Problem> {
+    let mut problems = Vec::new();
+
+    for mission in board.missions.values() {
+        if mission.status() != MissionStatus::Active {
+            continue;
+        }
+
+        if let Some(watch_id) = &mission.frontmatter.watch {
+            let watch = match board.find_watch(watch_id) {
+                Some(w) => w,
+                None => {
+                    problems.push(
+                        Problem::error(
+                            mission.path.clone(),
+                            format!(
+                                "Mission {} references nonexistent watch '{}'",
+                                mission.id(),
+                                watch_id
+                            ),
+                        )
+                        .with_scope(mission.id())
+                        .with_category(GapCategory::Coherence)
+                        .with_check_id(CheckId::MissionWatchConstraint),
+                    );
+                    continue;
+                }
+            };
+
+            if let Some(activated_at) = mission.frontmatter.activated_at {
+                let elapsed = (chrono::Utc::now().naive_utc() - activated_at).num_hours() as u32;
+                if elapsed >= watch.limit_hours() {
+                    problems.push(
+                        Problem::error(
+                            mission.path.clone(),
+                            format!(
+                                "Mission {} has exceeded its watch constraint ({}h limit, {}h elapsed)",
+                                mission.id(),
+                                watch.limit_hours(),
+                                elapsed
+                            ),
+                        )
+                        .with_scope(mission.id())
+                        .with_category(GapCategory::Coherence)
+                        .with_check_id(CheckId::MissionWatchConstraint),
+                    );
+                }
+            }
+        }
+    }
+
+    problems
+}
+
 /// Check that active missions still satisfy the activation charter contract.
 pub fn check_mission_definition_readiness(board: &Board) -> Vec<Problem> {
     let mut problems = Vec::new();
@@ -577,5 +632,51 @@ mod tests {
         assert_eq!(problems.len(), 1);
         assert_eq!(problems[0].check_id, CheckId::MissionNonTerminalChildren);
         assert!(problems[0].message.contains("bearing B1 (ready)"));
+    }
+
+    #[test]
+    fn test_check_mission_watches_flags_exceeded_limit() {
+        let mut mission = TestMission::new("M1").status("active");
+        mission.activated_at =
+            Some(chrono::Utc::now().naive_utc() - chrono::Duration::hours(13));
+        mission.watch = Some("W1".to_string());
+
+        let temp = TestBoardBuilder::new().mission(mission).build();
+
+        // Create the watch file
+        fs::create_dir_all(temp.path().join("watches/W1")).unwrap();
+        fs::write(
+            temp.path().join("watches/W1/README.md"),
+            r#"---
+id: W1
+title: Test Watch
+limit_hours: 12
+---
+"#,
+        )
+        .unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_mission_watches(&board);
+
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].check_id, CheckId::MissionWatchConstraint);
+        assert!(problems[0].message.contains("exceeded its watch constraint"));
+        assert!(problems[0].message.contains("12h limit"));
+    }
+
+    #[test]
+    fn test_check_mission_watches_flags_missing_watch() {
+        let mut mission = TestMission::new("M1").status("active");
+        mission.watch = Some("NONEXISTENT".to_string());
+
+        let temp = TestBoardBuilder::new().mission(mission).build();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_mission_watches(&board);
+
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].check_id, CheckId::MissionWatchConstraint);
+        assert!(problems[0].message.contains("references nonexistent watch"));
     }
 }

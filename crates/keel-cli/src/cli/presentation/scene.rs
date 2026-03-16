@@ -50,3 +50,33 @@ pub fn render_gears(active: bool) -> String {
         base_gears.dimmed().to_string()
     }
 }
+
+/// Renders a 12hr analog watch face metaphor for time-constrained missions.
+/// `hour` determines the hand position (0-11).
+pub fn render_watch(hour: u32) -> String {
+    let hour = hour % 12;
+
+    let center = match hour {
+        0 | 6 => "|",
+        3 | 9 => "-",
+        1 | 2 | 7 | 8 => "/",
+        4 | 5 | 10 | 11 => "\\",
+        _ => "+",
+    }
+    .yellow()
+    .to_string();
+
+    format!(
+        r#"
+      .-------.    
+    .'    12   '.  
+   /  9   {}   3  \ 
+  |       |       |
+  |       |       |
+   \      6      / 
+    '.         .'  
+      `-------`    
+"#,
+        center
+    )
+}

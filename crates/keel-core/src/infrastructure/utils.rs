@@ -112,7 +112,7 @@ pub fn cmp_optional_index_then_id(
 ///
 /// # Examples
 /// ```
-/// use keel::infrastructure::utils::pluralize;
+/// use keel_core::infrastructure::utils::pluralize;
 /// assert_eq!(pluralize(1, "story", "stories"), "story");
 /// assert_eq!(pluralize(2, "story", "stories"), "stories");
 /// ```

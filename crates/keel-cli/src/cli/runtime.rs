@@ -194,6 +194,7 @@ pub fn run() -> Result<()> {
         Some(("bearing", m)) => handle_bearing_command(&ctx, m),
         Some(("adr", m)) => handle_adr_command(&ctx, m),
         Some(("mission", m)) => handle_mission_command(&ctx, m),
+        Some(("watch", m)) => handle_watch_command(m),
         Some(("finance", m)) => {
             let scene = *m.get_one::<bool>("scene").unwrap_or(&false);
             super::commands::diagnostics::finance::run(&resolve_board_dir()?, scene)
@@ -239,6 +240,10 @@ fn handle_adr_command(ctx: &spoke_auth::ExecutionContext, matches: &ArgMatches) 
 
 fn handle_mission_command(ctx: &spoke_auth::ExecutionContext, matches: &ArgMatches) -> Result<()> {
     super::commands::management::mission::run(ctx, parse_subcommand_action(matches)?)
+}
+
+fn handle_watch_command(matches: &ArgMatches) -> Result<()> {
+    super::commands::management::watch::run(parse_subcommand_action(matches)?)
 }
 
 fn handle_knowledge_command(

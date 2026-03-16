@@ -31,6 +31,7 @@ fn test_mission_serialization_order() {
         activated_at: None,
         achieved_at: None,
         verified_at: None,
+        watch: None,
         operator_signal: None,
     };
     let s = serde_yaml::to_string(&fm).unwrap();
@@ -150,6 +151,7 @@ fn test_canonical_markdown_formatting() {
         activated_at: None,
         achieved_at: None,
         verified_at: None,
+        watch: None,
         operator_signal: None,
     };
     let serialized = serde_yaml::to_string(&fm).unwrap();

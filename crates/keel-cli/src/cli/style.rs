@@ -735,6 +735,11 @@ pub fn styled_story_id(id: &str) -> String {
     id.bright_blue().bold().to_string()
 }
 
+/// Color a Watch ID
+pub fn styled_watch_id(id: &str) -> String {
+    id.yellow().bold().to_string()
+}
+
 /// Color an SRS requirement ID
 pub fn styled_requirement_id(id: &str) -> String {
     id.cyan().to_string()

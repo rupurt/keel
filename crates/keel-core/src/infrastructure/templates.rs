@@ -71,6 +71,12 @@ pub mod adr {
     pub const ADR: &str = include_str!("../../../../templates/adrs/ADR.md");
 }
 
+/// Watch templates
+pub mod watch {
+    /// Watch README template
+    pub const README: &str = include_str!("../../../../templates/watches/README.md");
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -82,6 +88,7 @@ mod tests {
         "context",
         "epic",
         "goal",
+        "limit",
         "problem",
         "knowledge_example_id",
         "title",
@@ -568,6 +575,7 @@ mod tests {
             ("mission README", mission::README),
             ("mission CHARTER", mission::CHARTER),
             ("mission LOG", mission::LOG),
+            ("watch README", watch::README),
         ];
 
         for (label, template) in templates {
@@ -604,6 +612,7 @@ mod tests {
             ("mission README", mission::README),
             ("mission CHARTER", mission::CHARTER),
             ("mission LOG", mission::LOG),
+            ("watch README", watch::README),
         ];
 
         for (label, template) in planning_templates {

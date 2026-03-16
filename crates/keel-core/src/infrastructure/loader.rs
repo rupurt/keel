@@ -13,7 +13,7 @@ use walkdir::WalkDir;
 use crate::domain::model::{
     Adr, AdrFrontmatter, Bearing, BearingFrontmatter, Board, Epic, EpicFrontmatter, Heartbeat,
     Mission, MissionFrontmatter, Routine, RoutineFrontmatter, Story, StoryFrontmatter, Voyage,
-    VoyageFrontmatter,
+    VoyageFrontmatter, Watch, WatchFrontmatter,
 };
 use crate::infrastructure::parser::parse_frontmatter;
 use crate::infrastructure::utils::is_path_dirty;
@@ -66,6 +66,7 @@ pub fn load_board(board_dir: &Path) -> Result<Board> {
     let bearings = load_bearings(board_dir)?;
     let adrs = load_adrs(board_dir)?;
     let missions = load_missions(board_dir)?;
+    let watches = load_watches(board_dir)?;
     let heartbeat = load_heartbeat(board_dir)?;
 
     Ok(Board {
@@ -78,6 +79,7 @@ pub fn load_board(board_dir: &Path) -> Result<Board> {
         bearings,
         adrs,
         missions,
+        watches,
     })
 }
 
@@ -1076,5 +1078,78 @@ updated_at: 2026-03-01T10:00:00
         // Should use directory name, not frontmatter id
         assert!(board.missions.contains_key("dir-name"));
         assert_eq!(board.missions.get("dir-name").unwrap().id(), "dir-name");
+    }
+
+    #[test]
+    fn load_board_find_watches() {
+        let temp = TempDir::new().unwrap();
+        let root = temp.path();
+
+        fs::create_dir_all(root.join("watches/test-watch")).unwrap();
+        fs::write(
+            root.join("watches/test-watch/README.md"),
+            r#"---
+id: test-watch
+title: Test Watch
+limit_hours: 12
+---
+# Test Watch
+"#,
+        )
+        .unwrap();
+
+        let board = load_board(root).unwrap();
+
+        assert_eq!(board.watches.len(), 1);
+        assert!(board.watches.contains_key("test-watch"));
+
+        let watch = board.watches.get("test-watch").unwrap();
+        assert_eq!(watch.title(), "Test Watch");
+        assert_eq!(watch.limit_hours(), 12);
+    }
+}
+
+/// Load all watches from watches/*/README.md
+fn load_watches(board_dir: &Path) -> Result<HashMap<String, Watch>> {
+    let watches_dir = board_dir.join("watches");
+    if !watches_dir.exists() {
+        return Ok(HashMap::new());
+    }
+
+    let paths: Vec<_> = fs::read_dir(&watches_dir)?
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().is_dir())
+        .map(|e| e.path().join("README.md"))
+        .filter(|p| p.exists())
+        .collect();
+
+    Ok(load_entities(&paths))
+}
+
+impl FromPath for Watch {
+    fn from_path(path: &Path) -> Result<Self> {
+        let content = fs::read_to_string(path)
+            .with_context(|| format!("Failed to read watch file: {}", path.display()))?;
+        let (mut frontmatter, _body): (WatchFrontmatter, _) = parse_frontmatter(&content)
+            .with_context(|| format!("Failed to parse watch frontmatter: {}", path.display()))?;
+
+        // Extract ID from path: watches/{watch_id}/README.md
+        let watch_id = path
+            .parent()
+            .and_then(|p| p.file_name())
+            .and_then(|n| n.to_str())
+            .unwrap_or("")
+            .to_string();
+
+        // Override frontmatter id with directory name (source of truth)
+        frontmatter.id = watch_id;
+
+        Ok(Watch::new(frontmatter, path.to_path_buf()))
+    }
+    fn entity_id(&self) -> &str {
+        self.id()
+    }
+    fn entity_name() -> &'static str {
+        "watch"
     }
 }

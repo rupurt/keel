@@ -230,6 +230,7 @@ pub enum CheckId {
     MissionMissingLogEntries,
     MissionMissingChildren,
     MissionNonTerminalChildren,
+    MissionWatchConstraint,
     WorkflowGraphIntegrity,
     WorkflowTopology,
     RoutineInvalidCadence,
