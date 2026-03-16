@@ -9,6 +9,7 @@ The Ramping Path (Your Moves):
   doctor      Validate board health and optionally fix issues
   health      Subsystem status check and bio-scan (The Med-Bay)
   flow        Show workflow lane dashboard from configured topology
+  screen      Visual representation of the current board (Strategic Radar)
 
 2. The Operator (Learning by Building)
   workshop    Focus on items requiring human attention (The Workbench)
@@ -227,6 +228,30 @@ pub fn build_cli() -> Command {
                         .long("include-done")
                         .help("Include done voyages and stories")
                         .action(ArgAction::SetTrue),
+                )
+                .arg(
+                    Arg::new("static")
+                        .long("static")
+                        .help("Render once and exit even in an interactive terminal")
+                        .action(ArgAction::SetTrue),
+                ),
+        )
+        .subcommand(
+            Command::new("screen")
+                .about("Show a visual representation of the project state")
+                .arg(
+                    Arg::new("zoom")
+                        .long("zoom")
+                        .value_name("LEVEL")
+                        .default_value("mission")
+                        .value_parser(["world", "mission", "epic", "voyage", "story"])
+                        .help("Zoom level to render"),
+                )
+                .arg(
+                    Arg::new("focus")
+                        .long("focus")
+                        .value_name("ID")
+                        .help("Center the screen on a specific entity branch"),
                 )
                 .arg(
                     Arg::new("static")

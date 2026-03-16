@@ -101,6 +101,16 @@ pub fn run() -> Result<()> {
             let static_output = *m.get_one::<bool>("static").unwrap_or(&false);
             super::commands::management::topology::run(zoom, focus_id, include_done, static_output)
         }
+        Some(("screen", m)) => {
+            let zoom = m
+                .get_one::<String>("zoom")
+                .expect("defaulted")
+                .parse()
+                .expect("validated by clap");
+            let focus_id = m.get_one::<String>("focus").map(|value| value.as_str());
+            let static_output = *m.get_one::<bool>("static").unwrap_or(&false);
+            super::commands::management::topology::run(zoom, focus_id, false, static_output)
+        }
         Some(("play", m)) => {
             let bearing = m.get_one::<String>("bearing").cloned();
             let prop = m.get_one::<String>("prop").cloned();
