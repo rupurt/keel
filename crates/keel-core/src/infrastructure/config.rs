@@ -282,7 +282,7 @@ impl WorkflowConfig {
 
         if std::env::var("TMUX").is_ok() {
             return Some(
-                "tmux display-message \"Keel: Human input required (Capacitors full)\"".to_string(),
+                "tmux display-message \"Keel: Bench is messy (Human input required)\"".to_string(),
             );
         }
 
