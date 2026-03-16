@@ -5,7 +5,7 @@ cadence:
   cron: "0 0 * * *"
   timezone: UTC
   deadline: 48h
-target-scope: VE3KrOPS
+target-scope: VE4hiOYHj
 created_at: 2026-03-14T14:45:00
 updated_at: 2026-03-14T14:45:00
 ---
