@@ -46,6 +46,12 @@ pub fn run(
         ping.status = PingStatus::Ponged;
         ping.pong_message = Some(pong.clone());
         save_ping(board_dir, &ping)?;
+
+        // Also save to outbox
+        let outbox = super::outbox_dir(board_dir);
+        let _ = std::fs::create_dir_all(&outbox);
+        let outbox_path = outbox.join(format!("{}.json", ping.id));
+        let _ = serde_json::to_string_pretty(&ping).map(|json| std::fs::write(&outbox_path, json));
     }
 
     if json {
