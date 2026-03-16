@@ -100,7 +100,7 @@ pub fn run() -> Result<()> {
             let include_done = *m.get_one::<bool>("include_done").unwrap_or(&false);
             let static_output = *m.get_one::<bool>("static").unwrap_or(&false);
             super::commands::management::topology::run(zoom, focus_id, include_done, static_output)
-        }
+        } ,
         Some(("screen", m)) => {
             let zoom = m
                 .get_one::<String>("zoom")
