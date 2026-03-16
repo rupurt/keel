@@ -14,10 +14,7 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
     let metrics = flow_status::project(&board, chrono::Utc::now());
     let passed = report.passed();
     
-    // 1. Kinetic Load (Active work)
-    let _kinetic_load = metrics.verification.count + metrics.execution.in_progress_count;
-    
-    // 2. Strategic Congestion (Top-heavy backlog)
+    // 1. Strategic Congestion (Top-heavy backlog)
     // Congested if many draft epics (> 5) or many incomplete missions (> 3)
     let draft_epics = board.epics.values().filter(|e| e.status() == keel::domain::model::EpicState::Draft).count();
     let strategic_congested = draft_epics > 5 || metrics.incomplete_missions_count > 3;
@@ -89,7 +86,7 @@ fn render_med_bay_scene(
     println!("    └{}┘", "─".repeat(width.saturating_sub(6)));
 
     let passed = report.passed();
-    let _kinetic_load = metrics.verification.count + metrics.execution.in_progress_count;
+    let kinetic_load = metrics.verification.count + metrics.execution.in_progress_count;
 
     let (heart_rate, status_label, status_color) = if !passed {
         ("140 BPM", "CRITICAL", owo_colors::AnsiColors::Red)
