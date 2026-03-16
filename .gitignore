@@ -21,3 +21,4 @@ keel.toml
 
 .gemini/
 gha-creds-*.json
+.keel/outbox/

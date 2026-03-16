@@ -154,6 +154,14 @@ pub fn run() -> Result<()> {
             let is_self = m.get_flag("self");
             super::commands::comms::poke::run(&ctx, &resolve_board_dir()?, id.map(|s| s.as_str()), message.as_deref(), is_self, json)
         }
+        Some(("inbox", m)) => {
+            let json = *m.get_one::<bool>("json").unwrap_or(&false);
+            super::commands::comms::inbox::run(&ctx, &resolve_board_dir()?, json)
+        }
+        Some(("outbox", m)) => {
+            let json = *m.get_one::<bool>("json").unwrap_or(&false);
+            super::commands::comms::outbox::run(&ctx, &resolve_board_dir()?, json)
+        }
         Some(("generate", _)) => super::commands::setup::generate::run(&resolve_board_dir()?),
         Some(("init", _)) => Ok(super::commands::setup::init::run()?),
         Some(("roadmap", _)) => super::commands::management::roadmap::run(),

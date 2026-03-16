@@ -2,6 +2,8 @@
 
 pub mod ping;
 pub mod poke;
+pub mod inbox;
+pub mod outbox;
 pub mod notify;
 
 use anyhow::{Context, Result};
@@ -28,6 +30,10 @@ pub enum PingStatus {
 
 pub fn inbox_dir(board_dir: &Path) -> PathBuf {
     board_dir.join("inbox")
+}
+
+pub fn outbox_dir(board_dir: &Path) -> PathBuf {
+    board_dir.join("outbox")
 }
 
 pub fn save_ping(board_dir: &Path, ping: &PingMessage) -> Result<()> {

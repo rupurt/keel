@@ -34,6 +34,8 @@ Discovery & Automation:
 Comms:
   ping        Send a message to the inbox
   poke        Respond to or re-evaluate a ping in the inbox
+  inbox       List messages in the inbox
+  outbox      List messages in the outbox
 
 Setup:
   init        Initialize a new keel board
@@ -371,6 +373,28 @@ pub fn build_cli() -> Command {
                 .arg(Arg::new("message").help("Message to the system or a specific ping").num_args(1..))
                 .arg(Arg::new("id").long("id").help("The ID of the ping if targeting a specific one"))
                 .arg(Arg::new("self").long("self").help("Explicitly poke the system").action(ArgAction::SetTrue))
+                .arg(
+                    Arg::new("json")
+                        .long("json")
+                        .help("Output as JSON for scripting")
+                        .action(ArgAction::SetTrue),
+                ),
+        )
+        .subcommand(
+            Command::new("inbox")
+                .about("List messages in the inbox")
+                .hide(true)
+                .arg(
+                    Arg::new("json")
+                        .long("json")
+                        .help("Output as JSON for scripting")
+                        .action(ArgAction::SetTrue),
+                ),
+        )
+        .subcommand(
+            Command::new("outbox")
+                .about("List messages in the outbox")
+                .hide(true)
                 .arg(
                     Arg::new("json")
                         .long("json")
