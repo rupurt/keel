@@ -15,20 +15,20 @@ id: VDmdk1uib
 
 ## Analysis
 
-### Findings
+## Findings
 
 - Three bullets are sufficient for quick status. [SRC-01]
 - The framing of a "Ramping Path" provides a clear onboarding journey for new developers. [SRC-02]
 
-### Opportunity Cost
+## Opportunity Cost
 
 Slightly higher code complexity in the CLI layer. [SRC-01]
 
-### Dependencies
+## Dependencies
 
 - Depends on the existing `calculate_next` algorithm. [SRC-01]
 
-### Alternatives Considered
+## Alternatives Considered
 
 - Multi-page status was rejected as too verbose. [SRC-01]
 

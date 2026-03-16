@@ -404,18 +404,17 @@ updated_at: 2026-03-11T09:30:00
 | Effort | 2 |
 | Risk | 2 |
 
-## Analysis
 
-### Findings
+## Findings
 - Delivery teams need source-backed recommendations before converting research into roadmap work [SRC-01][SRC-02]
 
-### Opportunity Cost
+## Opportunity Cost
 Deferring this leaves roadmap work underspecified [SRC-02]
 
-### Dependencies
+## Dependencies
 - Evidence capture must produce canonical source records first [SRC-02]
 
-### Alternatives Considered
+## Alternatives Considered
 - Keep factor-only scoring and trust operator judgment alone [SRC-01]
 
 ## Recommendation

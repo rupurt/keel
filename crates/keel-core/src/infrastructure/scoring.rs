@@ -178,10 +178,10 @@ pub fn calculate_evidence_backed_score(
 pub fn parse_assessment_document(content: &str) -> AssessmentDocument {
     AssessmentDocument {
         factors: parse_assessment(content),
-        findings: parse_cited_list_section(content, "### Findings"),
-        opportunity_cost: parse_cited_paragraph(content, "### Opportunity Cost"),
-        dependencies: parse_cited_list_section(content, "### Dependencies"),
-        alternatives: parse_cited_list_section(content, "### Alternatives Considered"),
+        findings: parse_cited_list_section(content, "## Findings"),
+        opportunity_cost: parse_cited_paragraph(content, "## Opportunity Cost"),
+        dependencies: parse_cited_list_section(content, "## Dependencies"),
+        alternatives: parse_cited_list_section(content, "## Alternatives Considered"),
         recommendation: parse_cited_recommendation(content),
     }
 }
@@ -623,18 +623,16 @@ mod tests {
 | Effort | 2 |
 | Risk | 2 |
 
-## Analysis
-
-### Findings
+## Findings
 - Delivery teams need source-backed recommendations before converting research into roadmap work [SRC-01][SRC-02]
 
-### Opportunity Cost
+## Opportunity Cost
 Deferring this leaves EV scoring disconnected from the evidence contract [SRC-02]
 
-### Dependencies
+## Dependencies
 - Evidence capture must produce canonical source records first [SRC-02]
 
-### Alternatives Considered
+## Alternatives Considered
 - Keep factor-only scoring and trust operator judgment alone [SRC-03]
 
 ## Recommendation
@@ -656,15 +654,13 @@ Deferring this leaves EV scoring disconnected from the evidence contract [SRC-02
 | Effort | 2 |
 | Risk | 2 |
 
-## Analysis
-
-### Findings
+## Findings
 - Delivery teams need source-backed recommendations before converting research into roadmap work
 
-### Dependencies
+## Dependencies
 - Evidence capture must produce canonical source records first
 
-### Alternatives Considered
+## Alternatives Considered
 - Keep factor-only scoring and trust operator judgment alone
 
 ## Recommendation

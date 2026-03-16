@@ -14,7 +14,7 @@ id: 1vzeJF000
 
 ## Technical Research
 
-### Feasibility
+## Feasibility
 
 Fully feasible. Mission follows the same structural pattern as every existing
 keel entity (frontmatter + state machine + loader + doctor checks). The main

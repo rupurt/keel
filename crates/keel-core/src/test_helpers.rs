@@ -567,7 +567,7 @@ id: {}
 
 ## Technical Research
 
-### Feasibility
+## Feasibility
 Fixture evidence indicates the direction is feasible enough for tests.
 
 ## Key Findings

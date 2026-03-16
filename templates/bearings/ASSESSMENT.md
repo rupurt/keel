@@ -20,21 +20,19 @@ id: {{id}}
 - 4 = High
 - 5 = Very High
 
-## Analysis
-
-### Findings
+## Findings
 
 - Key finding with canonical support [SRC-01]
 
-### Opportunity Cost
+## Opportunity Cost
 
 What are we not doing by pursuing this? Cite the tradeoff, for example [SRC-01].
 
-### Dependencies
+## Dependencies
 
 - Dependency or prerequisite with support [SRC-01]
 
-### Alternatives Considered
+## Alternatives Considered
 
 - Alternative path with support [SRC-01]
 

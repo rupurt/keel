@@ -15,7 +15,7 @@ id: 1w5H2Bq9L
 
 ## Technical Research
 
-### Feasibility
+## Feasibility
 Implementing semantic search in a standalone CLI without an external database is highly feasible thanks to the Rust ecosystem's deep learning frameworks like `Candle`.
 
 ### Existing Solutions

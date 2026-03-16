@@ -10,9 +10,8 @@ id: {{id}}
 |----|-------|------------|----------|----------------------|-----------|-----------|-----------|-------|
 | SRC-01 | web | manual:web-search | https://example.com | 2026-01-01 | 2026-01-02 | medium | medium | Replace with the concrete claim this source supports |
 
-## Technical Research
+## Feasibility
 
-### Feasibility
 Summarize whether the current evidence supports feasibility and why.
 
 ## Key Findings

@@ -87,19 +87,19 @@ Transit (github.com/spoke-sh/transit) provides the transport-layer guarantees th
 
 *From bearing assessment:*
 
-### Findings
+## Findings
 
 - Schnorr threshold signatures (FROST) provide an efficient way for agents to collectively authorize state changes. [SRC-01]
 
-### Opportunity Cost
+## Opportunity Cost
 
 By investing in distributed cryptographic primitives now, we are deferring work on advanced TUI animations and deeper historical state visualization.
 
-### Dependencies
+## Dependencies
 
 - Requires a shared public key infrastructure (PKI) or a discovery mechanism for agent public keys. [SRC-01]
 
-### Alternatives Considered
+## Alternatives Considered
 
 - Centralized signing server (rejected due to single point of failure). [SRC-01]
 

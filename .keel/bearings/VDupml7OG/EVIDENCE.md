@@ -13,7 +13,7 @@ id: VDupml7OG
 
 ## Technical Research
 
-### Feasibility
+## Feasibility
 Initial research suggests that threshold signatures are highly feasible for Keel. The `frost-rust` library provides a robust implementation of Schnorr threshold signatures, which are computationally efficient and produce compact signatures.
 
 ## Key Findings

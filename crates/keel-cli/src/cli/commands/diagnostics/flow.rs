@@ -380,20 +380,22 @@ priority = 100
         let output = build_output_at(
             temp.path(),
             true,
-            false,
+            true,
             Utc.with_ymd_and_hms(2026, 1, 5, 18, 0, 0).unwrap(),
         )
         .unwrap();
 
-        assert!(output.contains("Scheduled Capacity"));
-        assert!(output.contains("routine-due"));
-        assert!(output.contains("due now"));
-        assert!(output.contains("run `keel pulse`"));
-        assert!(output.contains("routine-upcoming"));
-        assert!(output.contains("next run in 1h"));
-        let management = output.find("management (").unwrap();
-        let scheduled_capacity = output.find("  Scheduled Capacity").unwrap();
-        assert!(management < scheduled_capacity);
+        let stripped_output = ansi_escape_sequences::strip_ansi(&output);
+
+        assert!(stripped_output.contains("High-Priority Tasking"));
+        assert!(stripped_output.contains("routine-due"));
+        assert!(stripped_output.contains("due now"));
+        assert!(stripped_output.contains("run `keel pulse`"));
+        assert!(stripped_output.contains("routine-upcoming"));
+        assert!(stripped_output.contains("next run in 1h"));
+        let management = stripped_output.find("management (").unwrap();
+        let scheduled_capacity = stripped_output.find("High-Priority Tasking").unwrap();
+        assert!(scheduled_capacity < management);
     }
 
     #[test]
@@ -431,12 +433,13 @@ updated_at: 2026-01-05T18:00:00
         let output = build_output_at(
             temp.path(),
             true,
-            false,
+            true,
             Utc.with_ymd_and_hms(2026, 1, 5, 18, 0, 0).unwrap(),
         )
         .unwrap();
 
-        assert!(output.contains("already materialized this window as S1"));
+        let stripped_output = ansi_escape_sequences::strip_ansi(&output);
+        assert!(stripped_output.contains("already materialized this window as S1"));
     }
 
     #[test]

@@ -352,7 +352,7 @@ mod tests {
     #[test]
     fn test_check_adr_file_valid() {
         let temp = TestBoardBuilder::new().adr(TestAdr::new("ADR-001")).build();
-        let path = temp.path().join("adrs/ADR-001-test-adr.md");
+        let path = temp.path().join("adrs/ADR-001/README.md");
         let problem = check_adr_file(&path);
         assert!(problem.is_none());
     }

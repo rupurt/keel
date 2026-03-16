@@ -851,10 +851,22 @@ fn create_prd_from_bearing(board_dir: &Path, bearing: &Bearing) -> Result<String
     };
 
     // Extract assessment analysis
-    let analysis = assessment_content
-        .as_ref()
-        .and_then(|c| extract_section(c, "## Analysis"))
-        .unwrap_or_default();
+    let mut analysis = String::new();
+    if let Some(content) = assessment_content.as_ref() {
+        for heading in [
+            "## Findings",
+            "## Opportunity Cost",
+            "## Dependencies",
+            "## Alternatives Considered",
+        ] {
+            if let Some(section) = extract_section(content, heading) {
+                analysis.push_str(heading);
+                analysis.push_str("\n\n");
+                analysis.push_str(&section);
+                analysis.push('\n');
+            }
+        }
+    }
 
     // Build PRD content
     let mut prd = format!("# {} - Product Requirements\n\n", bearing.frontmatter.title);
@@ -1238,18 +1250,17 @@ The operator needs a concrete problem statement before the bearing advances.
 | Effort | 2 |
 | Risk | 2 |
 
-## Analysis
 
-### Findings
+## Findings
 - Delivery teams need source-backed recommendations before converting research into roadmap work [SRC-01][SRC-02]
 
-### Opportunity Cost
+## Opportunity Cost
 Deferring this leaves roadmap work underspecified [SRC-02]
 
-### Dependencies
+## Dependencies
 - Evidence capture must produce canonical source records first [SRC-02]
 
-### Alternatives Considered
+## Alternatives Considered
 - Keep factor-only scoring and trust operator judgment alone [SRC-01]
 
 ## Recommendation
@@ -1271,18 +1282,17 @@ Deferring this leaves roadmap work underspecified [SRC-02]
 | Effort | 2 |
 | Risk | 2 |
 
-## Analysis
 
-### Findings
+## Findings
 - Delivery teams need source-backed recommendations before converting research into roadmap work [SRC-99]
 
-### Opportunity Cost
+## Opportunity Cost
 Deferring this leaves roadmap work underspecified [SRC-99]
 
-### Dependencies
+## Dependencies
 - Evidence capture must produce canonical source records first [SRC-99]
 
-### Alternatives Considered
+## Alternatives Considered
 - Keep factor-only scoring and trust operator judgment alone [SRC-99]
 
 ## Recommendation
@@ -1304,18 +1314,17 @@ Deferring this leaves roadmap work underspecified [SRC-99]
 | Effort | 2 |
 | Risk | 2 |
 
-## Analysis
 
-### Findings
+## Findings
 - Delivery teams need source-backed recommendations before converting research into roadmap work [SRC-01]
 
-### Opportunity Cost
+## Opportunity Cost
 Deferring this leaves roadmap work underspecified [SRC-01]
 
-### Dependencies
+## Dependencies
 - Evidence capture must produce canonical source records first [SRC-01]
 
-### Alternatives Considered
+## Alternatives Considered
 - Keep factor-only scoring and trust operator judgment alone [SRC-01]
 
 ## Recommendation

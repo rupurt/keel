@@ -88,7 +88,7 @@ pub fn build_bearing_show_projection(
     };
 
     let evidence = evidence_content.map(|content| BearingEvidenceSummary {
-        feasibility: extract_section_excerpt(&section_text(content, "### Feasibility")),
+        feasibility: extract_section_excerpt(&section_text(content, "## Feasibility")),
         key_findings: parse_markdown_list_items(&section_text(content, "## Key Findings")),
         unknowns: parse_markdown_list_items(&section_text(content, "## Unknowns")),
         sources: parse_evidence_records(content)
@@ -114,7 +114,7 @@ pub fn build_bearing_show_projection(
             findings: cited_item_texts(&document.findings),
             opportunity_cost: extract_section_excerpt(&section_text(
                 content,
-                "### Opportunity Cost",
+                "## Opportunity Cost",
             )),
             dependencies: cited_item_texts(&document.dependencies),
             alternatives: cited_item_texts(&document.alternatives),
@@ -290,7 +290,7 @@ reviewed_at: 2026-03-06T12:00:00
 | SRC-01 | academic | manual:prior-art-review | https://example.test/paper | 2026-03-01 | 2026-03-02 | high | medium | Prior art supports the direction. |
 | SRC-02 | web | manual:official-doc | https://example.test/docs | 2026-03-02 | 2026-03-03 | medium | high | Official docs confirm the implementation path. |
 
-### Feasibility
+## Feasibility
 Looks practical.
 
 ## Key Findings
@@ -300,17 +300,16 @@ Looks practical.
 - Long-tail migration effort
 "#;
         let assessment = r#"
-## Analysis
-### Findings
+## Findings
 - Finding supported by evidence [SRC-01]
 
-### Opportunity Cost
+## Opportunity Cost
 Delayed roadmap item [SRC-02].
 
-### Dependencies
+## Dependencies
 - Team bandwidth [SRC-02]
 
-### Alternatives Considered
+## Alternatives Considered
 - Delay and observe
 
 ## Recommendation

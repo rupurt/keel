@@ -361,18 +361,17 @@ mod tests {
 | Effort | 2 |
 | Risk | 2 |
 
-## Analysis
 
-### Findings
+## Findings
 - Delivery teams need source-backed recommendations before converting research into roadmap work [SRC-01][SRC-02]
 
-### Opportunity Cost
+## Opportunity Cost
 Deferring this leaves roadmap work underspecified [SRC-02]
 
-### Dependencies
+## Dependencies
 - Evidence capture must produce canonical source records first [SRC-02]
 
-### Alternatives Considered
+## Alternatives Considered
 - Keep factor-only scoring and trust operator judgment alone [SRC-01]
 
 ## Recommendation
@@ -394,18 +393,17 @@ Deferring this leaves roadmap work underspecified [SRC-02]
 | Effort | 2 |
 | Risk | 2 |
 
-## Analysis
 
-### Findings
+## Findings
 - Delivery teams need source-backed recommendations before converting research into roadmap work [SRC-01]
 
-### Opportunity Cost
+## Opportunity Cost
 Deferring this leaves roadmap work underspecified [SRC-01]
 
-### Dependencies
+## Dependencies
 - Evidence capture must produce canonical source records first [SRC-01]
 
-### Alternatives Considered
+## Alternatives Considered
 - Keep factor-only scoring and trust operator judgment alone [SRC-02]
 
 ## Recommendation
@@ -427,18 +425,17 @@ Deferring this leaves roadmap work underspecified [SRC-01]
 | Effort | 2 |
 | Risk | 2 |
 
-## Analysis
 
-### Findings
+## Findings
 - Delivery teams need source-backed recommendations before converting research into roadmap work [SRC-01]
 
-### Opportunity Cost
+## Opportunity Cost
 Deferring this leaves roadmap work underspecified [SRC-01]
 
-### Dependencies
+## Dependencies
 - Evidence capture must produce canonical source records first [SRC-01]
 
-### Alternatives Considered
+## Alternatives Considered
 - Keep factor-only scoring and trust operator judgment alone [SRC-01]
 
 ## Recommendation

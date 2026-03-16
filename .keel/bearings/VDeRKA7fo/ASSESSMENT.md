@@ -22,21 +22,21 @@ id: VDeRKA7fo
 
 ## Analysis
 
-### Findings
+## Findings
 
 - Keel already has proto-reactor behavior in the process manager and proto-simulation behavior in temporal read models, so the proposal extends an existing pattern instead of inventing a new one [SRC-01][SRC-02]
 - The safest next step is to formalize a small internal vocabulary and migrate a few hot spots instead of renaming the whole architecture [SRC-01][SRC-03]
 
-### Opportunity Cost
+## Opportunity Cost
 
 Pursuing this architecture line spends time on internal clarity instead of immediately shipping new operator features. That trade is justified only if the resulting abstractions reduce future duplication across orchestration, temporal scheduling, and flow projections [SRC-01][SRC-03].
 
-### Dependencies
+## Dependencies
 
 - A clear ADR or equivalent architecture decision is needed before broad implementation work starts so the team keeps DDD and hexagonal boundaries intact [SRC-01]
 - The first implementation slice should target already-identified hotspots such as process management and temporal read models [SRC-01][SRC-02]
 
-### Alternatives Considered
+## Alternatives Considered
 
 - Keep the current architecture unchanged and continue adding ad hoc orchestration and time logic where needed. This has lower short-term cost but increases conceptual drift as more automation and temporal behavior lands [SRC-01][SRC-03]
 - Recast Keel wholesale as a game engine. This would create more terminology churn than practical value and does not fit the current command-driven runtime [SRC-01][SRC-02]

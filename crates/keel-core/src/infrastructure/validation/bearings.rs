@@ -27,7 +27,7 @@ const SUCCESS_CRITERIA_SCAFFOLD_MARKERS: &[&str] = &[
 const OPEN_QUESTION_SCAFFOLD_MARKERS: &[&str] = &["Question we need to answer"];
 
 /// Check bearing content sections
-/// Validates that BRIEF.md contains required markdown sections
+/// Validates that BRIEF.md, EVIDENCE.md, and ASSESSMENT.md contain required markdown sections
 pub fn check_bearing_content_sections(board: &Board) -> Vec<Problem> {
     let mut problems = Vec::new();
 
@@ -36,6 +36,7 @@ pub fn check_bearing_content_sections(board: &Board) -> Vec<Problem> {
 
         let evidence_path = bearing.path.parent().unwrap().join("EVIDENCE.md");
         if let Ok(content) = fs::read_to_string(&evidence_path) {
+            // Sources validation (legacy)
             for message in
                 crate::infrastructure::bearing_evidence::validate_evidence_document(&content)
             {
@@ -52,6 +53,53 @@ pub fn check_bearing_content_sections(board: &Board) -> Vec<Problem> {
                     category: None,
                     check_id: CheckId::Unknown,
                 });
+            }
+
+            // New strict contract validation for EVIDENCE.md
+            for heading in ["## Feasibility", "## Key Findings", "## Unknowns"] {
+                if extract_section(&content, heading).is_none() {
+                    problems.push(Problem {
+                        severity: Severity::Error,
+                        path: evidence_path.clone(),
+                        message: format!(
+                            "bearing '{}' is missing required EVIDENCE.md section: {}",
+                            bearing.id(),
+                            heading
+                        ),
+                        fix: None,
+                        scope: None,
+                        category: None,
+                        check_id: CheckId::Unknown,
+                    });
+                }
+            }
+        }
+
+        let assessment_path = bearing.path.parent().unwrap().join("ASSESSMENT.md");
+        if let Ok(content) = fs::read_to_string(&assessment_path) {
+            for heading in [
+                "## Scoring Factors",
+                "## Findings",
+                "## Opportunity Cost",
+                "## Dependencies",
+                "## Alternatives Considered",
+                "## Recommendation",
+            ] {
+                if extract_section(&content, heading).is_none() {
+                    problems.push(Problem {
+                        severity: Severity::Error,
+                        path: assessment_path.clone(),
+                        message: format!(
+                            "bearing '{}' is missing required ASSESSMENT.md section: {}",
+                            bearing.id(),
+                            heading
+                        ),
+                        fix: None,
+                        scope: None,
+                        category: None,
+                        check_id: CheckId::Unknown,
+                    });
+                }
             }
         }
     }

@@ -14,7 +14,7 @@ id: VDeRKA7fo
 
 ## Technical Research
 
-### Feasibility
+## Feasibility
 The evidence supports an incremental architecture extension. Keel already has state machines, domain events, process-manager orchestration, and deterministic time-based evaluation. The missing piece is not a new runtime model but a clearer internal vocabulary and a small number of reusable abstractions that make those patterns explicit.
 
 ## Key Findings

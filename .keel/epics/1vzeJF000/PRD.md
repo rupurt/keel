@@ -143,7 +143,7 @@ until the objective is done." Problems observed:
 
 *From bearing assessment:*
 
-### Findings
+## Findings
 
 - Autonomous harnesses halt early despite explicit AGENTS.md policy because the
   stopping condition is prose, not board state [SRC-01] [SRC-02]
@@ -151,19 +151,19 @@ until the objective is done." Problems observed:
   achieved" by encoding both machine-checkable and human-verifiable goals [SRC-03]
 - Design follows existing entity conventions, minimizing new infrastructure [SRC-03]
 
-### Opportunity Cost
+## Opportunity Cost
 
 Time spent building Mission is time not spent on other keel features. However,
 Mission directly enables the core use case (autonomous multi-day delivery) and
 the false-halting problem is the highest-friction issue observed in production
 harness usage [SRC-01] [SRC-02].
 
-### Dependencies
+## Dependencies
 
 - Existing entity infrastructure is stable and well-tested [SRC-03]
 - Lineage field pattern proven by bearing → epic lineage (just shipped) [SRC-03]
 
-### Alternatives Considered
+## Alternatives Considered
 
 - **Enhanced AGENTS.md only**: More prescriptive prose rules. Rejected — harnesses
   already ignore the existing rules because they're not machine-checkable [SRC-01]

@@ -545,7 +545,6 @@ mod tests {
                 "bearing.declined".to_string(),
                 "bearing.evaluating".to_string(),
                 "bearing.exploring".to_string(),
-                "bearing.laid".to_string(),
                 "bearing.parked".to_string(),
                 "bearing.ready".to_string(),
                 "mission.achieved".to_string(),

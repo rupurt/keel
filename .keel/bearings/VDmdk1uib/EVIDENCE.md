@@ -13,7 +13,7 @@ id: VDmdk1uib
 
 ## Technical Research
 
-### Feasibility
+## Feasibility
 Verified: adding the --status flag and a compact renderer is feasible with the current CLI and domain model.
 
 ## Key Findings
