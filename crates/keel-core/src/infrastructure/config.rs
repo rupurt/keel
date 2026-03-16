@@ -248,6 +248,10 @@ pub struct WorkflowConfig {
     /// Number of minutes before the circuit battery decays to zero after the last state transition
     #[serde(default = "default_battery_decay_minutes")]
     pub battery_decay_minutes: u32,
+
+    /// Optional command to execute when human input is required (e.g., 'tmux display-message "..."')
+    #[serde(default)]
+    pub notification_command: Option<String>,
 }
 
 impl Default for WorkflowConfig {
@@ -260,6 +264,7 @@ impl Default for WorkflowConfig {
             working_hours_start: default_working_hours_start(),
             working_hours_end: default_working_hours_end(),
             battery_decay_minutes: default_battery_decay_minutes(),
+            notification_command: None,
         }
     }
 }
@@ -267,6 +272,21 @@ impl Default for WorkflowConfig {
 impl WorkflowConfig {
     fn is_default(&self) -> bool {
         self == &Self::default()
+    }
+
+    /// Get the effective notification command, defaulting to tmux display-message if in tmux.
+    pub fn effective_notification_command(&self) -> Option<String> {
+        if let Some(cmd) = &self.notification_command {
+            return Some(cmd.clone());
+        }
+
+        if std::env::var("TMUX").is_ok() {
+            return Some(
+                "tmux display-message \"Keel: Human input required (Capacitors full)\"".to_string(),
+            );
+        }
+
+        None
     }
 }
 

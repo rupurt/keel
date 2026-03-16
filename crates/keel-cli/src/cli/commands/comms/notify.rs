@@ -1,0 +1,23 @@
+//! Notification utilities for Keel CLI
+
+use std::process::Command;
+use anyhow::Result;
+
+/// Execute the configured notification command.
+pub fn trigger_notification(command_str: &str) -> Result<()> {
+    #[cfg(unix)]
+    {
+        Command::new("sh")
+            .arg("-c")
+            .arg(command_str)
+            .spawn()?;
+    }
+    #[cfg(windows)]
+    {
+        Command::new("cmd")
+            .arg("/C")
+            .arg(command_str)
+            .spawn()?;
+    }
+    Ok(())
+}

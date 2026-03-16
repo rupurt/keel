@@ -104,6 +104,8 @@ struct ConfigShowWorkflowPayload {
     working_hours_start: u8,
     working_hours_end: u8,
     battery_decay_minutes: u32,
+    notification_command: Option<String>,
+    effective_notification_command: Option<String>,
     defaults: ConfigShowWorkflowDefaultsPayload,
     roles: Vec<ConfigShowRoleFamilyPayload>,
     lanes: Vec<ConfigShowLanePayload>,
@@ -221,6 +223,8 @@ fn build_show_payload(
             working_hours_start: config.workflow.working_hours_start,
             working_hours_end: config.workflow.working_hours_end,
             battery_decay_minutes: config.workflow.battery_decay_minutes,
+            notification_command: config.workflow.notification_command.clone(),
+            effective_notification_command: config.workflow.effective_notification_command(),
             defaults: ConfigShowWorkflowDefaultsPayload {
                 management_role: defaults.management_role,
                 delivery_role: defaults.delivery_role,
@@ -319,6 +323,12 @@ fn render_show_payload(payload: &ConfigShowPayload) -> Vec<String> {
         "battery_decay_minutes = {}",
         payload.workflow.battery_decay_minutes
     ));
+    if let Some(cmd) = &payload.workflow.notification_command {
+        lines.push(format!("notification_command = \"{}\"", cmd));
+    }
+    if let Some(cmd) = &payload.workflow.effective_notification_command {
+        lines.push(format!("# effective_notification_command = \"{}\"", cmd));
+    }
     lines.push(String::new());
     lines.push("[workflow.defaults]".to_string());
     lines.push(format!(

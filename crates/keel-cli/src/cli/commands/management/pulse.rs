@@ -20,6 +20,8 @@ use keel::read_model::scheduled_routines::{
     RoutineScheduleFilter, ScheduledRoutineGatingReason, ScheduledRoutineProjection,
     project_scheduled_routines,
 };
+use keel::read_model::{workflow_lane_flow, workflow_topology};
+use crate::cli::commands::comms::notify;
 
 /// Run the pulse command.
 pub fn run(json: bool, scene: bool) -> Result<()> {
@@ -214,6 +216,19 @@ fn build_pulse_cycle(board_dir: &Path, reference_time: DateTime<Utc>) -> Result<
                 .unwrap_or(0),
         })
     };
+
+    // 6. Notifications
+    let (config, _) = keel::infrastructure::config::load_config();
+    if let Some(cmd) = config.workflow.effective_notification_command() {
+        let topology = workflow_topology::load_for_board(board_dir)?;
+        let lane_flow = workflow_lane_flow::project(&board, &topology);
+        let needs_human_input =
+            lane_flow.lanes.iter().any(|lane| lane.manual_accept && lane.total_count > 0);
+
+        if needs_human_input {
+            let _ = notify::trigger_notification(&cmd);
+        }
+    }
 
     Ok(PulseCycleOutput {
         mode: "materialize",

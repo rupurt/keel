@@ -2,6 +2,7 @@
 
 pub mod ping;
 pub mod poke;
+pub mod notify;
 
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
