@@ -25,11 +25,11 @@ started_at: 2026-03-16T04:49:04
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/3 stories complete
+**Progress:** 1/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Add Depends On Field to Bearing Frontmatter](../../../../stories/VE1vOqhch/README.md) | feat | in-progress |
-| [Validate Bearing Dependencies in Doctor](../../../../stories/VE1vQc4Lh/README.md) | feat | backlog |
+| [Add Depends On Field to Bearing Frontmatter](../../../../stories/VE1vOqhch/README.md) | feat | done |
+| [Validate Bearing Dependencies in Doctor](../../../../stories/VE1vQc4Lh/README.md) | feat | in-progress |
 | [Factor Dependency State into Bearing Sort Order](../../../../stories/VE1vTf5Yq/README.md) | feat | backlog |
 <!-- END GENERATED -->

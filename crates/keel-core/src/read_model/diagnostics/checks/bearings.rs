@@ -415,7 +415,7 @@ pub fn check_bearing_dates(board: &Board) -> Vec<Problem> {
 
 /// Required sections in bearing BRIEF.md
 pub use crate::infrastructure::validation::bearings::{
-    BEARING_REQUIRED_SECTIONS, check_bearing_content_sections,
+    BEARING_REQUIRED_SECTIONS, check_bearing_content_sections, check_bearing_dependencies,
 };
 
 /// Check bearing-epic coherence

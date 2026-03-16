@@ -220,6 +220,8 @@ pub enum CheckId {
     IdInconsistency,
     BearingMissingEpicLineage,
     BearingInvalidGoalLineage,
+    BearingDanglingDependency,
+    BearingDependencyCycle,
     MissionDefinitionReadiness,
     MissionGoalAchieved,
     MissionActiveNoWork,

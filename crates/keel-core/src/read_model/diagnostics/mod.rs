@@ -537,6 +537,15 @@ fn validate_with_config_internal(
         bearing_recommendation_problems,
     ));
 
+    let bearing_dependency_problems = checks::bearings::check_bearing_dependencies(&board);
+    bearing_checks.push(configured_check(
+        doctor_config,
+        "bearing-dependencies",
+        "Bearing dependency integrity",
+        board.bearings.len(),
+        bearing_dependency_problems,
+    ));
+
     let bearing_lineage_epic_problems = checks::bearings::check_bearing_lineage_epic(&board);
     bearing_checks.push(configured_check(
         doctor_config,
