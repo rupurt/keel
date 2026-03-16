@@ -47,7 +47,17 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
         } else if autonomous {
             let mut circuit = String::new();
             circuit.push_str("\n    ┌───[BATTERY]───┐\n");
-            circuit.push_str("    │               │\n");
+            
+            let ready_backlog = metrics.execution.backlog_ready_count;
+            let mut packs_visual = String::new();
+            for _ in 0..ready_backlog.min(10) {
+                packs_visual.push('█');
+            }
+            if !packs_visual.is_empty() {
+                circuit.push_str(&format!("    │ {: <13} │  <-- {} BATTERY PACKS\n", packs_visual, ready_backlog));
+            } else {
+                circuit.push_str("    │               │\n");
+            }
 
             if !healthy {
                 circuit.push_str("    │   [XX][XX]    │  <-- CAPACITORS BLOWN (SYSTEM UNHEALTHY)\n");
@@ -67,10 +77,10 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
                 }
                 
                 circuit.push_str("    │               │\n");
-                circuit.push_str("    └───( \\ / )─────┘\n");
                 
                 if recently_completed > 0 {
-                    if in_progress > 0 {
+                    circuit.push_str("    └───( \\ / )─────┘\n");
+                    if in_progress > 0 || ready_backlog > 0 {
                         circuit.push_str("         \\_/_/  <-- SYSTEM AUTONOMOUS (LIGHT ON)\n");
                         println!("{}", circuit.yellow().bold());
                     } else {
@@ -78,7 +88,8 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
                         println!("{}", circuit.yellow().dimmed());
                     }
                 } else {
-                    circuit.push_str("         \\___/  <-- SYSTEM IDLE (LIGHT OFF - BATTERY DEAD, POKE TO WAKE)\n");
+                    circuit.push_str("    └───( \\ / )   ──  <-- CORD UNPLUGGED (POKE TO WAKE)\n");
+                    circuit.push_str("         \\___/\n");
                     println!("{}", circuit.dimmed());
                     return Err(anyhow::anyhow!("System is idle: Battery is dead"));
                 }
