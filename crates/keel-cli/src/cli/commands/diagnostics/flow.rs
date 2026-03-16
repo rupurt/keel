@@ -36,74 +36,88 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
         use owo_colors::OwoColorize;
         if !is_circuit_enabled {
             let mut circuit = String::new();
-            circuit.push_str("\n    ┌───[       ]───┐\n");
-            circuit.push_str("    │               │\n");
-            circuit.push_str("    │              / \n");
-            circuit.push_str("    │             /\n");
-            circuit.push_str("    └───(     )───  <-- CIRCUIT OPEN (OFF THE CLOCK / DISABLED)\n");
-            circuit.push_str("         \\___/\n");
+            circuit.push_str("\n    ┌───────────────────────────[         ]───────────────────────────┐\n");
+            circuit.push_str("    │                                                                 │\n");
+            circuit.push_str("    │                                /                                │\n");
+            circuit.push_str("    │                               /                                 │\n");
+            circuit.push_str("    │                              /                                  │\n");
+            circuit.push_str("    └───────────────(               )─────────────────────────────────┘\n");
+            circuit.push_str("                     \\             /   <-- CIRCUIT OPEN (OFF THE CLOCK / DISABLED)\n");
+            circuit.push_str("                      \\___________/\n");
             println!("{}", circuit.dimmed());
             return Err(anyhow::anyhow!("Circuit is open (disabled or off the clock)"));
         } else if autonomous {
             let mut circuit = String::new();
-            circuit.push_str("\n    ┌───[BATTERY]───┐\n");
+            circuit.push_str("\n    ┌───────────────────────────[ BATTERY ]───────────────────────────┐\n");
+            circuit.push_str("    │                                                                 │\n");
             
             let ready_backlog = metrics.execution.backlog_ready_count;
             let mut packs_visual = String::new();
-            for _ in 0..ready_backlog.min(10) {
+            for _ in 0..ready_backlog.min(20) {
                 packs_visual.push('█');
             }
             if !packs_visual.is_empty() {
-                circuit.push_str(&format!("    │ {: <13} │  <-- {} BATTERY PACKS\n", packs_visual, ready_backlog));
+                circuit.push_str(&format!("    │   [ {: <20} ]  <-- {} BATTERY PACKS PLUGGED IN        │\n", packs_visual, ready_backlog));
             } else {
-                circuit.push_str("    │               │\n");
+                circuit.push_str("    │                                                                 │\n");
             }
 
             if !healthy {
-                circuit.push_str("    │   [XX][XX]    │  <-- CAPACITORS BLOWN (SYSTEM UNHEALTHY)\n");
-                circuit.push_str("    │    * SPARKS * │\n");
-                circuit.push_str("    └───( X / X )───┘\n");
+                circuit.push_str("    │                                                                 │\n");
+                circuit.push_str("    │          [ XX ][ XX ]       [ XX ][ XX ]                        │\n");
+                circuit.push_str("    │          <-- CAPACITORS BLOWN (SYSTEM UNHEALTHY)                │\n");
+                circuit.push_str("    │               * SPARKS *                                        │\n");
+                circuit.push_str("    └───────────────(   X       X   )─────────────────────────────────┘\n");
                 println!("{}", circuit.red().bold());
                 println!("Run `keel doctor` to repair the circuit.");
                 return Err(anyhow::anyhow!("Short circuit: System is unhealthy"));
             } else {
-                // Render capacitor bank if work volume is high
+                circuit.push_str("    │                                                                 │\n");
+                // Render capacitor bank based on work volume
                 if in_progress > 3 {
-                    circuit.push_str("    │   [||][||]    │  <-- CAPACITOR BANK ACTIVE\n");
+                    circuit.push_str("    │          [ || ][ || ]       [ || ][ || ]                        │\n");
+                    circuit.push_str("    │          <-- CAPACITOR BANK ACTIVE (HIGH LOAD)                  │\n");
                 } else if in_progress > 0 {
-                    circuit.push_str("    │     [||]      │  <-- CAPACITOR CHARGING\n");
+                    circuit.push_str("    │                     [ || ][ || ]                                │\n");
+                    circuit.push_str("    │                 <-- CAPACITORS CHARGING                         │\n");
                 } else {
-                    circuit.push_str("    │               │\n");
+                    circuit.push_str("    │                                                                 │\n");
+                    circuit.push_str("    │                                                                 │\n");
                 }
                 
-                circuit.push_str("    │               │\n");
+                circuit.push_str("    │                                                                 │\n");
                 
                 if recently_completed > 0 {
-                    circuit.push_str("    └───( \\ / )─────┘\n");
+                    circuit.push_str("    └───────────────( \\             / )───────────────────────────────┘\n");
+                    circuit.push_str("                     \\ \\           / /\n");
                     if in_progress > 0 || ready_backlog > 0 {
-                        circuit.push_str("         \\_/_/  <-- SYSTEM AUTONOMOUS (LIGHT ON)\n");
+                        circuit.push_str("                      \\ \\_ _ _ _ _/ /  <-- SYSTEM AUTONOMOUS (LIGHT ON)\n");
+                        circuit.push_str("                       \\___________/\n");
                         println!("{}", circuit.yellow().bold());
                     } else {
-                        circuit.push_str("         \\_/_/  <-- SYSTEM IDLE (LIGHT DIM)\n");
+                        circuit.push_str("                      \\ \\_ _ _ _ _/ /  <-- SYSTEM IDLE (LIGHT DIM)\n");
+                        circuit.push_str("                       \\___________/\n");
                         println!("{}", circuit.yellow().dimmed());
                     }
                 } else {
-                    circuit.push_str("    └───( \\ / )   ──  <-- CORD UNPLUGGED (POKE TO WAKE)\n");
-                    circuit.push_str("         \\___/\n");
+                    circuit.push_str("    └───────────────( \\             / )   ───                         \n");
+                    circuit.push_str("                     \\ \\           / /   <-- CORD UNPLUGGED           \n");
+                    circuit.push_str("                      \\ \\_ _ _ _ _/ /        (POKE TO WAKE)           \n");
+                    circuit.push_str("                       \\___________/                                  \n");
                     println!("{}", circuit.dimmed());
                     return Err(anyhow::anyhow!("System is idle: Battery is dead"));
                 }
             }
         } else {
-            let circuit = r#"
-    ┌───[BATTERY]───┐
-    │               │
-    │              / 
-    │             /
-    └───(     )───  <-- HUMAN INPUT REQUIRED (LIGHT OFF)
-         \___/
-"#
-            .to_string();
+            let mut circuit = String::new();
+            circuit.push_str("\n    ┌───────────────────────────[ BATTERY ]───────────────────────────┐\n");
+            circuit.push_str("    │                                                                 │\n");
+            circuit.push_str("    │                                /                                │\n");
+            circuit.push_str("    │                               /                                 │\n");
+            circuit.push_str("    │                              /                                  │\n");
+            circuit.push_str("    └───────────────(               )─────────────────────────────────┘\n");
+            circuit.push_str("                     \\             /   <-- HUMAN INPUT REQUIRED (LIGHT OFF)\n");
+            circuit.push_str("                      \\___________/\n");
 
             let mut blocking_items = Vec::new();
             for lane in &lane_flow.lanes {
