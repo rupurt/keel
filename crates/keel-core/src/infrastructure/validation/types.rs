@@ -234,4 +234,5 @@ pub enum CheckId {
     WorkflowGraphIntegrity,
     WorkflowTopology,
     RoutineInvalidCadence,
+    RoutineScopeIncoherence,
 }
