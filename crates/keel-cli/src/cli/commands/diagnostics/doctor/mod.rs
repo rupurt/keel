@@ -18,8 +18,14 @@ pub fn run(
     _watch: bool,
     _quick: bool,
     scene: bool,
+    status: bool,
 ) -> Result<()> {
     let _start = Instant::now();
+
+    if status {
+        return run_status(board_dir);
+    }
+
     let report = validate(board_dir)?;
 
     if scene {
@@ -145,6 +151,106 @@ pub fn run(
     if errors > 0 {
         anyhow::bail!("Board has {} errors", errors);
     }
+
+    Ok(())
+}
+
+/// Print a 3-bullet importance summary of the board graph.
+///
+/// Each bullet is at most 8–10 words with a 3–6 character taxonomy ID,
+/// designed for embedding in commit messages.
+fn run_status(board_dir: &Path) -> Result<()> {
+    use keel::domain::model::{EpicState, StoryState, VoyageState};
+    use keel::infrastructure::loader::load_board;
+    use keel::read_model::board_graph::build_board_graph;
+
+    let board = load_board(board_dir)?;
+    let graph = build_board_graph(&board);
+    let report = validate(board_dir)?;
+
+    // --- Mission layer (MSN) ---
+    let active_missions = board
+        .missions
+        .values()
+        .filter(|m| !m.status().is_terminal())
+        .count();
+    let active_epics = board
+        .epics
+        .values()
+        .filter(|e| e.status() != EpicState::Done)
+        .count();
+    let mission_bullet = if active_missions == 0 {
+        "No missions defined on the board".to_string()
+    } else {
+        let m_word = if active_missions == 1 {
+            "mission"
+        } else {
+            "missions"
+        };
+        let e_word = if active_epics == 1 { "epic" } else { "epics" };
+        format!(
+            "{} {} driving {} {} forward",
+            active_missions, m_word, active_epics, e_word
+        )
+    };
+
+    // --- Execution layer (EXC) ---
+    let in_progress = board
+        .stories
+        .values()
+        .filter(|s| s.status() == StoryState::InProgress)
+        .count();
+    let active_voyages = board
+        .voyages
+        .values()
+        .filter(|v| v.status() == VoyageState::InProgress)
+        .count();
+    let backlog = board
+        .stories
+        .values()
+        .filter(|s| s.status() == StoryState::Backlog)
+        .count();
+    let exec_bullet = if in_progress == 0 && backlog == 0 {
+        "Board idle, no stories queued or active".to_string()
+    } else if in_progress == 0 {
+        format!("{} stories queued, none actively executing", backlog)
+    } else {
+        let v_clause = if active_voyages > 0 {
+            let v_word = if active_voyages == 1 {
+                "voyage"
+            } else {
+                "voyages"
+            };
+            format!(" across {} {}", active_voyages, v_word)
+        } else {
+            String::new()
+        };
+        let s_word = if in_progress == 1 {
+            "story"
+        } else {
+            "stories"
+        };
+        format!("{} {} executing{}", in_progress, s_word, v_clause)
+    };
+
+    // --- Health layer (HLT) ---
+    let errors = report.total_errors();
+    let warnings = report.total_warnings();
+    let dangling = graph.dangling_edges().len();
+    let health_bullet = if errors == 0 && warnings == 0 && dangling == 0 {
+        "All checks passing, graph fully connected".to_string()
+    } else if errors == 0 {
+        format!("{} warnings, no structural errors detected", warnings)
+    } else {
+        format!(
+            "{} errors and {} warnings need remediation",
+            errors, warnings
+        )
+    };
+
+    println!("• [MSN] {}", mission_bullet);
+    println!("• [EXC] {}", exec_bullet);
+    println!("• [HLT] {}", health_bullet);
 
     Ok(())
 }

@@ -98,6 +98,12 @@ pub fn build_cli() -> Command {
                         .long("scene")
                         .help("Render a visual representation of the current board scene")
                         .action(ArgAction::SetTrue),
+                )
+                .arg(
+                    Arg::new("status")
+                        .long("status")
+                        .help("Print a 3-bullet importance summary suitable for commit messages")
+                        .action(ArgAction::SetTrue),
                 ),
         )
         .subcommand(

@@ -31,6 +31,7 @@ pub fn run() -> Result<()> {
             let watch = *m.get_one::<bool>("watch").unwrap_or(&false);
             let quick = *m.get_one::<bool>("quick").unwrap_or(&false);
             let scene = *m.get_one::<bool>("scene").unwrap_or(&false);
+            let status = *m.get_one::<bool>("status").unwrap_or(&false);
             match super::commands::diagnostics::doctor::run(
                 &resolve_board_dir()?,
                 fix,
@@ -38,6 +39,7 @@ pub fn run() -> Result<()> {
                 watch,
                 quick,
                 scene,
+                status,
             ) {
                 Ok(_) => Ok(()),
                 Err(e) => {
