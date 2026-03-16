@@ -5,6 +5,7 @@ use chrono::{DateTime, Utc};
 
 use crate::cli::presentation::flow::display::render_annotated_flow;
 use crate::cli::presentation::terminal::get_terminal_width;
+use crate::cli::style::VisualPadding;
 use keel::infrastructure::loader::load_board;
 use keel::read_model::routine_materialization::existing_materializations;
 use keel::read_model::scheduled_routines::{RoutineScheduleFilter, project_scheduled_routines};
@@ -144,10 +145,14 @@ pub fn run(
             }
         }
 
-        circuit.push_str(&format!(
-            "    │  [ {} ]  <-- {: <33} │\n",
+        let power_line = format!(
+            "  [ {} ]  <-- {}",
             packs_visual,
             format!("{} BATTERY PACKS PLUGGED IN", ready_backlog)
+        );
+        circuit.push_str(&format!(
+            "    │{} │\n",
+            power_line.pad_to_width(62)
         ));
         circuit.push_str("    │  `───────────────────────────────────────────────────────────'  │\n");
         circuit.push_str("    │          |                                         |          │\n");

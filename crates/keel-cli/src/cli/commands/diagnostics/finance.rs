@@ -2,6 +2,7 @@
 
 use anyhow::Result;
 use crate::cli::presentation::terminal::get_terminal_width;
+use crate::cli::style::VisualPadding;
 use keel::infrastructure::loader::load_board;
 use keel::read_model::{flow_status, diagnostics};
 use owo_colors::OwoColorize;
@@ -72,18 +73,9 @@ fn render_vault_scene(metrics: &keel::read_model::flow_metrics::FlowMetrics, hea
         "DEBT WARNING".red().bold().to_string()
     };
     
-    // Use manual padding to account for ANSI codes
-    let label_plain = if liquidity > blocked && drift < 0.3 { "SOLVENT" } else { "DEBT WARNING" };
-    let total_width: usize = 17;
-    let padding = total_width.saturating_sub(label_plain.len());
-    let left_pad = padding / 2;
-    let right_pad = padding - left_pad;
-    
     vault.push_str(&format!(
-        "             |   {}{}{}   |\n", 
-        " ".repeat(left_pad),
-        status_label,
-        " ".repeat(right_pad)
+        "             |   {}   |\n", 
+        status_label.pad_to_width(17)
     ));
     vault.push_str("             |_________________________|\n");
     vault.push_str("            /                           \\\n");
@@ -95,8 +87,7 @@ fn render_vault_scene(metrics: &keel::read_model::flow_metrics::FlowMetrics, hea
         else { assets.push(' '); }
     }
     assets.push_str(" ] ASSETS (READY)");
-    
-    vault.push_str(&format!("    {: <40}\n", assets));
+    vault.push_str(&format!("    {}\n", assets.pad_to_width(40)));
     
     // Debt bars
     let mut debt = String::from(" [ ");
@@ -105,12 +96,12 @@ fn render_vault_scene(metrics: &keel::read_model::flow_metrics::FlowMetrics, hea
         else { debt.push(' '); }
     }
     debt.push_str(" ] DEBT (BLOCKED)");
-    vault.push_str(&format!("    {: <40}\n", debt));
+    vault.push_str(&format!("    {}\n", debt.pad_to_width(40)));
 
     // Maintenance cost
     let remediation = health.estimated_remediation_hours;
     let oil_needed = format!(" [ {:.1}h ] MAINTENANCE INTEREST", remediation);
-    vault.push_str(&format!("    {: <40}\n", oil_needed.yellow()));
+    vault.push_str(&format!("    {}\n", oil_needed.yellow().to_string().pad_to_width(40)));
 
     println!("{}", vault);
     

@@ -17,6 +17,27 @@ use keel::domain::model::StoryType;
 use keel::domain::state_machine::mission::MissionStatus;
 use keel::domain::state_machine::voyage::VoyageState;
 
+/// Helper trait for ANSI-aware string padding
+pub trait VisualPadding {
+    fn pad_to_width(&self, width: usize) -> String;
+}
+
+impl VisualPadding for String {
+    fn pad_to_width(&self, width: usize) -> String {
+        let visible = keel::infrastructure::utils::visible_width(self);
+        let padding = width.saturating_sub(visible);
+        format!("{}{}", self, " ".repeat(padding))
+    }
+}
+
+impl VisualPadding for &str {
+    fn pad_to_width(&self, width: usize) -> String {
+        let visible = keel::infrastructure::utils::visible_width(self);
+        let padding = width.saturating_sub(visible);
+        format!("{}{}", self, " ".repeat(padding))
+    }
+}
+
 /// Regex for SRS requirement references like [SRS-01/AC-01]
 #[allow(dead_code)]
 pub static AC_REQ_RE: LazyLock<Regex> =

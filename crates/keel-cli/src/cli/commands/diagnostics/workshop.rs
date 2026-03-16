@@ -1,6 +1,7 @@
 //! Workshop command - focus on items requiring human attention
 
 use crate::cli::presentation::terminal::get_terminal_width;
+use crate::cli::style::VisualPadding;
 use anyhow::Result;
 use keel::infrastructure::loader::load_board;
 use keel::read_model::{workflow_lane_flow, workflow_topology};
@@ -128,8 +129,8 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
             board.adrs.len()
         );
         visual.push_str(&format!(
-            "    |  .  .  .  .  .  .  .  {: <33}  .  .  .  .  .  |\n",
-            pegboard.dimmed()
+            "    |  .  .  .  .  .  .  .  {}  .  .  .  .  .  |\n",
+            pegboard.dimmed().to_string().pad_to_width(33)
         ));
         visual.push_str(
             "    |_____________________________________________________________________|\n",
@@ -159,10 +160,14 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
             }
         }
 
-        visual.push_str(&format!(
-            "    |   [ {} ]   <-- BENCH WIP ({})        |\n",
+        let bench_line = format!(
+            "[ {} ]   <-- BENCH WIP ({})",
             items_on_bench.yellow(),
             human_items.len()
+        );
+        visual.push_str(&format!(
+            "    |   {} |\n",
+            bench_line.pad_to_width(65)
         ));
         visual.push_str(
             "    |_____________________________________________________________________|\n",
@@ -176,18 +181,21 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
         let vice_label = format!("[ VICE ]  {} BLOCKED", blocked);
         let oil_label = format!("[ OIL CAN ]  {:.1}h REMEDIATION", remediation);
 
+        let vice_styled = if blocked > 0 {
+            vice_label.red().bold().to_string()
+        } else {
+            vice_label.dimmed().to_string()
+        };
+        let oil_styled = if remediation > 0.0 {
+            oil_label.yellow().bold().to_string()
+        } else {
+            oil_label.dimmed().to_string()
+        };
+
         visual.push_str(&format!(
-            "    |   {: <30}            {: >25}   |\n",
-            if blocked > 0 {
-                vice_label.red().bold().to_string()
-            } else {
-                vice_label.dimmed().to_string()
-            },
-            if remediation > 0.0 {
-                oil_label.yellow().bold().to_string()
-            } else {
-                oil_label.dimmed().to_string()
-            }
+            "    |   {}            {}   |\n",
+            vice_styled.pad_to_width(30),
+            oil_styled.pad_to_width(25)
         ));
         visual.push_str(
             "    |_____________________________________________________________________|\n",

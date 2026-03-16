@@ -2,6 +2,7 @@
 
 use anyhow::Result;
 use crate::cli::presentation::terminal::get_terminal_width;
+use crate::cli::style::VisualPadding;
 use keel::infrastructure::loader::load_board;
 use keel::read_model::{diagnostics, flow_status};
 use owo_colors::OwoColorize;
@@ -52,53 +53,75 @@ fn print_category(name: &str, results: &[keel::read_model::diagnostics::types::C
 }
 
 fn render_med_bay_scene(
-    report: &keel::read_model::diagnostics::types::DoctorReport, 
+    report: &keel::read_model::diagnostics::types::DoctorReport,
     metrics: &keel::read_model::flow_metrics::FlowMetrics,
-    width: usize
+    width: usize,
 ) {
     println!("\n    ┌{}┐", "─".repeat(width.saturating_sub(6)));
-    println!("    │ {: <width$} │", "THE MED-BAY (BIO-SCAN)".bold(), width = width.saturating_sub(8));
+    println!(
+        "    │ {: <width$} │",
+        "THE MED-BAY (ULTRA-RES BIO-SCAN)".bold(),
+        width = width.saturating_sub(8)
+    );
     println!("    └{}┘", "─".repeat(width.saturating_sub(6)));
 
     let passed = report.passed();
     let verify_count = metrics.verification.count;
     let in_progress_count = metrics.execution.in_progress_count;
     let total_load = verify_count + in_progress_count;
-    
+
     let (heart_rate, status_label, status_color) = if !passed {
         ("140 BPM", "CRITICAL", owo_colors::AnsiColors::Red)
+    } else if total_load > 15 {
+        ("120 BPM", "OVERLOAD", owo_colors::AnsiColors::Red)
+    } else if total_load > 7 {
+        ("100 BPM", "ELEVATED", owo_colors::AnsiColors::Yellow)
+    } else if total_load > 3 {
+        ("85 BPM", "STRESSED", owo_colors::AnsiColors::Cyan)
     } else {
-        if total_load > 15 {
-            ("120 BPM", "OVERLOAD", owo_colors::AnsiColors::Red)
-        } else if total_load > 7 {
-            ("100 BPM", "ELEVATED", owo_colors::AnsiColors::Yellow)
-        } else if total_load > 3 {
-            ("85 BPM", "STRESSED", owo_colors::AnsiColors::Cyan)
-        } else {
-            ("72 BPM", "STABLE", owo_colors::AnsiColors::Green)
-        }
+        ("72 BPM", "STABLE", owo_colors::AnsiColors::Green)
     };
 
     let mut scene = String::new();
-    scene.push_str("             ___________________________\n");
-    scene.push_str("            | [ DIAGNOSTIC MONITOR ]    |\n");
-    scene.push_str("            |                           |\n");
-    
-    // Heartbeat pulse (EKG) - speed based on heart rate
+    scene.push_str("             .__________________________________________.\n");
+    scene.push_str("             | [ MAIN DIAGNOSTIC MONITOR - HIGH RES ]   |\n");
+    scene.push_str("             |                                          |\n");
+
+    // High Res Heartbeat pulse (EKG)
     if !passed || total_load > 15 {
-        scene.push_str("            |   /\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/  |\n");
-        scene.push_str("            | !! ALARM !! ALARM !! ALARM !! |\n");
+        scene.push_str(&format!(
+            "             |   {}{}   |\n",
+            "/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\".red().bold(),
+            "/\\".red().bold()
+        ));
+        scene.push_str(&format!(
+            "             |   {}   |\n",
+            "!! ALARM !! ALARM !! ALARM !! ALARM !!".red().bold()
+        ));
     } else if total_load > 7 {
-        scene.push_str("            |  _/\\^/\\_  _/\\^/\\_  _/\\^/\\_    |\n");
-        scene.push_str("            | /      \\/      \\/      \\_____ |\n");
+        scene.push_str(&format!(
+            "             |   {}   |\n",
+            "_/^\\___/^\\___/^\\___/^\\___/^\\___/^\\___/^\\_".yellow().bold()
+        ));
+        scene.push_str(&format!(
+            "             |   {}   |\n",
+            "\\_/   \\_/   \\_/   \\_/   \\_/   \\_/   \\_/   \\".yellow().bold()
+        ));
     } else {
-        scene.push_str("            |   __/\\^/\\_      __/\\^/\\_      |\n");
-        scene.push_str("            | _/      \\____/      \\____ |\n");
+        scene.push_str(&format!(
+            "             |   {}   |\n",
+            "__/\x1b[1;32m^\x1b[0m\\________/\x1b[1;32m^\x1b[0m\\________/\x1b[1;32m^\x1b[0m\\________/\x1b[1;32m^\x1b[0m\\__".green()
+        ));
+        scene.push_str(&format!(
+            "             |  /      \\______/      \\______/      \\____/  |\n"
+        ));
     }
+
+    scene.push_str("             |__________________________________________|\n");
     
-    scene.push_str("            |___________________________|\n");
-    scene.push_str(&format!("            | HR: {: <8} STATUS: {: <8} |\n", heart_rate.bold(), status_label.color(status_color).bold()));
-    
+    let hr_line = format!(" HR: {}   STATUS: {}", heart_rate.bold(), status_label.color(status_color).bold());
+    scene.push_str(&format!("             | {} |\n", hr_line.pad_to_width(40)));
+
     let pressure_label = if total_load > 15 {
         "MAXIMUM".red().bold().to_string()
     } else if total_load > 7 {
@@ -110,24 +133,28 @@ fn render_med_bay_scene(
     } else {
         "IDLE".dimmed().to_string()
     };
+
+    let pressure_line = format!(" BP: PRESSURE: {}", pressure_label);
+    scene.push_str(&format!("             | {} |\n", pressure_line.pad_to_width(40)));
+    scene.push_str("             '------------------------------------------'\n");
+
+    // Add secondary medical visuals (Life Support / IV)
+    scene.push_str("                 | |                            | |\n");
+    scene.push_str("              [ LIFE SUPPORT ]               [ NEURAL SCAN ]\n");
     
-    let pressure_plain = if total_load > 15 {
-        "MAXIMUM"
-    } else if total_load > 7 {
-        "HIGH"
-    } else if total_load > 3 {
-        "MODERATE"
-    } else if total_load > 0 {
-        "NORMAL"
-    } else {
-        "IDLE"
-    };
+    let o2_val = if passed { "98% ".green().to_string() } else { "82% ".red().bold().to_string() };
+    let state_val = if passed { "SYNC".green().to_string() } else { "FOG ".yellow().to_string() };
     
-    let bp_total_width: usize = 16;
-    let bp_padding = bp_total_width.saturating_sub(pressure_plain.len());
+    let o2_line = format!("|  O2: {} |", o2_val);
+    let state_line = format!("|  STATE: {} |", state_val);
     
-    scene.push_str(&format!("            | BP: PRESSURE: {}{} |\n", pressure_label, " ".repeat(bp_padding)));
-    scene.push_str("            '---------------------------'\n");
+    scene.push_str(&format!(
+        "              {}               {} \n",
+        o2_line.pad_to_width(12),
+        state_line.pad_to_width(12)
+    ));
+    scene.push_str("              |  IV: FLOW  |               |  [||||||]   |\n");
+    scene.push_str("              '------------'               '------------'\n");
 
     println!("{}", scene);
 
