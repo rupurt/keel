@@ -330,6 +330,12 @@
 |--------|--------|
 | [Implementation of Time Constraints](epics/VDseuzIFg/voyages/VE3IYca8z/) | done |
 
+### [Permanent Project Operations](epics/VE3KrOPS/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Operational Routine Reliability](epics/VE3KrOPS/voyages/VE3yUoUUy/) | planned |
+
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
 | Voyage | Status |

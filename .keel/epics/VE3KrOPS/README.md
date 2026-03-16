@@ -17,4 +17,8 @@ index: 100
 ## Voyages
 
 <!-- BEGIN GENERATED -->
+**Progress:** 0/1 voyages complete, 0/3 stories done
+| Voyage | Status | Stories |
+|--------|--------|---------|
+| [Operational Routine Reliability](voyages/VE3yUoUUy/) | planned | 0/3 |
 <!-- END GENERATED -->
