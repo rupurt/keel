@@ -29,6 +29,6 @@ started_at: 2026-03-16T05:19:35
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Include Evidence Source Table in Generated PRD](../../../../stories/VE23HpS3U/README.md) | feat | backlog |
+| [Include Evidence Source Table in Generated PRD](../../../../stories/VE23HpS3U/README.md) | feat | in-progress |
 | [Populate PRD Risks from Brief Open Questions](../../../../stories/VE23JvauZ/README.md) | feat | backlog |
 <!-- END GENERATED -->

@@ -298,7 +298,7 @@
 
 | Voyage | Status |
 |--------|--------|
-| [Evidence and Risk Carry-Through](epics/VDiHwPniZ/voyages/VE22wWzeD/) | planned |
+| [Evidence and Risk Carry-Through](epics/VDiHwPniZ/voyages/VE22wWzeD/) | in-progress |
 
 ### [Accelerated Bearing Source Capture](epics/VDiHwULir/) (draft)
 

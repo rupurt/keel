@@ -856,6 +856,16 @@ fn create_prd_from_bearing(board_dir: &Path, bearing: &Bearing) -> Result<String
     let success_criteria =
         extract_section(&brief_content, "## Success Criteria").unwrap_or_default();
 
+    // Read EVIDENCE.md if it exists
+    let evidence_path = bearing_dir.join("EVIDENCE.md");
+    let evidence_sources = if evidence_path.exists() {
+        let evidence_content = fs::read_to_string(&evidence_path)
+            .with_context(|| "Failed to read EVIDENCE.md".to_string())?;
+        extract_section(&evidence_content, "## Sources").filter(|s| !s.trim().is_empty())
+    } else {
+        None
+    };
+
     // Read ASSESSMENT.md if it exists
     let assessment_path = bearing_dir.join("ASSESSMENT.md");
     let assessment_content = if assessment_path.exists() {
@@ -981,6 +991,14 @@ fn create_prd_from_bearing(board_dir: &Path, bearing: &Bearing) -> Result<String
         prd.push_str("## Research Analysis\n\n");
         prd.push_str("*From bearing assessment:*\n\n");
         prd.push_str(&format!("{}\n", analysis.trim()));
+    }
+
+    // Evidence sources from EVIDENCE.md
+    if let Some(sources) = &evidence_sources {
+        prd.push_str("\n## Research Provenance\n\n");
+        prd.push_str("*Source records from bearing evidence:*\n\n");
+        prd.push_str(sources.trim());
+        prd.push('\n');
     }
 
     // Reference back to bearing
@@ -2012,6 +2030,52 @@ Validated brief goals need to persist as machine-readable bearing lineage.
         assert!(
             dep_pos < blocked_pos,
             "no-dep bearing ({dep_pos}) must sort before unresolved deps ({blocked_pos}); order: {ids:?}"
+        );
+    }
+
+    #[test]
+    fn bearing_lay_prd_includes_evidence_sources() {
+        let temp = TempDir::new().unwrap();
+        let board_dir = create_test_bearing_with_status(&temp, "ready");
+        seed_readiness_docs(
+            &board_dir,
+            "test-research",
+            strong_evidence_fixture(),
+            cited_assessment_fixture(),
+        );
+
+        run_lay_at(&board_dir, "test-research").unwrap();
+
+        let prd = fs::read_to_string(board_dir.join("epics/test-research/PRD.md")).unwrap();
+        assert!(
+            prd.contains("## Research Provenance"),
+            "PRD must contain Research Provenance section"
+        );
+        assert!(
+            prd.contains("SRC-01"),
+            "PRD must contain source records from EVIDENCE.md"
+        );
+        assert!(
+            prd.contains("SRC-02"),
+            "PRD must contain all source records from EVIDENCE.md"
+        );
+    }
+
+    #[test]
+    fn bearing_lay_prd_omits_provenance_without_evidence() {
+        let temp = TempDir::new().unwrap();
+        let board_dir = create_test_bearing_with_status(&temp, "ready");
+        // Seed evidence + assessment normally, then delete EVIDENCE.md so PRD generation
+        // skips the provenance section. We must first lay with evidence to get past
+        // readiness checks, so instead we test create_prd_from_bearing directly.
+        // Instead: use a bearing without EVIDENCE.md file at all.
+        // The readiness gate requires evidence, so test via create_prd_from_bearing directly.
+        let board = load_board(&board_dir).unwrap();
+        let bearing = board.require_bearing("test-research").unwrap();
+        let prd = create_prd_from_bearing(&board_dir, bearing).unwrap();
+        assert!(
+            !prd.contains("## Research Provenance"),
+            "PRD must not contain Research Provenance when no EVIDENCE.md exists"
         );
     }
 }
