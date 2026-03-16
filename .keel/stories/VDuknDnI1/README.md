@@ -2,12 +2,13 @@
 id: VDuknDnI1
 title: Daily Status Surface Progress
 type: feat
-status: backlog
+status: in-progress
 scope: VDseuzIFg
 created_at: 2026-03-15T06:20:57
-updated_at: 2026-03-15T06:20:57
+updated_at: 2026-03-15T19:54:41
 index: 6
 operator-signal: pulse
+started_at: 2026-03-15T19:54:41
 ---
 
 <!-- keel:pulse-materialization: VDfVxvWgf@2026-03-21T16:00:00Z -->

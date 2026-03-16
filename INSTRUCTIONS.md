@@ -41,7 +41,16 @@ Keel's autonomous flow is governed by a physical battery metaphor. If the system
 If a human user pokes you (e.g., "I'm poking you", "Wake up"), you MUST:
 1.  **Energize the System**: Immediately execute `keel poke "Human interaction in chat"`. This physically mutates the board state and recharges the battery, signaling the engine to resume autonomous flow.
 2.  **Autonomous Scan**: Run `keel mission next --status` and `keel pulse` to identify any new work that has become ready or materialized.
-3.  **Visual Confirmation**: Run `keel flow --scene` to verify the light is now ON and the circuit is closed.
+3. **Visual Confirmation**: Run `keel flow --scene` to verify the light is now ON and the circuit is closed.
+
+## Autonomous Backlog Discharge
+
+As long as the system is **AUTONOMOUS (LIGHT ON)** and the circuit is healthy (no blown capacitors), you are responsible for discharging the delivery backlog.
+
+1.  **Identify Ready Work**: Scan the delivery lane for stories in `backlog` that are not blocked by dependencies.
+2.  **Autonomous Start**: For each ready story, execute `keel story start <id>`. 
+3.  **Rube Goldberg Loop**: Transitioning a story to `in-progress` mutates the board, which physically recharges the system battery, keeping the circuit closed and the engine running. 
+4.  **Priority**: Discharging the backlog is your primary tactical objective once energized. You must continue until the backlog is empty or the circuit trips.
 
 ## Global Hygiene Checklist
 

@@ -2,12 +2,13 @@
 id: VDzFTQcFz
 title: Explore Speculative Decoding for Transit Messages
 type: feat
-status: backlog
+status: in-progress
 scope: VDseuzIFg
 created_at: 2026-03-16T00:47:54
-updated_at: 2026-03-16T00:47:54
+updated_at: 2026-03-15T19:54:43
 index: 9
 operator-signal: pulse
+started_at: 2026-03-15T19:54:43
 ---
 
 <!-- keel:pulse-materialization: VD7dkcHxS@2026-03-23T00:00:00Z -->

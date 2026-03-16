@@ -2,12 +2,13 @@
 id: VDzFTQdG2
 title: Bridge Engine And VCS Via Auto Staging
 type: feat
-status: backlog
+status: in-progress
 scope: VDseuzIFg
 created_at: 2026-03-16T00:47:54
-updated_at: 2026-03-16T00:47:54
+updated_at: 2026-03-15T19:54:45
 index: 12
 operator-signal: pulse
+started_at: 2026-03-15T19:54:45
 ---
 
 <!-- keel:pulse-materialization: VDz8zh8q2@2026-03-17T00:00:00Z -->
