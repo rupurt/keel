@@ -280,7 +280,7 @@
 
 | Voyage | Status |
 |--------|--------|
-| [Contract Enforcement](epics/VDiHwCUZt/voyages/VE1bQwUPi/) | planned |
+| [Contract Enforcement](epics/VDiHwCUZt/voyages/VE1bQwUPi/) | in-progress |
 
 ### [Strict Deterministic Board Generation](epics/VDiHwGwe5/) (done)
 

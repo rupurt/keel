@@ -1,11 +1,12 @@
 ---
 id: VE1bQwUPi
 title: Contract Enforcement
-status: planned
+status: in-progress
 epic: VDiHwCUZt
 created_at: 2026-03-16T03:27:40
 index: 1
 updated_at: 2026-03-16T03:29:31
+started_at: 2026-03-16T03:38:25
 ---
 
 # Contract Enforcement
@@ -28,7 +29,7 @@ updated_at: 2026-03-16T03:29:31
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Align Templates and Parsing Logic](../../../../stories/VE1bVusKZ/README.md) | feat | backlog |
+| [Align Templates and Parsing Logic](../../../../stories/VE1bVusKZ/README.md) | feat | needs-human-verification |
 | [Update Diagnostic Engine for Strict Contract](../../../../stories/VE1bXPqvF/README.md) | feat | backlog |
 | [Refine CLI Projections for Bearings](../../../../stories/VE1bXV3wS/README.md) | feat | backlog |
 <!-- END GENERATED -->

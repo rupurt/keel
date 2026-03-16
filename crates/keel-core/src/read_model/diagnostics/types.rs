@@ -27,16 +27,16 @@ pub struct DoctorReport {
 
 impl DoctorReport {
     pub fn passed(&self) -> bool {
-        self.story_checks.iter().all(|c| c.passed)
-            && self.voyage_checks.iter().all(|c| c.passed)
-            && self.epic_checks.iter().all(|c| c.passed)
-            && self.adr_checks.iter().all(|c| c.passed)
-            && self.bearing_checks.iter().all(|c| c.passed)
-            && self.mission_checks.iter().all(|c| c.passed)
-            && self.routine_checks.iter().all(|c| c.passed)
-            && self.workflow_checks.iter().all(|c| c.passed)
-            && self.pacemaker_checks.iter().all(|c| c.passed)
-            && self.delivery_checks.iter().all(|c| c.passed)
+        !self.story_checks.iter().any(|c| c.has_errors())
+            && !self.voyage_checks.iter().any(|c| c.has_errors())
+            && !self.epic_checks.iter().any(|c| c.has_errors())
+            && !self.adr_checks.iter().any(|c| c.has_errors())
+            && !self.bearing_checks.iter().any(|c| c.has_errors())
+            && !self.mission_checks.iter().any(|c| c.has_errors())
+            && !self.routine_checks.iter().any(|c| c.has_errors())
+            && !self.workflow_checks.iter().any(|c| c.has_errors())
+            && !self.pacemaker_checks.iter().any(|c| c.has_errors())
+            && !self.delivery_checks.iter().any(|c| c.has_errors())
     }
 
     pub fn total_errors(&self) -> usize {
@@ -93,6 +93,16 @@ pub struct CheckResult {
     pub duration: Duration,
     pub passed: bool,
     pub disabled: bool,
+}
+
+impl CheckResult {
+    pub fn has_errors(&self) -> bool {
+        self.problems.iter().any(|p| p.severity == Severity::Error)
+    }
+
+    pub fn has_warnings(&self) -> bool {
+        self.problems.iter().any(|p| p.severity == Severity::Warning)
+    }
 }
 
 /// Summary result for a section of checks

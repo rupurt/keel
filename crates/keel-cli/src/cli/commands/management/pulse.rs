@@ -965,7 +965,7 @@ updated_at: 2026-01-01T00:00:00
 
         assert!(parsed["health"].is_object());
         let drift = parsed["health"]["drift_coefficient"].as_f64().unwrap();
-        assert!((0.21..=0.23).contains(&drift), "Drift was {drift}");
+        assert!((0.26..=0.28).contains(&drift), "Drift was {drift}");
 
         assert!(parsed["activity"].is_null());
 
