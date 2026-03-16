@@ -159,7 +159,7 @@ struct ResearchCaptureArgs {
 }
 
 impl ResearchCaptureArgs {
-    fn into_request(self) -> Result<Option<ResearchCaptureRequest>> {
+    fn into_request(mut self) -> Result<Option<ResearchCaptureRequest>> {
         let has_capture_args = self.class.is_some()
             || self.provider.is_some()
             || self.location.is_some()
@@ -171,6 +171,23 @@ impl ResearchCaptureArgs {
 
         if !has_capture_args {
             return Ok(None);
+        }
+
+        // Apply URL-derived defaults when location is a URL
+        if let Some(location) = &self.location
+            && (location.starts_with("http://") || location.starts_with("https://"))
+        {
+            if self.class.is_none() {
+                self.class = Some("web".to_string());
+            }
+            if self.retrieved_at.is_none() {
+                self.retrieved_at = Some(chrono::Local::now().format("%Y-%m-%d").to_string());
+            }
+            if self.provider.is_none()
+                && let Some(domain) = extract_url_domain(location)
+            {
+                self.provider = Some(format!("manual:{}", domain));
+            }
         }
 
         let class = EvidenceSourceClass::from_str(
@@ -221,6 +238,20 @@ impl ResearchCaptureArgs {
                 .ok_or_else(|| anyhow!("--notes is required when capturing evidence"))?,
         }))
     }
+}
+
+/// Extract domain from a URL, stripping `www.` prefix.
+fn extract_url_domain(url: &str) -> Option<String> {
+    let without_scheme = url
+        .strip_prefix("https://")
+        .or_else(|| url.strip_prefix("http://"))?;
+    let host = without_scheme.split('/').next()?;
+    let host = host.split(':').next()?; // strip port
+    if host.is_empty() {
+        return None;
+    }
+    let domain = host.strip_prefix("www.").unwrap_or(host);
+    Some(domain.to_string())
 }
 
 impl FogType {
@@ -2179,5 +2210,90 @@ The team needs clarity on the best approach before committing resources.
             prd.contains("Which rollout constraints"),
             "PRD must fall back to boilerplate risk row when no open questions exist"
         );
+    }
+
+    #[test]
+    fn url_capture_defaults_class_to_web() {
+        let args = ResearchCaptureArgs {
+            location: Some("https://example.com/docs".to_string()),
+            observed_at: Some("2026-03-16".to_string()),
+            authority: Some("high".to_string()),
+            freshness: Some("high".to_string()),
+            notes: Some("Test note".to_string()),
+            ..Default::default()
+        };
+        let request = args.into_request().unwrap().unwrap();
+        assert_eq!(request.class, EvidenceSourceClass::Web);
+    }
+
+    #[test]
+    fn url_capture_defaults_retrieved_at_to_today() {
+        let args = ResearchCaptureArgs {
+            location: Some("https://example.com/docs".to_string()),
+            observed_at: Some("2026-03-16".to_string()),
+            authority: Some("high".to_string()),
+            freshness: Some("high".to_string()),
+            notes: Some("Test note".to_string()),
+            ..Default::default()
+        };
+        let request = args.into_request().unwrap().unwrap();
+        assert_eq!(request.retrieved_at, chrono::Local::now().date_naive());
+    }
+
+    #[test]
+    fn url_capture_defaults_provider_from_domain() {
+        let args = ResearchCaptureArgs {
+            location: Some("https://www.example.com/path/to/page".to_string()),
+            observed_at: Some("2026-03-16".to_string()),
+            authority: Some("high".to_string()),
+            freshness: Some("high".to_string()),
+            notes: Some("Test note".to_string()),
+            ..Default::default()
+        };
+        let request = args.into_request().unwrap().unwrap();
+        assert_eq!(
+            request.provider.as_deref(),
+            Some("manual:example.com"),
+            "www. prefix must be stripped from domain"
+        );
+    }
+
+    #[test]
+    fn url_capture_explicit_flags_override_defaults() {
+        let args = ResearchCaptureArgs {
+            location: Some("https://example.com/docs".to_string()),
+            class: Some("academic".to_string()),
+            provider: Some("manual:custom-provider".to_string()),
+            retrieved_at: Some("2026-01-01".to_string()),
+            observed_at: Some("2026-03-16".to_string()),
+            authority: Some("high".to_string()),
+            freshness: Some("high".to_string()),
+            notes: Some("Test note".to_string()),
+        };
+        let request = args.into_request().unwrap().unwrap();
+        assert_eq!(request.class, EvidenceSourceClass::Academic);
+        assert_eq!(
+            request.retrieved_at,
+            chrono::NaiveDate::from_ymd_opt(2026, 1, 1).unwrap()
+        );
+        assert_eq!(request.provider.as_deref(), Some("manual:custom-provider"));
+    }
+
+    #[test]
+    fn extract_url_domain_strips_www_and_port() {
+        assert_eq!(
+            extract_url_domain("https://www.example.com/path"),
+            Some("example.com".to_string())
+        );
+        assert_eq!(
+            extract_url_domain("http://github.com:8080/repo"),
+            Some("github.com".to_string())
+        );
+        assert_eq!(
+            extract_url_domain("https://docs.rs/keel/latest"),
+            Some("docs.rs".to_string())
+        );
+        assert_eq!(extract_url_domain("not-a-url"), None);
+        assert_eq!(extract_url_domain("https://"), None);
     }
 }

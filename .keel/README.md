@@ -304,7 +304,7 @@
 
 | Voyage | Status |
 |--------|--------|
-| [URL-Aware Capture Defaults](epics/VDiHwULir/voyages/VE26NBIKc/) | planned |
+| [URL-Aware Capture Defaults](epics/VDiHwULir/voyages/VE26NBIKc/) | in-progress |
 
 ### [Theater Play Experience](epics/VDlzCqxr9/) (done)
 

@@ -23,5 +23,5 @@ index: 46
 **Progress:** 0/1 voyages complete, 0/1 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [URL-Aware Capture Defaults](voyages/VE26NBIKc/) | planned | 0/1 |
+| [URL-Aware Capture Defaults](voyages/VE26NBIKc/) | in-progress | 0/1 |
 <!-- END GENERATED -->
