@@ -106,7 +106,7 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
                     circuit.push_str("                      \\ \\_ _ _ _ _/ /        (POKE TO WAKE)           \n");
                     circuit.push_str("                       \\___________/                                  \n");
                     println!("{}", circuit.dimmed());
-                    return Err(anyhow::anyhow!("System is idle: Battery is dead"));
+                    return Err(anyhow::anyhow!("System is idle: Cord unplugged (poke to wake)"));
                 }
             }
         } else {
@@ -211,7 +211,7 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
         return Err(anyhow::anyhow!("System is idle: Human input required"));
     }
     if recently_completed == 0 {
-        return Err(anyhow::anyhow!("System is idle: Battery is dead"));
+        return Err(anyhow::anyhow!("System is idle: Cord unplugged (poke to wake)"));
     }
 
     Ok(())
