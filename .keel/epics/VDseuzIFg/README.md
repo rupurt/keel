@@ -19,7 +19,7 @@ index: 50
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/0 voyages complete, 12/13 stories done
+**Progress:** 0/0 voyages complete, 13/13 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
 <!-- END GENERATED -->

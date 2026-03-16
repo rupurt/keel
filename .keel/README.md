@@ -276,7 +276,11 @@
 |--------|--------|
 | [RoadmapMVP](epics/VDiHw85WK/voyages/VDiJfjvVG/) | done |
 
-### [Bearing Research Contract Alignment](epics/VDiHwCUZt/) (draft)
+### [Bearing Research Contract Alignment](epics/VDiHwCUZt/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Contract Enforcement](epics/VDiHwCUZt/voyages/VE1bQwUPi/) | planned |
 
 ### [Strict Deterministic Board Generation](epics/VDiHwGwe5/) (done)
 

@@ -20,11 +20,13 @@ Align bearing research documents and diagnostics on a strict section contract.
 
 ### In Scope
 
-- [SCOPE-01] The smallest end-to-end change needed to address the problem statement.
+- [SCOPE-01] Formalize the markdown section contract for bearing documents (BRIEF, EVIDENCE, ASSESSMENT).
+- [SCOPE-02] Update diagnostic engine to enforce required sections.
+- [SCOPE-03] Update CLI projections to surface new sections.
 
 ### Out of Scope
 
-- [SCOPE-02] Follow-on improvements or adjacent work that is not required for the first outcome.
+- [SCOPE-04] Follow-on improvements or adjacent work that is not required for the first outcome.
 
 ## Requirements
 
