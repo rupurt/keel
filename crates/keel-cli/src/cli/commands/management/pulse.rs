@@ -604,53 +604,29 @@ fn render_pulse_human(cycle: &PulseCycleOutput) -> String {
         cycle.evaluated, cycle.created, cycle.skipped
     ));
 
-    append_outcome_section(
-        &mut lines,
-        "Created routines:",
-        cycle.routines.iter(),
-        PulseRoutineOutcome::Created,
-    );
-    append_outcome_section(
-        &mut lines,
-        "Skipped routines:",
-        cycle.routines.iter(),
-        PulseRoutineOutcome::Skipped,
-    );
-    append_outcome_section(
-        &mut lines,
-        "Deferred routines:",
-        cycle.routines.iter(),
-        PulseRoutineOutcome::Deferred,
-    );
+    // 4. Per-routine outcome lines
+    if !cycle.routines.is_empty() {
+        lines.push(String::new());
+        lines.push("  Routines:".to_string());
+        for routine in &cycle.routines {
+            lines.push(render_human_routine_line(routine));
+        }
+    }
 
     lines.push(String::new());
     lines.join("\n")
 }
 
-fn append_outcome_section<'a, I>(
-    lines: &mut Vec<String>,
-    heading: &str,
-    routines: I,
-    outcome: PulseRoutineOutcome,
-) where
-    I: Iterator<Item = &'a PulseRoutineSummary>,
-{
-    let matching: Vec<_> = routines
-        .filter(|routine| routine.outcome == outcome)
-        .collect();
-    if matching.is_empty() {
-        return;
-    }
-
-    lines.push(String::new());
-    lines.push(heading.to_string());
-    lines.extend(matching.into_iter().map(render_human_routine_line));
-}
-
 fn render_human_routine_line(routine: &PulseRoutineSummary) -> String {
+    let outcome_label = match routine.outcome {
+        PulseRoutineOutcome::Created => "Created",
+        PulseRoutineOutcome::Skipped => "Skipped",
+        PulseRoutineOutcome::Deferred => "Deferred",
+    };
     format!(
-        "  - {} | {} | {} | {}",
+        "  - {} | {} | {} | {} | {}",
         routine.id,
+        outcome_label,
         routine.title,
         routine.target_scope,
         human_reason(routine)
@@ -907,16 +883,19 @@ updated_at: 2026-01-01T00:00:00
         assert!(!first.contains("Activity:"));
         assert!(first.contains("Health:"));
         assert!(first.contains("Volume:    3 routines evaluated (1 created, 0 skipped)"));
-        assert!(first.contains("Created routines:"));
+        assert!(first.contains("Routines:"));
+        // Each routine line includes its outcome label
+        assert!(first.contains("| Created |"));
+        assert!(first.contains("| Deferred |"));
+        // Created line includes the story ID
         assert!(first.contains("created story"));
-        assert!(first.contains("Deferred routines:"));
         assert!(first.contains("not due until 2026-01-05T19:00:00Z (in 1h)"));
         assert!(
             first.contains("invalid cadence: Routine 'routine-invalid' is missing cadence.cron")
         );
 
         assert!(second.contains("Volume:    3 routines evaluated (0 created, 1 skipped)"));
-        assert!(second.contains("Skipped routines:"));
+        assert!(second.contains("| Skipped |"));
         assert!(second.contains("already materialized as"));
     }
 
