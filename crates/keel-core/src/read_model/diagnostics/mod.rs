@@ -727,12 +727,17 @@ fn validate_with_config_internal(
         topology_problems,
     ));
 
-    let overload_problems = checks::stories::check_circuit_overload(&board, config.workflow.max_battery_packs);
+    let overload_problems =
+        checks::stories::check_circuit_overload(&board, config.workflow.max_battery_packs);
     workflow_checks.push(configured_check(
         doctor_config,
         "workflow-circuit-overload",
         "Circuit Overload (Max Battery Packs)",
-        board.stories.values().filter(|s| s.status == StoryState::Backlog).count(),
+        board
+            .stories
+            .values()
+            .filter(|s| s.status == StoryState::Backlog)
+            .count(),
         overload_problems,
     ));
 

@@ -48,7 +48,12 @@ impl StoryLifecycleService {
         }
     }
     /// Start a story (backlog/rejected -> in-progress).
-    pub fn start(&self, ctx: &spoke_auth::ExecutionContext, id: &str, version: Option<u64>) -> Result<()> {
+    pub fn start(
+        &self,
+        ctx: &spoke_auth::ExecutionContext,
+        id: &str,
+        version: Option<u64>,
+    ) -> Result<()> {
         let board_dir = &self.board_dir;
         let board = self.board_store.load()?;
 
@@ -103,7 +108,10 @@ impl StoryLifecycleService {
                 println!("Story {} started by local system user '{}'", id, os_user);
             }
             spoke_auth::Actor::Authenticated { identity, role } => {
-                println!("Story {} started by authenticated actor '{}' ({})", id, identity, role);
+                println!(
+                    "Story {} started by authenticated actor '{}' ({})",
+                    id, identity, role
+                );
             }
         }
 
@@ -158,7 +166,10 @@ impl StoryLifecycleService {
                 println!("Story {} submitted by local system user '{}'", id, os_user);
             }
             spoke_auth::Actor::Authenticated { identity, role } => {
-                println!("Story {} submitted by authenticated actor '{}' ({})", id, identity, role);
+                println!(
+                    "Story {} submitted by authenticated actor '{}' ({})",
+                    id, identity, role
+                );
             }
         }
 
@@ -217,7 +228,13 @@ impl StoryLifecycleService {
     }
 
     /// Accept a story (needs-human-verification -> done).
-    pub fn accept(&self, ctx: &spoke_auth::ExecutionContext, id: &str, actor_role: &RoleTaxonomy, reflect: Option<&str>) -> Result<()> {
+    pub fn accept(
+        &self,
+        ctx: &spoke_auth::ExecutionContext,
+        id: &str,
+        actor_role: &RoleTaxonomy,
+        reflect: Option<&str>,
+    ) -> Result<()> {
         let board_dir = &self.board_dir;
         let board = self.board_store.load()?;
         let story = self.story_store.get(id)?;
@@ -277,7 +294,10 @@ impl StoryLifecycleService {
                 println!("Story {} accepted by local system user '{}'", id, os_user);
             }
             spoke_auth::Actor::Authenticated { identity, role } => {
-                println!("Story {} accepted by authenticated actor '{}' ({})", id, identity, role);
+                println!(
+                    "Story {} accepted by authenticated actor '{}' ({})",
+                    id, identity, role
+                );
             }
         }
 
@@ -334,7 +354,10 @@ impl StoryLifecycleService {
                 println!("Story {} rejected by local system user '{}'", id, os_user);
             }
             spoke_auth::Actor::Authenticated { identity, role } => {
-                println!("Story {} rejected by authenticated actor '{}' ({})", id, identity, role);
+                println!(
+                    "Story {} rejected by authenticated actor '{}' ({})",
+                    id, identity, role
+                );
             }
         }
 
@@ -372,7 +395,10 @@ impl StoryLifecycleService {
                 println!("Story {} iced by local system user '{}'", id, os_user);
             }
             spoke_auth::Actor::Authenticated { identity, role } => {
-                println!("Story {} iced by authenticated actor '{}' ({})", id, identity, role);
+                println!(
+                    "Story {} iced by authenticated actor '{}' ({})",
+                    id, identity, role
+                );
             }
         }
 
@@ -409,7 +435,10 @@ impl StoryLifecycleService {
                 println!("Story {} thawed by local system user '{}'", id, os_user);
             }
             spoke_auth::Actor::Authenticated { identity, role } => {
-                println!("Story {} thawed by authenticated actor '{}' ({})", id, identity, role);
+                println!(
+                    "Story {} thawed by authenticated actor '{}' ({})",
+                    id, identity, role
+                );
             }
         }
 
@@ -762,7 +791,13 @@ mod tests {
         )
         .unwrap();
 
-        let err = service.submit(&spoke_auth::ExecutionContext::new_local("test".into()), "NEW000001").unwrap_err().to_string();
+        let err = service
+            .submit(
+                &spoke_auth::ExecutionContext::new_local("test".into()),
+                "NEW000001",
+            )
+            .unwrap_err()
+            .to_string();
         assert!(err.contains("too similar to existing knowledge"));
         assert!(err.contains("1AbCdE239"));
     }

@@ -26,26 +26,6 @@ pub fn render_count_bar(
     )
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn render_count_bar_handles_zero_total() {
-        assert_eq!(
-            render_count_bar(0, 0, 15, Some("(functional)")),
-            "0/0 (functional)"
-        );
-    }
-
-    #[test]
-    fn render_count_bar_renders_bar_and_suffix() {
-        let rendered = render_count_bar(2, 4, 10, Some("(stories)"));
-        assert!(rendered.contains("2/4"));
-        assert!(rendered.contains("(stories)"));
-    }
-}
-
 pub fn render_capacity_bar(
     done: usize,
     in_flight: usize,
@@ -77,4 +57,24 @@ pub fn render_capacity_bar(
     bar.push_str(&" ".repeat(remaining));
 
     format!("[{}]", bar)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn render_count_bar_handles_zero_total() {
+        assert_eq!(
+            render_count_bar(0, 0, 15, Some("(functional)")),
+            "0/0 (functional)"
+        );
+    }
+
+    #[test]
+    fn render_count_bar_renders_bar_and_suffix() {
+        let rendered = render_count_bar(2, 4, 10, Some("(stories)"));
+        assert!(rendered.contains("2/4"));
+        assert!(rendered.contains("(stories)"));
+    }
 }

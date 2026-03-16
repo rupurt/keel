@@ -56,12 +56,10 @@ pub fn run(
 
     if json {
         println!("{}", serde_json::to_string_pretty(&ping)?);
+    } else if ping.status == PingStatus::Ponged {
+        println!("[{}] {}", ping.id, ping.pong_message.as_ref().unwrap());
     } else {
-        if ping.status == PingStatus::Ponged {
-            println!("[{}] {}", ping.id, ping.pong_message.as_ref().unwrap());
-        } else {
-            println!("[{}]", ping.id);
-        }
+        println!("[{}]", ping.id);
     }
 
     Ok(())

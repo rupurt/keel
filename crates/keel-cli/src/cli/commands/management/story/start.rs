@@ -18,7 +18,12 @@ use super::guidance::{
 };
 
 /// Run the start story command
-pub fn run(ctx: &spoke_auth::ExecutionContext, board_dir: &Path, id: &str, version: Option<u64>) -> Result<()> {
+pub fn run(
+    ctx: &spoke_auth::ExecutionContext,
+    board_dir: &Path,
+    id: &str,
+    version: Option<u64>,
+) -> Result<()> {
     let adapter = Arc::new(FileSystemAdapter::new(board_dir));
     let voyage_service = Arc::new(VoyageEpicLifecycleService::new(
         board_dir.to_path_buf(),
@@ -80,7 +85,13 @@ mod tests {
             )
             .build();
 
-        run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "BACKLOG1", None).unwrap();
+        run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "BACKLOG1",
+            None,
+        )
+        .unwrap();
 
         // Status should be updated to in-progress
         let story_path = temp.path().join("stories/BACKLOG1/README.md");
@@ -98,7 +109,13 @@ mod tests {
             )
             .build();
 
-        run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "UPDATE1", None).unwrap();
+        run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "UPDATE1",
+            None,
+        )
+        .unwrap();
 
         let content = fs::read_to_string(temp.path().join("stories/UPDATE1/README.md")).unwrap();
 
@@ -117,7 +134,14 @@ mod tests {
             )
             .build();
 
-        let err = run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "UZZY1", None).unwrap_err().to_string();
+        let err = run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "UZZY1",
+            None,
+        )
+        .unwrap_err()
+        .to_string();
         assert!(err.contains("Story not found: UZZY1"));
     }
 
@@ -132,7 +156,13 @@ mod tests {
             )
             .build();
 
-        run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "REJECTED1", None).unwrap();
+        run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "REJECTED1",
+            None,
+        )
+        .unwrap();
 
         // Content should preserve rejection history and update status
         let story_path = temp.path().join("stories/REJECTED1/README.md");
@@ -160,7 +190,13 @@ mod tests {
         );
         fs::write(&story_path, with_started).unwrap();
 
-        run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "RESTART1", None).unwrap();
+        run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "RESTART1",
+            None,
+        )
+        .unwrap();
 
         let updated = fs::read_to_string(&story_path).unwrap();
         assert!(updated.contains("status: in-progress"));
@@ -178,7 +214,12 @@ mod tests {
             )
             .build();
 
-        let result = run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "READY1", None);
+        let result = run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "READY1",
+            None,
+        );
 
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
@@ -237,7 +278,13 @@ mod tests {
             )
             .build();
 
-        run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "FLAT1", None).unwrap();
+        run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "FLAT1",
+            None,
+        )
+        .unwrap();
 
         // Frontmatter should be updated
         let story_path = temp.path().join("stories/FLAT1/README.md");
@@ -254,7 +301,12 @@ mod tests {
             .build();
 
         // Pass an old version (0 instead of current)
-        let result = run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "S1", Some(9999));
+        let result = run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "S1",
+            Some(9999),
+        );
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
         assert!(err.contains("Board state has changed"));
@@ -275,7 +327,13 @@ mod tests {
             )
             .build();
 
-        run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "S1", None).unwrap();
+        run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "S1",
+            None,
+        )
+        .unwrap();
 
         // Voyage should now be in-progress
         let voyage_path = temp.path().join("epics/e1/voyages/v1/README.md");

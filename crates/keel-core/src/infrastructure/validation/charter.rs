@@ -17,15 +17,15 @@ const DEFAULT_HALTING_RULES: [&str; 3] = [
 pub fn parse_mission_archetype(content: &str) -> MissionArchetype {
     for line in content.lines() {
         let trimmed = line.trim();
-        if let Some(rest) = trimmed.strip_prefix("**Archetype:**") {
-            if let Some(archetype) = MissionArchetype::parse(rest.trim()) {
-                return archetype;
-            }
+        if let Some(rest) = trimmed.strip_prefix("**Archetype:**")
+            && let Some(archetype) = MissionArchetype::parse(rest.trim())
+        {
+            return archetype;
         }
-        if let Some(rest) = trimmed.strip_prefix("Archetype:") {
-            if let Some(archetype) = MissionArchetype::parse(rest.trim()) {
-                return archetype;
-            }
+        if let Some(rest) = trimmed.strip_prefix("Archetype:")
+            && let Some(archetype) = MissionArchetype::parse(rest.trim())
+        {
+            return archetype;
         }
     }
     MissionArchetype::default()

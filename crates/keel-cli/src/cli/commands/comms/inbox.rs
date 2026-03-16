@@ -2,9 +2,9 @@
 
 use super::{PingMessage, inbox_dir};
 use anyhow::Result;
+use spoke_auth::ExecutionContext;
 use std::fs;
 use std::path::Path;
-use spoke_auth::ExecutionContext;
 
 pub fn run(_ctx: &ExecutionContext, board_dir: &Path, json: bool) -> Result<()> {
     let dir = inbox_dir(board_dir);
@@ -32,22 +32,20 @@ pub fn run(_ctx: &ExecutionContext, board_dir: &Path, json: bool) -> Result<()> 
 
     if json {
         println!("{}", serde_json::to_string_pretty(&pings)?);
+    } else if pings.is_empty() {
+        println!("Inbox is empty.");
     } else {
-        if pings.is_empty() {
-            println!("Inbox is empty.");
-        } else {
-            println!("{:<12} {:<20} {:<10} {}", "ID", "TIMESTAMP", "STATUS", "MESSAGE");
-            println!("{}", "-".repeat(80));
-            for ping in pings {
-                let status = format!("{:?}", ping.status);
-                println!(
-                    "{:<12} {:<20} {:<10} {}",
-                    ping.id,
-                    ping.timestamp.format("%Y-%m-%d %H:%M:%S"),
-                    status,
-                    ping.message
-                );
-            }
+        println!("{:<12} {:<20} {:<10} MESSAGE", "ID", "TIMESTAMP", "STATUS");
+        println!("{}", "-".repeat(80));
+        for ping in pings {
+            let status = format!("{:?}", ping.status);
+            println!(
+                "{:<12} {:<20} {:<10} {}",
+                ping.id,
+                ping.timestamp.format("%Y-%m-%d %H:%M:%S"),
+                status,
+                ping.message
+            );
         }
     }
 

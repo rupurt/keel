@@ -1,10 +1,10 @@
 //! Comms commands - ping and poke the inbox
 
+pub mod inbox;
+pub mod notify;
+pub mod outbox;
 pub mod ping;
 pub mod poke;
-pub mod inbox;
-pub mod outbox;
-pub mod notify;
 
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
@@ -41,7 +41,8 @@ pub fn save_ping(board_dir: &Path, ping: &PingMessage) -> Result<()> {
     fs::create_dir_all(&dir)?;
     let path = dir.join(format!("{}.json", ping.id));
     let json = serde_json::to_string_pretty(ping)?;
-    fs::write(&path, json).with_context(|| format!("Failed to write ping to {}", path.display()))?;
+    fs::write(&path, json)
+        .with_context(|| format!("Failed to write ping to {}", path.display()))?;
     Ok(())
 }
 
@@ -57,7 +58,7 @@ pub fn load_ping(board_dir: &Path, id: &str) -> Result<PingMessage> {
 pub fn check_auto_pong(message: &str) -> Option<String> {
     let lower = message.to_lowercase();
     let words: Vec<&str> = lower.split_whitespace().collect();
-    
+
     if words.contains(&"ping") {
         Some("pong".to_string())
     } else if words.contains(&"hello") || words.contains(&"hi") {

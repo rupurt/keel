@@ -7,9 +7,9 @@ use owo_colors::OwoColorize;
 /// Renders a radar sweep visual for 'next' style commands.
 /// `signal_count` determines how many "blips" appear on the radar.
 pub fn render_radar(signal_count: usize) -> String {
-    let mut blips = vec![" ", " ", " "];
-    for i in 0..signal_count.min(3) {
-        blips[i] = "●";
+    let mut blips = [" ", " ", " "];
+    for blip in blips.iter_mut().take(signal_count.min(3)) {
+        *blip = "●";
     }
 
     let b1 = blips[0].green();

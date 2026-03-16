@@ -10,6 +10,7 @@ use colored::Color;
 use serde::Serialize;
 use txtplot::ChartContext;
 
+use crate::cli::commands::comms::notify;
 use keel::domain::model::{AdrStatus, Board, StoryFrontmatter, StoryState, StoryType};
 use keel::infrastructure::loader::load_board;
 use keel::infrastructure::story_id::generate_story_id;
@@ -21,14 +22,14 @@ use keel::read_model::scheduled_routines::{
     project_scheduled_routines,
 };
 use keel::read_model::{workflow_lane_flow, workflow_topology};
-use crate::cli::commands::comms::notify;
 
 /// Run the pulse command.
 pub fn run(json: bool, scene: bool) -> Result<()> {
     let (config, _) = keel::infrastructure::config::load_config();
     use chrono::Timelike;
     let current_hour = chrono::Local::now().hour() as u8;
-    let within_working_hours = current_hour >= config.workflow.working_hours_start && current_hour < config.workflow.working_hours_end;
+    let within_working_hours = current_hour >= config.workflow.working_hours_start
+        && current_hour < config.workflow.working_hours_end;
     let is_circuit_enabled = config.workflow.open_for_work && within_working_hours;
 
     if !is_circuit_enabled {
@@ -36,7 +37,7 @@ pub fn run(json: bool, scene: bool) -> Result<()> {
             println!("{}", crate::cli::presentation::scene::render_gears(false));
             return Ok(());
         }
-        
+
         let cycle = PulseCycleOutput {
             mode: "disabled",
             evaluated: 0,
@@ -59,10 +60,16 @@ pub fn run(json: bool, scene: bool) -> Result<()> {
 
     let board_dir = keel::infrastructure::config::find_board_dir()?;
     let cycle = build_pulse_cycle(&board_dir, Utc::now())?;
-    
+
     if scene {
-        let created_any = cycle.routines.iter().any(|r| r.outcome == PulseRoutineOutcome::Created);
-        println!("{}", crate::cli::presentation::scene::render_gears(created_any));
+        let created_any = cycle
+            .routines
+            .iter()
+            .any(|r| r.outcome == PulseRoutineOutcome::Created);
+        println!(
+            "{}",
+            crate::cli::presentation::scene::render_gears(created_any)
+        );
         return Ok(());
     }
 
@@ -209,11 +216,7 @@ fn build_pulse_cycle(board_dir: &Path, reference_time: DateTime<Utc>) -> Result<
                 .first()
                 .map(|w| w.stories_done as f64 / 7.0)
                 .unwrap_or(0.0),
-            weekly_total: history
-                .weekly
-                .first()
-                .map(|w| w.stories_done)
-                .unwrap_or(0),
+            weekly_total: history.weekly.first().map(|w| w.stories_done).unwrap_or(0),
         })
     };
 
@@ -222,8 +225,10 @@ fn build_pulse_cycle(board_dir: &Path, reference_time: DateTime<Utc>) -> Result<
     if let Some(cmd) = config.workflow.effective_notification_command() {
         let topology = workflow_topology::load_for_board(board_dir)?;
         let lane_flow = workflow_lane_flow::project(&board, &topology);
-        let needs_human_input =
-            lane_flow.lanes.iter().any(|lane| lane.manual_accept && lane.total_count > 0);
+        let needs_human_input = lane_flow
+            .lanes
+            .iter()
+            .any(|lane| lane.manual_accept && lane.total_count > 0);
 
         if needs_human_input {
             let _ = notify::trigger_notification(&cmd);
@@ -960,7 +965,7 @@ updated_at: 2026-01-01T00:00:00
 
         assert!(parsed["health"].is_object());
         let drift = parsed["health"]["drift_coefficient"].as_f64().unwrap();
-        assert!(drift >= 0.21 && drift <= 0.23, "Drift was {drift}");
+        assert!((0.21..=0.23).contains(&drift), "Drift was {drift}");
 
         assert!(parsed["activity"].is_null());
 

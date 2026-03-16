@@ -222,17 +222,17 @@ pub fn default_max_battery_packs() -> usize {
 pub struct WorkflowConfig {
     #[serde(default)]
     pub defaults: WorkflowDefaultsConfig,
-    
+
     /// The maximum number of missions that can be active at the same time.
     /// Represents the Circuit Breaker "max amperage".
     #[serde(default = "default_max_active_missions")]
     pub max_active_missions: usize,
-    
+
     /// The maximum number of ready stories allowed in the backlog before triggering an overload.
     /// Represents plugged-in queue load.
     #[serde(default = "default_max_battery_packs")]
     pub max_battery_packs: usize,
-    
+
     /// The main switch for the engine. If false, the engine does not perform work.
     #[serde(default = "default_open_for_work")]
     pub open_for_work: bool,

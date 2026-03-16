@@ -11,7 +11,10 @@ pub fn check_routine_cadence(board: &Board) -> Vec<Problem> {
                 problems.push(
                     Problem::error(
                         routine.path.clone(),
-                        format!("Routine '{}' has invalid cadence.cron (expected string)", routine.id()),
+                        format!(
+                            "Routine '{}' has invalid cadence.cron (expected string)",
+                            routine.id()
+                        ),
                     )
                     .with_check_id(CheckId::RoutineInvalidCadence)
                     .with_fix(Fix::SetFrontmatterField {
@@ -41,7 +44,10 @@ pub fn check_routine_cadence(board: &Board) -> Vec<Problem> {
                 problems.push(
                     Problem::error(
                         routine.path.clone(),
-                        format!("Routine '{}' has invalid cadence.timezone (expected string)", routine.id()),
+                        format!(
+                            "Routine '{}' has invalid cadence.timezone (expected string)",
+                            routine.id()
+                        ),
                     )
                     .with_check_id(CheckId::RoutineInvalidCadence)
                     .with_fix(Fix::SetFrontmatterField {

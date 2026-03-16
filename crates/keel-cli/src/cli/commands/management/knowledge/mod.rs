@@ -50,7 +50,11 @@ pub enum KnowledgeAction {
     Prune,
 }
 
-pub fn run(_ctx: &spoke_auth::ExecutionContext, board_dir: &Path, action: KnowledgeAction) -> Result<()> {
+pub fn run(
+    _ctx: &spoke_auth::ExecutionContext,
+    board_dir: &Path,
+    action: KnowledgeAction,
+) -> Result<()> {
     match action {
         KnowledgeAction::List {
             category,

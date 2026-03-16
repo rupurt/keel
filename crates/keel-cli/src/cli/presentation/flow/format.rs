@@ -1,9 +1,9 @@
 //! Terminal formatting for flow diagnostics
 
+use ansi_escape_sequences::strip_ansi;
 use owo_colors::OwoColorize;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write;
-use ansi_escape_sequences::strip_ansi;
 
 pub use super::capacity::EpicCapacityReport;
 use crate::cli::presentation::theme::Theme;
@@ -209,7 +209,12 @@ pub fn render_epic_capacities(
         .unwrap();
     }
     for epic in draft_epics.iter().take(COMPLETED_EPIC_RENDER_LIMIT) {
-        writeln!(out, "{}", render_epic_line(board, epic, max_width, status_width, theme)).unwrap();
+        writeln!(
+            out,
+            "{}",
+            render_epic_line(board, epic, max_width, status_width, theme)
+        )
+        .unwrap();
     }
 
     // Separator
@@ -219,19 +224,29 @@ pub fn render_epic_capacities(
 
     // Render Actives (never clipped)
     for epic in &active_epics {
-        writeln!(out, "{}", render_epic_line(board, epic, max_width, status_width, theme)).unwrap();
+        writeln!(
+            out,
+            "{}",
+            render_epic_line(board, epic, max_width, status_width, theme)
+        )
+        .unwrap();
     }
 
     // Separator
     if (!draft_epics.is_empty() || !active_epics.is_empty()) && !done_epics.is_empty() {
-       writeln!(out).unwrap();
+        writeln!(out).unwrap();
     }
 
     // Render Dones (clipped)
     for epic in done_epics.iter().take(COMPLETED_EPIC_RENDER_LIMIT) {
-        writeln!(out, "{}", render_epic_line(board, epic, max_width, status_width, theme)).unwrap();
+        writeln!(
+            out,
+            "{}",
+            render_epic_line(board, epic, max_width, status_width, theme)
+        )
+        .unwrap();
     }
-    
+
     if done_epics.len() > COMPLETED_EPIC_RENDER_LIMIT {
         let ellipsis_width = centered_ellipsis_width(max_width, &header);
         writeln!(out, "{}...", " ".repeat(ellipsis_width)).unwrap();
@@ -293,10 +308,7 @@ fn render_epic_line(
 
     let status_padded = pad_to_width(&status_styled, status_width);
 
-    format!(
-        "  {} {} {} {}",
-        emoji, epic_padded, status_padded, bar,
-    )
+    format!("  {} {} {} {}", emoji, epic_padded, status_padded, bar,)
 }
 
 fn centered_ellipsis_width(max_width: usize, header: &str) -> usize {
@@ -612,11 +624,26 @@ mod tests {
         ]);
 
         let mut board = keel::domain::model::Board::default();
-        board.epics.insert("epic1".to_string(), build_epic("epic1", keel::domain::model::EpicState::Done));
-        board.epics.insert("epic2".to_string(), build_epic("epic2", keel::domain::model::EpicState::Done));
-        board.epics.insert("epic3".to_string(), build_epic("epic3", keel::domain::model::EpicState::Done));
-        board.epics.insert("epic4".to_string(), build_epic("epic4", keel::domain::model::EpicState::Done));
-        board.epics.insert("epic5".to_string(), build_epic("epic5", keel::domain::model::EpicState::Done));
+        board.epics.insert(
+            "epic1".to_string(),
+            build_epic("epic1", keel::domain::model::EpicState::Done),
+        );
+        board.epics.insert(
+            "epic2".to_string(),
+            build_epic("epic2", keel::domain::model::EpicState::Done),
+        );
+        board.epics.insert(
+            "epic3".to_string(),
+            build_epic("epic3", keel::domain::model::EpicState::Done),
+        );
+        board.epics.insert(
+            "epic4".to_string(),
+            build_epic("epic4", keel::domain::model::EpicState::Done),
+        );
+        board.epics.insert(
+            "epic5".to_string(),
+            build_epic("epic5", keel::domain::model::EpicState::Done),
+        );
         let rendered = render_epic_capacities(&board, &capacities, &theme);
 
         assert!(!rendered.contains("epic1"));
@@ -681,14 +708,38 @@ mod tests {
         ]);
 
         let mut board = keel::domain::model::Board::default();
-        board.epics.insert("epic1".to_string(), build_epic("epic1", keel::domain::model::EpicState::Done));
-        board.epics.insert("epic2".to_string(), build_epic("epic2", keel::domain::model::EpicState::Done));
-        board.epics.insert("epic3".to_string(), build_epic("epic3", keel::domain::model::EpicState::Done));
-        board.epics.insert("epic4".to_string(), build_epic("epic4", keel::domain::model::EpicState::Done));
-        board.epics.insert("epic5".to_string(), build_epic("epic5", keel::domain::model::EpicState::Done));
-        board.epics.insert("epic6".to_string(), build_epic("epic6", keel::domain::model::EpicState::Active));
-        board.epics.insert("epic7".to_string(), build_epic("epic7", keel::domain::model::EpicState::Active));
-        board.epics.insert("epic8".to_string(), build_epic("epic8", keel::domain::model::EpicState::Active));
+        board.epics.insert(
+            "epic1".to_string(),
+            build_epic("epic1", keel::domain::model::EpicState::Done),
+        );
+        board.epics.insert(
+            "epic2".to_string(),
+            build_epic("epic2", keel::domain::model::EpicState::Done),
+        );
+        board.epics.insert(
+            "epic3".to_string(),
+            build_epic("epic3", keel::domain::model::EpicState::Done),
+        );
+        board.epics.insert(
+            "epic4".to_string(),
+            build_epic("epic4", keel::domain::model::EpicState::Done),
+        );
+        board.epics.insert(
+            "epic5".to_string(),
+            build_epic("epic5", keel::domain::model::EpicState::Done),
+        );
+        board.epics.insert(
+            "epic6".to_string(),
+            build_epic("epic6", keel::domain::model::EpicState::Active),
+        );
+        board.epics.insert(
+            "epic7".to_string(),
+            build_epic("epic7", keel::domain::model::EpicState::Active),
+        );
+        board.epics.insert(
+            "epic8".to_string(),
+            build_epic("epic8", keel::domain::model::EpicState::Active),
+        );
         let rendered = render_epic_capacities(&board, &capacities, &theme);
 
         assert!(!rendered.contains("epic1"));
@@ -724,10 +775,22 @@ mod tests {
         ]);
 
         let mut board = keel::domain::model::Board::default();
-        board.epics.insert("epic1".to_string(), build_epic("epic1", keel::domain::model::EpicState::Done));
-        board.epics.insert("epic2".to_string(), build_epic("epic2", keel::domain::model::EpicState::Done));
-        board.epics.insert("epic3".to_string(), build_epic("epic3", keel::domain::model::EpicState::Done));
-        board.epics.insert("epic4".to_string(), build_epic("epic4", keel::domain::model::EpicState::Active));
+        board.epics.insert(
+            "epic1".to_string(),
+            build_epic("epic1", keel::domain::model::EpicState::Done),
+        );
+        board.epics.insert(
+            "epic2".to_string(),
+            build_epic("epic2", keel::domain::model::EpicState::Done),
+        );
+        board.epics.insert(
+            "epic3".to_string(),
+            build_epic("epic3", keel::domain::model::EpicState::Done),
+        );
+        board.epics.insert(
+            "epic4".to_string(),
+            build_epic("epic4", keel::domain::model::EpicState::Active),
+        );
         let rendered = render_epic_capacities(&board, &capacities, &theme);
 
         assert!(rendered.contains("epic1"));
@@ -748,7 +811,7 @@ mod tests {
     ) -> EpicCapacityReport {
         let charge_state = crate::cli::presentation::flow::capacity::ChargeState::Discharged;
         let index = id.replace("epic", "").parse::<u32>().ok();
-        
+
         let status = if done > 0 && ready == 0 && in_flight == 0 && blocked == 0 && inactive == 0 {
             keel::domain::model::EpicState::Done
         } else if ready == 0 && in_flight == 0 && blocked == 0 && inactive == 0 && done == 0 {

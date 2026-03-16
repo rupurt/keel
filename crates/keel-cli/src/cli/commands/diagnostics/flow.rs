@@ -11,16 +11,24 @@ use keel::read_model::scheduled_routines::{RoutineScheduleFilter, project_schedu
 use keel::read_model::{flow_status, workflow_lane_flow, workflow_topology};
 
 /// Run the flow command
-pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, scene: bool) -> Result<()> {
+pub fn run(
+    board_dir: &std::path::Path,
+    no_color: bool,
+    show_routines: bool,
+    scene: bool,
+) -> Result<()> {
     let board = load_board(board_dir)?;
     let topology = workflow_topology::load_for_board(board_dir)?;
     let lane_flow = workflow_lane_flow::project(&board, &topology);
     let metrics = flow_status::project(&board, chrono::Utc::now());
     let report = keel::read_model::diagnostics::validate_report(board_dir)?;
     let healthy = report.total_errors() == 0;
-    
+
     // System is autonomous if no tasks are pending in manual_accept lanes
-    let needs_human_input = lane_flow.lanes.iter().any(|lane| lane.manual_accept && lane.total_count > 0);
+    let needs_human_input = lane_flow
+        .lanes
+        .iter()
+        .any(|lane| lane.manual_accept && lane.total_count > 0);
     let autonomous = !needs_human_input;
 
     let in_progress = metrics.execution.in_progress_count;
@@ -29,34 +37,63 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
     let (config, _) = keel::infrastructure::config::load_config();
     use chrono::Timelike;
     let current_hour = chrono::Local::now().hour() as u8;
-    let within_working_hours = current_hour >= config.workflow.working_hours_start && current_hour < config.workflow.working_hours_end;
+    let within_working_hours = current_hour >= config.workflow.working_hours_start
+        && current_hour < config.workflow.working_hours_end;
     let is_circuit_enabled = config.workflow.open_for_work && within_working_hours;
 
     if scene {
         use owo_colors::OwoColorize;
         if !is_circuit_enabled {
             let mut circuit = String::new();
-            circuit.push_str("\n    ┌───────────────────────────[         ]───────────────────────────┐\n");
-            circuit.push_str("    │                                                                 │\n");
-            circuit.push_str("    │                                /                                │\n");
-            circuit.push_str("    │                               /                                 │\n");
-            circuit.push_str("    │                              /                                  │\n");
-            circuit.push_str("    └───────────────(               )─────────────────────────────────┘\n");
+            circuit.push_str(
+                "\n    ┌───────────────────────────[         ]───────────────────────────┐\n",
+            );
+            circuit.push_str(
+                "    │                                                                 │\n",
+            );
+            circuit.push_str(
+                "    │                                /                                │\n",
+            );
+            circuit.push_str(
+                "    │                               /                                 │\n",
+            );
+            circuit.push_str(
+                "    │                              /                                  │\n",
+            );
+            circuit.push_str(
+                "    └───────────────(               )─────────────────────────────────┘\n",
+            );
             circuit.push_str("                     \\             /   <-- CIRCUIT OPEN (OFF THE CLOCK / DISABLED)\n");
             circuit.push_str("                      \\___________/\n");
             println!("{}", circuit.dimmed());
-            return Err(anyhow::anyhow!("Circuit is open (disabled or off the clock)"));
+            return Err(anyhow::anyhow!(
+                "Circuit is open (disabled or off the clock)"
+            ));
         }
 
         if !healthy {
             let mut circuit = String::new();
-            circuit.push_str("\n    ┌───────────────────────────[ BATTERY ]───────────────────────────┐\n");
-            circuit.push_str("    │                                                                 │\n");
-            circuit.push_str("    │                                                                 │\n");
-            circuit.push_str("    │          [ XX ][ XX ]       [ XX ][ XX ]                        │\n");
-            circuit.push_str("    │          <-- CAPACITORS BLOWN (SYSTEM UNHEALTHY)                │\n");
-            circuit.push_str("    │               * SPARKS *                                        │\n");
-            circuit.push_str("    └───────────────(   X       X   )─────────────────────────────────┘\n");
+            circuit.push_str(
+                "\n    ┌───────────────────────────[ BATTERY ]───────────────────────────┐\n",
+            );
+            circuit.push_str(
+                "    │                                                                 │\n",
+            );
+            circuit.push_str(
+                "    │                                                                 │\n",
+            );
+            circuit.push_str(
+                "    │          [ XX ][ XX ]       [ XX ][ XX ]                        │\n",
+            );
+            circuit.push_str(
+                "    │          <-- CAPACITORS BLOWN (SYSTEM UNHEALTHY)                │\n",
+            );
+            circuit.push_str(
+                "    │               * SPARKS *                                        │\n",
+            );
+            circuit.push_str(
+                "    └───────────────(   X       X   )─────────────────────────────────┘\n",
+            );
             println!("{}", circuit.red().bold());
             println!("Run `keel doctor` to repair the circuit.");
             return Err(anyhow::anyhow!("Short circuit: System is unhealthy"));
@@ -65,22 +102,41 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
         let energized = recently_completed > 0;
         if !energized {
             let mut circuit = String::new();
-            circuit.push_str("\n    ┌───────────────────────────[ BATTERY ]───────────────────────────┐\n");
-            circuit.push_str("    │                                                                 │\n");
-            circuit.push_str("    │                                                                 │\n");
-            circuit.push_str("    └───────────────( \\             / )   ───                         \n");
-            circuit.push_str("                     \\ \\           / /   <-- CORD UNPLUGGED           \n");
-            circuit.push_str("                      \\ \\_ _ _ _ _/ /        (POKE TO WAKE)           \n");
-            circuit.push_str("                       \\___________/                                  \n");
+            circuit.push_str(
+                "\n    ┌───────────────────────────[ BATTERY ]───────────────────────────┐\n",
+            );
+            circuit.push_str(
+                "    │                                                                 │\n",
+            );
+            circuit.push_str(
+                "    │                                                                 │\n",
+            );
+            circuit.push_str(
+                "    └───────────────( \\             / )   ───                         \n",
+            );
+            circuit.push_str(
+                "                     \\ \\           / /   <-- CORD UNPLUGGED           \n",
+            );
+            circuit.push_str(
+                "                      \\ \\_ _ _ _ _/ /        (POKE TO WAKE)           \n",
+            );
+            circuit.push_str(
+                "                       \\___________/                                  \n",
+            );
             println!("{}", circuit.dimmed());
-            return Err(anyhow::anyhow!("System is idle: Cord unplugged (poke to wake)"));
+            return Err(anyhow::anyhow!(
+                "System is idle: Cord unplugged (poke to wake)"
+            ));
         }
 
         // System is healthy and energized - Light is ON
         let mut circuit = String::new();
-        circuit.push_str("\n    ┌───────────────────────────[ BATTERY ]───────────────────────────┐\n");
-        circuit.push_str("    │                                                                 │\n");
-        
+        circuit.push_str(
+            "\n    ┌───────────────────────────[ BATTERY ]───────────────────────────┐\n",
+        );
+        circuit
+            .push_str("    │                                                                 │\n");
+
         let ready_backlog = metrics.execution.backlog_ready_count;
         let mut packs_visual = String::new();
         for _ in 0..ready_backlog.min(20) {
@@ -88,43 +144,69 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
         }
         if !packs_visual.is_empty() {
             let label = format!("<-- {} BATTERY PACKS PLUGGED IN", ready_backlog);
-            circuit.push_str(&format!("    │   [ {: <20} ]  {: <36}│\n", packs_visual, label));
+            circuit.push_str(&format!(
+                "    │   [ {: <20} ]  {: <36}│\n",
+                packs_visual, label
+            ));
         } else {
-            circuit.push_str("    │                                                                 │\n");
+            circuit.push_str(
+                "    │                                                                 │\n",
+            );
         }
 
-        circuit.push_str("    │                                                                 │\n");
+        circuit
+            .push_str("    │                                                                 │\n");
         // Render capacitor bank based on work volume
         if in_progress > 3 {
-            circuit.push_str("    │          [ || ][ || ]       [ || ][ || ]                        │\n");
-            circuit.push_str("    │          <-- CAPACITOR BANK ACTIVE (HIGH LOAD)                  │\n");
+            circuit.push_str(
+                "    │          [ || ][ || ]       [ || ][ || ]                        │\n",
+            );
+            circuit.push_str(
+                "    │          <-- CAPACITOR BANK ACTIVE (HIGH LOAD)                  │\n",
+            );
         } else if in_progress > 0 {
-            circuit.push_str("    │                     [ || ][ || ]                                │\n");
-            circuit.push_str("    │                 <-- CAPACITORS CHARGING                         │\n");
+            circuit.push_str(
+                "    │                     [ || ][ || ]                                │\n",
+            );
+            circuit.push_str(
+                "    │                 <-- CAPACITORS CHARGING                         │\n",
+            );
         } else {
-            circuit.push_str("    │                                                                 │\n");
-            circuit.push_str("    │                                                                 │\n");
+            circuit.push_str(
+                "    │                                                                 │\n",
+            );
+            circuit.push_str(
+                "    │                                                                 │\n",
+            );
         }
-        
-        circuit.push_str("    │                                                                 │\n");
-        circuit.push_str("    └───────────────( \\             / )───────────────────────────────┘\n");
+
+        circuit
+            .push_str("    │                                                                 │\n");
+        circuit
+            .push_str("    └───────────────( \\             / )───────────────────────────────┘\n");
         circuit.push_str("                     \\ \\           / /\n");
 
         if autonomous {
             if in_progress > 0 || ready_backlog > 0 {
-                circuit.push_str("                      \\ \\_ _ _ _ _/ /  <-- SYSTEM AUTONOMOUS (LIGHT ON)\n");
+                circuit.push_str(
+                    "                      \\ \\_ _ _ _ _/ /  <-- SYSTEM AUTONOMOUS (LIGHT ON)\n",
+                );
                 circuit.push_str("                       \\___________/\n");
                 println!("{}", circuit.yellow().bold());
             } else {
-                circuit.push_str("                      \\ \\_ _ _ _ _/ /  <-- SYSTEM IDLE (LIGHT DIM)\n");
+                circuit.push_str(
+                    "                      \\ \\_ _ _ _ _/ /  <-- SYSTEM IDLE (LIGHT DIM)\n",
+                );
                 circuit.push_str("                       \\___________/\n");
                 println!("{}", circuit.yellow().dimmed());
             }
         } else {
-            circuit.push_str("                      \\ \\_ _ _ _ _/ /  <-- WORKSHOP BUSY (LIGHT ON)\n");
+            circuit.push_str(
+                "                      \\ \\_ _ _ _ _/ /  <-- WORKSHOP BUSY (LIGHT ON)\n",
+            );
             circuit.push_str("                       \\___________/\n");
             println!("{}", circuit.yellow().bold());
-            
+
             let mut blocking_items = Vec::new();
             for lane in &lane_flow.lanes {
                 if lane.manual_accept && lane.total_count > 0 {
@@ -180,7 +262,9 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
     println!("{}", output);
 
     if !is_circuit_enabled {
-        return Err(anyhow::anyhow!("Circuit is open (disabled or off the clock)"));
+        return Err(anyhow::anyhow!(
+            "Circuit is open (disabled or off the clock)"
+        ));
     }
     if !healthy {
         return Err(anyhow::anyhow!("Short circuit: System is unhealthy"));
@@ -189,13 +273,19 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
         return Err(anyhow::anyhow!("System is idle: Human input required"));
     }
     if recently_completed == 0 {
-        return Err(anyhow::anyhow!("System is idle: Cord unplugged (poke to wake)"));
+        return Err(anyhow::anyhow!(
+            "System is idle: Cord unplugged (poke to wake)"
+        ));
     }
 
     Ok(())
 }
 
-fn build_output(board_dir: &std::path::Path, no_color: bool, show_routines: bool) -> Result<String> {
+fn build_output(
+    board_dir: &std::path::Path,
+    no_color: bool,
+    show_routines: bool,
+) -> Result<String> {
     build_output_at(board_dir, no_color, show_routines, Utc::now())
 }
 

@@ -42,7 +42,13 @@ pub(crate) fn legacy_story_accept_flag_guidance(args: &[String]) -> Option<Strin
 }
 
 /// Run the accept command
-pub fn run(ctx: &spoke_auth::ExecutionContext, board_dir: &Path, id: &str, role: &str, reflect: Option<&str>) -> Result<()> {
+pub fn run(
+    ctx: &spoke_auth::ExecutionContext,
+    board_dir: &Path,
+    id: &str,
+    role: &str,
+    reflect: Option<&str>,
+) -> Result<()> {
     let adapter = Arc::new(FileSystemAdapter::new(board_dir));
     let voyage_service = Arc::new(VoyageEpicLifecycleService::new(
         board_dir.to_path_buf(),
@@ -67,14 +73,16 @@ pub fn run(ctx: &spoke_auth::ExecutionContext, board_dir: &Path, id: &str, role:
         .map(|topology| topology.management_role_example().to_string())
         .unwrap_or_else(|_| "manager".to_string());
 
-    service.accept(ctx, id, &actor_role, reflect).map_err(|err| {
-        error_with_recovery_for_accept_role(
-            StoryLifecycleAction::Accept,
-            id,
-            err,
-            &accept_role_example,
-        )
-    })?;
+    service
+        .accept(ctx, id, &actor_role, reflect)
+        .map_err(|err| {
+            error_with_recovery_for_accept_role(
+                StoryLifecycleAction::Accept,
+                id,
+                err,
+                &accept_role_example,
+            )
+        })?;
 
     let board = load_board(board_dir)?;
     let story = board.require_story(id)?;
@@ -141,7 +149,14 @@ priority = 50
             )
             .build();
 
-        run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "READY1", "manager", None).unwrap();
+        run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "READY1",
+            "manager",
+            None,
+        )
+        .unwrap();
 
         // Status should be updated to done
         let story_path = temp.path().join("stories/READY1/README.md");
@@ -162,7 +177,14 @@ priority = 50
             )
             .build();
 
-        run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "UPDATE1", "manager", None).unwrap();
+        run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "UPDATE1",
+            "manager",
+            None,
+        )
+        .unwrap();
 
         let content = fs::read_to_string(temp.path().join("stories/UPDATE1/README.md")).unwrap();
 
@@ -196,7 +218,13 @@ priority = 50
             .build();
         write_custom_topology_config(temp.path());
 
-        let result = run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "1vkqtsHH1", "maker", None);
+        let result = run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "1vkqtsHH1",
+            "maker",
+            None,
+        );
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
         assert!(
@@ -219,7 +247,13 @@ priority = 50
             .build();
         write_custom_topology_config(temp.path());
 
-        let result = run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "1vkqtsHH2", "director", None);
+        let result = run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "1vkqtsHH2",
+            "director",
+            None,
+        );
         assert!(
             result.is_ok(),
             "Should succeed with configured management role: {:?}",
@@ -238,7 +272,13 @@ priority = 50
             .build();
         write_custom_topology_config(temp.path());
 
-        let result = run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "1vkqtsHH3", "maker", None);
+        let result = run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "1vkqtsHH3",
+            "maker",
+            None,
+        );
         assert!(
             result.is_ok(),
             "Should succeed for non-manual stories with any valid role: {:?}",
@@ -256,7 +296,13 @@ priority = 50
             )
             .build();
 
-        let result = run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "1vkqtsHH4", "operator", None);
+        let result = run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "1vkqtsHH4",
+            "operator",
+            None,
+        );
         assert!(
             result.is_ok(),
             "Should succeed for stories without verify annotations: {:?}",
@@ -277,7 +323,14 @@ priority = 50
             )
             .build();
 
-        run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "1vkqtsAAA", "manager", None).unwrap();
+        run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "1vkqtsAAA",
+            "manager",
+            None,
+        )
+        .unwrap();
 
         // Story bundle README should still exist
         let story_path = temp.path().join("stories/1vkqtsAAA/README.md");
@@ -328,7 +381,14 @@ priority = 50
             )
             .build();
 
-        run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "1vqNrfl02", "manager", Some("Latency was key")).unwrap();
+        run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "1vqNrfl02",
+            "manager",
+            Some("Latency was key"),
+        )
+        .unwrap();
 
         let content = fs::read_to_string(temp.path().join("stories/1vqNrfl02/REFLECT.md")).unwrap();
         assert!(
@@ -346,7 +406,14 @@ priority = 50
 
         let reflect_path = temp.path().join("stories/1vqNrfl03/REFLECT.md");
 
-        run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "1vqNrfl03", "manager", None).unwrap();
+        run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "1vqNrfl03",
+            "manager",
+            None,
+        )
+        .unwrap();
 
         assert!(
             !reflect_path.exists(),

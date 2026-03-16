@@ -77,7 +77,12 @@ mod tests {
         )
         .unwrap();
 
-        run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "ACTIVE1").unwrap();
+        run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "ACTIVE1",
+        )
+        .unwrap();
 
         // Status should be updated
         let story_path = temp.path().join("stories/ACTIVE1/README.md");
@@ -104,7 +109,12 @@ mod tests {
         )
         .unwrap();
 
-        run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "SUBMIT1").unwrap();
+        run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "SUBMIT1",
+        )
+        .unwrap();
 
         let content = fs::read_to_string(temp.path().join("stories/SUBMIT1/README.md")).unwrap();
 
@@ -146,7 +156,11 @@ mod tests {
         )
         .unwrap();
 
-        let result = run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "1vkqtsCCC");
+        let result = run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "1vkqtsCCC",
+        );
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
         assert!(err.contains("unchecked acceptance criteria"));
@@ -169,7 +183,11 @@ mod tests {
         if reflect_path.exists() {
             fs::remove_file(reflect_path).unwrap();
         }
-        let result = run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "1vkqtsREF");
+        let result = run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "1vkqtsREF",
+        );
 
         assert!(
             result.is_ok(),
@@ -191,7 +209,11 @@ mod tests {
         // Create EVIDENCE dir
         fs::create_dir_all(temp.path().join("stories/1vkqtsDDD/EVIDENCE")).unwrap();
 
-        let result = run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "1vkqtsDDD");
+        let result = run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "1vkqtsDDD",
+        );
         assert!(result.is_ok(), "Should succeed: {:?}", result);
     }
 
@@ -208,7 +230,11 @@ mod tests {
         // Create EVIDENCE dir
         fs::create_dir_all(temp.path().join("stories/1vkqtsEEE/EVIDENCE")).unwrap();
 
-        let result = run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "1vkqtsEEE");
+        let result = run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "1vkqtsEEE",
+        );
         assert!(result.is_ok());
     }
 
@@ -226,7 +252,12 @@ mod tests {
         // Create EVIDENCE dir
         fs::create_dir_all(temp.path().join("stories/FLATACT/EVIDENCE")).unwrap();
 
-        run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "FLATACT").unwrap();
+        run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "FLATACT",
+        )
+        .unwrap();
 
         // Story bundle README should exist
         let story_path = temp.path().join("stories/FLATACT/README.md");
@@ -256,7 +287,12 @@ mod tests {
         )
         .unwrap();
 
-        run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "1vkqtsVV1").unwrap();
+        run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "1vkqtsVV1",
+        )
+        .unwrap();
 
         let content = fs::read_to_string(temp.path().join("stories/1vkqtsVV1/README.md")).unwrap();
         assert!(content.contains("status: done"));
@@ -280,7 +316,12 @@ mod tests {
         )
         .unwrap();
 
-        run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "1vkqtsVV2").unwrap();
+        run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "1vkqtsVV2",
+        )
+        .unwrap();
 
         let content = fs::read_to_string(temp.path().join("stories/1vkqtsVV2/README.md")).unwrap();
         assert!(content.contains("status: needs-human-verification"));
@@ -302,6 +343,10 @@ mod tests {
 
         // For this test to work as "failure", we need the mock executor to fail.
         // For now, let's just verify it doesn't panic.
-        let _result = run(&spoke_auth::ExecutionContext::new_local("test".into()), temp.path(), "1vkqtsVV4");
+        let _result = run(
+            &spoke_auth::ExecutionContext::new_local("test".into()),
+            temp.path(),
+            "1vkqtsVV4",
+        );
     }
 }

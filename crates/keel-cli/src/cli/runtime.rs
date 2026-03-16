@@ -19,7 +19,9 @@ pub fn run() -> Result<()> {
     }
     let matches = build_cli().get_matches_from(raw_args);
 
-    let auth_file = matches.get_one::<std::path::PathBuf>("auth-file").map(|p| p.as_path());
+    let auth_file = matches
+        .get_one::<std::path::PathBuf>("auth-file")
+        .map(|p| p.as_path());
     let ctx = spoke_auth::load_auth_context(auth_file)?;
 
     match matches.subcommand() {
@@ -54,7 +56,12 @@ pub fn run() -> Result<()> {
             let no_color = *m.get_one::<bool>("no_color").unwrap_or(&false);
             let hide_routines = *m.get_one::<bool>("hide-routines").unwrap_or(&false);
             let scene = *m.get_one::<bool>("scene").unwrap_or(&false);
-            super::commands::diagnostics::flow::run(&resolve_board_dir()?, no_color, !hide_routines, scene)
+            super::commands::diagnostics::flow::run(
+                &resolve_board_dir()?,
+                no_color,
+                !hide_routines,
+                scene,
+            )
         }
         Some(("workshop", m)) => {
             let scene = *m.get_one::<bool>("scene").unwrap_or(&false);
@@ -115,7 +122,11 @@ pub fn run() -> Result<()> {
         }
         Some(("audit", m)) => {
             let id = m.get_one::<String>("id").cloned();
-            super::commands::management::story::audit::run(&ctx, &resolve_board_dir()?, id.as_deref())
+            super::commands::management::story::audit::run(
+                &ctx,
+                &resolve_board_dir()?,
+                id.as_deref(),
+            )
         }
         Some(("verify", m)) => match m.subcommand() {
             Some(("run", run_m)) => {
@@ -152,7 +163,14 @@ pub fn run() -> Result<()> {
                 .map(|vals| vals.map(|s| s.as_str()).collect::<Vec<_>>().join(" "));
             let json = *m.get_one::<bool>("json").unwrap_or(&false);
             let is_self = m.get_flag("self");
-            super::commands::comms::poke::run(&ctx, &resolve_board_dir()?, id.map(|s| s.as_str()), message.as_deref(), is_self, json)
+            super::commands::comms::poke::run(
+                &ctx,
+                &resolve_board_dir()?,
+                id.map(|s| s.as_str()),
+                message.as_deref(),
+                is_self,
+                json,
+            )
         }
         Some(("inbox", m)) => {
             let json = *m.get_one::<bool>("json").unwrap_or(&false);
@@ -215,7 +233,10 @@ fn handle_mission_command(ctx: &spoke_auth::ExecutionContext, matches: &ArgMatch
     super::commands::management::mission::run(ctx, parse_subcommand_action(matches)?)
 }
 
-fn handle_knowledge_command(ctx: &spoke_auth::ExecutionContext, matches: &ArgMatches) -> Result<()> {
+fn handle_knowledge_command(
+    ctx: &spoke_auth::ExecutionContext,
+    matches: &ArgMatches,
+) -> Result<()> {
     let command = matches
         .subcommand()
         .ok_or_else(|| anyhow::anyhow!("Missing knowledge subcommand"))?;

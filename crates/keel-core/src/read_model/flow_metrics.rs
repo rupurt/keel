@@ -1,8 +1,8 @@
 //! Canonical flow metrics projection shared by diagnostics and queue policy.
 
-use chrono::{DateTime, Utc};
 use crate::domain::model::{Board, EpicState, StoryState, VoyageState};
 use crate::read_model::execution_queue;
+use chrono::{DateTime, Utc};
 
 /// High-level summary of board-wide flow state.
 #[derive(Debug, Default)]
@@ -91,53 +91,61 @@ pub fn calculate_metrics(board: &Board, reference_time: DateTime<Utc>) -> FlowMe
 
     // Check stories
     for s in board.stories.values() {
-        let dt = s.frontmatter.updated_at.or(s.frontmatter.completed_at).or(s.frontmatter.created_at);
-        if let Some(dt) = dt {
-            if latest_activity.map_or(true, |lat| dt > lat) {
-                latest_activity = Some(dt);
-            }
+        let dt = s
+            .frontmatter
+            .updated_at
+            .or(s.frontmatter.completed_at)
+            .or(s.frontmatter.created_at);
+        if let Some(dt) = dt
+            && latest_activity.is_none_or(|lat| dt > lat)
+        {
+            latest_activity = Some(dt);
         }
     }
 
     // Check voyages
     for v in board.voyages.values() {
-        let dt = v.frontmatter.updated_at.or(v.frontmatter.completed_at).or(v.frontmatter.created_at);
-        if let Some(dt) = dt {
-            if latest_activity.map_or(true, |lat| dt > lat) {
-                latest_activity = Some(dt);
-            }
+        let dt = v
+            .frontmatter
+            .updated_at
+            .or(v.frontmatter.completed_at)
+            .or(v.frontmatter.created_at);
+        if let Some(dt) = dt
+            && latest_activity.is_none_or(|lat| dt > lat)
+        {
+            latest_activity = Some(dt);
         }
     }
 
     // Check epics
     for e in board.epics.values() {
         let dt = e.frontmatter.created_at; // Epics only have created_at currently?
-        if let Some(dt) = dt {
-            if latest_activity.map_or(true, |lat| dt > lat) {
-                latest_activity = Some(dt);
-            }
+        if let Some(dt) = dt
+            && latest_activity.is_none_or(|lat| dt > lat)
+        {
+            latest_activity = Some(dt);
         }
     }
 
     // Check missions
     for m in board.missions.values() {
         let dt = m.frontmatter.updated_at.or(m.frontmatter.created_at);
-        if let Some(dt) = dt {
-            if latest_activity.map_or(true, |lat| dt > lat) {
-                latest_activity = Some(dt);
-            }
+        if let Some(dt) = dt
+            && latest_activity.is_none_or(|lat| dt > lat)
+        {
+            latest_activity = Some(dt);
         }
     }
 
     // Check system heartbeat (poke)
     let heartbeat_path = board.root.join("heartbeat");
-    if let Ok(metadata) = std::fs::metadata(&heartbeat_path) {
-        if let Ok(mtime) = metadata.modified() {
-            let dt: chrono::DateTime<chrono::Utc> = mtime.into();
-            let naive = dt.naive_utc();
-            if latest_activity.map_or(true, |lat| naive > lat) {
-                latest_activity = Some(naive);
-            }
+    if let Ok(metadata) = std::fs::metadata(&heartbeat_path)
+        && let Ok(mtime) = metadata.modified()
+    {
+        let dt: chrono::DateTime<chrono::Utc> = mtime.into();
+        let naive = dt.naive_utc();
+        if latest_activity.is_none_or(|lat| naive > lat) {
+            latest_activity = Some(naive);
         }
     }
 

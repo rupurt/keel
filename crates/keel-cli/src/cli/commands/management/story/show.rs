@@ -143,7 +143,11 @@ fn render_compact_summary(
             format!("{} `keel story submit {}`", "Next:".bold(), story.id())
         }
         keel::domain::model::StoryState::NeedsHumanVerification => {
-            format!("{} `keel story accept {}` --role manager", "Next:".bold(), story.id())
+            format!(
+                "{} `keel story accept {}` --role manager",
+                "Next:".bold(),
+                story.id()
+            )
         }
         keel::domain::model::StoryState::Rejected => {
             format!(

@@ -128,7 +128,10 @@ fn render_compact_summary(
             format!("{} `keel voyage start {}`", "Next:".bold(), voyage.id())
         }
         keel::domain::state_machine::voyage::VoyageState::InProgress => {
-            format!("{} Continue implementation of remaining stories", "Next:".bold())
+            format!(
+                "{} Continue implementation of remaining stories",
+                "Next:".bold()
+            )
         }
         keel::domain::state_machine::voyage::VoyageState::Done => {
             "All voyage requirements satisfied and stories completed.".to_string()

@@ -129,7 +129,9 @@ pub fn run(ctx: &spoke_auth::ExecutionContext, action: MissionAction) -> Result<
             keel::application::mission_lifecycle::MissionLifecycleService::pause(&board_dir, &id)
         }
         MissionAction::Achieve { id } => {
-            keel::application::mission_lifecycle::MissionLifecycleService::achieve(ctx, &board_dir, &id)
+            keel::application::mission_lifecycle::MissionLifecycleService::achieve(
+                ctx, &board_dir, &id,
+            )
         }
         MissionAction::Verify { id } => {
             keel::application::mission_lifecycle::MissionLifecycleService::verify(&board_dir, &id)

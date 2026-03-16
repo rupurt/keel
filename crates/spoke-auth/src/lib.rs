@@ -1,5 +1,5 @@
 //! Spoke Auth
-//! 
+//!
 //! Provides authentication parsing and validation logic.
 
 use anyhow::Result;

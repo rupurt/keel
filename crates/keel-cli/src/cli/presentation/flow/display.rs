@@ -1,9 +1,9 @@
 //! Flow visualization and terminal rendering
 
+use chrono::Utc;
 use owo_colors::OwoColorize;
 use std::collections::HashMap;
 use std::fmt::Write;
-use chrono::Utc;
 
 use super::box_component::BoxComponent;
 use super::format::render_epic_capacities;
@@ -17,6 +17,7 @@ use keel::read_model::scheduled_routines::{ScheduledRoutineProjection, Scheduled
 use keel::read_model::workflow_lane_flow::{LaneFlowCard, LaneFlowProjection, LaneSourceCount};
 
 /// Render an annotated pipeline flow diagram.
+#[allow(clippy::too_many_arguments)]
 pub fn render_annotated_flow(
     board: &Board,
     metrics: &FlowMetrics,
@@ -80,7 +81,12 @@ pub fn render_annotated_flow(
             if !cap_render.is_empty() {
                 writeln!(output).unwrap();
             }
-            writeln!(output, "    {}", strategic_capacity_guidance(board, metrics)).unwrap();
+            writeln!(
+                output,
+                "    {}",
+                strategic_capacity_guidance(board, metrics)
+            )
+            .unwrap();
         }
     }
 
@@ -216,10 +222,10 @@ fn render_high_priority_tasking(
     let mut upcoming: Vec<_> = scheduled
         .iter()
         .filter(|r| {
-            if let ScheduledRoutineState::Upcoming = r.state {
-                if let Some(eligible) = r.next_eligible_at {
-                    return eligible.signed_duration_since(Utc::now()).num_hours() < 24;
-                }
+            if let ScheduledRoutineState::Upcoming = r.state
+                && let Some(eligible) = r.next_eligible_at
+            {
+                return eligible.signed_duration_since(Utc::now()).num_hours() < 24;
             }
             false
         })
@@ -724,6 +730,7 @@ fn strategic_capacity_guidance(board: &Board, metrics: &FlowMetrics) -> &'static
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ansi_escape_sequences::strip_ansi;
     use chrono::{TimeZone, Utc};
     use keel::infrastructure::config::Config;
     use keel::infrastructure::loader;
@@ -739,7 +746,6 @@ mod tests {
         TestBearing, TestBoardBuilder, TestEpic, TestMission, TestStory, TestVoyage,
     };
     use owo_colors::OwoColorize;
-    use ansi_escape_sequences::strip_ansi;
     use std::fs;
 
     fn write_test_mission_charter(root: &std::path::Path, mission_id: &str, goals_table: &str) {
@@ -1336,7 +1342,10 @@ mod tests {
         );
 
         let lines = rendered.lines().collect::<Vec<_>>();
-        let lane_bottom_index = lines.iter().position(|line| strip_ansi(line).starts_with('└')).unwrap();
+        let lane_bottom_index = lines
+            .iter()
+            .position(|line| strip_ansi(line).starts_with('└'))
+            .unwrap();
 
         // There might be a blank line between sections
         let next_section_index = if lines[lane_bottom_index + 1].trim().is_empty() {

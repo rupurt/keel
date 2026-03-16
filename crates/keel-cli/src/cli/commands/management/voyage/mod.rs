@@ -98,7 +98,11 @@ pub enum VoyageAction {
 }
 
 /// Run a voyage action through the voyage interface adapter.
-pub fn run(_ctx: &spoke_auth::ExecutionContext, board_dir: &Path, action: VoyageAction) -> Result<()> {
+pub fn run(
+    _ctx: &spoke_auth::ExecutionContext,
+    board_dir: &Path,
+    action: VoyageAction,
+) -> Result<()> {
     match action {
         VoyageAction::New { name, epic, goal } => new::run(&name, &epic, &goal),
         VoyageAction::Start {

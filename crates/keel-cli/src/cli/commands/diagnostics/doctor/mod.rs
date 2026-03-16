@@ -10,7 +10,14 @@ use keel::read_model::diagnostics::fixes::run_fixes;
 use keel::read_model::diagnostics::validate_report as validate;
 
 /// Run the doctor command
-pub fn run(board_dir: &Path, fix: bool, _evidence: bool, _watch: bool, _quick: bool, scene: bool) -> Result<()> {
+pub fn run(
+    board_dir: &Path,
+    fix: bool,
+    _evidence: bool,
+    _watch: bool,
+    _quick: bool,
+    scene: bool,
+) -> Result<()> {
     let _start = Instant::now();
     let report = validate(board_dir)?;
 

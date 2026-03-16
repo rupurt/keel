@@ -3,9 +3,9 @@
 //! This read model centralizes board operational metrics so `flow` and `next`
 //! consume one deterministic projection source.
 
-use chrono::{DateTime, Utc};
 use crate::domain::model::Board;
 use crate::read_model::flow_metrics::{FlowMetrics, calculate_metrics};
+use chrono::{DateTime, Utc};
 
 /// Build the canonical flow projection from a board snapshot.
 pub fn project(board: &Board, reference_time: DateTime<Utc>) -> FlowMetrics {

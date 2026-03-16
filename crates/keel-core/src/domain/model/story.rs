@@ -67,11 +67,7 @@ pub struct StoryFrontmatter {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub index: Option<u32>,
     /// ADR IDs that govern this story's implementation
-    #[serde(
-        default,
-        rename = "governed-by",
-        skip_serializing_if = "Vec::is_empty"
-    )]
+    #[serde(default, rename = "governed-by", skip_serializing_if = "Vec::is_empty")]
     pub governed_by: Vec<String>,
     /// Story IDs that should not be run in parallel with this story
     #[serde(default, skip_serializing_if = "Vec::is_empty")]

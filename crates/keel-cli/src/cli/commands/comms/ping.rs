@@ -3,10 +3,10 @@
 use super::{PingMessage, PingStatus, check_auto_pong, save_ping};
 use anyhow::Result;
 use chrono::Utc;
-use std::fs;
-use std::path::Path;
 use keel::infrastructure::story_id::generate_story_id;
 use spoke_auth::ExecutionContext;
+use std::fs;
+use std::path::Path;
 
 pub fn run(_ctx: &ExecutionContext, board_dir: &Path, message: &str, json: bool) -> Result<()> {
     let id = generate_story_id(); // Reuse ID generation for standard ID format
@@ -24,7 +24,7 @@ pub fn run(_ctx: &ExecutionContext, board_dir: &Path, message: &str, json: bool)
     }
 
     save_ping(board_dir, &ping)?;
-    
+
     // Also save to outbox
     let outbox = super::outbox_dir(board_dir);
     fs::create_dir_all(&outbox)?;
@@ -34,12 +34,10 @@ pub fn run(_ctx: &ExecutionContext, board_dir: &Path, message: &str, json: bool)
 
     if json {
         println!("{}", serde_json::to_string_pretty(&ping)?);
+    } else if ping.status == PingStatus::Ponged {
+        println!("[{}] {}", ping.id, ping.pong_message.as_ref().unwrap());
     } else {
-        if ping.status == PingStatus::Ponged {
-            println!("[{}] {}", ping.id, ping.pong_message.as_ref().unwrap());
-        } else {
-            println!("[{}]", ping.id);
-        }
+        println!("[{}]", ping.id);
     }
 
     Ok(())

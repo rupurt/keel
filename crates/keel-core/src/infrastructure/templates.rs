@@ -10,13 +10,15 @@ pub mod epic {
     /// Epic PRD template
     pub const PRD: &str = include_str!("../../../../templates/epic/[name]/PRD.md");
     /// Press Release template (Working Backwards)
-    pub const PRESS_RELEASE: &str = include_str!("../../../../templates/epic/[name]/PRESS_RELEASE.md");
+    pub const PRESS_RELEASE: &str =
+        include_str!("../../../../templates/epic/[name]/PRESS_RELEASE.md");
 }
 
 /// Voyage templates
 pub mod voyage {
     /// Voyage README template
-    pub const README: &str = include_str!("../../../../templates/epic/[name]/voyages/[name]/README.md");
+    pub const README: &str =
+        include_str!("../../../../templates/epic/[name]/voyages/[name]/README.md");
     /// Voyage SRS template
     pub const SRS: &str = include_str!("../../../../templates/epic/[name]/voyages/[name]/SRS.md");
     /// Voyage SDD template

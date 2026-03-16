@@ -74,11 +74,7 @@ pub struct AdrFrontmatter {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub context: Option<String>,
     /// Additional scopes this ADR applies to (e.g., ["all"], ["state-machines"])
-    #[serde(
-        default,
-        rename = "applies-to",
-        skip_serializing_if = "Vec::is_empty"
-    )]
+    #[serde(default, rename = "applies-to", skip_serializing_if = "Vec::is_empty")]
     pub applies_to: Vec<String>,
     /// Mission ID this ADR belongs to
     #[serde(default, skip_serializing_if = "Option::is_none")]

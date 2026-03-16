@@ -1,5 +1,5 @@
-use serde::Serialize;
 use crate::domain::model::*;
+use serde::Serialize;
 
 #[derive(Serialize)]
 struct TestFm {
@@ -68,7 +68,10 @@ fn test_voyage_serialization_order() {
         goal: None,
     };
     let s = serde_yaml::to_string(&fm).unwrap();
-    assert_eq!(s, "id: V1\ntitle: Voyage 1\nstatus: draft\nepic: E1\nindex: 1\n");
+    assert_eq!(
+        s,
+        "id: V1\ntitle: Voyage 1\nstatus: draft\nepic: E1\nindex: 1\n"
+    );
 }
 
 #[test]
@@ -92,7 +95,10 @@ fn test_story_serialization_order() {
         operator_signal: None,
     };
     let s = serde_yaml::to_string(&fm).unwrap();
-    assert_eq!(s, "id: S1\ntitle: Story 1\ntype: feat\nstatus: backlog\nscope: E1/V1\nindex: 1\n");
+    assert_eq!(
+        s,
+        "id: S1\ntitle: Story 1\ntype: feat\nstatus: backlog\nscope: E1/V1\nindex: 1\n"
+    );
 }
 
 #[test]
@@ -127,7 +133,10 @@ fn test_routine_serialization_order() {
         operator_signal: None,
     };
     let s = serde_yaml::to_string(&fm).unwrap();
-    assert_eq!(s, "id: R1\ntitle: Routine 1\ncadence: null\ntarget-scope: E1\n");
+    assert_eq!(
+        s,
+        "id: R1\ntitle: Routine 1\ncadence: null\ntarget-scope: E1\n"
+    );
 }
 
 #[test]
@@ -145,7 +154,7 @@ fn test_canonical_markdown_formatting() {
     };
     let serialized = serde_yaml::to_string(&fm).unwrap();
     let body = "# My Body";
-    
+
     // Logic from filesystem.rs
     let body = body.trim();
     let updated = if body.is_empty() {
@@ -154,5 +163,8 @@ fn test_canonical_markdown_formatting() {
         format!("---\n{}\n---\n\n{}\n", serialized.trim(), body)
     };
 
-    assert_eq!(updated, "---\nid: M1\ntitle: Mission 1\nstatus: defining\n---\n\n# My Body\n");
+    assert_eq!(
+        updated,
+        "---\nid: M1\ntitle: Mission 1\nstatus: defining\n---\n\n# My Body\n"
+    );
 }
