@@ -11,7 +11,7 @@ use serde::Serialize;
 use txtplot::ChartContext;
 
 use crate::cli::commands::comms::notify;
-use keel::domain::model::{AdrStatus, Board, StoryFrontmatter, StoryState, StoryType};
+use keel::domain::model::{AdrStatus, Board, StoryFrontmatter, StoryState, StoryType, VoyageState};
 use keel::infrastructure::loader::load_board;
 use keel::infrastructure::story_id::generate_story_id;
 use keel::read_model::routine_materialization::{
@@ -493,6 +493,13 @@ fn validate_target_scope(board: &Board, target_scope: &str) -> Result<()> {
                 voyage_id,
                 voyage.epic_id,
                 epic_id
+            ));
+        }
+        if voyage.status() == VoyageState::Done {
+            return Err(anyhow!(
+                "Cannot materialize into scope '{}': voyage '{}' is done",
+                target_scope,
+                voyage_id
             ));
         }
         Ok(())
@@ -978,6 +985,33 @@ updated_at: 2026-01-01T00:00:00
 
         assert_eq!(parsed["routines"][2]["id"], "routine-invalid");
         assert_eq!(parsed["routines"][2]["outcome"], "deferred");
+    }
+
+    #[test]
+    fn pulse_rejects_materialization_into_terminal_voyage() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("E1"))
+            .voyage(TestVoyage::new("V1", "E1").status("done"))
+            .build();
+        write_routine(
+            temp.path(),
+            "routine-done-scope",
+            "Review Done Scope",
+            "E1/V1",
+            "  cron: 0 9 * * 1\n  timezone: America/Los_Angeles",
+            "# Blueprint\n\n- Should not materialize.\n",
+        );
+
+        let output = build_pulse_output_with_dir_at(
+            temp.path(),
+            true,
+            Utc.with_ymd_and_hms(2026, 1, 5, 18, 0, 0).unwrap(),
+        )
+        .unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&output).unwrap();
+
+        assert_eq!(parsed["created"], 0);
+        assert_eq!(story_readmes(temp.path()).len(), 0);
     }
 
     #[test]

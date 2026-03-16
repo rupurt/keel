@@ -16,7 +16,7 @@ Every session follows this deterministic cycle:
     - Record your move in the mission `LOG.md`.
     - **Pace-setting**: Execute `just keel poke "Sealing move: <summary>"` to synchronize the pacemaker with the board state. This is MANDATORY for all commits, including work performed without a story (e.g., gardening, bug fixes, or engine improvements).
     - Create a single atomic [Conventional Commit](https://www.conventionalcommits.org/) including the heartbeat.
-6.  **Re-orient**: After the commit lands, run `just keel doctor --status` and `just keel flow` to see what the board needs next. This is the "plug the chord back in" moment — you reconnect to the board's current state before deciding whether to start another loop or hand off to the human.
+6.  **Re-orient**: After the commit lands, run `just keel doctor --status` and `just keel flow` to see what the board needs next. This is the "plug the chord back in" moment — you reconnect to the board's current state. If the delivery lane has ready work, start the next loop immediately. Only stop to ask the human when you reach a manual lane (design direction, bearing assessment, or human verification).
 
 ## Primary Workflows
 

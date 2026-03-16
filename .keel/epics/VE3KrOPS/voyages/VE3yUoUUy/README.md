@@ -1,11 +1,12 @@
 ---
 id: VE3yUoUUy
 title: Operational Routine Reliability
-status: planned
+status: in-progress
 epic: VE3KrOPS
 created_at: 2026-03-16T13:11:49
 index: 1
 updated_at: 2026-03-16T13:15:04
+started_at: 2026-03-16T13:18:16
 ---
 
 # Operational Routine Reliability
@@ -28,7 +29,7 @@ updated_at: 2026-03-16T13:15:04
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Guard Materialization Against Terminal Voyage Scope](../../../../stories/VE3z3roGf/README.md) | feat | backlog |
+| [Guard Materialization Against Terminal Voyage Scope](../../../../stories/VE3z3roGf/README.md) | feat | in-progress |
 | [Doctor Warns On Routine Scope Incoherence](../../../../stories/VE3z4kLeK/README.md) | feat | backlog |
 | [Pulse Reports Per Routine Materialization Outcome](../../../../stories/VE3z5SB01/README.md) | feat | backlog |
 <!-- END GENERATED -->

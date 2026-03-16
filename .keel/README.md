@@ -334,7 +334,7 @@
 
 | Voyage | Status |
 |--------|--------|
-| [Operational Routine Reliability](epics/VE3KrOPS/voyages/VE3yUoUUy/) | planned |
+| [Operational Routine Reliability](epics/VE3KrOPS/voyages/VE3yUoUUy/) | in-progress |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

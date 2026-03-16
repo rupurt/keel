@@ -2,12 +2,14 @@
 id: VE3z3roGf
 title: Guard Materialization Against Terminal Voyage Scope
 type: feat
-status: backlog
+status: done
 created_at: 2026-03-16T13:14:04
-updated_at: 2026-03-16T13:15:04
+updated_at: 2026-03-16T13:21:13
 operator-signal:
 scope: VE3KrOPS/VE3yUoUUy
 index: 1
+started_at: 2026-03-16T13:18:17
+completed_at: 2026-03-16T13:21:13
 ---
 
 # Guard Materialization Against Terminal Voyage Scope
@@ -18,5 +20,5 @@ Extend `validate_target_scope()` in `routine_materialization.rs` to reject mater
 
 ## Acceptance Criteria
 
-- [ ] [SRS-01/AC-01] Pulse skips materialization when target voyage status is done <!-- verify: test -->
-- [ ] [SRS-01/AC-02] Skipped routine produces a Rejected outcome with reason explaining terminal scope <!-- verify: test -->
+- [x] [SRS-01/AC-01] Pulse skips materialization when target voyage status is done <!-- verify: cargo test --bin keel pulse_rejects, SRS-01:start:end, proof: ac-1.log-->
+- [x] [SRS-01/AC-02] Skipped routine produces a Rejected outcome with reason explaining terminal scope <!-- verify: cargo test --bin keel pulse_rejects, SRS-01:start:end, proof: ac-2.log-->
