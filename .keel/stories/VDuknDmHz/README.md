@@ -2,13 +2,15 @@
 id: VDuknDmHz
 title: Eliminate Report Tail Friction
 type: feat
-status: in-progress
+status: done
 scope: VDseuzIFg
 created_at: 2026-03-15T06:20:57
-updated_at: 2026-03-14T23:24:20
+updated_at: 2026-03-16T03:17:50
 index: 4
 operator-signal: pulse
 started_at: 2026-03-14T23:24:20
+submitted_at: 2026-03-16T03:17:49
+completed_at: 2026-03-16T03:17:50
 ---
 
 <!-- keel:pulse-materialization: VDVGSjq3Q@2026-03-16T00:00:00Z -->

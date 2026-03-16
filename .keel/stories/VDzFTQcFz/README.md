@@ -2,13 +2,15 @@
 id: VDzFTQcFz
 title: Explore Speculative Decoding for Transit Messages
 type: feat
-status: in-progress
+status: done
 scope: VDseuzIFg
 created_at: 2026-03-16T00:47:54
-updated_at: 2026-03-15T19:54:43
+updated_at: 2026-03-16T03:17:56
 index: 9
 operator-signal: pulse
 started_at: 2026-03-15T19:54:43
+submitted_at: 2026-03-16T03:17:55
+completed_at: 2026-03-16T03:17:56
 ---
 
 <!-- keel:pulse-materialization: VD7dkcHxS@2026-03-23T00:00:00Z -->
@@ -21,7 +23,7 @@ Materialized from routine `VD7dkcHxS` for eligible window ending `2026-03-23T00:
 
 ## Acceptance Criteria
 
-- [ ] [SRS-ROUTINE/AC-01] Complete the authored routine blueprint for this eligible window. <!-- verify: manual, SRS-ROUTINE:start:end -->
+- [x] [SRS-ROUTINE/AC-01] Complete the authored routine blueprint for this eligible window. <!-- verify: manual, SRS-ROUTINE:start:end -->
 
 ## Routine Provenance
 

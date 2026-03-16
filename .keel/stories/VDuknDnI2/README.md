@@ -2,13 +2,15 @@
 id: VDuknDnI2
 title: Bridge Engine And VCS Via Auto Staging
 type: feat
-status: in-progress
+status: done
 scope: VDseuzIFg
 created_at: 2026-03-15T06:20:57
-updated_at: 2026-03-15T19:54:42
+updated_at: 2026-03-16T03:17:52
 index: 7
 operator-signal: pulse
 started_at: 2026-03-15T19:54:42
+submitted_at: 2026-03-16T03:17:40
+completed_at: 2026-03-16T03:17:52
 ---
 
 <!-- keel:pulse-materialization: VDz8zh8q2@2026-03-16T00:00:00Z -->
@@ -21,7 +23,7 @@ Materialized from routine `VDz8zh8q2` for eligible window ending `2026-03-16T00:
 
 ## Acceptance Criteria
 
-- [ ] [SRS-ROUTINE/AC-01] Complete the authored routine blueprint for this eligible window. <!-- verify: manual, SRS-ROUTINE:start:end -->
+- [x] [SRS-ROUTINE/AC-01] Complete the authored routine blueprint for this eligible window. <!-- verify: manual, SRS-ROUTINE:start:end -->
 
 ## Routine Provenance
 

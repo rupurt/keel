@@ -2,13 +2,15 @@
 id: VDzFTQcG0
 title: Eliminate Report Tail Friction
 type: feat
-status: in-progress
+status: done
 scope: VDseuzIFg
 created_at: 2026-03-16T00:47:54
-updated_at: 2026-03-15T19:54:43
+updated_at: 2026-03-16T03:17:51
 index: 10
 operator-signal: pulse
 started_at: 2026-03-15T19:54:43
+submitted_at: 2026-03-16T03:17:40
+completed_at: 2026-03-16T03:17:51
 ---
 
 <!-- keel:pulse-materialization: VDVGSjq3Q@2026-03-17T00:00:00Z -->
@@ -21,7 +23,7 @@ Materialized from routine `VDVGSjq3Q` for eligible window ending `2026-03-17T00:
 
 ## Acceptance Criteria
 
-- [ ] [SRS-ROUTINE/AC-01] Complete the authored routine blueprint for this eligible window. <!-- verify: manual, SRS-ROUTINE:start:end -->
+- [x] [SRS-ROUTINE/AC-01] Complete the authored routine blueprint for this eligible window. <!-- verify: manual, SRS-ROUTINE:start:end -->
 
 ## Routine Provenance
 

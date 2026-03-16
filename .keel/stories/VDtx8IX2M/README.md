@@ -2,14 +2,14 @@
 id: VDtx8IX2M
 title: Eliminate Report Tail Friction
 type: feat
-status: in-progress
+status: done
 scope: VDseuzIFg
 milestone: null
 created_at: 2026-03-15T03:03:41
-updated_at: 2026-03-14T23:24:19
+updated_at: 2026-03-16T03:17:49
 started_at: 2026-03-14T23:24:19
-completed_at: null
-submitted_at: null
+completed_at: 2026-03-16T03:17:49
+submitted_at: 2026-03-16T03:17:48
 index: 3
 governed-by: []
 blocked_by: []
