@@ -3,19 +3,21 @@
 use anyhow::Result;
 use crate::cli::presentation::terminal::get_terminal_width;
 use keel::infrastructure::loader::load_board;
-use keel::read_model::diagnostics;
+use keel::read_model::{diagnostics, flow_status, queue_policy};
 use owo_colors::OwoColorize;
 
 /// Run the health command
 pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
-    let _board = load_board(board_dir)?;
+    let board = load_board(board_dir)?;
     let report = diagnostics::validate_report(board_dir)?;
+    let metrics = flow_status::project(&board, chrono::Utc::now());
+    let queue_snapshot = queue_policy::project(&metrics);
     let passed = report.passed();
     
     let width = get_terminal_width();
     
     if scene {
-        render_med_bay_scene(&report, width);
+        render_med_bay_scene(&report, &queue_snapshot, width);
     } else {
         println!("\n    {} SUBSYSTEM STATUS REPORT", " HEALTH ".on_green().black().bold());
         
@@ -48,32 +50,63 @@ fn print_category(name: &str, results: &[keel::read_model::diagnostics::types::C
     println!("    • {: <10} {}", name, marker);
 }
 
-fn render_med_bay_scene(report: &keel::read_model::diagnostics::types::DoctorReport, width: usize) {
+fn render_med_bay_scene(report: &keel::read_model::diagnostics::types::DoctorReport, queue: &keel::read_model::queue_policy::QueuePolicySnapshot, width: usize) {
     println!("\n    ┌{}┐", "─".repeat(width.saturating_sub(6)));
     println!("    │ {: <width$} │", "THE MED-BAY (BIO-SCAN)".bold(), width = width.saturating_sub(8));
     println!("    └{}┘", "─".repeat(width.saturating_sub(6)));
 
     let passed = report.passed();
-    let heart_rate = if passed { "72 BPM" } else { "140 BPM" };
-    let status_label = if passed { "STABLE" } else { "CRITICAL" };
-    let status_color = if passed { owo_colors::AnsiColors::Green } else { owo_colors::AnsiColors::Red };
+    let pressure = queue.verification;
+    
+    let (heart_rate, status_label, status_color) = if !passed {
+        ("140 BPM", "CRITICAL", owo_colors::AnsiColors::Red)
+    } else {
+        match pressure {
+            keel::domain::policy::queue::VerificationQueueCategory::FlowBlocked => ("120 BPM", "OVERLOAD", owo_colors::AnsiColors::Red),
+            keel::domain::policy::queue::VerificationQueueCategory::HumanBlocked => ("100 BPM", "ELEVATED", owo_colors::AnsiColors::Yellow),
+            keel::domain::policy::queue::VerificationQueueCategory::Attention => ("85 BPM", "STRESSED", owo_colors::AnsiColors::Cyan),
+            _ => ("72 BPM", "STABLE", owo_colors::AnsiColors::Green),
+        }
+    };
 
     let mut scene = String::new();
     scene.push_str("             ___________________________\n");
     scene.push_str("            | [ DIAGNOSTIC MONITOR ]    |\n");
     scene.push_str("            |                           |\n");
     
-    // Heartbeat pulse (EKG)
-    if passed {
-        scene.push_str("            |   __/\\^/\\_      __/\\^/\\_      |\n");
-        scene.push_str("            | _/      \\____/      \\____ |\n");
-    } else {
+    // Heartbeat pulse (EKG) - speed based on heart rate
+    if !passed || pressure.blocks_flow() {
         scene.push_str("            |   /\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/  |\n");
         scene.push_str("            | !! ALARM !! ALARM !! ALARM !! |\n");
+    } else if pressure.blocks_human_next() {
+        scene.push_str("            |  _/\\^/\\_  _/\\^/\\_  _/\\^/\\_    |\n");
+        scene.push_str("            | /      \\/      \\/      \\_____ |\n");
+    } else {
+        scene.push_str("            |   __/\\^/\\_      __/\\^/\\_      |\n");
+        scene.push_str("            | _/      \\____/      \\____ |\n");
     }
     
     scene.push_str("            |___________________________|\n");
     scene.push_str(&format!("            | HR: {: <8} STATUS: {: <8} |\n", heart_rate.bold(), status_label.color(status_color).bold()));
+    
+    let pressure_label = match pressure {
+        keel::domain::policy::queue::VerificationQueueCategory::Empty => "IDLE".dimmed().to_string(),
+        keel::domain::policy::queue::VerificationQueueCategory::Attention => "MODERATE".cyan().to_string(),
+        keel::domain::policy::queue::VerificationQueueCategory::HumanBlocked => "HIGH".yellow().bold().to_string(),
+        keel::domain::policy::queue::VerificationQueueCategory::FlowBlocked => "MAXIMUM".red().bold().to_string(),
+    };
+    
+    let pressure_plain = match pressure {
+        keel::domain::policy::queue::VerificationQueueCategory::Empty => "IDLE",
+        keel::domain::policy::queue::VerificationQueueCategory::Attention => "MODERATE",
+        keel::domain::policy::queue::VerificationQueueCategory::HumanBlocked => "HIGH",
+        keel::domain::policy::queue::VerificationQueueCategory::FlowBlocked => "MAXIMUM",
+    };
+    
+    let bp_total_width: usize = 16;
+    let bp_padding = bp_total_width.saturating_sub(pressure_plain.len());
+    
+    scene.push_str(&format!("            | BP: PRESSURE: {}{} |\n", pressure_label, " ".repeat(bp_padding)));
     scene.push_str("            '---------------------------'\n");
 
     println!("{}", scene);
