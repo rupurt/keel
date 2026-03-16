@@ -96,21 +96,23 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
                 lamp_style.color(lamp_color).bold(),
                 lamp_label.color(lamp_color).bold()
             ));
+            visual.push_str("         /  '.|.'  \\\n");
+            visual.push_str("        /    ' '    \\\n");
         } else {
             visual.push_str(&format!(
                 "          / {: <3} \\   <-- {}\n",
                 lamp_style.dimmed(),
                 lamp_label.dimmed()
             ));
+            visual.push_str("          \\_____/\n");
         }
-        visual.push_str("          \\_____/\n");
 
-        // Higher Fidelity Workbench visual
+        // Ultra High Fidelity Workbench visual
         visual.push_str(
             "    ._____________________________________________________________________.\n",
         );
         visual.push_str(
-            "    |                                                                     |\n",
+            "    | [ PEGBOARD ]                                                        |\n",
         );
         let pegboard = format!(
             "M:{} E:{} B:{} A:{}",
@@ -120,7 +122,7 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
             board.adrs.len()
         );
         visual.push_str(&format!(
-            "    | [ PEGBOARD ]  {: <53} |\n",
+            "    |  .  .  .  .  .  .  .  {: <33}  .  .  .  .  .  |\n",
             pegboard.dimmed()
         ));
         visual.push_str(
@@ -128,6 +130,15 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
         );
         visual.push_str(
             "    |                                                                     |\n",
+        );
+        visual.push_str(
+            "    |  [ DRILL PRESS ]                                     [ ANVIL ]      |\n",
+        );
+        visual.push_str(
+            "    |         _|_                                            _ _          |\n",
+        );
+        visual.push_str(
+            "    |        (o o)                                          /   \\         |\n",
         );
 
         let occupancy = (human_items.len() as f64 / 10.0).min(1.0);

@@ -54,12 +54,17 @@ fn render_vault_scene(metrics: &keel::read_model::flow_metrics::FlowMetrics, hea
 
     let mut vault = String::new();
     vault.push_str("             ._________________________.\n");
-    vault.push_str("             |                         |\n");
-    vault.push_str("             |      [ WORK CAPITAL ]   |\n");
+    vault.push_str("             | /                     \\ |\n");
+    vault.push_str("             |/   [ WORK CAPITAL ]    \\|\n");
     vault.push_str("             |_________________________|\n");
     vault.push_str("             |            _            |\n");
-    vault.push_str("             |           ( )           |\n");
-    vault.push_str("             |          _\\|/_          |\n");
+    vault.push_str("             |        .-------.        |\n");
+    vault.push_str("             |       /   _|_   \\       |\n");
+    vault.push_str("             |      |  /\\ | /\\  |      |\n");
+    vault.push_str("             |      | <──(O)──> |      |\n");
+    vault.push_str("             |      |  \\/ | \\/  |      |\n");
+    vault.push_str("             |       \\_______/       |\n");
+    vault.push_str("             |         '---'           |\n");
     
     let status_label = if liquidity > blocked && drift < 0.3 {
         "SOLVENT".green().bold().to_string()

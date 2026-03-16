@@ -131,80 +131,64 @@ pub fn run(
 
         // System is healthy and energized - Light is ON
         let mut circuit = String::new();
-        circuit.push_str(
-            "\n    ┌───────────────────────────[ BATTERY ]───────────────────────────┐\n",
-        );
-        circuit
-            .push_str("    │                                                                 │\n");
+        circuit.push_str("\n    .───────────────────────────[ POWER ]───────────────────────────.\n");
+        circuit.push_str("    │                                                               │\n");
 
         let ready_backlog = metrics.execution.backlog_ready_count;
         let mut packs_visual = String::new();
-        for _ in 0..ready_backlog.min(20) {
-            packs_visual.push('█');
-        }
-        if !packs_visual.is_empty() {
-            let label = format!("<-- {} BATTERY PACKS PLUGGED IN", ready_backlog);
-            circuit.push_str(&format!(
-                "    │   [ {: <20} ]  {: <36}│\n",
-                packs_visual, label
-            ));
-        } else {
-            circuit.push_str(
-                "    │                                                                 │\n",
-            );
+        for i in 0..20 {
+            if i < ready_backlog {
+                packs_visual.push_str(&"█".green().to_string());
+            } else {
+                packs_visual.push_str(&"░".dimmed().to_string());
+            }
         }
 
-        circuit
-            .push_str("    │                                                                 │\n");
+        circuit.push_str(&format!(
+            "    │  [ {} ]  <-- {: <33} │\n",
+            packs_visual,
+            format!("{} BATTERY PACKS PLUGGED IN", ready_backlog)
+        ));
+        circuit.push_str("    │  `───────────────────────────────────────────────────────────'  │\n");
+        circuit.push_str("    │          |                                         |          │\n");
+        circuit.push_str("    │      .───┴───.                                 .───┴───.      │\n");
+
         // Render capacitor bank based on work volume
         if in_progress > 3 {
-            circuit.push_str(
-                "    │          [ || ][ || ]       [ || ][ || ]                        │\n",
-            );
-            circuit.push_str(
-                "    │          <-- CAPACITOR BANK ACTIVE (HIGH LOAD)                  │\n",
-            );
+            circuit.push_str("    │      |[ || ]| [ HIGH LOAD ]           [ ACTIVE ] |[ || ]|     │\n");
+            circuit.push_str("    │      |[ || ]|  ( !!! )                 ( !!! )   |[ || ]|     │\n");
         } else if in_progress > 0 {
-            circuit.push_str(
-                "    │                     [ || ][ || ]                                │\n",
-            );
-            circuit.push_str(
-                "    │                 <-- CAPACITORS CHARGING                         │\n",
-            );
+            circuit.push_str("    │      |[ || ]| [ CHARGING ]             [ STABLE ] |[    ]|     │\n");
+            circuit.push_str("    │      |[ || ]|  ( ... )                 ( ... )   |[    ]|     │\n");
         } else {
-            circuit.push_str(
-                "    │                                                                 │\n",
-            );
-            circuit.push_str(
-                "    │                                                                 │\n",
-            );
+            circuit.push_str("    │      |[    ]| [ IDLE ]                 [ READY ]  |[    ]|     │\n");
+            circuit.push_str("    │      |[    ]|  ( zzz )                 ( ooo )   |[    ]|     │\n");
         }
 
-        circuit
-            .push_str("    │                                                                 │\n");
-        circuit
-            .push_str("    └───────────────( \\             / )───────────────────────────────┘\n");
-        circuit.push_str("                     \\ \\           / /\n");
+        circuit.push_str("    │      '───────'                                 '───────'      │\n");
+        circuit.push_str("    │          |                                         |          │\n");
+        circuit.push_str("    └──────────┴────( \\                       / )────┴──────────┘\n");
+        circuit.push_str("                     \\ \\                     / /\n");
 
         if autonomous {
             if in_progress > 0 || ready_backlog > 0 {
                 circuit.push_str(
-                    "                      \\ \\_ _ _ _ _/ /  <-- SYSTEM AUTONOMOUS (LIGHT ON)\n",
+                    "                      \\ \\___________________/ /  <-- SYSTEM AUTONOMOUS\n",
                 );
-                circuit.push_str("                       \\___________/\n");
+                circuit.push_str("                       \\_____________________/        (LIGHT ON)\n");
                 println!("{}", circuit.yellow().bold());
             } else {
                 circuit.push_str(
-                    "                      \\ \\_ _ _ _ _/ /  <-- SYSTEM IDLE (LIGHT DIM)\n",
+                    "                      \\ \\___________________/ /  <-- SYSTEM IDLE\n",
                 );
-                circuit.push_str("                       \\___________/\n");
+                circuit.push_str("                       \\_____________________/        (LIGHT DIM)\n");
                 println!("{}", circuit.yellow().dimmed());
             }
         } else {
             circuit.push_str(
-                "                      \\ \\_ _ _ _ _/ /  <-- WORKSHOP BUSY (LIGHT ON)\n",
+                "                      \\ \\___________________/ /  <-- WORKSHOP BUSY\n",
             );
-            circuit.push_str("                       \\___________/\n");
+            circuit.push_str("                       \\_____________________/        (LIGHT ON)\n");
             println!("{}", circuit.yellow().bold());
 
             let mut blocking_items = Vec::new();
