@@ -81,7 +81,21 @@ While most inputs to Keel are simple strings and flags (like `keel ping "hello"`
 - **The Inbox as JSONIN**: The `.keel/inbox/<id>.json` file itself represents our first JSONIN construct. When an agent creates or modifies a ping file directly, it must conform to the `PingMessage` schema defined above.
 - **Future Support**: We plan to support piping JSON directly into commands (e.g., `cat payload.json | keel poke <id> --json-in`) to allow agents to pass rich contextual data structures instead of flat strings.
 
-## 5. Expanding the Protocol
+## 5. The System Pacemaker
+
+The communication protocol also serves as the system's **Pacemaker**. The `.keel/heartbeat` file records the kinetic energy of the workflow.
+
+### The Heartbeat
+- **Activation**: Invoking `keel poke` (without a targeted ping ID) updates the heartbeat file.
+- **Energization**: The engine considers itself "energized" if the heartbeat's modification time is within the configured `battery_decay_minutes` (default: 10m).
+- **Idle State**: If the heartbeat decays, the engine transitions to **IDLE**, dimming the visual scenes and pausing autonomous backlog discharge.
+
+### Pace-setting
+To maintain board integrity, the pacemaker must be synchronized with all state changes. 
+- **The Protocol**: Every state-mutating commit MUST be "pace-set" by executing a final `keel poke` immediately before the commit.
+- **Consistency**: This ensures that the recorded "energy" of the system is precisely aligned with the resulting Git hash and board state.
+
+## 6. Expanding the Protocol
 
 As Keel's capabilities grow, the routing rules will be expanded to support more complex interactions:
 - **Regex/Semantic Matching:** Moving beyond simple word inclusion to understand intent.
