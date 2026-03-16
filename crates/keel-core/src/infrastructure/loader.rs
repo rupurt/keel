@@ -11,11 +11,12 @@ use rayon::prelude::*;
 use walkdir::WalkDir;
 
 use crate::domain::model::{
-    Adr, AdrFrontmatter, Bearing, BearingFrontmatter, Board, Epic, EpicFrontmatter, Mission,
-    MissionFrontmatter, Routine, RoutineFrontmatter, Story, StoryFrontmatter, Voyage,
+    Adr, AdrFrontmatter, Bearing, BearingFrontmatter, Board, Epic, EpicFrontmatter, Heartbeat,
+    Mission, MissionFrontmatter, Routine, RoutineFrontmatter, Story, StoryFrontmatter, Voyage,
     VoyageFrontmatter,
 };
 use crate::infrastructure::parser::parse_frontmatter;
+use crate::infrastructure::utils::is_path_dirty;
 
 /// Trait for entities that can be loaded from a file path
 pub trait FromPath: Sized + Send {
@@ -65,9 +66,11 @@ pub fn load_board(board_dir: &Path) -> Result<Board> {
     let bearings = load_bearings(board_dir)?;
     let adrs = load_adrs(board_dir)?;
     let missions = load_missions(board_dir)?;
+    let heartbeat = load_heartbeat(board_dir)?;
 
     Ok(Board {
         root: board_dir.to_path_buf(),
+        heartbeat,
         routines,
         stories,
         voyages,
@@ -76,6 +79,34 @@ pub fn load_board(board_dir: &Path) -> Result<Board> {
         adrs,
         missions,
     })
+}
+
+/// Load the system heartbeat from .keel/heartbeat
+fn load_heartbeat(board_dir: &Path) -> Result<Option<Heartbeat>> {
+    let heartbeat_path = board_dir.join("heartbeat");
+    if !heartbeat_path.exists() {
+        return Ok(None);
+    }
+
+    let metadata = fs::metadata(&heartbeat_path)?;
+    let last_modified = metadata.modified()?;
+
+    // Check if heartbeat is dirty in Git
+    // repo_path is the parent of board_dir (assuming .keel is in repo root)
+    let repo_path = board_dir.parent().unwrap_or(board_dir);
+    let relative_path = board_dir
+        .file_name()
+        .map(Path::new)
+        .unwrap_or_else(|| Path::new(".keel"))
+        .join("heartbeat");
+
+    let is_dirty = is_path_dirty(repo_path, &relative_path);
+
+    Ok(Some(Heartbeat::new(
+        heartbeat_path,
+        last_modified,
+        is_dirty,
+    )))
 }
 
 impl FromPath for Story {

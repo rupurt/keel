@@ -66,6 +66,12 @@ pub fn calculate_board_hash(board_dir: &Path) -> Result<String> {
         update_hasher_with_metadata(&mut hasher, board_dir, &metadata);
     }
 
+    // Hash heartbeat metadata if it exists
+    let heartbeat_path = board_dir.join("heartbeat");
+    if let Ok(metadata) = heartbeat_path.metadata() {
+        update_hasher_with_metadata(&mut hasher, &heartbeat_path, &metadata);
+    }
+
     for dir_name in dirs {
         let dir_path = board_dir.join(dir_name);
         if !dir_path.exists() {

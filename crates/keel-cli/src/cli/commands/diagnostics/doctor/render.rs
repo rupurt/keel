@@ -17,6 +17,7 @@ pub fn print_report(report: &DoctorReport) {
     print_section("Missions", &report.mission_checks);
     print_section("Routines", &report.routine_checks);
     print_section("Workflow", &report.workflow_checks);
+    print_section("Pacemaker", &report.pacemaker_checks);
 }
 
 fn print_section(name: &str, checks: &[keel::read_model::diagnostics::CheckResult]) {

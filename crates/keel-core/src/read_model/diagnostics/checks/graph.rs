@@ -309,6 +309,7 @@ fn path_for_node(board: &Board, node_id: &BoardNodeId) -> std::path::PathBuf {
             .get(id)
             .map(|routine| routine.path.clone())
             .unwrap_or_else(|| board.root.join("README.md")),
+        BoardNodeId::Heartbeat => board.root.join("heartbeat"),
     }
 }
 
@@ -322,6 +323,7 @@ fn describe_node_ref(node_id: &BoardNodeId) -> String {
         BoardNodeId::Voyage(id) => format!("voyage {id}"),
         BoardNodeId::Story(id) => format!("story {id}"),
         BoardNodeId::Routine(id) => format!("routine {id}"),
+        BoardNodeId::Heartbeat => "pacemaker".to_string(),
     }
 }
 

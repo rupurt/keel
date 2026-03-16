@@ -28,6 +28,7 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
         print_category("Missions", &report.mission_checks);
         print_category("Routines", &report.routine_checks);
         print_category("Workflow", &report.workflow_checks);
+        print_category("Pacemaker", &report.pacemaker_checks);
         
         if passed {
             println!("\n    {} System is 100% healthy.", "✓".green().bold());
@@ -140,6 +141,7 @@ fn render_med_bay_scene(
         ("VITAL", &report.mission_checks),
         ("AUTONOMIC", &report.routine_checks),
         ("CIRCULATORY", &report.workflow_checks),
+        ("PACEMAKER", &report.pacemaker_checks),
     ];
 
     for (name, results) in categories {

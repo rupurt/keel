@@ -19,6 +19,7 @@ pub enum BoardNodeKind {
     Voyage,
     Story,
     Routine,
+    Heartbeat,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -31,6 +32,7 @@ pub enum BoardNodeId {
     Voyage(String),
     Story(String),
     Routine(String),
+    Heartbeat,
 }
 
 impl BoardNodeId {
@@ -44,12 +46,14 @@ impl BoardNodeId {
             Self::Voyage(_) => BoardNodeKind::Voyage,
             Self::Story(_) => BoardNodeKind::Story,
             Self::Routine(_) => BoardNodeKind::Routine,
+            Self::Heartbeat => BoardNodeKind::Heartbeat,
         }
     }
 
     pub fn raw_id(&self) -> &str {
         match self {
             Self::Board => "__board__",
+            Self::Heartbeat => "__heartbeat__",
             Self::Mission(id)
             | Self::Epic(id)
             | Self::Bearing(id)
@@ -67,6 +71,7 @@ pub enum BoardEdgeKind {
     DependsOn,
     GovernedBy,
     LaidInto,
+    Energizes,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -217,9 +222,44 @@ pub fn build_board_graph(board: &Board) -> BoardGraph {
         });
     }
 
+    if let Some(hb) = &board.heartbeat {
+        nodes.push(BoardGraphNode {
+            id: BoardNodeId::Heartbeat,
+            title: "Pacemaker".to_string(),
+            kind: BoardNodeKind::Heartbeat,
+            state: if hb.is_dirty {
+                "dirty".to_string()
+            } else {
+                "stable".to_string()
+            },
+            terminal: !hb.is_dirty,
+            order_index: None,
+            declared_parent: Some(BoardNodeId::Board),
+        });
+    }
+
     let known_ids: BTreeSet<_> = nodes.iter().map(|node| node.id.clone()).collect();
     let mut edges = BTreeSet::new();
     let mut dangling_edges = BTreeSet::new();
+
+    if board.heartbeat.is_some() {
+        add_edge(
+            &known_ids,
+            &mut edges,
+            &mut dangling_edges,
+            BoardNodeId::Board,
+            BoardNodeId::Heartbeat,
+            BoardEdgeKind::Contains,
+        );
+        add_edge(
+            &known_ids,
+            &mut edges,
+            &mut dangling_edges,
+            BoardNodeId::Heartbeat,
+            BoardNodeId::Board,
+            BoardEdgeKind::Energizes,
+        );
+    }
 
     for mission in sorted_missions(board) {
         add_edge(
@@ -1039,5 +1079,26 @@ updated_at: 2026-03-12T09:00:00
         assert_eq!(graph_a.edges(), graph_b.edges());
         assert_eq!(graph_a.dangling_edges(), graph_b.dangling_edges());
         assert_eq!(graph_a.story_dependencies(), graph_b.story_dependencies());
+    }
+
+    #[test]
+    fn board_graph_includes_pacemaker() {
+        let temp = TestBoardBuilder::new().build();
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        // loader should find heartbeat if it exists, but TestBoardBuilder doesn't create one by default.
+        // Actually TestBoardBuilder::build calls load_board? No, it returns TempDir.
+        
+        // I'll manually create a heartbeat file.
+        fs::write(temp.path().join("heartbeat"), "test").unwrap();
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        assert!(board.heartbeat.is_some());
+
+        let graph = build_board_graph(&board);
+        let hb_node = graph.nodes().iter().find(|n| n.id == BoardNodeId::Heartbeat);
+        assert!(hb_node.is_some(), "Heartbeat node should be in graph");
+        
+        let incoming = graph.incoming(&BoardNodeId::Heartbeat, BoardEdgeKind::Contains);
+        assert!(!incoming.is_empty(), "Heartbeat should have a containment parent");
+        assert_eq!(incoming[0], BoardNodeId::Board);
     }
 }

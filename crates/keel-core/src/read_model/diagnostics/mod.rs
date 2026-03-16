@@ -87,6 +87,7 @@ fn validate_with_config_internal(
     let mut bearing_checks = Vec::new();
     let mut mission_checks = Vec::new();
     let mut workflow_checks = Vec::new();
+    let mut pacemaker_checks = Vec::new();
 
     // 1. Story Checks
     let (story_file_problems, story_count) = checks::stories::scan_story_files(board_dir)?;
@@ -714,7 +715,9 @@ fn validate_with_config_internal(
             + board.bearings.len()
             + board.adrs.len()
             + board.voyages.len()
-            + board.stories.len(),
+            + board.stories.len()
+            + board.routines.len()
+            + 1, // Pacemaker
         graph_integrity_problems,
     ));
 
@@ -741,6 +744,16 @@ fn validate_with_config_internal(
         overload_problems,
     ));
 
+    // 9. Pacemaker Checks
+    let pacemaker_problems = checks::pacemaker::check_pacemaker_stability(&board);
+    pacemaker_checks.push(configured_check(
+        doctor_config,
+        "pacemaker-stability",
+        "Pacemaker stability",
+        1,
+        pacemaker_problems,
+    ));
+
     let mut report = DoctorReport {
         story_checks,
         voyage_checks,
@@ -750,6 +763,7 @@ fn validate_with_config_internal(
         mission_checks,
         routine_checks,
         workflow_checks,
+        pacemaker_checks,
         drift_coefficient: 0.0,
         estimated_remediation_hours: 0.0,
         last_checked_at: std::time::SystemTime::now(),

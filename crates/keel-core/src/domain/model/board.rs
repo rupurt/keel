@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use anyhow::{Result, anyhow};
 
-use super::{Adr, Bearing, Entity, Epic, Mission, Routine, Story, StoryState, Voyage};
+use super::{Adr, Bearing, Entity, Epic, Heartbeat, Mission, Routine, Story, StoryState, Voyage};
 
 /// The board contains all routines, stories, voyages, epics, bearings, and ADRs.
 #[derive(Debug, Clone)]
@@ -14,6 +14,8 @@ pub struct Board {
     /// Root directory of the board (.keel)
     #[allow(dead_code)] // Available for path resolution
     pub root: PathBuf,
+    /// The system's heartbeat (pacemaker)
+    pub heartbeat: Option<Heartbeat>,
     /// All routines indexed by ID
     pub routines: HashMap<String, Routine>,
     /// All stories indexed by ID
@@ -43,6 +45,7 @@ impl Board {
     pub fn new(root: PathBuf) -> Self {
         Self {
             root,
+            heartbeat: None,
             routines: HashMap::new(),
             stories: HashMap::new(),
             voyages: HashMap::new(),

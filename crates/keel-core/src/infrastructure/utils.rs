@@ -28,6 +28,21 @@ pub fn get_git_sha(repo_path: &Path) -> anyhow::Result<String> {
     Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
 }
 
+/// Check if a path has uncommitted changes in Git.
+pub fn is_path_dirty(repo_path: &Path, relative_path: &Path) -> bool {
+    let output = Command::new("git")
+        .arg("status")
+        .arg("--porcelain")
+        .arg(relative_path)
+        .current_dir(repo_path)
+        .output();
+
+    match output {
+        Ok(output) if output.status.success() => !output.stdout.is_empty(),
+        _ => false,
+    }
+}
+
 /// Calculate the SHA-256 hash of a file.
 pub fn hash_file(path: &Path) -> anyhow::Result<String> {
     let output = Command::new("sha256sum").arg(path).output()?;

@@ -135,6 +135,7 @@ The `keel health` command provides a high-level triage of the system's core subs
 | **VITAL** | Missions | Core strategic objectives |
 | **AUTONOMIC** | Routines | Scheduled automation and materialization |
 | **CIRCULATORY** | Workflow | Board graph integrity and lane topology |
+| **PACEMAKER** | Heartbeat | System energization and commit stability |
 
 ```bash
 just keel health --scene

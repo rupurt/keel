@@ -10,3 +10,4 @@ pub mod routines;
 pub mod stories;
 pub mod voyages;
 pub mod workflow;
+pub mod pacemaker;

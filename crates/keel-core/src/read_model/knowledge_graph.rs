@@ -26,6 +26,7 @@ pub enum KnowledgeGraphNodeKind {
     Voyage,
     Story,
     Routine,
+    Heartbeat,
     Artifact,
     Knowledge,
     ProjectDoc,
@@ -38,6 +39,7 @@ pub enum KnowledgeGraphEdgeKind {
     DependsOn,
     GovernedBy,
     LaidInto,
+    Energizes,
     Documents,
     Provenance,
     Traceability,
@@ -549,6 +551,7 @@ fn graph_node_kind(kind: crate::read_model::board_graph::BoardNodeKind) -> Knowl
         crate::read_model::board_graph::BoardNodeKind::Voyage => KnowledgeGraphNodeKind::Voyage,
         crate::read_model::board_graph::BoardNodeKind::Story => KnowledgeGraphNodeKind::Story,
         crate::read_model::board_graph::BoardNodeKind::Routine => KnowledgeGraphNodeKind::Routine,
+        crate::read_model::board_graph::BoardNodeKind::Heartbeat => KnowledgeGraphNodeKind::Heartbeat,
     }
 }
 
@@ -562,6 +565,7 @@ fn graph_node_id(id: &BoardNodeId) -> String {
         BoardNodeId::Voyage(id) => format!("voyage:{id}"),
         BoardNodeId::Story(id) => format!("story:{id}"),
         BoardNodeId::Routine(id) => format!("routine:{id}"),
+        BoardNodeId::Heartbeat => "system:heartbeat".to_string(),
     }
 }
 
@@ -571,6 +575,7 @@ fn edge_kind_from_board_edge(kind: BoardEdgeKind) -> KnowledgeGraphEdgeKind {
         BoardEdgeKind::DependsOn => KnowledgeGraphEdgeKind::DependsOn,
         BoardEdgeKind::GovernedBy => KnowledgeGraphEdgeKind::GovernedBy,
         BoardEdgeKind::LaidInto => KnowledgeGraphEdgeKind::LaidInto,
+        BoardEdgeKind::Energizes => KnowledgeGraphEdgeKind::Energizes,
     }
 }
 
@@ -612,6 +617,7 @@ fn path_for_board_node(board: &Board, id: &BoardNodeId) -> PathBuf {
             .get(id)
             .map(|routine| routine.path.clone())
             .unwrap_or_else(|| board.root.join("README.md")),
+        BoardNodeId::Heartbeat => board.root.join("heartbeat"),
     }
 }
 

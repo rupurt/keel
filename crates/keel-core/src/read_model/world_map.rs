@@ -105,6 +105,7 @@ pub enum WorldMapNodeKind {
     Voyage,
     Story,
     Routine,
+    Heartbeat,
 }
 
 impl WorldMapNodeKind {
@@ -118,6 +119,7 @@ impl WorldMapNodeKind {
             Self::Voyage => "voyage",
             Self::Story => "story",
             Self::Routine => "routine",
+            Self::Heartbeat => "pacemaker",
         }
     }
 
@@ -131,6 +133,7 @@ impl WorldMapNodeKind {
             Self::Voyage => "voyages",
             Self::Story => "stories",
             Self::Routine => "routines",
+            Self::Heartbeat => "pacemakers",
         }
     }
 
@@ -144,6 +147,7 @@ impl WorldMapNodeKind {
             Self::Voyage => 5,
             Self::Story => 6,
             Self::Routine => 7,
+            Self::Heartbeat => 8,
         }
     }
 }
@@ -460,6 +464,14 @@ fn build_world_map_node(
                 routine_signals(scheduled),
             )
         }
+        BoardNodeId::Heartbeat => (
+            node.title.clone(),
+            WorldMapNodeKind::Heartbeat,
+            node.state.clone(),
+            Some("System pacemaker".to_string()),
+            None,
+            Vec::new(),
+        ),
     };
 
     Ok(WorldMapNode {
@@ -480,6 +492,7 @@ fn build_world_map_node(
 fn world_node_id(id: &BoardNodeId) -> String {
     match id {
         BoardNodeId::Board => WORLD_NODE_ID.to_string(),
+        BoardNodeId::Heartbeat => "pacemaker".to_string(),
         BoardNodeId::Mission(id)
         | BoardNodeId::Epic(id)
         | BoardNodeId::Bearing(id)
@@ -500,6 +513,7 @@ fn world_node_kind(kind: BoardNodeKind) -> WorldMapNodeKind {
         BoardNodeKind::Voyage => WorldMapNodeKind::Voyage,
         BoardNodeKind::Story => WorldMapNodeKind::Story,
         BoardNodeKind::Routine => WorldMapNodeKind::Routine,
+        BoardNodeKind::Heartbeat => WorldMapNodeKind::Heartbeat,
     }
 }
 

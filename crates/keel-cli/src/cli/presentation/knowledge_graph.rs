@@ -1278,6 +1278,7 @@ fn depth_for_kind(kind: KnowledgeGraphNodeKind) -> usize {
         | KnowledgeGraphNodeKind::Knowledge
         | KnowledgeGraphNodeKind::ProjectDoc => 4,
         KnowledgeGraphNodeKind::SourceFile => 5,
+        KnowledgeGraphNodeKind::Heartbeat => 1, // Pacemaker sits at mission/world boundary
     }
 }
 
@@ -1295,6 +1296,7 @@ fn kind_sort_rank(kind: KnowledgeGraphNodeKind) -> u8 {
         KnowledgeGraphNodeKind::Knowledge => 9,
         KnowledgeGraphNodeKind::ProjectDoc => 10,
         KnowledgeGraphNodeKind::SourceFile => 11,
+        KnowledgeGraphNodeKind::Heartbeat => 5,
     }
 }
 
@@ -1316,6 +1318,7 @@ fn node_color(node: &KnowledgeGraphViewNode) -> Color {
         KnowledgeGraphNodeKind::Knowledge => Color::Yellow,
         KnowledgeGraphNodeKind::ProjectDoc => Color::Magenta,
         KnowledgeGraphNodeKind::SourceFile => Color::Green,
+        KnowledgeGraphNodeKind::Heartbeat => Color::BrightYellow,
     }
 }
 
@@ -1333,6 +1336,7 @@ fn node_radius(kind: KnowledgeGraphNodeKind) -> isize {
         | KnowledgeGraphNodeKind::Knowledge
         | KnowledgeGraphNodeKind::ProjectDoc
         | KnowledgeGraphNodeKind::SourceFile => 1,
+        KnowledgeGraphNodeKind::Heartbeat => 3,
     }
 }
 
@@ -1340,7 +1344,7 @@ fn is_terminal_state(state: Option<&str>) -> bool {
     matches!(
         state,
         Some(
-            "done" | "verified" | "laid" | "accepted" | "rejected" | "iced" | "parked" | "declined"
+            "done" | "verified" | "laid" | "accepted" | "rejected" | "iced" | "parked" | "declined" | "stable"
         )
     )
 }
@@ -1359,6 +1363,7 @@ fn singular_label(kind: KnowledgeGraphNodeKind) -> &'static str {
         KnowledgeGraphNodeKind::Knowledge => "knowledge unit",
         KnowledgeGraphNodeKind::ProjectDoc => "project doc",
         KnowledgeGraphNodeKind::SourceFile => "source file",
+        KnowledgeGraphNodeKind::Heartbeat => "pacemaker",
     }
 }
 
@@ -1376,6 +1381,7 @@ fn plural_label(kind: KnowledgeGraphNodeKind) -> &'static str {
         KnowledgeGraphNodeKind::Knowledge => "knowledge units",
         KnowledgeGraphNodeKind::ProjectDoc => "project docs",
         KnowledgeGraphNodeKind::SourceFile => "source files",
+        KnowledgeGraphNodeKind::Heartbeat => "pacemakers",
     }
 }
 
