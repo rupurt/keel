@@ -18,7 +18,7 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
 
     let mut human_items = Vec::new();
     for lane in &lane_flow.lanes {
-        if lane.manual_accept && lane.total_count > 0 {
+        if lane.total_count > 0 {
             for source in &lane.source_counts {
                 if source.count > 0 {
                     let items: Vec<_> = match source.source.as_str() {
@@ -29,6 +29,12 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
                                 s.status == keel::domain::model::StoryState::NeedsHumanVerification
                             })
                             .map(|s| format!("Story {} - {}", s.id().yellow(), s.title()))
+                            .collect(),
+                        "story.in-progress" => board
+                            .stories
+                            .values()
+                            .filter(|s| s.status == keel::domain::model::StoryState::InProgress)
+                            .map(|s| format!("Active Story {} - {}", s.id().cyan(), s.title()))
                             .collect(),
                         "mission.achieved" => board
                             .missions
