@@ -11,8 +11,11 @@ Every session follows this deterministic cycle:
 1.  **Mission Orientation**: Start by running `keel mission next --status`. This gives you the top 3 high-signal moves required by the engine. Check `just keel flow --scene` to quickly visualize if the workflow is autonomous or blocked waiting for human input.
 2.  **Role Selection**: Identify if you are a `manager` (planning/decisions) or an `operator` (implementation). Do not drift across these roles in a single atomic change.
 3.  **Execute Move**: Perform exactly ONE move (e.g., plan a voyage, implement a story, fix a diagnostic).
-4.  **Seal Move**: Close the loop with `story submit`, `voyage plan`, or `bearing lay`. This mutates the `.keel` state.
-5.  **Log & Commit**: Record your move in the mission `LOG.md` and create a single atomic [Conventional Commit](https://www.conventionalcommits.org/).
+4.  **Seal Move**: Close the loop with `story submit`, `voyage plan`, or `bearing lay`. This mutates the `.keel` state. Ensure the pacemaker is stable (committed heartbeat).
+5.  **Log & Commit**: 
+    - Record your move in the mission `LOG.md`.
+    - **Pace-setting**: Execute `just keel poke "Sealing move: <summary>"` to synchronize the pacemaker with the board state.
+    - Create a single atomic [Conventional Commit](https://www.conventionalcommits.org/) including the heartbeat.
 
 ## Primary Workflows
 
@@ -51,6 +54,7 @@ As long as the system is **AUTONOMOUS (LIGHT ON)** and the circuit is healthy (n
 2.  **Autonomous Start**: For each ready story, execute `keel story start <id>`. 
 3.  **Rube Goldberg Loop**: Transitioning a story to `in-progress` mutates the board, which physically recharges the system battery, keeping the circuit closed and the engine running. 
 4.  **Priority**: Discharging the backlog is your primary tactical objective once energized. You must continue until the backlog is empty or the circuit trips.
+5.  **Loop Closure**: After every successful implementation or transition, you MUST stabilize the pacemaker by committing the `.keel/heartbeat` alongside the board changes. Do not leave the loop open.
 
 ## Global Hygiene Checklist
 
