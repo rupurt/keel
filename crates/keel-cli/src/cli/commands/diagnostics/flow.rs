@@ -57,7 +57,8 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
                 packs_visual.push('█');
             }
             if !packs_visual.is_empty() {
-                circuit.push_str(&format!("    │   [ {: <20} ]  <-- {} BATTERY PACKS PLUGGED IN        │\n", packs_visual, ready_backlog));
+                let label = format!("<-- {} BATTERY PACKS PLUGGED IN", ready_backlog);
+                circuit.push_str(&format!("    │   [ {: <20} ]  {: <37}│\n", packs_visual, label));
             } else {
                 circuit.push_str("    │                                                                 │\n");
             }
