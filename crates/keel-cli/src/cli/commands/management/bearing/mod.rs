@@ -568,11 +568,28 @@ fn build_bearing_list_rows(
         })
         .collect();
 
-    rows.sort_by(|a, b| match (a.1, b.1) {
-        (Some(score_a), Some(score_b)) => score_b.partial_cmp(&score_a).unwrap(),
-        (Some(_), None) => std::cmp::Ordering::Less,
-        (None, Some(_)) => std::cmp::Ordering::Greater,
-        (None, None) => a.0.id().cmp(b.0.id()),
+    // Bearings with unresolved dependencies sort below resolved ones.
+    let has_unresolved_deps = |bearing: &Bearing| -> bool {
+        match &bearing.frontmatter.depends_on {
+            Some(deps) if !deps.is_empty() => deps.iter().any(|dep_id| {
+                board
+                    .bearings
+                    .get(dep_id)
+                    .map_or(true, |dep| !dep.is_complete())
+            }),
+            _ => false,
+        }
+    };
+
+    rows.sort_by(|a, b| {
+        let a_unresolved = has_unresolved_deps(a.0);
+        let b_unresolved = has_unresolved_deps(b.0);
+        a_unresolved.cmp(&b_unresolved).then_with(|| match (a.1, b.1) {
+            (Some(score_a), Some(score_b)) => score_b.partial_cmp(&score_a).unwrap(),
+            (Some(_), None) => std::cmp::Ordering::Less,
+            (None, Some(_)) => std::cmp::Ordering::Greater,
+            (None, None) => a.0.id().cmp(b.0.id()),
+        })
     });
 
     rows.into_iter()
@@ -1939,6 +1956,62 @@ Validated brief goals need to persist as machine-readable bearing lineage.
         assert!(
             readme.contains("goals: [GOAL-01]"),
             "valid goal references must be persisted in bearing frontmatter"
+        );
+    }
+
+    #[test]
+    fn bearing_list_demotes_unresolved_dependencies() {
+        let temp = TestBoardBuilder::new()
+            .bearing(
+                TestBearing::new("brg-dep")
+                    .title("Dependency")
+                    .status("exploring"),
+            )
+            .bearing(
+                TestBearing::new("brg-resolved")
+                    .title("Resolved Deps")
+                    .status("exploring")
+                    .depends_on(vec!["brg-done"]),
+            )
+            .bearing(
+                TestBearing::new("brg-done")
+                    .title("Done Bearing")
+                    .status("laid"),
+            )
+            .bearing(
+                TestBearing::new("brg-blocked")
+                    .title("Blocked Deps")
+                    .status("exploring")
+                    .depends_on(vec!["brg-dep"]),
+            )
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+        let status_filter =
+            crate::cli::commands::management::status_filter::resolve_status_filter(
+                &[],
+                &["exploring", "evaluating", "ready", "laid", "parked", "declined"],
+                BEARING_STATUS_VALUES,
+            )
+            .unwrap();
+        let rows =
+            build_bearing_list_rows(temp.path(), &board, &status_filter, &ModeWeights::growth());
+
+        let ids: Vec<&str> = rows.iter().map(|r| r.id.as_str()).collect();
+
+        // brg-blocked depends on brg-dep (exploring) → unresolved, should sort last
+        // brg-resolved depends on brg-done (laid) → resolved, should sort with the rest
+        let blocked_pos = ids.iter().position(|id| *id == "brg-blocked").unwrap();
+        let resolved_pos = ids.iter().position(|id| *id == "brg-resolved").unwrap();
+        let dep_pos = ids.iter().position(|id| *id == "brg-dep").unwrap();
+
+        assert!(
+            resolved_pos < blocked_pos,
+            "resolved deps ({resolved_pos}) must sort before unresolved deps ({blocked_pos}); order: {ids:?}"
+        );
+        assert!(
+            dep_pos < blocked_pos,
+            "no-dep bearing ({dep_pos}) must sort before unresolved deps ({blocked_pos}); order: {ids:?}"
         );
     }
 }
