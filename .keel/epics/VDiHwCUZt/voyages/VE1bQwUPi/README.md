@@ -30,6 +30,6 @@ started_at: 2026-03-16T03:38:25
 | Title | Type | Status |
 |-------|------|--------|
 | [Align Templates and Parsing Logic](../../../../stories/VE1bVusKZ/README.md) | feat | done |
-| [Update Diagnostic Engine for Strict Contract](../../../../stories/VE1bXPqvF/README.md) | feat | in-progress |
-| [Refine CLI Projections for Bearings](../../../../stories/VE1bXV3wS/README.md) | feat | backlog |
+| [Update Diagnostic Engine for Strict Contract](../../../../stories/VE1bXPqvF/README.md) | feat | needs-human-verification |
+| [Refine CLI Projections for Bearings](../../../../stories/VE1bXV3wS/README.md) | feat | in-progress |
 <!-- END GENERATED -->

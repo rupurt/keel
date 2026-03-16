@@ -2,12 +2,15 @@
 id: VE1bXV3wS
 title: Refine CLI Projections for Bearings
 type: feat
-status: backlog
+status: needs-human-verification
 scope: VDiHwCUZt/VE1bQwUPi
+updated_at: 2026-03-16T04:29:29
+started_at: 2026-03-16T04:28:25
+submitted_at: 2026-03-16T04:29:29
 ---
 
 # Refine CLI Projections for Bearings
 
 ## Acceptance Criteria
 
-- [ ] [SRS-03/AC-01] `keel bearing show` surfaces authored content from ## Feasibility and ## Findings. <!-- verify: manual, SRS-03:start:end -->
+- [x] [SRS-03/AC-01] `keel bearing show` surfaces authored content from ## Feasibility and ## Findings. <!-- verify: manual, SRS-03:start:end, proof: ac-1.log-->

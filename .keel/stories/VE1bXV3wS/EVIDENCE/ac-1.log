@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-16T04:28:59.939734666-07:00
+mode: manual
+---
+keel bearing show surfaces Feasibility content from EVIDENCE.md and Findings content from ASSESSMENT.md. Verified on bearing VDeRKA7fo: output shows Feasibility, Key Findings(3), and Findings(2) sections with authored content. Implementation at show.rs lines 224, 232, 308. Tests at show.rs lines 482, 536, 589.
