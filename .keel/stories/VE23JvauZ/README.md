@@ -2,14 +2,16 @@
 id: VE23JvauZ
 title: Populate PRD Risks from Brief Open Questions
 type: feat
-status: backlog
+status: done
 created_at: 2026-03-16T05:18:26
-updated_at: 2026-03-16T05:19:29
+updated_at: 2026-03-16T05:27:29
 operator-signal:
 scope: VDiHwPniZ/VE22wWzeD
 index: 2
 blocked_by:
   - VE23HpS3U
+started_at: 2026-03-16T05:24:17
+completed_at: 2026-03-16T05:27:29
 ---
 
 # Populate PRD Risks from Brief Open Questions
@@ -20,5 +22,5 @@ Extend `create_prd_from_bearing` to extract open questions from BRIEF.md and pop
 
 ## Acceptance Criteria
 
-- [ ] [SRS-02/AC-01] Generated PRD Open Questions & Risks table contains rows from BRIEF.md open questions. <!-- verify: cargo test -p keel bearing_lay_prd_includes_brief_open_questions, SRS-02:start:end -->
-- [ ] [SRS-04/AC-01] Generated PRD falls back to boilerplate risk row when BRIEF.md has no open questions. <!-- verify: cargo test -p keel bearing_lay_prd_falls_back_without_open_questions, SRS-04:start:end -->
+- [x] [SRS-02/AC-01] Generated PRD Open Questions & Risks table contains rows from BRIEF.md open questions. <!-- verify: cargo test -p keel bearing_lay_prd_includes_brief_open_questions, SRS-02:start:end -->
+- [x] [SRS-04/AC-01] Generated PRD falls back to boilerplate risk row when BRIEF.md has no open questions. <!-- verify: cargo test -p keel bearing_lay_prd_falls_back_without_open_questions, SRS-04:start:end -->

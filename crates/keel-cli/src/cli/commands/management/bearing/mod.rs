@@ -575,7 +575,7 @@ fn build_bearing_list_rows(
                 board
                     .bearings
                     .get(dep_id)
-                    .map_or(true, |dep| !dep.is_complete())
+                    .is_none_or(|dep| !dep.is_complete())
             }),
             _ => false,
         }
@@ -584,12 +584,14 @@ fn build_bearing_list_rows(
     rows.sort_by(|a, b| {
         let a_unresolved = has_unresolved_deps(a.0);
         let b_unresolved = has_unresolved_deps(b.0);
-        a_unresolved.cmp(&b_unresolved).then_with(|| match (a.1, b.1) {
-            (Some(score_a), Some(score_b)) => score_b.partial_cmp(&score_a).unwrap(),
-            (Some(_), None) => std::cmp::Ordering::Less,
-            (None, Some(_)) => std::cmp::Ordering::Greater,
-            (None, None) => a.0.id().cmp(b.0.id()),
-        })
+        a_unresolved
+            .cmp(&b_unresolved)
+            .then_with(|| match (a.1, b.1) {
+                (Some(score_a), Some(score_b)) => score_b.partial_cmp(&score_a).unwrap(),
+                (Some(_), None) => std::cmp::Ordering::Less,
+                (None, Some(_)) => std::cmp::Ordering::Greater,
+                (None, None) => a.0.id().cmp(b.0.id()),
+            })
     });
 
     rows.into_iter()
@@ -855,6 +857,23 @@ fn create_prd_from_bearing(board_dir: &Path, bearing: &Bearing) -> Result<String
     let problem_space = extract_section(&brief_content, "## Problem Space").unwrap_or_default();
     let success_criteria =
         extract_section(&brief_content, "## Success Criteria").unwrap_or_default();
+    let open_questions: Vec<String> = extract_section(&brief_content, "## Open Questions")
+        .map(|section| {
+            section
+                .lines()
+                .filter_map(|line| {
+                    let trimmed = line.trim();
+                    if trimmed.starts_with("- ") {
+                        let question = trimmed.trim_start_matches("- ").trim();
+                        if !question.is_empty() {
+                            return Some(question.to_string());
+                        }
+                    }
+                    None
+                })
+                .collect()
+        })
+        .unwrap_or_default();
 
     // Read EVIDENCE.md if it exists
     let evidence_path = bearing_dir.join("EVIDENCE.md");
@@ -959,9 +978,16 @@ fn create_prd_from_bearing(board_dir: &Path, bearing: &Bearing) -> Result<String
     prd.push_str("## Open Questions & Risks\n\n");
     prd.push_str("| Question/Risk | Owner | Status |\n");
     prd.push_str("|---------------|-------|--------|\n");
-    prd.push_str(
-        "| Which rollout constraints should gate broader adoption? | Product | Open |\n\n",
-    );
+    if open_questions.is_empty() {
+        prd.push_str(
+            "| Which rollout constraints should gate broader adoption? | Product | Open |\n",
+        );
+    } else {
+        for question in &open_questions {
+            prd.push_str(&format!("| {} | Planner | Open |\n", question));
+        }
+    }
+    prd.push('\n');
 
     // Success Criteria from bearing
     prd.push_str("## Success Criteria\n\n");
@@ -2005,13 +2031,19 @@ Validated brief goals need to persist as machine-readable bearing lineage.
             .build();
 
         let board = load_board(temp.path()).unwrap();
-        let status_filter =
-            crate::cli::commands::management::status_filter::resolve_status_filter(
-                &[],
-                &["exploring", "evaluating", "ready", "laid", "parked", "declined"],
-                BEARING_STATUS_VALUES,
-            )
-            .unwrap();
+        let status_filter = crate::cli::commands::management::status_filter::resolve_status_filter(
+            &[],
+            &[
+                "exploring",
+                "evaluating",
+                "ready",
+                "laid",
+                "parked",
+                "declined",
+            ],
+            BEARING_STATUS_VALUES,
+        )
+        .unwrap();
         let rows =
             build_bearing_list_rows(temp.path(), &board, &status_filter, &ModeWeights::growth());
 
@@ -2065,17 +2097,87 @@ Validated brief goals need to persist as machine-readable bearing lineage.
     fn bearing_lay_prd_omits_provenance_without_evidence() {
         let temp = TempDir::new().unwrap();
         let board_dir = create_test_bearing_with_status(&temp, "ready");
-        // Seed evidence + assessment normally, then delete EVIDENCE.md so PRD generation
-        // skips the provenance section. We must first lay with evidence to get past
-        // readiness checks, so instead we test create_prd_from_bearing directly.
-        // Instead: use a bearing without EVIDENCE.md file at all.
-        // The readiness gate requires evidence, so test via create_prd_from_bearing directly.
         let board = load_board(&board_dir).unwrap();
         let bearing = board.require_bearing("test-research").unwrap();
         let prd = create_prd_from_bearing(&board_dir, bearing).unwrap();
         assert!(
             !prd.contains("## Research Provenance"),
             "PRD must not contain Research Provenance when no EVIDENCE.md exists"
+        );
+    }
+
+    #[test]
+    fn bearing_lay_prd_includes_brief_open_questions() {
+        let temp = TempDir::new().unwrap();
+        let board_dir = create_test_bearing_with_status(&temp, "ready");
+        seed_readiness_docs(
+            &board_dir,
+            "test-research",
+            strong_evidence_fixture(),
+            cited_assessment_fixture(),
+        );
+
+        run_lay_at(&board_dir, "test-research").unwrap();
+
+        let prd = fs::read_to_string(board_dir.join("epics/test-research/PRD.md")).unwrap();
+        // The default BRIEF.md contains "- What evidence would overturn the current direction?"
+        assert!(
+            prd.contains("What evidence would overturn the current direction?"),
+            "PRD risks table must contain open questions from BRIEF.md"
+        );
+        assert!(
+            prd.contains(
+                "| What evidence would overturn the current direction? | Planner | Open |"
+            ),
+            "Open questions must be formatted as risks table rows"
+        );
+        // Boilerplate row should NOT appear when open questions exist
+        assert!(
+            !prd.contains("Which rollout constraints"),
+            "Boilerplate risk row must be replaced by actual open questions"
+        );
+    }
+
+    #[test]
+    fn bearing_lay_prd_falls_back_without_open_questions() {
+        let temp = TempDir::new().unwrap();
+        let board_dir = create_test_bearing_with_status(&temp, "ready");
+        seed_readiness_docs(
+            &board_dir,
+            "test-research",
+            strong_evidence_fixture(),
+            cited_assessment_fixture(),
+        );
+        // Overwrite BRIEF.md with empty Open Questions section (no bullets)
+        fs::write(
+            board_dir.join("bearings/test-research/BRIEF.md"),
+            r#"# Test Research — Brief
+
+## Hypothesis
+
+This research explores a promising direction for the project.
+
+## Problem Space
+
+The team needs clarity on the best approach before committing resources.
+
+## Success Criteria
+
+- [ ] The brief captures the bet clearly enough to guide research.
+
+## Open Questions
+
+(none identified)
+"#,
+        )
+        .unwrap();
+
+        run_lay_at(&board_dir, "test-research").unwrap();
+
+        let prd = fs::read_to_string(board_dir.join("epics/test-research/PRD.md")).unwrap();
+        assert!(
+            prd.contains("Which rollout constraints"),
+            "PRD must fall back to boilerplate risk row when no open questions exist"
         );
     }
 }
