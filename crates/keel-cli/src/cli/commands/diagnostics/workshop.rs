@@ -75,7 +75,14 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
         // Higher Fidelity Workbench visual
         visual.push_str("    ._____________________________________________________________________.\n");
         visual.push_str("    |                                                                     |\n");
-        visual.push_str("    | [ PEGBOARD ]  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  |\n");
+        let pegboard = format!(
+            "M:{} E:{} B:{} A:{}", 
+            board.missions.len(), 
+            board.epics.len(), 
+            board.bearings.len(), 
+            board.adrs.len()
+        );
+        visual.push_str(&format!("    | [ PEGBOARD ]  {: <53} |\n", pegboard.dimmed()));
         visual.push_str("    |_____________________________________________________________________|\n");
         visual.push_str("    |                                                                     |\n");
         
@@ -94,7 +101,16 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
         visual.push_str(&format!("    |   [ {} ]   <-- BENCH WIP ({})        |\n", items_on_bench.yellow(), human_items.len()));
         visual.push_str("    |_____________________________________________________________________|\n");
         visual.push_str("    |                                                                     |\n");
-        visual.push_str("    |   [ VICE ]                                          [  OIL CAN  ]   |\n");
+        
+        let blocked = metrics.execution.backlog_blocked_count;
+        let remediation = health.estimated_remediation_hours;
+        let vice_label = format!("[ VICE ]  {} BLOCKED", blocked);
+        let oil_label = format!("[ OIL CAN ]  {:.1}h REMEDIATION", remediation);
+        
+        visual.push_str(&format!("    |   {: <30}            {: >25}   |\n", 
+            if blocked > 0 { vice_label.red().bold().to_string() } else { vice_label.dimmed().to_string() },
+            if remediation > 0.0 { oil_label.yellow().bold().to_string() } else { oil_label.dimmed().to_string() }
+        ));
         visual.push_str("    |_____________________________________________________________________|\n");
         visual.push_str("      | |                                                               | |\n");
         
