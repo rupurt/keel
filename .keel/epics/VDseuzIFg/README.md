@@ -20,8 +20,8 @@ index: 50
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 13/16 stories done
+**Progress:** 1/1 voyages complete, 16/16 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Implementation of Time Constraints](voyages/VE3IYca8z/) | planned | 0/3 |
+| [Implementation of Time Constraints](voyages/VE3IYca8z/) | done | 3/3 |
 <!-- END GENERATED -->

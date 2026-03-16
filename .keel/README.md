@@ -324,11 +324,11 @@
 |--------|--------|
 | [Implement Inquiry Personas](epics/VDo4OmYow/voyages/VDo4Ugi5v/) | done |
 
-### [Project Operations](epics/VDseuzIFg/) (active)
+### [Project Operations](epics/VDseuzIFg/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Implementation of Time Constraints](epics/VDseuzIFg/voyages/VE3IYca8z/) | planned |
+| [Implementation of Time Constraints](epics/VDseuzIFg/voyages/VE3IYca8z/) | done |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

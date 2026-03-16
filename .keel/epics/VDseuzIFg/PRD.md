@@ -35,6 +35,7 @@ The keel engine repository lacks a dedicated scope for tracking and automating i
 | ID | Requirement | Goals | Priority | Rationale |
 |----|-------------|-------|----------|-----------|
 | FR-01 | Deliver the primary user workflow for this epic end-to-end. | GOAL-01 | must | Establishes the minimum functional capability needed to achieve the epic goal. |
+| FR-02 | Stabilize engine pacemaker and codify heartbeat rules in instructions. | GOAL-02 | must | Ensures operational consistency and synchronization across all tactical moves. |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ### Non-Functional Requirements
