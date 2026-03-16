@@ -13,9 +13,10 @@ Keel is an engine with strict constraints (see [FORMAL_RULES.md](FORMAL_RULES.md
 ### Session Start & Human Interaction
 When a human user opens the chat or "pokes" you (e.g., "Wake up", "I'm poking you"), you MUST immediately energize the system and orient yourself by following the **Human Interaction & Pokes** workflow in [INSTRUCTIONS.md](INSTRUCTIONS.md):
 1.  **Energize**: Run `just keel poke "Human interaction in chat"`.
-2.  **Scan**: Run `just keel mission next --status` and `just keel pulse`.
-3.  **Confirm**: Run `just keel flow --scene` to verify the LIGHT IS ON.
-4.  **Diagnose**: Run `just keel doctor` to ensure board integrity before proceeding.
+2.  **Pulse**: Run `just keel health --scene` to check subsystem stability.
+3.  **Scan**: Run `just keel mission next --status` and `just keel pulse`.
+4.  **Confirm**: Run `just keel flow --scene` to verify the LIGHT IS ON.
+5.  **Diagnose**: Run `just keel doctor` to ensure board integrity before proceeding.
 
 ### Procedural Instructions
 Follow the formal procedural loops and checklists defined in:

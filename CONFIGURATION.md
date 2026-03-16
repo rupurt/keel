@@ -121,6 +121,25 @@ weight = 1.0
 weight = 1.5
 ```
 
+## Subsystem Health (The Med-Bay)
+
+The `keel health` command provides a high-level triage of the system's core subsystems. Use `--scene` for a visual bio-scan.
+
+| Subsystem | Component | Description |
+|-----------|-----------|-------------|
+| **NEURAL** | Stories | Atomic implementation units and verification |
+| **MOTOR** | Voyages | Tactical planning and SRS/SDD authorship |
+| **STRATEGIC** | Epics | High-level initiatives and PRD coherence |
+| **SENSORY** | Bearings | Research artifacts and evidence quality |
+| **SKELETAL** | ADRs | Architecture Decision Records |
+| **VITAL** | Missions | Core strategic objectives |
+| **AUTONOMIC** | Routines | Scheduled automation and materialization |
+| **CIRCULATORY** | Workflow | Board graph integrity and lane topology |
+
+```bash
+just keel health --scene
+```
+
 ## Full Example
 
 ```toml
