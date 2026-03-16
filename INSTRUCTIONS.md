@@ -12,10 +12,11 @@ Every session follows this deterministic cycle:
 2.  **Role Selection**: Identify if you are a `manager` (planning/decisions) or an `operator` (implementation). Do not drift across these roles in a single atomic change.
 3.  **Execute Move**: Perform exactly ONE move (e.g., plan a voyage, implement a story, fix a diagnostic).
 4.  **Seal Move**: Close the loop with `story submit`, `voyage plan`, or `bearing lay`. This mutates the `.keel` state. Ensure the pacemaker is stable (committed heartbeat).
-5.  **Log & Commit**: 
+5.  **Log & Commit**:
     - Record your move in the mission `LOG.md`.
     - **Pace-setting**: Execute `just keel poke "Sealing move: <summary>"` to synchronize the pacemaker with the board state. This is MANDATORY for all commits, including work performed without a story (e.g., gardening, bug fixes, or engine improvements).
     - Create a single atomic [Conventional Commit](https://www.conventionalcommits.org/) including the heartbeat.
+6.  **Re-orient**: After the commit lands, run `just keel doctor --status` and `just keel flow` to see what the board needs next. This is the "plug the chord back in" moment — you reconnect to the board's current state before deciding whether to start another loop or hand off to the human.
 
 ## Primary Workflows
 
