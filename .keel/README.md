@@ -276,11 +276,11 @@
 |--------|--------|
 | [RoadmapMVP](epics/VDiHw85WK/voyages/VDiJfjvVG/) | done |
 
-### [Bearing Research Contract Alignment](epics/VDiHwCUZt/) (active)
+### [Bearing Research Contract Alignment](epics/VDiHwCUZt/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Contract Enforcement](epics/VDiHwCUZt/voyages/VE1bQwUPi/) | in-progress |
+| [Contract Enforcement](epics/VDiHwCUZt/voyages/VE1bQwUPi/) | done |
 
 ### [Strict Deterministic Board Generation](epics/VDiHwGwe5/) (done)
 
@@ -288,7 +288,11 @@
 |--------|--------|
 | [Canonical Serialization](epics/VDiHwGwe5/voyages/VDuc2GPCN/) | done |
 
-### [Dependency-Aware Bearing Prioritization](epics/VDiHwLLfY/) (draft)
+### [Dependency-Aware Bearing Prioritization](epics/VDiHwLLfY/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Bearing Dependency Primitives](epics/VDiHwLLfY/voyages/VE1vAyNzt/) | planned |
 
 ### [Research-Preserving Bearing Promotion](epics/VDiHwPniZ/) (draft)
 
