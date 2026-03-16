@@ -7,6 +7,7 @@ The Ramping Path (Your Moves):
 
 1. The Fixer (Learning by Healing)
   doctor      Validate board health and optionally fix issues
+  health      Subsystem status check and bio-scan (The Med-Bay)
   flow        Show workflow lane dashboard from configured topology
 
 2. The Operator (Learning by Building)
@@ -96,6 +97,17 @@ pub fn build_cli() -> Command {
                     Arg::new("scene")
                         .long("scene")
                         .help("Render a visual representation of the current board scene")
+                        .action(ArgAction::SetTrue),
+                ),
+        )
+        .subcommand(
+            Command::new("health")
+                .about("Subsystem status check and bio-scan (The Med-Bay)")
+                .hide(true)
+                .arg(
+                    Arg::new("scene")
+                        .long("scene")
+                        .help("Render the system health as a visual bio-scan scene")
                         .action(ArgAction::SetTrue),
                 ),
         )

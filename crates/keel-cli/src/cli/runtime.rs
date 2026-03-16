@@ -52,6 +52,10 @@ pub fn run() -> Result<()> {
                 }
             }
         }
+        Some(("health", m)) => {
+            let scene = *m.get_one::<bool>("scene").unwrap_or(&false);
+            super::commands::diagnostics::health::run(&resolve_board_dir()?, scene)
+        }
         Some(("flow", m)) => {
             let no_color = *m.get_one::<bool>("no_color").unwrap_or(&false);
             let hide_routines = *m.get_one::<bool>("hide-routines").unwrap_or(&false);
