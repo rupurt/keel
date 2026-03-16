@@ -58,7 +58,7 @@ pub fn run(board_dir: &std::path::Path, no_color: bool, show_routines: bool, sce
             }
             if !packs_visual.is_empty() {
                 let label = format!("<-- {} BATTERY PACKS PLUGGED IN", ready_backlog);
-                circuit.push_str(&format!("    │   [ {: <20} ]  {: <37}│\n", packs_visual, label));
+                circuit.push_str(&format!("    │   [ {: <20} ]  {: <36}│\n", packs_visual, label));
             } else {
                 circuit.push_str("    │                                                                 │\n");
             }
