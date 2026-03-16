@@ -14,7 +14,7 @@ Every session follows this deterministic cycle:
 4.  **Seal Move**: Close the loop with `story submit`, `voyage plan`, or `bearing lay`. This mutates the `.keel` state. Ensure the pacemaker is stable (committed heartbeat).
 5.  **Log & Commit**: 
     - Record your move in the mission `LOG.md`.
-    - **Pace-setting**: Execute `just keel poke "Sealing move: <summary>"` to synchronize the pacemaker with the board state.
+    - **Pace-setting**: Execute `just keel poke "Sealing move: <summary>"` to synchronize the pacemaker with the board state. This is MANDATORY for all commits, including work performed without a story (e.g., gardening, bug fixes, or engine improvements).
     - Create a single atomic [Conventional Commit](https://www.conventionalcommits.org/) including the heartbeat.
 
 ## Primary Workflows
@@ -54,7 +54,7 @@ As long as the system is **AUTONOMOUS (LIGHT ON)** and the circuit is healthy (n
 2.  **Autonomous Start**: For each ready story, execute `keel story start <id>`. 
 3.  **Rube Goldberg Loop**: Transitioning a story to `in-progress` mutates the board, which physically recharges the system battery, keeping the circuit closed and the engine running. 
 4.  **Priority**: Discharging the backlog is your primary tactical objective once energized. You must continue until the backlog is empty or the circuit trips.
-5.  **Loop Closure**: After every successful implementation or transition, you MUST stabilize the pacemaker by committing the `.keel/heartbeat` alongside the board changes. Do not leave the loop open.
+5.  **Loop Closure**: After every successful implementation or transition, you MUST stabilize the pacemaker by executing `just keel poke "Sealing move: <summary>"` and committing the `.keel/heartbeat` alongside the board changes. This applies to ALL work, including storyless gardening or engine changes. Do not leave the loop open.
 
 ## Global Hygiene Checklist
 
@@ -72,7 +72,7 @@ Apply these checks to **every change** before finalizing work:
    - **CIRCULATORY**: Workflow (Graph integrity, topology)
    - **PACEMAKER**: Heartbeat (System energization and commit stability)
    - **KINETIC**: Delivery (Backlog liquidity, execution capacity)
-3. **Pacemaker Protocol**: The system's heartbeat (.keel/heartbeat) is its pacemaker. You MUST ensure the pacemaker is stable (committed) before concluding any unit of work. Uncommitted energy is a signal of an open tactical loop and will trigger a CRITICAL status in the Med-Bay bio-scan.
+3. **Pacemaker Protocol**: The system's heartbeat (.keel/heartbeat) is its pacemaker. You MUST ensure the pacemaker is stable (committed) before concluding any unit of work. Every commit MUST be preceded by a `just keel poke "Sealing move: <summary>"` to refresh the system's pulse and reflect the latest change, especially when working without a story. Uncommitted energy is a signal of an open tactical loop and will trigger a CRITICAL status in the Med-Bay bio-scan.
 4. **Gardening First**: You MUST tend to the garden (fixing `doctor` errors, discharging automated backlog, and resolving structural drift) BEFORE notifying the human operator or requesting input. 
 5. **Notification Threshold**: Only request human intervention when you reach a "Manual Lane" that requires design direction or a decision on application behavior (e.g., assessing a Bearing, planning a Voyage, or human verification of a complex Story).
 6. **Quality Check**: `just quality` must be clean (formatting and linting).
