@@ -7,10 +7,10 @@
 
 - **Role**: operator
 - **Move**: Added test coverage proving the diagnostic engine flags missing required `##` sections in EVIDENCE.md and ASSESSMENT.md. Fixed pre-existing FlowMetrics compilation errors and clippy warnings. Updated ASSESSMENT.md test fixture to include all required contract sections.
-- **Outcome**: Story submitted to needs-human-verification.
+- **Outcome**: Story accepted.
 
 ## 2026-03-16T04:29:00 — VE1bXV3wS: Refine CLI Projections for Bearings
 
 - **Role**: operator
 - **Move**: Verified that `keel bearing show` already surfaces authored content from `## Feasibility` and `## Findings` sections. No code changes needed — projection was already aligned by SRS-01 work.
-- **Outcome**: Story submitted to needs-human-verification.
+- **Outcome**: Story accepted. Voyage VE1bQwUPi auto-completed. Epic VDiHwCUZt finalized.

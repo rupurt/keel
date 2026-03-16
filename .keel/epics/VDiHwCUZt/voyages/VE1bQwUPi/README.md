@@ -1,12 +1,13 @@
 ---
 id: VE1bQwUPi
 title: Contract Enforcement
-status: in-progress
+status: done
 epic: VDiHwCUZt
 created_at: 2026-03-16T03:27:40
 index: 1
 updated_at: 2026-03-16T03:29:31
 started_at: 2026-03-16T03:38:25
+completed_at: 2026-03-16T04:41:22
 ---
 
 # Contract Enforcement
@@ -25,11 +26,11 @@ started_at: 2026-03-16T03:38:25
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/3 stories complete
+**Progress:** 2/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
 | [Align Templates and Parsing Logic](../../../../stories/VE1bVusKZ/README.md) | feat | done |
-| [Update Diagnostic Engine for Strict Contract](../../../../stories/VE1bXPqvF/README.md) | feat | needs-human-verification |
-| [Refine CLI Projections for Bearings](../../../../stories/VE1bXV3wS/README.md) | feat | in-progress |
+| [Update Diagnostic Engine for Strict Contract](../../../../stories/VE1bXPqvF/README.md) | feat | done |
+| [Refine CLI Projections for Bearings](../../../../stories/VE1bXV3wS/README.md) | feat | needs-human-verification |
 <!-- END GENERATED -->

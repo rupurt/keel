@@ -2,11 +2,12 @@
 id: VE1bXV3wS
 title: Refine CLI Projections for Bearings
 type: feat
-status: needs-human-verification
+status: done
 scope: VDiHwCUZt/VE1bQwUPi
-updated_at: 2026-03-16T04:29:29
+updated_at: 2026-03-16T04:41:22
 started_at: 2026-03-16T04:28:25
 submitted_at: 2026-03-16T04:29:29
+completed_at: 2026-03-16T04:41:22
 ---
 
 # Refine CLI Projections for Bearings
