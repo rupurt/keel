@@ -300,11 +300,11 @@
 |--------|--------|
 | [Evidence and Risk Carry-Through](epics/VDiHwPniZ/voyages/VE22wWzeD/) | done |
 
-### [Accelerated Bearing Source Capture](epics/VDiHwULir/) (active)
+### [Accelerated Bearing Source Capture](epics/VDiHwULir/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [URL-Aware Capture Defaults](epics/VDiHwULir/voyages/VE26NBIKc/) | in-progress |
+| [URL-Aware Capture Defaults](epics/VDiHwULir/voyages/VE26NBIKc/) | done |
 
 ### [Theater Play Experience](epics/VDlzCqxr9/) (done)
 
@@ -324,7 +324,11 @@
 |--------|--------|
 | [Implement Inquiry Personas](epics/VDo4OmYow/voyages/VDo4Ugi5v/) | done |
 
-### [Project Operations](epics/VDseuzIFg/) (draft)
+### [Project Operations](epics/VDseuzIFg/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Implementation of Time Constraints](epics/VDseuzIFg/voyages/VE3IYca8z/) | planned |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

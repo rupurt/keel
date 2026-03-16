@@ -8,7 +8,8 @@ The keel engine repository lacks a dedicated scope for tracking and automating i
 
 | ID | Goal | Success Metric | Target |
 |----|------|----------------|--------|
-| GOAL-01 | Resolve the problem described above for the primary user. | A measurable outcome is defined for this problem | Target agreed during planning |
+| GOAL-01 | Implement Watch primitive for time-based mission constraints | Subcommands functional, tests pass, doctor check active | Production ready |
+| GOAL-02 | Stabilize engine pacemaker and codify heartbeat rules | No Med-Bay failures, instructions updated | 100% adherence |
 
 ## Users
 
