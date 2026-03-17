@@ -18,6 +18,7 @@ fn extract_frontmatter_keys(template: &str) -> HashSet<String> {
     frontmatter
         .lines()
         .filter(|line| !line.trim().is_empty())
+        .filter(|line| !line.trim_start().starts_with('#'))
         .filter_map(|line| line.split(':').next())
         .map(|key| key.trim().to_string())
         .collect()

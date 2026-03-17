@@ -1,9 +1,11 @@
 ---
+# system-managed
 id: {{id}}
-title: {{title}}
 status: {{status}}
 created_at: {{created_at}}
 updated_at: {{updated_at}}
+# authored
+title: {{title}}
 watch: ~
 ---
 

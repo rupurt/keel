@@ -1,5 +1,7 @@
 ---
+# system-managed
 id: {{id}}
+# authored
 title: {{title}}
 limit_hours: {{limit}}
 ---

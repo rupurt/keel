@@ -1,7 +1,9 @@
 ---
+# system-managed
 id: {{id}}
-title: {{title}}
 created_at: {{created_at}}
+# authored
+title: {{title}}
 ---
 
 # {{title}}

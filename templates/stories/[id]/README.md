@@ -1,11 +1,13 @@
 ---
+# system-managed
 id: {{id}}
-title: {{title}}
-type: {{type}}
 status: icebox
 created_at: {{created_at}}
 updated_at: {{updated_at}}
-operator-signal: 
+# authored
+title: {{title}}
+type: {{type}}
+operator-signal:
 ---
 
 # {{title}}

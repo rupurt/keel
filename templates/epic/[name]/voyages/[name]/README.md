@@ -1,9 +1,11 @@
 ---
+# system-managed
 id: {{id}}
-title: {{title}}
 status: draft
 epic: {{epic}}
 created_at: {{created_at}}
+# authored
+title: {{title}}
 ---
 
 # {{title}}

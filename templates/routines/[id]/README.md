@@ -1,11 +1,13 @@
 ---
+# system-managed
 id: {{id}}
+created_at: {{created_at}}
+updated_at: {{updated_at}}
+# authored
 title: {{title}}
 cadence:
 {{cadence_block}}
 target-scope: {{target_scope}}
-created_at: {{created_at}}
-updated_at: {{updated_at}}
 ---
 
 # Blueprint

@@ -1,13 +1,15 @@
 ---
+# system-managed
 id: {{id}}
 index: {{index}}
-title: {{title}}
 status: proposed
-context: {{context}}
-applies-to: {{applies_to}}
+decided_at: {{decided_at}}
 supersedes: []
 superseded-by: null
-decided_at: {{decided_at}}
+# authored
+title: {{title}}
+context: {{context}}
+applies-to: {{applies_to}}
 ---
 
 # {{title}}

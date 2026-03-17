@@ -226,10 +226,27 @@ pub fn run() -> Result<()> {
     };
 
     if result.is_ok() {
+        auto_sync_artifacts();
         auto_stage_board();
     }
 
     result
+}
+
+/// Regenerate all board artifacts (READMEs, reports, flow history) so they
+/// stay in sync with the board state after every command.  Idempotent —
+/// `write_if_changed` means read-only commands produce no disk writes.
+fn auto_sync_artifacts() {
+    let Ok(board_dir) = resolve_board_dir() else {
+        return;
+    };
+    let Ok(board) = keel::infrastructure::loader::load_board(&board_dir) else {
+        return;
+    };
+    let _ = keel::infrastructure::generate::sync_board_artifacts(
+        &board,
+        &keel::infrastructure::generate::BoardArtifactSyncOptions::default(),
+    );
 }
 
 /// If `workflow.auto_stage` is enabled, stage all `.keel/` changes.
