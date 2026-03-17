@@ -105,6 +105,7 @@ pub enum WorldMapNodeKind {
     Voyage,
     Story,
     Routine,
+    Watch,
     Heartbeat,
 }
 
@@ -119,6 +120,7 @@ impl WorldMapNodeKind {
             Self::Voyage => "voyage",
             Self::Story => "story",
             Self::Routine => "routine",
+            Self::Watch => "watch",
             Self::Heartbeat => "pacemaker",
         }
     }
@@ -133,6 +135,7 @@ impl WorldMapNodeKind {
             Self::Voyage => "voyages",
             Self::Story => "stories",
             Self::Routine => "routines",
+            Self::Watch => "watches",
             Self::Heartbeat => "pacemakers",
         }
     }
@@ -147,7 +150,8 @@ impl WorldMapNodeKind {
             Self::Voyage => 5,
             Self::Story => 6,
             Self::Routine => 7,
-            Self::Heartbeat => 8,
+            Self::Watch => 8,
+            Self::Heartbeat => 9,
         }
     }
 }
@@ -464,6 +468,20 @@ fn build_world_map_node(
                 routine_signals(scheduled),
             )
         }
+        BoardNodeId::Watch(id) => {
+            let watch = board
+                .watches
+                .get(id)
+                .expect("graph watch nodes must resolve against the board");
+            (
+                node.title.clone(),
+                world_node_kind(node.kind),
+                node.state.clone(),
+                Some(format!("{}h limit", watch.limit_hours())),
+                None,
+                Vec::new(),
+            )
+        }
         BoardNodeId::Heartbeat => (
             node.title.clone(),
             WorldMapNodeKind::Heartbeat,
@@ -499,7 +517,8 @@ fn world_node_id(id: &BoardNodeId) -> String {
         | BoardNodeId::Adr(id)
         | BoardNodeId::Voyage(id)
         | BoardNodeId::Story(id)
-        | BoardNodeId::Routine(id) => id.clone(),
+        | BoardNodeId::Routine(id)
+        | BoardNodeId::Watch(id) => id.clone(),
     }
 }
 
@@ -513,6 +532,7 @@ fn world_node_kind(kind: BoardNodeKind) -> WorldMapNodeKind {
         BoardNodeKind::Voyage => WorldMapNodeKind::Voyage,
         BoardNodeKind::Story => WorldMapNodeKind::Story,
         BoardNodeKind::Routine => WorldMapNodeKind::Routine,
+        BoardNodeKind::Watch => WorldMapNodeKind::Watch,
         BoardNodeKind::Heartbeat => WorldMapNodeKind::Heartbeat,
     }
 }

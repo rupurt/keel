@@ -3,7 +3,7 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::fs;
 
-use crate::domain::model::{Board, Epic, Routine, Story, Voyage, VoyageState};
+use crate::domain::model::{Board, Epic, Routine, Story, Voyage, VoyageState, Watch};
 use crate::infrastructure::utils::cmp_optional_index_then_id;
 use crate::infrastructure::verification::parse_ac_references;
 
@@ -19,6 +19,7 @@ pub enum BoardNodeKind {
     Voyage,
     Story,
     Routine,
+    Watch,
     Heartbeat,
 }
 
@@ -32,6 +33,7 @@ pub enum BoardNodeId {
     Voyage(String),
     Story(String),
     Routine(String),
+    Watch(String),
     Heartbeat,
 }
 
@@ -46,6 +48,7 @@ impl BoardNodeId {
             Self::Voyage(_) => BoardNodeKind::Voyage,
             Self::Story(_) => BoardNodeKind::Story,
             Self::Routine(_) => BoardNodeKind::Routine,
+            Self::Watch(_) => BoardNodeKind::Watch,
             Self::Heartbeat => BoardNodeKind::Heartbeat,
         }
     }
@@ -60,7 +63,8 @@ impl BoardNodeId {
             | Self::Adr(id)
             | Self::Voyage(id)
             | Self::Story(id)
-            | Self::Routine(id) => id,
+            | Self::Routine(id)
+            | Self::Watch(id) => id,
         }
     }
 }
@@ -210,6 +214,18 @@ pub fn build_board_graph(board: &Board) -> BoardGraph {
         });
     }
 
+    for watch in sorted_watches(board) {
+        nodes.push(BoardGraphNode {
+            id: BoardNodeId::Watch(watch.id().to_string()),
+            title: watch.title().to_string(),
+            kind: BoardNodeKind::Watch,
+            state: "running".to_string(),
+            terminal: false,
+            order_index: None,
+            declared_parent: Some(BoardNodeId::Board),
+        });
+    }
+
     for routine in sorted_routines(board) {
         nodes.push(BoardGraphNode {
             id: BoardNodeId::Routine(routine.id().to_string()),
@@ -218,7 +234,7 @@ pub fn build_board_graph(board: &Board) -> BoardGraph {
             state: "scheduled".to_string(),
             terminal: false,
             order_index: None,
-            declared_parent: routine_declared_parent(routine),
+            declared_parent: routine_declared_parent(board, routine),
         });
     }
 
@@ -345,6 +361,17 @@ pub fn build_board_graph(board: &Board) -> BoardGraph {
         );
     }
 
+    for watch in sorted_watches(board) {
+        add_edge(
+            &known_ids,
+            &mut edges,
+            &mut dangling_edges,
+            BoardNodeId::Board,
+            BoardNodeId::Watch(watch.id().to_string()),
+            BoardEdgeKind::Contains,
+        );
+    }
+
     for voyage in sorted_voyages(board) {
         add_edge(
             &known_ids,
@@ -382,7 +409,7 @@ pub fn build_board_graph(board: &Board) -> BoardGraph {
 
     for routine in sorted_routines(board) {
         let routine_id = BoardNodeId::Routine(routine.id().to_string());
-        let parent = routine_declared_parent(routine).unwrap_or(BoardNodeId::Board);
+        let parent = routine_declared_parent(board, routine).unwrap_or(BoardNodeId::Board);
         add_edge(
             &known_ids,
             &mut edges,
@@ -617,12 +644,18 @@ fn story_declared_parent(story: &Story) -> Option<BoardNodeId> {
     }
 }
 
-fn routine_declared_parent(routine: &Routine) -> Option<BoardNodeId> {
+fn routine_declared_parent(board: &Board, routine: &Routine) -> Option<BoardNodeId> {
     let target_scope = routine.target_scope().trim();
     if target_scope.is_empty() {
         return None;
     }
 
+    // Watch scope: plain ID that matches a known watch
+    if board.find_watch(target_scope).is_some() {
+        return Some(BoardNodeId::Watch(target_scope.to_string()));
+    }
+
+    // Legacy: epic/voyage scope
     if let Some((_, voyage_id)) = target_scope.split_once('/') {
         return Some(BoardNodeId::Voyage(voyage_id.to_string()));
     }
@@ -768,6 +801,12 @@ fn sorted_stories(board: &Board) -> Vec<&Story> {
         cmp_optional_index_then_id(left.index(), left.id(), right.index(), right.id())
     });
     stories
+}
+
+fn sorted_watches(board: &Board) -> Vec<&Watch> {
+    let mut watches: Vec<_> = board.watches.values().collect();
+    watches.sort_by(|left, right| left.id().cmp(right.id()));
+    watches
 }
 
 fn sorted_routines(board: &Board) -> Vec<&Routine> {

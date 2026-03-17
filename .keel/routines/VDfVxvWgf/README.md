@@ -4,7 +4,10 @@ title: Daily Status Surface Progress
 cadence:
   cron: 0 9 * * 6
   timezone: America/Los_Angeles
-target-scope: VE5OOqP2S
+target-scope: VE3IAG4jZ
+lineage:
+  - VE4hiOYHj
+  - VE5OOqP2S
 created_at: 2026-03-13T11:43:53
 updated_at: 2026-03-13T11:43:53
 ---

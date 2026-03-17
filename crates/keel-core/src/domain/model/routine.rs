@@ -41,6 +41,9 @@ pub struct RoutineFrontmatter {
         skip_serializing_if = "Option::is_none"
     )]
     pub operator_signal: Option<String>,
+    /// IDs of epics, voyages, or missions this routine has previously contributed to.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub lineage: Vec<String>,
 }
 
 /// A routine bundle with its frontmatter, authored blueprint body, and file path.
@@ -83,6 +86,10 @@ impl Routine {
 
     pub fn blueprint_markdown(&self) -> &str {
         &self.blueprint_markdown
+    }
+
+    pub fn lineage(&self) -> &[String] {
+        &self.frontmatter.lineage
     }
 }
 

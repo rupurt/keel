@@ -152,8 +152,18 @@ fn routine_matches_filter(
 }
 
 fn routine_in_mission(board: &Board, routine: &Routine, mission_id: &str) -> bool {
-    routine
-        .target_scope()
+    let target_scope = routine.target_scope().trim();
+
+    // Watch-scoped: check if any mission for this watch matches
+    if board.find_watch(target_scope).is_some() {
+        return board
+            .missions_for_watch(target_scope)
+            .iter()
+            .any(|m| m.id() == mission_id);
+    }
+
+    // Legacy epic/voyage scope
+    target_scope
         .split('/')
         .next()
         .is_some_and(|epic_id| board.is_epic_in_mission(epic_id, mission_id))

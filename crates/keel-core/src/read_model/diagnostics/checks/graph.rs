@@ -267,7 +267,7 @@ fn render_cycle(cycle: &[BoardNodeId]) -> String {
 fn is_containment_parent(kind: BoardNodeKind) -> bool {
     matches!(
         kind,
-        BoardNodeKind::Mission | BoardNodeKind::Epic | BoardNodeKind::Voyage
+        BoardNodeKind::Mission | BoardNodeKind::Epic | BoardNodeKind::Voyage | BoardNodeKind::Watch
     )
 }
 
@@ -309,6 +309,11 @@ fn path_for_node(board: &Board, node_id: &BoardNodeId) -> std::path::PathBuf {
             .get(id)
             .map(|routine| routine.path.clone())
             .unwrap_or_else(|| board.root.join("README.md")),
+        BoardNodeId::Watch(id) => board
+            .watches
+            .get(id)
+            .map(|watch| watch.path.clone())
+            .unwrap_or_else(|| board.root.join("README.md")),
         BoardNodeId::Heartbeat => board.root.join("heartbeat"),
     }
 }
@@ -323,6 +328,7 @@ fn describe_node_ref(node_id: &BoardNodeId) -> String {
         BoardNodeId::Voyage(id) => format!("voyage {id}"),
         BoardNodeId::Story(id) => format!("story {id}"),
         BoardNodeId::Routine(id) => format!("routine {id}"),
+        BoardNodeId::Watch(id) => format!("watch {id}"),
         BoardNodeId::Heartbeat => "pacemaker".to_string(),
     }
 }

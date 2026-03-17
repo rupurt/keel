@@ -911,7 +911,8 @@ fn kind_sort_rank(kind: WorldMapNodeKind) -> u8 {
         WorldMapNodeKind::Voyage => 5,
         WorldMapNodeKind::Story => 6,
         WorldMapNodeKind::Routine => 7,
-        WorldMapNodeKind::Heartbeat => 8,
+        WorldMapNodeKind::Watch => 8,
+        WorldMapNodeKind::Heartbeat => 9,
     }
 }
 
@@ -940,6 +941,7 @@ fn node_color(node: &WorldMapNode) -> Color {
             "upcoming" => Color::BrightCyan,
             _ => Color::Cyan,
         },
+        WorldMapNodeKind::Watch => Color::BrightYellow,
         WorldMapNodeKind::Heartbeat => Color::BrightYellow,
     }
 }
@@ -952,6 +954,7 @@ fn node_radius(kind: WorldMapNodeKind) -> isize {
         WorldMapNodeKind::Voyage => 2,
         WorldMapNodeKind::Story => 1,
         WorldMapNodeKind::Routine => 1,
+        WorldMapNodeKind::Watch => 2,
         WorldMapNodeKind::Heartbeat => 3,
     }
 }

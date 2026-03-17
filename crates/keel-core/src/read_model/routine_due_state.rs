@@ -186,6 +186,7 @@ timezone: America/Los_Angeles
                 ),
                 updated_at: None,
                 operator_signal: None,
+                lineage: Vec::new(),
             },
             "# Blueprint\n",
             ".keel/routines/routine-weekly-review/README.md",

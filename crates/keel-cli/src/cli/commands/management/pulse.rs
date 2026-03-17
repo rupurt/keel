@@ -426,11 +426,7 @@ fn create_materialized_story(
 ) -> Result<String> {
     validate_target_scope(board, &routine.target_scope)?;
 
-    let epic_id = routine
-        .target_scope
-        .split('/')
-        .next()
-        .ok_or_else(|| anyhow!("Routine '{}' target scope is empty", routine.id))?;
+    let watch_scoped = is_watch_scope(board, &routine.target_scope);
     let next_index = next_scope_indexes
         .entry(routine.target_scope.clone())
         .and_modify(|index| *index += 1)
@@ -452,12 +448,29 @@ fn create_materialized_story(
         .naive_utc()
         .with_nanosecond(0)
         .unwrap_or_else(|| reference_time.naive_utc());
+
+    // Watch-scoped routines produce unscoped stories (no epic/voyage lineage).
+    // Epic-scoped routines produce stories scoped to the epic/voyage.
+    let (scope, governed_by) = if watch_scoped {
+        (None, Vec::new())
+    } else {
+        let epic_id = routine
+            .target_scope
+            .split('/')
+            .next()
+            .ok_or_else(|| anyhow!("Routine '{}' target scope is empty", routine.id))?;
+        (
+            Some(routine.target_scope.clone()),
+            find_governing_adrs(board, epic_id),
+        )
+    };
+
     let frontmatter = StoryFrontmatter {
         id: story_id.clone(),
         title: routine.title.clone(),
         story_type: StoryType::Feat,
         status: StoryState::Backlog,
-        scope: Some(routine.target_scope.clone()),
+        scope,
         milestone: None,
         created_at: Some(timestamp),
         updated_at: Some(timestamp),
@@ -465,7 +478,7 @@ fn create_materialized_story(
         completed_at: None,
         submitted_at: None,
         index: Some(*next_index),
-        governed_by: find_governing_adrs(board, epic_id),
+        governed_by,
         blocked_by: Vec::new(),
         role: None,
         operator_signal: Some("pulse".to_string()),
@@ -482,7 +495,16 @@ fn create_materialized_story(
     Ok(story_id)
 }
 
+fn is_watch_scope(board: &Board, target_scope: &str) -> bool {
+    board.find_watch(target_scope).is_some()
+}
+
 fn validate_target_scope(board: &Board, target_scope: &str) -> Result<()> {
+    // Watch scope: validated by existence
+    if is_watch_scope(board, target_scope) {
+        return Ok(());
+    }
+
     if let Some((epic_id, voyage_id)) = target_scope.split_once('/') {
         board.require_epic(epic_id)?;
         let voyage = board.require_voyage(voyage_id)?;

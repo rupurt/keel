@@ -86,6 +86,11 @@ pub fn check_routine_scope_coherence(board: &Board) -> Vec<Problem> {
             continue;
         }
 
+        // Watch scope: plain ID matching a known watch
+        if board.find_watch(target_scope).is_some() {
+            continue; // Valid watch scope
+        }
+
         if let Some((epic_id, voyage_id)) = target_scope.split_once('/') {
             if board.find_epic(epic_id).is_none() {
                 problems.push(

@@ -132,6 +132,7 @@ fn test_routine_serialization_order() {
         created_at: None,
         updated_at: None,
         operator_signal: None,
+        lineage: Vec::new(),
     };
     let s = serde_yaml::to_string(&fm).unwrap();
     assert_eq!(

@@ -26,6 +26,7 @@ pub enum KnowledgeGraphNodeKind {
     Voyage,
     Story,
     Routine,
+    Watch,
     Heartbeat,
     Artifact,
     Knowledge,
@@ -551,6 +552,7 @@ fn graph_node_kind(kind: crate::read_model::board_graph::BoardNodeKind) -> Knowl
         crate::read_model::board_graph::BoardNodeKind::Voyage => KnowledgeGraphNodeKind::Voyage,
         crate::read_model::board_graph::BoardNodeKind::Story => KnowledgeGraphNodeKind::Story,
         crate::read_model::board_graph::BoardNodeKind::Routine => KnowledgeGraphNodeKind::Routine,
+        crate::read_model::board_graph::BoardNodeKind::Watch => KnowledgeGraphNodeKind::Watch,
         crate::read_model::board_graph::BoardNodeKind::Heartbeat => {
             KnowledgeGraphNodeKind::Heartbeat
         }
@@ -567,6 +569,7 @@ fn graph_node_id(id: &BoardNodeId) -> String {
         BoardNodeId::Voyage(id) => format!("voyage:{id}"),
         BoardNodeId::Story(id) => format!("story:{id}"),
         BoardNodeId::Routine(id) => format!("routine:{id}"),
+        BoardNodeId::Watch(id) => format!("watch:{id}"),
         BoardNodeId::Heartbeat => "system:heartbeat".to_string(),
     }
 }
@@ -618,6 +621,11 @@ fn path_for_board_node(board: &Board, id: &BoardNodeId) -> PathBuf {
             .routines
             .get(id)
             .map(|routine| routine.path.clone())
+            .unwrap_or_else(|| board.root.join("README.md")),
+        BoardNodeId::Watch(id) => board
+            .watches
+            .get(id)
+            .map(|watch| watch.path.clone())
             .unwrap_or_else(|| board.root.join("README.md")),
         BoardNodeId::Heartbeat => board.root.join("heartbeat"),
     }
