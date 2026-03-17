@@ -41,6 +41,10 @@ pub fn run(
         },
     )?;
 
+    crate::cli::presentation::audio::play(
+        crate::cli::presentation::audio::SoundEvent::VoyageDone,
+    );
+
     Ok(())
 }
 

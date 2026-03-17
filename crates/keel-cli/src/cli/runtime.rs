@@ -45,8 +45,14 @@ pub fn run() -> Result<()> {
                 Err(e) => {
                     let msg = e.to_string();
                     if msg.contains("errors") {
+                        super::presentation::audio::play(
+                            super::presentation::audio::SoundEvent::DoctorError,
+                        );
                         std::process::exit(2);
                     } else if msg.contains("warnings") {
+                        super::presentation::audio::play(
+                            super::presentation::audio::SoundEvent::DoctorWarning,
+                        );
                         std::process::exit(1);
                     } else {
                         Err(e)

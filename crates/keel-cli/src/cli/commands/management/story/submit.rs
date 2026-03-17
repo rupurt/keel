@@ -40,6 +40,17 @@ pub fn run(ctx: &spoke_auth::ExecutionContext, board_dir: &Path, id: &str) -> Re
 
     let board = load_board(board_dir)?;
     let story = board.require_story(id)?;
+
+    if story.status.is_terminal() {
+        crate::cli::presentation::audio::play(
+            crate::cli::presentation::audio::SoundEvent::StoryComplete,
+        );
+    } else {
+        crate::cli::presentation::audio::play(
+            crate::cli::presentation::audio::SoundEvent::StorySubmitted,
+        );
+    }
+
     let guidance = guidance_for_action(StoryLifecycleAction::Submit, story.status, story.id());
     print_human(guidance.as_ref());
 

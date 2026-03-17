@@ -1,5 +1,8 @@
 board_dir = ".keel"
 
+[audio]
+enabled = true
+
 [workflow]
 auto_stage = true
 open_for_work = true

@@ -84,6 +84,10 @@ pub fn run(
             )
         })?;
 
+    crate::cli::presentation::audio::play(
+        crate::cli::presentation::audio::SoundEvent::StoryComplete,
+    );
+
     let board = load_board(board_dir)?;
     let story = board.require_story(id)?;
     let guidance = guidance_for_action(StoryLifecycleAction::Accept, story.status, story.id());

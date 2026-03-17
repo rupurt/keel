@@ -351,6 +351,36 @@ pub struct StorageConfig {
     pub backend: StorageBackend,
 }
 
+/// Audio feedback configuration.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct AudioConfig {
+    /// Master enable/disable for audio feedback (default: false — opt-in).
+    #[serde(default)]
+    pub enabled: bool,
+
+    /// Use terminal bell as baseline (default: true). Works through tmux.
+    #[serde(default = "default_bell_enabled")]
+    pub bell: bool,
+
+    /// Custom sound file paths keyed by event name (e.g., "mission_verified").
+    #[serde(default)]
+    pub sounds: std::collections::HashMap<String, String>,
+}
+
+fn default_bell_enabled() -> bool {
+    true
+}
+
+impl Default for AudioConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            bell: default_bell_enabled(),
+            sounds: std::collections::HashMap::new(),
+        }
+    }
+}
+
 /// Keel configuration
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Config {
@@ -390,6 +420,10 @@ pub struct Config {
     /// Research provider configuration.
     #[serde(default)]
     pub research: ResearchConfig,
+
+    /// Audio feedback configuration.
+    #[serde(default)]
+    pub audio: AudioConfig,
 }
 
 impl Default for Config {
@@ -404,6 +438,7 @@ impl Default for Config {
             scoring: ScoringConfig::default(),
             doctor: DoctorConfig::default(),
             research: ResearchConfig::default(),
+            audio: AudioConfig::default(),
         }
     }
 }

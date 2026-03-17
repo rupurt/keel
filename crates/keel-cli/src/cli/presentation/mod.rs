@@ -1,5 +1,6 @@
 //! Shared CLI presentation modules.
 
+pub mod audio;
 pub mod drift_surface;
 pub mod duration;
 pub mod flow;
