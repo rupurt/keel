@@ -342,8 +342,6 @@
 |--------|--------|
 | [Operational Routine Infrastructure](epics/VE4hiOYHj/voyages/VE5NSQ2T2/) | done |
 
-### [Continuous Project Operations II](epics/VE5OOqP2S/) (draft)
-
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
 | Voyage | Status |
