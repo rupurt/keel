@@ -45,7 +45,11 @@ fi
 "#;
 
 pub fn run() -> Result<()> {
-    let git_dir = find_git_dir()?;
+    run_in(None)
+}
+
+pub fn run_in(working_dir: Option<&Path>) -> Result<()> {
+    let git_dir = find_git_dir(working_dir)?;
     let hooks_dir = git_dir.join("hooks");
 
     fs::create_dir_all(&hooks_dir)
@@ -61,22 +65,31 @@ pub fn run() -> Result<()> {
     Ok(())
 }
 
-fn find_git_dir() -> Result<std::path::PathBuf> {
-    let output = std::process::Command::new("git")
-        .args(["rev-parse", "--git-dir"])
-        .output()
-        .context("Failed to run git rev-parse")?;
+fn find_git_dir(working_dir: Option<&Path>) -> Result<std::path::PathBuf> {
+    let mut cmd = std::process::Command::new("git");
+    cmd.args(["rev-parse", "--git-dir"]);
+    if let Some(dir) = working_dir {
+        cmd.current_dir(dir);
+    }
+    let output = cmd.output().context("Failed to run git rev-parse")?;
 
     if !output.status.success() {
         return Err(anyhow!("Not inside a git repository"));
     }
 
-    let path = String::from_utf8(output.stdout)
+    let raw = String::from_utf8(output.stdout)
         .context("Invalid UTF-8 in git dir path")?
         .trim()
         .to_string();
 
-    Ok(std::path::PathBuf::from(path))
+    let path = std::path::PathBuf::from(&raw);
+    if path.is_absolute() {
+        Ok(path)
+    } else if let Some(dir) = working_dir {
+        Ok(dir.join(path))
+    } else {
+        Ok(path)
+    }
 }
 
 fn install_hook(hooks_dir: &Path, name: &str, content: &str) -> Result<()> {

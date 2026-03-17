@@ -83,6 +83,12 @@ fn init_board(root: &Path, config: &Config) -> Result<()> {
         }
     }
 
+    // Install git hooks for pacemaker protocol
+    match super::hooks::run_in(Some(root)) {
+        Ok(()) => {}
+        Err(e) => eprintln!("Warning: Could not install git hooks: {e}"),
+    }
+
     println!("Initialized keel board in {}", board_path.display());
     println!("Created subdirectories:");
     for dir in INIT_SUBDIRS {
@@ -96,6 +102,14 @@ fn init_board(root: &Path, config: &Config) -> Result<()> {
 mod tests {
     use super::*;
     use tempfile::tempdir;
+
+    fn init_git_repo(dir: &Path) {
+        std::process::Command::new("git")
+            .args(["init", "--quiet"])
+            .current_dir(dir)
+            .output()
+            .unwrap();
+    }
 
     #[test]
     fn test_init_board() {
@@ -111,5 +125,18 @@ mod tests {
         assert!(root.join(".keel/bearings").is_dir());
         assert!(root.join(".keel/adrs").is_dir());
         assert!(root.join("keel.toml").is_file());
+    }
+
+    #[test]
+    fn test_init_installs_git_hooks() {
+        let temp = tempdir().unwrap();
+        let root = temp.path();
+        init_git_repo(root);
+        let config = Config::default();
+
+        init_board(root, &config).unwrap();
+
+        assert!(root.join(".git/hooks/pre-commit").exists());
+        assert!(root.join(".git/hooks/commit-msg").exists());
     }
 }
