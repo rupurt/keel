@@ -1,9 +1,12 @@
 ---
 id: VDiBh1orx
 title: Horizon and Roadmap View
-status: defining
+status: verified
 created_at: 2026-03-12T19:46:15
-updated_at: 2026-03-12T19:46:15
+updated_at: 2026-03-16T18:16:47
+activated_at: 2026-03-16T18:16:47
+achieved_at: 2026-03-16T18:16:47
+verified_at: 2026-03-16T18:16:47
 ---
 
 # Horizon and Roadmap View
