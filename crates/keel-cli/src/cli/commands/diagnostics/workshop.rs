@@ -3,6 +3,7 @@
 use crate::cli::presentation::terminal::get_terminal_width;
 use crate::cli::style::VisualPadding;
 use anyhow::Result;
+use chrono::Timelike;
 use keel::infrastructure::loader::load_board;
 use keel::read_model::{workflow_lane_flow, workflow_topology};
 use owo_colors::OwoColorize;
@@ -83,8 +84,11 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
 
     if scene {
         let healthy = health.passed();
-        let recently_completed = metrics.execution.recently_completed_count;
-        let energized = recently_completed > 0;
+        let (config, _) = keel::infrastructure::config::load_config();
+        let current_hour = chrono::Local::now().hour() as u8;
+        let within_working_hours = current_hour >= config.workflow.working_hours_start
+            && current_hour < config.workflow.working_hours_end;
+        let energized = config.workflow.open_for_work && within_working_hours;
 
         println!("\n    ┌{}┐", "─".repeat(width.saturating_sub(6)));
         println!(
@@ -102,9 +106,9 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
         };
         let lamp_style = if energized { "(*)" } else { "( )" };
         let lamp_label = if energized {
-            "THE LIGHT IS ON"
+            "CIRCUIT CLOSED (ON THE CLOCK)"
         } else {
-            "LIGHT IS OFF (POKE TO WAKE)"
+            "CIRCUIT OPEN (OFF THE CLOCK)"
         };
 
         let mut visual = String::new();
