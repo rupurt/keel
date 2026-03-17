@@ -1,0 +1,173 @@
+//! `keel hooks install` — install git hooks that enforce the pacemaker protocol.
+
+use std::fs;
+use std::os::unix::fs::PermissionsExt;
+use std::path::Path;
+
+use anyhow::{Context, Result, anyhow};
+
+const PRE_COMMIT_HOOK: &str = r#"#!/bin/sh
+# keel pacemaker protocol — auto-poke and stage heartbeat on every commit.
+# Installed by `keel hooks install`. Do not edit manually.
+
+KEEL_BIN="${KEEL_BIN:-keel}"
+
+# Find the board directory (default .keel)
+if [ -d ".keel" ]; then
+    HEARTBEAT=".keel/heartbeat"
+elif [ -f "keel.toml" ]; then
+    HEARTBEAT="$(grep -oP 'board_dir\s*=\s*"\K[^"]+' keel.toml 2>/dev/null || echo ".keel")/heartbeat"
+else
+    # No board found — skip silently
+    exit 0
+fi
+
+$KEEL_BIN poke "pre-commit auto-poke" 2>/dev/null || true
+git add "$HEARTBEAT" 2>/dev/null || true
+"#;
+
+const COMMIT_MSG_HOOK: &str = r#"#!/bin/sh
+# keel pacemaker protocol — auto-append doctor --status to commit messages.
+# Installed by `keel hooks install`. Do not edit manually.
+
+KEEL_BIN="${KEEL_BIN:-keel}"
+COMMIT_MSG_FILE="$1"
+
+# Skip merge commits and amends that already have status
+if grep -q '\[MSN\]' "$COMMIT_MSG_FILE" 2>/dev/null; then
+    exit 0
+fi
+
+STATUS=$($KEEL_BIN doctor --status 2>/dev/null)
+if [ -n "$STATUS" ]; then
+    printf '\n%s\n' "$STATUS" >> "$COMMIT_MSG_FILE"
+fi
+"#;
+
+pub fn run() -> Result<()> {
+    let git_dir = find_git_dir()?;
+    let hooks_dir = git_dir.join("hooks");
+
+    fs::create_dir_all(&hooks_dir)
+        .with_context(|| format!("Failed to create hooks directory: {}", hooks_dir.display()))?;
+
+    install_hook(&hooks_dir, "pre-commit", PRE_COMMIT_HOOK)?;
+    install_hook(&hooks_dir, "commit-msg", COMMIT_MSG_HOOK)?;
+
+    println!("Installed git hooks:");
+    println!("  - pre-commit  (auto-poke + stage heartbeat)");
+    println!("  - commit-msg  (auto-append doctor --status)");
+
+    Ok(())
+}
+
+fn find_git_dir() -> Result<std::path::PathBuf> {
+    let output = std::process::Command::new("git")
+        .args(["rev-parse", "--git-dir"])
+        .output()
+        .context("Failed to run git rev-parse")?;
+
+    if !output.status.success() {
+        return Err(anyhow!("Not inside a git repository"));
+    }
+
+    let path = String::from_utf8(output.stdout)
+        .context("Invalid UTF-8 in git dir path")?
+        .trim()
+        .to_string();
+
+    Ok(std::path::PathBuf::from(path))
+}
+
+fn install_hook(hooks_dir: &Path, name: &str, content: &str) -> Result<()> {
+    let hook_path = hooks_dir.join(name);
+
+    if hook_path.exists() {
+        let existing = fs::read_to_string(&hook_path)
+            .with_context(|| format!("Failed to read existing hook: {}", hook_path.display()))?;
+
+        if existing.contains("keel pacemaker protocol") {
+            // Our hook — safe to overwrite
+        } else {
+            return Err(anyhow!(
+                "Existing {} hook is not managed by keel. \
+                 Remove it manually or merge the pacemaker protocol into your existing hook.",
+                name
+            ));
+        }
+    }
+
+    fs::write(&hook_path, content)
+        .with_context(|| format!("Failed to write hook: {}", hook_path.display()))?;
+
+    fs::set_permissions(&hook_path, fs::Permissions::from_mode(0o755))
+        .with_context(|| format!("Failed to set permissions on: {}", hook_path.display()))?;
+
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+
+    fn init_git_repo(dir: &Path) {
+        std::process::Command::new("git")
+            .args(["init", "--quiet"])
+            .current_dir(dir)
+            .output()
+            .unwrap();
+    }
+
+    #[test]
+    fn install_creates_hooks_with_correct_permissions() {
+        let temp = tempdir().unwrap();
+        init_git_repo(temp.path());
+
+        let hooks_dir = temp.path().join(".git/hooks");
+        install_hook(&hooks_dir, "pre-commit", PRE_COMMIT_HOOK).unwrap();
+        install_hook(&hooks_dir, "commit-msg", COMMIT_MSG_HOOK).unwrap();
+
+        let pre_commit = hooks_dir.join("pre-commit");
+        let commit_msg = hooks_dir.join("commit-msg");
+
+        assert!(pre_commit.exists());
+        assert!(commit_msg.exists());
+
+        let pre_mode = fs::metadata(&pre_commit).unwrap().permissions().mode();
+        assert_eq!(pre_mode & 0o755, 0o755);
+
+        let content = fs::read_to_string(&pre_commit).unwrap();
+        assert!(content.contains("keel pacemaker protocol"));
+        assert!(content.contains("poke"));
+
+        let msg_content = fs::read_to_string(&commit_msg).unwrap();
+        assert!(msg_content.contains("doctor --status"));
+    }
+
+    #[test]
+    fn install_overwrites_keel_managed_hook() {
+        let temp = tempdir().unwrap();
+        init_git_repo(temp.path());
+
+        let hooks_dir = temp.path().join(".git/hooks");
+        install_hook(&hooks_dir, "pre-commit", PRE_COMMIT_HOOK).unwrap();
+
+        // Second install should succeed (overwrites our own hook)
+        install_hook(&hooks_dir, "pre-commit", PRE_COMMIT_HOOK).unwrap();
+    }
+
+    #[test]
+    fn install_refuses_to_overwrite_foreign_hook() {
+        let temp = tempdir().unwrap();
+        init_git_repo(temp.path());
+
+        let hooks_dir = temp.path().join(".git/hooks");
+        fs::create_dir_all(&hooks_dir).unwrap();
+        fs::write(hooks_dir.join("pre-commit"), "#!/bin/sh\necho custom hook\n").unwrap();
+
+        let result = install_hook(&hooks_dir, "pre-commit", PRE_COMMIT_HOOK);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("not managed by keel"));
+    }
+}

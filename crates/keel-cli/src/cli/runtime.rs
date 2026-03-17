@@ -198,6 +198,10 @@ pub fn run() -> Result<()> {
         }
         Some(("generate", _)) => super::commands::setup::generate::run(&resolve_board_dir()?),
         Some(("init", _)) => Ok(super::commands::setup::init::run()?),
+        Some(("hooks", m)) => match m.subcommand() {
+            Some(("install", _)) => super::commands::setup::hooks::run(),
+            _ => unreachable!("subcommand_required"),
+        },
         Some(("roadmap", _)) => super::commands::management::roadmap::run(),
         Some(("epic", m)) => handle_epic_command(&ctx, m),
         Some(("routine", m)) => handle_routine_command(&ctx, m),

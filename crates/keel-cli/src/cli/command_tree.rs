@@ -44,6 +44,7 @@ Setup:
   init        Initialize a new keel board
   config      Configuration and technique inventory
   generate    Regenerate board artifacts
+  hooks       Install git hooks for pacemaker protocol
 "#;
 
 fn hidden_subcommand_group<T>(name: &'static str, about: &'static str) -> Command
@@ -397,6 +398,16 @@ pub fn build_cli() -> Command {
             Command::new("init")
                 .about("Initialize a new keel board in the current directory")
                 .hide(true),
+        )
+        .subcommand(
+            Command::new("hooks")
+                .about("Manage git hooks for the pacemaker protocol")
+                .hide(true)
+                .subcommand(
+                    Command::new("install")
+                        .about("Install pre-commit and commit-msg hooks"),
+                )
+                .subcommand_required(true),
         )
         .subcommand(
             Command::new("ping")
