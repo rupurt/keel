@@ -2,7 +2,7 @@
 id: VDuAohPEw
 index: 2
 title: Authentication and Crate Boundary
-status: proposed
+status: accepted
 context: null
 applies-to: []
 supersedes: []
