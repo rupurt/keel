@@ -66,6 +66,19 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
         }
     }
 
+    // Draft epics are planning work — surface them even if not in a lane source
+    let draft_epics: Vec<_> = board
+        .epics
+        .values()
+        .filter(|e| e.status() == keel::domain::model::EpicState::Draft)
+        .map(|e| format!("Epic {} - {} (draft)", e.id().bright_blue(), e.title()))
+        .collect();
+    for item in draft_epics {
+        if !human_items.contains(&item) {
+            human_items.push(item);
+        }
+    }
+
     let width = get_terminal_width();
 
     if scene {
@@ -122,24 +135,35 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
             "    | [ PEGBOARD ]                                                        |\n",
         );
 
-        let active_epics = metrics.planning.planned_count + metrics.execution.active_voyages_count;
-        let draft_epics = metrics.planning.draft_count;
-        let congestion_ratio = if active_epics > 0 {
-            draft_epics as f64 / active_epics as f64
+        let draft_epic_count = board
+            .epics
+            .values()
+            .filter(|e| e.status() == keel::domain::model::EpicState::Draft)
+            .count();
+        let done_epic_count = board
+            .epics
+            .values()
+            .filter(|e| e.status() == keel::domain::model::EpicState::Done)
+            .count();
+        let active_epic_count = board.epics.len() - draft_epic_count - done_epic_count;
+        let congestion_ratio = if active_epic_count > 0 {
+            draft_epic_count as f64 / active_epic_count as f64
         } else {
-            draft_epics as f64
+            draft_epic_count as f64
         };
 
         let pegboard = format!(
             "M:{} E:{}/{} B:{} A:{}",
             board.missions.len(),
-            draft_epics,
-            active_epics,
+            draft_epic_count,
+            active_epic_count,
             board.bearings.len(),
             board.adrs.len()
         );
 
-        let congestion_styled = if congestion_ratio > 2.0 {
+        let congestion_styled = if draft_epic_count > 0 {
+            pegboard.yellow().bold().to_string()
+        } else if congestion_ratio > 2.0 {
             pegboard.yellow().bold().to_string()
         } else {
             pegboard.dimmed().to_string()
