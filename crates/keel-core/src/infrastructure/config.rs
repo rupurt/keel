@@ -252,6 +252,10 @@ pub struct WorkflowConfig {
     /// Optional command to execute when human input is required (e.g., 'tmux display-message "..."')
     #[serde(default)]
     pub notification_command: Option<String>,
+
+    /// When true, `keel poke` auto-installs git hooks if they are missing.
+    #[serde(default)]
+    pub auto_install_hooks: bool,
 }
 
 impl Default for WorkflowConfig {
@@ -265,6 +269,7 @@ impl Default for WorkflowConfig {
             working_hours_end: default_working_hours_end(),
             battery_decay_minutes: default_battery_decay_minutes(),
             notification_command: None,
+            auto_install_hooks: false,
         }
     }
 }
