@@ -28,6 +28,9 @@ pub enum MissionAction {
         /// Render a compact three-bullet summary
         #[arg(long, short)]
         compact: bool,
+        /// Render the watch constraint visualization
+        #[arg(long)]
+        scene: bool,
     },
     /// Attach a bearing to a mission
     Attach {
@@ -104,7 +107,12 @@ pub fn run(ctx: &spoke_auth::ExecutionContext, action: MissionAction) -> Result<
     match action {
         MissionAction::New { title } => run_new(&title),
         MissionAction::List => list::run(),
-        MissionAction::Show { id, json, compact } => show::run(&id, json, compact),
+        MissionAction::Show {
+            id,
+            json,
+            compact,
+            scene,
+        } => show::run(&id, json, compact, scene),
         MissionAction::Attach {
             mission_id,
             bearing_id,

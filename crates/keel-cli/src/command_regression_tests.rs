@@ -326,10 +326,17 @@ fn head_show_commands_resolve_management_entities() {
         "HEAD",
         false,
         false,
+        false,
     )
     .unwrap();
-    crate::cli::commands::management::mission::show::run_with_dir(temp.path(), "M2", false, false)
-        .unwrap();
+    crate::cli::commands::management::mission::show::run_with_dir(
+        temp.path(),
+        "M2",
+        false,
+        false,
+        false,
+    )
+    .unwrap();
 
     crate::cli::commands::management::epic::show::run_with_dir(temp.path(), "HEAD").unwrap();
     crate::cli::commands::management::epic::show::run_with_dir(temp.path(), "E2").unwrap();
@@ -364,6 +371,7 @@ fn head_show_commands_report_selector_errors() {
     let err = crate::cli::commands::management::mission::show::run_with_dir(
         empty.path(),
         "HEAD",
+        false,
         false,
         false,
     )
@@ -405,6 +413,7 @@ fn head_show_commands_reject_invalid_syntax() {
         crate::cli::commands::management::mission::show::run_with_dir(
             temp.path(),
             "HEAD~3",
+            false,
             false,
             false,
         )

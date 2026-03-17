@@ -12,13 +12,19 @@ use keel::read_model::mission_show::{self, MissionShowProjection};
 use keel::read_model::show_selector::{ShowEntityKind, resolve_show_selector};
 
 /// Show mission details
-pub fn run(id: &str, json: bool, compact: bool) -> Result<()> {
+pub fn run(id: &str, json: bool, compact: bool, scene: bool) -> Result<()> {
     let board_dir = keel::infrastructure::config::find_board_dir()?;
-    run_with_dir(&board_dir, id, json, compact)
+    run_with_dir(&board_dir, id, json, compact, scene)
 }
 
 /// Show mission details with an explicit board directory.
-pub fn run_with_dir(board_dir: &Path, id: &str, json: bool, compact: bool) -> Result<()> {
+pub fn run_with_dir(
+    board_dir: &Path,
+    id: &str,
+    json: bool,
+    compact: bool,
+    scene: bool,
+) -> Result<()> {
     let board = load_board(board_dir)?;
     let resolved_id = resolve_show_selector(board_dir, &board, ShowEntityKind::Mission, id)?;
     let mission = board.require_mission(&resolved_id)?;
@@ -26,6 +32,22 @@ pub fn run_with_dir(board_dir: &Path, id: &str, json: bool, compact: bool) -> Re
 
     if json {
         println!("{}", serde_json::to_string_pretty(&projection)?);
+        return Ok(());
+    }
+
+    if scene {
+        if let Some(watch) = &projection.watch {
+            println!(
+                "{}",
+                crate::cli::presentation::scene::render_watch_hifi(
+                    watch.current_hour,
+                    watch.limit_hours,
+                    &watch.title,
+                )
+            );
+        } else {
+            println!("  (no watch constraint on this mission)");
+        }
         return Ok(());
     }
 
@@ -75,16 +97,16 @@ fn build_document(projection: &MissionShowProjection, width: usize) -> ShowDocum
 
     let mut sections = Vec::new();
 
-    // Watch Section
+    // Watch Section (compact — use --scene for visualization)
     if let Some(watch) = &projection.watch {
         let mut watch_section = ShowSection::new("Watch Constraint");
-        let watch_scene = crate::cli::presentation::scene::render_watch(watch.current_hour);
-        watch_section.push_lines(watch_scene.lines().map(|s| s.to_string()));
+        let remaining = watch.limit_hours.saturating_sub(watch.current_hour);
         watch_section.push_lines([format!(
-            "  {} - {}h limit (currently {}h elapsed)",
+            "  {} - {}h / {}h elapsed ({}h remaining)",
             watch.title.bold(),
+            watch.current_hour,
             watch.limit_hours,
-            watch.current_hour
+            remaining
         )]);
         sections.push(watch_section);
     }
