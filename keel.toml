@@ -1,9 +1,10 @@
 board_dir = ".keel"
 
 [workflow]
-max_active_missions = 1
-max_battery_packs = 10
+auto_install_hooks = true
 open_for_work = true
 working_hours_start = 0
 working_hours_end = 24
+max_active_missions = 1
+max_battery_packs = 10
 battery_decay_minutes = 15
