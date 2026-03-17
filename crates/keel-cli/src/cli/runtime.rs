@@ -24,7 +24,7 @@ pub fn run() -> Result<()> {
         .map(|p| p.as_path());
     let ctx = spoke_auth::load_auth_context(auth_file)?;
 
-    match matches.subcommand() {
+    let result = match matches.subcommand() {
         Some(("doctor", m)) => {
             let fix = *m.get_one::<bool>("fix").unwrap_or(&false);
             let evidence = *m.get_one::<bool>("evidence").unwrap_or(&false);
@@ -223,7 +223,27 @@ pub fn run() -> Result<()> {
             Ok(())
         }
         _ => unreachable!("Unhandled command"),
+    };
+
+    if result.is_ok() {
+        auto_stage_board();
     }
+
+    result
+}
+
+/// If `workflow.auto_stage` is enabled, stage all `.keel/` changes.
+fn auto_stage_board() {
+    let (config, _) = keel::infrastructure::config::load_config();
+    if !config.workflow.auto_stage {
+        return;
+    }
+    let Ok(board_dir) = resolve_board_dir() else {
+        return;
+    };
+    let _ = std::process::Command::new("git")
+        .args(["add", &board_dir.to_string_lossy()])
+        .output();
 }
 
 fn handle_epic_command(ctx: &spoke_auth::ExecutionContext, matches: &ArgMatches) -> Result<()> {

@@ -256,6 +256,10 @@ pub struct WorkflowConfig {
     /// When true, `keel poke` auto-installs git hooks if they are missing.
     #[serde(default)]
     pub auto_install_hooks: bool,
+
+    /// When true, CLI commands auto-stage `.keel/` artifacts after mutations.
+    #[serde(default)]
+    pub auto_stage: bool,
 }
 
 impl Default for WorkflowConfig {
@@ -270,6 +274,7 @@ impl Default for WorkflowConfig {
             battery_decay_minutes: default_battery_decay_minutes(),
             notification_command: None,
             auto_install_hooks: false,
+            auto_stage: false,
         }
     }
 }

@@ -1,7 +1,7 @@
 board_dir = ".keel"
 
 [workflow]
-auto_install_hooks = true
+auto_stage = true
 open_for_work = true
 working_hours_start = 0
 working_hours_end = 24
