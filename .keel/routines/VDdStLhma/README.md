@@ -5,7 +5,7 @@ cadence:
   cron: "0 0 * * *"
   timezone: UTC
   daily: true
-target-scope: VE4hiOYHj
+target-scope: VE5OOqP2S
 created_at: 2026-03-14T14:45:00
 updated_at: 2026-03-14T14:45:00
 ---

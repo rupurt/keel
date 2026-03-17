@@ -336,7 +336,13 @@
 |--------|--------|
 | [Operational Routine Reliability](epics/VE3KrOPS/voyages/VE3yUoUUy/) | done |
 
-### [Continuous Project Operations](epics/VE4hiOYHj/) (draft)
+### [Continuous Project Operations](epics/VE4hiOYHj/) (done)
+
+| Voyage | Status |
+|--------|--------|
+| [Operational Routine Infrastructure](epics/VE4hiOYHj/voyages/VE5NSQ2T2/) | done |
+
+### [Continuous Project Operations II](epics/VE5OOqP2S/) (draft)
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

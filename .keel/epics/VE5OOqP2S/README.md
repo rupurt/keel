@@ -1,13 +1,15 @@
 ---
-id: VE4hiOYHj
-title: Continuous Project Operations
-created_at: 2026-03-16T16:11:26
-index: 101
+# system-managed
+id: VE5OOqP2S
+created_at: 2026-03-16T19:00:59
+# authored
+title: Continuous Project Operations II
+index: 102
 ---
 
-# Continuous Project Operations
+# Continuous Project Operations II
 
-> Operational routines (daily status, report friction, auto-staging, exploration) have no live epic to materialize stories into after VE3KrOPS finalized
+> Successor to VE4hiOYHj: operational routines need a live epic to materialize stories into
 
 ## Documents
 
@@ -19,8 +21,7 @@ index: 101
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/1 voyages complete, 3/3 stories done
+**Progress:** 0/0 voyages complete, 0/0 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Operational Routine Infrastructure](voyages/VE5NSQ2T2/) | done | 3/3 |
 <!-- END GENERATED -->

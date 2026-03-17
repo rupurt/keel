@@ -3,9 +3,9 @@ id: VE56ttUZX
 title: Ask About Keel System Audio Feedback Support For Transitions
 type: feat
 status: done
-scope: VE4hiOYHj
+scope: VE4hiOYHj/VE5NSQ2T2
 created_at: 2026-03-17T00:51:29
-updated_at: 2026-03-16T18:46:00
+updated_at: 2026-03-16T18:58:07
 index: 2
 operator-signal: pulse
 started_at: 2026-03-16T18:38:58
