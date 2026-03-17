@@ -2,29 +2,29 @@
 
 ## Problem Statement
 
-Successor to VE4hiOYHj: operational routines need a live epic to materialize stories into
+Operational routines (status reviews, exploratory research, process improvements) require a live epic scope to materialize stories into. This epic succeeds VE4hiOYHj and provides the container for 5 active routines.
 
 ## Goals & Objectives
 
 | ID | Goal | Success Metric | Target |
 |----|------|----------------|--------|
-| GOAL-01 | Resolve the problem described above for the primary user. | A measurable outcome is defined for this problem | Target agreed during planning |
+| GOAL-01 | Maintain a live operational scope for recurring routine-materialized stories | Routines materialize without graph integrity errors | Zero doctor errors from routine scoping |
 
 ## Users
 
 | Persona | Description | Primary Need |
 |---------|-------------|--------------|
-| Primary User | The person or team most affected by the problem above. | A clearer path to the outcome this epic should improve. |
+| Operator | Project operator running daily/weekly routines | Routines fire into a valid epic scope |
 
 ## Scope
 
 ### In Scope
 
-- [SCOPE-01] The smallest end-to-end change needed to address the problem statement.
+- [SCOPE-01] Container for 5 active operational routines and their materialized stories
 
 ### Out of Scope
 
-- [SCOPE-02] Follow-on improvements or adjacent work that is not required for the first outcome.
+- [SCOPE-02] Feature development work tracked in dedicated feature epics
 
 ## Requirements
 
@@ -33,7 +33,7 @@ Successor to VE4hiOYHj: operational routines need a live epic to materialize sto
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Goals | Priority | Rationale |
 |----|-------------|-------|----------|-----------|
-| FR-01 | Deliver the primary user workflow for this epic end-to-end. | GOAL-01 | must | Establishes the minimum functional capability needed to achieve the epic goal. |
+| FR-01 | Provide valid epic scope for routine story materialization | GOAL-01 | must | Routines need a non-terminal parent to pass graph integrity checks |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ### Non-Functional Requirements
@@ -41,29 +41,29 @@ Successor to VE4hiOYHj: operational routines need a live epic to materialize sto
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Goals | Priority | Rationale |
 |----|-------------|-------|----------|-----------|
-| NFR-01 | Maintain reliability and observability for all new workflow paths introduced by this epic. | GOAL-01 | must | Keeps operations stable and makes regressions detectable during rollout. |
+| NFR-01 | Maintain board health at zero errors during routine operations | GOAL-01 | must | Operational work should not degrade board integrity |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
 
 ## Verification Strategy
 
 | Area | Method | Evidence |
 |------|--------|----------|
-| Problem outcome | Tests, CLI proofs, or manual review chosen during planning | Story-level verification artifacts linked during execution |
+| Routine materialization | keel doctor --status shows zero errors | Heartbeat and doctor output in commit messages |
 
 ## Assumptions
 
 | Assumption | Impact if Wrong | Validation |
 |------------|-----------------|------------|
-| The problem statement reflects a real user or operator need. | The epic may optimize the wrong outcome. | Revisit with planners during decomposition. |
+| Operational routines continue to generate useful work | Epic accumulates unused stories | Review routine value in weekly status |
 
 ## Open Questions & Risks
 
 | Question/Risk | Owner | Status |
 |---------------|-------|--------|
-| Which metric best proves the problem above is resolved? | Epic owner | Open |
+| Should completed one-shot routines be retired? | Operator | Open |
 
 ## Success Criteria
 
 <!-- BEGIN SUCCESS_CRITERIA -->
-- [ ] The team can state a measurable user outcome that resolves the problem above.
+- [x] Routines materialize stories without graph integrity errors
 <!-- END SUCCESS_CRITERIA -->
