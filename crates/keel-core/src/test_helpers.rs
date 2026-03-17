@@ -970,6 +970,7 @@ pub struct StoryFactory {
     completed_at: Option<NaiveDateTime>,
     role: Option<String>,
     blocked_by: Vec<String>,
+    materialization_key: Option<String>,
 }
 
 impl Default for StoryFactory {
@@ -984,6 +985,7 @@ impl Default for StoryFactory {
             completed_at: None,
             role: None,
             blocked_by: vec![],
+            materialization_key: None,
         }
     }
 }
@@ -1046,6 +1048,12 @@ impl StoryFactory {
         self
     }
 
+    /// Set the materialization key.
+    pub fn materialization_key(mut self, key: &str) -> Self {
+        self.materialization_key = Some(key.to_string());
+        self
+    }
+
     /// Build the Story struct.
     pub fn build(self) -> Story {
         Story::new(
@@ -1068,6 +1076,7 @@ impl StoryFactory {
                 operator_signal: None,
             },
             PathBuf::from(format!("{}.md", self.id)),
+            self.materialization_key,
         )
     }
 }

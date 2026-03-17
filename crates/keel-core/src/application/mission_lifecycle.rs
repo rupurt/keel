@@ -52,41 +52,6 @@ impl MissionLifecycleService {
             return Err(anyhow!(format_gate_error("mission", "achieve", &problems)));
         }
 
-        // Verify goals before achievement
-        let charter_path = mission.path.parent().unwrap().join("CHARTER.md");
-        let charter_content = std::fs::read_to_string(&charter_path).unwrap_or_default();
-        let goals = charter::parse_mission_goals(&charter_content);
-
-        let unmet_goals: Vec<_> = goals
-            .iter()
-            .filter(|g| {
-                matches!(g.verification, GoalVerification::Board(_))
-                    && !is_goal_met(&board, g.verification.raw())
-            })
-            .collect();
-
-        if !unmet_goals.is_empty() {
-            println!(
-                "Cannot achieve mission {}. The following board goals are unmet:",
-                id
-            );
-            for goal in unmet_goals {
-                println!("  - {}: {}", goal.id, goal.description);
-            }
-            return Err(anyhow!("Mission has unmet board goals"));
-        }
-
-        // Verify log entries
-        let log_path = mission.path.parent().unwrap().join("LOG.md");
-        let log_content = std::fs::read_to_string(&log_path).unwrap_or_default();
-        let (_, entries) = parse_log_entries(&log_content);
-        if entries.is_empty() {
-            return Err(anyhow!(
-                "Cannot achieve mission {}. At least one entry in LOG.md is required to document the session.",
-                id
-            ));
-        }
-
         // Apply mutation
         execute(board_dir, id, &mission_transitions::ACHIEVE)?;
 
@@ -122,17 +87,6 @@ impl MissionLifecycleService {
         let problems = evaluate_mission_transition(&board, mission, MissionTransition::Verify);
         if !problems.is_empty() {
             return Err(anyhow!(format_gate_error("mission", "verify", &problems)));
-        }
-
-        // Verify log entries
-        let log_path = mission.path.parent().unwrap().join("LOG.md");
-        let log_content = std::fs::read_to_string(&log_path).unwrap_or_default();
-        let (_, entries) = parse_log_entries(&log_content);
-        if entries.is_empty() {
-            return Err(anyhow!(
-                "Cannot verify mission {}. At least one entry in LOG.md is required to document the session.",
-                id
-            ));
         }
 
         execute(board_dir, id, &mission_transitions::VERIFY)?;
@@ -257,30 +211,6 @@ fn parse_log_entries(content: &str) -> (String, Vec<LogEntry>) {
     }
 
     (header, entries)
-}
-
-fn is_goal_met(board: &crate::domain::model::Board, verification: &str) -> bool {
-    let target = verification.trim_start_matches("board:").trim();
-    if target.is_empty() || target == "..." {
-        return false;
-    }
-
-    // Check if it's an epic
-    if let Some(epic) = board.epics.get(target) {
-        return epic.status() == crate::domain::model::EpicState::Done;
-    }
-
-    // Check if it's a voyage
-    if let Some(voyage) = board.voyages.get(target) {
-        return voyage.status() == crate::domain::state_machine::voyage::VoyageState::Done;
-    }
-
-    // Check if it's a story
-    if let Some(story) = board.stories.get(target) {
-        return story.status == crate::domain::model::StoryState::Done;
-    }
-
-    false
 }
 
 fn get_next_question(content: &str) -> Option<String> {
@@ -578,7 +508,7 @@ mod tests {
             "M1",
         );
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("unmet board goals"));
+        assert!(res.unwrap_err().to_string().contains("unmet board goal"));
     }
 
     #[test]
@@ -597,7 +527,7 @@ mod tests {
             "M1",
         );
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("no child entities"));
+        assert!(res.unwrap_err().to_string().contains("no child entities found"));
 
         // Add a child (epic)
         let temp = TestBoardBuilder::new()
@@ -615,7 +545,7 @@ mod tests {
             "M1",
         );
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("one entry in LOG.md"));
+        assert!(res.unwrap_err().to_string().contains("requires at least one entry in LOG.md"));
 
         // Add a log entry
         MissionLifecycleService::log(temp.path(), "M1", "Did some work").unwrap();

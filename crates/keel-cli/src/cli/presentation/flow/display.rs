@@ -10,7 +10,7 @@ use super::format::render_epic_capacities;
 use crate::cli::presentation::scheduled_routines::describe_scheduled_routine;
 use crate::cli::presentation::theme::Theme;
 use crate::cli::style;
-use keel::domain::model::Board;
+use keel::domain::model::{Board, StoryState};
 use keel::read_model::flow_metrics::FlowMetrics;
 use keel::read_model::routine_materialization::projection_materialization_key;
 use keel::read_model::scheduled_routines::{ScheduledRoutineProjection, ScheduledRoutineState};
@@ -213,7 +213,9 @@ fn render_high_priority_tasking(
         .filter(|r| {
             matches!(
                 r.state,
-                ScheduledRoutineState::Due | ScheduledRoutineState::Invalid
+                ScheduledRoutineState::Due
+                    | ScheduledRoutineState::Finished
+                    | ScheduledRoutineState::Invalid
             )
         })
         .collect();
@@ -237,6 +239,7 @@ fn render_high_priority_tasking(
     for routine in high_priority.into_iter().chain(upcoming) {
         let status = match routine.state {
             ScheduledRoutineState::Due => "DUE".bold().yellow().to_string(),
+            ScheduledRoutineState::Finished => "FINISHED".dimmed().to_string(),
             ScheduledRoutineState::Invalid => "INVALID".bold().red().to_string(),
             ScheduledRoutineState::Upcoming => "UPCOMING".bold().yellow().to_string(),
         };
@@ -494,17 +497,27 @@ fn render_scheduled_capacity(
 
 fn render_scheduled_capacity_line(
     routine: &ScheduledRoutineProjection,
-    materialized_by_key: &HashMap<String, String>,
+    _materialized_by_key: &HashMap<String, String>,
 ) -> String {
     let mut line = describe_scheduled_routine(routine);
     match routine.state {
         ScheduledRoutineState::Due => {
-            let guidance = projection_materialization_key(routine)
-                .and_then(|key| materialized_by_key.get(&key).cloned())
+            let guidance = routine
+                .materialized_as
+                .as_ref()
                 .map(|story_id| format!("already materialized this window as {story_id}"))
                 .unwrap_or_else(|| "run `keel pulse` to materialize".to_string());
             line.push_str("; ");
             line.push_str(&guidance);
+        }
+        ScheduledRoutineState::Finished => {
+            if let Some(story_id) = &routine.materialized_as {
+                line.push_str(
+                    &format!("; finished this window as {story_id}")
+                        .dimmed()
+                        .to_string(),
+                );
+            }
         }
         ScheduledRoutineState::Upcoming => {
             line.push_str("; no pulse action yet");
@@ -807,6 +820,8 @@ mod tests {
         next_eligible_at: Option<chrono::DateTime<chrono::Utc>>,
         countdown: Option<&str>,
         error: Option<&str>,
+        materialized_as: Option<&str>,
+        materialized_status: Option<StoryState>,
     ) -> ScheduledRoutineProjection {
         ScheduledRoutineProjection {
             id: id.to_string(),
@@ -816,6 +831,9 @@ mod tests {
             actionable: matches!(state, ScheduledRoutineState::Due),
             gating_reason: match state {
                 ScheduledRoutineState::Due => ScheduledRoutineGatingReason::DueNow,
+                ScheduledRoutineState::Finished => {
+                    ScheduledRoutineGatingReason::NotDueUntilNextEligible
+                }
                 ScheduledRoutineState::Upcoming => {
                     ScheduledRoutineGatingReason::NotDueUntilNextEligible
                 }
@@ -824,6 +842,8 @@ mod tests {
             next_eligible_at,
             countdown: countdown.map(str::to_string),
             error: error.map(str::to_string),
+            materialized_as: materialized_as.map(str::to_string),
+            materialized_status,
         }
     }
 
@@ -928,6 +948,8 @@ mod tests {
                 Some(due_next),
                 Some("in 6d 23h"),
                 None,
+                Some("S1"),
+                Some(StoryState::InProgress),
             ),
             make_scheduled_projection(
                 "routine-upcoming",
@@ -936,6 +958,8 @@ mod tests {
                 ScheduledRoutineState::Upcoming,
                 Some(Utc.with_ymd_and_hms(2026, 1, 5, 19, 0, 0).unwrap()),
                 Some("in 1h"),
+                None,
+                None,
                 None,
             ),
             make_scheduled_projection(
@@ -946,6 +970,8 @@ mod tests {
                 None,
                 None,
                 Some("missing cadence.cron"),
+                None,
+                None,
             ),
         ];
         let materialized_by_key = HashMap::from([(
@@ -988,6 +1014,8 @@ mod tests {
                 Some(Utc.with_ymd_and_hms(2026, 1, 12, 17, 0, 0).unwrap()),
                 Some("in 6d 23h"),
                 None,
+                None,
+                None,
             ),
             make_scheduled_projection(
                 "routine-upcoming",
@@ -996,6 +1024,8 @@ mod tests {
                 ScheduledRoutineState::Upcoming,
                 Some(Utc.with_ymd_and_hms(2026, 1, 5, 19, 0, 0).unwrap()),
                 Some("in 1h"),
+                None,
+                None,
                 None,
             ),
         ];

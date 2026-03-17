@@ -348,6 +348,7 @@ mod tests {
                 operator_signal: None,
             },
             path: PathBuf::from("test.md"),
+            materialization_key: None,
         }
     }
 

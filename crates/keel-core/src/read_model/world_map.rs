@@ -582,6 +582,7 @@ fn voyage_timer(voyage: &Voyage, reference_time: NaiveDateTime) -> Option<String
 fn routine_state_label(scheduled: Option<&ScheduledRoutineProjection>) -> String {
     match scheduled.map(|routine| routine.state) {
         Some(ScheduledRoutineState::Due) => "due".to_string(),
+        Some(ScheduledRoutineState::Finished) => "finished".to_string(),
         Some(ScheduledRoutineState::Upcoming) => "upcoming".to_string(),
         Some(ScheduledRoutineState::Invalid) => "invalid".to_string(),
         None => "scheduled".to_string(),
@@ -592,6 +593,9 @@ fn routine_timer(scheduled: Option<&ScheduledRoutineProjection>) -> Option<Strin
     match scheduled {
         Some(routine) => match routine.state {
             ScheduledRoutineState::Due => Some("due now".to_string()),
+            ScheduledRoutineState::Finished => {
+                Some(format!("finished as {}", routine.materialized_as.as_deref().unwrap_or("?")))
+            }
             ScheduledRoutineState::Upcoming => routine.countdown.clone(),
             ScheduledRoutineState::Invalid => Some("invalid cadence".to_string()),
         },
@@ -603,6 +607,7 @@ fn routine_signals(scheduled: Option<&ScheduledRoutineProjection>) -> Vec<String
     match scheduled {
         Some(routine) => match routine.state {
             ScheduledRoutineState::Due => vec!["due now".to_string()],
+            ScheduledRoutineState::Finished => Vec::new(),
             ScheduledRoutineState::Invalid => vec![
                 routine
                     .error

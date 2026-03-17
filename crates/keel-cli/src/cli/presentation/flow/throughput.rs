@@ -213,6 +213,7 @@ mod tests {
                 operator_signal: None,
             },
             PathBuf::from(format!("{}.md", id)),
+            None,
         )
     }
 

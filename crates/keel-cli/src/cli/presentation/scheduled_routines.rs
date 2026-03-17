@@ -12,6 +12,11 @@ pub fn describe_scheduled_routine(routine: &ScheduledRoutineProjection) -> Strin
             routine.countdown.as_deref().unwrap_or("later"),
             next_eligible_suffix(routine.next_eligible_at)
         ),
+        ScheduledRoutineState::Finished => format!(
+            "finished this window; next run {}{}",
+            routine.countdown.as_deref().unwrap_or("later"),
+            next_eligible_suffix(routine.next_eligible_at)
+        ),
         ScheduledRoutineState::Upcoming => format!(
             "next run {}{}",
             routine.countdown.as_deref().unwrap_or("later"),

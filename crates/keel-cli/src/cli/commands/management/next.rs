@@ -50,6 +50,10 @@ struct JsonScheduledRoutine {
     next_eligible_at: Option<chrono::DateTime<chrono::Utc>>,
     countdown: Option<String>,
     error: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    materialized_as: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    materialized_status: Option<keel::domain::model::StoryState>,
 }
 
 #[derive(Serialize, Clone)]
@@ -682,6 +686,8 @@ fn json_scheduled_routines(scheduled: &[ScheduledRoutineProjection]) -> Vec<Json
             next_eligible_at: routine.next_eligible_at,
             countdown: routine.countdown.clone(),
             error: routine.error.clone(),
+            materialized_as: routine.materialized_as.clone(),
+            materialized_status: routine.materialized_status,
         })
         .collect()
 }
@@ -691,6 +697,7 @@ fn scheduled_state_label(
 ) -> &'static str {
     match state {
         keel::read_model::scheduled_routines::ScheduledRoutineState::Due => "due",
+        keel::read_model::scheduled_routines::ScheduledRoutineState::Finished => "finished",
         keel::read_model::scheduled_routines::ScheduledRoutineState::Upcoming => "upcoming",
         keel::read_model::scheduled_routines::ScheduledRoutineState::Invalid => "invalid",
     }
@@ -1385,6 +1392,8 @@ priority = 50
                 ),
                 countdown: Some("in 6d 23h".to_string()),
                 error: None,
+                materialized_as: None,
+                materialized_status: None,
             },
             ScheduledRoutineProjection {
                 id: "routine-upcoming".to_string(),
@@ -1400,6 +1409,8 @@ priority = 50
                 ),
                 countdown: Some("in 1h".to_string()),
                 error: None,
+                materialized_as: None,
+                materialized_status: None,
             },
         ];
 
@@ -1428,6 +1439,8 @@ priority = 50
             ),
             countdown: Some("in 1h".to_string()),
             error: None,
+            materialized_as: None,
+            materialized_status: None,
         }];
 
         let json = serde_json::to_value(json_scheduled_routines(&scheduled)).unwrap();
@@ -1460,6 +1473,8 @@ priority = 50
             ),
             countdown: Some("in 1h".to_string()),
             error: None,
+            materialized_as: None,
+            materialized_status: None,
         }];
 
         let payload = decision_to_json(&decision, &scheduled, None, "manager");

@@ -12,6 +12,7 @@ use crate::domain::state_machine::invariants;
 use crate::domain::state_machine::mission::MissionTransition;
 use crate::domain::state_machine::story::StoryTransition;
 use crate::domain::state_machine::voyage::VoyageTransition;
+use crate::infrastructure::validation::charter::{self, GoalVerification};
 use crate::infrastructure::validation::{CheckId, Problem, Severity};
 use crate::infrastructure::verification::parse_verify_annotations;
 use crate::infrastructure::verification::parser::RequirementPhase;
@@ -74,6 +75,30 @@ pub fn evaluate_mission_transition(
         MissionTransition::Verify => evaluate_mission_verification(board, mission),
         _ => Vec::new(),
     }
+}
+
+fn is_goal_met(board: &Board, verification: &str) -> bool {
+    let target = verification.trim_start_matches("board:").trim();
+    if target.is_empty() || target == "..." {
+        return false;
+    }
+
+    // Check if it's an epic
+    if let Some(epic) = board.epics.get(target) {
+        return epic.status() == crate::domain::model::EpicState::Done;
+    }
+
+    // Check if it's a voyage
+    if let Some(voyage) = board.voyages.get(target) {
+        return voyage.status() == crate::domain::state_machine::voyage::VoyageState::Done;
+    }
+
+    // Check if it's a story
+    if let Some(story) = board.stories.get(target) {
+        return story.status == StoryState::Done;
+    }
+
+    false
 }
 
 fn evaluate_mission_activation(
@@ -139,6 +164,47 @@ fn evaluate_mission_achieve(
             board, mission,
         ),
     );
+
+    // Verify goals before achievement
+    let charter_path = mission.path.parent().unwrap().join("CHARTER.md");
+    if charter_path.exists() {
+        if let Ok(charter_content) = std::fs::read_to_string(&charter_path) {
+            let goals = charter::parse_mission_goals(&charter_content);
+            let unmet_goals: Vec<_> = goals
+                .iter()
+                .filter(|g| {
+                    matches!(g.verification, GoalVerification::Board(_))
+                        && !is_goal_met(board, g.verification.raw())
+                })
+                .collect();
+
+            for goal in unmet_goals {
+                problems.push(Problem::error(
+                    charter_path.clone(),
+                    format!("Mission {} has unmet board goal {}: {}", mission.id(), goal.id, goal.description)
+                ));
+            }
+        }
+    }
+
+    // Verify log entries
+    let log_path = mission.path.parent().unwrap().join("LOG.md");
+    if log_path.exists() {
+        if let Ok(log_content) = std::fs::read_to_string(&log_path) {
+            let mut entries = 0;
+            for line in log_content.lines() {
+                if line.starts_with("## ") {
+                    entries += 1;
+                }
+            }
+            if entries == 0 {
+                problems.push(Problem::error(
+                    log_path,
+                    format!("Mission {} requires at least one entry in LOG.md to document the session.", mission.id())
+                ));
+            }
+        }
+    }
 
     problems
 }

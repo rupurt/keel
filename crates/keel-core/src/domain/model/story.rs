@@ -91,14 +91,21 @@ pub struct Story {
     pub frontmatter: StoryFrontmatter,
     /// Path to the story file
     pub path: PathBuf,
+    /// Optional materialization key for routine-generated stories
+    pub materialization_key: Option<String>,
 }
 
 impl Story {
     /// Construct a story from parsed frontmatter and its README path.
-    pub fn new(frontmatter: StoryFrontmatter, path: impl Into<PathBuf>) -> Self {
+    pub fn new(
+        frontmatter: StoryFrontmatter,
+        path: impl Into<PathBuf>,
+        materialization_key: Option<String>,
+    ) -> Self {
         Self {
             frontmatter,
             path: path.into(),
+            materialization_key,
         }
     }
 
@@ -220,11 +227,16 @@ started_at: 2025-01-23T12:00:00
         Story::new(
             serde_yaml::from_str(sample_frontmatter_yaml()).unwrap(),
             PathBuf::from(path),
+            None,
         )
     }
 
     fn story_from_yaml(yaml: &str, path: &str) -> Story {
-        Story::new(serde_yaml::from_str(yaml).unwrap(), PathBuf::from(path))
+        Story::new(
+            serde_yaml::from_str(yaml).unwrap(),
+            PathBuf::from(path),
+            None,
+        )
     }
 
     #[test]

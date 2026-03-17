@@ -1403,6 +1403,7 @@ mod tests {
                 operator_signal: None,
             },
             std::path::PathBuf::from(format!("{}.md", id)),
+            None,
         )
     }
 

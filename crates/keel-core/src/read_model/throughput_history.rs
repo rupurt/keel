@@ -288,6 +288,7 @@ mod tests {
                 operator_signal: None,
             },
             PathBuf::from(format!("{id}.md")),
+            None,
         )
     }
 

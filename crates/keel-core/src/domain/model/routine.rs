@@ -194,7 +194,11 @@ started_at: 2026-03-11T10:00:00
 "#;
 
         let frontmatter: StoryFrontmatter = serde_yaml::from_str(yaml).unwrap();
-        let story = Story::new(frontmatter.clone(), ".keel/stories/FEAT0001/README.md");
+        let story = Story::new(
+            frontmatter.clone(),
+            ".keel/stories/FEAT0001/README.md",
+            None,
+        );
 
         assert_eq!(frontmatter.id, "FEAT0001");
         assert_eq!(frontmatter.status, StoryState::Backlog);

@@ -192,6 +192,7 @@ mod tests {
                 operator_signal: None,
             },
             story_dir.join("README.md"),
+            None,
         )
     }
 
@@ -322,6 +323,7 @@ mod tests {
                     operator_signal: None,
                 },
                 story_dir.join("README.md"),
+                None,
             ),
         );
 

@@ -6,11 +6,14 @@ use chrono::{DateTime, Duration, Utc};
 
 use crate::domain::model::{Board, Routine, Story};
 use crate::read_model::routine_due_state::{RoutineDueCategory, evaluate_routine_due_state};
+use crate::read_model::routine_materialization::materialization_key;
+use std::collections::HashMap;
 
 /// Stable scheduled state exposed by `keel next`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ScheduledRoutineState {
     Due,
+    Finished,
     Upcoming,
     Invalid,
 }
@@ -35,6 +38,8 @@ pub struct ScheduledRoutineProjection {
     pub next_eligible_at: Option<DateTime<Utc>>,
     pub countdown: Option<String>,
     pub error: Option<String>,
+    pub materialized_as: Option<String>,
+    pub materialized_status: Option<crate::domain::model::StoryState>,
 }
 
 /// Optional board-level filter for scheduled routine projection.
@@ -49,11 +54,22 @@ pub fn project_scheduled_routines(
     reference_time: DateTime<Utc>,
     filter: RoutineScheduleFilter<'_>,
 ) -> Vec<ScheduledRoutineProjection> {
+    let materialized: HashMap<_, _> = board
+        .stories
+        .values()
+        .filter_map(|story| {
+            story
+                .materialization_key
+                .as_ref()
+                .map(|key| (key.clone(), story))
+        })
+        .collect();
+
     let mut scheduled: Vec<_> = board
         .routines
         .values()
         .filter(|routine| routine_matches_filter(board, routine, filter))
-        .map(|routine| project_routine(routine, reference_time))
+        .map(|routine| project_routine(routine, reference_time, &materialized))
         .collect();
 
     scheduled.sort_by(compare_scheduled_routines);
@@ -82,15 +98,32 @@ pub fn story_is_gated_by_scheduled_routines(
     })
 }
 
-fn project_routine(routine: &Routine, reference_time: DateTime<Utc>) -> ScheduledRoutineProjection {
+fn project_routine(
+    routine: &Routine,
+    reference_time: DateTime<Utc>,
+    materialized: &HashMap<String, &Story>,
+) -> ScheduledRoutineProjection {
     match evaluate_routine_due_state(routine, reference_time) {
         Ok(state) => {
+            let key = materialization_key(routine.id(), state.next_eligible_at);
+            let story = materialized.get(&key);
+
             let (scheduled_state, actionable, gating_reason) = match state.category {
-                RoutineDueCategory::Due => (
-                    ScheduledRoutineState::Due,
-                    true,
-                    ScheduledRoutineGatingReason::DueNow,
-                ),
+                RoutineDueCategory::Due => {
+                    if story.is_some_and(|s| s.status().is_terminal()) {
+                        (
+                            ScheduledRoutineState::Finished,
+                            false,
+                            ScheduledRoutineGatingReason::NotDueUntilNextEligible,
+                        )
+                    } else {
+                        (
+                            ScheduledRoutineState::Due,
+                            true,
+                            ScheduledRoutineGatingReason::DueNow,
+                        )
+                    }
+                }
                 RoutineDueCategory::NotDue => (
                     ScheduledRoutineState::Upcoming,
                     false,
@@ -108,6 +141,8 @@ fn project_routine(routine: &Routine, reference_time: DateTime<Utc>) -> Schedule
                 next_eligible_at: Some(state.next_eligible_at),
                 countdown: Some(format_countdown(reference_time, state.next_eligible_at)),
                 error: None,
+                materialized_as: story.map(|s| s.id().to_string()),
+                materialized_status: story.map(|s| s.status()),
             }
         }
         Err(error) => ScheduledRoutineProjection {
@@ -120,6 +155,8 @@ fn project_routine(routine: &Routine, reference_time: DateTime<Utc>) -> Schedule
             next_eligible_at: None,
             countdown: None,
             error: Some(error.to_string()),
+            materialized_as: None,
+            materialized_status: None,
         },
     }
 }
@@ -136,8 +173,9 @@ fn compare_scheduled_routines(
 fn state_rank(state: ScheduledRoutineState) -> u8 {
     match state {
         ScheduledRoutineState::Due => 0,
-        ScheduledRoutineState::Upcoming => 1,
-        ScheduledRoutineState::Invalid => 2,
+        ScheduledRoutineState::Finished => 1,
+        ScheduledRoutineState::Upcoming => 2,
+        ScheduledRoutineState::Invalid => 3,
     }
 }
 

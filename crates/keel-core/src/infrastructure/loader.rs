@@ -17,6 +17,7 @@ use crate::domain::model::{
 };
 use crate::infrastructure::parser::parse_frontmatter;
 use crate::infrastructure::utils::is_path_dirty;
+use crate::read_model::routine_materialization::extract_materialization_key;
 
 /// Trait for entities that can be loaded from a file path
 pub trait FromPath: Sized + Send {
@@ -115,9 +116,14 @@ impl FromPath for Story {
     fn from_path(path: &Path) -> Result<Self> {
         let content = fs::read_to_string(path)
             .with_context(|| format!("Failed to read story file: {}", path.display()))?;
-        let (frontmatter, _body): (StoryFrontmatter, _) = parse_frontmatter(&content)
+        let (frontmatter, body): (StoryFrontmatter, _) = parse_frontmatter(&content)
             .with_context(|| format!("Failed to parse story frontmatter: {}", path.display()))?;
-        Ok(Story::new(frontmatter, path.to_path_buf()))
+        let materialization_key = extract_materialization_key(&body);
+        Ok(Story::new(
+            frontmatter,
+            path.to_path_buf(),
+            materialization_key,
+        ))
     }
     fn entity_id(&self) -> &str {
         self.id()
