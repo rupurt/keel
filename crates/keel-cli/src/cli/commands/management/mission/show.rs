@@ -80,10 +80,7 @@ fn build_document(projection: &MissionShowProjection, width: usize) -> ShowDocum
             "Archetype:",
             format!("{}", projection.archetype.bold().bright_magenta()),
         )
-        .row_optional(
-            "Watch:",
-            projection.watch.as_ref().map(|w| w.id.clone()),
-        )
+        .row_optional("Watch:", projection.watch.as_ref().map(|w| w.id.clone()))
         .row_optional(
             "Signal:",
             projection

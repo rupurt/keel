@@ -58,15 +58,15 @@ pub fn play(event: SoundEvent) {
     }
 
     // Check for a custom sound file first
-    if let Some(path) = config.audio.sounds.get(event.config_key()) {
-        if let Some(player) = find_platform_player() {
-            let path = path.clone();
-            let player = player.to_string();
-            std::thread::spawn(move || {
-                let _ = std::process::Command::new(&player).arg(&path).spawn();
-            });
-            return;
-        }
+    if let Some(path) = config.audio.sounds.get(event.config_key())
+        && let Some(player) = find_platform_player()
+    {
+        let path = path.clone();
+        let player = player.to_string();
+        std::thread::spawn(move || {
+            let _ = std::process::Command::new(&player).arg(&path).spawn();
+        });
+        return;
     }
 
     // Fall back to terminal bell

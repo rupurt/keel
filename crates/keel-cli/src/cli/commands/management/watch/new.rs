@@ -50,12 +50,8 @@ fn new_watch(board_dir: &Path, title: &str, limit: u32) -> Result<String> {
     if watch_dir.exists() {
         return Err(anyhow!("Watch already exists: {}", watch_id));
     }
-    fs::create_dir_all(&watch_dir).with_context(|| {
-        format!(
-            "Failed to create watch directory: {}",
-            watch_dir.display()
-        )
-    })?;
+    fs::create_dir_all(&watch_dir)
+        .with_context(|| format!("Failed to create watch directory: {}", watch_dir.display()))?;
 
     // Render README.md template
     let readme_content = template_rendering::render(

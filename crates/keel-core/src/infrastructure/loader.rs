@@ -118,7 +118,7 @@ impl FromPath for Story {
             .with_context(|| format!("Failed to read story file: {}", path.display()))?;
         let (frontmatter, body): (StoryFrontmatter, _) = parse_frontmatter(&content)
             .with_context(|| format!("Failed to parse story frontmatter: {}", path.display()))?;
-        let materialization_key = extract_materialization_key(&body);
+        let materialization_key = extract_materialization_key(body);
         Ok(Story::new(
             frontmatter,
             path.to_path_buf(),
@@ -482,6 +482,51 @@ impl FromPath for Mission {
     }
     fn entity_name() -> &'static str {
         "mission"
+    }
+}
+
+/// Load all watches from watches/*/README.md
+fn load_watches(board_dir: &Path) -> Result<HashMap<String, Watch>> {
+    let watches_dir = board_dir.join("watches");
+    if !watches_dir.exists() {
+        return Ok(HashMap::new());
+    }
+
+    let paths: Vec<_> = fs::read_dir(&watches_dir)?
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().is_dir())
+        .map(|e| e.path().join("README.md"))
+        .filter(|p| p.exists())
+        .collect();
+
+    Ok(load_entities(&paths))
+}
+
+impl FromPath for Watch {
+    fn from_path(path: &Path) -> Result<Self> {
+        let content = fs::read_to_string(path)
+            .with_context(|| format!("Failed to read watch file: {}", path.display()))?;
+        let (mut frontmatter, _body): (WatchFrontmatter, _) = parse_frontmatter(&content)
+            .with_context(|| format!("Failed to parse watch frontmatter: {}", path.display()))?;
+
+        // Extract ID from path: watches/{watch_id}/README.md
+        let watch_id = path
+            .parent()
+            .and_then(|p| p.file_name())
+            .and_then(|n| n.to_str())
+            .unwrap_or("")
+            .to_string();
+
+        // Override frontmatter id with directory name (source of truth)
+        frontmatter.id = watch_id;
+
+        Ok(Watch::new(frontmatter, path.to_path_buf()))
+    }
+    fn entity_id(&self) -> &str {
+        self.id()
+    }
+    fn entity_name() -> &'static str {
+        "watch"
     }
 }
 
@@ -1112,50 +1157,5 @@ limit_hours: 12
         let watch = board.watches.get("test-watch").unwrap();
         assert_eq!(watch.title(), "Test Watch");
         assert_eq!(watch.limit_hours(), 12);
-    }
-}
-
-/// Load all watches from watches/*/README.md
-fn load_watches(board_dir: &Path) -> Result<HashMap<String, Watch>> {
-    let watches_dir = board_dir.join("watches");
-    if !watches_dir.exists() {
-        return Ok(HashMap::new());
-    }
-
-    let paths: Vec<_> = fs::read_dir(&watches_dir)?
-        .filter_map(|e| e.ok())
-        .filter(|e| e.path().is_dir())
-        .map(|e| e.path().join("README.md"))
-        .filter(|p| p.exists())
-        .collect();
-
-    Ok(load_entities(&paths))
-}
-
-impl FromPath for Watch {
-    fn from_path(path: &Path) -> Result<Self> {
-        let content = fs::read_to_string(path)
-            .with_context(|| format!("Failed to read watch file: {}", path.display()))?;
-        let (mut frontmatter, _body): (WatchFrontmatter, _) = parse_frontmatter(&content)
-            .with_context(|| format!("Failed to parse watch frontmatter: {}", path.display()))?;
-
-        // Extract ID from path: watches/{watch_id}/README.md
-        let watch_id = path
-            .parent()
-            .and_then(|p| p.file_name())
-            .and_then(|n| n.to_str())
-            .unwrap_or("")
-            .to_string();
-
-        // Override frontmatter id with directory name (source of truth)
-        frontmatter.id = watch_id;
-
-        Ok(Watch::new(frontmatter, path.to_path_buf()))
-    }
-    fn entity_id(&self) -> &str {
-        self.id()
-    }
-    fn entity_name() -> &'static str {
-        "watch"
     }
 }

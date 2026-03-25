@@ -148,8 +148,9 @@ pub fn run(ctx: &spoke_auth::ExecutionContext, action: MissionAction) -> Result<
             result
         }
         MissionAction::Verify { id } => {
-            let result =
-                keel::application::mission_lifecycle::MissionLifecycleService::verify(&board_dir, &id);
+            let result = keel::application::mission_lifecycle::MissionLifecycleService::verify(
+                &board_dir, &id,
+            );
             if result.is_ok() {
                 crate::cli::presentation::audio::play(
                     crate::cli::presentation::audio::SoundEvent::MissionVerified,

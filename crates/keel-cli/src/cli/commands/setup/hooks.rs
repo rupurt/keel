@@ -7,8 +7,16 @@ use std::path::Path;
 use anyhow::{Context, Result, anyhow};
 
 const PRE_COMMIT_HOOK: &str = r#"#!/bin/sh
-# keel pacemaker protocol — auto-poke and stage heartbeat on every commit.
+# keel pacemaker protocol — run quality checks, tests, and auto-poke heartbeat.
 # Installed by `keel hooks install`. Do not edit manually.
+
+# Run quality checks
+echo "Running quality checks..."
+just quality || exit 1
+
+# Run tests
+echo "Running tests..."
+just test || exit 1
 
 KEEL_BIN="${KEEL_BIN:-keel}"
 
@@ -59,7 +67,7 @@ pub fn run_in(working_dir: Option<&Path>) -> Result<()> {
     install_hook(&hooks_dir, "commit-msg", COMMIT_MSG_HOOK)?;
 
     println!("Installed git hooks:");
-    println!("  - pre-commit  (auto-poke + stage heartbeat)");
+    println!("  - pre-commit  (quality + test + auto-poke)");
     println!("  - commit-msg  (auto-append doctor --status)");
 
     Ok(())
@@ -177,10 +185,19 @@ mod tests {
 
         let hooks_dir = temp.path().join(".git/hooks");
         fs::create_dir_all(&hooks_dir).unwrap();
-        fs::write(hooks_dir.join("pre-commit"), "#!/bin/sh\necho custom hook\n").unwrap();
+        fs::write(
+            hooks_dir.join("pre-commit"),
+            "#!/bin/sh\necho custom hook\n",
+        )
+        .unwrap();
 
         let result = install_hook(&hooks_dir, "pre-commit", PRE_COMMIT_HOOK);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("not managed by keel"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("not managed by keel")
+        );
     }
 }

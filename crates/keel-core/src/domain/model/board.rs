@@ -6,7 +6,9 @@ use std::path::PathBuf;
 
 use anyhow::{Result, anyhow};
 
-use super::{Adr, Bearing, Entity, Epic, Heartbeat, Mission, Routine, Story, StoryState, Voyage, Watch};
+use super::{
+    Adr, Bearing, Entity, Epic, Heartbeat, Mission, Routine, Story, StoryState, Voyage, Watch,
+};
 
 /// The board contains all routines, stories, voyages, epics, bearings, and ADRs.
 #[derive(Debug, Clone)]

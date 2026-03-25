@@ -3,9 +3,9 @@
 //! Watches are constraints on time. They provide a 12hr analog face
 //! metaphor for tracking mission duration or windows.
 
-use std::path::{Path, PathBuf};
-use serde::{Deserialize, Serialize};
 use super::Entity;
+use serde::{Deserialize, Serialize};
+use std::path::{Path, PathBuf};
 
 /// Watch frontmatter from YAML
 #[derive(Debug, Clone, Serialize, Deserialize)]

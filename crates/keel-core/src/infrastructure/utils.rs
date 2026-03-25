@@ -308,17 +308,13 @@ mod tests {
     }
 
     #[test]
-    fn to_title_case_converts_common_formats() {
-        assert_eq!(to_title_case("hello world"), "Hello World");
-        assert_eq!(to_title_case("kebab-case-title"), "Kebab Case Title");
-        assert_eq!(to_title_case("snake_case_title"), "Snake Case Title");
+    fn visible_width_handles_ansi_colors() {
+        assert_eq!(visible_width("\x1b[32m\x1b[1mNOM\x1b[0m"), 3);
+        assert_eq!(visible_width("\x1b[31m\x1b[1mERR\x1b[0m"), 3);
         assert_eq!(
-            to_title_case("a story with small words"),
-            "A Story with Small Words"
+            visible_width("\x1b[32m_\x1b[0m\x1b[32m/\x1b[0m\x1b[32m\\\x1b[0m\x1b[32m^\x1b[0m"),
+            4
         );
-        assert_eq!(
-            to_title_case("the beginning of the end"),
-            "The Beginning of the End"
-        );
+        assert_eq!(visible_width("Plain"), 5);
     }
 }

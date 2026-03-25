@@ -167,42 +167,50 @@ fn evaluate_mission_achieve(
 
     // Verify goals before achievement
     let charter_path = mission.path.parent().unwrap().join("CHARTER.md");
-    if charter_path.exists() {
-        if let Ok(charter_content) = std::fs::read_to_string(&charter_path) {
-            let goals = charter::parse_mission_goals(&charter_content);
-            let unmet_goals: Vec<_> = goals
-                .iter()
-                .filter(|g| {
-                    matches!(g.verification, GoalVerification::Board(_))
-                        && !is_goal_met(board, g.verification.raw())
-                })
-                .collect();
+    if charter_path.exists()
+        && let Ok(charter_content) = std::fs::read_to_string(&charter_path)
+    {
+        let goals = charter::parse_mission_goals(&charter_content);
+        let unmet_goals: Vec<_> = goals
+            .iter()
+            .filter(|g| {
+                matches!(g.verification, GoalVerification::Board(_))
+                    && !is_goal_met(board, g.verification.raw())
+            })
+            .collect();
 
-            for goal in unmet_goals {
-                problems.push(Problem::error(
-                    charter_path.clone(),
-                    format!("Mission {} has unmet board goal {}: {}", mission.id(), goal.id, goal.description)
-                ));
-            }
+        for goal in unmet_goals {
+            problems.push(Problem::error(
+                charter_path.clone(),
+                format!(
+                    "Mission {} has unmet board goal {}: {}",
+                    mission.id(),
+                    goal.id,
+                    goal.description
+                ),
+            ));
         }
     }
 
     // Verify log entries
     let log_path = mission.path.parent().unwrap().join("LOG.md");
-    if log_path.exists() {
-        if let Ok(log_content) = std::fs::read_to_string(&log_path) {
-            let mut entries = 0;
-            for line in log_content.lines() {
-                if line.starts_with("## ") {
-                    entries += 1;
-                }
+    if log_path.exists()
+        && let Ok(log_content) = std::fs::read_to_string(&log_path)
+    {
+        let mut entries = 0;
+        for line in log_content.lines() {
+            if line.starts_with("## ") {
+                entries += 1;
             }
-            if entries == 0 {
-                problems.push(Problem::error(
-                    log_path,
-                    format!("Mission {} requires at least one entry in LOG.md to document the session.", mission.id())
-                ));
-            }
+        }
+        if entries == 0 {
+            problems.push(Problem::error(
+                log_path,
+                format!(
+                    "Mission {} requires at least one entry in LOG.md to document the session.",
+                    mission.id()
+                ),
+            ));
         }
     }
 

@@ -163,7 +163,7 @@ fn render_med_bay_scene(
     scene.push_str("             |__________________________________________|\n");
 
     let hr_line = format!(
-        " HR: {}   STATUS: {}",
+        "HR: {}   STATUS: {}",
         heart_rate.bold(),
         status_label.color(status_color).bold()
     );
@@ -181,14 +181,14 @@ fn render_med_bay_scene(
         "IDLE".dimmed().to_string()
     };
 
-    let pressure_line = format!(" BP: PRESSURE: {}", pressure_label);
+    let pressure_line = format!("BP: PRESSURE: {}", pressure_label);
     scene.push_str(&format!(
         "             | {} |\n",
         pressure_line.pad_to_width(40)
     ));
 
     let state_line = format!(
-        " SC: {}   OF: {}",
+        "SC: {}   OF: {}",
         if strategic_congested {
             "CONGESTED".yellow().bold().to_string()
         } else {
@@ -221,11 +221,11 @@ fn render_med_bay_scene(
         "FOG ".yellow().to_string()
     };
 
-    let o2_line = format!("|  O2: {} |", o2_val);
-    let state_line = format!("|  STATE: {} |", state_val);
+    let o2_line = format!("  O2: {}", o2_val);
+    let state_line = format!("  STATE: {}", state_val);
 
     scene.push_str(&format!(
-        "              {}               {} \n",
+        "              |{}|               |{}|\n",
         o2_line.pad_to_width(12),
         state_line.pad_to_width(12)
     ));

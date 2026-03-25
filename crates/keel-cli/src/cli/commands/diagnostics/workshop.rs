@@ -165,9 +165,7 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
             board.adrs.len()
         );
 
-        let congestion_styled = if draft_epic_count > 0 {
-            pegboard.yellow().bold().to_string()
-        } else if congestion_ratio > 2.0 {
+        let congestion_styled = if draft_epic_count > 0 || congestion_ratio > 2.0 {
             pegboard.yellow().bold().to_string()
         } else {
             pegboard.dimmed().to_string()
@@ -258,8 +256,8 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
         };
 
         visual.push_str(&format!(
-            "    |   {}            {}   |\n",
-            vice_styled.pad_to_width(30),
+            "    |   {}        {}   |\n",
+            vice_styled.pad_to_width(28),
             oil_styled.pad_to_width(25)
         ));
         visual.push_str(

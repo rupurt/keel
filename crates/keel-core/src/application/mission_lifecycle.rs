@@ -527,7 +527,11 @@ mod tests {
             "M1",
         );
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("no child entities found"));
+        assert!(
+            res.unwrap_err()
+                .to_string()
+                .contains("no child entities found")
+        );
 
         // Add a child (epic)
         let temp = TestBoardBuilder::new()
@@ -545,7 +549,11 @@ mod tests {
             "M1",
         );
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("requires at least one entry in LOG.md"));
+        assert!(
+            res.unwrap_err()
+                .to_string()
+                .contains("requires at least one entry in LOG.md")
+        );
 
         // Add a log entry
         MissionLifecycleService::log(temp.path(), "M1", "Did some work").unwrap();

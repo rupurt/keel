@@ -54,48 +54,45 @@ pub fn run(
         visual.push_str(
             "    │  [ VITAL SIGNS MONITOR ]                                               │\n",
         );
-        visual.push_str(
-            "    │  .-----------------------.                                             │\n",
-        );
+        visual.push_str(&format!(
+            "    │  {} │\n",
+            ".----------------------------.".pad_to_width(69)
+        ));
 
         if passed {
             let sys_label = format!("SYS: {}", "NOMINAL".green().bold());
             let hr_label = format!("HR:  {}", "72 BPM".green().bold());
 
-            let line1_content = format!(
-                "  |   {}/\\{}__{}/\\{}__{}/\\{} |  {}",
-                "_".green(),
-                "^".green(),
-                "_".green(),
-                "^".green(),
-                "_".green(),
-                "^".green(),
-                sys_label
-            );
-            let line2_content = format!(
-                "  | {}/    \\{}/    \\{}/    \\ |  {}",
-                "_".green(),
-                "_".green(),
-                "_".green(),
-                hr_label
-            );
+            let unit1 = "__/\x1b[1;32m^\x1b[0m\\__".to_string(); // visible width 7
+            let ekg1 = format!("{}{}{}{}", unit1, unit1, unit1, unit1);
 
-            visual.push_str(&format!("    │ {} │\n", line1_content.pad_to_width(68)));
-            visual.push_str(&format!("    │ {} │\n", line2_content.pad_to_width(68)));
+            let unit2 = "_/    \\".to_string(); // visible width 7
+            let ekg2 = format!("{}{}{}{}", unit2, unit2, unit2, unit2);
+
+            let line1_content = format!(" |{}|    {}", ekg1, sys_label);
+            let line2_content = format!(" |{}|    {}", ekg2, hr_label);
+
+            visual.push_str(&format!("    │ {} │\n", line1_content.pad_to_width(70)));
+            visual.push_str(&format!("    │ {} │\n", line2_content.pad_to_width(70)));
         } else {
             let sys_label = format!("SYS: {}", "CRITICAL".red().bold());
             let hr_label = format!("HR:  {}", "--- BPM".red().bold());
 
-            let line1_content = format!("  | {} |  {}", "_______________________".red(), sys_label);
-            let line2_content = format!("  |                       |  {}", hr_label);
+            let line1_content = format!(
+                " | {} |    {}",
+                "__________________________".red(),
+                sys_label
+            );
+            let line2_content = format!(" |                            |    {}", hr_label);
 
-            visual.push_str(&format!("    │ {} │\n", line1_content.pad_to_width(68)));
-            visual.push_str(&format!("    │ {} │\n", line2_content.pad_to_width(68)));
+            visual.push_str(&format!("    │ {} │\n", line1_content.pad_to_width(70)));
+            visual.push_str(&format!("    │ {} │\n", line2_content.pad_to_width(70)));
         }
 
-        visual.push_str(
-            "    │  '-----------------------'                                             │\n",
-        );
+        visual.push_str(&format!(
+            "    │  {} │\n",
+            "'----------------------------'".pad_to_width(69)
+        ));
         visual.push_str(
             "    │                                                                        │\n",
         );
@@ -107,13 +104,14 @@ pub fn run(
                 "ERR".red().bold().to_string()
             }
         };
-        visual.push_str(&format!(
-            "    │    CORE: [{}]  STRAT: [{}]  EXEC: [{}]  FLOW: [{}]    │\n",
+        let subsystems = format!(
+            "CORE: [{}]    STRAT: [{}]    EXEC: [{}]    FLOW: [{}]",
             status(core_passed),
             status(strategy_passed),
             status(execution_passed),
             status(flow_passed)
-        ));
+        );
+        visual.push_str(&format!("    │       {}        │\n", subsystems));
 
         visual.push_str(
             "    │                                                                        │\n",
@@ -225,11 +223,7 @@ fn run_status(board_dir: &Path) -> Result<()> {
         } else {
             String::new()
         };
-        let s_word = if in_progress == 1 {
-            "story"
-        } else {
-            "stories"
-        };
+        let s_word = if in_progress == 1 { "story" } else { "stories" };
         format!("{} {} executing{}", in_progress, s_word, v_clause)
     };
 

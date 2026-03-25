@@ -593,9 +593,10 @@ fn routine_timer(scheduled: Option<&ScheduledRoutineProjection>) -> Option<Strin
     match scheduled {
         Some(routine) => match routine.state {
             ScheduledRoutineState::Due => Some("due now".to_string()),
-            ScheduledRoutineState::Finished => {
-                Some(format!("finished as {}", routine.materialized_as.as_deref().unwrap_or("?")))
-            }
+            ScheduledRoutineState::Finished => Some(format!(
+                "finished as {}",
+                routine.materialized_as.as_deref().unwrap_or("?")
+            )),
             ScheduledRoutineState::Upcoming => routine.countdown.clone(),
             ScheduledRoutineState::Invalid => Some("invalid cadence".to_string()),
         },

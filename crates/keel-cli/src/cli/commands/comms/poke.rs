@@ -24,9 +24,7 @@ pub fn run(
         let heartbeat_path = board_dir.join("heartbeat");
         std::fs::write(&heartbeat_path, manual_pong.unwrap_or(""))?;
 
-        crate::cli::presentation::audio::play(
-            crate::cli::presentation::audio::SoundEvent::Poke,
-        );
+        crate::cli::presentation::audio::play(crate::cli::presentation::audio::SoundEvent::Poke);
 
         if json {
             println!(r#"{{"status": "poked", "message": "System energized"}}"#);

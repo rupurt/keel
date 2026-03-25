@@ -637,8 +637,7 @@ mod tests {
     #[test]
     fn test_check_mission_watches_flags_exceeded_limit() {
         let mut mission = TestMission::new("M1").status("active");
-        mission.activated_at =
-            Some(chrono::Utc::now().naive_utc() - chrono::Duration::hours(13));
+        mission.activated_at = Some(chrono::Utc::now().naive_utc() - chrono::Duration::hours(13));
         mission.watch = Some("W1".to_string());
 
         let temp = TestBoardBuilder::new().mission(mission).build();
@@ -661,7 +660,11 @@ limit_hours: 12
 
         assert_eq!(problems.len(), 1);
         assert_eq!(problems[0].check_id, CheckId::MissionWatchConstraint);
-        assert!(problems[0].message.contains("exceeded its watch constraint"));
+        assert!(
+            problems[0]
+                .message
+                .contains("exceeded its watch constraint")
+        );
         assert!(problems[0].message.contains("12h limit"));
     }
 

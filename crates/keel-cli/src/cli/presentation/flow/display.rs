@@ -812,41 +812,6 @@ mod tests {
         workflow_lane_flow::project(&Board::default(), &topology)
     }
 
-    fn make_scheduled_projection(
-        id: &str,
-        title: &str,
-        target_scope: &str,
-        state: ScheduledRoutineState,
-        next_eligible_at: Option<chrono::DateTime<chrono::Utc>>,
-        countdown: Option<&str>,
-        error: Option<&str>,
-        materialized_as: Option<&str>,
-        materialized_status: Option<StoryState>,
-    ) -> ScheduledRoutineProjection {
-        ScheduledRoutineProjection {
-            id: id.to_string(),
-            title: title.to_string(),
-            target_scope: target_scope.to_string(),
-            state,
-            actionable: matches!(state, ScheduledRoutineState::Due),
-            gating_reason: match state {
-                ScheduledRoutineState::Due => ScheduledRoutineGatingReason::DueNow,
-                ScheduledRoutineState::Finished => {
-                    ScheduledRoutineGatingReason::NotDueUntilNextEligible
-                }
-                ScheduledRoutineState::Upcoming => {
-                    ScheduledRoutineGatingReason::NotDueUntilNextEligible
-                }
-                ScheduledRoutineState::Invalid => ScheduledRoutineGatingReason::InvalidCadence,
-            },
-            next_eligible_at,
-            countdown: countdown.map(str::to_string),
-            error: error.map(str::to_string),
-            materialized_as: materialized_as.map(str::to_string),
-            materialized_status,
-        }
-    }
-
     #[test]
     fn render_lane_boxes_contains_management_header() {
         let lane_flow = make_test_lane_flow();
@@ -940,39 +905,45 @@ mod tests {
         let lane_flow = make_test_lane_flow();
         let due_next = Utc.with_ymd_and_hms(2026, 1, 12, 17, 0, 0).unwrap();
         let scheduled = vec![
-            make_scheduled_projection(
-                "routine-due",
-                "Weekly Review",
-                "E1/V1",
-                ScheduledRoutineState::Due,
-                Some(due_next),
-                Some("in 6d 23h"),
-                None,
-                Some("S1"),
-                Some(StoryState::InProgress),
-            ),
-            make_scheduled_projection(
-                "routine-upcoming",
-                "Friday Review",
-                "E1/V1",
-                ScheduledRoutineState::Upcoming,
-                Some(Utc.with_ymd_and_hms(2026, 1, 5, 19, 0, 0).unwrap()),
-                Some("in 1h"),
-                None,
-                None,
-                None,
-            ),
-            make_scheduled_projection(
-                "routine-invalid",
-                "Broken Review",
-                "E1/V1",
-                ScheduledRoutineState::Invalid,
-                None,
-                None,
-                Some("missing cadence.cron"),
-                None,
-                None,
-            ),
+            ScheduledRoutineProjection {
+                id: "routine-due".to_string(),
+                title: "Weekly Review".to_string(),
+                target_scope: "E1/V1".to_string(),
+                state: ScheduledRoutineState::Due,
+                actionable: true,
+                gating_reason: ScheduledRoutineGatingReason::DueNow,
+                next_eligible_at: Some(due_next),
+                countdown: Some("in 6d 23h".to_string()),
+                error: None,
+                materialized_as: Some("S1".to_string()),
+                materialized_status: Some(StoryState::InProgress),
+            },
+            ScheduledRoutineProjection {
+                id: "routine-upcoming".to_string(),
+                title: "Friday Review".to_string(),
+                target_scope: "E1/V1".to_string(),
+                state: ScheduledRoutineState::Upcoming,
+                actionable: false,
+                gating_reason: ScheduledRoutineGatingReason::NotDueUntilNextEligible,
+                next_eligible_at: Some(Utc.with_ymd_and_hms(2026, 1, 5, 19, 0, 0).unwrap()),
+                countdown: Some("in 1h".to_string()),
+                error: None,
+                materialized_as: None,
+                materialized_status: None,
+            },
+            ScheduledRoutineProjection {
+                id: "routine-invalid".to_string(),
+                title: "Broken Review".to_string(),
+                target_scope: "E1/V1".to_string(),
+                state: ScheduledRoutineState::Invalid,
+                actionable: false,
+                gating_reason: ScheduledRoutineGatingReason::InvalidCadence,
+                next_eligible_at: None,
+                countdown: None,
+                error: Some("missing cadence.cron".to_string()),
+                materialized_as: None,
+                materialized_status: None,
+            },
         ];
         let materialized_by_key = HashMap::from([(
             materialization_key("routine-due", due_next),
@@ -1006,28 +977,32 @@ mod tests {
         let metrics = make_test_metrics();
         let lane_flow = make_test_lane_flow();
         let scheduled = vec![
-            make_scheduled_projection(
-                "routine-due",
-                "Weekly Review",
-                "E1/V1",
-                ScheduledRoutineState::Due,
-                Some(Utc.with_ymd_and_hms(2026, 1, 12, 17, 0, 0).unwrap()),
-                Some("in 6d 23h"),
-                None,
-                None,
-                None,
-            ),
-            make_scheduled_projection(
-                "routine-upcoming",
-                "Friday Review",
-                "E1/V1",
-                ScheduledRoutineState::Upcoming,
-                Some(Utc.with_ymd_and_hms(2026, 1, 5, 19, 0, 0).unwrap()),
-                Some("in 1h"),
-                None,
-                None,
-                None,
-            ),
+            ScheduledRoutineProjection {
+                id: "routine-due".to_string(),
+                title: "Weekly Review".to_string(),
+                target_scope: "E1/V1".to_string(),
+                state: ScheduledRoutineState::Due,
+                actionable: true,
+                gating_reason: ScheduledRoutineGatingReason::DueNow,
+                next_eligible_at: Some(Utc.with_ymd_and_hms(2026, 1, 12, 17, 0, 0).unwrap()),
+                countdown: Some("in 6d 23h".to_string()),
+                error: None,
+                materialized_as: None,
+                materialized_status: None,
+            },
+            ScheduledRoutineProjection {
+                id: "routine-upcoming".to_string(),
+                title: "Friday Review".to_string(),
+                target_scope: "E1/V1".to_string(),
+                state: ScheduledRoutineState::Upcoming,
+                actionable: false,
+                gating_reason: ScheduledRoutineGatingReason::NotDueUntilNextEligible,
+                next_eligible_at: Some(Utc.with_ymd_and_hms(2026, 1, 5, 19, 0, 0).unwrap()),
+                countdown: Some("in 1h".to_string()),
+                error: None,
+                materialized_as: None,
+                materialized_status: None,
+            },
         ];
 
         let wide = render_annotated_flow(

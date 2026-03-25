@@ -14,7 +14,12 @@ pub fn run(id: &str) -> Result<()> {
     let board = load_board(&board_dir)?;
     let watch = board.require_watch(id)?;
 
-    build_document(&board, watch, crate::cli::presentation::terminal::get_terminal_width()).print();
+    build_document(
+        &board,
+        watch,
+        crate::cli::presentation::terminal::get_terminal_width(),
+    )
+    .print();
 
     Ok(())
 }
@@ -45,7 +50,9 @@ fn build_document(board: &Board, watch: &keel::domain::model::Watch, width: usiz
         missions_section.push_text_block("  (no missions constrained by this watch)");
     } else {
         for mission in missions {
-            let elapsed = mission.frontmatter.activated_at
+            let elapsed = mission
+                .frontmatter
+                .activated_at
                 .map(|a| (chrono::Utc::now().naive_utc() - a).num_hours() as u32)
                 .unwrap_or(0);
 
