@@ -14,10 +14,10 @@ Every session follows this deterministic cycle:
 4.  **Seal Move**: Close the loop with `story submit`, `voyage plan`, or `bearing lay`. This mutates the `.keel` state. Ensure the pacemaker is stable (committed heartbeat).
 5.  **Log & Commit**:
     - Record your move in the mission `LOG.md`.
-    - **Pace-setting**: Execute `just keel poke "Sealing move: <summary>"` to synchronize the pacemaker with the board state. This is MANDATORY for all commits, including work performed without a story (e.g., gardening, bug fixes, or engine improvements).
-    - **Automated Guardrails**: The git pre-commit hook (installed via `just keel hooks install`) automatically executes `just quality` and `just test` before allowing the commit to proceed. 
-    - Create a single atomic [Conventional Commit](https://www.conventionalcommits.org/) including the heartbeat.
-6.  **Re-orient**: After the commit lands, run `just keel doctor --status` and `just keel flow` to see what the board needs next. This is the "plug the chord back in" moment — you reconnect to the board's current state. If the delivery lane has ready work, start the next loop immediately. Only stop to ask the human when you reach a manual lane (design direction, bearing assessment, or human verification).
+    - **Pace-setting**: Execute `just keel poke "Sealing move: <summary>"` to synchronize the pacemaker with the board state.
+    - **Commit**: Execute `git commit`. The pre-commit hook will automatically run `just quality` and `just test`. Resolve any issues if the commit is rejected.
+6.  **Re-orient**: After the commit lands, run `just keel doctor --status` and `just keel flow` to see what the board needs next.
+ This is the "plug the chord back in" moment — you reconnect to the board's current state. If the delivery lane has ready work, start the next loop immediately. Only stop to ask the human when you reach a manual lane (design direction, bearing assessment, or human verification).
 
 ## Primary Workflows
 
@@ -77,19 +77,18 @@ Apply these checks to **every change** before finalizing work:
 3. **Pacemaker Protocol**: The system's heartbeat (.keel/heartbeat) is its pacemaker. You MUST ensure the pacemaker is stable (committed) before concluding any unit of work. Every commit MUST be preceded by a `just keel poke "Sealing move: <summary>"` to refresh the system's pulse and reflect the latest change, especially when working without a story. Uncommitted energy is a signal of an open tactical loop and will trigger a CRITICAL status in the Med-Bay bio-scan. Any commit that includes `.keel/heartbeat` MUST append the output of `just keel doctor --status` to the commit message body so reviewers can see the board's importance snapshot at the time of the commit.
 4. **Gardening First**: You MUST tend to the garden (fixing `doctor` errors, discharging automated backlog, and resolving structural drift) BEFORE notifying the human operator or requesting input. 
 5. **Notification Threshold**: Only request human intervention when you reach a "Manual Lane" that requires design direction or a decision on application behavior (e.g., assessing a Bearing, planning a Voyage, or human verification of a complex Story).
-6. **Quality Check**: `just quality` must be clean (formatting and linting).
-7. **Verification**: `just test` and `just doctest` must pass 100%.
-8. **Lifecycle Before Commit**: Run board-mutating lifecycle commands before the atomic commit when they generate or rewrite `.keel` artifacts (for example `story submit`, `voyage plan`, `voyage done`, `bearing assess`, `bearing lay`). After the transition, inspect `git status` and include the resulting `.keel` churn in the same commit.
-9. **Atomic Commits**: Commit once per logical unit of work. Use [Conventional Commits](https://www.conventionalcommits.org/):
+6. **Automated Guardrails**: You no longer need to run `just quality` or `just test` manually before every commit. The git pre-commit hook (installed via `just keel hooks install`) automatically enforces these checks. If a commit fails, resolve the reported lints or test failures and try again.
+7. **Lifecycle Before Commit**: Run board-mutating lifecycle commands before the atomic commit when they generate or rewrite `.keel` artifacts (for example `story submit`, `voyage plan`, `voyage done`, `bearing assess`, `bearing lay`). After the transition, inspect `git status` and include the resulting `.keel` churn in the same commit.
+8. **Atomic Commits**: Commit once per logical unit of work. Use [Conventional Commits](https://www.conventionalcommits.org/):
    - `feat:` (new feature)
    - `fix:` (bug fix)
    - `docs:` (documentation)
    - `refactor:` (code change, no behavior change)
    - `test:` (adding/updating tests)
    - `chore:` (build/tooling)
-10. **Mission Loop Discipline**: For mission-driven work, return to the mission steward loop after every completed story, planning unit, or bearing instead of continuing ad hoc from the last worker context.
-11. **Knowledge Quality Bar**: Prefer no new knowledge over low-signal knowledge. A new knowledge entry should be novel, reusable across stories, and materially reduce future drift; otherwise link existing knowledge or omit capture entirely.
-12. **Config Completeness**: Whenever introducing a new property to the configuration struct (`keel::infrastructure::config::Config`), you MUST immediately update `keel config show` (`crates/keel-cli/src/cli/commands/setup/config.rs`) to render it. The `config show` command is the definitive binding of runtime configuration visibility.
+9. **Mission Loop Discipline**: For mission-driven work, return to the mission steward loop after every completed story, planning unit, or bearing instead of continuing ad hoc from the last worker context.
+10. **Knowledge Quality Bar**: Prefer no new knowledge over low-signal knowledge. A new knowledge entry should be novel, reusable across stories, and materially reduce future drift; otherwise link existing knowledge or omit capture entirely.
+11. **Config Completeness**: Whenever introducing a new property to the configuration struct (`keel::infrastructure::config::Config`), you MUST immediately update `keel config show` (`crates/keel-cli/src/cli/commands/setup/config.rs`) to render it. The `config show` command is the definitive binding of runtime configuration visibility.
 
 ## Compatibility Policy (Hard Cutover)
 
