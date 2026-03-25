@@ -239,9 +239,9 @@ pub fn run() -> Result<()> {
     result
 }
 
-/// Regenerate all board artifacts (READMEs, reports, flow history) so they
-/// stay in sync with the board state after every command.  Idempotent —
-/// `write_if_changed` means read-only commands produce no disk writes.
+/// Regenerate persisted board artifacts (READMEs and reports) so they stay in
+/// sync with the board state after every command. Idempotent when generated
+/// content already matches the current board snapshot.
 fn auto_sync_artifacts() {
     let Ok(board_dir) = resolve_board_dir() else {
         return;

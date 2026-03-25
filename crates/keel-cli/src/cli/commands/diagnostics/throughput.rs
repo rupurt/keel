@@ -11,7 +11,6 @@ use keel::infrastructure::loader::load_board;
 pub fn run(board_dir: &std::path::Path, no_color: bool) -> Result<()> {
     let board = load_board(board_dir)?;
     let history = keel::read_model::throughput_history::project_default(&board);
-    keel::infrastructure::throughput_history_store::save_if_changed(board_dir, &history)?;
     let width = get_terminal_width();
     let use_color = Theme::should_use_color(no_color);
     let theme = Theme::for_color_mode(use_color);
@@ -32,5 +31,6 @@ mod tests {
         let temp = TestBoardBuilder::new().build();
         let result = run(temp.path(), true);
         assert!(result.is_ok());
+        assert!(!temp.path().join("flow_history.json").exists());
     }
 }

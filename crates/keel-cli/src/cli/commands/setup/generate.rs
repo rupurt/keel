@@ -56,12 +56,11 @@ mod tests {
     }
 
     #[test]
-    fn generate_writes_flow_history_snapshot() {
+    fn generate_does_not_write_flow_history_snapshot() {
         let temp = TestBoardBuilder::new().build();
         run(temp.path()).unwrap();
 
-        let history = fs::read_to_string(temp.path().join("flow_history.json")).unwrap();
-        assert!(history.contains("\"schema_version\": 3"));
+        assert!(!temp.path().join("flow_history.json").exists());
     }
 
     #[test]

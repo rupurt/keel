@@ -57,9 +57,6 @@ pub fn sync_board_artifacts(board: &Board, options: &BoardArtifactSyncOptions) -
         ));
     }
 
-    let history = crate::read_model::throughput_history::project_default(board);
-    crate::infrastructure::throughput_history_store::save_if_changed(&board.root, &history)?;
-
     Ok(())
 }
 

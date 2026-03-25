@@ -1,1 +1,1 @@
-Sealing move: invalidate pacemaker cache on heartbeat commit
+Sealing move: remove persisted flow history artifacts
