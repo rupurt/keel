@@ -11,6 +11,7 @@ publish = false
 
 [dependencies]
 spoke-auth.workspace = true
+speccy.workspace = true
 anyhow.workspace = true
 chrono.workspace = true
 serde.workspace = true

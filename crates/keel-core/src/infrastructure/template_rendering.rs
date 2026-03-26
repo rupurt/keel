@@ -2,15 +2,11 @@
 //!
 //! Replaces `{{placeholder}}` tokens with concrete values.
 
-use crate::infrastructure::frontmatter_mutation::{Mutation, apply};
+use speccy::Mutation;
 
 /// Render a template by replacing `{{placeholder}}` patterns.
 pub fn render(template: &str, replacements: &[(&str, &str)]) -> String {
-    let mut content = template.to_string();
-    for (placeholder, value) in replacements {
-        content = content.replace(&format!("{{{{{}}}}}", placeholder), value);
-    }
-    content
+    speccy::render(template, replacements)
 }
 
 /// Render a template, then apply a single batch of frontmatter mutations.
@@ -19,35 +15,18 @@ pub fn render_with_mutations(
     replacements: &[(&str, &str)],
     mutations: &[Mutation],
 ) -> String {
-    let rendered = render(template, replacements);
-    if mutations.is_empty() {
-        rendered
-    } else {
-        apply(&rendered, mutations)
-    }
+    speccy::render_with_mutations(template, replacements, mutations)
 }
 
 /// Render a template and strip an optional leading frontmatter block.
 pub fn render_body(template: &str, replacements: &[(&str, &str)]) -> String {
-    strip_optional_frontmatter(&render(template, replacements))
-}
-
-fn strip_optional_frontmatter(content: &str) -> String {
-    let Some(without_prefix) = content.strip_prefix("---\n") else {
-        return content.to_string();
-    };
-    let Some(frontmatter_end) = without_prefix.find("\n---\n") else {
-        return content.to_string();
-    };
-    without_prefix[frontmatter_end + "\n---\n".len()..]
-        .trim_start_matches('\n')
-        .to_string()
+    speccy::render_body(template, replacements)
 }
 
 #[cfg(test)]
 mod tests {
     use super::{render, render_body, render_with_mutations};
-    use crate::infrastructure::frontmatter_mutation::Mutation;
+    use speccy::Mutation;
 
     #[test]
     fn render_replaces_placeholders() {

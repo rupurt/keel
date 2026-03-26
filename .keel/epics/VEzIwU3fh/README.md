@@ -22,8 +22,8 @@ index: 103
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 0/3 stories done
+**Progress:** 1/1 voyages complete, 3/3 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Speccy Foundation And Keel Integration Pilot](voyages/VEzIxN01G/) | planned | 0/3 |
+| [Speccy Foundation And Keel Integration Pilot](voyages/VEzIxN01G/) | done | 3/3 |
 <!-- END GENERATED -->
