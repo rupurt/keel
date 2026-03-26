@@ -10,11 +10,16 @@ use crate::cli::presentation::theme::Theme;
 use keel::infrastructure::loader::load_board;
 use keel::read_model::routine_materialization::existing_materializations;
 use keel::read_model::scheduled_routines::{RoutineScheduleFilter, project_scheduled_routines};
-use keel::read_model::{flow_status, workflow_lane_flow, workflow_topology};
+use keel::read_model::{
+    capacity::{ChargeState, WatchCapacityReport, project as project_capacity},
+    flow_status, workflow_lane_flow, workflow_topology,
+};
 
 const FLOW_SCENE_WIDTH: usize = 69;
 const FLOW_SCENE_FRAME_WIDTH: usize = 63;
 const FLOW_SCENE_INDENT: &str = "    ";
+const BATTERY_PACK_SLOTS: usize = 20;
+const WATCH_DIAL_SLOTS: usize = 6;
 
 #[derive(Debug, Clone, Copy)]
 enum FlowSceneTone {
@@ -22,6 +27,19 @@ enum FlowSceneTone {
     WarningBold,
     WarningDim,
     Dim,
+}
+
+#[derive(Debug, Clone)]
+struct SceneIndicator {
+    bank: String,
+    annotation: String,
+}
+
+#[derive(Debug, Clone)]
+struct WatchSceneSummary {
+    dial_states: Vec<Option<ChargeState>>,
+    pressured_watch_count: usize,
+    governed_story_count: usize,
 }
 
 /// Run the flow command
@@ -58,6 +76,7 @@ pub fn run(
 
     if scene {
         use owo_colors::OwoColorize;
+        let capacity = project_capacity(&board);
         if !is_circuit_enabled {
             println!("\n{}", render_open_circuit_scene(use_color));
             return Err(anyhow::anyhow!(
@@ -82,7 +101,13 @@ pub fn run(
         let ready_backlog = metrics.execution.backlog_ready_count;
         println!(
             "\n{}",
-            render_power_scene(ready_backlog, in_progress, autonomous, use_color)
+            render_power_scene(
+                ready_backlog,
+                in_progress,
+                &capacity.watches,
+                autonomous,
+                use_color,
+            )
         );
 
         if !autonomous {
@@ -217,6 +242,7 @@ fn render_unplugged_scene(use_color: bool) -> String {
 fn render_power_scene(
     ready_backlog: usize,
     in_progress: usize,
+    watch_reports: &[WatchCapacityReport],
     autonomous: bool,
     use_color: bool,
 ) -> String {
@@ -229,6 +255,7 @@ fn render_power_scene(
     let frame = SceneFrame::new(FLOW_SCENE_INDENT, "│", "│", FLOW_SCENE_FRAME_WIDTH);
     let (bank_left, label_left, label_right, state_left, state_right, bank_right) =
         capacitor_bank_layout(in_progress);
+    let watch_scene = summarize_watch_scene(watch_reports);
 
     let mut lines = Vec::new();
     lines.push(style_flow_scene(
@@ -238,6 +265,7 @@ fn render_power_scene(
     ));
     lines.push(style_flow_scene(&palette, tone, frame.empty_row()));
     lines.push(render_power_meter_row(&palette, tone, ready_backlog));
+    lines.push(render_watch_meter_row(&palette, tone, &watch_scene));
     lines.push(render_frame_row(&frame, &palette, tone, |line| {
         line.push(" `───────────────────────────────────────────────────────────' ");
     }));
@@ -316,23 +344,23 @@ fn render_power_meter_row(
     tone: FlowSceneTone,
     ready_backlog: usize,
 ) -> String {
-    let mut row = SceneLine::new(FLOW_SCENE_WIDTH);
-    row.push(style_flow_scene(palette, tone, "    │"));
-    row.push(style_flow_scene(palette, tone, "  [ "));
-    row.push(render_battery_packs(palette, ready_backlog));
-    row.push(style_flow_scene(
+    render_indicator_row(
         palette,
         tone,
-        format!(" ]  <-- {} BATTERY PACKS PLUGGED IN", ready_backlog),
-    ));
-    row.pad_to(FLOW_SCENE_WIDTH - 1);
-    row.push(style_flow_scene(palette, tone, "│"));
-    row.finish()
+        SceneIndicator {
+            bank: render_battery_packs(palette, ready_backlog),
+            annotation: format!(
+                "{} {} PLUGGED IN",
+                ready_backlog,
+                count_noun(ready_backlog, "BATTERY PACK", "BATTERY PACKS")
+            ),
+        },
+    )
 }
 
 fn render_battery_packs(palette: &ScenePalette, ready_backlog: usize) -> String {
     let mut packs = String::new();
-    for i in 0..20 {
+    for i in 0..BATTERY_PACK_SLOTS {
         if i < ready_backlog {
             packs.push_str(&palette.green("█"));
         } else {
@@ -340,6 +368,93 @@ fn render_battery_packs(palette: &ScenePalette, ready_backlog: usize) -> String 
         }
     }
     packs
+}
+
+fn render_watch_meter_row(
+    palette: &ScenePalette,
+    tone: FlowSceneTone,
+    watch_scene: &WatchSceneSummary,
+) -> String {
+    render_indicator_row(
+        palette,
+        tone,
+        SceneIndicator {
+            bank: render_watch_dials(palette, &watch_scene.dial_states),
+            annotation: render_watch_annotation(watch_scene),
+        },
+    )
+}
+
+fn render_indicator_row(
+    palette: &ScenePalette,
+    tone: FlowSceneTone,
+    indicator: SceneIndicator,
+) -> String {
+    let mut row = SceneLine::new(FLOW_SCENE_WIDTH);
+    row.push(style_flow_scene(palette, tone, "    │"));
+    row.push(style_flow_scene(palette, tone, "  [ "));
+    row.push(indicator.bank);
+    row.push(style_flow_scene(palette, tone, " ]  <-- "));
+    row.push(style_flow_scene(palette, tone, indicator.annotation));
+    row.pad_to(FLOW_SCENE_WIDTH - 1);
+    row.push(style_flow_scene(palette, tone, "│"));
+    row.finish()
+}
+
+fn summarize_watch_scene(watch_reports: &[WatchCapacityReport]) -> WatchSceneSummary {
+    let mut dial_states = watch_reports
+        .iter()
+        .take(WATCH_DIAL_SLOTS)
+        .map(|report| Some(report.charge_state))
+        .collect::<Vec<_>>();
+    dial_states.resize(WATCH_DIAL_SLOTS, None);
+
+    WatchSceneSummary {
+        dial_states,
+        pressured_watch_count: watch_reports
+            .iter()
+            .filter(|report| actionable_watch_story_count(report) > 0)
+            .count(),
+        governed_story_count: watch_reports.iter().map(actionable_watch_story_count).sum(),
+    }
+}
+
+fn actionable_watch_story_count(report: &WatchCapacityReport) -> usize {
+    report.capacity.ready + report.capacity.in_flight + report.capacity.blocked
+}
+
+fn render_watch_dials(palette: &ScenePalette, dial_states: &[Option<ChargeState>]) -> String {
+    let mut dials = String::new();
+    for state in dial_states {
+        let glyph = match state {
+            None | Some(ChargeState::Discharged) => palette.dim("○"),
+            Some(ChargeState::Trickle) => palette.green("◔"),
+            Some(ChargeState::Charged) => palette.green("◑"),
+            Some(ChargeState::Supercharged) => palette.yellow_bold("◕"),
+            Some(ChargeState::Overloaded) => palette.red_bold("●"),
+            Some(ChargeState::Blocked) => palette.red_bold("◴"),
+        };
+        dials.push_str(&glyph);
+    }
+    dials
+}
+
+fn render_watch_annotation(watch_scene: &WatchSceneSummary) -> String {
+    if watch_scene.governed_story_count == 0 {
+        return "WATCHES AT REST".to_string();
+    }
+
+    format!(
+        "{} {} KEEPING {} {} ON CLOCK",
+        watch_scene.pressured_watch_count,
+        count_noun(watch_scene.pressured_watch_count, "WATCH", "WATCHES"),
+        watch_scene.governed_story_count,
+        count_noun(watch_scene.governed_story_count, "STORY", "STORIES"),
+    )
+}
+
+fn count_noun(count: usize, singular: &'static str, plural: &'static str) -> &'static str {
+    if count == 1 { singular } else { plural }
 }
 
 fn capacitor_bank_layout(
@@ -467,6 +582,7 @@ mod tests {
     use chrono::TimeZone;
     use keel::domain::model::StoryState;
     use keel::infrastructure::utils::visible_width;
+    use keel::read_model::capacity::EpicCapacity;
     use keel::read_model::routine_materialization::materialization_marker;
     use keel::test_helpers::{TestBearing, TestBoardBuilder, TestMission, TestStory};
     use std::fs;
@@ -681,10 +797,10 @@ updated_at: 2026-01-05T18:00:00
 
     #[test]
     fn render_power_scene_has_stable_width_without_color() {
-        let scene = render_power_scene(5, 0, true, false);
+        let scene = render_power_scene(5, 0, &[], true, false);
         let lines: Vec<_> = scene.lines().collect();
 
-        assert_eq!(lines.len(), 14);
+        assert_eq!(lines.len(), 15);
         assert!(
             lines
                 .iter()
@@ -692,23 +808,68 @@ updated_at: 2026-01-05T18:00:00
         );
         assert!(!scene.contains("\x1b["));
         assert_eq!(
-            lines[6],
-            "    │      |[    ]| [ IDLE ]               [ READY ]  |[    ]|      │"
+            lines[3],
+            "    │  [ ○○○○○○ ]  <-- WATCHES AT REST                              │"
         );
         assert_eq!(
             lines[7],
+            "    │      |[    ]| [ IDLE ]               [ READY ]  |[    ]|      │"
+        );
+        assert_eq!(
+            lines[8],
             "    │      |[    ]|  ( zzz )                ( ooo )   |[    ]|      │"
         );
     }
 
     #[test]
     fn render_power_scene_has_stable_width_with_color() {
-        let scene = render_power_scene(5, 0, true, true);
+        let scene = render_power_scene(
+            5,
+            0,
+            &[watch_report("W1", ChargeState::Charged, 3, 1, 1)],
+            true,
+            true,
+        );
         assert!(scene.contains("\x1b["));
         assert!(
             scene
                 .lines()
                 .all(|line| visible_width(line) == FLOW_SCENE_WIDTH)
         );
+    }
+
+    #[test]
+    fn render_power_scene_surfaces_watch_pressure_without_color() {
+        let scene = render_power_scene(
+            5,
+            0,
+            &[watch_report("W1", ChargeState::Charged, 3, 1, 1)],
+            true,
+            false,
+        );
+
+        assert!(scene.contains("◑"));
+        assert!(scene.contains("1 WATCH KEEPING 5 STORIES ON CLOCK"));
+    }
+
+    fn watch_report(
+        id: &str,
+        charge_state: ChargeState,
+        ready: usize,
+        in_flight: usize,
+        blocked: usize,
+    ) -> WatchCapacityReport {
+        WatchCapacityReport {
+            id: id.to_string(),
+            title: format!("Watch {id}"),
+            charge_state,
+            capacity: EpicCapacity {
+                ready,
+                in_flight,
+                blocked,
+                inactive: 0,
+                done: 0,
+            },
+        }
     }
 }
