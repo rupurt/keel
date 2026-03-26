@@ -338,6 +338,8 @@
 |--------|--------|
 | [Operational Routine Infrastructure](epics/VE4hiOYHj/voyages/VE5NSQ2T2/) | done |
 
+### [Extract Shared Txt Scene Engine](epics/VEzA7KvXB/) (draft)
+
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
 | Voyage | Status |
