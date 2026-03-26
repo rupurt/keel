@@ -350,6 +350,12 @@
 |--------|--------|
 | [Speccy Foundation And Keel Integration Pilot](epics/VEzIwU3fh/voyages/VEzIxN01G/) | done |
 
+### [Simplify Speccy Architecture And Public API](epics/VF0XAFqlF/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Two-Pass Speccy Refactor](epics/VF0XAFqlF/voyages/VF0XBQxJ5/) | planned |
+
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
 | Voyage | Status |

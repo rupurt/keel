@@ -165,12 +165,19 @@ mod tests {
         )
         .unwrap();
 
-        assert!(path.to_string_lossy().contains("/routines/VE"));
         assert!(path.exists());
         assert!(!path.parent().unwrap().join("BLUEPRINT.md").exists());
 
-        let content = fs::read_to_string(path).unwrap();
-        assert!(content.contains("id: VE"));
+        let content = fs::read_to_string(&path).unwrap();
+        let routine_id = content
+            .lines()
+            .find_map(|line| line.strip_prefix("id: "))
+            .expect("routine scaffold should include an id");
+        assert!(routine_id.starts_with('V'));
+        assert!(
+            path.to_string_lossy()
+                .contains(&format!("/routines/{routine_id}"))
+        );
         assert!(content.contains("title: Weekly Review"));
         assert!(content.contains("cadence:"));
         assert!(content.contains("cron:"));
