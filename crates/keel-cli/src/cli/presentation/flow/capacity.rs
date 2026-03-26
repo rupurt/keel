@@ -6,7 +6,7 @@ use keel::domain::model::Board;
 use keel::read_model::capacity;
 
 pub use keel::read_model::capacity::{
-    ChargeState, EpicCapacity, EpicCapacityReport, SystemCapacity,
+    ChargeState, EpicCapacity, EpicCapacityReport, SystemCapacity, WatchCapacityReport,
 };
 
 /// Calculate capacity via canonical read-model projection.

@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::fmt::Write;
 
 use super::box_component::BoxComponent;
-use super::format::render_epic_capacities;
+use super::format::{render_epic_capacities, render_watch_capacities};
 use crate::cli::presentation::scheduled_routines::describe_scheduled_routine;
 use crate::cli::presentation::theme::Theme;
 use crate::cli::style;
@@ -55,7 +55,7 @@ pub fn render_annotated_flow(
 
     // 3. Execution Capacity (Strategic Throughput)
     let capacity = crate::cli::presentation::flow::capacity::calculate_system_capacity(board);
-    let has_actionable_capacity = strategic_capacity_available(&capacity.epics);
+    let has_actionable_capacity = strategic_capacity_available(&capacity);
     let cap_map = capacity
         .epics
         .iter()
@@ -64,7 +64,8 @@ pub fn render_annotated_flow(
         .collect::<std::collections::HashMap<_, _>>();
 
     let cap_render = render_epic_capacities(board, &cap_map, &theme);
-    if !cap_render.is_empty() || !has_actionable_capacity {
+    let watch_render = render_watch_capacities(board, &capacity.watches, &theme);
+    if !cap_render.is_empty() || !watch_render.is_empty() || !has_actionable_capacity {
         ensure_section_spacing(&mut output);
         writeln!(
             output,
@@ -77,8 +78,15 @@ pub fn render_annotated_flow(
             writeln!(output, "{}", cap_render).unwrap();
         }
 
-        if !has_actionable_capacity {
+        if !watch_render.is_empty() {
             if !cap_render.is_empty() {
+                writeln!(output).unwrap();
+            }
+            writeln!(output, "{}", watch_render).unwrap();
+        }
+
+        if !has_actionable_capacity {
+            if !cap_render.is_empty() || !watch_render.is_empty() {
                 writeln!(output).unwrap();
             }
             writeln!(
@@ -717,9 +725,11 @@ fn render_lane_capabilities_line(lane: &LaneFlowCard, width: usize) -> String {
 }
 
 fn strategic_capacity_available(
-    reports: &[crate::cli::presentation::flow::format::EpicCapacityReport],
+    capacity: &crate::cli::presentation::flow::capacity::SystemCapacity,
 ) -> bool {
-    reports.iter().any(|report| {
+    capacity.epics.iter().any(|report| {
+        report.capacity.ready + report.capacity.in_flight + report.capacity.blocked > 0
+    }) || capacity.watches.iter().any(|report| {
         report.capacity.ready + report.capacity.in_flight + report.capacity.blocked > 0
     })
 }
@@ -759,12 +769,46 @@ mod tests {
         TestBearing, TestBoardBuilder, TestEpic, TestMission, TestStory, TestVoyage,
     };
     use owo_colors::OwoColorize;
-    use std::fs;
+    use std::{collections::HashMap as StdHashMap, fs};
 
     fn write_test_mission_charter(root: &std::path::Path, mission_id: &str, goals_table: &str) {
         fs::write(
             root.join("missions").join(mission_id).join("CHARTER.md"),
             format!("# Mission Charter\n\n## Goals\n{goals_table}\n"),
+        )
+        .unwrap();
+    }
+
+    fn write_watch(root: &std::path::Path, id: &str, title: &str) {
+        let dir = root.join("watches").join(id);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            dir.join("README.md"),
+            format!("---\nid: {id}\ntitle: {title}\nlimit_hours: 12\n---\n\n# {title}\n"),
+        )
+        .unwrap();
+    }
+
+    fn write_routine(root: &std::path::Path, id: &str, title: &str, target_scope: &str) {
+        let dir = root.join("routines").join(id);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            dir.join("README.md"),
+            format!(
+                "---\nid: {id}\ntitle: {title}\ncadence:\n  cron: 0 9 * * 1\n  timezone: UTC\ntarget-scope: {target_scope}\n---\n\n# Blueprint\n\n- Review the watch backlog.\n"
+            ),
+        )
+        .unwrap();
+    }
+
+    fn write_watch_story(root: &std::path::Path, id: &str, title: &str, materialization_key: &str) {
+        let dir = root.join("stories").join(id);
+        fs::create_dir_all(dir.join("EVIDENCE")).unwrap();
+        fs::write(
+            dir.join("README.md"),
+            format!(
+                "---\nid: {id}\ntitle: {title}\ntype: feat\nstatus: backlog\nindex: 1\n---\n\n<!-- keel:pulse-materialization: {materialization_key} -->\n\n# {title}\n\n## Acceptance Criteria\n\n- [ ] [SRS-ROUTINE/AC-01] Review the watch backlog.\n"
+            ),
         )
         .unwrap();
     }
@@ -1362,5 +1406,38 @@ mod tests {
         };
 
         assert!(strip_ansi(lines[next_section_index]).contains("Strategic Capacity"));
+    }
+
+    #[test]
+    fn render_annotated_flow_surfaces_watch_capacity_for_watch_scoped_routines() {
+        let temp = TestBoardBuilder::new().build();
+        write_watch(temp.path(), "W1", "Standard Operations");
+        write_routine(temp.path(), "routine-watch", "Watch Review", "W1");
+        write_watch_story(
+            temp.path(),
+            "S1",
+            "Watch Review",
+            "routine-watch@2026-01-12T17:00:00Z",
+        );
+        let board = loader::load_board(temp.path()).unwrap();
+        let metrics = make_test_metrics();
+        let lane_flow = make_test_lane_flow();
+
+        let rendered = render_annotated_flow(
+            &board,
+            &metrics,
+            &lane_flow,
+            &[],
+            &StdHashMap::new(),
+            100,
+            true,
+            true,
+        );
+        let plain = strip_ansi(&rendered);
+
+        assert!(plain.contains("WATCH"));
+        assert!(plain.contains("W1"));
+        assert!(plain.contains("Standard Operations"));
+        assert!(!plain.contains("No executable epic capacity"));
     }
 }

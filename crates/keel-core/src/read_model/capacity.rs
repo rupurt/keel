@@ -5,7 +5,7 @@
 
 use std::collections::HashMap;
 
-use crate::domain::model::{Board, StoryState};
+use crate::domain::model::{Board, Story, StoryState};
 use crate::read_model::execution_queue::{BacklogQueueState, classify_backlog_story};
 use crate::read_model::traceability::derive_implementation_dependencies;
 
@@ -13,9 +13,10 @@ use crate::read_model::traceability::derive_implementation_dependencies;
 #[derive(Debug, Clone)]
 pub struct SystemCapacity {
     pub epics: Vec<EpicCapacityReport>,
+    pub watches: Vec<WatchCapacityReport>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct EpicCapacity {
     pub ready: usize,
     pub in_flight: usize,
@@ -34,6 +35,14 @@ pub struct EpicCapacityReport {
     pub capacity: EpicCapacity,
 }
 
+#[derive(Debug, Clone)]
+pub struct WatchCapacityReport {
+    pub id: String,
+    pub title: String,
+    pub charge_state: ChargeState,
+    pub capacity: EpicCapacity,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ChargeState {
     Blocked,
@@ -48,6 +57,7 @@ pub enum ChargeState {
 pub fn project(board: &Board) -> SystemCapacity {
     let deps = derive_implementation_dependencies(board);
     let mut epic_map: HashMap<String, EpicCapacityReport> = HashMap::new();
+    let mut watch_map: HashMap<String, WatchCapacityReport> = HashMap::new();
 
     for epic in board.epics.values() {
         epic_map.insert(
@@ -58,35 +68,39 @@ pub fn project(board: &Board) -> SystemCapacity {
                 status: epic.status(),
                 index: epic.frontmatter.index,
                 charge_state: ChargeState::Discharged,
-                capacity: EpicCapacity {
-                    ready: 0,
-                    in_flight: 0,
-                    blocked: 0,
-                    inactive: 0,
-                    done: 0,
-                },
+                capacity: EpicCapacity::default(),
             },
         );
     }
 
     for story in board.stories.values() {
-        let Some(epic_id) = story.epic() else {
+        if let Some(epic_id) = story.epic() {
+            let Some(report) = epic_map.get_mut(epic_id) else {
+                continue;
+            };
+
+            apply_story_capacity(board, story, &deps, &mut report.capacity);
+            continue;
+        }
+
+        let Some(watch_id) = materialized_watch_scope(board, story) else {
             continue;
         };
-        let Some(report) = epic_map.get_mut(epic_id) else {
+        let Some(watch) = board.find_watch(watch_id) else {
             continue;
         };
 
-        match story.status {
-            StoryState::Done => report.capacity.done += 1,
-            StoryState::InProgress => report.capacity.in_flight += 1,
-            StoryState::Backlog => match classify_backlog_story(board, story, &deps) {
-                BacklogQueueState::Ready => report.capacity.ready += 1,
-                BacklogQueueState::Blocked => report.capacity.blocked += 1,
-            },
-            StoryState::Icebox | StoryState::Rejected => report.capacity.inactive += 1,
-            _ => {}
-        }
+        let report =
+            watch_map
+                .entry(watch.id().to_string())
+                .or_insert_with(|| WatchCapacityReport {
+                    id: watch.id().to_string(),
+                    title: watch.title().to_string(),
+                    charge_state: ChargeState::Discharged,
+                    capacity: EpicCapacity::default(),
+                });
+
+        apply_story_capacity(board, story, &deps, &mut report.capacity);
     }
 
     let mut epics: Vec<_> = epic_map
@@ -104,7 +118,48 @@ pub fn project(board: &Board) -> SystemCapacity {
             .then_with(|| a.id.cmp(&b.id))
     });
 
-    SystemCapacity { epics }
+    let mut watches: Vec<_> = watch_map
+        .into_values()
+        .map(|mut report| {
+            report.charge_state = classify_charge(report.capacity.ready, report.capacity.blocked);
+            report
+        })
+        .collect();
+
+    watches.sort_by(|a, b| {
+        b.charge_state
+            .cmp(&a.charge_state)
+            .then_with(|| a.id.cmp(&b.id))
+    });
+
+    SystemCapacity { epics, watches }
+}
+
+fn apply_story_capacity(
+    board: &Board,
+    story: &Story,
+    deps: &HashMap<String, Vec<String>>,
+    capacity: &mut EpicCapacity,
+) {
+    match story.status {
+        StoryState::Done => capacity.done += 1,
+        StoryState::InProgress => capacity.in_flight += 1,
+        StoryState::Backlog => match classify_backlog_story(board, story, deps) {
+            BacklogQueueState::Ready => capacity.ready += 1,
+            BacklogQueueState::Blocked => capacity.blocked += 1,
+        },
+        StoryState::Icebox | StoryState::Rejected => capacity.inactive += 1,
+        _ => {}
+    }
+}
+
+fn materialized_watch_scope<'a>(board: &'a Board, story: &'a Story) -> Option<&'a str> {
+    let materialization_key = story.materialization_key.as_deref()?;
+    let (routine_id, _) = materialization_key.split_once('@')?;
+    let routine = board.find_routine(routine_id)?;
+    let target_scope = routine.target_scope();
+    board.find_watch(target_scope)?;
+    Some(target_scope)
 }
 
 fn classify_charge(ready: usize, blocked: usize) -> ChargeState {
@@ -126,6 +181,29 @@ mod tests {
     use super::project;
     use crate::domain::model::StoryState;
     use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use std::fs;
+
+    fn write_watch(root: &std::path::Path, id: &str, title: &str) {
+        let dir = root.join("watches").join(id);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            dir.join("README.md"),
+            format!("---\nid: {id}\ntitle: {title}\nlimit_hours: 12\n---\n\n# {title}\n"),
+        )
+        .unwrap();
+    }
+
+    fn write_routine(root: &std::path::Path, id: &str, title: &str, target_scope: &str) {
+        let dir = root.join("routines").join(id);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            dir.join("README.md"),
+            format!(
+                "---\nid: {id}\ntitle: {title}\ncadence:\n  cron: 0 9 * * 1\n  timezone: UTC\ntarget-scope: {target_scope}\n---\n\n# Blueprint\n\n- Review the watch backlog.\n"
+            ),
+        )
+        .unwrap();
+    }
 
     #[test]
     fn blocked_stories_identified_from_unmet_deps() {
@@ -207,5 +285,41 @@ mod tests {
 
         assert_eq!(keel_cap.capacity.blocked, 1);
         assert_eq!(keel_cap.capacity.ready, 0);
+    }
+
+    #[test]
+    fn watch_scoped_materialized_story_surfaces_watch_capacity() {
+        let temp = TestBoardBuilder::new().build();
+        write_watch(temp.path(), "W1", "Standard Operations");
+        write_routine(temp.path(), "routine-watch", "Watch Review", "W1");
+
+        let story_dir = temp.path().join("stories").join("S1");
+        fs::create_dir_all(story_dir.join("EVIDENCE")).unwrap();
+        fs::write(
+            story_dir.join("README.md"),
+            concat!(
+                "---\n",
+                "id: S1\n",
+                "title: Watch Review\n",
+                "type: feat\n",
+                "status: backlog\n",
+                "index: 1\n",
+                "---\n\n",
+                "<!-- keel:pulse-materialization: routine-watch@2026-01-12T17:00:00Z -->\n\n",
+                "# Watch Review\n\n",
+                "## Acceptance Criteria\n\n",
+                "- [ ] [SRS-ROUTINE/AC-01] Review the watch backlog.\n"
+            ),
+        )
+        .unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let cap = project(&board);
+
+        assert_eq!(cap.watches.len(), 1);
+        assert_eq!(cap.watches[0].id, "W1");
+        assert_eq!(cap.watches[0].title, "Standard Operations");
+        assert_eq!(cap.watches[0].capacity.ready, 1);
+        assert_eq!(cap.watches[0].capacity.blocked, 0);
     }
 }

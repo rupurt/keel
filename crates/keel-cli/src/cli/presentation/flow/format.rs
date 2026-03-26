@@ -5,7 +5,7 @@ use owo_colors::OwoColorize;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write;
 
-pub use super::capacity::EpicCapacityReport;
+pub use super::capacity::{EpicCapacityReport, WatchCapacityReport};
 use crate::cli::presentation::theme::Theme;
 
 const COMPLETED_EPIC_RENDER_LIMIT: usize = 3;
@@ -256,6 +256,47 @@ pub fn render_epic_capacities(
     out
 }
 
+pub fn render_watch_capacities(
+    board: &keel::domain::model::Board,
+    capacities: &[WatchCapacityReport],
+    _theme: &Theme,
+) -> String {
+    let mut out = String::new();
+    if capacities.is_empty() {
+        return out;
+    }
+
+    let mut max_width = 15;
+    for cap in capacities {
+        let label_width = cap.id.len() + 1 + cap.title.len();
+        if label_width > max_width {
+            max_width = label_width;
+        }
+    }
+    max_width += 2;
+    let status_width = 10;
+
+    let header = format!(
+        "     {: <w$} {:<sw$} CAPACITY",
+        "WATCH",
+        "STATUS",
+        w = max_width,
+        sw = status_width
+    );
+    writeln!(out, "{}", header.dimmed()).unwrap();
+
+    for cap in capacities {
+        writeln!(
+            out,
+            "{}",
+            render_watch_line(board, cap, max_width, status_width)
+        )
+        .unwrap();
+    }
+
+    out
+}
+
 fn render_epic_line(
     board: &keel::domain::model::Board,
     cap: &EpicCapacityReport,
@@ -263,14 +304,7 @@ fn render_epic_line(
     status_width: usize,
     _theme: &Theme,
 ) -> String {
-    let emoji = match cap.charge_state {
-        crate::cli::presentation::flow::capacity::ChargeState::Blocked => "🔴",
-        crate::cli::presentation::flow::capacity::ChargeState::Discharged => "⚪",
-        crate::cli::presentation::flow::capacity::ChargeState::Trickle => "💡",
-        crate::cli::presentation::flow::capacity::ChargeState::Charged => "🔋",
-        crate::cli::presentation::flow::capacity::ChargeState::Supercharged => "⚡",
-        crate::cli::presentation::flow::capacity::ChargeState::Overloaded => "🔥",
-    };
+    let emoji = charge_icon(cap.charge_state);
 
     let epic = board.epics.get(&cap.id).unwrap();
     let status_str = epic.status().to_string();
@@ -309,6 +343,50 @@ fn render_epic_line(
     let status_padded = pad_to_width(&status_styled, status_width);
 
     format!("  {} {} {} {}", emoji, epic_padded, status_padded, bar,)
+}
+
+fn render_watch_line(
+    board: &keel::domain::model::Board,
+    cap: &WatchCapacityReport,
+    watch_width: usize,
+    status_width: usize,
+) -> String {
+    let emoji = charge_icon(cap.charge_state);
+    let watch = board.watches.get(&cap.id).unwrap();
+
+    let id_styled = crate::cli::style::styled_watch_id(&cap.id);
+    let watch_label = format!("{} {}", id_styled, watch.title());
+    let watch_padded = pad_to_width(&watch_label, watch_width);
+    let status_padded = pad_to_width(&format!("{}", "watch".dimmed()), status_width);
+
+    let bar = crate::cli::presentation::progress::render_capacity_bar(
+        cap.capacity.done,
+        cap.capacity.in_flight,
+        cap.capacity.ready,
+        15,
+        if cap.capacity.in_flight > 0 {
+            Some(owo_colors::AnsiColors::Green)
+        } else if cap.capacity.ready > 0 {
+            Some(owo_colors::AnsiColors::Yellow)
+        } else {
+            None
+        },
+    );
+
+    format!("  {} {} {} {}", emoji, watch_padded, status_padded, bar)
+}
+
+fn charge_icon(
+    charge_state: crate::cli::presentation::flow::capacity::ChargeState,
+) -> &'static str {
+    match charge_state {
+        crate::cli::presentation::flow::capacity::ChargeState::Blocked => "🔴",
+        crate::cli::presentation::flow::capacity::ChargeState::Discharged => "⚪",
+        crate::cli::presentation::flow::capacity::ChargeState::Trickle => "💡",
+        crate::cli::presentation::flow::capacity::ChargeState::Charged => "🔋",
+        crate::cli::presentation::flow::capacity::ChargeState::Supercharged => "⚡",
+        crate::cli::presentation::flow::capacity::ChargeState::Overloaded => "🔥",
+    }
 }
 
 fn centered_ellipsis_width(max_width: usize, header: &str) -> usize {
@@ -798,6 +876,47 @@ mod tests {
         assert!(rendered.contains("epic3"));
         assert!(rendered.contains("epic4"));
         assert!(rendered.lines().all(|line| line.trim() != "..."));
+    }
+
+    #[test]
+    fn render_watch_capacities_shows_watch_pressure() {
+        let theme = Theme::default();
+        let mut board = keel::domain::model::Board::default();
+        board.watches.insert(
+            "W1".to_string(),
+            keel::domain::model::Watch::new(
+                keel::domain::model::WatchFrontmatter {
+                    id: "W1".to_string(),
+                    title: "Standard Operations".to_string(),
+                    limit_hours: 12,
+                },
+                std::path::PathBuf::from("watches/W1/README.md"),
+            ),
+        );
+
+        let rendered = render_watch_capacities(
+            &board,
+            &[WatchCapacityReport {
+                id: "W1".to_string(),
+                title: "Standard Operations".to_string(),
+                charge_state: crate::cli::presentation::flow::capacity::ChargeState::Charged,
+                capacity: crate::cli::presentation::flow::capacity::EpicCapacity {
+                    ready: 3,
+                    in_flight: 0,
+                    blocked: 0,
+                    inactive: 0,
+                    done: 0,
+                },
+            }],
+            &theme,
+        );
+
+        assert!(rendered.contains("WATCH"));
+        assert!(rendered.contains("W1"));
+        assert!(rendered.contains("Standard Operations"));
+        assert!(rendered.contains("watch"));
+        assert!(rendered.contains("["));
+        assert!(rendered.contains("]"));
     }
 
     fn epic_capacity(
