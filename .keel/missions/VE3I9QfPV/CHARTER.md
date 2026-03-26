@@ -6,9 +6,9 @@ Archetype: Strategic
 
 | ID | Description | Verification |
 |----|-------------|--------------|
-| MG-01 | Implement Watch time constraint primitive | board: VDseuzIFg |
-| MG-02 | Codify Pacemaker stability rules in INSTRUCTIONS.md | board: VDseuzIFg |
-| MG-03 | Stabilize system heartbeat and clear Med-Bay failures | board: VE3KrOPS |
+| MG-01 | Implement Watch time constraint primitive | watch: VE3IAG4jZ |
+| MG-02 | Codify Pacemaker stability rules in INSTRUCTIONS.md | watch: VE3IAG4jZ |
+| MG-03 | Stabilize system heartbeat and clear Med-Bay failures | watch: VE3IAG4jZ |
 
 ## Constraints
 

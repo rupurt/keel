@@ -15,3 +15,7 @@ Remaining action: 5 operational routines under VE3KrOPS need rescoping to a succ
 ## 2026-03-16T14:21:39
 
 Mission achieved by local system user 'alex'
+
+## 2026-03-25T17:43:54-07:00
+
+Retired the legacy operational epics `VDseuzIFg` and `VE3KrOPS` after consolidating their lasting implementation history into watch `VE3IAG4jZ` and rolling all live routine pressure onto watch-scoped backlog stories.

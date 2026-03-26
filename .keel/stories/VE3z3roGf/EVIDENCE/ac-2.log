@@ -1,5 +1,0 @@
----
-recorded_at: 2026-03-16T13:20:30.826704830-07:00
-mode: manual
----
-Deferred outcome with MaterializationFailed reason and error message. Test: pulse_rejects_materialization_into_terminal_voyage asserts created==0.

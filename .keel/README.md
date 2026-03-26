@@ -324,18 +324,6 @@
 |--------|--------|
 | [Implement Inquiry Personas](epics/VDo4OmYow/voyages/VDo4Ugi5v/) | done |
 
-### [Project Operations](epics/VDseuzIFg/) (done)
-
-| Voyage | Status |
-|--------|--------|
-| [Implementation of Time Constraints](epics/VDseuzIFg/voyages/VE3IYca8z/) | done |
-
-### [Permanent Project Operations](epics/VE3KrOPS/) (done)
-
-| Voyage | Status |
-|--------|--------|
-| [Operational Routine Reliability](epics/VE3KrOPS/voyages/VE3yUoUUy/) | done |
-
 ### [Continuous Project Operations](epics/VE4hiOYHj/) (done)
 
 | Voyage | Status |

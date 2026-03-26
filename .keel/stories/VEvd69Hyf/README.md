@@ -34,6 +34,13 @@ Use this story as the canonical review anchor for this routine topic.
 - Iced duplicate: `VEvT3qXAj` from eligible window `2026-03-26T00:00:00Z`
 - Merge note: no blueprint delta was introduced between the duplicate materializations
 
+## Pre-Watch Materialization History
+
+This watch-scoped story replaces earlier completions that were materialized under retired project-operations epics before watch scope became canonical.
+
+- Retired predecessors: `VDtx8IX2M` and `VDuknDmHz` from eligible window `2026-03-16T00:00:00Z`, plus `VDzFTQcG0` from eligible window `2026-03-17T00:00:00Z`
+- Merge note: blueprint intent is unchanged across the legacy epic-scoped runs and the current watch-scoped run
+
 ## Blueprint
 
 Investigate and implement a graph-based artifact computation system that generates Voyage and Compliance reports automatically during state transitions.

@@ -27,6 +27,13 @@ Materialized from routine `VDfVxvWgf` for eligible window ending `2026-03-28T16:
 - Target scope: `VE3IAG4jZ`
 - Eligible window ends: `2026-03-28T16:00:00Z`
 
+## Pre-Watch Materialization History
+
+This watch-scoped story replaces an earlier completion that was materialized under a retired project-operations epic before watch scope became canonical.
+
+- Retired predecessor: `VDuknDnI1` from eligible window `2026-03-21T16:00:00Z`
+- Merge note: blueprint intent is unchanged across the legacy epic-scoped run and the current watch-scoped run
+
 ## Blueprint
 
 - Review progress on compact status surfaces and richer mission drilldown.

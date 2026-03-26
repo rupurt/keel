@@ -7,7 +7,7 @@ index: 101
 
 # Continuous Project Operations
 
-> Operational routines (daily status, report friction, auto-staging, exploration) have no live epic to materialize stories into after VE3KrOPS finalized
+> Operational routines (daily status, report friction, auto-staging, exploration) needed a durable landing zone after the legacy project-operations epics finalized; the Standard Operations watch now serves that role
 
 ## Documents
 

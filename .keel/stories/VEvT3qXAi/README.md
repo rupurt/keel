@@ -27,6 +27,13 @@ Materialized from routine `VD7dkcHxS` for eligible window ending `2026-03-30T00:
 - Target scope: `VE3IAG4jZ`
 - Eligible window ends: `2026-03-30T00:00:00Z`
 
+## Pre-Watch Materialization History
+
+This watch-scoped story replaces an earlier completion that was materialized under a retired project-operations epic before watch scope became canonical.
+
+- Retired predecessor: `VDzFTQcFz` from eligible window `2026-03-23T00:00:00Z`
+- Merge note: blueprint intent is unchanged across the legacy epic-scoped run and the current watch-scoped run
+
 ## Blueprint
 
 - **Trigger**: Monthly review of machine learning and CPU architecture research.

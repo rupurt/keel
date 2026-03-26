@@ -1,5 +1,0 @@
----
-recorded_at: 2026-03-16T13:23:30.636081744-07:00
-mode: manual
----
-Tests scope_coherence_warns_on_missing_epic and scope_coherence_warns_on_missing_voyage both assert Warning severity.

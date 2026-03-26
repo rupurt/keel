@@ -1,8 +1,0 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.09s
-     Running unittests src/main.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-ad5ef3c650b5286a)
-
-running 1 test
-test cli::commands::management::pulse::tests::pulse_human_output_reports_created_skipped_and_deferred_routines ... ok
-
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 715 filtered out; finished in 0.05s
-

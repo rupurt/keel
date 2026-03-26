@@ -1,5 +1,0 @@
----
-recorded_at: 2026-03-16T13:20:26.682494408-07:00
-mode: manual
----
-validate_target_scope rejects VoyageState::Done. Test: pulse_rejects_materialization_into_terminal_voyage passes.
