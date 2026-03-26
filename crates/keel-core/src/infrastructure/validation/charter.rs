@@ -119,6 +119,10 @@ pub fn goal_needs_verification(goal: &ParsedMissionGoal) -> bool {
         || matches!(goal.verification, GoalVerification::Unknown(_))
 }
 
+pub fn goal_is_authored(goal: &ParsedMissionGoal) -> bool {
+    !goal_needs_description(goal) && !goal_needs_verification(goal)
+}
+
 pub fn has_authored_constraints(content: &str) -> bool {
     let Some(section) = extract_section(content, "## Constraints") else {
         return false;
@@ -300,6 +304,71 @@ pub fn check_mission_charter_readiness(board: &Board, mission: &Mission) -> Vec<
             mission,
             format!(
                 "Mission {} cannot be activated: `## Halting Rules` must replace the scaffold defaults with mission-specific rules.",
+                mission.id()
+            ),
+        ));
+    }
+
+    problems
+}
+
+pub fn check_defining_mission_charter_authorship(mission: &Mission) -> Vec<Problem> {
+    let charter_path = mission.path.parent().unwrap().join("CHARTER.md");
+    let content = match fs::read_to_string(&charter_path) {
+        Ok(content) => content,
+        Err(err) => {
+            return vec![mission_readiness_problem(
+                &charter_path,
+                mission,
+                format!(
+                    "Mission {} is defining but CHARTER.md could not be read ({}).",
+                    mission.id(),
+                    err
+                ),
+            )];
+        }
+    };
+
+    let mut problems = Vec::new();
+    let goals = parse_mission_goals(&content);
+    let mut authored_goal_count = 0usize;
+
+    for goal in &goals {
+        if goal_needs_description(goal) {
+            problems.push(mission_readiness_problem(
+                &charter_path,
+                mission,
+                format!(
+                    "Mission {} is defining but goal {} still uses a scaffold description.",
+                    mission.id(),
+                    goal.id
+                ),
+            ));
+        }
+
+        if goal_needs_verification(goal) {
+            problems.push(mission_readiness_problem(
+                &charter_path,
+                mission,
+                format!(
+                    "Mission {} is defining but goal {} still uses a scaffold verification target.",
+                    mission.id(),
+                    goal.id
+                ),
+            ));
+        }
+
+        if goal_is_authored(goal) {
+            authored_goal_count += 1;
+        }
+    }
+
+    if authored_goal_count == 0 {
+        problems.push(mission_readiness_problem(
+            &charter_path,
+            mission,
+            format!(
+                "Mission {} is defining but CHARTER.md has no authored goals yet.",
                 mission.id()
             ),
         ));

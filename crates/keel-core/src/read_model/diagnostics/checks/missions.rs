@@ -143,14 +143,21 @@ pub fn check_mission_definition_readiness(board: &Board) -> Vec<Problem> {
     let mut problems = Vec::new();
 
     for mission in board.missions.values() {
-        if mission.status() != MissionStatus::Active {
-            continue;
+        match mission.status() {
+            MissionStatus::Defining => {
+                problems.extend(charter::check_defining_mission_charter_authorship(mission));
+            }
+            MissionStatus::Active => {
+                problems.extend(charter::check_mission_charter_readiness(board, mission));
+                problems.extend(missions::check_mission_actionable_lineage_readiness(
+                    board, mission,
+                ));
+            }
+            MissionStatus::Paused
+            | MissionStatus::Achieved
+            | MissionStatus::Verified
+            | MissionStatus::Abandoned => {}
         }
-
-        problems.extend(charter::check_mission_charter_readiness(board, mission));
-        problems.extend(missions::check_mission_actionable_lineage_readiness(
-            board, mission,
-        ));
     }
 
     problems
@@ -534,6 +541,69 @@ mod tests {
         assert_eq!(problems.len(), 1);
         assert_eq!(problems[0].check_id, CheckId::MissionDefinitionReadiness);
         assert!(problems[0].message.contains("mission-specific rules"));
+    }
+
+    #[test]
+    fn test_check_mission_definition_readiness_flags_defining_scaffold_goal() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("defining"))
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_mission_definition_readiness(&board);
+
+        assert!(
+            problems
+                .iter()
+                .all(|problem| problem.check_id == CheckId::MissionDefinitionReadiness)
+        );
+        assert!(
+            problems
+                .iter()
+                .any(|problem| problem.message.contains("scaffold description"))
+        );
+        assert!(
+            problems
+                .iter()
+                .any(|problem| problem.message.contains("scaffold verification target"))
+        );
+        assert!(
+            problems
+                .iter()
+                .any(|problem| problem.message.contains("no authored goals yet"))
+        );
+    }
+
+    #[test]
+    fn test_check_mission_definition_readiness_allows_authored_defining_mission_goal() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("defining"))
+            .build();
+
+        let charter_path = temp.path().join("missions/M1/CHARTER.md");
+        fs::write(
+            charter_path,
+            r#"
+## Goals
+| ID | Description | Verification |
+|----|-------------|--------------|
+| MG-01 | Investigate puppet telemetry scoring thresholds. | manual: review with operator |
+
+## Constraints
+- (none yet)
+
+## Halting Rules
+- DO NOT halt while any MG-* goal has unfinished board work.
+- HALT when all MG-* goals with `board:` verification are satisfied.
+- YIELD to human when only `metric:` or `manual:` goals remain.
+"#,
+        )
+        .unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_mission_definition_readiness(&board);
+
+        assert!(problems.is_empty());
     }
 
     #[test]
