@@ -27,6 +27,13 @@ Materialized from routine `VDVGSjq3Q` for eligible window ending `2026-03-27T00:
 - Target scope: `VE3IAG4jZ`
 - Eligible window ends: `2026-03-27T00:00:00Z`
 
+## Consolidated Duplicate History
+
+Use this story as the canonical review anchor for this routine topic.
+
+- Iced duplicate: `VEvT3qXAj` from eligible window `2026-03-26T00:00:00Z`
+- Merge note: no blueprint delta was introduced between the duplicate materializations
+
 ## Blueprint
 
 Investigate and implement a graph-based artifact computation system that generates Voyage and Compliance reports automatically during state transitions.

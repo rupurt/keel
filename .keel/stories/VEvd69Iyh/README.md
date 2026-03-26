@@ -27,6 +27,13 @@ Materialized from routine `VDz8zh8q2` for eligible window ending `2026-03-27T00:
 - Target scope: `VE3IAG4jZ`
 - Eligible window ends: `2026-03-27T00:00:00Z`
 
+## Consolidated Duplicate History
+
+Use this story as the canonical review anchor for this routine topic.
+
+- Iced duplicate: `VEvT3qYAm` from eligible window `2026-03-26T00:00:00Z`
+- Merge note: no blueprint delta was introduced between the duplicate materializations
+
 ## Blueprint
 
 Design and implement an "Auto-Staging" feature for the Keel CLI.
