@@ -4,12 +4,25 @@ use anyhow::Result;
 use chrono::{DateTime, Utc};
 
 use crate::cli::presentation::flow::display::render_annotated_flow;
+use crate::cli::presentation::scene::{SceneFrame, SceneLine, ScenePalette};
 use crate::cli::presentation::terminal::get_terminal_width;
-use crate::cli::style::VisualPadding;
+use crate::cli::presentation::theme::Theme;
 use keel::infrastructure::loader::load_board;
 use keel::read_model::routine_materialization::existing_materializations;
 use keel::read_model::scheduled_routines::{RoutineScheduleFilter, project_scheduled_routines};
 use keel::read_model::{flow_status, workflow_lane_flow, workflow_topology};
+
+const FLOW_SCENE_WIDTH: usize = 69;
+const FLOW_SCENE_FRAME_WIDTH: usize = 63;
+const FLOW_SCENE_INDENT: &str = "    ";
+
+#[derive(Debug, Clone, Copy)]
+enum FlowSceneTone {
+    Danger,
+    WarningBold,
+    WarningDim,
+    Dim,
+}
 
 /// Run the flow command
 pub fn run(
@@ -41,174 +54,38 @@ pub fn run(
     let within_working_hours = current_hour >= config.workflow.working_hours_start
         && current_hour < config.workflow.working_hours_end;
     let is_circuit_enabled = config.workflow.open_for_work && within_working_hours;
+    let use_color = Theme::should_use_color(no_color);
 
     if scene {
         use owo_colors::OwoColorize;
         if !is_circuit_enabled {
-            let mut circuit = String::new();
-            circuit.push_str(
-                "\n    ┌───────────────────────────[         ]───────────────────────────┐\n",
-            );
-            circuit.push_str(
-                "    │                                                                 │\n",
-            );
-            circuit.push_str(
-                "    │                                /                                │\n",
-            );
-            circuit.push_str(
-                "    │                               /                                 │\n",
-            );
-            circuit.push_str(
-                "    │                              /                                  │\n",
-            );
-            circuit.push_str(
-                "    └───────────────(               )─────────────────────────────────┘\n",
-            );
-            circuit.push_str("                     \\             /   <-- CIRCUIT OPEN (OFF THE CLOCK / DISABLED)\n");
-            circuit.push_str("                      \\___________/\n");
-            println!("{}", circuit.dimmed());
+            println!("\n{}", render_open_circuit_scene(use_color));
             return Err(anyhow::anyhow!(
                 "Circuit is open (disabled or off the clock)"
             ));
         }
 
         if !healthy {
-            let mut circuit = String::new();
-            circuit.push_str(
-                "\n    ┌───────────────────────────[ BATTERY ]───────────────────────────┐\n",
-            );
-            circuit.push_str(
-                "    │                                                                 │\n",
-            );
-            circuit.push_str(
-                "    │                                                                 │\n",
-            );
-            circuit.push_str(
-                "    │          [ XX ][ XX ]       [ XX ][ XX ]                        │\n",
-            );
-            circuit.push_str(
-                "    │          <-- CAPACITORS BLOWN (SYSTEM UNHEALTHY)                │\n",
-            );
-            circuit.push_str(
-                "    │               * SPARKS *                                        │\n",
-            );
-            circuit.push_str(
-                "    └───────────────(   X       X   )─────────────────────────────────┘\n",
-            );
-            println!("{}", circuit.red().bold());
+            println!("\n{}", render_unhealthy_scene(use_color));
             println!("Run `keel doctor` to repair the circuit.");
             return Err(anyhow::anyhow!("Short circuit: System is unhealthy"));
         }
 
         let energized = recently_completed > 0;
         if !energized {
-            let mut circuit = String::new();
-            circuit.push_str(
-                "\n    ┌───────────────────────────[ BATTERY ]───────────────────────────┐\n",
-            );
-            circuit.push_str(
-                "    │                                                                 │\n",
-            );
-            circuit.push_str(
-                "    │                                                                 │\n",
-            );
-            circuit.push_str(
-                "    └───────────────( \\             / )   ───                         \n",
-            );
-            circuit.push_str(
-                "                     \\ \\           / /   <-- CORD UNPLUGGED           \n",
-            );
-            circuit.push_str(
-                "                      \\ \\_ _ _ _ _/ /        (POKE TO WAKE)           \n",
-            );
-            circuit.push_str(
-                "                       \\___________/                                  \n",
-            );
-            println!("{}", circuit.dimmed());
+            println!("\n{}", render_unplugged_scene(use_color));
             return Err(anyhow::anyhow!(
                 "System is idle: Cord unplugged (poke to wake)"
             ));
         }
 
-        // System is healthy and energized - Light is ON
-        let mut circuit = String::new();
-        circuit
-            .push_str("\n    .───────────────────────────[ POWER ]───────────────────────────.\n");
-        circuit.push_str("    │                                                               │\n");
-
         let ready_backlog = metrics.execution.backlog_ready_count;
-        let mut packs_visual = String::new();
-        for i in 0..20 {
-            if i < ready_backlog {
-                packs_visual.push_str(&"█".green().to_string());
-            } else {
-                packs_visual.push_str(&"░".dimmed().to_string());
-            }
-        }
-
-        let power_line = format!(
-            "  [ {} ]  <-- {} BATTERY PACKS PLUGGED IN",
-            packs_visual, ready_backlog
+        println!(
+            "\n{}",
+            render_power_scene(ready_backlog, in_progress, autonomous, use_color)
         );
-        circuit.push_str(&format!("    │{} │\n", power_line.pad_to_width(62)));
-        circuit
-            .push_str("    │  `───────────────────────────────────────────────────────────'  │\n");
-        circuit.push_str("    │          |                                         |          │\n");
-        circuit.push_str("    │      .───┴───.                                 .───┴───.      │\n");
 
-        // Render capacitor bank based on work volume
-        if in_progress > 3 {
-            circuit.push_str(
-                "    │      |[ || ]| [ HIGH LOAD ]           [ ACTIVE ] |[ || ]|     │\n",
-            );
-            circuit.push_str(
-                "    │      |[ || ]|  ( !!! )                 ( !!! )   |[ || ]|     │\n",
-            );
-        } else if in_progress > 0 {
-            circuit.push_str(
-                "    │      |[ || ]| [ CHARGING ]             [ STABLE ] |[    ]|     │\n",
-            );
-            circuit.push_str(
-                "    │      |[ || ]|  ( ... )                 ( ... )   |[    ]|     │\n",
-            );
-        } else {
-            circuit.push_str(
-                "    │      |[    ]| [ IDLE ]                 [ READY ]  |[    ]|     │\n",
-            );
-            circuit.push_str(
-                "    │      |[    ]|  ( zzz )                 ( ooo )   |[    ]|     │\n",
-            );
-        }
-
-        circuit.push_str("    │      '───────'                                 '───────'      │\n");
-        circuit.push_str("    │          |                                         |          │\n");
-        circuit.push_str("    └──────────┴────( \\                       / )────┴──────────┘\n");
-        circuit.push_str("                     \\ \\                     / /\n");
-
-        if autonomous {
-            if in_progress > 0 || ready_backlog > 0 {
-                circuit.push_str(
-                    "                      \\ \\___________________/ /  <-- SYSTEM AUTONOMOUS\n",
-                );
-                circuit.push_str(
-                    "                       \\_____________________/        (LIGHT ON)\n",
-                );
-                println!("{}", circuit.yellow().bold());
-            } else {
-                circuit.push_str(
-                    "                      \\ \\___________________/ /  <-- SYSTEM IDLE\n",
-                );
-                circuit.push_str(
-                    "                       \\_____________________/        (LIGHT DIM)\n",
-                );
-                println!("{}", circuit.yellow().dimmed());
-            }
-        } else {
-            circuit
-                .push_str("                      \\ \\___________________/ /  <-- WORKSHOP BUSY\n");
-            circuit.push_str("                       \\_____________________/        (LIGHT ON)\n");
-            println!("{}", circuit.yellow().bold());
-
+        if !autonomous {
             let mut blocking_items = Vec::new();
             for lane in &lane_flow.lanes {
                 if lane.manual_accept && lane.total_count > 0 {
@@ -250,7 +127,12 @@ pub fn run(
             if !blocking_items.is_empty() {
                 println!("\nRun `keel workshop` to clear the bench:");
                 for item in blocking_items.iter().take(3) {
-                    println!("  - {}", item.yellow());
+                    let rendered = if use_color {
+                        item.yellow().to_string()
+                    } else {
+                        item.to_string()
+                    };
+                    println!("  - {}", rendered);
                 }
                 if blocking_items.len() > 3 {
                     println!("  ... and {} more", blocking_items.len() - 3);
@@ -281,6 +163,266 @@ pub fn run(
     }
 
     Ok(())
+}
+
+fn render_open_circuit_scene(use_color: bool) -> String {
+    render_static_scene(
+        use_color,
+        FlowSceneTone::Dim,
+        &[
+            "    ┌───────────────────────────[         ]───────────────────────────┐",
+            "    │                                                                 │",
+            "    │                                /                                │",
+            "    │                               /                                 │",
+            "    │                              /                                  │",
+            "    └───────────────(               )─────────────────────────────────┘",
+            "                     \\             /   <-- CIRCUIT OPEN (OFF THE CLOCK / DISABLED)",
+            "                      \\___________/",
+        ],
+    )
+}
+
+fn render_unhealthy_scene(use_color: bool) -> String {
+    render_static_scene(
+        use_color,
+        FlowSceneTone::Danger,
+        &[
+            "    ┌───────────────────────────[ BATTERY ]───────────────────────────┐",
+            "    │                                                                 │",
+            "    │                                                                 │",
+            "    │          [ XX ][ XX ]       [ XX ][ XX ]                        │",
+            "    │          <-- CAPACITORS BLOWN (SYSTEM UNHEALTHY)                │",
+            "    │               * SPARKS *                                        │",
+            "    └───────────────(   X       X   )─────────────────────────────────┘",
+        ],
+    )
+}
+
+fn render_unplugged_scene(use_color: bool) -> String {
+    render_static_scene(
+        use_color,
+        FlowSceneTone::Dim,
+        &[
+            "    ┌───────────────────────────[ BATTERY ]───────────────────────────┐",
+            "    │                                                                 │",
+            "    │                                                                 │",
+            "    └───────────────( \\             / )   ───                         ",
+            "                     \\ \\           / /   <-- CORD UNPLUGGED           ",
+            "                      \\ \\_ _ _ _ _/ /        (POKE TO WAKE)           ",
+            "                       \\___________/                                  ",
+        ],
+    )
+}
+
+fn render_power_scene(
+    ready_backlog: usize,
+    in_progress: usize,
+    autonomous: bool,
+    use_color: bool,
+) -> String {
+    let tone = if autonomous && (in_progress > 0 || ready_backlog > 0) {
+        FlowSceneTone::WarningBold
+    } else {
+        FlowSceneTone::WarningDim
+    };
+    let palette = ScenePalette::new(use_color);
+    let frame = SceneFrame::new(FLOW_SCENE_INDENT, "│", "│", FLOW_SCENE_FRAME_WIDTH);
+    let (bank_left, label_left, label_right, state_left, state_right, bank_right) =
+        capacitor_bank_layout(in_progress);
+
+    let mut lines = Vec::new();
+    lines.push(style_flow_scene(
+        &palette,
+        tone,
+        "    .───────────────────────────[ POWER ]───────────────────────────.",
+    ));
+    lines.push(style_flow_scene(&palette, tone, frame.empty_row()));
+    lines.push(render_power_meter_row(&palette, tone, ready_backlog));
+    lines.push(render_frame_row(&frame, &palette, tone, |line| {
+        line.push(" `───────────────────────────────────────────────────────────' ");
+    }));
+    lines.push(render_frame_row(&frame, &palette, tone, |line| {
+        line.pad_to(10).push("|");
+        line.pad_to(52).push("|");
+    }));
+    lines.push(render_frame_row(&frame, &palette, tone, |line| {
+        line.pad_to(6).push(".───┴───.");
+        line.pad_to(48).push(".───┴───.");
+    }));
+    lines.push(render_frame_row(&frame, &palette, tone, |line| {
+        line.pad_to(6).push(bank_left);
+        line.pad_to(15).push(label_left);
+        line.pad_to(38).push(label_right);
+        line.pad_to(49).push(bank_right);
+    }));
+    lines.push(render_frame_row(&frame, &palette, tone, |line| {
+        line.pad_to(6).push(bank_left);
+        line.pad_to(16).push(state_left);
+        line.pad_to(39).push(state_right);
+        line.pad_to(49).push(bank_right);
+    }));
+    lines.push(render_frame_row(&frame, &palette, tone, |line| {
+        line.pad_to(6).push("'───────'");
+        line.pad_to(48).push("'───────'");
+    }));
+    lines.push(render_frame_row(&frame, &palette, tone, |line| {
+        line.pad_to(10).push("|");
+        line.pad_to(52).push("|");
+    }));
+    lines.push(render_flow_line(&palette, tone, |line| {
+        line.push("    └──────────┴────( \\                       / )────┴──────────┘");
+    }));
+    lines.push(render_flow_line(&palette, tone, |line| {
+        line.pad_to(21).push("\\ \\");
+        line.pad_to(44).push("/ /");
+    }));
+
+    if autonomous {
+        if in_progress > 0 || ready_backlog > 0 {
+            lines.push(render_flow_line(&palette, tone, |line| {
+                line.pad_to(22)
+                    .push("\\ \\___________________/ / <-- SYSTEM AUTONOMOUS");
+            }));
+            lines.push(render_flow_line(&palette, tone, |line| {
+                line.pad_to(23)
+                    .push("\\_____________________/        (LIGHT ON)");
+            }));
+        } else {
+            lines.push(render_flow_line(&palette, tone, |line| {
+                line.pad_to(22)
+                    .push("\\ \\___________________/ / <-- SYSTEM IDLE");
+            }));
+            lines.push(render_flow_line(&palette, tone, |line| {
+                line.pad_to(23)
+                    .push("\\_____________________/        (LIGHT DIM)");
+            }));
+        }
+    } else {
+        lines.push(render_flow_line(&palette, tone, |line| {
+            line.pad_to(22)
+                .push("\\ \\___________________/ / <-- WORKSHOP BUSY");
+        }));
+        lines.push(render_flow_line(&palette, tone, |line| {
+            line.pad_to(23)
+                .push("\\_____________________/        (LIGHT ON)");
+        }));
+    }
+
+    lines.join("\n")
+}
+
+fn render_power_meter_row(
+    palette: &ScenePalette,
+    tone: FlowSceneTone,
+    ready_backlog: usize,
+) -> String {
+    let mut row = SceneLine::new(FLOW_SCENE_WIDTH);
+    row.push(style_flow_scene(palette, tone, "    │"));
+    row.push(style_flow_scene(palette, tone, "  [ "));
+    row.push(render_battery_packs(palette, ready_backlog));
+    row.push(style_flow_scene(
+        palette,
+        tone,
+        format!(" ]  <-- {} BATTERY PACKS PLUGGED IN", ready_backlog),
+    ));
+    row.pad_to(FLOW_SCENE_WIDTH - 1);
+    row.push(style_flow_scene(palette, tone, "│"));
+    row.finish()
+}
+
+fn render_battery_packs(palette: &ScenePalette, ready_backlog: usize) -> String {
+    let mut packs = String::new();
+    for i in 0..20 {
+        if i < ready_backlog {
+            packs.push_str(&palette.green("█"));
+        } else {
+            packs.push_str(&palette.dim("░"));
+        }
+    }
+    packs
+}
+
+fn capacitor_bank_layout(
+    in_progress: usize,
+) -> (
+    &'static str,
+    &'static str,
+    &'static str,
+    &'static str,
+    &'static str,
+    &'static str,
+) {
+    if in_progress > 3 {
+        (
+            "|[ || ]|",
+            "[ HIGH LOAD ]",
+            "[ ACTIVE ]",
+            "( !!! )",
+            "( !!! )",
+            "|[ || ]|",
+        )
+    } else if in_progress > 0 {
+        (
+            "|[ || ]|",
+            "[ CHARGING ]",
+            "[ STABLE ]",
+            "( ... )",
+            "( ... )",
+            "|[    ]|",
+        )
+    } else {
+        (
+            "|[    ]|",
+            "[ IDLE ]",
+            "[ READY ]",
+            "( zzz )",
+            "( ooo )",
+            "|[    ]|",
+        )
+    }
+}
+
+fn render_static_scene(use_color: bool, tone: FlowSceneTone, lines: &[&str]) -> String {
+    let palette = ScenePalette::new(use_color);
+    lines
+        .iter()
+        .map(|line| style_flow_scene(&palette, tone, *line))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+fn render_frame_row<F>(
+    frame: &SceneFrame<'_>,
+    palette: &ScenePalette,
+    tone: FlowSceneTone,
+    build: F,
+) -> String
+where
+    F: FnOnce(&mut SceneLine),
+{
+    style_flow_scene(palette, tone, frame.row(build))
+}
+
+fn render_flow_line<F>(palette: &ScenePalette, tone: FlowSceneTone, build: F) -> String
+where
+    F: FnOnce(&mut SceneLine),
+{
+    let mut line = SceneLine::new(FLOW_SCENE_WIDTH);
+    build(&mut line);
+    style_flow_scene(palette, tone, line.finish())
+}
+
+fn style_flow_scene(
+    palette: &ScenePalette,
+    tone: FlowSceneTone,
+    text: impl Into<String>,
+) -> String {
+    match tone {
+        FlowSceneTone::Danger => palette.red_bold(text),
+        FlowSceneTone::WarningBold => palette.yellow_bold(text),
+        FlowSceneTone::WarningDim => palette.yellow_dim(text),
+        FlowSceneTone::Dim => palette.dim(text),
+    }
 }
 
 fn build_output(
@@ -324,6 +466,7 @@ mod tests {
     use super::*;
     use chrono::TimeZone;
     use keel::domain::model::StoryState;
+    use keel::infrastructure::utils::visible_width;
     use keel::read_model::routine_materialization::materialization_marker;
     use keel::test_helpers::{TestBearing, TestBoardBuilder, TestMission, TestStory};
     use std::fs;
@@ -534,5 +677,38 @@ updated_at: 2026-01-05T18:00:00
         assert!(!output.contains("Execution"));
         assert!(!output.contains("Verification"));
         assert!(!output.contains("Done"));
+    }
+
+    #[test]
+    fn render_power_scene_has_stable_width_without_color() {
+        let scene = render_power_scene(5, 0, true, false);
+        let lines: Vec<_> = scene.lines().collect();
+
+        assert_eq!(lines.len(), 14);
+        assert!(
+            lines
+                .iter()
+                .all(|line| visible_width(line) == FLOW_SCENE_WIDTH)
+        );
+        assert!(!scene.contains("\x1b["));
+        assert_eq!(
+            lines[6],
+            "    │      |[    ]| [ IDLE ]               [ READY ]  |[    ]|      │"
+        );
+        assert_eq!(
+            lines[7],
+            "    │      |[    ]|  ( zzz )                ( ooo )   |[    ]|      │"
+        );
+    }
+
+    #[test]
+    fn render_power_scene_has_stable_width_with_color() {
+        let scene = render_power_scene(5, 0, true, true);
+        assert!(scene.contains("\x1b["));
+        assert!(
+            scene
+                .lines()
+                .all(|line| visible_width(line) == FLOW_SCENE_WIDTH)
+        );
     }
 }
