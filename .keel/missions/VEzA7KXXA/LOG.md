@@ -2,3 +2,9 @@
 
 <!-- Append entries below. Each entry is an H2 with ISO timestamp. -->
 <!-- Use `keel mission digest` to compress older entries when this file grows large. -->
+
+## 2026-03-26T08:14:30-07:00
+
+- Planned voyage `VEzDZy6Eq` to land the `txt-scene` crate boundary and use `flow --scene` as the pilot migration surface.
+- Decomposed the voyage into three delivery stories covering crate extraction, `flow` migration, and follow-on adoption boundaries.
+- Returned delivery liquidity to the board by promoting the voyage and thawing the scoped stories to backlog.

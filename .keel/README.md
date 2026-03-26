@@ -338,7 +338,11 @@
 |--------|--------|
 | [Operational Routine Infrastructure](epics/VE4hiOYHj/voyages/VE5NSQ2T2/) | done |
 
-### [Extract Shared Txt Scene Engine](epics/VEzA7KvXB/) (draft)
+### [Extract Shared Txt Scene Engine](epics/VEzA7KvXB/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Txt Scene Foundation And Flow Pilot](epics/VEzA7KvXB/voyages/VEzDZy6Eq/) | planned |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
