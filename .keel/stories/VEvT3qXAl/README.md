@@ -2,9 +2,9 @@
 id: VEvT3qXAl
 title: Daily Status Surface Progress
 type: feat
-status: backlog
+status: icebox
 created_at: 2026-03-25T23:45:40
-updated_at: 2026-03-25T23:45:40
+updated_at: 2026-03-26T06:14:19
 index: 4
 operator-signal: pulse
 ---

@@ -2,9 +2,9 @@
 id: VEvd69Hyg
 title: Ask About Keel System Audio Feedback Support For Transitions
 type: feat
-status: backlog
+status: icebox
 created_at: 2026-03-26T00:25:32
-updated_at: 2026-03-26T00:25:32
+updated_at: 2026-03-26T06:14:19
 index: 2
 operator-signal: pulse
 ---

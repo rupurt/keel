@@ -19,3 +19,7 @@ Mission achieved by local system user 'alex'
 ## 2026-03-25T17:43:54-07:00
 
 Retired the legacy operational epics `VDseuzIFg` and `VE3KrOPS` after consolidating their lasting implementation history into watch `VE3IAG4jZ` and rolling all live routine pressure onto watch-scoped backlog stories.
+
+## 2026-03-26T06:14:55-07:00
+
+Audited the surviving watch-scoped routine backlog and removed four stale operational routines whose blueprint intent had already shipped under earlier scopes. Iced their false-pressure materializations (`VEvd69Hyf`, `VEvd69Hyg`, `VEvT3qXAl`, `VEvd69Iyh`), removed the retired routines, and left only the open speculative-decoding research topic as a live watch anchor.

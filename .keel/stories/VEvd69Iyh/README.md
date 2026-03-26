@@ -2,9 +2,9 @@
 id: VEvd69Iyh
 title: Bridge Engine And VCS Via Auto Staging
 type: feat
-status: backlog
+status: icebox
 created_at: 2026-03-26T00:25:32
-updated_at: 2026-03-26T00:25:32
+updated_at: 2026-03-26T06:14:19
 index: 3
 operator-signal: pulse
 ---
