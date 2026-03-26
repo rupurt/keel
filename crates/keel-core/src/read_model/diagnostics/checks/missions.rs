@@ -11,7 +11,10 @@ pub fn check_mission_goals(board: &Board) -> Vec<Problem> {
     let mut problems = Vec::new();
 
     for mission in board.missions.values() {
-        if mission.status() != MissionStatus::Active {
+        if matches!(
+            mission.status(),
+            MissionStatus::Achieved | MissionStatus::Verified | MissionStatus::Abandoned
+        ) {
             continue;
         }
 
@@ -39,13 +42,36 @@ pub fn check_mission_goals(board: &Board) -> Vec<Problem> {
         }
 
         if board_goal_count > 0 && all_board_met {
-            problems.push(Problem {
-                severity: Severity::Info,
-                path: mission.path.clone(),
-                message: format!(
-                    "Mission {} has met all board-verifiable goals. Ready for achievement.",
-                    mission.id()
+            let (severity, message) = match mission.status() {
+                MissionStatus::Active => (
+                    Severity::Info,
+                    format!(
+                        "Mission {} has met all board-verifiable goals. Ready for achievement.",
+                        mission.id()
+                    ),
                 ),
+                MissionStatus::Defining => (
+                    Severity::Warning,
+                    format!(
+                        "Mission {} has met all board-verifiable goals but is still Defining. Mission lifecycle drift: activate, log, achieve, and verify it or update the charter.",
+                        mission.id()
+                    ),
+                ),
+                MissionStatus::Paused => (
+                    Severity::Warning,
+                    format!(
+                        "Mission {} has met all board-verifiable goals but is Paused. Resume it or advance it to achievement.",
+                        mission.id()
+                    ),
+                ),
+                MissionStatus::Achieved | MissionStatus::Verified | MissionStatus::Abandoned => {
+                    continue;
+                }
+            };
+            problems.push(Problem {
+                severity,
+                path: mission.path.clone(),
+                message,
                 fix: None,
                 scope: Some(mission.id().to_string()),
                 category: Some(GapCategory::Coherence),
@@ -422,6 +448,56 @@ mod tests {
         let board = load_board(temp.path()).unwrap();
         let problems = check_mission_goals(&board);
         assert!(problems.is_empty());
+    }
+
+    #[test]
+    fn test_check_mission_goals_ready_for_achievement_when_active_goal_is_met() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "E1").status("done"))
+            .build();
+
+        let charter_path = temp.path().join("missions/M1/CHARTER.md");
+        let charter = r#"
+## Goals
+| ID | Description | Verification |
+|----|-------------|--------------|
+| MG-01 | Test goal | board: V1 |
+"#;
+        fs::write(charter_path, charter).unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_mission_goals(&board);
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].check_id, CheckId::MissionGoalAchieved);
+        assert_eq!(problems[0].severity, Severity::Info);
+        assert!(problems[0].message.contains("Ready for achievement"));
+    }
+
+    #[test]
+    fn test_check_mission_goals_flags_defining_mission_with_met_goal() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("defining"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "E1").status("done"))
+            .build();
+
+        let charter_path = temp.path().join("missions/M1/CHARTER.md");
+        let charter = r#"
+## Goals
+| ID | Description | Verification |
+|----|-------------|--------------|
+| MG-01 | Test goal | board: V1 |
+"#;
+        fs::write(charter_path, charter).unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_mission_goals(&board);
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].check_id, CheckId::MissionGoalAchieved);
+        assert_eq!(problems[0].severity, Severity::Warning);
+        assert!(problems[0].message.contains("still Defining"));
     }
 
     #[test]
