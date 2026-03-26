@@ -19,17 +19,16 @@ This is a **Watch** constraint. It limits the duration of missions that referenc
 
 ## Active Routine Anchor
 
-Only one live watch-scoped routine topic remains after auditing the routine backlog for duplicate shipped work:
+No live watch-scoped routine topics remain after auditing the routine backlog for shipped work and repo fit.
 
-- `VEvT3qXAi` Explore Speculative Decoding for Transit Messages
-
-This remaining topic is open research pressure rather than completed operational delivery. If it graduates from recurring review into concrete work, it should likely move into a bearing-led research track instead of staying on the watch indefinitely.
+If a new recurring operational review belongs on this watch later, it should be introduced with a repo-specific routine blueprint instead of reusing speculative research prompts from another context.
 
 ## Retired Routine Anchors
 
-The following watch-scoped routine anchors were retired on `2026-03-26` after confirming that their blueprint intent had already shipped under earlier scopes. Their current watch-scoped materializations were iced and the stale routines were removed so they can no longer create false strategic pressure.
+The following watch-scoped routine anchors were retired on `2026-03-26` after confirming that their blueprint intent had already shipped under earlier scopes or did not fit this repository. Their current watch-scoped materializations were iced or removed and the stale routines were deleted so they can no longer create false strategic pressure.
 
 - `VEvd69Hyf` Eliminate Report Tail Friction — covered by `VE56ttUZW` and voyage `VE5NSQ2T2`
 - `VEvd69Hyg` Ask About Keel System Audio Feedback Support For Transitions — covered by `VE56ttUZX` and voyage `VE5NSQ2T2`
 - `VEvT3qXAl` Daily Status Surface Progress — covered by `VDtx8IX2L` and epic `VDm4ld6EX`
 - `VEvd69Iyh` Bridge Engine And VCS Via Auto Staging — covered by `VE56ttVZY` and voyage `VE5NSQ2T2`
+- `VEvT3qXAi` Explore Speculative Decoding for Transit Messages — removed because the routine blueprint targeted unrelated `transit` and `dojo` research rather than Keel work
