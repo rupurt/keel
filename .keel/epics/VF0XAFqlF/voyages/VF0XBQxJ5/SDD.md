@@ -74,6 +74,19 @@ Pass 2 converges the public rendering contract around two main entrypoints:
 
 `RenderOptions` carries optional hooks, mutation batches, and body-only/frontmatter stripping behavior. Frontmatter mutation remains independently callable for hosts that need it outside the render pipeline.
 
+## Stable Extension Points
+
+- `TemplateCatalog` is the stable host-facing abstraction for template lookup.
+- `RenderHooks` and `RenderOptions` are the stable host-facing configuration points for render-time behavior.
+- `render` and `render_from_catalog` are the stable render entrypoints the host should build upon.
+- `Mutation` and `apply_frontmatter_mutations` remain stable for generic markdown frontmatter edits outside the main render pipeline.
+
+## Host-Owned Responsibilities
+
+- Template inventory and storage strategy remain outside `speccy`.
+- Project-specific helper functions, wrapper APIs, and domain-specific frontmatter choices remain outside `speccy`.
+- Keel continues to own board-specific scaffolds, command wiring, and any helper names retained for its internal adapter compatibility.
+
 ## Data Flow
 
 1. A host provides either a raw template string or a `TemplateCatalog`.

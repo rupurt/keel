@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-26T13:47:27.324852570-07:00
+mode: manual
+---
+Introduced RenderOptions and reduced speccy to the core public render entrypoints (`render`, `render_from_catalog`) plus the existing catalog, hook, and frontmatter types; the old helper matrix is no longer re-exported.

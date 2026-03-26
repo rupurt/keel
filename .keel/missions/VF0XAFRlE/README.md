@@ -1,13 +1,15 @@
 ---
 # system-managed
 id: VF0XAFRlE
-status: active
+status: verified
 created_at: 2026-03-26T13:33:19
-updated_at: 2026-03-26T13:37:25
+updated_at: 2026-03-26T13:49:13
 # authored
 title: Refactor Speccy Crate Surface And Module Layout
 watch: ~
 activated_at: 2026-03-26T13:37:25
+achieved_at: 2026-03-26T13:49:13
+verified_at: 2026-03-26T13:49:13
 ---
 
 # Refactor Speccy Crate Surface And Module Layout

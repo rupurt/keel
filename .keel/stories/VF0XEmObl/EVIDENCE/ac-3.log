@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-26T13:44:13.402476259-07:00
+mode: manual
+---
+Keel still compiles cleanly against the split speccy modules at the end of pass 1.

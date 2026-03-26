@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-26T13:48:21.662978936-07:00
+mode: manual
+---
+speccy crate docs now state the stable public contract (TemplateCatalog, RenderHooks, RenderOptions, render, render_from_catalog, Mutation) and explicitly leave template inventory, wrappers, and domain semantics to the host project.

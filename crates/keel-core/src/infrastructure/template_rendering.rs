@@ -2,11 +2,12 @@
 //!
 //! Replaces `{{placeholder}}` tokens with concrete values.
 
-use speccy::Mutation;
+use speccy::{Mutation, RenderOptions};
 
 /// Render a template by replacing `{{placeholder}}` patterns.
 pub fn render(template: &str, replacements: &[(&str, &str)]) -> String {
-    speccy::render(template, replacements)
+    speccy::render(template, replacements, RenderOptions::default())
+        .expect("rendering without host hooks should be infallible")
 }
 
 /// Render a template, then apply a single batch of frontmatter mutations.
@@ -15,12 +16,22 @@ pub fn render_with_mutations(
     replacements: &[(&str, &str)],
     mutations: &[Mutation],
 ) -> String {
-    speccy::render_with_mutations(template, replacements, mutations)
+    speccy::render(
+        template,
+        replacements,
+        RenderOptions::new().with_mutations(mutations),
+    )
+    .expect("rendering without host hooks should be infallible")
 }
 
 /// Render a template and strip an optional leading frontmatter block.
 pub fn render_body(template: &str, replacements: &[(&str, &str)]) -> String {
-    speccy::render_body(template, replacements)
+    speccy::render(
+        template,
+        replacements,
+        RenderOptions::new().strip_frontmatter(),
+    )
+    .expect("rendering without host hooks should be infallible")
 }
 
 #[cfg(test)]

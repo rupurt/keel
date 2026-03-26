@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-26T13:47:30.271041039-07:00
+mode: manual
+---
+Keel wrappers now adapt their existing render helpers onto speccy::render plus RenderOptions instead of the old helper matrix.

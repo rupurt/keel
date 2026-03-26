@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-26T13:41:55.441371400-07:00
+mode: manual
+---
+Split speccy into catalog.rs, hooks.rs, render.rs, and frontmatter.rs; lib.rs now re-exports the public surface instead of holding the implementation.

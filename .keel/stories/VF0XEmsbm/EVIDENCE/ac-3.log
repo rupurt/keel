@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-26T13:47:33.477250988-07:00
+mode: manual
+---
+The reduced API preserves speccy crate behavior and Keel template wrapper behavior.

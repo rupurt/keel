@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-26T13:48:21.646486183-07:00
+mode: manual
+---
+The planning artifacts now capture the module split and stable extension points: the PRD defines the reduced API goal, the SRS maps the two-pass scope, and the SDD adds explicit Stable Extension Points and Host-Owned Responsibilities sections.
