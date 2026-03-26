@@ -40,6 +40,6 @@ By investing in distributed cryptographic primitives now, we are deferring work 
 
 ## Recommendation
 
-[x] Proceed → convert to epic [SRC-01][SRC-02]
-[ ] Park → revisit later [SRC-01]
+[ ] Proceed → convert to epic [SRC-01][SRC-02]
+[x] Park → revisit when Transit is ready [SRC-01][SRC-02]
 [ ] Decline → document learnings [SRC-01]
