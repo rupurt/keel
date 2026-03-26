@@ -344,6 +344,12 @@
 |--------|--------|
 | [Txt Scene Foundation And Flow Pilot](epics/VEzA7KvXB/voyages/VEzDZy6Eq/) | done |
 
+### [Extract Reusable Speccy Markdown Template Engine](epics/VEzIwU3fh/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Speccy Foundation And Keel Integration Pilot](epics/VEzIwU3fh/voyages/VEzIxN01G/) | planned |
+
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
 | Voyage | Status |
