@@ -36,6 +36,7 @@ assets = [
 [dependencies]
 keel-core.workspace = true
 spoke-auth.workspace = true
+txt-scene.workspace = true
 anyhow.workspace = true
 chrono.workspace = true
 serde.workspace = true

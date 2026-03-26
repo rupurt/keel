@@ -22,8 +22,8 @@ index: 102
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 0/3 stories done
+**Progress:** 1/1 voyages complete, 3/3 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Txt Scene Foundation And Flow Pilot](voyages/VEzDZy6Eq/) | planned | 0/3 |
+| [Txt Scene Foundation And Flow Pilot](voyages/VEzDZy6Eq/) | done | 3/3 |
 <!-- END GENERATED -->

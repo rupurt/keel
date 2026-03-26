@@ -1,0 +1,14 @@
+[package]
+name = "txt-scene"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Reusable fixed-width terminal scene primitives"
+publish = false
+
+[dependencies]
+owo-colors = "4.2.3"
+regex = "1"

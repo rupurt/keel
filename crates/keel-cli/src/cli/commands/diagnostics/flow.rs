@@ -2,9 +2,9 @@
 
 use anyhow::Result;
 use chrono::{DateTime, Utc};
+use txt_scene::{SceneFrame, SceneLine, ScenePalette};
 
 use crate::cli::presentation::flow::display::render_annotated_flow;
-use crate::cli::presentation::scene::{SceneFrame, SceneLine, ScenePalette};
 use crate::cli::presentation::terminal::get_terminal_width;
 use crate::cli::presentation::theme::Theme;
 use keel::infrastructure::loader::load_board;
@@ -581,12 +581,12 @@ mod tests {
     use super::*;
     use chrono::TimeZone;
     use keel::domain::model::StoryState;
-    use keel::infrastructure::utils::visible_width;
     use keel::read_model::capacity::EpicCapacity;
     use keel::read_model::routine_materialization::materialization_marker;
     use keel::test_helpers::{TestBearing, TestBoardBuilder, TestMission, TestStory};
     use std::fs;
     use std::path::Path;
+    use txt_scene::visible_width;
 
     fn write_routine(root: &Path, id: &str, title: &str, target_scope: &str, cadence_block: &str) {
         let routine_dir = root.join("routines").join(id);

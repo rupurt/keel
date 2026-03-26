@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-26T08:20:41.332125537-07:00
+mode: manual
+---
+Verified voyage SDD overview, architecture, and components sections state that txt-scene owns reusable width-aware primitives while flow remains the pilot command-local semantic renderer.

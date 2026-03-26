@@ -2,7 +2,8 @@
 members = [
     "crates/keel-core",
     "crates/keel-cli",
-    "crates/spoke-auth"
+    "crates/spoke-auth",
+    "crates/txt-scene"
 ]
 resolver = "2"
 
@@ -17,6 +18,7 @@ homepage = "https://github.com/rupurt/keel"
 [workspace.dependencies]
 keel-core = { path = "crates/keel-core" }
 spoke-auth = { path = "crates/spoke-auth" }
+txt-scene = { path = "crates/txt-scene" }
 anyhow = "1"
 chrono = { version = "0.4", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
