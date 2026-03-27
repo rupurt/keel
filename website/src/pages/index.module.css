@@ -1,0 +1,281 @@
+.page {
+  position: relative;
+}
+
+.hero {
+  padding: 4.5rem 0 3rem;
+}
+
+.heroGrid {
+  display: grid;
+  gap: 2rem;
+  align-items: center;
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.95fr);
+}
+
+.heroCopy h1 {
+  max-width: 12ch;
+  margin: 0 0 1rem;
+  font-size: clamp(3rem, 6vw, 5.2rem);
+  line-height: 0.92;
+  letter-spacing: -0.05em;
+}
+
+.eyebrow,
+.sectionEyebrow {
+  margin: 0 0 0.9rem;
+  font-size: 0.83rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--keel-copper);
+}
+
+.lede {
+  max-width: 62ch;
+  margin: 0 0 1.5rem;
+  font-size: 1.1rem;
+  line-height: 1.75;
+  color: var(--keel-ink-soft);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+}
+
+.primaryAction,
+.secondaryAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding: 0.8rem 1.25rem;
+  border-radius: 999px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.primaryAction {
+  color: #f8f2e8;
+  background: linear-gradient(135deg, var(--keel-navy), #31486d);
+  box-shadow: 0 18px 40px rgba(27, 39, 58, 0.18);
+}
+
+.secondaryAction {
+  color: var(--keel-ink);
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(27, 39, 58, 0.12);
+}
+
+.primaryAction:hover,
+.secondaryAction:hover {
+  color: inherit;
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.heroPoints {
+  margin: 1.4rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--keel-ink-soft);
+}
+
+.heroPoints li + li {
+  margin-top: 0.5rem;
+}
+
+.scenePanel {
+  display: grid;
+  gap: 1rem;
+}
+
+.sceneFrame {
+  position: relative;
+  overflow: hidden;
+  padding: 1.6rem;
+  border-radius: 1.75rem;
+  background:
+    radial-gradient(circle at top right, rgba(191, 122, 61, 0.28), transparent 34%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.92), rgba(240, 231, 217, 0.82));
+  border: 1px solid rgba(27, 39, 58, 0.1);
+  box-shadow: 0 22px 44px rgba(27, 39, 58, 0.13);
+}
+
+.sceneLabel {
+  margin: 0 0 1rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--keel-copper);
+}
+
+.sceneSteps {
+  display: grid;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sceneSteps li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(27, 39, 58, 0.08);
+  color: var(--keel-ink-soft);
+}
+
+.sceneSteps li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.sceneSteps span {
+  font-weight: 600;
+  color: var(--keel-ink);
+}
+
+.sceneSteps code {
+  font-size: 0.84rem;
+  white-space: nowrap;
+}
+
+.sceneSignals {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.sceneSignals > div {
+  padding: 1rem;
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(27, 39, 58, 0.09);
+}
+
+.signalTitle {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--keel-copper);
+}
+
+.sceneSignals strong {
+  font-family: var(--ifm-heading-font-family);
+  font-size: 1.2rem;
+  color: var(--keel-ink);
+}
+
+.section,
+.sectionAlt {
+  padding: 2.5rem 0;
+}
+
+.sectionAlt {
+  background: rgba(255, 255, 255, 0.44);
+  border-top: 1px solid rgba(27, 39, 58, 0.06);
+  border-bottom: 1px solid rgba(27, 39, 58, 0.06);
+}
+
+.sectionHeader {
+  max-width: 60rem;
+  margin-bottom: 1.5rem;
+}
+
+.sectionHeader h2 {
+  max-width: 16ch;
+  margin: 0 0 0.8rem;
+  font-size: clamp(2rem, 4vw, 3.1rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.sectionHeader p:last-child {
+  max-width: 62ch;
+  margin: 0;
+  color: var(--keel-ink-soft);
+}
+
+.ctaBand {
+  padding: 2.8rem 0 4.2rem;
+}
+
+.ctaCard {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  align-items: center;
+  padding: 1.8rem;
+  border-radius: 2rem;
+  background: linear-gradient(140deg, var(--keel-navy), #39557f);
+  color: #f8f2e8;
+  box-shadow: 0 28px 60px rgba(27, 39, 58, 0.24);
+}
+
+.ctaCard h2 {
+  max-width: 15ch;
+  margin: 0;
+  color: inherit;
+}
+
+.ctaCard .sectionEyebrow {
+  color: rgba(248, 242, 232, 0.72);
+}
+
+.ctaCard .primaryAction {
+  background: #f8f2e8;
+  color: var(--keel-navy);
+}
+
+.ctaCard .secondaryAction {
+  background: rgba(248, 242, 232, 0.15);
+  border-color: rgba(248, 242, 232, 0.2);
+  color: #f8f2e8;
+}
+
+@media (max-width: 996px) {
+  .hero {
+    padding-top: 3rem;
+  }
+
+  .heroGrid,
+  .ctaCard {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sceneSignals {
+    grid-template-columns: 1fr;
+  }
+
+  .sceneSteps li {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ctaCard h2,
+  .sectionHeader h2 {
+    max-width: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .heroCopy h1 {
+    font-size: 3rem;
+  }
+
+  .primaryAction,
+  .secondaryAction {
+    width: 100%;
+  }
+}

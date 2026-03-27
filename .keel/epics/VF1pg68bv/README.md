@@ -22,8 +22,8 @@ index: 105
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 0/3 stories done
+**Progress:** 1/1 voyages complete, 3/3 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Public Docs Site And Persona Guides](voyages/VF1ph7Z2N/) | planned | 0/3 |
+| [Public Docs Site And Persona Guides](voyages/VF1ph7Z2N/) | done | 3/3 |
 <!-- END GENERATED -->

@@ -1,0 +1,676 @@
+---
+recorded_at: 2026-03-26T19:12:31.950271275-07:00
+mode: manual
+files: ["website/src/components/SignalGrid/index.tsx", "website/src/components/TurnCycle/index.tsx", "website/src/components/TermRamp/index.tsx", "website/src/css/custom.css", "website/docs/workflows/routines-and-pulse.mdx", "website/docs/personas/project-managers.mdx"]
+---
+
+--- File: index.tsx ---
+import Link from '@docusaurus/Link';
+
+import styles from './styles.module.css';
+
+type SignalItem = {
+  eyebrow?: string;
+  title: string;
+  body: string;
+  href?: string;
+  cta?: string;
+};
+
+type SignalGridProps = {
+  items: SignalItem[];
+  columns?: 'two' | 'three';
+};
+
+export default function SignalGrid({
+  items,
+  columns = 'three',
+}: SignalGridProps) {
+  return (
+    <div
+      className={`${styles.grid} ${
+        columns === 'two' ? styles.twoColumns : styles.threeColumns
+      }`}>
+      {items.map((item) => {
+        const content = (
+          <>
+            {item.eyebrow ? <p className={styles.eyebrow}>{item.eyebrow}</p> : null}
+            <h3>{item.title}</h3>
+            <p>{item.body}</p>
+            {item.href ? (
+              <span className={styles.linkText}>{item.cta ?? 'Read more'}</span>
+            ) : null}
+          </>
+        );
+
+        if (item.href) {
+          return (
+            <Link key={item.title} className={styles.cardLink} to={item.href}>
+              <article className={styles.card}>{content}</article>
+            </Link>
+          );
+        }
+
+        return (
+          <article key={item.title} className={styles.card}>
+            {content}
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+
+--- File: index.tsx ---
+import styles from './styles.module.css';
+
+const steps = [
+  {
+    label: 'Orient',
+    command: 'keel health --scene',
+    body: 'Read the board before acting. Check for drift, blocked work, and missing integrity.',
+  },
+  {
+    label: 'Inspect',
+    command: 'keel mission next --status',
+    body: 'Understand what the system thinks matters now at the strategic and tactical level.',
+  },
+  {
+    label: 'Pull',
+    command: 'keel next --role operator',
+    body: 'Take one role-scoped move from the delivery lane instead of browsing an unbounded backlog.',
+  },
+  {
+    label: 'Ship',
+    command: 'keel story submit STORY-ID',
+    body: 'Move the slice into review only when the implementation and its evidence are ready together.',
+  },
+  {
+    label: 'Close',
+    command: 'keel story accept --role manager STORY-ID',
+    body: 'Accept the slice with an explicit role, then let the next turn begin from a clean board state.',
+  },
+];
+
+export default function TurnCycle() {
+  return (
+    <div className={styles.wrap}>
+      {steps.map((step, index) => (
+        <article key={step.label} className={styles.card}>
+          <div className={styles.head}>
+            <span className={styles.count}>0{index + 1}</span>
+            <h3>{step.label}</h3>
+          </div>
+          <code>{step.command}</code>
+          <p>{step.body}</p>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+
+--- File: index.tsx ---
+import styles from './styles.module.css';
+
+const terms = [
+  {
+    plain: 'Objective',
+    keel: 'Mission',
+    body: 'The long-running outcome you are trying to achieve across multiple efforts.',
+  },
+  {
+    plain: 'Strategic track',
+    keel: 'Epic',
+    body: 'A major problem or opportunity inside the mission that deserves its own planning surface.',
+  },
+  {
+    plain: 'Tactical campaign',
+    keel: 'Voyage',
+    body: 'A planned delivery arc with SRS and SDD constraints before execution begins.',
+  },
+  {
+    plain: 'Executable slice',
+    keel: 'Story',
+    body: 'The smallest tracked unit that can be started, submitted, accepted, and evidenced.',
+  },
+  {
+    plain: 'Research vector',
+    keel: 'Bearing',
+    body: 'A discovery move used to reduce fog before you freeze requirements or architecture.',
+  },
+  {
+    plain: 'Scheduled contract',
+    keel: 'Routine',
+    body: 'Recurring work that pulse can materialize into the board without inventing new scope.',
+  },
+];
+
+export default function TermRamp() {
+  return (
+    <div className={styles.grid}>
+      {terms.map((term) => (
+        <article key={term.keel} className={styles.card}>
+          <p className={styles.plain}>{term.plain}</p>
+          <div className={styles.arrow} />
+          <h3>{term.keel}</h3>
+          <p>{term.body}</p>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+
+--- File: custom.css ---
+:root {
+  --ifm-color-primary: #3f5c85;
+  --ifm-color-primary-dark: #395278;
+  --ifm-color-primary-darker: #354d72;
+  --ifm-color-primary-darkest: #2b405e;
+  --ifm-color-primary-light: #4a678f;
+  --ifm-color-primary-lighter: #547298;
+  --ifm-color-primary-lightest: #6d85ab;
+  --ifm-background-color: #f4ecdf;
+  --ifm-background-surface-color: rgba(255, 255, 255, 0.82);
+  --ifm-code-font-size: 92%;
+  --ifm-font-family-base: 'IBM Plex Sans', sans-serif;
+  --ifm-font-family-monospace: 'IBM Plex Mono', monospace;
+  --ifm-heading-font-family: 'Fraunces', serif;
+  --ifm-heading-color: #172132;
+  --ifm-navbar-background-color: rgba(244, 236, 223, 0.82);
+  --ifm-footer-background-color: #172132;
+  --ifm-footer-color: rgba(248, 242, 232, 0.82);
+  --ifm-footer-link-color: #f8f2e8;
+  --ifm-footer-title-color: rgba(248, 242, 232, 0.62);
+  --ifm-link-color: #2e527d;
+  --ifm-menu-color-background-active: rgba(63, 92, 133, 0.12);
+  --ifm-menu-color-background-hover: rgba(63, 92, 133, 0.08);
+  --ifm-toc-border-color: rgba(23, 33, 50, 0.12);
+  --ifm-table-head-background: rgba(63, 92, 133, 0.08);
+  --ifm-table-stripe-background: rgba(255, 255, 255, 0.38);
+  --docusaurus-highlighted-code-line-bg: rgba(63, 92, 133, 0.12);
+  --keel-ink: #172132;
+  --keel-ink-soft: #46536a;
+  --keel-navy: #243751;
+  --keel-copper: #bf7a3d;
+  --keel-line: rgba(23, 33, 50, 0.1);
+}
+
+html {
+  background:
+    radial-gradient(circle at top left, rgba(191, 122, 61, 0.18), transparent 24%),
+    radial-gradient(circle at top right, rgba(63, 92, 133, 0.14), transparent 28%),
+    var(--ifm-background-color);
+}
+
+body {
+  color: var(--keel-ink);
+  background: transparent;
+}
+
+.navbar {
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(23, 33, 50, 0.08);
+}
+
+.navbar__brand {
+  gap: 0.75rem;
+}
+
+.navbar__title {
+  font-family: var(--ifm-heading-font-family);
+  font-size: 1.35rem;
+  letter-spacing: -0.03em;
+}
+
+.footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.footer__copyright {
+  color: rgba(248, 242, 232, 0.6);
+}
+
+.theme-doc-markdown {
+  font-size: 1.02rem;
+}
+
+.theme-doc-markdown h1,
+.theme-doc-markdown h2,
+.theme-doc-markdown h3,
+.theme-doc-markdown h4 {
+  letter-spacing: -0.03em;
+}
+
+.theme-doc-markdown h1 {
+  font-size: clamp(2.4rem, 5vw, 3.7rem);
+}
+
+.theme-doc-markdown h2 {
+  margin-top: 3rem;
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
+}
+
+.theme-doc-markdown p,
+.theme-doc-markdown li {
+  color: var(--keel-ink-soft);
+}
+
+.theme-doc-markdown strong {
+  color: var(--keel-ink);
+}
+
+.theme-doc-markdown code {
+  border: 1px solid rgba(23, 33, 50, 0.08);
+}
+
+.theme-doc-markdown pre code {
+  border: 0;
+}
+
+.theme-doc-sidebar-container {
+  border-right: 1px solid rgba(23, 33, 50, 0.08);
+}
+
+.alert {
+  border: 1px solid rgba(23, 33, 50, 0.08);
+  box-shadow: none;
+}
+
+.table-of-contents {
+  font-size: 0.92rem;
+}
+
+.markdown > .keel-callout-grid,
+.markdown > .keel-command-grid {
+  margin: 1.5rem 0 2rem;
+}
+
+.keel-callout-grid,
+.keel-command-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.keel-panel {
+  padding: 1.2rem;
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--keel-line);
+  box-shadow: 0 14px 28px rgba(23, 33, 50, 0.08);
+}
+
+.keel-panel h3,
+.keel-panel h4,
+.keel-panel p:last-child {
+  margin-bottom: 0;
+}
+
+.keel-panel .keel-label {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--keel-copper);
+}
+
+.keel-checklist {
+  padding-left: 1.2rem;
+}
+
+.keel-checklist li + li {
+  margin-top: 0.55rem;
+}
+
+@media (max-width: 996px) {
+  .table-of-contents {
+    display: none;
+  }
+}
+
+
+--- File: routines-and-pulse.mdx ---
+---
+title: Routines And Pulse
+description: Materialize recurring work with explicit routine contracts and a non-daemon automation cycle.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+
+export const routineSurfaces = [
+  {
+    eyebrow: 'Author',
+    title: 'Create a routine bundle',
+    body:
+      'A routine is authored as one human-editable bundle under `.keel/routines/<id>/README.md`.',
+  },
+  {
+    eyebrow: 'Review',
+    title: 'Inspect schedule state before creating work',
+    body:
+      'Use `keel next --role operator` and `keel flow` to see whether recurring work is due or already materialized.',
+  },
+  {
+    eyebrow: 'Materialize',
+    title: 'Run one automation cycle with pulse',
+    body:
+      '`keel pulse` creates due stories once per eligible window and skips duplicates safely.',
+  },
+  {
+    eyebrow: 'Operate',
+    title: 'Use an external scheduler',
+    body:
+      'Keel does not ship a daemon. Run `keel pulse` from cron, systemd, or your own scheduler.',
+  },
+];
+
+Routines are Keel's answer to recurring work. Instead of keeping a side calendar of recurring chores, you author a formal contract and let the board materialize work only when the schedule says it is due.
+
+<SignalGrid items={routineSurfaces} columns="two" />
+
+## Core model
+
+A routine is a recurring-work contract stored as a single bundle:
+
+```text
+.keel/routines/<id>/README.md
+```
+
+Each bundle contains:
+
+- YAML frontmatter
+- a `# Blueprint` body
+
+The blueprint is the canonical authored content. When `keel pulse` creates a story, that body becomes the starting content for the materialized work item.
+
+Routine target scope can point to:
+
+- an epic: `EPIC-ID`
+- a voyage inside an epic: `EPIC-ID/VOYAGE-ID`
+
+Use the current command names:
+
+```bash
+keel routine new
+keel routine list
+keel routine show
+keel next --role operator
+keel flow
+keel pulse
+```
+
+`keel next` requires `--role`. Use `keel next --role manager` for management review and `keel next --role operator` for delivery review.
+
+## Author a routine
+
+Create a new routine bundle:
+
+```bash
+keel routine new "Weekly Pipeline Review" \
+  --target-scope EPIC-ID/VOYAGE-ID \
+  --cadence cron="0 9 * * 1" \
+  --cadence timezone="America/Los_Angeles"
+```
+
+The resulting authored contract looks like this:
+
+```md
+---
+id: weekly-pipeline-review
+title: Weekly Pipeline Review
+cadence:
+  cron: 0 9 * * 1
+  timezone: America/Los_Angeles
+target-scope: EPIC-ID/VOYAGE-ID
+created_at: 2026-03-11T00:00:00
+updated_at: 2026-03-11T00:00:00
+---
+
+# Blueprint
+
+- Describe the recurring trigger or review point.
+- Outline the work to perform.
+- Capture the expected output or exit criteria.
+```
+
+Authoring rules:
+
+- `cadence` is stored as a YAML mapping
+- the current scheduling path interprets `cadence.cron` and `cadence.timezone`
+- extra cadence keys may be stored, but they are opaque unless another implemented surface consumes them
+- `target-scope` must point at existing board scope
+- the blueprint body should be actionable because it becomes the starting point for each created story
+
+Inspect authored routines with:
+
+```bash
+keel routine list
+keel routine show weekly-pipeline-review
+```
+
+## Review schedule state before materializing work
+
+Keel exposes routine schedule state in two places before automation runs.
+
+### `keel next --role operator`
+
+This remains the delivery pull surface. When routines exist, it also prints a `Scheduled routines:` section that marks each routine as:
+
+- `due now`
+- `next run ...`
+- `invalid cadence: ...`
+
+Use it when you want a compact answer to: "Should I keep working existing delivery items, or is recurring work due for this scope?"
+
+### `keel flow`
+
+`keel flow` adds a `Scheduled Capacity` section when routines exist. That surface shows:
+
+- due routines that still need `keel pulse`
+- upcoming routines that are not actionable yet
+- invalid cadence entries that need repair
+- due routines already materialized during the current eligible window
+
+That makes recurring demand visible before and after automation runs.
+
+## End-to-end example
+
+1. Create the routine.
+
+   ```bash
+   keel routine new "Weekly Pipeline Review" \
+     --target-scope EPIC-ID/VOYAGE-ID \
+     --cadence cron="0 9 * * 1" \
+     --cadence timezone="America/Los_Angeles"
+   ```
+
+2. Confirm the authored bundle.
+
+   ```bash
+   keel routine list
+   keel routine show weekly-pipeline-review
+   ```
+
+3. Review whether it is due.
+
+   ```bash
+   keel next --role operator
+   keel flow --no-color
+   ```
+
+4. Run one automation cycle.
+
+   ```bash
+   keel pulse
+   ```
+
+   For scheduler-friendly output:
+
+   ```bash
+   keel pulse --json
+   ```
+
+5. Review the result.
+
+- If the routine was due, `keel pulse` creates one story inside the targeted scope.
+- If the same eligible window already produced a story, `keel pulse` skips it instead of duplicating work.
+- If cadence is malformed, the affected routine is reported as invalid or deferred while the rest of the cycle continues.
+
+6. Return to normal delivery work.
+
+   ```bash
+   keel next --role operator
+   keel flow --no-color
+   ```
+
+## Running pulse from cron or systemd
+
+Keel does not ship a daemon, hosted scheduler, or always-on worker. If you want automation, invoke `keel pulse` from an external scheduler while the working directory points at the board root.
+
+Example cron entry:
+
+```cron
+*/15 * * * * cd /path/to/board && /path/to/keel pulse >> /var/log/keel-pulse.log 2>&1
+```
+
+Example systemd service:
+
+```ini
+[Unit]
+Description=Keel pulse run
+
+[Service]
+Type=oneshot
+WorkingDirectory=/path/to/board
+ExecStart=/path/to/keel pulse --json
+```
+
+Example systemd timer:
+
+```ini
+[Unit]
+Description=Run Keel pulse every 15 minutes
+
+[Timer]
+OnCalendar=*:0/15
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+Operational expectations:
+
+- repeated runs are safe because pulse is idempotent per routine eligible window
+- running pulse more frequently than the cadence is allowed
+- scheduler logs are worth keeping
+- invalid cadence in one routine does not require the entire automation cycle to fail
+
+## Supported boundaries
+
+What Keel supports today:
+
+- one-file routine bundles under `.keel/routines/<id>/README.md`
+- temporal review in `keel next --role operator`
+- scheduled automation visibility in `keel flow`
+- non-interactive materialization with `keel pulse`
+- cron or systemd invoking `keel pulse`
+
+What this workflow does not support:
+
+- a built-in daemon, hosted scheduler, or background service
+- materializing work from `keel next` or `keel flow`
+- legacy `keel next --agent` or `keel next --human` flags
+- alternate routine lifecycle states beyond the authored bundle itself
+- undocumented cadence schemas or fallback command names
+
+If you need different automation behavior, plan it as new board work instead of assuming hidden compatibility.
+
+
+--- File: project-managers.mdx ---
+---
+title: Project Managers
+description: Use Keel to turn priorities, constraints, and review authority into a visible operating system instead of a loose backlog.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+
+export const managerMoves = [
+  {
+    eyebrow: 'Direction',
+    title: 'Use missions and epics to state the problem clearly',
+    body:
+      'Create the strategic frame before asking the delivery lane to execute. Keel rewards clear problem statements.',
+  },
+  {
+    eyebrow: 'Planning',
+    title: 'Demand planned voyages before execution starts',
+    body:
+      'A voyage should capture requirements and design decisions before stories begin consuming team capacity.',
+  },
+  {
+    eyebrow: 'Review',
+    title: 'Accept slices with explicit authority',
+    body:
+      'Acceptance is a role-bearing move. Use it to keep closure decisions visible and deliberate.',
+  },
+];
+
+Project managers use Keel to keep direction and delivery connected. The board becomes the place where priorities are made visible, planning gets constrained, and acceptance happens with evidence in view.
+
+<SignalGrid items={managerMoves} />
+
+## Your default surfaces
+
+```bash
+keel mission next --status
+keel next --role manager
+keel flow
+keel workshop
+```
+
+These commands tell you whether the board needs:
+
+- a new objective or active mission
+- a new epic or voyage decision
+- acceptance and review work
+- human intervention because the flow is blocked
+
+## What good management looks like in Keel
+
+- Create missions only when the outcome is real enough to govern later work.
+- Write epic problems in plain language before the team disappears into solution mode.
+- Require voyage planning before you open the delivery lane.
+- Use acceptance as a public act, not a private DM.
+
+## Typical planning pattern
+
+```bash
+keel mission new "Launch onboarding"
+keel mission activate MISSION-ID
+keel epic new --problem "Users cannot orient in the first five minutes." "Teach the first-use path"
+keel voyage new --epic EPIC-ID --goal "Ship a guided onboarding loop." "First-turn docs"
+keel voyage plan VOYAGE-ID
+```
+
+The important shift is cultural: Keel wants management work to be specific enough that someone else can execute without reconstructing intent from memory.
+
+## When a story comes back for acceptance
+
+Use the story bundle as the review surface:
+
+- read the acceptance criteria
+- inspect the recorded evidence
+- decide with an explicit role whether the slice should close
+
+```bash
+keel story accept --role manager STORY-ID
+```
+
+If the slice is not ready, reject it or redirect it through planning instead of accepting ambiguity.
+

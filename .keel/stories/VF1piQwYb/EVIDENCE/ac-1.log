@@ -1,0 +1,309 @@
+---
+recorded_at: 2026-03-26T19:12:31.929468475-07:00
+mode: manual
+files: ["website/docs/personas/project-managers.mdx", "website/docs/personas/programmers.mdx", "website/docs/personas/designers.mdx", "website/docs/personas/leaders-and-specialists.mdx"]
+---
+
+--- File: project-managers.mdx ---
+---
+title: Project Managers
+description: Use Keel to turn priorities, constraints, and review authority into a visible operating system instead of a loose backlog.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+
+export const managerMoves = [
+  {
+    eyebrow: 'Direction',
+    title: 'Use missions and epics to state the problem clearly',
+    body:
+      'Create the strategic frame before asking the delivery lane to execute. Keel rewards clear problem statements.',
+  },
+  {
+    eyebrow: 'Planning',
+    title: 'Demand planned voyages before execution starts',
+    body:
+      'A voyage should capture requirements and design decisions before stories begin consuming team capacity.',
+  },
+  {
+    eyebrow: 'Review',
+    title: 'Accept slices with explicit authority',
+    body:
+      'Acceptance is a role-bearing move. Use it to keep closure decisions visible and deliberate.',
+  },
+];
+
+Project managers use Keel to keep direction and delivery connected. The board becomes the place where priorities are made visible, planning gets constrained, and acceptance happens with evidence in view.
+
+<SignalGrid items={managerMoves} />
+
+## Your default surfaces
+
+```bash
+keel mission next --status
+keel next --role manager
+keel flow
+keel workshop
+```
+
+These commands tell you whether the board needs:
+
+- a new objective or active mission
+- a new epic or voyage decision
+- acceptance and review work
+- human intervention because the flow is blocked
+
+## What good management looks like in Keel
+
+- Create missions only when the outcome is real enough to govern later work.
+- Write epic problems in plain language before the team disappears into solution mode.
+- Require voyage planning before you open the delivery lane.
+- Use acceptance as a public act, not a private DM.
+
+## Typical planning pattern
+
+```bash
+keel mission new "Launch onboarding"
+keel mission activate MISSION-ID
+keel epic new --problem "Users cannot orient in the first five minutes." "Teach the first-use path"
+keel voyage new --epic EPIC-ID --goal "Ship a guided onboarding loop." "First-turn docs"
+keel voyage plan VOYAGE-ID
+```
+
+The important shift is cultural: Keel wants management work to be specific enough that someone else can execute without reconstructing intent from memory.
+
+## When a story comes back for acceptance
+
+Use the story bundle as the review surface:
+
+- read the acceptance criteria
+- inspect the recorded evidence
+- decide with an explicit role whether the slice should close
+
+```bash
+keel story accept --role manager STORY-ID
+```
+
+If the slice is not ready, reject it or redirect it through planning instead of accepting ambiguity.
+
+
+--- File: programmers.mdx ---
+---
+title: Programmers
+description: Use Keel to pull precise work, attach proof, and keep engineering delivery synchronized with the board.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+
+export const programmerMoves = [
+  {
+    eyebrow: 'Pull',
+    title: 'Start from the lane, not from memory',
+    body:
+      'Use `keel next --role operator` to pull the board-approved next slice instead of building a private queue.',
+  },
+  {
+    eyebrow: 'Implement',
+    title: 'Keep the slice small enough to verify',
+    body:
+      'Stories should be executable units. If the work is sprawling, the board usually needs another planning pass.',
+  },
+  {
+    eyebrow: 'Prove',
+    title: 'Attach evidence before you submit',
+    body:
+      'Tests, screenshots, logs, and manual review notes belong on the story, not only in commit history or chat.',
+  },
+];
+
+For programmers, Keel is the mechanism that keeps code changes connected to why they exist and how they should be trusted. It is not there to replace your editor or terminal; it is there to keep the board honest.
+
+<SignalGrid items={programmerMoves} />
+
+## Your default loop
+
+```bash
+keel next --role operator
+keel story start STORY-ID
+keel story record STORY-ID --ac 1 --cmd "cargo test"
+keel story submit STORY-ID
+```
+
+The exact command proof changes by project. The workflow does not.
+
+## What makes Keel useful for engineering
+
+- acceptance criteria live with the story bundle
+- evidence is recorded where review happens
+- planning artifacts are nearby when implementation gets fuzzy
+- recurring work can be formalized as routines instead of hidden checklists
+
+## When to push back on the board
+
+Programmers should not silently absorb planning failures.
+
+If a story is too wide, too vague, or detached from its parent planning artifacts, the right move is usually one of these:
+
+- ask for voyage planning to tighten the contract
+- split the story into smaller executable units
+- add a bearing if the team is still operating in fog
+
+Keel is strongest when implementation refuses to normalize ambiguity.
+
+## Daily engineering rhythm
+
+```bash
+keel health --scene
+keel flow --scene
+keel next --role operator
+```
+
+Read the board, ship the slice, attach the proof, and leave the next engineer a cleaner state than the one you inherited.
+
+
+--- File: designers.mdx ---
+---
+title: Designers
+description: Use Keel to keep discovery, design constraints, and review evidence visible all the way through delivery.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+
+export const designMoves = [
+  {
+    eyebrow: 'Discovery',
+    title: 'Use bearings when the team is still learning',
+    body:
+      'Keel gives discovery a formal place so design questions do not get squeezed into delivery stories too early.',
+  },
+  {
+    eyebrow: 'Constraint',
+    title: 'Shape voyages before implementation starts',
+    body:
+      'Design decisions belong in the planned delivery arc, not only in loose references or verbal handoff.',
+  },
+  {
+    eyebrow: 'Review',
+    title: 'Attach visual proof to the story bundle',
+    body:
+      'Screens, flows, prototypes, and manual review notes can all be recorded as evidence before acceptance.',
+  },
+];
+
+Designers can use Keel without pretending that design is only implementation support. The board has room for discovery, constraints, and review, which means design work can stay explicit instead of being squeezed into engineering comments.
+
+<SignalGrid items={designMoves} />
+
+## How designers fit into the board
+
+Use Keel when you need to:
+
+- reduce fog before requirements freeze
+- record the design intent that should govern a voyage
+- review whether a slice actually satisfies the intended experience
+
+Useful surfaces:
+
+```bash
+keel next --role manager
+keel flow
+keel story record STORY-ID --ac 2 --file mockup.png
+```
+
+## Bearings are your friend
+
+When the right user flow, narrative, or interaction pattern is still unclear, the board should say so.
+
+That is the job of a bearing:
+
+- explore before committing
+- reduce uncertainty
+- feed stronger planning artifacts later
+
+This keeps design discovery from becoming "surprise scope" halfway through implementation.
+
+## Review with evidence, not memory
+
+If the acceptance criterion is visual or experiential, record proof that supports that judgment:
+
+- annotated screens
+- prototype links
+- screenshots
+- manual review notes
+
+Keel does not force design into automated checks. It does force the review signal to be public.
+
+
+--- File: leaders-and-specialists.mdx ---
+---
+title: Leaders And Specialists
+description: Read Keel as a board for visibility, risk review, and scoped contribution even if you are not in the delivery lane every day.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+
+export const leadershipMoves = [
+  {
+    eyebrow: 'Executives',
+    title: 'Read direction and readiness without asking for a custom dashboard',
+    body:
+      'Missions, epics, and flow surfaces provide a direct view into progress, blocked work, and verification posture.',
+  },
+  {
+    eyebrow: 'General Managers',
+    title: 'See whether operating capacity matches the plan',
+    body:
+      'The board exposes when work is blocked, when routines are due, and when acceptance authority is waiting.',
+  },
+  {
+    eyebrow: 'Specialists',
+    title: 'Contribute judgment without living in the delivery lane',
+    body:
+      'Marketers, lawyers, and other specialists can review the relevant slice, record input, and keep the board authoritative.',
+  },
+];
+
+Keel is not only for full-time operators. It is also useful for people who need a precise read on scope, readiness, and risk without running the day-to-day delivery loop themselves.
+
+<SignalGrid items={leadershipMoves} />
+
+## What to look at first
+
+```bash
+keel mission next --status
+keel flow
+keel workshop
+```
+
+These commands answer:
+
+- which objective is active
+- whether the board is moving cleanly
+- where human judgment is required next
+
+## How specialists should engage
+
+If your role is occasional but important, keep the contribution scoped:
+
+- review the relevant mission, epic, voyage, or story
+- record the decision or feedback where the board can retain it
+- avoid creating side channels that replace the artifact trail
+
+Examples:
+
+- a marketer reviews narrative readiness for a launch story
+- a lawyer reviews acceptance criteria tied to policy or terms
+- a CEO checks whether a mission is truly achieved and verified
+
+## The value of one board
+
+The main benefit for leadership and specialists is not more detail. It is less ambiguity.
+
+Keel gives you:
+
+- one current source of scope
+- one visible chain from objective to slice
+- one place to see whether verification actually happened
+
+That is enough to make better decisions without turning every review into a meeting.
+

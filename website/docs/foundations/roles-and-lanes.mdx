@@ -1,0 +1,88 @@
+---
+title: Roles And Lanes
+description: See how Keel separates direction-setting from delivery while keeping both on one board.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+
+export const laneSignals = [
+  {
+    eyebrow: 'Management Lane',
+    title: 'Choose and constrain',
+    body:
+      'Use management roles when deciding what should exist, what should change, and what needs review or acceptance.',
+  },
+  {
+    eyebrow: 'Delivery Lane',
+    title: 'Execute and submit',
+    body:
+      'Use delivery roles when pulling implementable work, starting stories, attaching evidence, and submitting slices.',
+  },
+  {
+    eyebrow: 'Role Taxonomy',
+    title: 'Be explicit about who is acting',
+    body:
+      'Keel requires `--role` for lane selection so the board never has to guess whether you want strategic or delivery work.',
+  },
+];
+
+Keel keeps strategy and implementation close, but it does not let them blur together. The board has separate lanes because the questions are different.
+
+<SignalGrid items={laneSignals} />
+
+## `keel next` is role-aware on purpose
+
+Keel does not have an implicit default queue. You must declare the role family that should be used for routing:
+
+```bash
+keel next --role manager
+keel next --role operator
+keel next --role operator/software:frontend
+```
+
+This matters for two reasons:
+
+- it protects strategic work from getting buried in implementation noise
+- it protects delivery work from being interrupted by planning decisions that belong elsewhere
+
+## What belongs in each lane
+
+Management lane questions:
+
+- Which mission should be active?
+- What problem deserves a new epic?
+- Is a voyage planned tightly enough to start?
+- Can this story be accepted yet?
+
+Delivery lane questions:
+
+- What is the next executable slice?
+- Which story should I start now?
+- What evidence is still missing?
+- What should be submitted for review next?
+
+## The shared board is still one system
+
+Separation does not mean fragmentation. Both lanes read from the same board state:
+
+- the same mission and epic structure
+- the same voyage plans
+- the same story evidence
+- the same routines and health signals
+
+That is why Keel works for mixed teams. A project manager, engineer, designer, and operator can all look at one system without wanting the same view.
+
+## Commands that make the lanes legible
+
+```bash
+keel flow
+keel flow --scene
+keel workshop
+keel doctor
+```
+
+- `keel flow` shows how work is moving across the configured topology
+- `keel workshop` highlights items that require human attention
+- `keel doctor` validates structural integrity regardless of lane
+
+The lanes decide what you pull next. Diagnostics tell you whether the board should be trusted first.

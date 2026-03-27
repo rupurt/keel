@@ -1,0 +1,369 @@
+---
+recorded_at: 2026-03-26T19:11:54.918760733-07:00
+mode: manual
+files: ["website/docusaurus.config.ts", "website/sidebars.ts", "website/README.md", "justfile", "flake.nix"]
+---
+
+--- File: docusaurus.config.ts ---
+import {themes as prismThemes} from 'prism-react-renderer';
+import type {Config} from '@docusaurus/types';
+import type * as Preset from '@docusaurus/preset-classic';
+
+const siteUrl = process.env.DOCS_SITE_URL ?? 'https://spoke.sh';
+const baseUrl = process.env.DOCS_BASE_URL ?? '/';
+const repoUrl = 'https://github.com/spoke-sh/keel';
+
+const config: Config = {
+  title: 'Keel',
+  tagline: 'Turn-based board operating engine for human/AI delivery teams',
+  favicon: 'img/favicon.svg',
+  future: {
+    v4: true,
+  },
+  url: siteUrl,
+  baseUrl,
+  organizationName: 'spoke-sh',
+  projectName: 'keel',
+
+  onBrokenLinks: 'throw',
+
+  i18n: {
+    defaultLocale: 'en',
+    locales: ['en'],
+  },
+
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: 'throw',
+    },
+  },
+
+  stylesheets: [
+    {
+      href:
+        'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap',
+      type: 'text/css',
+    },
+  ],
+
+  presets: [
+    [
+      'classic',
+      {
+        docs: {
+          sidebarPath: './sidebars.ts',
+          editUrl: `${repoUrl}/tree/main/website/`,
+          routeBasePath: 'docs',
+          showLastUpdateAuthor: false,
+          showLastUpdateTime: true,
+        },
+        blog: false,
+        theme: {
+          customCss: './src/css/custom.css',
+        },
+      } satisfies Preset.Options,
+    ],
+  ],
+
+  themeConfig: {
+    image: 'img/keel-social-card.svg',
+    colorMode: {
+      defaultMode: 'light',
+      disableSwitch: true,
+      respectPrefersColorScheme: false,
+    },
+    navbar: {
+      title: 'Keel',
+      logo: {
+        alt: 'Keel logo',
+        src: 'img/logo.svg',
+      },
+      items: [
+        {
+          type: 'doc',
+          docId: 'intro',
+          position: 'left',
+          label: 'Docs',
+        },
+        {
+          to: '/docs/personas/project-managers',
+          label: 'Personas',
+          position: 'left',
+        },
+        {
+          href: repoUrl,
+          label: 'GitHub',
+          position: 'right',
+        },
+      ],
+    },
+    footer: {
+      style: 'dark',
+      links: [
+        {
+          title: 'Start Here',
+          items: [
+            {
+              label: 'Why Keel',
+              to: '/docs/intro',
+            },
+            {
+              label: 'Install Keel',
+              to: '/docs/start-here/install-keel',
+            },
+            {
+              label: 'Take Your First Turn',
+              to: '/docs/start-here/first-turn',
+            },
+          ],
+        },
+        {
+          title: 'Workflows',
+          items: [
+            {
+              label: 'Board Model',
+              to: '/docs/foundations/board-model',
+            },
+            {
+              label: 'Planning And Verification',
+              to: '/docs/foundations/planning-and-verification',
+            },
+            {
+              label: 'Routines And Pulse',
+              to: '/docs/workflows/routines-and-pulse',
+            },
+          ],
+        },
+        {
+          title: 'Project',
+          items: [
+            {
+              label: 'GitHub',
+              href: repoUrl,
+            },
+            {
+              label: 'Architecture',
+              href: `${repoUrl}/blob/main/ARCHITECTURE.md`,
+            },
+            {
+              label: 'Policy',
+              href: `${repoUrl}/blob/main/POLICY.md`,
+            },
+          ],
+        },
+      ],
+      copyright: `Copyright © ${new Date().getFullYear()} Keel contributors.`,
+    },
+    prism: {
+      theme: prismThemes.github,
+      darkTheme: prismThemes.dracula,
+    },
+  } satisfies Preset.ThemeConfig,
+};
+
+export default config;
+
+
+--- File: sidebars.ts ---
+import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
+
+const sidebars: SidebarsConfig = {
+  docsSidebar: [
+    'intro',
+    {
+      type: 'category',
+      label: 'Start Here',
+      items: ['start-here/install-keel', 'start-here/first-turn'],
+    },
+    {
+      type: 'category',
+      label: 'Foundations',
+      items: [
+        'foundations/board-model',
+        'foundations/roles-and-lanes',
+        'foundations/planning-and-verification',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Workflows',
+      items: ['workflows/everyday-keel', 'workflows/routines-and-pulse'],
+    },
+    {
+      type: 'category',
+      label: 'Persona Tracks',
+      items: [
+        'personas/project-managers',
+        'personas/programmers',
+        'personas/designers',
+        'personas/leaders-and-specialists',
+      ],
+    },
+  ],
+};
+
+export default sidebars;
+
+
+--- File: README.md ---
+# Keel Public Docs
+
+This directory contains the public MDX documentation site for Keel.
+
+## Local Workflow
+
+Use the repo-supported `just` recipes from the repository root:
+
+```bash
+just docs-install
+just docs-dev
+just docs-build
+```
+
+These commands use the repository's Nix-supported Node toolchain so the docs workflow stays reproducible in this workspace.
+
+## Deployment Inputs
+
+The site reads these optional environment variables at build time:
+
+- `DOCS_SITE_URL`
+- `DOCS_BASE_URL`
+
+If they are not set, the site defaults to `https://spoke.sh` and `/`.
+
+
+--- File: justfile ---
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+# Show all available commands
+default:
+  @just --list --unsorted
+
+# Install necessary Cargo tools for testing and coverage
+setup:
+  cargo install --locked --force cargo-nextest cargo-llvm-cov
+
+# Build the project in debug mode
+build:
+  @just build-debug
+
+# Compile the project in debug mode and copy binary to target/debug
+build-debug:
+  cargo build
+  mkdir -p target/debug target/release
+  cp -f "${CARGO_TARGET_DIR:-target}/debug/keel" target/debug/keel
+
+# Compile the project in release mode and copy binary to target/release
+build-release:
+  cargo build --release
+  mkdir -p target/debug target/release
+  cp -f "${CARGO_TARGET_DIR:-target}/release/keel" target/release/keel
+
+# Run tests using cargo nextest
+test *args:
+  cargo nextest run {{args}}
+
+# Run doc tests (nextest does not support these)
+doctest:
+  cargo test --doc
+
+# Check formatting and run clippy
+quality:
+  cargo fmt --all -- --check
+  cargo clippy --all-targets --all-features -- -D warnings
+
+# Generate an LCOV coverage report at coverage/lcov.info (pass custom args to override)
+coverage args="":
+  mkdir -p coverage
+  if [[ -n "{{args}}" ]]; then cargo llvm-cov nextest {{args}}; else cargo llvm-cov nextest --lcov --output-path ./coverage/lcov.info; fi
+
+# Install the docs site dependencies using the repo-supported Node toolchain
+docs-install:
+  nix shell nixpkgs#nodejs_22 -c sh -lc 'cd website && npm install'
+
+# Run the public docs site locally
+docs-dev:
+  nix shell nixpkgs#nodejs_22 -c sh -lc 'cd website && npm start -- --host 0.0.0.0'
+
+# Build the public docs site
+docs-build:
+  nix shell nixpkgs#nodejs_22 -c sh -lc 'cd website && npm run build'
+
+# Run the keel binary via cargo with arguments
+keel *args:
+  cargo run {{args}}
+
+# Run quality checks and tests
+pre-commit: quality test doctest
+  @echo "✓ All pre-commit checks passed"
+
+
+--- File: flake.nix ---
+{
+  description = "Keel - Agentic SDLC management";
+
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    rust-overlay.url = "github:oxalica/rust-overlay";
+    flake-utils.url = "github:numtide/flake-utils";
+  };
+
+  outputs = { self, nixpkgs, rust-overlay, flake-utils }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        overlays = [ (import rust-overlay) ];
+        pkgs = import nixpkgs { inherit system overlays; };
+        rust = pkgs.rust-bin.stable.latest.default.override {
+          extensions = [ "rust-src" "rust-analyzer" "llvm-tools" ];
+        };
+        isLinux = pkgs.stdenv.isLinux;
+        isDarwin = pkgs.stdenv.isDarwin;
+
+        keel = pkgs.callPackage ./nix/keel.nix {
+          rustPlatform = pkgs.makeRustPlatform {
+            cargo = rust;
+            rustc = rust;
+          };
+        };
+      in {
+        packages = {
+          keel = keel;
+          default = keel;
+        };
+
+        devShells.default = pkgs.mkShell {
+          buildInputs = [
+            rust
+            pkgs.nodejs_22
+            pkgs.just
+            pkgs.cargo-nextest
+            pkgs.cargo-llvm-cov
+            # CLI recording and video processing
+            pkgs.vhs
+            pkgs.ffmpeg
+            # Native build deps
+            pkgs.pkg-config
+          ] ++ pkgs.lib.optionals isLinux [
+            # mold is a faster linker (Linux only)
+            pkgs.mold
+          ];
+
+          shellHook = ''
+            # Shared target directory across all worktrees for faster builds
+            # WARNING: cargo clean will affect ALL worktrees
+            export CARGO_TARGET_DIR="$HOME/.cache/cargo-target/keel"
+          '' + pkgs.lib.optionalString isDarwin ''
+            # Fix TMPDIR for sccache on macOS (Nix 2.24+ issue)
+            # Nix sets TMPDIR to a nix-shell-specific dir that gets cleaned up
+            # causing "Failed to create temp dir" errors in sccache
+            # See: https://github.com/NixOS/nix/issues/11929
+            export TMPDIR=/var/tmp
+          '' + pkgs.lib.optionalString isLinux ''
+            # Use mold linker on Linux for faster linking
+            export CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS="-C link-arg=-fuse-ld=mold"
+            export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS="-C link-arg=-fuse-ld=mold"
+          '';
+        };
+      });
+}
+

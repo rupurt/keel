@@ -1,0 +1,414 @@
+---
+recorded_at: 2026-03-26T19:12:22.787556285-07:00
+mode: manual
+files: ["website/docs/intro.mdx", "website/docs/start-here/install-keel.mdx", "website/docs/start-here/first-turn.mdx", "website/docs/workflows/everyday-keel.mdx"]
+---
+
+--- File: intro.mdx ---
+---
+title: Why Keel
+description: Understand what Keel is, what it is not, and how to learn the board vocabulary without starting from jargon.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+import TermRamp from '@site/src/components/TermRamp';
+import TurnCycle from '@site/src/components/TurnCycle';
+
+export const openingSignals = [
+  {
+    eyebrow: 'Turn-Based',
+    title: 'Work advances through explicit moves',
+    body:
+      'Instead of throwing tasks into a general pile, Keel expects each move to change the board in a visible way.',
+  },
+  {
+    eyebrow: 'Human And AI',
+    title: 'The operating surface is shared',
+    body:
+      'People and agents read the same planning artifacts, work the same states, and close the same acceptance criteria.',
+  },
+  {
+    eyebrow: 'Evidence-Backed',
+    title: 'Completion requires proof',
+    body:
+      'Stories close with recorded evidence, not just confidence. Keel treats missing proof as drift, not style.',
+  },
+];
+
+export const nextStops = [
+  {
+    eyebrow: 'Start Here',
+    title: 'Install Keel',
+    body: 'Pick a local install path, verify the CLI, and prepare a repo for its first board.',
+    href: '/docs/start-here/install-keel',
+    cta: 'Go to installation',
+  },
+  {
+    eyebrow: 'First Turn',
+    title: 'Initialize a board and make the first move',
+    body:
+      'Create a new board, read the initial signals, and stand up the first mission, epic, voyage, and story.',
+    href: '/docs/start-here/first-turn',
+    cta: 'Take the first turn',
+  },
+];
+
+Keel is a turn-based board operating engine for human/AI delivery teams. It is designed for teams that want planning, execution, and verification to live on one visible operating surface instead of being split across chat, tickets, scratchpads, and private memory.
+
+This documentation starts in plain language on purpose. You do not need to know Keel's native vocabulary before you can understand what the system is trying to accomplish.
+
+<SignalGrid items={openingSignals} />
+
+## What "turn-based" means in practice
+
+Most tools assume that more activity means more progress. Keel assumes the opposite: when the board is blurry, the team slows down even if everyone is busy.
+
+A turn is a bounded move. It begins with orientation, advances one scoped slice, and ends with proof. That rhythm is what keeps human and AI collaboration legible.
+
+<TurnCycle />
+
+## Translate first, then learn the board terms
+
+Keel uses a native vocabulary because it wants different types of work to mean different things. A mission is not just a bigger story, and a routine is not just a repeating ticket.
+
+The docs will translate from familiar concepts into Keel terms as you go.
+
+<TermRamp />
+
+## What Keel does and does not own
+
+Keel owns the board contract:
+
+- what work exists
+- what state each unit is in
+- what constraints were planned up front
+- what proof is attached before closure
+- what recurring work may be materialized automatically
+
+Keel does not try to replace the rest of your toolchain:
+
+- your editor or IDE
+- your preferred AI harness or model vendor
+- design tools
+- source control hosting
+- deployment runtime
+
+That boundary is deliberate. Keel is the operating layer, not the entire stack.
+
+## Read the docs in this order
+
+1. Install the CLI and verify your local path.
+2. Initialize a board and take the first turn.
+3. Learn the board model, lanes, and verification loop.
+4. Move into the persona track that matches your job.
+
+<SignalGrid items={nextStops} columns="two" />
+
+
+--- File: install-keel.mdx ---
+---
+title: Install Keel
+description: Set up Keel locally, verify the CLI, and choose a path that fits OSS evaluation or source contribution.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+
+export const installPaths = [
+  {
+    eyebrow: 'Fastest Path',
+    title: 'Run it with Nix',
+    body: 'Best when you want to try Keel immediately without setting up a long-lived local install.',
+  },
+  {
+    eyebrow: 'Source Path',
+    title: 'Build from the repo',
+    body:
+      'Best when you want the latest code, want to contribute, or prefer a Rust-first local workflow.',
+  },
+  {
+    eyebrow: 'Release Artifacts',
+    title: 'Use packaged binaries when available',
+    body:
+      'GitHub Releases are the public distribution point for installers and archives across supported platforms.',
+  },
+];
+
+If you are evaluating Keel for the first time, use the fastest path that gets the CLI into your terminal. If you plan to contribute or inspect the source, use the repo path.
+
+<SignalGrid items={installPaths} />
+
+## Quick try with Nix
+
+Nix is the simplest public way to run Keel without a manual install step:
+
+```bash
+nix run github:spoke-sh/keel
+```
+
+You can also enter the contributor shell for repo-local work:
+
+```bash
+git clone https://github.com/spoke-sh/keel.git
+cd keel
+nix develop
+```
+
+Inside the shell, the Rust toolchain, `just`, and the docs toolchain are available together.
+
+## Build from source
+
+If you want a local `keel` binary from source:
+
+```bash
+git clone https://github.com/spoke-sh/keel.git
+cd keel
+cargo install --path crates/keel-cli
+```
+
+If you do not want to install globally yet, running through Cargo is fine during evaluation:
+
+```bash
+cargo run -- --help
+```
+
+## Release artifacts
+
+Packaged binaries and installers are published on GitHub Releases:
+
+```text
+https://github.com/spoke-sh/keel/releases
+```
+
+Use that path if you prefer release artifacts over source builds.
+
+## Verify the CLI
+
+Once the binary is available, confirm the surface before you create a board:
+
+```bash
+keel --help
+keel init --help
+keel next --help
+```
+
+You should see the main command families for diagnostics, planning, execution, and automation.
+
+## Repo-local docs workflow
+
+This repository ships a supported MDX docs workflow through `just`:
+
+```bash
+just docs-install
+just docs-dev
+just docs-build
+```
+
+Those recipes use the repo-supported Node toolchain through Nix, which keeps the docs build reproducible in this workspace.
+
+
+--- File: first-turn.mdx ---
+---
+title: Take Your First Turn
+description: Initialize a board, read the first signals, and stand up the smallest useful planning stack.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+import TurnCycle from '@site/src/components/TurnCycle';
+
+export const freshBoardSignals = [
+  {
+    eyebrow: 'Expected',
+    title: 'A new board starts mostly empty',
+    body:
+      'On day one, health and doctor will tell you the board has no active mission yet. That is orientation, not failure.',
+  },
+  {
+    eyebrow: 'Important',
+    title: 'Initialize inside Git',
+    body:
+      'Running `keel init` inside a git repository lets Keel install its pacemaker hooks immediately instead of warning later.',
+  },
+  {
+    eyebrow: 'Practical',
+    title: 'Capture IDs as you go',
+    body:
+      'Commands such as `mission new`, `epic new`, and `voyage new` return IDs. Use the returned IDs in the next move.',
+  },
+];
+
+The smallest useful Keel session is not "open the app and click around." It is: create a board, read what the board is telling you, and then make the first structured move.
+
+<SignalGrid items={freshBoardSignals} />
+
+## 1. Start in a fresh Git repository
+
+```bash
+mkdir harbor
+cd harbor
+git init
+keel init
+```
+
+When `keel init` runs inside Git, it creates the board scaffold and installs Keel's git hooks for the pacemaker protocol.
+
+## 2. Read the board before creating work
+
+```bash
+keel health --scene
+keel doctor --status
+keel mission next --status
+```
+
+On a brand-new board:
+
+- `keel health --scene` shows whether the system is structurally healthy
+- `keel doctor --status` reports that no mission exists yet
+- `keel mission next --status` returns a non-zero exit with a suggestion to create a mission
+
+That is the expected opening posture. Keel is telling you the board has no direction yet.
+
+## 3. Create the first planning stack
+
+Create the smallest stack that can produce a real delivery slice:
+
+```bash
+keel mission new "Launch the first public docs"
+keel mission activate MISSION-ID
+
+keel epic new --problem "Readers cannot understand Keel quickly." "Teach the product story"
+
+keel voyage new \
+  --epic EPIC-ID \
+  --goal "Ship an onboarding path that explains the board model." \
+  "Narrative onboarding"
+
+keel voyage plan VOYAGE-ID
+keel voyage start VOYAGE-ID
+
+keel story new --epic EPIC-ID --voyage VOYAGE-ID "Write the opening guide"
+keel story start STORY-ID
+```
+
+Replace `MISSION-ID`, `EPIC-ID`, `VOYAGE-ID`, and `STORY-ID` with the values returned by the CLI.
+
+## 4. Pull the next move from the lane
+
+Once the first story exists, return to the board instead of inventing your own queue:
+
+```bash
+keel next --role operator
+keel flow --scene
+```
+
+`keel next --role operator` is the delivery pull surface. `keel flow --scene` gives you the board-wide picture of whether the circuit is open, healthy, or waiting on something.
+
+## 5. Close the slice with evidence
+
+The turn is not complete when the code or content exists. It is complete when the board can show why the slice should be trusted.
+
+```bash
+keel story record STORY-ID --ac 1 --msg "Manual proof captured during first-run review."
+keel story submit STORY-ID
+keel story accept --role manager STORY-ID
+```
+
+The exact evidence command you use will vary by story. The contract does not: attach proof, submit the slice, accept it with an explicit role.
+
+## 6. Repeat the turn loop
+
+<TurnCycle />
+
+Once you can perform this loop without guessing, you are ready for the foundations and persona-specific tracks.
+
+:::note
+If you prefer a tighter engineering loop, you can continue to run the binary through `cargo run -- ...` while you learn the system. Keel's operating model does not depend on a specific editor or AI vendor.
+:::
+
+
+--- File: everyday-keel.mdx ---
+---
+title: Everyday Keel
+description: Use Keel day to day without losing the turn-based rhythm that keeps the board trustworthy.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+import TurnCycle from '@site/src/components/TurnCycle';
+
+export const dailySignals = [
+  {
+    eyebrow: 'Morning Read',
+    title: 'Check health before pulling work',
+    body:
+      'Start with `health`, `flow`, and `doctor` so you know whether the system is healthy before you create more motion.',
+  },
+  {
+    eyebrow: 'Lane Discipline',
+    title: 'Pull from the correct queue',
+    body:
+      'Use `keel next --role ...` instead of browsing manually. The board should decide what is truly next.',
+  },
+  {
+    eyebrow: 'Tight Closure',
+    title: 'Submit with proof in hand',
+    body:
+      'Do not split implementation and evidence into separate, vague cleanup phases. Close the slice in one motion.',
+  },
+];
+
+Keel works best when it becomes a stable rhythm rather than an occasional cleanup tool. The board should be the first place you read and the last place you update before closing a turn.
+
+<SignalGrid items={dailySignals} />
+
+## The daily loop
+
+```bash
+keel health --scene
+keel flow --scene
+keel next --role operator
+```
+
+That short sequence answers three important questions:
+
+- Is the system healthy?
+- Is the board blocked, open, or waiting on human input?
+- What should I work on next from my lane?
+
+## When you are operating the board
+
+For strategic review or coordination work:
+
+```bash
+keel mission next --status
+keel next --role manager
+keel workshop
+```
+
+These surfaces help you decide whether the system needs planning, review, acceptance, or a structural repair.
+
+## When you are shipping a slice
+
+For delivery work:
+
+```bash
+keel story start STORY-ID
+keel story record STORY-ID --ac 1 --cmd "your-check-here"
+keel story submit STORY-ID
+```
+
+Replace the proof command with whatever the acceptance criterion actually requires. Keel is vendor-neutral about your tools, but not neutral about attaching proof.
+
+## When the board feels wrong
+
+Do not paper over weirdness with more work. Repair the board first.
+
+```bash
+keel doctor
+keel flow
+```
+
+If the diagnostics surface drift, treat that as real operational work. Keel is designed around the idea that structural debt is still delivery debt.
+
+## Keep the rhythm visible
+
+<TurnCycle />
+

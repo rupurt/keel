@@ -1,0 +1,255 @@
+---
+title: Routines And Pulse
+description: Materialize recurring work with explicit routine contracts and a non-daemon automation cycle.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+
+export const routineSurfaces = [
+  {
+    eyebrow: 'Author',
+    title: 'Create a routine bundle',
+    body:
+      'A routine is authored as one human-editable bundle under `.keel/routines/<id>/README.md`.',
+  },
+  {
+    eyebrow: 'Review',
+    title: 'Inspect schedule state before creating work',
+    body:
+      'Use `keel next --role operator` and `keel flow` to see whether recurring work is due or already materialized.',
+  },
+  {
+    eyebrow: 'Materialize',
+    title: 'Run one automation cycle with pulse',
+    body:
+      '`keel pulse` creates due stories once per eligible window and skips duplicates safely.',
+  },
+  {
+    eyebrow: 'Operate',
+    title: 'Use an external scheduler',
+    body:
+      'Keel does not ship a daemon. Run `keel pulse` from cron, systemd, or your own scheduler.',
+  },
+];
+
+Routines are Keel's answer to recurring work. Instead of keeping a side calendar of recurring chores, you author a formal contract and let the board materialize work only when the schedule says it is due.
+
+<SignalGrid items={routineSurfaces} columns="two" />
+
+## Core model
+
+A routine is a recurring-work contract stored as a single bundle:
+
+```text
+.keel/routines/<id>/README.md
+```
+
+Each bundle contains:
+
+- YAML frontmatter
+- a `# Blueprint` body
+
+The blueprint is the canonical authored content. When `keel pulse` creates a story, that body becomes the starting content for the materialized work item.
+
+Routine target scope can point to:
+
+- an epic: `EPIC-ID`
+- a voyage inside an epic: `EPIC-ID/VOYAGE-ID`
+
+Use the current command names:
+
+```bash
+keel routine new
+keel routine list
+keel routine show
+keel next --role operator
+keel flow
+keel pulse
+```
+
+`keel next` requires `--role`. Use `keel next --role manager` for management review and `keel next --role operator` for delivery review.
+
+## Author a routine
+
+Create a new routine bundle:
+
+```bash
+keel routine new "Weekly Pipeline Review" \
+  --target-scope EPIC-ID/VOYAGE-ID \
+  --cadence cron="0 9 * * 1" \
+  --cadence timezone="America/Los_Angeles"
+```
+
+The resulting authored contract looks like this:
+
+```md
+---
+id: weekly-pipeline-review
+title: Weekly Pipeline Review
+cadence:
+  cron: 0 9 * * 1
+  timezone: America/Los_Angeles
+target-scope: EPIC-ID/VOYAGE-ID
+created_at: 2026-03-11T00:00:00
+updated_at: 2026-03-11T00:00:00
+---
+
+# Blueprint
+
+- Describe the recurring trigger or review point.
+- Outline the work to perform.
+- Capture the expected output or exit criteria.
+```
+
+Authoring rules:
+
+- `cadence` is stored as a YAML mapping
+- the current scheduling path interprets `cadence.cron` and `cadence.timezone`
+- extra cadence keys may be stored, but they are opaque unless another implemented surface consumes them
+- `target-scope` must point at existing board scope
+- the blueprint body should be actionable because it becomes the starting point for each created story
+
+Inspect authored routines with:
+
+```bash
+keel routine list
+keel routine show weekly-pipeline-review
+```
+
+## Review schedule state before materializing work
+
+Keel exposes routine schedule state in two places before automation runs.
+
+### `keel next --role operator`
+
+This remains the delivery pull surface. When routines exist, it also prints a `Scheduled routines:` section that marks each routine as:
+
+- `due now`
+- `next run ...`
+- `invalid cadence: ...`
+
+Use it when you want a compact answer to: "Should I keep working existing delivery items, or is recurring work due for this scope?"
+
+### `keel flow`
+
+`keel flow` adds a `Scheduled Capacity` section when routines exist. That surface shows:
+
+- due routines that still need `keel pulse`
+- upcoming routines that are not actionable yet
+- invalid cadence entries that need repair
+- due routines already materialized during the current eligible window
+
+That makes recurring demand visible before and after automation runs.
+
+## End-to-end example
+
+1. Create the routine.
+
+   ```bash
+   keel routine new "Weekly Pipeline Review" \
+     --target-scope EPIC-ID/VOYAGE-ID \
+     --cadence cron="0 9 * * 1" \
+     --cadence timezone="America/Los_Angeles"
+   ```
+
+2. Confirm the authored bundle.
+
+   ```bash
+   keel routine list
+   keel routine show weekly-pipeline-review
+   ```
+
+3. Review whether it is due.
+
+   ```bash
+   keel next --role operator
+   keel flow --no-color
+   ```
+
+4. Run one automation cycle.
+
+   ```bash
+   keel pulse
+   ```
+
+   For scheduler-friendly output:
+
+   ```bash
+   keel pulse --json
+   ```
+
+5. Review the result.
+
+- If the routine was due, `keel pulse` creates one story inside the targeted scope.
+- If the same eligible window already produced a story, `keel pulse` skips it instead of duplicating work.
+- If cadence is malformed, the affected routine is reported as invalid or deferred while the rest of the cycle continues.
+
+6. Return to normal delivery work.
+
+   ```bash
+   keel next --role operator
+   keel flow --no-color
+   ```
+
+## Running pulse from cron or systemd
+
+Keel does not ship a daemon, hosted scheduler, or always-on worker. If you want automation, invoke `keel pulse` from an external scheduler while the working directory points at the board root.
+
+Example cron entry:
+
+```cron
+*/15 * * * * cd /path/to/board && /path/to/keel pulse >> /var/log/keel-pulse.log 2>&1
+```
+
+Example systemd service:
+
+```ini
+[Unit]
+Description=Keel pulse run
+
+[Service]
+Type=oneshot
+WorkingDirectory=/path/to/board
+ExecStart=/path/to/keel pulse --json
+```
+
+Example systemd timer:
+
+```ini
+[Unit]
+Description=Run Keel pulse every 15 minutes
+
+[Timer]
+OnCalendar=*:0/15
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+Operational expectations:
+
+- repeated runs are safe because pulse is idempotent per routine eligible window
+- running pulse more frequently than the cadence is allowed
+- scheduler logs are worth keeping
+- invalid cadence in one routine does not require the entire automation cycle to fail
+
+## Supported boundaries
+
+What Keel supports today:
+
+- one-file routine bundles under `.keel/routines/<id>/README.md`
+- temporal review in `keel next --role operator`
+- scheduled automation visibility in `keel flow`
+- non-interactive materialization with `keel pulse`
+- cron or systemd invoking `keel pulse`
+
+What this workflow does not support:
+
+- a built-in daemon, hosted scheduler, or background service
+- materializing work from `keel next` or `keel flow`
+- legacy `keel next --agent` or `keel next --human` flags
+- alternate routine lifecycle states beyond the authored bundle itself
+- undocumented cadence schemas or fallback command names
+
+If you need different automation behavior, plan it as new board work instead of assuming hidden compatibility.

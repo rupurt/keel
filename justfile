@@ -42,6 +42,18 @@ coverage args="":
   mkdir -p coverage
   if [[ -n "{{args}}" ]]; then cargo llvm-cov nextest {{args}}; else cargo llvm-cov nextest --lcov --output-path ./coverage/lcov.info; fi
 
+# Install the docs site dependencies using the repo-supported Node toolchain
+docs-install:
+  nix shell nixpkgs#nodejs_22 -c sh -lc 'cd website && npm install'
+
+# Run the public docs site locally
+docs-dev:
+  nix shell nixpkgs#nodejs_22 -c sh -lc 'cd website && npm start -- --host 0.0.0.0'
+
+# Build the public docs site
+docs-build:
+  nix shell nixpkgs#nodejs_22 -c sh -lc 'cd website && npm run build'
+
 # Run the keel binary via cargo with arguments
 keel *args:
   cargo run {{args}}

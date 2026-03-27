@@ -1,0 +1,71 @@
+---
+title: Programmers
+description: Use Keel to pull precise work, attach proof, and keep engineering delivery synchronized with the board.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+
+export const programmerMoves = [
+  {
+    eyebrow: 'Pull',
+    title: 'Start from the lane, not from memory',
+    body:
+      'Use `keel next --role operator` to pull the board-approved next slice instead of building a private queue.',
+  },
+  {
+    eyebrow: 'Implement',
+    title: 'Keep the slice small enough to verify',
+    body:
+      'Stories should be executable units. If the work is sprawling, the board usually needs another planning pass.',
+  },
+  {
+    eyebrow: 'Prove',
+    title: 'Attach evidence before you submit',
+    body:
+      'Tests, screenshots, logs, and manual review notes belong on the story, not only in commit history or chat.',
+  },
+];
+
+For programmers, Keel is the mechanism that keeps code changes connected to why they exist and how they should be trusted. It is not there to replace your editor or terminal; it is there to keep the board honest.
+
+<SignalGrid items={programmerMoves} />
+
+## Your default loop
+
+```bash
+keel next --role operator
+keel story start STORY-ID
+keel story record STORY-ID --ac 1 --cmd "cargo test"
+keel story submit STORY-ID
+```
+
+The exact command proof changes by project. The workflow does not.
+
+## What makes Keel useful for engineering
+
+- acceptance criteria live with the story bundle
+- evidence is recorded where review happens
+- planning artifacts are nearby when implementation gets fuzzy
+- recurring work can be formalized as routines instead of hidden checklists
+
+## When to push back on the board
+
+Programmers should not silently absorb planning failures.
+
+If a story is too wide, too vague, or detached from its parent planning artifacts, the right move is usually one of these:
+
+- ask for voyage planning to tighten the contract
+- split the story into smaller executable units
+- add a bearing if the team is still operating in fog
+
+Keel is strongest when implementation refuses to normalize ambiguity.
+
+## Daily engineering rhythm
+
+```bash
+keel health --scene
+keel flow --scene
+keel next --role operator
+```
+
+Read the board, ship the slice, attach the proof, and leave the next engineer a cleaner state than the one you inherited.

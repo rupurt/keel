@@ -1,0 +1,98 @@
+---
+title: Why Keel
+description: Understand what Keel is, what it is not, and how to learn the board vocabulary without starting from jargon.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+import TermRamp from '@site/src/components/TermRamp';
+import TurnCycle from '@site/src/components/TurnCycle';
+
+export const openingSignals = [
+  {
+    eyebrow: 'Turn-Based',
+    title: 'Work advances through explicit moves',
+    body:
+      'Instead of throwing tasks into a general pile, Keel expects each move to change the board in a visible way.',
+  },
+  {
+    eyebrow: 'Human And AI',
+    title: 'The operating surface is shared',
+    body:
+      'People and agents read the same planning artifacts, work the same states, and close the same acceptance criteria.',
+  },
+  {
+    eyebrow: 'Evidence-Backed',
+    title: 'Completion requires proof',
+    body:
+      'Stories close with recorded evidence, not just confidence. Keel treats missing proof as drift, not style.',
+  },
+];
+
+export const nextStops = [
+  {
+    eyebrow: 'Start Here',
+    title: 'Install Keel',
+    body: 'Pick a local install path, verify the CLI, and prepare a repo for its first board.',
+    href: '/docs/start-here/install-keel',
+    cta: 'Go to installation',
+  },
+  {
+    eyebrow: 'First Turn',
+    title: 'Initialize a board and make the first move',
+    body:
+      'Create a new board, read the initial signals, and stand up the first mission, epic, voyage, and story.',
+    href: '/docs/start-here/first-turn',
+    cta: 'Take the first turn',
+  },
+];
+
+Keel is a turn-based board operating engine for human/AI delivery teams. It is designed for teams that want planning, execution, and verification to live on one visible operating surface instead of being split across chat, tickets, scratchpads, and private memory.
+
+This documentation starts in plain language on purpose. You do not need to know Keel's native vocabulary before you can understand what the system is trying to accomplish.
+
+<SignalGrid items={openingSignals} />
+
+## What "turn-based" means in practice
+
+Most tools assume that more activity means more progress. Keel assumes the opposite: when the board is blurry, the team slows down even if everyone is busy.
+
+A turn is a bounded move. It begins with orientation, advances one scoped slice, and ends with proof. That rhythm is what keeps human and AI collaboration legible.
+
+<TurnCycle />
+
+## Translate first, then learn the board terms
+
+Keel uses a native vocabulary because it wants different types of work to mean different things. A mission is not just a bigger story, and a routine is not just a repeating ticket.
+
+The docs will translate from familiar concepts into Keel terms as you go.
+
+<TermRamp />
+
+## What Keel does and does not own
+
+Keel owns the board contract:
+
+- what work exists
+- what state each unit is in
+- what constraints were planned up front
+- what proof is attached before closure
+- what recurring work may be materialized automatically
+
+Keel does not try to replace the rest of your toolchain:
+
+- your editor or IDE
+- your preferred AI harness or model vendor
+- design tools
+- source control hosting
+- deployment runtime
+
+That boundary is deliberate. Keel is the operating layer, not the entire stack.
+
+## Read the docs in this order
+
+1. Install the CLI and verify your local path.
+2. Initialize a board and take the first turn.
+3. Learn the board model, lanes, and verification loop.
+4. Move into the persona track that matches your job.
+
+<SignalGrid items={nextStops} columns="two" />

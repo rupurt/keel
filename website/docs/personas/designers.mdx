@@ -1,0 +1,70 @@
+---
+title: Designers
+description: Use Keel to keep discovery, design constraints, and review evidence visible all the way through delivery.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+
+export const designMoves = [
+  {
+    eyebrow: 'Discovery',
+    title: 'Use bearings when the team is still learning',
+    body:
+      'Keel gives discovery a formal place so design questions do not get squeezed into delivery stories too early.',
+  },
+  {
+    eyebrow: 'Constraint',
+    title: 'Shape voyages before implementation starts',
+    body:
+      'Design decisions belong in the planned delivery arc, not only in loose references or verbal handoff.',
+  },
+  {
+    eyebrow: 'Review',
+    title: 'Attach visual proof to the story bundle',
+    body:
+      'Screens, flows, prototypes, and manual review notes can all be recorded as evidence before acceptance.',
+  },
+];
+
+Designers can use Keel without pretending that design is only implementation support. The board has room for discovery, constraints, and review, which means design work can stay explicit instead of being squeezed into engineering comments.
+
+<SignalGrid items={designMoves} />
+
+## How designers fit into the board
+
+Use Keel when you need to:
+
+- reduce fog before requirements freeze
+- record the design intent that should govern a voyage
+- review whether a slice actually satisfies the intended experience
+
+Useful surfaces:
+
+```bash
+keel next --role manager
+keel flow
+keel story record STORY-ID --ac 2 --file mockup.png
+```
+
+## Bearings are your friend
+
+When the right user flow, narrative, or interaction pattern is still unclear, the board should say so.
+
+That is the job of a bearing:
+
+- explore before committing
+- reduce uncertainty
+- feed stronger planning artifacts later
+
+This keeps design discovery from becoming "surprise scope" halfway through implementation.
+
+## Review with evidence, not memory
+
+If the acceptance criterion is visual or experiential, record proof that supports that judgment:
+
+- annotated screens
+- prototype links
+- screenshots
+- manual review notes
+
+Keel does not force design into automated checks. It does force the review signal to be public.

@@ -1,0 +1,98 @@
+---
+title: Install Keel
+description: Set up Keel locally, verify the CLI, and choose a path that fits OSS evaluation or source contribution.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+
+export const installPaths = [
+  {
+    eyebrow: 'Fastest Path',
+    title: 'Run it with Nix',
+    body: 'Best when you want to try Keel immediately without setting up a long-lived local install.',
+  },
+  {
+    eyebrow: 'Source Path',
+    title: 'Build from the repo',
+    body:
+      'Best when you want the latest code, want to contribute, or prefer a Rust-first local workflow.',
+  },
+  {
+    eyebrow: 'Release Artifacts',
+    title: 'Use packaged binaries when available',
+    body:
+      'GitHub Releases are the public distribution point for installers and archives across supported platforms.',
+  },
+];
+
+If you are evaluating Keel for the first time, use the fastest path that gets the CLI into your terminal. If you plan to contribute or inspect the source, use the repo path.
+
+<SignalGrid items={installPaths} />
+
+## Quick try with Nix
+
+Nix is the simplest public way to run Keel without a manual install step:
+
+```bash
+nix run github:spoke-sh/keel
+```
+
+You can also enter the contributor shell for repo-local work:
+
+```bash
+git clone https://github.com/spoke-sh/keel.git
+cd keel
+nix develop
+```
+
+Inside the shell, the Rust toolchain, `just`, and the docs toolchain are available together.
+
+## Build from source
+
+If you want a local `keel` binary from source:
+
+```bash
+git clone https://github.com/spoke-sh/keel.git
+cd keel
+cargo install --path crates/keel-cli
+```
+
+If you do not want to install globally yet, running through Cargo is fine during evaluation:
+
+```bash
+cargo run -- --help
+```
+
+## Release artifacts
+
+Packaged binaries and installers are published on GitHub Releases:
+
+```text
+https://github.com/spoke-sh/keel/releases
+```
+
+Use that path if you prefer release artifacts over source builds.
+
+## Verify the CLI
+
+Once the binary is available, confirm the surface before you create a board:
+
+```bash
+keel --help
+keel init --help
+keel next --help
+```
+
+You should see the main command families for diagnostics, planning, execution, and automation.
+
+## Repo-local docs workflow
+
+This repository ships a supported MDX docs workflow through `just`:
+
+```bash
+just docs-install
+just docs-dev
+just docs-build
+```
+
+Those recipes use the repo-supported Node toolchain through Nix, which keeps the docs build reproducible in this workspace.

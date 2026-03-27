@@ -1,0 +1,657 @@
+---
+recorded_at: 2026-03-26T19:11:59.564713806-07:00
+mode: manual
+files: ["website/src/pages/index.tsx", "website/src/pages/index.module.css", "website/src/components/TurnCycle/index.tsx", "website/src/components/TermRamp/index.tsx", "website/src/components/PersonaGrid/index.tsx"]
+---
+
+--- File: index.tsx ---
+import type {ReactNode} from 'react';
+import Link from '@docusaurus/Link';
+import Layout from '@theme/Layout';
+import SignalGrid from '@site/src/components/SignalGrid';
+import TurnCycle from '@site/src/components/TurnCycle';
+import TermRamp from '@site/src/components/TermRamp';
+import PersonaGrid from '@site/src/components/PersonaGrid';
+
+import styles from './index.module.css';
+
+const signalItems = [
+  {
+    eyebrow: 'Board Discipline',
+    title: 'Reduce drift before it spreads',
+    body:
+      'Keel treats planning gaps, stale state, and missing evidence as first-class system problems instead of project folklore.',
+  },
+  {
+    eyebrow: 'Shared Operations',
+    title: 'Give humans and agents one operating surface',
+    body:
+      'The board, the CLI, and the planning artifacts form one public contract that works across terminals, editors, and AI harnesses.',
+  },
+  {
+    eyebrow: 'Proof Over Vibes',
+    title: 'Close work with evidence',
+    body:
+      'Stories do not end when someone says they are done. They end when the board can show why they should be trusted.',
+  },
+];
+
+const laneItems = [
+  {
+    eyebrow: 'Management Lane',
+    title: 'Choose direction',
+    body:
+      'Use missions, epics, voyages, and bearings to decide what the team should do next and what constraints matter.',
+  },
+  {
+    eyebrow: 'Delivery Lane',
+    title: 'Ship one slice at a time',
+    body:
+      'Pull work with explicit roles, move it through clear states, and keep every turn small enough to verify.',
+  },
+];
+
+export default function Home(): ReactNode {
+  return (
+    <Layout
+      title="Keel"
+      description="Keel is a turn-based board operating engine for human/AI delivery teams.">
+      <main className={styles.page}>
+        <section className={styles.hero}>
+          <div className="container">
+            <div className={styles.heroGrid}>
+              <div className={styles.heroCopy}>
+                <p className={styles.eyebrow}>Board Operating Engine</p>
+                <h1>Operate delivery one turn at a time.</h1>
+                <p className={styles.lede}>
+                  Keel is a turn-based board operating engine for human/AI
+                  delivery teams. It turns planning, execution, and verification
+                  into one shared board with explicit moves, role-aware lanes,
+                  and evidence-backed closure.
+                </p>
+                <div className={styles.actions}>
+                  <Link className={styles.primaryAction} to="/docs/intro">
+                    Read The Story
+                  </Link>
+                  <Link
+                    className={styles.secondaryAction}
+                    to="/docs/start-here/install-keel">
+                    Install Keel
+                  </Link>
+                </div>
+                <ul className={styles.heroPoints}>
+                  <li>Translate from plain language into Keel terms gradually.</li>
+                  <li>Keep examples neutral across editors, terminals, and AI tools.</li>
+                  <li>Use one board for planning, delivery, routines, and verification.</li>
+                </ul>
+              </div>
+              <div className={styles.scenePanel}>
+                <div className={styles.sceneFrame}>
+                  <p className={styles.sceneLabel}>Typical First Turn</p>
+                  <ol className={styles.sceneSteps}>
+                    <li>
+                      <span>Orient</span>
+                      <code>keel health --scene</code>
+                    </li>
+                    <li>
+                      <span>Inspect</span>
+                      <code>keel mission next --status</code>
+                    </li>
+                    <li>
+                      <span>Pull</span>
+                      <code>keel next --role operator</code>
+                    </li>
+                    <li>
+                      <span>Verify</span>
+                      <code>keel doctor</code>
+                    </li>
+                  </ol>
+                </div>
+                <div className={styles.sceneSignals}>
+                  <div>
+                    <span className={styles.signalTitle}>Turns</span>
+                    <strong>Explicit</strong>
+                  </div>
+                  <div>
+                    <span className={styles.signalTitle}>Proof</span>
+                    <strong>Recorded</strong>
+                  </div>
+                  <div>
+                    <span className={styles.signalTitle}>Automation</span>
+                    <strong>Constrained</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <div className="container">
+            <div className={styles.sectionHeader}>
+              <p className={styles.sectionEyebrow}>Why Teams Reach For Keel</p>
+              <h2>Keel behaves like an operating model, not a notes app.</h2>
+              <p>
+                The board is opinionated on purpose. It creates a visible system
+                for planning, work intake, delivery, and verification so humans
+                and AI collaborators stop improvising different versions of
+                reality.
+              </p>
+            </div>
+            <SignalGrid items={signalItems} />
+          </div>
+        </section>
+
+        <section className={styles.sectionAlt}>
+          <div className="container">
+            <div className={styles.sectionHeader}>
+              <p className={styles.sectionEyebrow}>The Turn Loop</p>
+              <h2>A ticket can be vague. A turn has a visible state change.</h2>
+              <p>
+                Keel keeps the loop legible: orient the board, pick the next
+                move, execute the slice, and close it with evidence before the
+                next turn starts.
+              </p>
+            </div>
+            <TurnCycle />
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <div className="container">
+            <div className={styles.sectionHeader}>
+              <p className={styles.sectionEyebrow}>Native Vocabulary</p>
+              <h2>Start in plain language, then learn the board terms.</h2>
+              <p>
+                You do not need to memorize Keel jargon on day one. The docs
+                introduce each term only after the underlying job is already
+                clear.
+              </p>
+            </div>
+            <TermRamp />
+          </div>
+        </section>
+
+        <section className={styles.sectionAlt}>
+          <div className="container">
+            <div className={styles.sectionHeader}>
+              <p className={styles.sectionEyebrow}>Lanes And Roles</p>
+              <h2>Strategy and delivery stay connected without collapsing.</h2>
+              <p>
+                Keel separates direction-setting from implementation execution
+                so teams can move quickly without losing authority, review, or
+                context.
+              </p>
+            </div>
+            <SignalGrid items={laneItems} columns="two" />
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <div className="container">
+            <div className={styles.sectionHeader}>
+              <p className={styles.sectionEyebrow}>Persona Tracks</p>
+              <h2>Learn the basics once, then follow the path that matches your job.</h2>
+              <p>
+                After the shared onboarding, Keel branches into role-focused
+                guidance for builders, operators, and leaders who need to read
+                the same board from different angles.
+              </p>
+            </div>
+            <PersonaGrid />
+          </div>
+        </section>
+
+        <section className={styles.ctaBand}>
+          <div className="container">
+            <div className={styles.ctaCard}>
+              <div>
+                <p className={styles.sectionEyebrow}>Start Here</p>
+                <h2>Read the narrative, install the CLI, and take the first turn.</h2>
+              </div>
+              <div className={styles.actions}>
+                <Link className={styles.primaryAction} to="/docs/intro">
+                  Open The Docs
+                </Link>
+                <Link
+                  className={styles.secondaryAction}
+                  to="/docs/start-here/first-turn">
+                  First Turn Guide
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </Layout>
+  );
+}
+
+
+--- File: index.module.css ---
+.page {
+  position: relative;
+}
+
+.hero {
+  padding: 4.5rem 0 3rem;
+}
+
+.heroGrid {
+  display: grid;
+  gap: 2rem;
+  align-items: center;
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.95fr);
+}
+
+.heroCopy h1 {
+  max-width: 12ch;
+  margin: 0 0 1rem;
+  font-size: clamp(3rem, 6vw, 5.2rem);
+  line-height: 0.92;
+  letter-spacing: -0.05em;
+}
+
+.eyebrow,
+.sectionEyebrow {
+  margin: 0 0 0.9rem;
+  font-size: 0.83rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--keel-copper);
+}
+
+.lede {
+  max-width: 62ch;
+  margin: 0 0 1.5rem;
+  font-size: 1.1rem;
+  line-height: 1.75;
+  color: var(--keel-ink-soft);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+}
+
+.primaryAction,
+.secondaryAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding: 0.8rem 1.25rem;
+  border-radius: 999px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.primaryAction {
+  color: #f8f2e8;
+  background: linear-gradient(135deg, var(--keel-navy), #31486d);
+  box-shadow: 0 18px 40px rgba(27, 39, 58, 0.18);
+}
+
+.secondaryAction {
+  color: var(--keel-ink);
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(27, 39, 58, 0.12);
+}
+
+.primaryAction:hover,
+.secondaryAction:hover {
+  color: inherit;
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.heroPoints {
+  margin: 1.4rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--keel-ink-soft);
+}
+
+.heroPoints li + li {
+  margin-top: 0.5rem;
+}
+
+.scenePanel {
+  display: grid;
+  gap: 1rem;
+}
+
+.sceneFrame {
+  position: relative;
+  overflow: hidden;
+  padding: 1.6rem;
+  border-radius: 1.75rem;
+  background:
+    radial-gradient(circle at top right, rgba(191, 122, 61, 0.28), transparent 34%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.92), rgba(240, 231, 217, 0.82));
+  border: 1px solid rgba(27, 39, 58, 0.1);
+  box-shadow: 0 22px 44px rgba(27, 39, 58, 0.13);
+}
+
+.sceneLabel {
+  margin: 0 0 1rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--keel-copper);
+}
+
+.sceneSteps {
+  display: grid;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sceneSteps li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(27, 39, 58, 0.08);
+  color: var(--keel-ink-soft);
+}
+
+.sceneSteps li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.sceneSteps span {
+  font-weight: 600;
+  color: var(--keel-ink);
+}
+
+.sceneSteps code {
+  font-size: 0.84rem;
+  white-space: nowrap;
+}
+
+.sceneSignals {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.sceneSignals > div {
+  padding: 1rem;
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(27, 39, 58, 0.09);
+}
+
+.signalTitle {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--keel-copper);
+}
+
+.sceneSignals strong {
+  font-family: var(--ifm-heading-font-family);
+  font-size: 1.2rem;
+  color: var(--keel-ink);
+}
+
+.section,
+.sectionAlt {
+  padding: 2.5rem 0;
+}
+
+.sectionAlt {
+  background: rgba(255, 255, 255, 0.44);
+  border-top: 1px solid rgba(27, 39, 58, 0.06);
+  border-bottom: 1px solid rgba(27, 39, 58, 0.06);
+}
+
+.sectionHeader {
+  max-width: 60rem;
+  margin-bottom: 1.5rem;
+}
+
+.sectionHeader h2 {
+  max-width: 16ch;
+  margin: 0 0 0.8rem;
+  font-size: clamp(2rem, 4vw, 3.1rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.sectionHeader p:last-child {
+  max-width: 62ch;
+  margin: 0;
+  color: var(--keel-ink-soft);
+}
+
+.ctaBand {
+  padding: 2.8rem 0 4.2rem;
+}
+
+.ctaCard {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  align-items: center;
+  padding: 1.8rem;
+  border-radius: 2rem;
+  background: linear-gradient(140deg, var(--keel-navy), #39557f);
+  color: #f8f2e8;
+  box-shadow: 0 28px 60px rgba(27, 39, 58, 0.24);
+}
+
+.ctaCard h2 {
+  max-width: 15ch;
+  margin: 0;
+  color: inherit;
+}
+
+.ctaCard .sectionEyebrow {
+  color: rgba(248, 242, 232, 0.72);
+}
+
+.ctaCard .primaryAction {
+  background: #f8f2e8;
+  color: var(--keel-navy);
+}
+
+.ctaCard .secondaryAction {
+  background: rgba(248, 242, 232, 0.15);
+  border-color: rgba(248, 242, 232, 0.2);
+  color: #f8f2e8;
+}
+
+@media (max-width: 996px) {
+  .hero {
+    padding-top: 3rem;
+  }
+
+  .heroGrid,
+  .ctaCard {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sceneSignals {
+    grid-template-columns: 1fr;
+  }
+
+  .sceneSteps li {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ctaCard h2,
+  .sectionHeader h2 {
+    max-width: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .heroCopy h1 {
+    font-size: 3rem;
+  }
+
+  .primaryAction,
+  .secondaryAction {
+    width: 100%;
+  }
+}
+
+
+--- File: index.tsx ---
+import styles from './styles.module.css';
+
+const steps = [
+  {
+    label: 'Orient',
+    command: 'keel health --scene',
+    body: 'Read the board before acting. Check for drift, blocked work, and missing integrity.',
+  },
+  {
+    label: 'Inspect',
+    command: 'keel mission next --status',
+    body: 'Understand what the system thinks matters now at the strategic and tactical level.',
+  },
+  {
+    label: 'Pull',
+    command: 'keel next --role operator',
+    body: 'Take one role-scoped move from the delivery lane instead of browsing an unbounded backlog.',
+  },
+  {
+    label: 'Ship',
+    command: 'keel story submit STORY-ID',
+    body: 'Move the slice into review only when the implementation and its evidence are ready together.',
+  },
+  {
+    label: 'Close',
+    command: 'keel story accept --role manager STORY-ID',
+    body: 'Accept the slice with an explicit role, then let the next turn begin from a clean board state.',
+  },
+];
+
+export default function TurnCycle() {
+  return (
+    <div className={styles.wrap}>
+      {steps.map((step, index) => (
+        <article key={step.label} className={styles.card}>
+          <div className={styles.head}>
+            <span className={styles.count}>0{index + 1}</span>
+            <h3>{step.label}</h3>
+          </div>
+          <code>{step.command}</code>
+          <p>{step.body}</p>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+
+--- File: index.tsx ---
+import styles from './styles.module.css';
+
+const terms = [
+  {
+    plain: 'Objective',
+    keel: 'Mission',
+    body: 'The long-running outcome you are trying to achieve across multiple efforts.',
+  },
+  {
+    plain: 'Strategic track',
+    keel: 'Epic',
+    body: 'A major problem or opportunity inside the mission that deserves its own planning surface.',
+  },
+  {
+    plain: 'Tactical campaign',
+    keel: 'Voyage',
+    body: 'A planned delivery arc with SRS and SDD constraints before execution begins.',
+  },
+  {
+    plain: 'Executable slice',
+    keel: 'Story',
+    body: 'The smallest tracked unit that can be started, submitted, accepted, and evidenced.',
+  },
+  {
+    plain: 'Research vector',
+    keel: 'Bearing',
+    body: 'A discovery move used to reduce fog before you freeze requirements or architecture.',
+  },
+  {
+    plain: 'Scheduled contract',
+    keel: 'Routine',
+    body: 'Recurring work that pulse can materialize into the board without inventing new scope.',
+  },
+];
+
+export default function TermRamp() {
+  return (
+    <div className={styles.grid}>
+      {terms.map((term) => (
+        <article key={term.keel} className={styles.card}>
+          <p className={styles.plain}>{term.plain}</p>
+          <div className={styles.arrow} />
+          <h3>{term.keel}</h3>
+          <p>{term.body}</p>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+
+--- File: index.tsx ---
+import SignalGrid from '@site/src/components/SignalGrid';
+
+const items = [
+  {
+    eyebrow: 'Project Managers',
+    title: 'Drive planning without losing delivery reality',
+    body:
+      'Learn how to create clean arcs, manage lanes, and pull the right signals before asking the team for another move.',
+    href: '/docs/personas/project-managers',
+    cta: 'Open the PM track',
+  },
+  {
+    eyebrow: 'Programmers',
+    title: 'Turn code changes into board-safe slices',
+    body:
+      'Use stories, evidence, verification, and routines without needing a separate system for engineering coordination.',
+    href: '/docs/personas/programmers',
+    cta: 'Open the programmer track',
+  },
+  {
+    eyebrow: 'Designers',
+    title: 'Shape the board from discovery to acceptance',
+    body:
+      'Work through bearings, review loops, and story evidence so design work stays visible and enforceable.',
+    href: '/docs/personas/designers',
+    cta: 'Open the designer track',
+  },
+  {
+    eyebrow: 'Leaders And Specialists',
+    title: 'Read the system without living in it all day',
+    body:
+      'Marketers, lawyers, general managers, and executives can use the same board to review scope, risk, and readiness.',
+    href: '/docs/personas/leaders-and-specialists',
+    cta: 'Open the leadership track',
+  },
+];
+
+export default function PersonaGrid() {
+  return <SignalGrid items={items} columns="two" />;
+}
+

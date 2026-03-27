@@ -1,0 +1,71 @@
+---
+title: Leaders And Specialists
+description: Read Keel as a board for visibility, risk review, and scoped contribution even if you are not in the delivery lane every day.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+
+export const leadershipMoves = [
+  {
+    eyebrow: 'Executives',
+    title: 'Read direction and readiness without asking for a custom dashboard',
+    body:
+      'Missions, epics, and flow surfaces provide a direct view into progress, blocked work, and verification posture.',
+  },
+  {
+    eyebrow: 'General Managers',
+    title: 'See whether operating capacity matches the plan',
+    body:
+      'The board exposes when work is blocked, when routines are due, and when acceptance authority is waiting.',
+  },
+  {
+    eyebrow: 'Specialists',
+    title: 'Contribute judgment without living in the delivery lane',
+    body:
+      'Marketers, lawyers, and other specialists can review the relevant slice, record input, and keep the board authoritative.',
+  },
+];
+
+Keel is not only for full-time operators. It is also useful for people who need a precise read on scope, readiness, and risk without running the day-to-day delivery loop themselves.
+
+<SignalGrid items={leadershipMoves} />
+
+## What to look at first
+
+```bash
+keel mission next --status
+keel flow
+keel workshop
+```
+
+These commands answer:
+
+- which objective is active
+- whether the board is moving cleanly
+- where human judgment is required next
+
+## How specialists should engage
+
+If your role is occasional but important, keep the contribution scoped:
+
+- review the relevant mission, epic, voyage, or story
+- record the decision or feedback where the board can retain it
+- avoid creating side channels that replace the artifact trail
+
+Examples:
+
+- a marketer reviews narrative readiness for a launch story
+- a lawyer reviews acceptance criteria tied to policy or terms
+- a CEO checks whether a mission is truly achieved and verified
+
+## The value of one board
+
+The main benefit for leadership and specialists is not more detail. It is less ambiguity.
+
+Keel gives you:
+
+- one current source of scope
+- one visible chain from objective to slice
+- one place to see whether verification actually happened
+
+That is enough to make better decisions without turning every review into a meeting.

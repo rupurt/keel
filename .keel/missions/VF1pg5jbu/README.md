@@ -1,13 +1,15 @@
 ---
 # system-managed
 id: VF1pg5jbu
-status: active
+status: verified
 created_at: 2026-03-26T18:53:08
-updated_at: 2026-03-26T18:55:12
+updated_at: 2026-03-26T19:13:42
 # authored
 title: Create Formal MDX Documentation Experience For Keel
 watch: ~
 activated_at: 2026-03-26T18:55:12
+achieved_at: 2026-03-26T19:13:39
+verified_at: 2026-03-26T19:13:42
 ---
 
 # Create Formal MDX Documentation Experience For Keel

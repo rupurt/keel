@@ -1,0 +1,80 @@
+---
+title: Project Managers
+description: Use Keel to turn priorities, constraints, and review authority into a visible operating system instead of a loose backlog.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+
+export const managerMoves = [
+  {
+    eyebrow: 'Direction',
+    title: 'Use missions and epics to state the problem clearly',
+    body:
+      'Create the strategic frame before asking the delivery lane to execute. Keel rewards clear problem statements.',
+  },
+  {
+    eyebrow: 'Planning',
+    title: 'Demand planned voyages before execution starts',
+    body:
+      'A voyage should capture requirements and design decisions before stories begin consuming team capacity.',
+  },
+  {
+    eyebrow: 'Review',
+    title: 'Accept slices with explicit authority',
+    body:
+      'Acceptance is a role-bearing move. Use it to keep closure decisions visible and deliberate.',
+  },
+];
+
+Project managers use Keel to keep direction and delivery connected. The board becomes the place where priorities are made visible, planning gets constrained, and acceptance happens with evidence in view.
+
+<SignalGrid items={managerMoves} />
+
+## Your default surfaces
+
+```bash
+keel mission next --status
+keel next --role manager
+keel flow
+keel workshop
+```
+
+These commands tell you whether the board needs:
+
+- a new objective or active mission
+- a new epic or voyage decision
+- acceptance and review work
+- human intervention because the flow is blocked
+
+## What good management looks like in Keel
+
+- Create missions only when the outcome is real enough to govern later work.
+- Write epic problems in plain language before the team disappears into solution mode.
+- Require voyage planning before you open the delivery lane.
+- Use acceptance as a public act, not a private DM.
+
+## Typical planning pattern
+
+```bash
+keel mission new "Launch onboarding"
+keel mission activate MISSION-ID
+keel epic new --problem "Users cannot orient in the first five minutes." "Teach the first-use path"
+keel voyage new --epic EPIC-ID --goal "Ship a guided onboarding loop." "First-turn docs"
+keel voyage plan VOYAGE-ID
+```
+
+The important shift is cultural: Keel wants management work to be specific enough that someone else can execute without reconstructing intent from memory.
+
+## When a story comes back for acceptance
+
+Use the story bundle as the review surface:
+
+- read the acceptance criteria
+- inspect the recorded evidence
+- decide with an explicit role whether the slice should close
+
+```bash
+keel story accept --role manager STORY-ID
+```
+
+If the slice is not ready, reject it or redirect it through planning instead of accepting ambiguity.

@@ -1,0 +1,85 @@
+---
+title: Everyday Keel
+description: Use Keel day to day without losing the turn-based rhythm that keeps the board trustworthy.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+import TurnCycle from '@site/src/components/TurnCycle';
+
+export const dailySignals = [
+  {
+    eyebrow: 'Morning Read',
+    title: 'Check health before pulling work',
+    body:
+      'Start with `health`, `flow`, and `doctor` so you know whether the system is healthy before you create more motion.',
+  },
+  {
+    eyebrow: 'Lane Discipline',
+    title: 'Pull from the correct queue',
+    body:
+      'Use `keel next --role ...` instead of browsing manually. The board should decide what is truly next.',
+  },
+  {
+    eyebrow: 'Tight Closure',
+    title: 'Submit with proof in hand',
+    body:
+      'Do not split implementation and evidence into separate, vague cleanup phases. Close the slice in one motion.',
+  },
+];
+
+Keel works best when it becomes a stable rhythm rather than an occasional cleanup tool. The board should be the first place you read and the last place you update before closing a turn.
+
+<SignalGrid items={dailySignals} />
+
+## The daily loop
+
+```bash
+keel health --scene
+keel flow --scene
+keel next --role operator
+```
+
+That short sequence answers three important questions:
+
+- Is the system healthy?
+- Is the board blocked, open, or waiting on human input?
+- What should I work on next from my lane?
+
+## When you are operating the board
+
+For strategic review or coordination work:
+
+```bash
+keel mission next --status
+keel next --role manager
+keel workshop
+```
+
+These surfaces help you decide whether the system needs planning, review, acceptance, or a structural repair.
+
+## When you are shipping a slice
+
+For delivery work:
+
+```bash
+keel story start STORY-ID
+keel story record STORY-ID --ac 1 --cmd "your-check-here"
+keel story submit STORY-ID
+```
+
+Replace the proof command with whatever the acceptance criterion actually requires. Keel is vendor-neutral about your tools, but not neutral about attaching proof.
+
+## When the board feels wrong
+
+Do not paper over weirdness with more work. Repair the board first.
+
+```bash
+keel doctor
+keel flow
+```
+
+If the diagnostics surface drift, treat that as real operational work. Keel is designed around the idea that structural debt is still delivery debt.
+
+## Keep the rhythm visible
+
+<TurnCycle />
