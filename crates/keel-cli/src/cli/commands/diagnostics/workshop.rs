@@ -7,6 +7,313 @@ use chrono::Timelike;
 use keel::infrastructure::loader::load_board;
 use keel::read_model::{workflow_lane_flow, workflow_topology};
 use owo_colors::OwoColorize;
+use txt_scene::{SceneFrame, SceneLine, visible_width};
+
+const WORKSHOP_SCENE_WIDTH: usize = 75;
+const WORKSHOP_FRAME_WIDTH: usize = 69;
+const WORKSHOP_SCENE_INDENT: &str = "    ";
+const WORKSHOP_FLOOR_INDENT: &str = "     ";
+const WORKSHOP_FLOOR_WIDTH: usize = 62;
+
+fn render_workshop_line<F>(build: F) -> String
+where
+    F: FnOnce(&mut SceneLine),
+{
+    let mut line = SceneLine::new(WORKSHOP_SCENE_WIDTH);
+    build(&mut line);
+    line.finish()
+}
+
+fn centered_visible(text: impl Into<String>, width: usize) -> String {
+    let text = text.into();
+    let visible = visible_width(&text);
+    let total_padding = width.saturating_sub(visible);
+    let left_padding = total_padding / 2;
+    let right_padding = total_padding - left_padding;
+
+    format!(
+        "{}{}{}",
+        " ".repeat(left_padding),
+        text,
+        " ".repeat(right_padding)
+    )
+}
+
+fn render_workshop_scene(
+    board: &keel::domain::model::Board,
+    human_items: &[String],
+    metrics: &keel::read_model::flow_metrics::FlowMetrics,
+    health: &keel::read_model::diagnostics::DoctorReport,
+    energized: bool,
+) -> String {
+    let bench_frame = SceneFrame::new(WORKSHOP_SCENE_INDENT, "|", "|", WORKSHOP_FRAME_WIDTH);
+    let floor_frame = SceneFrame::new(WORKSHOP_FLOOR_INDENT, "| |", "| |", WORKSHOP_FLOOR_WIDTH);
+
+    let lamp_color = if energized {
+        owo_colors::AnsiColors::Yellow
+    } else {
+        owo_colors::AnsiColors::White
+    };
+    let lamp_style = if energized { "(*)" } else { "( )" };
+    let lamp_label = if energized {
+        "CIRCUIT CLOSED (ON THE CLOCK)"
+    } else {
+        "CIRCUIT OPEN (OFF THE CLOCK)"
+    };
+
+    let draft_epic_count = board
+        .epics
+        .values()
+        .filter(|e| e.status() == keel::domain::model::EpicState::Draft)
+        .count();
+    let done_epic_count = board
+        .epics
+        .values()
+        .filter(|e| e.status() == keel::domain::model::EpicState::Done)
+        .count();
+    let active_epic_count = board.epics.len() - draft_epic_count - done_epic_count;
+    let congestion_ratio = if active_epic_count > 0 {
+        draft_epic_count as f64 / active_epic_count as f64
+    } else {
+        draft_epic_count as f64
+    };
+
+    let pegboard = format!(
+        "M:{} E:{}/{} B:{} A:{}",
+        board.missions.len(),
+        draft_epic_count,
+        active_epic_count,
+        board.bearings.len(),
+        board.adrs.len()
+    );
+
+    let congestion_styled = if draft_epic_count > 0 || congestion_ratio > 2.0 {
+        pegboard.yellow().bold().to_string()
+    } else {
+        pegboard.dimmed().to_string()
+    };
+
+    let operational_fatigue = metrics.governance.proposed_count > 5;
+    let drill_label = if operational_fatigue {
+        "NOISY"
+    } else {
+        "DRILL PRESS"
+    };
+    let anvil_label = if operational_fatigue {
+        "CLANGING"
+    } else {
+        "ANVIL"
+    };
+
+    let drill_styled = if operational_fatigue {
+        drill_label.red().bold().to_string()
+    } else {
+        drill_label.to_string()
+    };
+    let anvil_styled = if operational_fatigue {
+        anvil_label.red().bold().to_string()
+    } else {
+        anvil_label.to_string()
+    };
+
+    let occupancy = (human_items.len() as f64 / 10.0).min(1.0);
+    let bar_width = 40;
+    let filled = (occupancy * bar_width as f64) as usize;
+    let mut items_on_bench = String::new();
+    for i in 0..bar_width {
+        if i < filled {
+            items_on_bench.push('█');
+        } else {
+            items_on_bench.push(' ');
+        }
+    }
+
+    let blocked = metrics.execution.backlog_blocked_count;
+    let remediation = health.estimated_remediation_hours;
+    let vice_label = format!("[ VICE ]  {} BLOCKED", blocked);
+    let oil_label = format!("[ OIL CAN ]  {:.1}h REMEDIATION", remediation);
+
+    let vice_styled = if blocked > 0 {
+        vice_label.red().bold().to_string()
+    } else {
+        vice_label.dimmed().to_string()
+    };
+    let oil_styled = if remediation > 0.0 {
+        oil_label.yellow().bold().to_string()
+    } else {
+        oil_label.dimmed().to_string()
+    };
+
+    let drift = health.drift_coefficient;
+    let mut sawdust_pattern = String::new();
+    for i in 0..40 {
+        let noise = ((i as f64 * 1.618).sin() + 1.0) / 2.0;
+        if noise < drift {
+            if i % 3 == 0 {
+                sawdust_pattern.push_str(&":".dimmed().to_string());
+            } else if i % 2 == 0 {
+                sawdust_pattern.push_str(&".".dimmed().to_string());
+            } else {
+                sawdust_pattern.push_str(&"*".dimmed().to_string());
+            }
+        } else {
+            sawdust_pattern.push(' ');
+        }
+    }
+
+    let healthy = health.passed();
+    let dust_label = if !healthy {
+        "SYSTEM UNHEALTHY (BROKEN TOOLS)"
+    } else if drift > 0.5 {
+        "SHOP ENTROPY (SEVERE)"
+    } else {
+        "SHOP SAWDUST (DRIFT)"
+    };
+    let dust_label = centered_visible(dust_label.dimmed().to_string(), 40);
+
+    let mut lines = vec![
+        render_workshop_line(|line| {
+            line.pad_to(4)
+                .push("┌")
+                .push("─".repeat(WORKSHOP_FRAME_WIDTH))
+                .push("┐");
+        }),
+        bench_frame.row(|line| {
+            line.push(" THE WORKBENCH".bold().to_string());
+        }),
+        render_workshop_line(|line| {
+            line.pad_to(4)
+                .push("└")
+                .push("─".repeat(WORKSHOP_FRAME_WIDTH))
+                .push("┘");
+        }),
+        render_workshop_line(|line| {
+            line.pad_to(13).push("|");
+        }),
+        render_workshop_line(|line| {
+            line.pad_to(11).push("__|__");
+        }),
+    ];
+
+    if energized {
+        lines.push(render_workshop_line(|line| {
+            line.pad_to(10)
+                .push("/ ")
+                .push(lamp_style.color(lamp_color).bold().to_string())
+                .push(" \\   <-- ")
+                .push(lamp_label.color(lamp_color).bold().to_string());
+        }));
+        lines.push(render_workshop_line(|line| {
+            line.pad_to(9).push("/  '.|.'\\");
+        }));
+        lines.push(render_workshop_line(|line| {
+            line.pad_to(8).push("/    ' '  \\");
+        }));
+    } else {
+        lines.push(render_workshop_line(|line| {
+            line.pad_to(10)
+                .push("/ ")
+                .push(lamp_style.dimmed().to_string())
+                .push(" \\   <-- ")
+                .push(lamp_label.dimmed().to_string());
+        }));
+        lines.push(render_workshop_line(|line| {
+            line.pad_to(10).push("\\_____/");
+        }));
+    }
+
+    lines.push(render_workshop_line(|line| {
+        line.pad_to(4)
+            .push(".")
+            .push("_".repeat(WORKSHOP_FRAME_WIDTH))
+            .push(".");
+    }));
+    lines.push(bench_frame.row(|line| {
+        line.push(" [ PEGBOARD ]");
+    }));
+    lines.push(bench_frame.row(|line| {
+        const RIGHT_DECOR: &str = ".  .  .  .  .  ";
+
+        line.push("  .  .  .  .  .  .  .  ");
+        line.push(&congestion_styled);
+        line.pad_to(WORKSHOP_FRAME_WIDTH - visible_width(RIGHT_DECOR));
+        line.push(RIGHT_DECOR);
+    }));
+    lines.push(render_workshop_line(|line| {
+        line.pad_to(4)
+            .push("|")
+            .push("_".repeat(WORKSHOP_FRAME_WIDTH))
+            .push("|");
+    }));
+    lines.push(bench_frame.empty_row());
+    lines.push(bench_frame.row(|line| {
+        line.push("  ");
+        line.push(format!("[ {} ]", drill_styled.pad_to_width(11)));
+        line.pad_to(52);
+        line.push(format!("[ {} ]", anvil_styled.pad_to_width(7)));
+    }));
+    lines.push(bench_frame.row(|line| {
+        line.push("         _|_");
+        line.pad_to(51);
+        line.push("_ _");
+    }));
+    lines.push(bench_frame.row(|line| {
+        line.push("        (o o)");
+        line.pad_to(50);
+        line.push("/   \\");
+    }));
+    lines.push(bench_frame.row(|line| {
+        line.push("   [ ");
+        line.push(items_on_bench.yellow().to_string());
+        line.push(" ]   <-- BENCH WIP (");
+        line.push(human_items.len().to_string());
+        line.push(")");
+    }));
+    lines.push(render_workshop_line(|line| {
+        line.pad_to(4)
+            .push("|")
+            .push("_".repeat(WORKSHOP_FRAME_WIDTH))
+            .push("|");
+    }));
+    lines.push(bench_frame.empty_row());
+    lines.push(bench_frame.row(|line| {
+        line.push("   ");
+        line.push(vice_styled.pad_to_width(24));
+        line.push("   ");
+        line.push(oil_styled.pad_to_width(36));
+    }));
+    lines.push(render_workshop_line(|line| {
+        line.pad_to(4)
+            .push("|")
+            .push("_".repeat(WORKSHOP_FRAME_WIDTH))
+            .push("|");
+    }));
+    lines.push(render_workshop_line(|line| {
+        line.push(floor_frame.empty_row());
+    }));
+    lines.push(render_workshop_line(|line| {
+        line.push(floor_frame.row(|floor| {
+            floor.push("         ");
+            floor.push(&sawdust_pattern);
+        }));
+    }));
+    lines.push(render_workshop_line(|line| {
+        line.push(floor_frame.row(|floor| {
+            floor.push("         ");
+            floor.push(dust_label);
+        }));
+    }));
+    lines.push(render_workshop_line(|line| {
+        line.pad_to(4).push("_|_|_");
+        line.pad_to(69).push("_|_|_");
+    }));
+    lines.push(render_workshop_line(|line| {
+        line.pad_to(3).push("|_____|");
+        line.pad_to(68).push("|_____|");
+    }));
+
+    lines.join("\n")
+}
 
 /// Run the workshop command
 pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
@@ -83,230 +390,16 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
     let width = get_terminal_width();
 
     if scene {
-        let healthy = health.passed();
         let (config, _) = keel::infrastructure::config::load_config();
         let current_hour = chrono::Local::now().hour() as u8;
         let within_working_hours = current_hour >= config.workflow.working_hours_start
             && current_hour < config.workflow.working_hours_end;
         let energized = config.workflow.open_for_work && within_working_hours;
 
-        println!("\n    ┌{}┐", "─".repeat(width.saturating_sub(6)));
         println!(
-            "    │ {: <width$} │",
-            "THE WORKBENCH".bold(),
-            width = width.saturating_sub(8)
+            "\n{}",
+            render_workshop_scene(&board, &human_items, &metrics, &health, energized)
         );
-        println!("    └{}┘", "─".repeat(width.saturating_sub(6)));
-
-        // Work Lamp visual
-        let lamp_color = if energized {
-            owo_colors::AnsiColors::Yellow
-        } else {
-            owo_colors::AnsiColors::White
-        };
-        let lamp_style = if energized { "(*)" } else { "( )" };
-        let lamp_label = if energized {
-            "CIRCUIT CLOSED (ON THE CLOCK)"
-        } else {
-            "CIRCUIT OPEN (OFF THE CLOCK)"
-        };
-
-        let mut visual = String::new();
-        visual.push_str("             | \n");
-        visual.push_str("           __|__\n");
-        if energized {
-            visual.push_str(&format!(
-                "          / {: <3} \\   <-- {}\n",
-                lamp_style.color(lamp_color).bold(),
-                lamp_label.color(lamp_color).bold()
-            ));
-            visual.push_str("         /  '.|.'  \\\n");
-            visual.push_str("        /    ' '    \\\n");
-        } else {
-            visual.push_str(&format!(
-                "          / {: <3} \\   <-- {}\n",
-                lamp_style.dimmed(),
-                lamp_label.dimmed()
-            ));
-            visual.push_str("          \\_____/\n");
-        }
-
-        // Ultra High Fidelity Workbench visual
-        visual.push_str(
-            "    ._____________________________________________________________________.\n",
-        );
-        visual.push_str(
-            "    | [ PEGBOARD ]                                                        |\n",
-        );
-
-        let draft_epic_count = board
-            .epics
-            .values()
-            .filter(|e| e.status() == keel::domain::model::EpicState::Draft)
-            .count();
-        let done_epic_count = board
-            .epics
-            .values()
-            .filter(|e| e.status() == keel::domain::model::EpicState::Done)
-            .count();
-        let active_epic_count = board.epics.len() - draft_epic_count - done_epic_count;
-        let congestion_ratio = if active_epic_count > 0 {
-            draft_epic_count as f64 / active_epic_count as f64
-        } else {
-            draft_epic_count as f64
-        };
-
-        let pegboard = format!(
-            "M:{} E:{}/{} B:{} A:{}",
-            board.missions.len(),
-            draft_epic_count,
-            active_epic_count,
-            board.bearings.len(),
-            board.adrs.len()
-        );
-
-        let congestion_styled = if draft_epic_count > 0 || congestion_ratio > 2.0 {
-            pegboard.yellow().bold().to_string()
-        } else {
-            pegboard.dimmed().to_string()
-        };
-
-        visual.push_str(&format!(
-            "    |  .  .  .  .  .  .  .  {}  .  .  .  .  .  |\n",
-            congestion_styled.pad_to_width(33)
-        ));
-        visual.push_str(
-            "    |_____________________________________________________________________|\n",
-        );
-        visual.push_str(
-            "    |                                                                     |\n",
-        );
-
-        let operational_fatigue = metrics.governance.proposed_count > 5;
-        let drill_label = if operational_fatigue {
-            "NOISY"
-        } else {
-            "DRILL PRESS"
-        };
-        let anvil_label = if operational_fatigue {
-            "CLANGING"
-        } else {
-            "ANVIL"
-        };
-
-        visual.push_str(&format!(
-            "    |  [ {: <11} ]                                     [ {: <7} ]      |\n",
-            if operational_fatigue {
-                drill_label.red().bold().to_string()
-            } else {
-                drill_label.to_string()
-            },
-            if operational_fatigue {
-                anvil_label.red().bold().to_string()
-            } else {
-                anvil_label.to_string()
-            }
-        ));
-        visual.push_str(
-            "    |         _|_                                            _ _          |\n",
-        );
-        visual.push_str(
-            "    |        (o o)                                          /   \\         |\n",
-        );
-
-        let occupancy = (human_items.len() as f64 / 10.0).min(1.0);
-        let bar_width = 40;
-        let filled = (occupancy * bar_width as f64) as usize;
-        let mut items_on_bench = String::new();
-        for i in 0..bar_width {
-            if i < filled {
-                items_on_bench.push('█');
-            } else {
-                items_on_bench.push(' ');
-            }
-        }
-
-        let bench_line = format!(
-            "[ {} ]   <-- BENCH WIP ({})",
-            items_on_bench.yellow(),
-            human_items.len()
-        );
-        visual.push_str(&format!("    |   {} |\n", bench_line.pad_to_width(65)));
-        visual.push_str(
-            "    |_____________________________________________________________________|\n",
-        );
-        visual.push_str(
-            "    |                                                                     |\n",
-        );
-
-        let blocked = metrics.execution.backlog_blocked_count;
-        let remediation = health.estimated_remediation_hours;
-        let vice_label = format!("[ VICE ]  {} BLOCKED", blocked);
-        let oil_label = format!("[ OIL CAN ]  {:.1}h REMEDIATION", remediation);
-
-        let vice_styled = if blocked > 0 {
-            vice_label.red().bold().to_string()
-        } else {
-            vice_label.dimmed().to_string()
-        };
-        let oil_styled = if remediation > 0.0 {
-            oil_label.yellow().bold().to_string()
-        } else {
-            oil_label.dimmed().to_string()
-        };
-
-        visual.push_str(&format!(
-            "    |   {}        {}   |\n",
-            vice_styled.pad_to_width(28),
-            oil_styled.pad_to_width(25)
-        ));
-        visual.push_str(
-            "    |_____________________________________________________________________|\n",
-        );
-        visual.push_str(
-            "      | |                                                               | |\n",
-        );
-
-        // Deterministic sawdust based on drift
-        let drift = health.drift_coefficient;
-        let mut floor = String::from("      | |         ");
-        for i in 0..40 {
-            // Pseudo-random pattern based on i and drift
-            let noise = ((i as f64 * 1.618).sin() + 1.0) / 2.0;
-            if noise < drift {
-                if i % 3 == 0 {
-                    floor.push_str(&":".dimmed().to_string());
-                } else if i % 2 == 0 {
-                    floor.push_str(&".".dimmed().to_string());
-                } else {
-                    floor.push_str(&"*".dimmed().to_string());
-                }
-            } else {
-                floor.push(' ');
-            }
-        }
-        floor.push_str("      | |\n");
-
-        visual.push_str(&floor);
-        let label = if !healthy {
-            "SYSTEM UNHEALTHY (BROKEN TOOLS)"
-        } else if drift > 0.5 {
-            "SHOP ENTROPY (SEVERE)"
-        } else {
-            "SHOP SAWDUST (DRIFT)"
-        };
-        visual.push_str(&format!(
-            "      | |         {: ^40}      | |\n",
-            label.dimmed()
-        ));
-        visual.push_str(
-            "     _|_|_                                                           _|_|_\n",
-        );
-        visual.push_str(
-            "    |_____|                                                         |_____|\n",
-        );
-
-        println!("{}", visual);
 
         if !human_items.is_empty() {
             println!("    REQUIRED DECISIONS:");
@@ -468,4 +561,69 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
     println!("\n    \"A broken workshop is a messy workshop!\"");
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+    use keel::infrastructure::loader::load_board;
+    use keel::test_helpers::TestBoardBuilder;
+
+    #[test]
+    fn workshop_scene_has_stable_width_with_colorized_content() {
+        let temp = TestBoardBuilder::new().build();
+        let board = load_board(temp.path()).unwrap();
+        let metrics = keel::read_model::flow_status::project(&board, Utc::now());
+        let health = keel::read_model::diagnostics::validate_report(temp.path()).unwrap();
+
+        let scene = render_workshop_scene(
+            &board,
+            &["Story S1 - Needs review".to_string()],
+            &metrics,
+            &health,
+            true,
+        );
+
+        assert!(scene.contains("\x1b["));
+        assert!(
+            scene
+                .lines()
+                .all(|line| visible_width(line) == WORKSHOP_SCENE_WIDTH)
+        );
+    }
+
+    #[test]
+    fn workshop_scene_has_stable_width_when_dimmed() {
+        let temp = TestBoardBuilder::new().build();
+        let board = load_board(temp.path()).unwrap();
+        let metrics = keel::read_model::flow_status::project(&board, Utc::now());
+        let health = keel::read_model::diagnostics::validate_report(temp.path()).unwrap();
+
+        let scene = render_workshop_scene(&board, &[], &metrics, &health, false);
+
+        assert!(
+            scene
+                .lines()
+                .all(|line| visible_width(line) == WORKSHOP_SCENE_WIDTH)
+        );
+    }
+
+    #[test]
+    fn workshop_scene_right_support_stays_centered_under_floor_posts() {
+        let temp = TestBoardBuilder::new().build();
+        let board = load_board(temp.path()).unwrap();
+        let metrics = keel::read_model::flow_status::project(&board, Utc::now());
+        let health = keel::read_model::diagnostics::validate_report(temp.path()).unwrap();
+
+        let scene = render_workshop_scene(&board, &[], &metrics, &health, false);
+        let lines: Vec<_> = scene.lines().collect();
+        let floor_empty = lines[lines.len() - 5];
+        let foot_row = lines[lines.len() - 2];
+        let base_row = lines[lines.len() - 1];
+
+        assert_eq!(floor_empty.rfind("| |"), Some(70));
+        assert_eq!(foot_row.rfind("_|_|_"), Some(69));
+        assert_eq!(base_row.rfind("|_____|"), Some(68));
+    }
 }
