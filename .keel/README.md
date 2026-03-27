@@ -356,6 +356,12 @@
 |--------|--------|
 | [Two-Pass Speccy Refactor](epics/VF0XAFqlF/voyages/VF0XBQxJ5/) | done |
 
+### [Launch Keel Public MDX Documentation](epics/VF1pg68bv/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Public Docs Site And Persona Guides](epics/VF1pg68bv/voyages/VF1ph7Z2N/) | planned |
+
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
 | Voyage | Status |
