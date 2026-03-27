@@ -83,17 +83,17 @@ While most inputs to Keel are simple strings and flags (like `keel ping "hello"`
 
 ## 5. The System Pacemaker
 
-The communication protocol also serves as the system's **Pacemaker**. The `.keel/heartbeat` file records the kinetic energy of the workflow.
+The communication protocol also serves as the system's **Pacemaker**. The `.keel/heartbeat` file is an optional wake marker that records recent workflow energy.
 
 ### The Heartbeat
-- **Activation**: Invoking `keel poke` (without a targeted ping ID) updates the heartbeat file.
-- **Energization**: The engine considers itself "energized" if the heartbeat's modification time is within the configured `battery_decay_minutes` (default: 10m).
-- **Idle State**: If the heartbeat decays, the engine transitions to **IDLE**, dimming the visual scenes and pausing autonomous backlog discharge.
+- **Activation**: Invoking `keel poke` (without a targeted ping ID) creates or updates the heartbeat file.
+- **Energization**: The engine considers itself "energized" if the heartbeat exists and its modification time is within the configured `battery_decay_minutes` (default: 10m).
+- **Idle State**: If the heartbeat is missing or decays, the engine transitions to **IDLE**, dimming the visual scenes and pausing autonomous backlog discharge. Missing heartbeat is a flow-state signal, not structural drift.
 
 ### Pace-setting
-To maintain board integrity, the pacemaker must be synchronized with all state changes. 
-- **The Protocol**: Every state-mutating commit MUST be "pace-set" by executing a final `keel poke` immediately before the commit.
-- **Consistency**: This ensures that the recorded "energy" of the system is precisely aligned with the resulting Git hash and board state.
+To maintain board integrity, the pacemaker should be synchronized with the commit boundary.
+- **The Protocol**: Before landing a state-mutating commit, execute a final `keel poke` or rely on the installed pre-commit hook to auto-poke and stage `.keel/heartbeat`.
+- **Consistency**: A dirty heartbeat is warning-level evidence that the loop has been opened but not yet sealed. The commit itself clears that warning by aligning the wake marker with the resulting Git hash and board state.
 
 ## 6. Expanding the Protocol
 

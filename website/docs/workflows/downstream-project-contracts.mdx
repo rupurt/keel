@@ -31,7 +31,7 @@ export const upstreamBoundary = {
   eyebrow: 'Upstream Keel',
   title: 'Canonical engine contract',
   items: [
-    'Core principles such as gardening first, pacemaker stability, and notification discipline.',
+    'Core principles such as gardening first, heartbeat hygiene, and notification discipline.',
     'The tactical loop, role separation, lifecycle expectations, and doctor-first hygiene.',
     'Canonical board operations such as mission, voyage, story, bearing, flow, doctor, and pulse.',
     'The resolution hierarchy that points back to ADRs, policy, architecture, and planning artifacts.',
@@ -63,6 +63,8 @@ Those two files are the downstream operating contract. They tell humans and AI h
 | `INSTRUCTIONS.md` | Detailed procedural manual | It defines the tactical loop, role-specific workflows, hygiene rules, lifecycle sequencing, and the exact command vocabulary that should be used in the repo. |
 
 `AGENTS.md` should be easy to scan. `INSTRUCTIONS.md` should be the place where ambiguity goes to die.
+
+One example of upstream intent worth preserving exactly is heartbeat semantics: a missing heartbeat is acceptable, while a dirty heartbeat is warning-level loop debt that should be closed at the commit boundary. Downstream copies should preserve that contract instead of inventing repo-local heartbeat rules.
 
 ## What stays upstream and what changes downstream
 

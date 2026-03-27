@@ -110,6 +110,8 @@ While you review that diff, separate the changes into two piles:
 
 Engine changes usually include the tactical loop, new lifecycle guidance, new command expectations, or updated hygiene rules. Repo-specific seams usually include your wrappers, proof contract, project overview, and any local delegation guidance.
 
+This is also where small-but-important behavioral changes show up. For example, upstream may tighten or relax heartbeat semantics, hook behavior, or commit-boundary hygiene. Those changes belong in your downstream copies of `AGENTS.md` and `INSTRUCTIONS.md`, not in tribal memory.
+
 ## 4. Reapply the downstream seams deliberately
 
 After the upstream sync, inspect each local surface that probably needs to stay different:
