@@ -12,6 +12,12 @@ just docs-dev
 just docs-build
 ```
 
+The dev server binds to `0.0.0.0` by default. Override the port when `3000` is already in use:
+
+```bash
+PORT=3010 just docs-dev
+```
+
 These commands use the repository's Nix-supported Node toolchain so the docs workflow stays reproducible in this workspace.
 
 ## Deployment Inputs

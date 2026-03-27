@@ -95,4 +95,8 @@ just docs-dev
 just docs-build
 ```
 
-Those recipes use the repo-supported Node toolchain through Nix, which keeps the docs build reproducible in this workspace.
+Those recipes use the repo-supported Node toolchain through Nix, which keeps the docs build reproducible in this workspace. If `3000` is already occupied, start the dev server on a different port:
+
+```bash
+PORT=3010 just docs-dev
+```

@@ -48,7 +48,7 @@ docs-install:
 
 # Run the public docs site locally
 docs-dev:
-  nix shell nixpkgs#nodejs_22 -c sh -lc 'cd website && npm start -- --host 0.0.0.0'
+  nix shell nixpkgs#nodejs_22 -c sh -lc 'cd website && npm run start -- --host "${HOST:-0.0.0.0}" --port "${PORT:-3000}"'
 
 # Build the public docs site
 docs-build:
