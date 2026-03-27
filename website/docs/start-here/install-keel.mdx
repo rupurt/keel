@@ -85,6 +85,12 @@ keel next --help
 
 You should see the main command families for diagnostics, planning, execution, and automation.
 
+## If you are adopting Keel inside another repo
+
+Installing the binary is only the first layer. A downstream repository still needs local `AGENTS.md` and `INSTRUCTIONS.md` files that teach humans and agents how to use Keel as that repo's project-management engine.
+
+Read [Downstream Project Contracts](/docs/workflows/downstream-project-contracts) when you are adapting Keel into another codebase, and [Upgrade Keel And Sync Upstream Instructions](/docs/workflows/upgrading-keel-and-syncing-instructions) when you need to absorb upstream changes without erasing local operating rules.
+
 ## Repo-local docs workflow
 
 This repository ships a supported MDX docs workflow through `just`:

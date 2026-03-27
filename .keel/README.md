@@ -362,6 +362,12 @@
 |--------|--------|
 | [Public Docs Site And Persona Guides](epics/VF1pg68bv/voyages/VF1ph7Z2N/) | done |
 
+### [Teach Downstream Keel Adoption And Instruction Sync](epics/VF2RJfiKo/) (done)
+
+| Voyage | Status |
+|--------|--------|
+| [Downstream Adoption And Upgrade Docs](epics/VF2RJfiKo/voyages/VF2RKxjt7/) | done |
+
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
 | Voyage | Status |

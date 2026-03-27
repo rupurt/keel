@@ -1,0 +1,156 @@
+---
+title: Upgrade Keel And Sync Upstream Instructions
+description: Upgrade the engine without erasing the downstream wrappers, proof contracts, and repo-specific operating surfaces that make it usable in practice.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+import UpgradeLoop from '@site/src/components/UpgradeLoop';
+
+export const upgradeSignals = [
+  {
+    eyebrow: 'Explicit Work',
+    title: 'Treat instruction sync as a real maintenance slice',
+    body:
+      'Upgrading Keel is not just swapping a binary. It can change the operating contract that tells humans and agents how to use the board in your repo.',
+  },
+  {
+    eyebrow: 'Narrow Diff',
+    title: 'Start from upstream, preserve local seams',
+    body:
+      'The safe move is to diff the upstream files, absorb new engine guidance, and then reapply the repo-specific wrappers and proof rules that your project actually needs.',
+  },
+  {
+    eyebrow: 'Validation',
+    title: 'Close the loop on the board',
+    body:
+      'After syncing, rerun the health and board surfaces that prove the repository still behaves like a coherent Keel installation.',
+  },
+];
+
+export const upgradeSteps = [
+  {
+    label: 'Snapshot',
+    title: 'Read the current board before changing anything',
+    command: 'keel doctor --status',
+    body:
+      'Take a clean snapshot of the current operating state so you know whether the repo was healthy before the upgrade started.',
+  },
+  {
+    label: 'Upgrade',
+    title: 'Update the binary or dev-shell path',
+    command: 'nix flake update',
+    body:
+      'Upgrade Keel the same way your repository installed it: release artifact, Nix input, source build, or pinned contributor toolchain.',
+  },
+  {
+    label: 'Diff',
+    title: 'Compare upstream instruction files to your local copies',
+    command: 'diff -u AGENTS.md /tmp/keel-upstream/AGENTS.md',
+    body:
+      'Find the new engine guidance before you start editing. The goal is to merge upstream intent into your downstream contract, not to freestyle a replacement.',
+  },
+  {
+    label: 'Reapply',
+    title: 'Put the repo-specific seams back on top',
+    command: 'keel hooks install',
+    body:
+      'Restore local wrappers, proof contracts, and repo overview sections after the upstream sync so the repo remains usable in its actual environment.',
+  },
+  {
+    label: 'Validate',
+    title: 'Prove that the engine still fits the repository',
+    command: 'keel flow --scene',
+    body:
+      'Rerun the board surfaces that should still make sense after the change. If they drift, fix the contract now rather than leaving hidden ambiguity behind.',
+  },
+];
+
+Upgrading Keel in a downstream repository is a contract sync, not just a version bump. The binary can change command behavior, but the bigger risk is that the repo's copied instruction files stop matching the engine that humans and agents are actually running.
+
+<SignalGrid items={upgradeSignals} />
+
+<UpgradeLoop steps={upgradeSteps} />
+
+## 1. Snapshot current behavior
+
+Before you touch the install path or the copied instruction files, read the board surfaces that matter now:
+
+```bash
+keel doctor --status
+keel flow --scene
+keel mission next --status
+```
+
+If those surfaces are already broken, fix that drift before the upgrade. Otherwise you will not know which problems came from the sync and which were already present.
+
+## 2. Upgrade Keel through the path your repo actually uses
+
+Use the same upgrade path that installed Keel in the first place:
+
+- Nix-managed repo: update the flake input or dev-shell pin.
+- Source-driven repo: rebuild or reinstall from the desired commit or release tag.
+- Release-artifact repo: replace the pinned binary or installer version.
+
+Do not change the instruction files first. Upgrade the engine, then sync the contract around the engine you are actually going to run.
+
+## 3. Diff upstream `AGENTS.md` and `INSTRUCTIONS.md`
+
+Use a clean upstream checkout so you can compare the latest engine guidance against your repo-local copies:
+
+```bash
+git clone https://github.com/spoke-sh/keel.git /tmp/keel-upstream
+diff -u /tmp/keel-upstream/AGENTS.md AGENTS.md
+diff -u /tmp/keel-upstream/INSTRUCTIONS.md INSTRUCTIONS.md
+```
+
+While you review that diff, separate the changes into two piles:
+
+- engine changes you should absorb
+- repo-specific seams you must preserve
+
+Engine changes usually include the tactical loop, new lifecycle guidance, new command expectations, or updated hygiene rules. Repo-specific seams usually include your wrappers, proof contract, project overview, and any local delegation guidance.
+
+## 4. Reapply the downstream seams deliberately
+
+After the upstream sync, inspect each local surface that probably needs to stay different:
+
+| Surface | What to preserve downstream |
+| --- | --- |
+| Command wrappers | Repo-local helpers such as `just mission`, `just screen`, or direct `keel ...` usage instead of Keel-repo wrappers |
+| Proof contract | The real product or runtime claim your repo must verify, not just generic board closure |
+| Project overview | Repo description, directory map, important entrypoints, and local architecture notes |
+| Delegation rules | Worker-context, steward, or harness-specific coordination rules that only matter in this repo |
+| Adjacent harness docs | Extra files for specific harnesses that should continue to point back to the same board contract |
+
+The `port` repository shows this clearly: it keeps the upstream engine language around orientation, health, and lifecycle, but it swaps in direct `keel ...` commands, adds `just mission` and `just screen`, and carries a Mission Proof Contract that only Port can define.
+
+## 5. Reinstall hooks and validate the engine
+
+Once the files are synced, refresh the repo's automation and then re-read the board:
+
+```bash
+keel hooks install
+keel doctor --status
+keel flow --scene
+keel mission next --status
+keel pulse
+```
+
+Depending on the repo, you may also want to run local wrappers such as `just check`, `just test`, or project-specific smoke tests. The important part is that the board contract and the repo's actual command surface agree again.
+
+:::note
+Treat this as explicit board work when the repository is already under Keel. If the sync is material, open a story or maintenance voyage instead of silently editing the contract in a chat session.
+:::
+
+## What not to do
+
+- Do not overwrite downstream files wholesale and assume you will remember the local seams later.
+- Do not keep stale wrapper names when the repo has already moved to a different command surface.
+- Do not leave hook installation or board validation for an undefined follow-up.
+- Do not let harness-specific files drift away from `AGENTS.md` and `INSTRUCTIONS.md`.
+
+The goal is not a perfect textual match with upstream. The goal is a downstream contract that still behaves like Keel while remaining truthful about the repository it governs.
+
+## Related reading
+
+If you are setting up the downstream contract for the first time, start with [Downstream Project Contracts](/docs/workflows/downstream-project-contracts).

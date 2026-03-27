@@ -1,0 +1,119 @@
+---
+title: Downstream Project Contracts
+description: Adapt AGENTS.md and INSTRUCTIONS.md so Keel becomes the project-management engine inside your repository, not just another CLI on the PATH.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+import ContractBoundary from '@site/src/components/ContractBoundary';
+
+export const contractSignals = [
+  {
+    eyebrow: 'Operating Layer',
+    title: 'Keel becomes the project-management engine',
+    body:
+      'A repo does not adopt Keel just by installing the binary. It adopts Keel when every human and agent is taught to orient, pull work, prove work, and close work through the board.',
+  },
+  {
+    eyebrow: 'Canonical Core',
+    title: 'Keep the engine discipline recognizable',
+    body:
+      'The tactical loop, evidence bar, health checks, and lifecycle rules should stay recognizable across downstream repos so the board behaves consistently.',
+  },
+  {
+    eyebrow: 'Project Surface',
+    title: 'Adapt only what the repo actually owns',
+    body:
+      'Command wrappers, proof contracts, project overviews, and local workflow helpers belong in the downstream copies because they depend on the actual repository.',
+  },
+];
+
+export const upstreamBoundary = {
+  eyebrow: 'Upstream Keel',
+  title: 'Canonical engine contract',
+  items: [
+    'Core principles such as gardening first, pacemaker stability, and notification discipline.',
+    'The tactical loop, role separation, lifecycle expectations, and doctor-first hygiene.',
+    'Canonical board operations such as mission, voyage, story, bearing, flow, doctor, and pulse.',
+    'The resolution hierarchy that points back to ADRs, policy, architecture, and planning artifacts.',
+  ],
+};
+
+export const downstreamBoundary = {
+  eyebrow: 'Downstream Repository',
+  title: 'Local operating surface',
+  items: [
+    'A repo-specific opening that makes it clear Keel is the project-management engine for this codebase.',
+    'Repo-local wrapper commands such as direct `keel ...` usage or helper recipes like `just mission` and `just screen`.',
+    'Proof contracts tied to the project outcome, runtime, or deployment shape the repo is trying to validate.',
+    'Project overview, directory map, delegation rules, and harness-specific helpers that belong to the codebase rather than the engine.',
+  ],
+};
+
+Installing Keel into a repository gives you the engine. Authoring `AGENTS.md` and `INSTRUCTIONS.md` inside that repository is what turns the engine on for day-to-day work.
+
+Those two files are the downstream operating contract. They tell humans and AI harnesses how to use the board, which commands are canonical in this repo, what proof counts, and which local wrappers or validation surfaces matter here.
+
+<SignalGrid items={contractSignals} />
+
+## The two-file operating contract
+
+| File | Job | Why it matters |
+| --- | --- | --- |
+| `AGENTS.md` | Short, high-authority entry contract | It sets priorities, points to the right command surfaces, names the foundational documents, and tells an agent how to behave before it does anything clever. |
+| `INSTRUCTIONS.md` | Detailed procedural manual | It defines the tactical loop, role-specific workflows, hygiene rules, lifecycle sequencing, and the exact command vocabulary that should be used in the repo. |
+
+`AGENTS.md` should be easy to scan. `INSTRUCTIONS.md` should be the place where ambiguity goes to die.
+
+## What stays upstream and what changes downstream
+
+<ContractBoundary
+  upstream={upstreamBoundary}
+  downstream={downstreamBoundary}
+  seamTitle="Copy first, adapt second"
+  seamBody="Do not rewrite the engine contract from memory. Start from upstream Keel, then change only the repo-facing seams that must describe your codebase, wrappers, proof requirements, or local workflow tooling."
+/>
+
+This is the key distinction: upstream Keel owns the board discipline, while the downstream repository owns the local operating surface.
+
+## The `port` adaptation pattern
+
+The `port` repository is a good example of a downstream adoption that preserves the engine while changing the project-facing seams.
+
+| Surface | Upstream Keel | `port` adaptation | Why it changes |
+| --- | --- | --- | --- |
+| Opening frame | "Keel is an engine with strict constraints." | "This repository uses Keel as its project management engine." | The downstream copy needs to center the project repo, not the Keel repo itself. |
+| Command path | `just keel ...` for board work inside the Keel source tree | direct `keel ...`, plus wrappers such as `just mission`, `just screen`, and `just port` | Downstream repos choose the command surface that matches their own shell and wrapper conventions. |
+| Proof guidance | generic board integrity and verification expectations | a repo-specific Mission Proof Contract tied to Port's runtime claim | Downstream proof must answer the repo's actual product question, not just the board's health. |
+| Delegation rules | general engine guidance | mission steward and worker-context guidance tuned for Port | Repos can add coordination rules when their harness or workflow needs stricter separation. |
+| Repo context | Keel foundational docs and architecture map | project overview, board directory, and repo-local command tables | Agents need to know what this repository is and where its important surfaces live. |
+
+The shape to copy is not the literal wording. The shape to copy is:
+
+1. Keep the engine contract recognizable.
+2. Rename or reframe only the parts that must describe this repo.
+3. Add project-specific sections only when they govern real operating behavior.
+
+## How to adopt the contract in your own repo
+
+1. Start from upstream `AGENTS.md` and `INSTRUCTIONS.md`. Do not author these files from a blank page.
+2. Rewrite the opening frame so it clearly says your repository uses Keel as its project-management engine.
+3. Replace command paths with the repo's real command surface, including `just` wrappers, dev-shell commands, or runtime helpers.
+4. Add project-specific proof rules only when the repo has a real claim to validate, such as a runtime path, deployment check, or artifact contract.
+5. Add project overview and directory maps so new agents can orient without searching the entire tree.
+6. Keep harness-specific extras such as `CLAUDE.md` or `GEMINI.md` adjacent to this contract, not in place of it.
+
+:::tip
+If a downstream repo supports multiple AI harnesses, keep `AGENTS.md` and `INSTRUCTIONS.md` as the canonical repo-wide contract. Put harness-specific setup in separate files that point back to the same board rules.
+:::
+
+## The failure mode to avoid
+
+The common mistake is to "customize" the files so heavily that the downstream repo no longer behaves like Keel at all.
+
+When that happens, the board model becomes optional, lifecycle commands drift, and every agent ends up re-learning the repo from scratch. Keel stops being the project-management engine and collapses back into a disconnected CLI.
+
+The safer pattern is narrower: preserve the engine, adapt the seam.
+
+## Next step
+
+Once a repo has adopted the contract, the next responsibility is maintenance. Read [Upgrade Keel And Sync Upstream Instructions](/docs/workflows/upgrading-keel-and-syncing-instructions) for the safe way to absorb upstream changes without deleting downstream intent.

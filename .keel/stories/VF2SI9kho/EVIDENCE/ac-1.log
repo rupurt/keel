@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-26T21:31:11.064636560-07:00
+mode: manual
+---
+Added the new downstream workflow pages to website/sidebars.ts and cross-linked them from website/docs/start-here/install-keel.mdx and website/docs/workflows/everyday-keel.mdx so the material is discoverable from the existing onboarding and workflow path.

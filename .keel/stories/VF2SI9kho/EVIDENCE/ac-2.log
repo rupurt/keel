@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-26T21:31:13.593604487-07:00
+mode: manual
+---
+The new pages reuse SignalGrid and add ContractBoundary plus UpgradeLoop with the same card, gradient, and typography system as the existing docs site; just docs-build and just pre-commit both passed after integration.

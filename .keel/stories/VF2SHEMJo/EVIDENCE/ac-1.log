@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-26T21:31:08.419766769-07:00
+mode: manual
+---
+Authored website/docs/workflows/upgrading-keel-and-syncing-instructions.mdx with an explicit upgrade, diff, reapply, and validate loop that preserves repo-specific wrappers, proof contracts, and local command surfaces while syncing upstream guidance.

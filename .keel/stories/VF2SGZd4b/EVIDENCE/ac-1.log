@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-26T21:30:59.978720943-07:00
+mode: manual
+---
+Authored website/docs/workflows/downstream-project-contracts.mdx to explain how AGENTS.md and INSTRUCTIONS.md make Keel the project-management engine inside a downstream repository, with the operating-contract model translated in plain language.

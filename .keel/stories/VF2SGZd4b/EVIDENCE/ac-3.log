@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-26T21:31:05.729054848-07:00
+mode: manual
+---
+Examples and instructions stay vendor-neutral by focusing on repo contracts, wrappers, proof surfaces, and harness-agnostic extension files instead of any single model provider.

@@ -20,7 +20,12 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Workflows',
-      items: ['workflows/everyday-keel', 'workflows/routines-and-pulse'],
+      items: [
+        'workflows/everyday-keel',
+        'workflows/downstream-project-contracts',
+        'workflows/upgrading-keel-and-syncing-instructions',
+        'workflows/routines-and-pulse',
+      ],
     },
     {
       type: 'category',
