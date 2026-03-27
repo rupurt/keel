@@ -4,8 +4,52 @@ use crate::cli::presentation::terminal::get_terminal_width;
 use crate::cli::style::VisualPadding;
 use anyhow::Result;
 use keel::infrastructure::loader::load_board;
+use keel::read_model::diagnostics::types::CheckResult;
 use keel::read_model::{diagnostics, flow_status};
 use owo_colors::OwoColorize;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum CategoryStatus {
+    Nominal,
+    Warning,
+    Failure,
+}
+
+impl CategoryStatus {
+    fn marker(self) -> String {
+        match self {
+            Self::Nominal => "✓".green().to_string(),
+            Self::Warning => "!".yellow().to_string(),
+            Self::Failure => "✗".red().to_string(),
+        }
+    }
+
+    fn scene_label(self) -> &'static str {
+        match self {
+            Self::Nominal => "NOMINAL",
+            Self::Warning => "WATCH",
+            Self::Failure => "FAILURE",
+        }
+    }
+
+    fn scene_color(self) -> owo_colors::AnsiColors {
+        match self {
+            Self::Nominal => owo_colors::AnsiColors::Green,
+            Self::Warning => owo_colors::AnsiColors::Yellow,
+            Self::Failure => owo_colors::AnsiColors::Red,
+        }
+    }
+}
+
+fn category_status(results: &[CheckResult]) -> CategoryStatus {
+    if results.iter().any(CheckResult::has_errors) {
+        CategoryStatus::Failure
+    } else if results.iter().any(CheckResult::has_warnings) {
+        CategoryStatus::Warning
+    } else {
+        CategoryStatus::Nominal
+    }
+}
 
 /// Run the health command
 pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
@@ -13,6 +57,7 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
     let report = diagnostics::validate_report(board_dir)?;
     let metrics = flow_status::project(&board, chrono::Utc::now());
     let passed = report.passed();
+    let warning_active = report.total_warnings() > 0;
 
     // 1. Strategic Congestion (Top-heavy backlog)
     // Congested if many draft epics (> 5) or many incomplete missions (> 3)
@@ -62,10 +107,10 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
             println!("    ! {: <10} {}", "Ops", "FATIGUE".red().bold());
         }
 
-        if passed && !strategic_congested && !operational_fatigue {
+        if passed && !warning_active && !strategic_congested && !operational_fatigue {
             println!("\n    {} System is 100% healthy.", "✓".green().bold());
         } else if passed {
-            println!("\n    ! System is nominal but under pressure.");
+            println!("\n    ! System is stable but under observation.");
         } else {
             println!(
                 "\n    {} System has issues. Run `keel doctor` for details.",
@@ -81,14 +126,8 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
     }
 }
 
-fn print_category(name: &str, results: &[keel::read_model::diagnostics::types::CheckResult]) {
-    let passed = results.iter().all(|c| c.passed);
-    let marker = if passed {
-        "✓".green().to_string()
-    } else {
-        "✗".red().to_string()
-    };
-    println!("    • {: <10} {}", name, marker);
+fn print_category(name: &str, results: &[CheckResult]) {
+    println!("    • {: <10} {}", name, category_status(results).marker());
 }
 
 fn render_med_bay_scene(
@@ -250,19 +289,75 @@ fn render_med_bay_scene(
     ];
 
     for (name, results) in categories {
-        let cat_passed = results.iter().all(|c| c.passed);
-        let color = if cat_passed {
-            owo_colors::AnsiColors::Green
-        } else {
-            owo_colors::AnsiColors::Red
-        };
-        let status = if cat_passed { "NOMINAL" } else { "FAILURE" };
-        println!("      - {: <12} [ {} ]", name, status.color(color).bold());
+        let status = category_status(results);
+        println!(
+            "      - {: <12} [ {} ]",
+            name,
+            status.scene_label().color(status.scene_color()).bold()
+        );
     }
 
-    if passed {
+    let warning_active = report.total_warnings() > 0;
+    if passed && warning_active {
+        println!(
+            "\n    \"Patient is fit for duty. Monitor flagged subsystems for warning-level drift.\""
+        );
+    } else if passed {
         println!("\n    \"Patient is fit for duty. The garden is in good hands.\"");
     } else {
         println!("\n    \"EMERGENCY: Subsystem failure detected. Scrub in with `keel doctor`.\"");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{CategoryStatus, category_status};
+    use keel::read_model::diagnostics::types::{CheckResult, Problem, Severity};
+    use std::path::PathBuf;
+    use std::time::Duration;
+
+    fn check_with_problems(problems: Vec<Problem>) -> CheckResult {
+        CheckResult {
+            id: "check".to_string(),
+            name: "Check".to_string(),
+            problems,
+            evaluations: 1,
+            duration: Duration::from_millis(0),
+            passed: false,
+            disabled: false,
+        }
+    }
+
+    fn problem(severity: Severity) -> Problem {
+        Problem {
+            severity,
+            path: PathBuf::from(".keel/test"),
+            message: "problem".to_string(),
+            fix: None,
+            scope: None,
+            category: None,
+            check_id: keel::read_model::diagnostics::types::CheckId::Unknown,
+        }
+    }
+
+    #[test]
+    fn category_status_is_nominal_without_problems() {
+        let results = vec![check_with_problems(Vec::new())];
+        assert_eq!(category_status(&results), CategoryStatus::Nominal);
+    }
+
+    #[test]
+    fn category_status_is_warning_for_warning_only_checks() {
+        let results = vec![check_with_problems(vec![problem(Severity::Warning)])];
+        assert_eq!(category_status(&results), CategoryStatus::Warning);
+    }
+
+    #[test]
+    fn category_status_is_failure_when_any_error_exists() {
+        let results = vec![
+            check_with_problems(vec![problem(Severity::Warning)]),
+            check_with_problems(vec![problem(Severity::Error)]),
+        ];
+        assert_eq!(category_status(&results), CategoryStatus::Failure);
     }
 }
