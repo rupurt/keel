@@ -32,6 +32,6 @@ Developing semantic search delays other features like graph visualization improv
 
 ## Recommendation
 
-[x] Proceed → convert to epic [SRC-01][SRC-02][SRC-03][SRC-04]
-[ ] Park → revisit later [SRC-04]
+[ ] Proceed → convert to epic [SRC-01][SRC-02][SRC-03][SRC-04]
+[x] Park → revisit later [SRC-04]
 [ ] Decline → document learnings [SRC-03]
