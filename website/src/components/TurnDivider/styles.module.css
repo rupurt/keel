@@ -33,6 +33,7 @@
 }
 
 .step {
+  --step-cursor-scale: 1;
   --step-delay: 0ms;
   --step-rotate: 0deg;
   --step-surface: rgba(255, 255, 252, 0.94);
@@ -49,7 +50,10 @@
   border: 1px solid rgba(74, 159, 216, 0.28);
   background: var(--step-surface);
   box-shadow: var(--keel-shadow-pill);
-  transform: translate(-50%, -50%) rotate(var(--step-rotate));
+  transform:
+    translate(-50%, -50%)
+    rotate(var(--step-rotate))
+    scale(var(--step-cursor-scale));
   animation: turnstepCadence var(--keel-motion-duration-turnstep)
     var(--keel-motion-ease-turnstep) infinite;
   animation-delay: var(--step-delay);
@@ -86,7 +90,10 @@
     border-color: rgba(74, 159, 216, 0.24);
     box-shadow: var(--keel-shadow-pill);
     opacity: 0.88;
-    transform: translate(-50%, -50%) rotate(var(--step-rotate)) scale(1);
+    transform:
+      translate(-50%, -50%)
+      rotate(var(--step-rotate))
+      scale(var(--step-cursor-scale));
   }
 
   14% {
@@ -96,6 +103,7 @@
     transform:
       translate(-50%, calc(-50% - var(--keel-motion-turnstep-rise)))
       rotate(var(--step-rotate))
+      scale(var(--step-cursor-scale))
       scale(1.035);
   }
 
@@ -106,6 +114,7 @@
     transform:
       translate(-50%, calc(-50% - calc(var(--keel-motion-turnstep-rise) * 0.5)))
       rotate(var(--step-rotate))
+      scale(var(--step-cursor-scale))
       scale(1.018);
   }
 }

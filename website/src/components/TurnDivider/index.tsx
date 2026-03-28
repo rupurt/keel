@@ -1,4 +1,5 @@
-import type {CSSProperties} from 'react';
+import {useState} from 'react';
+import type {CSSProperties, PointerEvent} from 'react';
 
 import styles from './styles.module.css';
 
@@ -13,6 +14,16 @@ type StepPosition = {
   x: number;
   y: number;
 };
+
+type PointerState = {
+  height: number;
+  width: number;
+  x: number;
+  y: number;
+};
+
+const GRAVITY_RADIUS_FACTOR = 0.92;
+const GRAVITY_SCALE_MAX = 1.9;
 
 const STEP_PATTERNS: Record<2 | 3 | 4, StepPosition[]> = {
   2: [
@@ -37,6 +48,7 @@ export default function TurnDivider({
   compact = false,
   turns = 3,
 }: TurnDividerProps) {
+  const [pointer, setPointer] = useState<PointerState | null>(null);
   const steps = STEP_PATTERNS[turns];
   const wrapClass = [
     styles.wrap,
@@ -46,12 +58,58 @@ export default function TurnDivider({
     .filter(Boolean)
     .join(' ');
 
+  const handlePointerLeave = () => {
+    setPointer(null);
+  };
+
+  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (
+      event.pointerType === 'touch' ||
+      (typeof window !== 'undefined' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    ) {
+      return;
+    }
+
+    const rect = event.currentTarget.getBoundingClientRect();
+
+    setPointer({
+      height: rect.height,
+      width: rect.width,
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    });
+  };
+
   return (
     <div aria-hidden="true" className={wrapClass}>
-      <div className={styles.trail}>
+      <div
+        className={styles.trail}
+        onPointerLeave={handlePointerLeave}
+        onPointerMove={handlePointerMove}>
         {steps.map((step, index) => {
           const x = arcSide === 'left' ? 100 - step.x : step.x;
+          let cursorScale = 1;
+
+          if (pointer) {
+            const stepCenterX = (x / 100) * pointer.width;
+            const stepCenterY = (step.y / 100) * pointer.height;
+            const gravityRadius =
+              Math.max(pointer.width, pointer.height) * GRAVITY_RADIUS_FACTOR;
+            const distance = Math.hypot(
+              pointer.x - stepCenterX,
+              pointer.y - stepCenterY,
+            );
+            const proximity = Math.max(0, 1 - distance / gravityRadius);
+
+            cursorScale =
+              1 +
+              Math.pow(proximity, 1.8) *
+                (GRAVITY_SCALE_MAX - 1);
+          }
+
           const style = {
+            '--step-cursor-scale': cursorScale.toFixed(3),
             '--step-delay': `calc(${index} * var(--keel-motion-delay-turnstep))`,
             '--step-rotate': `${arcSide === 'left' ? -step.rotate : step.rotate}deg`,
             '--step-x': `${x}%`,
