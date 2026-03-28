@@ -100,6 +100,12 @@
   --keel-shadow-button-hover: -8px 11px 20px rgba(58, 89, 113, 0.16);
   --keel-shadow-pill: -4px 6px 10px rgba(58, 89, 113, 0.08);
   --keel-shadow-inset: inset -1px 1px 0 rgba(255, 255, 255, 0.55);
+  --keel-motion-duration-lift: 160ms;
+  --keel-motion-duration-turnstep: 2200ms;
+  --keel-motion-delay-turnstep: 220ms;
+  --keel-motion-ease-lift: cubic-bezier(0.22, 1, 0.36, 1);
+  --keel-motion-ease-turnstep: cubic-bezier(0.45, 0.05, 0.2, 1);
+  --keel-motion-turnstep-rise: 0.16rem;
 }
 
 html {
@@ -114,6 +120,15 @@ body {
   background: transparent;
   font-family: var(--ifm-font-family-base);
   letter-spacing: -0.012em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --keel-motion-duration-lift: 0ms;
+    --keel-motion-duration-turnstep: 0ms;
+    --keel-motion-delay-turnstep: 0ms;
+    --keel-motion-turnstep-rise: 0rem;
+  }
 }
 
 .main-wrapper {

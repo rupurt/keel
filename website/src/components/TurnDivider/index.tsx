@@ -52,6 +52,7 @@ export default function TurnDivider({
         {steps.map((step, index) => {
           const x = arcSide === 'left' ? 100 - step.x : step.x;
           const style = {
+            '--step-delay': `calc(${index} * var(--keel-motion-delay-turnstep))`,
             '--step-rotate': `${arcSide === 'left' ? -step.rotate : step.rotate}deg`,
             '--step-x': `${x}%`,
             '--step-y': `${step.y}%`,

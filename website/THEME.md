@@ -53,6 +53,25 @@ There are three planes in the docs theme:
 - Recessed surfaces:
   Terminals and internal trays should rely on inset contrast rather than external drop shadows.
 
+## Motion
+
+Motion in the docs should be structural, not ornamental.
+
+Rules:
+
+- motion should guide reading order, continuity, or state change
+- ambient animation should be slow, sparse, and staggered
+- moving surfaces must still obey the lighting model instead of inventing a second visual system
+- all non-essential motion must shut off under `prefers-reduced-motion`
+
+Turnsteps are the canonical motion pattern:
+
+- use 2-4 hex steps between sections
+- animate them as a traveling cadence, not a bounce loop
+- one step should crest at a time so the eye reads progression through the page
+- the motion should feel like footsteps through paper or sand, with a slight rise and settle rather than a jump
+- opacity and inset highlight may pulse with the active step, but the overall surface must remain calm
+
 ## Avoid
 
 - symmetrical ambient shadows that ignore the light source
