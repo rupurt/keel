@@ -73,6 +73,7 @@ Turnsteps are the canonical motion pattern:
 - opacity and inset highlight may pulse with the active step, but the overall surface must remain calm
 - pointer devices may exert local gravity so nearby steps scale up as the cursor approaches
 - gravity should feather in at the perimeter, then tighten so the nearest step grows most once the pointer is inside the trail
+- clicking a deeper step should scroll farther down the page so the trail doubles as a reading-depth control
 - the gravity field must stay local to the trail, decay quickly, and drop out on touch or reduced-motion contexts
 
 ## Avoid
