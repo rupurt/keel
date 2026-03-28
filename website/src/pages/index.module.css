@@ -147,7 +147,7 @@
 .secondaryAction:focus-visible {
   text-decoration: none;
   outline: none;
-  box-shadow: var(--keel-shadow-button-recessed);
+  box-shadow: var(--keel-shadow-button-focus);
 }
 
 .primaryAction:active,
@@ -322,8 +322,15 @@
   text-decoration: none;
   background: rgba(17, 51, 79, 0.06);
   border-color: rgba(17, 51, 79, 0.16);
-  box-shadow: var(--keel-shadow-button-recessed);
   outline: none;
+}
+
+.sceneStepLink:hover {
+  box-shadow: var(--keel-shadow-button-recessed);
+}
+
+.sceneStepLink:focus-visible {
+  box-shadow: var(--keel-shadow-button-focus);
 }
 
 .sceneStepLink:hover::before,
