@@ -3,7 +3,7 @@ title: The Turn Loop
 description: See how Keel turns a vague ticket flow into a visible loop of orientation, selection, execution, and closure.
 ---
 
-Keel is built around the idea that one turn should leave the board in a visibly better state. The loop below is not ceremony for its own sake. It is the minimum rhythm that keeps a human and AI team aligned on what is true.
+After [Board Model](/docs/foundations/board-model) explains what exists and [Roles And Lanes](/docs/foundations/roles-and-lanes) explains who may act, the turn loop explains how the system changes over time. Keel is built around the idea that one turn should leave the board in a visibly better state. The loop below is not ceremony for its own sake. It is the minimum rhythm that keeps a human and AI team aligned on what is true.
 
 ## Orient
 
@@ -42,7 +42,7 @@ keel next --role operator
 keel next --role operator/software:frontend
 ```
 
-This is where Keel stops being a passive tracker. The board routes work based on roles and lanes so strategy and execution do not fight for the same queue.
+This is where Keel stops being a passive tracker. The board routes work based on roles and lanes so strategy and execution do not fight for the same queue. This is the exact handoff point between the lane model and the turn model.
 
 ## Ship
 
@@ -71,3 +71,9 @@ Closure is a governed act. Acceptance remains visible because the system disting
 A normal ticket can sit in ambiguous states for days. A turn should not. Each step above exists to make the next state legible to both humans and agents.
 
 For the visual surfaces that support this loop, read [Scene Surfaces](/docs/cli/scene-surfaces). For the planning contract behind it, read [Planning And Verification](/docs/foundations/planning-and-verification).
+
+Taken together, these three pages describe one system:
+
+- [Board Model](/docs/foundations/board-model): what exists
+- [Roles And Lanes](/docs/foundations/roles-and-lanes): who may act
+- [The Turn Loop](/docs/workflows/turn-loop): how state changes

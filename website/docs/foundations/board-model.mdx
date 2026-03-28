@@ -34,6 +34,12 @@ export const structuralSignals = [
   },
 ];
 
+Keel’s core system story has three layers:
+
+1. This page explains what exists on the board.
+2. [Roles And Lanes](/docs/foundations/roles-and-lanes) explains who is allowed to move that structure.
+3. [The Turn Loop](/docs/workflows/turn-loop) explains how those moves create visible state change over time.
+
 Keel uses a strict hierarchy because the board is meant to answer more than "what is someone doing right now?" It must also answer why the work exists, which constraints govern it, and how closure will be verified later.
 
 <TermRamp />
@@ -84,3 +90,5 @@ Objects are not just nested; they move through states.
 - Stories move from backlog into in-progress, then into review and acceptance.
 
 That state model is what makes Keel turn-based. The board is not a flat list of nouns. It is a system of allowed moves.
+
+The next question is who is allowed to make those moves. Read [Roles And Lanes](/docs/foundations/roles-and-lanes) next to see how Keel separates strategic authority from delivery execution without splitting the board into separate systems.

@@ -26,7 +26,7 @@ export const laneSignals = [
   },
 ];
 
-Keel keeps strategy and implementation close, but it does not let them blur together. The board has separate lanes because the questions are different.
+If [Board Model](/docs/foundations/board-model) explains what exists on the board, this page explains who gets to move it. Keel keeps strategy and implementation close, but it does not let them blur together. The board has separate lanes because the questions are different.
 
 <SignalGrid items={laneSignals} />
 
@@ -106,3 +106,5 @@ keel doctor
 The lanes decide what you pull next. Diagnostics tell you whether the board should be trusted first.
 
 If you want the full visual contract, read [Scene Surfaces](/docs/cli/scene-surfaces).
+
+Once the structure and lane authority are clear, the remaining question is temporal: what does one good move look like? Read [The Turn Loop](/docs/workflows/turn-loop) next to see how Keel turns board structure and role routing into a repeatable operating rhythm.
