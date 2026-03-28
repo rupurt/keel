@@ -55,6 +55,7 @@ pub fn run(
     let metrics = flow_status::project(&board, chrono::Utc::now());
     let report = keel::read_model::diagnostics::validate_report(board_dir)?;
     let healthy = report.total_errors() == 0;
+    let heartbeat = super::heartbeat::inspect(board_dir, Utc::now());
 
     // System is autonomous if no tasks are pending in manual_accept lanes
     let needs_human_input = lane_flow
@@ -64,7 +65,6 @@ pub fn run(
     let autonomous = !needs_human_input;
 
     let in_progress = metrics.execution.in_progress_count;
-    let recently_completed = metrics.execution.recently_completed_count;
 
     let (config, _) = keel::infrastructure::config::load_config();
     use chrono::Timelike;
@@ -90,8 +90,7 @@ pub fn run(
             return Err(anyhow::anyhow!("Short circuit: System is unhealthy"));
         }
 
-        let energized = recently_completed > 0;
-        if !energized {
+        if !heartbeat.energized {
             println!("\n{}", render_unplugged_scene(use_color));
             return Err(anyhow::anyhow!(
                 "System is idle: no recent repository activity (run `keel heartbeat`)"
@@ -181,7 +180,7 @@ pub fn run(
     if !autonomous {
         return Err(anyhow::anyhow!("System is idle: Human input required"));
     }
-    if recently_completed == 0 {
+    if !heartbeat.energized {
         return Err(anyhow::anyhow!(
             "System is idle: no recent repository activity (run `keel heartbeat`)"
         ));

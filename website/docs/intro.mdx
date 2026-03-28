@@ -44,6 +44,14 @@ export const nextStops = [
     href: '/docs/start-here/first-turn',
     cta: 'Take the first turn',
   },
+  {
+    eyebrow: 'CLI Interface',
+    title: 'Read the operating surface directly',
+    body:
+      'Learn the command families, pacemaker contract, and scene surfaces that make Keel readable in a terminal.',
+    href: '/docs/cli/overview',
+    cta: 'Browse the CLI',
+  },
 ];
 
 Keel is a turn-based board operating engine for human/AI delivery teams. It is designed for teams that want planning, execution, and verification to live on one visible operating surface instead of being split across chat, tickets, scratchpads, and private memory.
@@ -92,7 +100,8 @@ That boundary is deliberate. Keel is the operating layer, not the entire stack.
 
 1. Install the CLI and verify your local path.
 2. Initialize a board and take the first turn.
-3. Learn the board model, lanes, and verification loop.
-4. Move into the persona track that matches your job.
+3. Learn the CLI interface, pacemaker contract, and scene surfaces.
+4. Learn the board model, lanes, and verification loop.
+5. Move into the persona track that matches your job.
 
-<SignalGrid items={nextStops} columns="two" />
+<SignalGrid items={nextStops} />

@@ -1,0 +1,129 @@
+---
+title: Scene Surfaces
+description: Use Keel's `--scene` flags as compact logic displays for board state, not as ornamental terminal art.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+import SceneAtlas from '@site/src/components/SceneAtlas';
+
+export const sceneSignals = [
+  {
+    eyebrow: 'Agentic Era',
+    title: 'Scenes are compressed operating views',
+    body:
+      'Keel uses visual scenes to make system coherence legible at terminal speed. The goal is not decoration. The goal is faster, shared interpretation.',
+  },
+  {
+    eyebrow: 'Logical',
+    title: 'A scene should never invent state',
+    body:
+      'Every `--scene` view should be a visual rendering of existing command logic. If the scene and the textual command disagree, the scene should be fixed.',
+  },
+  {
+    eyebrow: 'Practical',
+    title: 'Use scenes for orientation, not scripting',
+    body:
+      'Scenes are ideal for reading health, flow, attention, and drift. For automation, exact field extraction, and logs, use the textual or JSON surfaces instead.',
+  },
+];
+
+export const sceneSurfaces = [
+  {
+    scene: 'Med-Bay',
+    command: 'keel health --scene',
+    signal:
+      'Subsystem health classified into nominal, watch, and failure states from doctor-style checks.',
+    when:
+      'Use first when you want a fast structural read before creating more work.',
+  },
+  {
+    scene: 'Power Circuit',
+    command: 'keel flow --scene',
+    signal:
+      'Working-hours gate, heartbeat energization, delivery readiness, watch pressure, and human-input blocking.',
+    when:
+      'Use before pulling work or when the board feels idle, blocked, or strangely quiet.',
+  },
+  {
+    scene: 'Workbench',
+    command: 'keel workshop --scene',
+    signal:
+      'Human-attention queue, draft planning clutter, remediation pressure, structural drift, and the heartbeat lamp.',
+    when:
+      'Use when a manager, designer, or reviewer needs to see what still requires direct human motion.',
+  },
+  {
+    scene: 'Repair Bay',
+    command: 'keel doctor --scene',
+    signal:
+      'A high-level structural diagnosis of strategic, execution, flow, and pacemaker integrity.',
+    when:
+      'Use when something feels wrong, before a commit, or before asking a human to intervene.',
+  },
+  {
+    scene: 'Automation Gear Train',
+    command: 'keel pulse --scene',
+    signal:
+      'Whether the current automation cycle produced work, skipped work, or left the gears at rest.',
+    when:
+      'Use when you are running upkeep or inspecting routine materialization behavior.',
+  },
+  {
+    scene: 'Constraint Watch',
+    command: 'keel mission show MISSION-ID --scene',
+    signal:
+      'Mission time pressure and watch-style constraint visualization for a single strategic objective.',
+    when:
+      'Use when a mission carries a time boundary and you need a focused visual reminder of it.',
+  },
+  {
+    scene: 'Mission Radar',
+    command: 'keel mission next --scene',
+    signal:
+      'The next move for a mission rendered as a focused tactical scan instead of a long status block.',
+    when:
+      'Use when you are steering a single mission and want a compact read of its immediate frontier.',
+  },
+  {
+    scene: 'Vault',
+    command: 'keel finance --scene',
+    signal:
+      'Board drift, remediation effort, and work capital rendered as solvency rather than abstract debt numbers.',
+    when:
+      'Use when explaining the cost of process debt or planning why cleanup deserves real time.',
+  },
+];
+
+Keel's `--scene` flags are a deliberate answer to the agentic era: a shared terminal can carry a richer, more coherent state story than a wall of plain text, as long as the visuals stay logically tied to the command data underneath them.
+
+<SignalGrid items={sceneSignals} />
+
+## The current scene atlas
+
+<SceneAtlas scenes={sceneSurfaces} />
+
+## The heartbeat rule
+
+The pacemaker is the simplest test of scene honesty:
+
+- `keel heartbeat` is the source of truth for energized or idle state
+- `keel flow --scene` should use that truth when deciding whether the circuit is unplugged
+- `keel workshop --scene` should use that truth when deciding whether the lamp is on
+- structural scenes such as `health` and `doctor` should not invent their own wake model
+
+This matters because scenes become misleading very quickly if they mix metaphors. A lit lamp with an idle heartbeat is not charming. It is wrong.
+
+## When to prefer text over scenes
+
+Use the non-scene surfaces when you need:
+
+- exact IDs, fields, and machine-readable output
+- scripting through `--json`
+- detailed inspection of long lists or evidence records
+- command-line diffs that should stay stable in logs or commit messages
+
+The scene should help you understand the system faster. The text should help you act on it precisely.
+
+## Related visual surfaces
+
+Not every visual command uses `--scene`, but the design logic is shared. `screen` gives you a compact board snapshot, and `topology` gives you a world-map view of the structure. Use those when you need breadth; use `--scene` surfaces when you need fast operational diagnosis.

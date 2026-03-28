@@ -110,7 +110,7 @@ While you review that diff, separate the changes into two piles:
 
 Engine changes usually include the tactical loop, new lifecycle guidance, new command expectations, or updated hygiene rules. Repo-specific seams usually include your wrappers, proof contract, project overview, and any local delegation guidance.
 
-This is also where small-but-important behavioral changes show up. For example, upstream may tighten or relax heartbeat semantics, hook behavior, or commit-boundary hygiene. Those changes belong in your downstream copies of `AGENTS.md` and `INSTRUCTIONS.md`, not in tribal memory.
+This is also where small-but-important behavioral changes show up. For example, upstream may tighten or relax heartbeat semantics, hook behavior, or commit-boundary hygiene. Those changes belong in your downstream copies of `AGENTS.md` and `INSTRUCTIONS.md`, not in tribal memory. The public reference point for that specific contract is now [Heartbeat And Pacemaker](/docs/cli/heartbeat-and-pacemaker).
 
 ## 4. Reapply the downstream seams deliberately
 
@@ -140,6 +140,8 @@ keel pulse
 ```
 
 Depending on the repo, you may also want to run local wrappers such as `just check`, `just test`, or project-specific smoke tests. The important part is that the board contract and the repo's actual command surface agree again.
+
+If the scenes themselves changed upstream, also compare them against [Scene Surfaces](/docs/cli/scene-surfaces) so your downstream docs keep describing the right visual logic.
 
 :::note
 Treat this as explicit board work when the repository is already under Keel. If the sync is material, open a story or maintenance voyage instead of silently editing the contract in a chat session.

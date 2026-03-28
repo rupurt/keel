@@ -1,0 +1,116 @@
+---
+title: CLI Interface
+description: Learn the public command surface as one coherent operating layer for planning, delivery, diagnostics, and maintenance.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+import CliAtlas from '@site/src/components/CliAtlas';
+
+export const cliSignals = [
+  {
+    eyebrow: 'Public Contract',
+    title: 'The CLI is the product surface',
+    body:
+      'Keel is not a hidden engine behind a UI. The board, the artifacts, and the command line are one operating contract that humans and AI harnesses can share.',
+  },
+  {
+    eyebrow: 'Vendor Neutral',
+    title: 'The interface works across harnesses',
+    body:
+      'Keel does not assume a specific editor, model vendor, or chat shell. The CLI keeps the operating model portable across different agent setups.',
+  },
+  {
+    eyebrow: 'Layered',
+    title: 'You do not need every command on day one',
+    body:
+      'The command families are intentionally staged. Orientation and pull commands come first, then planning, then deeper automation and maintenance surfaces.',
+  },
+];
+
+export const cliFamilies = [
+  {
+    eyebrow: 'The Fixer',
+    title: 'Orientation and integrity',
+    body:
+      'Read the pacemaker, health, and board flow before you create more motion. These surfaces tell you whether the system should be trusted first.',
+    commands: ['doctor', 'health', 'heartbeat', 'flow', 'screen'],
+  },
+  {
+    eyebrow: 'The Operator',
+    title: 'Pull and close delivery slices',
+    body:
+      'Use the workbench and role-scoped queues to pull one executable move, attach proof, and close the slice without guessing.',
+    commands: ['workshop', 'next', 'story', 'verify', 'audit'],
+  },
+  {
+    eyebrow: 'The Architect',
+    title: 'Shape missions, plans, and constraints',
+    body:
+      'These commands create the strategic and tactical structure that keeps delivery work bounded and reviewable.',
+    commands: ['mission', 'epic', 'voyage', 'routine', 'adr', 'roadmap', 'finance'],
+  },
+  {
+    eyebrow: 'Discovery',
+    title: 'Research, topology, and automation',
+    body:
+      'Use these surfaces when you need to reduce fog, inspect the board graph, or run a bounded automation cycle.',
+    commands: ['play', 'bearing', 'knowledge', 'pulse', 'topology'],
+  },
+  {
+    eyebrow: 'Comms',
+    title: 'Agent-to-agent signaling',
+    body:
+      'Inbox and ping surfaces let teams coordinate through a visible repository-level channel instead of private memory.',
+    commands: ['ping', 'poke', 'inbox', 'outbox'],
+  },
+  {
+    eyebrow: 'Setup',
+    title: 'Install and maintain the engine',
+    body:
+      'These commands initialize a board, refresh generated artifacts, install hooks, and inspect repo-local configuration.',
+    commands: ['init', 'config', 'generate', 'hooks'],
+  },
+];
+
+Keel is a command-line product, not a fallback shell around some hidden primary interface. The commands are how the board is inspected, changed, and trusted.
+
+<SignalGrid items={cliSignals} />
+
+## The command families
+
+<CliAtlas families={cliFamilies} />
+
+## Read the CLI in layers
+
+For onboarding and day-one use, start with this narrow sequence:
+
+```bash
+keel health --scene
+keel heartbeat
+keel flow --scene
+keel next --role operator
+```
+
+That sequence answers four different questions:
+
+- Is the board structurally healthy?
+- Is the pacemaker energized?
+- Is the delivery circuit open, healthy, and moving?
+- What is the next role-scoped move?
+
+Once that loop feels natural, expand outward into planning commands such as `mission`, `epic`, `voyage`, and `adr`, then deeper maintenance surfaces such as `pulse`, `topology`, and `knowledge`.
+
+## The CLI is designed to be read by both humans and agents
+
+The same surface should work in three modes:
+
+- interactive reading in a terminal
+- automation-friendly output such as `--json`
+- compact visual diagnosis through `--scene`
+
+That is why the CLI matters so much in Keel. It is not just an admin tool. It is the operating grammar of the system.
+
+## Next stops
+
+- Read [Heartbeat And Pacemaker](/docs/cli/heartbeat-and-pacemaker) to understand the derived repository-activity model that now powers the pacemaker.
+- Read [Scene Surfaces](/docs/cli/scene-surfaces) to learn which `--scene` views are logical decision surfaces rather than decoration.

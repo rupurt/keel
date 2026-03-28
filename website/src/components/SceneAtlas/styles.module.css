@@ -1,0 +1,56 @@
+.grid {
+  display: grid;
+  gap: 1rem;
+  margin: 1.5rem 0 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.card {
+  display: grid;
+  gap: 0.95rem;
+  padding: 1.35rem;
+  border-radius: 1.6rem;
+  background:
+    radial-gradient(circle at top right, rgba(191, 122, 61, 0.15), transparent 30%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(241, 233, 222, 0.84));
+  border: 1px solid var(--keel-line);
+  box-shadow: 0 18px 34px rgba(23, 33, 50, 0.08);
+}
+
+.scene {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--keel-copper);
+}
+
+.command {
+  display: inline-flex;
+  width: fit-content;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(23, 33, 50, 0.08);
+  background: rgba(255, 255, 255, 0.78);
+  font-size: 0.82rem;
+  color: var(--keel-ink);
+}
+
+.meta {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--keel-ink);
+}
+
+.meta p {
+  margin: 0;
+  color: var(--keel-ink-soft);
+}

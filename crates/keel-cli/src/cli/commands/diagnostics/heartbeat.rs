@@ -3,8 +3,15 @@
 use std::path::Path;
 
 use anyhow::Result;
-use chrono::{SecondsFormat, Utc};
+use chrono::{DateTime, SecondsFormat, Utc};
 use serde::Serialize;
+
+#[derive(Debug, Clone)]
+pub struct HeartbeatStatus {
+    pub projection: keel::read_model::heartbeat::HeartbeatProjection,
+    pub decay_minutes: u64,
+    pub energized: bool,
+}
 
 #[derive(Debug, Serialize)]
 struct HeartbeatOutput {
@@ -19,27 +26,43 @@ struct HeartbeatOutput {
     decay_minutes: u64,
 }
 
-pub fn run(board_dir: &Path, json: bool) -> Result<()> {
-    let now = Utc::now();
-    let heartbeat = keel::read_model::heartbeat::project(board_dir, now);
+pub fn inspect(board_dir: &Path, now: DateTime<Utc>) -> HeartbeatStatus {
+    let projection = keel::read_model::heartbeat::project(board_dir, now);
     let (config, _) = keel::infrastructure::config::load_config();
     let decay_minutes = u64::from(config.workflow.battery_decay_minutes);
-    let energized = heartbeat.is_energized(now, decay_minutes);
-    let output = HeartbeatOutput {
-        state: if energized { "energized" } else { "idle" },
-        source: heartbeat.source,
+    let energized = projection.is_energized(now, decay_minutes);
+
+    HeartbeatStatus {
+        projection,
+        decay_minutes,
         energized,
-        dirty: heartbeat.dirty,
-        dirty_files: heartbeat.dirty_paths.len(),
+    }
+}
+
+pub fn run(board_dir: &Path, json: bool) -> Result<()> {
+    let now = Utc::now();
+    let heartbeat = inspect(board_dir, now);
+    let output = HeartbeatOutput {
+        state: if heartbeat.energized {
+            "energized"
+        } else {
+            "idle"
+        },
+        source: heartbeat.projection.source,
+        energized: heartbeat.energized,
+        dirty: heartbeat.projection.dirty,
+        dirty_files: heartbeat.projection.dirty_paths.len(),
         latest_path: heartbeat
+            .projection
             .latest_path
             .as_ref()
             .map(|path| path.display().to_string()),
         last_activity_at: heartbeat
+            .projection
             .last_activity_at
             .to_rfc3339_opts(SecondsFormat::Secs, true),
-        age_seconds: heartbeat.age_seconds(now),
-        decay_minutes,
+        age_seconds: heartbeat.projection.age_seconds(now),
+        decay_minutes: heartbeat.decay_minutes,
     };
 
     if json {

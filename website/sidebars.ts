@@ -10,6 +10,15 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'CLI Interface',
+      items: [
+        'cli/overview',
+        'cli/heartbeat-and-pacemaker',
+        'cli/scene-surfaces',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Foundations',
       items: [
         'foundations/board-model',

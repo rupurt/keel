@@ -77,12 +77,14 @@ That is why Keel works for mixed teams. A project manager, engineer, designer, a
 ```bash
 keel flow
 keel flow --scene
-keel workshop
+keel workshop --scene
 keel doctor
 ```
 
 - `keel flow` shows how work is moving across the configured topology
-- `keel workshop` highlights items that require human attention
+- `keel workshop --scene` highlights items that require human attention
 - `keel doctor` validates structural integrity regardless of lane
 
 The lanes decide what you pull next. Diagnostics tell you whether the board should be trusted first.
+
+If you want the full visual contract, read [Scene Surfaces](/docs/cli/scene-surfaces).

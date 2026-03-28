@@ -3,7 +3,6 @@
 use crate::cli::presentation::terminal::get_terminal_width;
 use crate::cli::style::VisualPadding;
 use anyhow::Result;
-use chrono::Timelike;
 use keel::infrastructure::loader::load_board;
 use keel::read_model::{workflow_lane_flow, workflow_topology};
 use owo_colors::OwoColorize;
@@ -56,9 +55,9 @@ fn render_workshop_scene(
     };
     let lamp_style = if energized { "(*)" } else { "( )" };
     let lamp_label = if energized {
-        "CIRCUIT CLOSED (ON THE CLOCK)"
+        "CIRCUIT CLOSED (HEARTBEAT ENERGIZED)"
     } else {
-        "CIRCUIT OPEN (OFF THE CLOCK)"
+        "CIRCUIT OPEN (RUN keel heartbeat)"
     };
 
     let draft_epic_count = board
@@ -390,11 +389,7 @@ pub fn run(board_dir: &std::path::Path, scene: bool) -> Result<()> {
     let width = get_terminal_width();
 
     if scene {
-        let (config, _) = keel::infrastructure::config::load_config();
-        let current_hour = chrono::Local::now().hour() as u8;
-        let within_working_hours = current_hour >= config.workflow.working_hours_start
-            && current_hour < config.workflow.working_hours_end;
-        let energized = config.workflow.open_for_work && within_working_hours;
+        let energized = super::heartbeat::inspect(board_dir, chrono::Utc::now()).energized;
 
         println!(
             "\n{}",
@@ -607,6 +602,20 @@ mod tests {
                 .lines()
                 .all(|line| visible_width(line) == WORKSHOP_SCENE_WIDTH)
         );
+    }
+
+    #[test]
+    fn workshop_scene_lamp_label_tracks_heartbeat_state() {
+        let temp = TestBoardBuilder::new().build();
+        let board = load_board(temp.path()).unwrap();
+        let metrics = keel::read_model::flow_status::project(&board, Utc::now());
+        let health = keel::read_model::diagnostics::validate_report(temp.path()).unwrap();
+
+        let energized = render_workshop_scene(&board, &[], &metrics, &health, true);
+        let idle = render_workshop_scene(&board, &[], &metrics, &health, false);
+
+        assert!(energized.contains("CIRCUIT CLOSED (HEARTBEAT ENERGIZED)"));
+        assert!(idle.contains("CIRCUIT OPEN (RUN keel heartbeat)"));
     }
 
     #[test]

@@ -1,0 +1,56 @@
+.grid {
+  display: grid;
+  gap: 1rem;
+  margin: 1.5rem 0 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.card {
+  padding: 1.35rem;
+  border-radius: 1.5rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(242, 235, 226, 0.8));
+  border: 1px solid var(--keel-line);
+  box-shadow: 0 16px 30px rgba(23, 33, 50, 0.08);
+}
+
+.eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--keel-copper);
+}
+
+.card h3 {
+  margin-bottom: 0.5rem;
+}
+
+.card p {
+  margin-bottom: 0;
+}
+
+.commandList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.commandPill {
+  border-radius: 999px;
+  background: rgba(36, 55, 81, 0.08);
+  border: 1px solid rgba(23, 33, 50, 0.08);
+}
+
+.commandPill code {
+  display: inline-block;
+  padding: 0.32rem 0.6rem;
+  border: 0;
+  background: transparent;
+  font-size: 0.78rem;
+  color: var(--keel-ink);
+}
