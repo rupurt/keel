@@ -214,7 +214,7 @@ pub fn default_battery_decay_minutes() -> u32 {
 }
 
 pub fn default_max_battery_packs() -> usize {
-    5
+    20
 }
 
 /// Workflow-level configuration.
@@ -591,6 +591,12 @@ mod tests {
         let config = Config::default();
         assert_eq!(config.workflow.working_hours_start, 7);
         assert_eq!(config.workflow.working_hours_end, 19);
+    }
+
+    #[test]
+    fn default_config_uses_twenty_battery_packs() {
+        let config = Config::default();
+        assert_eq!(config.workflow.max_battery_packs, 20);
     }
 
     #[test]

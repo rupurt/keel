@@ -22,11 +22,30 @@ board_dir = ".keel"
 
 Keel uses a flexible, role-based lane topology to route work. This is configured via the `[workflow]`, `[roles]`, and `[lanes]` sections, and it drives the `Pull` phase of the turn loop.
 
+### Workflow Controls
+
+The `[workflow]` section controls the main operating window and queue pressure defaults. The built-in defaults currently assume a `7-7` autonomous window and up to `20` ready backlog stories before overload warnings begin.
+
+```toml
+[workflow]
+open_for_work = true
+working_hours_start = 7
+working_hours_end = 19
+max_battery_packs = 20
+battery_decay_minutes = 30
+```
+
 ### Workflow Defaults
 
 Defines the default roles and lanes used by commands like `keel next --role <role>`, `keel roles`, `keel next --role <role> --explain`, and `keel flow`.
 
 ```toml
+[workflow]
+open_for_work = true
+working_hours_start = 7
+working_hours_end = 19
+max_battery_packs = 20
+
 [workflow.defaults]
 management_role = "manager"
 delivery_role = "operator"

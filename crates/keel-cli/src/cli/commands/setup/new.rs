@@ -520,6 +520,7 @@ mod tests {
         let config = fs::read_to_string(root.join("keel.toml")).unwrap();
         assert!(config.contains("board_dir = \".keel\""));
         assert!(config.contains("[workflow]"));
+        assert!(config.contains("max_battery_packs = 20"));
         assert!(config.contains("working_hours_start = 7"));
         assert!(config.contains("[roles.manager]"));
     }

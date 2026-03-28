@@ -292,6 +292,7 @@ mod tests {
     fn project_keel_toml_template_exposes_workflow_defaults() {
         assert!(project::KEEL_TOML.contains("board_dir = \"{{board_dir}}\""));
         assert!(project::KEEL_TOML.contains("[workflow]"));
+        assert!(project::KEEL_TOML.contains("max_battery_packs = 20"));
         assert!(project::KEEL_TOML.contains("[workflow.defaults]"));
         assert!(project::KEEL_TOML.contains("[roles.manager]"));
     }
