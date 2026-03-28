@@ -6,7 +6,7 @@ Archetype: Strategic
 
 | ID | Description | Verification |
 |----|-------------|--------------|
-| MG-01 | Replace the synthetic `.keel/heartbeat` file as Keel's primary activity signal with a derived heartbeat model exposed through `keel heartbeat`, and have `keel flow --scene` use that derived activity to decide when the system is unplugged. | manual: the two-pass rollout is represented by authored child board work and the final cutover criteria are captured in the mission log |
+| MG-01 | Replace the synthetic `.keel/heartbeat` file as Keel's primary activity signal with a derived heartbeat model exposed through `keel heartbeat`, and have `keel flow --scene` use that derived activity to decide when the system is unplugged. | board: VF7Geb3Wa |
 
 ## Constraints
 

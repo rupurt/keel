@@ -368,6 +368,13 @@
 |--------|--------|
 | [Downstream Adoption And Upgrade Docs](epics/VF2RJfiKo/voyages/VF2RKxjt7/) | done |
 
+### [Derive Heartbeat From Repository Activity](epics/VF7Geb3Wa/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Introduce Derived Heartbeat Surface And Flow Fallback](epics/VF7Geb3Wa/voyages/VF7Gfk7zv/) | planned |
+| [Remove File Heartbeat And Align Pacemaker Operations](epics/VF7Geb3Wa/voyages/VF7Gfkizo/) | draft |
+
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
 | Voyage | Status |
