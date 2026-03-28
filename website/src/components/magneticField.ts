@@ -10,6 +10,17 @@ const RECESSED_OUTER_EXPONENT = 1.42;
 const RECESSED_CORE_EXPONENT = 1.1;
 const RECESSED_OUTER_GAIN = 0.3;
 const RECESSED_CORE_GAIN = 0.98;
+const RECESSED_LOCK_THRESHOLD = 0.08;
+
+type RecessedFieldState = {
+  lockX: number;
+  lockY: number;
+  peakX: number;
+  peakY: number;
+  peakDepth: number;
+};
+
+const recessedFieldState = new WeakMap<HTMLElement, RecessedFieldState>();
 
 function prefersReducedMotion() {
   return (
@@ -60,9 +71,26 @@ function updateMagneticField(
 }
 
 function resetRecessedField(element: HTMLElement) {
+  recessedFieldState.delete(element);
   element.style.setProperty("--button-repel-x", "0px");
   element.style.setProperty("--button-repel-y", "0px");
   element.style.setProperty("--button-depth", "0");
+}
+
+function getRecessedFieldState(element: HTMLElement) {
+  let state = recessedFieldState.get(element);
+  if (!state) {
+    state = {
+      lockX: 0,
+      lockY: 0,
+      peakX: 0,
+      peakY: 0,
+      peakDepth: 0,
+    };
+    recessedFieldState.set(element, state);
+  }
+
+  return state;
 }
 
 function updateRecessedField(
@@ -100,12 +128,32 @@ function updateRecessedField(
     1,
     outerField * RECESSED_OUTER_GAIN + coreField * RECESSED_CORE_GAIN,
   );
-  const pushX = -normalizedX * RECESSED_MAX_PUSH_PX * repelField;
-  const pushY = -normalizedY * RECESSED_MAX_PUSH_PX * repelField;
+  const state = getRecessedFieldState(element);
+
+  if (state.lockX === 0 && Math.abs(normalizedX) >= RECESSED_LOCK_THRESHOLD) {
+    state.lockX = -Math.sign(normalizedX);
+  }
+
+  if (state.lockY === 0 && Math.abs(normalizedY) >= RECESSED_LOCK_THRESHOLD) {
+    state.lockY = -Math.sign(normalizedY);
+  }
+
+  state.peakX = Math.max(
+    state.peakX,
+    Math.abs(normalizedX) * RECESSED_MAX_PUSH_PX * repelField,
+  );
+  state.peakY = Math.max(
+    state.peakY,
+    Math.abs(normalizedY) * RECESSED_MAX_PUSH_PX * repelField,
+  );
+  state.peakDepth = Math.max(state.peakDepth, repelField);
+
+  const pushX = state.lockX * state.peakX;
+  const pushY = state.lockY * state.peakY;
 
   element.style.setProperty("--button-repel-x", `${pushX.toFixed(2)}px`);
   element.style.setProperty("--button-repel-y", `${pushY.toFixed(2)}px`);
-  element.style.setProperty("--button-depth", repelField.toFixed(3));
+  element.style.setProperty("--button-depth", state.peakDepth.toFixed(3));
 }
 
 export function magneticFieldEvents<T extends HTMLElement>() {
