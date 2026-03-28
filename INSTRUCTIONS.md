@@ -2,35 +2,35 @@
 
 Procedural instructions and workflow guidance for agents and operators working with Keel.
 
-## The Tactical Loop
+## The Turn Loop
 
-Keel is an engine with strict constraints. Your job is to perform "tactical moves" that push work through the state machine while eliminating drift.
+Keel is an engine with strict constraints. Your job is to move the board through the canonical `Orient -> Inspect -> Pull -> Ship -> Close` loop while eliminating drift.
 
-Every session follows this deterministic cycle:
+`keel turn` is the canonical reference surface for this rhythm. Every session follows this deterministic cycle:
 
-1.  **Mission Orientation**: Start by running `keel mission next --status`. This gives you the top 3 high-signal moves required by the engine. Check `just keel flow --scene` to quickly visualize if the workflow is autonomous or blocked waiting for human input.
-2.  **Role Selection**: Identify if you are a `manager` (planning/decisions) or an `operator` (implementation). Do not drift across these roles in a single atomic change.
-3.  **Execute Move**: Perform exactly ONE move (e.g., plan a voyage, implement a story, fix a diagnostic).
-4.  **Seal Move**: Close the loop with `story submit`, `voyage plan`, or `bearing lay`. This mutates the `.keel` state and may leave temporary worktree energy that should be cleared by the sealing commit.
-5.  **Log & Commit**:
+1.  **Orient**: Run `keel heartbeat`, `keel health --scene`, `keel flow --scene`, and `keel doctor`. This tells you whether the board is energized, healthy, and structurally coherent.
+2.  **Inspect**: Run `keel mission next --status` and `keel pulse`. If routing is unclear, inspect `keel roles` or `keel next --role <role> --explain`.
+3.  **Pull**: Choose the correct lane and role (`manager`, `operator`, or a configured role family) and pull exactly ONE slice of work.
+4.  **Ship**: Execute the move, record proof while the work is fresh, and land the relevant lifecycle transition (`story submit`, `voyage plan`, `bearing lay`, etc.).
+5.  **Close**:
     - Record your move in the mission `LOG.md`.
     - **Heartbeat Check**: Use `just keel heartbeat` if you need to inspect the current activity source or confirm the circuit is still energized before the commit boundary.
     - **Commit**: Execute `git commit`. The installed hooks automatically run `just quality`, `just test`, and append `doctor --status` to the commit message. Resolve any issues if the commit is rejected.
 6.  **Re-orient**: After the commit lands, run `just keel doctor --status` and `just keel flow` to see what the board needs next.
- This is the "plug the chord back in" moment — you reconnect to the board's current state. If the delivery lane has ready work, start the next loop immediately. Only stop to ask the human when you reach a manual lane (design direction, bearing assessment, or human verification).
+ This is the "plug the cord back in" moment. If the delivery lane has ready work, start the next turn immediately. Only stop to ask the human when you reach a manual lane (design direction, bearing assessment, or human verification).
 
 ## Primary Workflows
 
 ### Operator (Implementation)
 Focus on **evidence-backed delivery**.
-- **Context**: `keel story show <id>` and `keel voyage show <id>`.
+- **Context**: `keel story show <id>`, `keel voyage show <id>`, and `keel next --role operator`.
 - **Action**: Implement requirements, record proofs with `keel story record`, and `submit`.
 - **Constraint**: Every AC must have a proof.
 
 ### Manager (Planning)
 Focus on **strategic alignment and unblocking**.
-- **Context**: `keel epic show <id>` and `keel flow`.
-- **Action**: Author `PRD.md`, `SRS.md`, `SDD.md`, and decompose stories.
+- **Context**: `keel epic show <id>`, `keel roles`, `keel next --role manager --explain`, and `keel flow`.
+- **Action**: Author `PRD.md`, `SRS.md`, `SDD.md`, resolve routing, and decompose stories.
 - **Constraint**: Move voyages from `draft` to `planned` only when requirements are coherent.
 
 ### Explorer (Research)
@@ -44,13 +44,13 @@ Focus on **technical discovery and fog reduction**.
 Keel's autonomous flow is governed by a physical battery metaphor, but the charge is now derived from real repository activity rather than a synthetic wake file.
 
 If a human user pokes you (e.g., "I'm poking you", "Wake up"), you MUST:
-1.  **Inspect the Charge**: Immediately execute `keel heartbeat` to see whether recent repository activity is still energizing the board and whether the worktree is carrying uncommitted energy.
-2.  **Autonomous Scan**: Run `keel mission next --status` and `keel pulse` to identify any new work that has become ready or materialized.
-3. **Visual Confirmation**: Run `keel flow --scene` to verify whether the light is ON or whether the board is idle waiting for a real move.
+1.  **Orient**: Execute `keel heartbeat`, `keel health --scene`, `keel flow --scene`, and `keel doctor`.
+2.  **Inspect**: Run `keel mission next --status` and `keel pulse` to identify any new work that has become ready or materialized.
+3.  **Route if Needed**: Use `keel roles` or `keel next --role <role> --explain` when lane selection or queue behavior needs clarification.
 
 ## Autonomous Backlog Discharge
 
-As long as the system is **AUTONOMOUS (LIGHT ON)** and the circuit is healthy (no blown capacitors), you are responsible for discharging the delivery backlog.
+As long as the system is **AUTONOMOUS (LIGHT ON)** and the circuit is healthy (no blown capacitors), you are responsible for discharging the delivery backlog during the `Pull` and `Ship` phases of the turn loop.
 
 1.  **Identify Ready Work**: Scan the delivery lane for stories in `backlog` that are not blocked by dependencies.
 2.  **Autonomous Start**: For each ready story, execute `keel story start <id>`. 
@@ -131,10 +131,12 @@ Run `just keel --help` for the full command tree. The core commands you should r
 
 | Category | Commands |
 |----------|----------|
+| Orientation | `just keel turn` `just keel heartbeat` `just keel health --scene` `just keel flow --scene` `just keel doctor` |
+| Inspection | `just keel mission next [<id>]` `just keel pulse` `just keel roles` `just keel next --role manager --explain` |
 | Discovery | `just keel bearing new <name>` `just keel bearing research <id>` `just keel bearing assess <id>` `just keel bearing list` |
 | Planning | `just keel epic new <name> --problem <problem>` `just keel voyage new <name> --epic <epic-id> --goal <goal>` |
 | Execution | `just keel story new "<title>" [--type <type>] [--epic <epic-id> [--voyage <voyage-id>]]` |
-| Board Ops | `just keel mission next [<id>]` `just keel next --role manager` `just keel next --role operator` `just keel flow` `just keel doctor` `just keel generate` `just keel config show` `just keel mission show <id>` |
+| Board Ops | `just keel next --role manager` `just keel next --role operator` `just keel generate` `just keel config show` `just keel mission show <id>` |
 | Lifecycle | Story/voyage/epic transitions in the table below |
 
 ## Story and Milestone State Changes

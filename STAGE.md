@@ -1,12 +1,22 @@
 # STAGE.md: The Visual Philosophy of Keel
 
-The `--scene` flag in the Keel CLI is not a UI framework; it is an emotional and visceral counterpart to the engine's mechanical data. While standard commands output structured data for parsing and reading, `--scene` renders visual metaphors that give the user an immediate intuitive grasp of state, tone, or context.
+The `--scene` flag in the Keel CLI is not a UI framework and it is not freehand ornament. It is a logical visual surface: cinematic enough to be legible at a glance, but strict enough to remain grounded in canonical engine state. While standard commands output structured data for parsing and reading, `--scene` renders visual metaphors that compress the same truth into a faster perceptual surface.
 
 ## Core Philosophy
 
-1. **Vibe over Data**: A scene should convey a feeling or a high-level summary before the user reads a single word.
-2. **Speed**: Scenes must render instantly. They should rely on cheap computations (hashing, sampling, simple simulations) rather than heavy processing.
-3. **Purity**: Scenes are built with ASCII/ANSI primitives and semantic colors (`owo_colors`). They avoid complex terminal UI libraries (no curses, no TUI grids) to maintain the raw CLI aesthetic.
+1. **State Before Ornament**: A scene may feel expressive, but it must never invent state. If the engine cannot defend a visual claim through a canonical projection, the scene should not render it.
+2. **Vibe from Truth**: A scene should convey a feeling or a high-level summary before the user reads a single word, but that feeling must emerge from real engine semantics.
+3. **Speed**: Scenes must render instantly. They should rely on cheap computations and shared read models rather than heavy processing.
+4. **Purity**: Scenes are built with ASCII/ANSI primitives and semantic colors (`owo_colors`). They avoid complex terminal UI libraries to maintain the raw CLI aesthetic.
+
+## Scene Contracts
+
+Every public `--scene` surface should have an explicit contract.
+
+- Scene dependencies live in `crates/keel-core/src/read_model/scene_contracts.rs`.
+- Scene renderers should consume canonical read models (`heartbeat`, `flow_metrics`, `workflow_topology`, mission projections, etc.) instead of re-deriving logic inside CLI handlers.
+- Energization must stay coherent across surfaces: if `keel heartbeat` reports the board as idle, scenes like `flow --scene` and `workshop` must reflect that same state.
+- Width and alignment are part of the contract. ANSI color must not change visible geometry.
 
 ## Archetypes of Scenes
 
@@ -31,14 +41,15 @@ Visuals representing the result of a discrete action or sweep.
 
 When implementing a new `--scene`, adhere to these guidelines:
 
-1. **Modularity**: Place scene generation logic in a dedicated module (e.g., `src/cli/presentation/scene.rs` or specific command presentation files).
-2. **Color Semantics**: 
+1. **Modularity**: Place scene generation logic in a dedicated module (for example `crates/keel-cli/src/cli/presentation/scene.rs` or a command-specific presentation module).
+2. **Canonical Inputs**: Prefer shared projections from `keel-core` and width-safe scene primitives from `txt-scene`.
+3. **Color Semantics**: 
    - **Green/Cyan**: Autonomy, health, successful action.
    - **Yellow/Orange**: Pending work, active but safe friction.
    - **Red**: Blocking failures, flatlines, critical manual intervention.
    - **Dim/Grey**: Idling, fog, inactive paths.
-3. **Dimensions**: Keep scenes compact. Aim for a maximum width of 60 characters and a height of 5-10 lines to ensure they fit cleanly in standard terminal splits without scrolling.
-4. **Behavior**: Passing `--scene` should typically print the scene at the *top* of the output, or entirely *replace* the standard output if the scene is meant to be a dashboard-like check (as seen in `doctor` and `flow`).
+4. **Dimensions**: Keep scenes compact enough for standard terminal splits, but prioritize exact visible-width integrity over arbitrary width caps. Public scenes should typically land in the 60-96 column range and remain stable with ANSI styling enabled.
+5. **Behavior**: Passing `--scene` should typically print the scene at the *top* of the output, or entirely *replace* the standard output if the scene is meant to be a dashboard-like check. Informative idle states are valid scene outcomes.
 
 ---
 

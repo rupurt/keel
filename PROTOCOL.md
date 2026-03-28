@@ -88,6 +88,7 @@ The system's **Pacemaker** is derived from repository activity rather than a ded
 ### The Heartbeat
 - **Activation**: Dirty worktree activity is the primary signal; a clean repository falls back to the latest commit timestamp.
 - **Inspection**: `keel heartbeat` reports the source, age, and whether the worktree is carrying uncommitted energy.
+- **Turn Loop**: `Orient` uses `keel heartbeat` as the canonical charge surface before `flow --scene` and other visual checks are interpreted.
 - **Idle State**: If the derived heartbeat decays beyond `battery_decay_minutes` (default: 10m), the engine transitions to **IDLE**, dimming the visual scenes and pausing autonomous backlog discharge. Idle heartbeat is a flow-state signal, not structural drift.
 
 ### Pace-setting

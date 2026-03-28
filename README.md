@@ -1,8 +1,8 @@
-# Keel: The Agentic SDLC Simulator
+# Keel: The Agentic Board Engine
 
-> **Minimize drift through planning, execution, and verification.**
+> **Turn-based board engine for human/AI delivery teams.**
 
-Welcome to Keel. This isn't just a project management tool; it’s an engine designed for the era of human-agent collaboration. Keel treats software development as a high-fidelity simulation where **Formal Rules** act as the physics and **Play** is the primary mode of discovery.
+Welcome to Keel. This is not a notes app with automation bolted on; it is a board engine designed for the era of human-agent collaboration. Keel treats software development as a high-fidelity operating system where **Formal Rules** act as the physics, **Turns** are the unit of progress, and **Play** remains a first-class tool for discovery.
 
 ---
 
@@ -17,8 +17,8 @@ Start here. The engine will tell you exactly where the board is "broken" (Scaffo
 
 ### 2. The Operator (Learning by Building)
 **Comprehension:** Medium
-**The Move:** `keel mission next --status`
-Once the board is healthy, you move into implementation. You pull stories, record evidence, and close the **Specification-Evidence Loop**. You learn how requirements flow from planning into verified code.
+**The Move:** `keel turn`
+Once the board is healthy, you move into the canonical **Turn Loop**. You orient, inspect, pull, ship, and close one visible state change at a time. You learn how requirements flow from planning into verified code.
 
 ### 3. The Architect (Learning by Constraining)
 **Comprehension:** High
@@ -39,18 +39,33 @@ We believe that planning should be preceded by exploration. Keel encourages **Pl
 
 ## ⚙️ Technical Core
 
-### Queue Routing & The Simulation Loop
-The engine uses a 2-queue pull model to prevent "Strategic Fog":
+### The Turn Loop
+The canonical operating rhythm is:
+
+- **Orient**: `keel turn`, `keel heartbeat`, `keel health --scene`, `keel flow --scene`, `keel doctor`
+- **Inspect**: `keel mission next --status`, `keel pulse`
+- **Pull**: `keel roles`, `keel next --role <role>`, `keel next --role <role> --explain`
+- **Ship**: `keel story start <id>`, `keel story record <id>`, `keel story submit <id>`
+- **Close**: `keel story accept <id> --role manager` or the equivalent planning transition plus a sealing commit
+
+### Role Routing & Lanes
+The engine uses a 2-lane pull model to prevent strategic fog:
 
 - **MANAGEMENT LANE**: `keel next --role manager` returns management-lane decisions and never returns implementation `Work`.
 - **DELIVERY LANE**: `keel next --role operator` returns implementation work from the delivery lane (`in-progress` then `backlog`).
 
+Use `keel roles` to inspect the resolved lane topology and `keel next --role <role> --explain` to understand why a role pulls from a particular lane.
+
 **Constraint**: `keel next` requires `--role`; there is no implicit manager default.
 
-### Key Simulation Commands
-- next        Pull the next item using explicit role-based queue routing
-- flow        Show workflow lane dashboard from configured topology
-- doctor      Validate board health and optionally fix issues
+### Key Engine Commands
+```text
+turn        Inspect the canonical Orient/Inspect/Pull/Ship/Close loop
+next        Pull the next item using explicit role-based queue routing
+roles       Show resolved roles, lanes, and operational contracts
+flow        Show workflow lane dashboard from configured topology
+doctor      Validate board health and optionally fix issues
+```
 
 ## ⚖️ The Physics: Formal Rules
 
@@ -60,22 +75,23 @@ Keel is governed by a strict set of operational invariants. These rules ensure t
 Use this order when authoring or reviewing decisions:
 1. ADRs (`.keel/adrs/`) — binding architectural decisions
 2. [CONSTITUTION.md](CONSTITUTION.md) — collaboration philosophy and governance intent
-3. [FORMAL_RULES.md](FORMAL_RULES.md) — operational invariants and engine constraints
+3. [POLICY.md](POLICY.md) — operational invariants and engine constraints
 4. [ARCHITECTURE.md](ARCHITECTURE.md) — implementation structure and technical constraints
 5. [CONFIGURATION.md](CONFIGURATION.md) — role-based and config-driven topology
 6. [RELEASE.md](RELEASE.md) — release capabilities and overview
 7. Planning artifacts (`PRD.md` → `SRS.md`/`SDD.md` → story `README.md`) — scoped executable work
 
-- **[AGENTS.md](AGENTS.md)**: The tactical loop for AI contributors.
+- **[AGENTS.md](AGENTS.md)**: The turn loop and operator contract for AI contributors.
 
 ---
 
 ## 🚀 Quick Start
 
 1. **Install:** `nix run github:spoke-sh/keel`
-2. **Orient:** `keel mission next --status`
-3. **Heal:** `keel doctor`
-4. **Play:** `keel play --theater`
+2. **Orient:** `keel turn`
+3. **Inspect:** `keel mission next --status`
+4. **Pull:** `keel next --role manager` or `keel next --role operator`
+5. **Ship & Close:** move one slice, record proof, and land the sealing commit
 
 **Everything flows down:** Vision → Epic → Voyage → Story → Implementation.
 **Everything loops back:** Reflection → Knowledge → Patterns → Bearings → Architecture.

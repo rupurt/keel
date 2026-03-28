@@ -162,6 +162,9 @@ Pull commands:
 - `keel next --role manager`: management lane only (never returns implementation `Work`).
 - `keel next --role <role>`: pull work from the lane associated with the role family.
 - `keel next --role operator`: delivery lane (`in-progress` then `backlog`).
+- `keel roles`: inspect the resolved role families, lanes, and operational contracts.
+- `keel next --role <role> --explain`: explain why a role resolves to a lane and queue behavior.
+- `keel turn`: expose the same routing model inside the canonical turn loop.
 - `keel next` requires `--role`; there is no implicit management-lane fallback.
 - `keel flow`: visual dashboard using the same queue policy semantics plus topology-resolved lane cards.
 
@@ -189,6 +192,18 @@ Verification queue categories are shared across command and flow paths:
 Management-lane `keel next --role <management-role>` decision set is constrained to:
 `decision`, `accept`, `research`, `needs-stories`, `needs-planning`, `blocked`, `empty`.
 It never returns `Work`.
+
+## Canonical Operator Projections
+
+Keel's public operator vocabulary is defined in shared read models rather than duplicated across CLI handlers.
+
+- `crates/keel-core/src/read_model/command_catalog.rs` owns the canonical command taxonomy, docs slugs, turn-phase hints, and scene capability metadata.
+- `crates/keel-core/src/read_model/turn_loop.rs` owns the canonical `Orient -> Inspect -> Pull -> Ship -> Close` projection exposed by `keel turn`.
+- `crates/keel-core/src/read_model/scene_contracts.rs` defines which engine signals each public `--scene` surface is allowed to represent.
+- `crates/keel-core/src/read_model/role_routing.rs` owns the role-and-lane explanation surfaced by `keel roles` and `keel next --explain`.
+
+Architectural consequence:
+- CLI help, routing guidance, scene discovery, and docs drift guards should consume these projections instead of re-declaring parallel taxonomies in command handlers.
 
 ## World Map Projection
 

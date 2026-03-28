@@ -11,8 +11,17 @@ Keel is an engine with strict constraints (see [POLICY.md](POLICY.md)). Your pri
 2. **Heartbeat Hygiene**: Monitor the system's pulse via `keel heartbeat` and `keel health --scene`. The pacemaker is derived from repository activity; uncommitted energy in the worktree is tactical debt that should be closed autonomously by landing the sealing commit.
 3. **Notification Discipline**: Ping the human operator ONLY when you need input on design direction or how the application behaves. Resolve technical drift and tactical moves autonomously.
 
+### Canonical Turn Loop
+Keel's operator rhythm is the `Orient -> Inspect -> Pull -> Ship -> Close` loop surfaced by `keel turn`.
+
+- **Orient**: Inspect charge and board stability with `keel heartbeat`, `keel health --scene`, `keel flow --scene`, and `keel doctor`.
+- **Inspect**: Read current demand with `keel mission next --status`, `keel pulse`, `keel roles`, and `keel next --role <role> --explain` when routing is unclear.
+- **Pull**: Select one role-scoped slice with `keel next --role <role>`.
+- **Ship**: Execute the slice, record proof, and advance lifecycle state.
+- **Close**: Land the relevant transition and the sealing commit that clears open-loop energy.
+
 ### Session Start & Human Interaction
-When a human user opens the chat or "pokes" you (e.g., "Wake up", "I'm poking you"), you MUST immediately energize the system and orient yourself by following the **Human Interaction & Pokes** workflow in [INSTRUCTIONS.md](INSTRUCTIONS.md):
+When a human user opens the chat or "pokes" you (e.g., "Wake up", "I'm poking you"), you MUST immediately perform the `Orient` and `Inspect` halves of the turn loop by following the **Human Interaction & Pokes** workflow in [INSTRUCTIONS.md](INSTRUCTIONS.md):
 1.  **Heartbeat**: Run `just keel heartbeat` to inspect current charge and whether the worktree is carrying uncommitted energy.
 2.  **Pulse**: Run `just keel health --scene` to check subsystem stability.
 3.  **Scan**: Run `just keel mission next --status` and `just keel pulse`.

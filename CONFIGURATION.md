@@ -20,11 +20,11 @@ board_dir = ".keel"
 
 ## Workflow & Topology
 
-Keel uses a flexible, role-based lane topology to route work. This is configured via the `[workflow]`, `[roles]`, and `[lanes]` sections.
+Keel uses a flexible, role-based lane topology to route work. This is configured via the `[workflow]`, `[roles]`, and `[lanes]` sections, and it drives the `Pull` phase of the turn loop.
 
 ### Workflow Defaults
 
-Defines the default roles and lanes used by commands like `keel next --role <role>` and `keel flow`.
+Defines the default roles and lanes used by commands like `keel next --role <role>`, `keel roles`, `keel next --role <role> --explain`, and `keel flow`.
 
 ```toml
 [workflow.defaults]
@@ -79,6 +79,14 @@ You can provide specific overrides for full role taxonomy strings.
 [role_overrides."operator/software:infrastructure"]
 operational_contract = "infrastructure-operator"
 ```
+
+### Runtime Inspection
+
+Use the CLI to inspect the resolved topology at runtime:
+
+- `keel roles` shows role families, default lanes, operational contracts, and overrides.
+- `keel next --role <role> --explain` shows why a role resolves to a given lane and whether that lane is parallel or manual-accept.
+- `keel config show` is the canonical rendered view of the merged configuration.
 
 ## Scoring Modes
 
@@ -152,11 +160,11 @@ delivery_role = "operator"
 
 [roles.manager]
 default_lane = "management"
-template = "manager-core"
+operational_contract = "manager-core"
 
 [roles.operator]
 default_lane = "delivery"
-template = "operator-core"
+operational_contract = "operator-core"
 
 [lanes.management]
 description = "Planning and verification"
