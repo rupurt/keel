@@ -6,6 +6,7 @@ import TurnDivider from "@site/src/components/TurnDivider";
 import TurnCycle from "@site/src/components/TurnCycle";
 import TermRamp from "@site/src/components/TermRamp";
 import PersonaGrid from "@site/src/components/PersonaGrid";
+import { recessedFieldEvents } from "@site/src/components/magneticField";
 
 import styles from "./index.module.css";
 
@@ -50,6 +51,29 @@ const laneItems = [
   },
 ];
 
+const firstTurnItems = [
+  {
+    label: "Orient",
+    command: "keel health --scene",
+    href: "/docs/workflows/turn-loop#orient",
+  },
+  {
+    label: "Inspect",
+    command: "keel mission next --status",
+    href: "/docs/workflows/turn-loop#inspect",
+  },
+  {
+    label: "Pull",
+    command: "keel next --role operator",
+    href: "/docs/workflows/turn-loop#pull",
+  },
+  {
+    label: "Verify",
+    command: "keel doctor",
+    href: "/docs/foundations/planning-and-verification#diagnostics-are-part-of-the-loop",
+  },
+];
+
 export default function Home(): ReactNode {
   return (
     <Layout
@@ -70,12 +94,17 @@ export default function Home(): ReactNode {
                   evidence-backed closure.
                 </p>
                 <div className={styles.actions}>
-                  <Link className={styles.primaryAction} to="/docs/intro">
+                  <Link
+                    className={`${styles.primaryAction} keel-recessed-button`}
+                    to="/docs/intro"
+                    {...recessedFieldEvents<HTMLAnchorElement>()}
+                  >
                     Read The Story
                   </Link>
                   <Link
-                    className={styles.secondaryAction}
+                    className={`${styles.secondaryAction} keel-recessed-button`}
                     to="/docs/start-here/install-keel"
+                    {...recessedFieldEvents<HTMLAnchorElement>()}
                   >
                     Install Keel
                   </Link>
@@ -103,22 +132,18 @@ export default function Home(): ReactNode {
                   </div>
                   <p className={styles.sceneLabel}>Typical First Turn</p>
                   <ol className={styles.sceneSteps}>
-                    <li>
-                      <span>Orient</span>
-                      <code>keel health --scene</code>
-                    </li>
-                    <li>
-                      <span>Inspect</span>
-                      <code>keel mission next --status</code>
-                    </li>
-                    <li>
-                      <span>Pull</span>
-                      <code>keel next --role operator</code>
-                    </li>
-                    <li>
-                      <span>Verify</span>
-                      <code>keel doctor</code>
-                    </li>
+                    {firstTurnItems.map((item) => (
+                      <li key={item.command}>
+                        <Link
+                          className={styles.sceneStepLink}
+                          to={item.href}
+                          {...recessedFieldEvents<HTMLAnchorElement>()}
+                        >
+                          <span>{item.label}</span>
+                          <code>{item.command}</code>
+                        </Link>
+                      </li>
+                    ))}
                   </ol>
                 </div>
               </div>
@@ -221,12 +246,17 @@ export default function Home(): ReactNode {
                 </h2>
               </div>
               <div className={styles.actions}>
-                <Link className={styles.primaryAction} to="/docs/intro">
+                <Link
+                  className={`${styles.primaryAction} keel-recessed-button`}
+                  to="/docs/intro"
+                  {...recessedFieldEvents<HTMLAnchorElement>()}
+                >
                   Open The Docs
                 </Link>
                 <Link
-                  className={styles.secondaryAction}
+                  className={`${styles.secondaryAction} keel-recessed-button`}
                   to="/docs/start-here/first-turn"
+                  {...recessedFieldEvents<HTMLAnchorElement>()}
                 >
                   First Turn Guide
                 </Link>

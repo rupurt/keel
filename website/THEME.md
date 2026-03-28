@@ -62,6 +62,7 @@ Default to Reference inside `/docs/*`. Hero is an explicit exception.
   On reference pages, reduce shadow depth, remove decorative highlight rails, and prefer flatter functional grouping.
 - Buttons and pills:
   Should feel like premium nautical controls: compact, tactile, milled, and slightly lifted from the page.
+  Buttons should resist the pointer rather than chasing it. As the cursor moves across them, they should repel away from the pointer and collapse into a recessed state.
 - Recessed surfaces:
   Terminals and internal trays should rely on inset contrast rather than external drop shadows.
 
@@ -78,6 +79,7 @@ Rules:
 - interactive cards may be lightly attracted toward the pointer rather than floating in a fixed direction
 - that magnetic pull should feather in early at the perimeter and dampen as the pointer gets close
 - magnetic pointer motion belongs to hero surfaces, not routine reference cards inside the docs corpus
+- buttons use the inverse field: they repel from the pointer and deepen into a recess once the cursor is over them
 
 Turnsteps are the canonical motion pattern:
 

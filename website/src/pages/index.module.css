@@ -53,6 +53,10 @@
 
 .primaryAction,
 .secondaryAction {
+  --button-repel-x: 0px;
+  --button-repel-y: 0px;
+  --button-depth: 0;
+
   position: relative;
   overflow: hidden;
   isolation: isolate;
@@ -65,16 +69,19 @@
   border: 1px solid;
   font-weight: 640;
   text-decoration: none;
+  transform: translate(var(--button-repel-x), var(--button-repel-y));
   transition:
-    transform 150ms ease,
+    transform 180ms var(--keel-motion-ease-lift),
     box-shadow 150ms ease,
     border-color 150ms ease,
-    background 150ms ease;
+    background 150ms ease,
+    color 150ms ease;
+  will-change: transform, box-shadow;
 }
 
 .primaryAction::before,
 .secondaryAction::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0.56rem;
   right: 0.92rem;
@@ -84,6 +91,10 @@
   background: var(--keel-acrylic-line);
   opacity: 0.82;
   pointer-events: none;
+  transform-origin: right center;
+  transition:
+    opacity 160ms ease,
+    transform 180ms ease;
 }
 
 .primaryAction > *,
@@ -95,37 +106,53 @@
 .primaryAction {
   color: #fffdf8;
   background: var(--keel-navy);
-  border-color:
-    rgba(255, 255, 255, 0.44)
-    rgba(255, 255, 255, 0.28)
-    rgba(17, 51, 79, 0.18)
-    rgba(17, 51, 79, 0.14);
+  border-color: rgba(255, 255, 255, 0.44) rgba(255, 255, 255, 0.28)
+    rgba(17, 51, 79, 0.18) rgba(17, 51, 79, 0.14);
   box-shadow: var(--keel-shadow-button);
 }
 
 .secondaryAction {
   color: var(--keel-ink);
   background: var(--keel-surface-control);
-  border-color:
-    var(--keel-raised-border-top)
-    var(--keel-raised-border-right)
-    var(--keel-raised-border-bottom)
-    var(--keel-raised-border-left);
+  border-color: var(--keel-raised-border-top) var(--keel-raised-border-right)
+    var(--keel-raised-border-bottom) var(--keel-raised-border-left);
   box-shadow: var(--keel-shadow-button);
 }
 
 .primaryAction:hover {
   color: #fffdf8;
   text-decoration: none;
-  transform: translate(-1px, -3px);
-  box-shadow: var(--keel-shadow-button-hover);
+  box-shadow: var(--keel-shadow-button-recessed);
+  border-color: rgba(255, 255, 255, 0.18) rgba(255, 255, 255, 0.14)
+    rgba(17, 51, 79, 0.24) rgba(17, 51, 79, 0.18);
 }
 
 .secondaryAction:hover {
   color: var(--keel-ink);
   text-decoration: none;
-  transform: translate(-1px, -3px);
-  box-shadow: var(--keel-shadow-button-hover);
+  box-shadow: var(--keel-shadow-button-recessed);
+  border-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.22)
+    rgba(17, 51, 79, 0.16) rgba(17, 51, 79, 0.12);
+}
+
+.primaryAction:hover::before,
+.primaryAction:focus-visible::before,
+.secondaryAction:hover::before,
+.secondaryAction:focus-visible::before {
+  opacity: 0.42;
+  transform: scaleX(0.82);
+}
+
+.primaryAction:focus-visible,
+.secondaryAction:focus-visible {
+  text-decoration: none;
+  outline: none;
+  box-shadow: var(--keel-shadow-button-recessed);
+}
+
+.primaryAction:active,
+.secondaryAction:active {
+  box-shadow: var(--keel-shadow-button-recessed-strong);
 }
 
 .heroPoints {
@@ -143,7 +170,7 @@
 }
 
 .heroPoints li::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   top: 0.48rem;
@@ -169,16 +196,13 @@
   border-radius: 2rem;
   background: var(--keel-surface-raised);
   border: 1px solid;
-  border-color:
-    var(--keel-raised-border-top)
-    var(--keel-raised-border-right)
-    var(--keel-raised-border-bottom)
-    var(--keel-raised-border-left);
+  border-color: var(--keel-raised-border-top) var(--keel-raised-border-right)
+    var(--keel-raised-border-bottom) var(--keel-raised-border-left);
   box-shadow: var(--keel-shadow-panel);
 }
 
 .sceneFrame::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0.95rem;
   right: 1.2rem;
@@ -190,7 +214,7 @@
 }
 
 .sceneFrame::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 1rem;
   right: 0.95rem;
@@ -239,15 +263,77 @@
 }
 
 .sceneSteps li {
+  margin: 0;
+}
+
+.sceneStepLink {
+  --button-repel-x: 0px;
+  --button-repel-y: 0px;
+  --button-depth: 0;
+
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   display: flex;
   justify-content: space-between;
   gap: var(--keel-space-4);
   align-items: center;
+  width: 100%;
   padding: 0.9rem 1rem;
   border-radius: 1.25rem;
   background: rgba(17, 51, 79, 0.05);
-  border: 1px dashed rgba(17, 51, 79, 0.14);
+  border: 1px solid rgba(17, 51, 79, 0.12);
   color: var(--keel-ink-soft);
+  text-decoration: none;
+  transform: translate(var(--button-repel-x), var(--button-repel-y));
+  box-shadow: var(--keel-shadow-button);
+  transition:
+    transform 180ms var(--keel-motion-ease-lift),
+    box-shadow 150ms ease,
+    border-color 150ms ease,
+    background 150ms ease;
+  will-change: transform, box-shadow;
+}
+
+.sceneStepLink::before {
+  content: "";
+  position: absolute;
+  top: 0.62rem;
+  right: 0.9rem;
+  width: 32%;
+  height: 1px;
+  border-radius: 999px;
+  background: var(--keel-acrylic-line);
+  opacity: 0.68;
+  transform-origin: right center;
+  transition:
+    opacity 160ms ease,
+    transform 180ms ease;
+}
+
+.sceneStepLink > * {
+  position: relative;
+  z-index: 1;
+}
+
+.sceneStepLink:hover,
+.sceneStepLink:focus-visible {
+  color: var(--keel-ink-soft);
+  text-decoration: none;
+  background: rgba(17, 51, 79, 0.06);
+  border-color: rgba(17, 51, 79, 0.16);
+  box-shadow: var(--keel-shadow-button-recessed);
+  outline: none;
+}
+
+.sceneStepLink:hover::before,
+.sceneStepLink:focus-visible::before {
+  opacity: 0.34;
+  transform: scaleX(0.78);
+}
+
+.sceneStepLink:active {
+  box-shadow: var(--keel-shadow-button-recessed-strong);
 }
 
 .sceneSteps span {
@@ -312,17 +398,14 @@
   border-radius: 2rem;
   background: var(--keel-navy);
   border: 1px solid;
-  border-color:
-    rgba(255, 255, 255, 0.34)
-    rgba(255, 255, 255, 0.22)
-    rgba(17, 51, 79, 0.16)
-    rgba(17, 51, 79, 0.12);
+  border-color: rgba(255, 255, 255, 0.34) rgba(255, 255, 255, 0.22)
+    rgba(17, 51, 79, 0.16) rgba(17, 51, 79, 0.12);
   color: #fffdf8;
   box-shadow: var(--keel-shadow-panel);
 }
 
 .ctaCard::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 1rem;
   left: 2rem;
@@ -333,7 +416,7 @@
 }
 
 .ctaCard::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 1rem;
   right: 1.2rem;
@@ -387,11 +470,10 @@
   .sectionAlt {
     padding: 3.2rem 0;
   }
-
 }
 
 @media (max-width: 640px) {
-  .sceneSteps li {
+  .sceneStepLink {
     flex-direction: column;
     align-items: flex-start;
   }
