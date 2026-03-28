@@ -5,6 +5,7 @@ description: Use Keel's `--scene` flags as compact logic displays for board stat
 
 import SignalGrid from '@site/src/components/SignalGrid';
 import SceneAtlas from '@site/src/components/SceneAtlas';
+import SceneGallery from '@site/src/components/SceneGallery';
 
 export const sceneSignals = [
   {
@@ -94,6 +95,325 @@ export const sceneSurfaces = [
   },
 ];
 
+export const sceneBlueprints = [
+  {
+    scene: 'Med-Bay',
+    command: 'keel health --scene',
+    lead:
+      'The med-bay is the fast structural triage surface. It compresses diagnostic health into a single monitor and a subsystem scan so you can decide whether the board is safe to trust before you do more work.',
+    art: String.raw`┌─────────────────────────────────────────────────────────────────────┐
+│ THE MED-BAY (ULTRA-RES BIO-SCAN)                                   │
+└─────────────────────────────────────────────────────────────────────┘
+         .__________________________________________.
+         | [ MAIN DIAGNOSTIC MONITOR - HIGH RES ]   |
+         |   __/^\________/^\________/^\________/^\__ |
+         |  /      \______/      \______/      \____/|
+         |__________________________________________|
+         | HR: 72 BPM   STATUS: STABLE              |
+         | BP: PRESSURE: IDLE                       |
+         | SC: OPTIMAL   OF: CALM                   |
+         '------------------------------------------'
+SCANNING SUBSYSTEMS...
+  - PACEMAKER    [ NOMINAL ]
+  - KINETIC      [ WATCH ]`,
+    reads: [
+      'Doctor-style structural checks grouped into subsystem families.',
+      'Kinetic load from verification plus in-progress execution.',
+      'Strategic congestion and operational fatigue as monitor-side pressure signals.',
+    ],
+    states: [
+      {
+        label: 'STATUS: STABLE / STRESSED / ELEVATED / OVERLOAD / CRITICAL',
+        detail:
+          'The monitor headline changes with structural pass/fail plus execution pressure. It is not a heartbeat lamp.',
+      },
+      {
+        label: 'Subsystem labels: NOMINAL / WATCH / FAILURE',
+        detail:
+          'Each category is derived from doctor checks: warnings produce WATCH, errors produce FAILURE.',
+      },
+      {
+        label: 'BP / SC / OF',
+        detail:
+          'Pressure rises with execution load, while SC and OF surface strategic congestion and operational fatigue separately.',
+      },
+    ],
+  },
+  {
+    scene: 'Power Circuit',
+    command: 'keel flow --scene',
+    lead:
+      'The power circuit is the board-wide readiness display. It combines working-hours gating, structural integrity, derived heartbeat energy, queue readiness, watch pressure, and manual-input blocking into one logic surface.',
+    art: String.raw`.───────────────────────────[ POWER ]───────────────────────────.
+│  [ ░░░░░░░░░░░░░░░░░░░░ ]  <-- 0 BATTERY PACKS PLUGGED IN     │
+│  [ ○○○○○○ ]  <-- WATCHES AT REST                              │
+│      .───┴───.                                 .───┴───.      │
+│      |[    ]| [ IDLE ]               [ READY ]  |[    ]|      │
+│      |[    ]|  ( zzz )                ( ooo )   |[    ]|      │
+└──────────┴────( \                       / )────┴──────────┘
+                 \ \___________________/ / <-- WORKSHOP BUSY
+                  \_____________________/        (LIGHT ON)`,
+    reads: [
+      'Working-hours policy and open-for-work config before any deeper diagnosis.',
+      'Doctor structural pass/fail before the circuit is allowed to energize.',
+      'Derived heartbeat output from `keel heartbeat`, ready backlog count, watch capacity, and manual-accept lane pressure.',
+    ],
+    states: [
+      {
+        label: 'Circuit open',
+        detail:
+          'If the repo is off the clock or the workflow is disabled, the scene opens the circuit and stops there.',
+      },
+      {
+        label: 'Unplugged',
+        detail:
+          'If `keel heartbeat` is idle, the scene shows no recent repository activity even when the board is otherwise healthy.',
+      },
+      {
+        label: 'Short circuit',
+        detail:
+          'If doctor detects structural errors, the power scene flips to the unhealthy state instead of pretending delivery can continue.',
+      },
+      {
+        label: 'Battery packs',
+        detail:
+          'The pack row is ready backlog capacity, not pacemaker energy. Empty packs mean no ready stories, not necessarily an idle heartbeat.',
+      },
+      {
+        label: 'Bottom light',
+        detail:
+          'The final light tells you whether the system is autonomous, idle, or waiting on the workshop. It must stay coherent with `keel heartbeat`.',
+      },
+    ],
+  },
+  {
+    scene: 'Workbench',
+    command: 'keel workshop --scene',
+    lead:
+      'The workbench is the human-attention surface. It translates planning clutter, blocked work, remediation effort, and board drift into a literal bench that looks busier as human intervention becomes more necessary.',
+    art: String.raw`┌─────────────────────────────────────────────────────────────────────┐
+| THE WORKBENCH                                                       |
+└─────────────────────────────────────────────────────────────────────┘
+         |
+       __|__
+      / (*) \   <-- CIRCUIT CLOSED (HEARTBEAT ENERGIZED)
+     /  '.|.'\
+    /    ' '  \
+._____________________________________________________________________.
+| [ PEGBOARD ]                                                        |
+|  .  .  .  .  .  .  .  M:30 E:0/0 B:5 A:4             .  .  .  .  .  |
+|  [ DRILL PRESS ]                                   [ ANVIL   ]      |
+|   [                                          ]   <-- BENCH WIP (0)  |
+|   [ VICE ]  0 BLOCKED        [ OIL CAN ]  0.2h REMEDIATION          |
+| |                   SHOP SAWDUST (DRIFT)                       | |
+_|_|_                                                            _|_|_
+|_____|                                                          |_____|`,
+    reads: [
+      'Derived heartbeat for the lamp state, never a synthetic wake file.',
+      'Human-accept queues, blocked backlog, and remediation hours from diagnostics.',
+      'Pegboard counts for missions, epics, bearings, and ADRs plus drift/entropy on the floor.',
+    ],
+    states: [
+      {
+        label: 'Lamp on / lamp off',
+        detail:
+          'The lamp follows the heartbeat only. Energized boards light the bench; idle boards show an open circuit and a darkened top.',
+      },
+      {
+        label: 'Pegboard pressure',
+        detail:
+          'The pegboard turns hot when draft epic pressure or congestion rises. It is a strategic-clutter cue, not delivery throughput.',
+      },
+      {
+        label: 'Bench WIP bar',
+        detail:
+          'The bar fills with human queue occupancy. A crowded bench means the system needs direct human motion rather than more autonomous work.',
+      },
+      {
+        label: 'Vice / oil can / sawdust',
+        detail:
+          'Blocked work, remediation time, and drift each get their own metaphor so process debt is visible instead of hidden in text.',
+      },
+    ],
+  },
+  {
+    scene: 'Repair Bay',
+    command: 'keel doctor --scene',
+    lead:
+      'The laboratory is the strictest visual surface. It is intentionally simpler than the med-bay because its job is binary structural confidence: either the patient is nominal or the lab has found real damage.',
+    art: String.raw`┌───────────────────────────[ THE LABORATORY ]───────────────────────────┐
+│  [ VITAL SIGNS MONITOR ]                                               │
+│  .----------------------------.                                        │
+│  |__/^\____/^\____/^\____/^\__|    SYS: NOMINAL                        │
+│  |_/    \_/    \_/    \_/    \|    HR: 72 BPM                          │
+│  '----------------------------'                                        │
+│       CORE: [NOM]    STRAT: [NOM]    EXEC: [NOM]    FLOW: [NOM]        │
+└────────────────────────────────────────────────────────────────────────┘`,
+    reads: [
+      'The aggregated doctor report, grouped into core, strategy, execution, and flow layers.',
+      'Error-level structural integrity, not warning-level nuance.',
+      'The exact same truth that gates other command surfaces and commit safety.',
+    ],
+    states: [
+      {
+        label: 'SYS: NOMINAL / CRITICAL',
+        detail:
+          'The laboratory scene only escalates when doctor sees errors. Warning-only boards remain structurally alive.',
+      },
+      {
+        label: 'CORE / STRAT / EXEC / FLOW',
+        detail:
+          'Each lane compresses multiple doctor check families into a compact nominal-or-error read.',
+      },
+      {
+        label: 'Use it before repair, not instead of repair',
+        detail:
+          'The scene is the scan. The full `keel doctor` output is still the exact pathology report and fix surface.',
+      },
+    ],
+  },
+  {
+    scene: 'Automation Gear Train',
+    command: 'keel pulse --scene',
+    lead:
+      'The gear train is a tiny but honest automation indicator. It exists to tell you whether the current pulse cycle actually created work, idled, or was skipped because the circuit was closed for the day.',
+    art: String.raw`      _   _
+    /   V   \
+   |  ( O )  | -- _
+    \   ^   /   /
+      -   -    | (O) |
+                \ _ /`,
+    reads: [
+      'Routine materialization results for the current pulse cycle.',
+      'Working-hours gating before automation is allowed to run.',
+      'A yes-or-no answer to whether automation actually moved the board.',
+    ],
+    states: [
+      {
+        label: 'Bright gears',
+        detail:
+          'At least one routine materialized new work this cycle. Read the textual output when you need the exact created stories.',
+      },
+      {
+        label: 'Dim gears',
+        detail:
+          'Either the cycle was idle or the system was off the clock. The scene is intentionally coarse.',
+      },
+    ],
+  },
+  {
+    scene: 'Constraint Watch',
+    command: 'keel mission show MISSION-ID --scene',
+    lead:
+      'The mission watch renders a single time-bound mission as a clock face. It is the cleanest example of a scene acting as a constraint reminder instead of a decorative mascot.',
+    art: String.raw`          ╭─────────────────╮
+        ╭─┤       ○       ├─╮
+       ╱  ╰─●───────────◆─╯  ╲
+      │                         │
+     ●             ⊙             ○
+      │                         │
+       ╲    ○───────────○      ╱
+        ╰──┤       ○       ├──╯
+           ╰─────────────────╯
+
+    ████████████░░░░░░░░░░░░
+
+    Design System Refresh  6h / 12h  (6h remaining)  HALFWAY`,
+    reads: [
+      'Mission watch constraints only. If a mission has no watch, the command says so instead of inventing one.',
+      'Elapsed versus allowed hours rendered as both a clock face and a progress bar.',
+      'A time-pressure label that can escalate independently of structural health.',
+    ],
+    states: [
+      {
+        label: 'NOMINAL',
+        detail:
+          'Less than halfway through the time budget. The watch is green and mostly unconsumed.',
+      },
+      {
+        label: 'HALFWAY',
+        detail:
+          'Half the window is gone. The watch shifts to yellow to signal a real, but not yet critical, constraint.',
+      },
+      {
+        label: 'CRITICAL / EXPIRED',
+        detail:
+          'At three quarters consumed the watch turns red, and at or beyond the limit it marks the mission expired.',
+      },
+    ],
+  },
+  {
+    scene: 'Mission Radar',
+    command: 'keel mission next --scene',
+    lead:
+      'The radar scene is intentionally light-weight. It is an orientation pulse for a single mission, not a replacement for the textual next-move output.',
+    art: String.raw`      .-------.
+    .'  \ | /  '.
+   /  ---(+)---  \
+  |  ●    |   ●   |
+   \      |      /
+    '.  ● |    .'
+      \`-------\``,
+    reads: [
+      'The existence of a mission-local next surface rather than the full textual decision tree.',
+      'Immediate tactical focus when you want a visual cue before reading the exact recommendation.',
+      'A deliberately minimal surface that stays out of the way.',
+    ],
+    states: [
+      {
+        label: 'Minimal by design',
+        detail:
+          'Today the radar is a focus marker, not a dense state machine. Use plain `keel mission next` for the precise move.',
+      },
+      {
+        label: 'Mission-local orientation',
+        detail:
+          'It is best used when you already know the mission and want to switch into tactical scanning mode.',
+      },
+    ],
+  },
+  {
+    scene: 'Vault',
+    command: 'keel finance --scene',
+    lead:
+      'The vault turns queue liquidity and debt into a solvency metaphor. It is especially effective when explaining cleanup and planning tradeoffs to non-programmer roles.',
+    art: String.raw`┌─────────────────────────────────────────────────────────────────────┐
+│ THE VAULT (WORK CAPITAL)                                            │
+└─────────────────────────────────────────────────────────────────────┘
+             ._________________________.
+             |/   [ WORK CAPITAL ]    \|
+             |       /   _|_   \       |
+             |      | <──(O)──> |      |
+             |       SOLVENT           |
+            /                           \
+ [ ███       ] ASSETS (READY)
+ [ █         ] DEBT (BLOCKED)
+ [ 0.2h ] MAINTENANCE INTEREST`,
+    reads: [
+      'Ready backlog as liquidity, blocked work as debt, and remediation effort as maintenance interest.',
+      'A solvency judgment that combines flow readiness with structural drift.',
+      'A board-level metaphor that works well across engineering and business roles.',
+    ],
+    states: [
+      {
+        label: 'SOLVENT',
+        detail:
+          'Ready work exceeds blocked work and drift remains low enough that the board can keep producing.',
+      },
+      {
+        label: 'DEBT WARNING',
+        detail:
+          'Blocked work or drift is overtaking liquidity. The vault signals that cleanup or replenishment is needed.',
+      },
+      {
+        label: 'Liquidity warnings',
+        detail:
+          'The command also distinguishes between no liquidity, low capital, and a healthy vault in its follow-on text.',
+      },
+    ],
+  },
+];
+
 Keel's `--scene` flags are a deliberate answer to the agentic era: a shared terminal can carry a richer, more coherent state story than a wall of plain text, as long as the visuals stay logically tied to the command data underneath them.
 
 <SignalGrid items={sceneSignals} />
@@ -101,6 +421,12 @@ Keel's `--scene` flags are a deliberate answer to the agentic era: a shared term
 ## The current scene atlas
 
 <SceneAtlas scenes={sceneSurfaces} />
+
+## Representative outputs and state models
+
+The atlas above tells you what each scene is for. The gallery below shows how the public scenes actually look and what each visual state means.
+
+<SceneGallery scenes={sceneBlueprints} />
 
 ## The heartbeat rule
 

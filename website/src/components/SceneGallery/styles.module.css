@@ -1,0 +1,130 @@
+.stack {
+  display: grid;
+  gap: var(--keel-space-6);
+  margin: var(--keel-space-6) 0 var(--keel-space-8);
+}
+
+.card {
+  display: grid;
+  gap: var(--keel-space-4);
+  padding: clamp(1.15rem, 1rem + 0.6vw, 1.6rem);
+  border-radius: var(--keel-radius-xl);
+  border: 1px solid var(--keel-line);
+  background:
+    radial-gradient(circle at top right, rgba(63, 92, 133, 0.12), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(241, 233, 222, 0.82));
+  box-shadow: var(--keel-shadow-panel);
+}
+
+.header {
+  display: grid;
+  gap: var(--keel-space-2);
+}
+
+.identity {
+  display: grid;
+  gap: var(--keel-space-2);
+  justify-items: start;
+}
+
+.scene {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 760;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: var(--keel-copper);
+}
+
+.command {
+  display: inline-flex;
+  width: fit-content;
+  padding: 0.42rem 0.72rem;
+  border-radius: 999px;
+  border: 1px solid rgba(23, 33, 50, 0.08);
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--keel-ink);
+  font-size: 0.83rem;
+}
+
+.lead {
+  margin: 0;
+  max-width: var(--keel-doc-measure-wide);
+  color: var(--keel-ink-soft);
+}
+
+.terminalFrame {
+  display: grid;
+  gap: var(--keel-space-2);
+}
+
+.terminalLabel {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 760;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--keel-ink);
+}
+
+.terminal {
+  margin: 0;
+  overflow-x: auto;
+  padding: var(--keel-space-5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--keel-radius-lg);
+  background:
+    linear-gradient(180deg, rgba(14, 20, 31, 0.95), rgba(23, 33, 50, 0.96));
+  color: rgba(248, 242, 232, 0.94);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 16px 28px rgba(23, 33, 50, 0.16);
+}
+
+.terminal code {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font-size: 0.86rem;
+  font-weight: 500;
+  line-height: 1.55;
+  white-space: pre;
+}
+
+.metaGrid {
+  display: grid;
+  gap: var(--keel-space-4);
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.metaCard {
+  display: grid;
+  gap: var(--keel-space-2);
+  padding: var(--keel-space-4);
+  border-radius: var(--keel-radius-md);
+  border: 1px solid rgba(23, 33, 50, 0.08);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 760;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--keel-ink);
+}
+
+.list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--keel-ink-soft);
+}
+
+.list li + li {
+  margin-top: var(--keel-space-2);
+}
+
+.list strong {
+  color: var(--keel-ink);
+}
