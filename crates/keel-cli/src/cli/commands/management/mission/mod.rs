@@ -1,7 +1,7 @@
 //! Mission commands - lifecycle management
 
 use anyhow::Result;
-use clap::Subcommand;
+use clap::{ArgGroup, Subcommand};
 
 pub mod attach;
 pub mod list;
@@ -32,12 +32,25 @@ pub enum MissionAction {
         #[arg(long)]
         scene: bool,
     },
-    /// Attach a bearing to a mission
+    /// Attach a mission child entity to a mission
+    #[command(group(
+        ArgGroup::new("target")
+            .args(["bearing", "epic", "adr"])
+            .required(true)
+            .multiple(false)
+    ))]
     Attach {
         /// Mission ID
         mission_id: String,
-        /// Bearing ID
-        bearing_id: String,
+        /// Bearing ID to attach
+        #[arg(long, value_name = "BEARING_ID")]
+        bearing: Option<String>,
+        /// Epic ID to attach
+        #[arg(long, value_name = "EPIC_ID")]
+        epic: Option<String>,
+        /// ADR ID to attach
+        #[arg(long, value_name = "ADR_ID")]
+        adr: Option<String>,
     },
     /// Show next steps across all roles for a mission
     Next {
@@ -115,8 +128,15 @@ pub fn run(ctx: &spoke_auth::ExecutionContext, action: MissionAction) -> Result<
         } => show::run(&id, json, compact, scene),
         MissionAction::Attach {
             mission_id,
-            bearing_id,
-        } => attach::run(&mission_id, &bearing_id),
+            bearing,
+            epic,
+            adr,
+        } => attach::run(
+            &mission_id,
+            bearing.as_deref(),
+            epic.as_deref(),
+            adr.as_deref(),
+        ),
         MissionAction::Next {
             id,
             status,

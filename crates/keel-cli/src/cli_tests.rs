@@ -231,17 +231,73 @@ fn cli_parses_mission_next_without_id() {
 }
 
 #[test]
-fn cli_parses_mission_attach() {
-    let cli = Cli::try_parse_from(["board", "mission", "attach", "M1", "B1"]).unwrap();
+fn cli_parses_mission_attach_bearing_flag() {
+    let cli = Cli::try_parse_from(["board", "mission", "attach", "M1", "--bearing", "B1"]).unwrap();
     assert!(matches!(
         cli.command,
         Commands::Management(ManagementCommands::Mission {
             action: MissionAction::Attach {
                 mission_id,
-                bearing_id
+                bearing: Some(bearing),
+                epic: None,
+                adr: None,
             }
-        }) if mission_id == "M1" && bearing_id == "B1"
+        }) if mission_id == "M1" && bearing == "B1"
     ));
+}
+
+#[test]
+fn cli_parses_mission_attach_epic_flag() {
+    let cli = Cli::try_parse_from(["board", "mission", "attach", "M1", "--epic", "E1"]).unwrap();
+    assert!(matches!(
+        cli.command,
+        Commands::Management(ManagementCommands::Mission {
+            action: MissionAction::Attach {
+                mission_id,
+                bearing: None,
+                epic: Some(epic),
+                adr: None,
+            }
+        }) if mission_id == "M1" && epic == "E1"
+    ));
+}
+
+#[test]
+fn cli_parses_mission_attach_adr_flag() {
+    let cli =
+        Cli::try_parse_from(["board", "mission", "attach", "M1", "--adr", "ADR-0001"]).unwrap();
+    assert!(matches!(
+        cli.command,
+        Commands::Management(ManagementCommands::Mission {
+            action: MissionAction::Attach {
+                mission_id,
+                bearing: None,
+                epic: None,
+                adr: Some(adr),
+            }
+        }) if mission_id == "M1" && adr == "ADR-0001"
+    ));
+}
+
+#[test]
+fn cli_rejects_legacy_mission_attach_positional_target() {
+    let result = Cli::try_parse_from(["board", "mission", "attach", "M1", "B1"]);
+    assert!(result.is_err());
+}
+
+#[test]
+fn cli_rejects_multiple_mission_attach_target_flags() {
+    let result = Cli::try_parse_from([
+        "board",
+        "mission",
+        "attach",
+        "M1",
+        "--bearing",
+        "B1",
+        "--epic",
+        "E1",
+    ]);
+    assert!(result.is_err());
 }
 
 #[test]

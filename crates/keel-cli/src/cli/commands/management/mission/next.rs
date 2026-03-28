@@ -763,7 +763,7 @@ fn format_no_actionable_mission_message(
     if !orphaned_bearings.is_empty() {
         writeln!(
             out,
-            "  - Create a mission for the orphaned bearings above, then assign each bearing's `mission:` field to the new mission ID."
+            "  - Create a mission for the orphaned bearings above, then attach each one with `keel mission attach <mission-id> --bearing <bearing-id>`."
         )
         .unwrap();
     }
@@ -1054,7 +1054,7 @@ mod tests {
         assert!(message.contains("Orphaned bearings worth turning into missions"));
         assert!(message.contains("B1 Payments Research"));
         assert!(message.contains("keel mission new \"Payments\""));
-        assert!(message.contains("assign each bearing's `mission:` field"));
+        assert!(message.contains("keel mission attach <mission-id> --bearing <bearing-id>"));
     }
 
     #[test]
