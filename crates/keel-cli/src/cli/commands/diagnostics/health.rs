@@ -7,6 +7,14 @@ use keel::infrastructure::loader::load_board;
 use keel::read_model::diagnostics::types::CheckResult;
 use keel::read_model::{diagnostics, flow_status};
 use owo_colors::OwoColorize;
+use txt_scene::{SceneFrame, SceneLine};
+
+const HEALTH_SCENE_WIDTH: usize = 75;
+const HEALTH_SCENE_MONITOR_INDENT: &str = "             ";
+const HEALTH_SCENE_MONITOR_WIDTH: usize = 42;
+const HEALTH_SCENE_POD_INDENT: usize = 14;
+const HEALTH_SCENE_POD_GAP_COLUMN: usize = 47;
+const HEALTH_SCENE_POD_WIDTH: usize = 13;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum CategoryStatus {
@@ -130,6 +138,32 @@ fn print_category(name: &str, results: &[CheckResult]) {
     println!("    • {: <10} {}", name, category_status(results).marker());
 }
 
+fn render_health_line<F>(build: F) -> String
+where
+    F: FnOnce(&mut SceneLine),
+{
+    let mut line = SceneLine::new(HEALTH_SCENE_WIDTH);
+    build(&mut line);
+    line.finish()
+}
+
+fn render_monitor_row<F>(monitor_frame: &SceneFrame<'_>, build: F) -> String
+where
+    F: FnOnce(&mut SceneLine),
+{
+    render_health_line(|line| {
+        line.pad_to(HEALTH_SCENE_MONITOR_INDENT.len())
+            .push(monitor_frame.row(build));
+    })
+}
+
+fn render_monitor_empty_row(monitor_frame: &SceneFrame<'_>) -> String {
+    render_health_line(|line| {
+        line.pad_to(HEALTH_SCENE_MONITOR_INDENT.len())
+            .push(monitor_frame.empty_row());
+    })
+}
+
 fn render_med_bay_scene(
     report: &keel::read_model::diagnostics::types::DoctorReport,
     metrics: &keel::read_model::flow_metrics::FlowMetrics,
@@ -146,132 +180,17 @@ fn render_med_bay_scene(
     println!("    └{}┘", "─".repeat(width.saturating_sub(6)));
 
     let passed = report.passed();
-    let kinetic_load = metrics.verification.count + metrics.execution.in_progress_count;
 
-    let (heart_rate, status_label, status_color) = if !passed {
-        ("140 BPM", "CRITICAL", owo_colors::AnsiColors::Red)
-    } else if kinetic_load > 15 || (strategic_congested && kinetic_load > 8) {
-        ("120 BPM", "OVERLOAD", owo_colors::AnsiColors::Red)
-    } else if kinetic_load > 7 || strategic_congested || operational_fatigue {
-        ("100 BPM", "ELEVATED", owo_colors::AnsiColors::Yellow)
-    } else if kinetic_load > 3 {
-        ("85 BPM", "STRESSED", owo_colors::AnsiColors::Cyan)
-    } else {
-        ("72 BPM", "STABLE", owo_colors::AnsiColors::Green)
-    };
-
-    let mut scene = String::new();
-    scene.push_str("             .__________________________________________.\n");
-    scene.push_str("             | [ MAIN DIAGNOSTIC MONITOR - HIGH RES ]   |\n");
-    scene.push_str("             |                                          |\n");
-
-    // High Res Heartbeat pulse (EKG)
-    if !passed || kinetic_load > 15 {
-        scene.push_str(&format!(
-            "             |   {}{}   |\n",
-            "/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\"
-                .red()
-                .bold(),
-            "/\\".red().bold()
-        ));
-        scene.push_str(&format!(
-            "             |   {}   |\n",
-            "!! ALARM !! ALARM !! ALARM !! ALARM !!".red().bold()
-        ));
-    } else if kinetic_load > 7 || strategic_congested {
-        scene.push_str(&format!(
-            "             |   {}   |\n",
-            "_/^\\___/^\\___/^\\___/^\\___/^\\___/^\\___/^\\_"
-                .yellow()
-                .bold()
-        ));
-        scene.push_str(&format!(
-            "             |   {}   |\n",
-            "\\_/   \\_/   \\_/   \\_/   \\_/   \\_/   \\_/   \\"
-                .yellow()
-                .bold()
-        ));
-    } else {
-        scene.push_str(&format!(
-            "             |   {}   |\n",
-            "__/\x1b[1;32m^\x1b[0m\\________/\x1b[1;32m^\x1b[0m\\________/\x1b[1;32m^\x1b[0m\\________/\x1b[1;32m^\x1b[0m\\__".green()
-        ));
-        scene.push_str("             |  /      \\______/      \\______/      \\____/  |\n");
-    }
-
-    scene.push_str("             |__________________________________________|\n");
-
-    let hr_line = format!(
-        "HR: {}   STATUS: {}",
-        heart_rate.bold(),
-        status_label.color(status_color).bold()
+    println!(
+        "{}",
+        build_med_bay_scene(
+            report,
+            metrics,
+            strategic_congested,
+            operational_fatigue,
+            true,
+        )
     );
-    scene.push_str(&format!("             | {} |\n", hr_line.pad_to_width(40)));
-
-    let pressure_label = if kinetic_load > 15 {
-        "MAXIMUM".red().bold().to_string()
-    } else if kinetic_load > 7 {
-        "HIGH".yellow().bold().to_string()
-    } else if kinetic_load > 3 {
-        "MODERATE".cyan().to_string()
-    } else if kinetic_load > 0 {
-        "NORMAL".green().to_string()
-    } else {
-        "IDLE".dimmed().to_string()
-    };
-
-    let pressure_line = format!("BP: PRESSURE: {}", pressure_label);
-    scene.push_str(&format!(
-        "             | {} |\n",
-        pressure_line.pad_to_width(40)
-    ));
-
-    let state_line = format!(
-        "SC: {}   OF: {}",
-        if strategic_congested {
-            "CONGESTED".yellow().bold().to_string()
-        } else {
-            "OPTIMAL".dimmed().to_string()
-        },
-        if operational_fatigue {
-            "FATIGUE".red().bold().to_string()
-        } else {
-            "CALM".dimmed().to_string()
-        }
-    );
-    scene.push_str(&format!(
-        "             | {} |\n",
-        state_line.pad_to_width(40)
-    ));
-    scene.push_str("             '------------------------------------------'\n");
-
-    // Add secondary medical visuals (Life Support / IV)
-    scene.push_str("                 | |                            | |\n");
-    scene.push_str("              [ LIFE SUPPORT ]               [ NEURAL SCAN ]\n");
-
-    let o2_val = if passed {
-        "98% ".green().to_string()
-    } else {
-        "82% ".red().bold().to_string()
-    };
-    let state_val = if passed {
-        "SYNC".green().to_string()
-    } else {
-        "FOG ".yellow().to_string()
-    };
-
-    let o2_line = format!("  O2: {}", o2_val);
-    let state_line = format!("  STATE: {}", state_val);
-
-    scene.push_str(&format!(
-        "              |{}|               |{}|\n",
-        o2_line.pad_to_width(12),
-        state_line.pad_to_width(12)
-    ));
-    scene.push_str("              |  IV: FLOW  |               |  [||||||]   |\n");
-    scene.push_str("              '------------'               '------------'\n");
-
-    println!("{}", scene);
 
     println!("    SCANNING SUBSYSTEMS...");
 
@@ -309,12 +228,259 @@ fn render_med_bay_scene(
     }
 }
 
+fn build_med_bay_scene(
+    report: &keel::read_model::diagnostics::types::DoctorReport,
+    metrics: &keel::read_model::flow_metrics::FlowMetrics,
+    strategic_congested: bool,
+    operational_fatigue: bool,
+    use_color: bool,
+) -> String {
+    let passed = report.passed();
+    let kinetic_load = metrics.verification.count + metrics.execution.in_progress_count;
+    let (heart_rate, status_label, status_color) = if !passed {
+        ("140 BPM", "CRITICAL", owo_colors::AnsiColors::Red)
+    } else if kinetic_load > 15 || (strategic_congested && kinetic_load > 8) {
+        ("120 BPM", "OVERLOAD", owo_colors::AnsiColors::Red)
+    } else if kinetic_load > 7 || strategic_congested || operational_fatigue {
+        ("100 BPM", "ELEVATED", owo_colors::AnsiColors::Yellow)
+    } else if kinetic_load > 3 {
+        ("85 BPM", "STRESSED", owo_colors::AnsiColors::Cyan)
+    } else {
+        ("72 BPM", "STABLE", owo_colors::AnsiColors::Green)
+    };
+    let monitor_frame = SceneFrame::new("", "|", "|", HEALTH_SCENE_MONITOR_WIDTH);
+    let pod_frame = SceneFrame::new("", "|", "|", HEALTH_SCENE_POD_WIDTH);
+
+    let paint = |text: String, status: CategoryStatus| -> String {
+        if !use_color {
+            return text;
+        }
+
+        match status {
+            CategoryStatus::Nominal => text.green().bold().to_string(),
+            CategoryStatus::Warning => text.yellow().bold().to_string(),
+            CategoryStatus::Failure => text.red().bold().to_string(),
+        }
+    };
+
+    // High Res Heartbeat pulse (EKG)
+    let mut lines = vec![
+        render_health_line(|line| {
+            line.pad_to(HEALTH_SCENE_MONITOR_INDENT.len())
+                .push(".")
+                .push("_".repeat(HEALTH_SCENE_MONITOR_WIDTH))
+                .push(".");
+        }),
+        render_monitor_row(&monitor_frame, |line| {
+            line.push(" [ MAIN DIAGNOSTIC MONITOR - HIGH RES ]");
+        }),
+        render_monitor_empty_row(&monitor_frame),
+    ];
+
+    if !passed || kinetic_load > 15 {
+        lines.push(render_monitor_row(&monitor_frame, |line| {
+            let pulse = if use_color {
+                format!(
+                    "{}{}",
+                    "/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\"
+                        .red()
+                        .bold(),
+                    "/\\".red().bold()
+                )
+            } else {
+                "/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\^/\\/\\".to_string()
+            };
+            line.push("   ");
+            line.push(pulse);
+        }));
+        lines.push(render_monitor_row(&monitor_frame, |line| {
+            let alarm = if use_color {
+                "!! ALARM !! ALARM !! ALARM !! ALARM !!"
+                    .red()
+                    .bold()
+                    .to_string()
+            } else {
+                "!! ALARM !! ALARM !! ALARM !! ALARM !!".to_string()
+            };
+            line.push("   ");
+            line.push(alarm);
+            line.push("   ");
+        }));
+    } else if kinetic_load > 7 || strategic_congested {
+        lines.push(render_monitor_row(&monitor_frame, |line| {
+            let upper = if use_color {
+                "_/^\\___/^\\___/^\\___/^\\___/^\\___/^\\___/^\\_"
+                    .yellow()
+                    .bold()
+                    .to_string()
+            } else {
+                "_/^\\___/^\\___/^\\___/^\\___/^\\___/^\\___/^\\_".to_string()
+            };
+            line.push("   ");
+            line.push(upper);
+            line.push("   ");
+        }));
+        lines.push(render_monitor_row(&monitor_frame, |line| {
+            let lower = if use_color {
+                "\\_/   \\_/   \\_/   \\_/   \\_/   \\_/   \\_/   \\"
+                    .yellow()
+                    .bold()
+                    .to_string()
+            } else {
+                "\\_/   \\_/   \\_/   \\_/   \\_/   \\_/   \\_/   \\".to_string()
+            };
+            line.push("   ");
+            line.push(lower);
+            line.push("   ");
+        }));
+    } else {
+        lines.push(render_monitor_row(&monitor_frame, |line| {
+            let upper = if use_color {
+                "__/^\\________/^\\________/^\\________/^\\__"
+                    .green()
+                    .bold()
+                    .to_string()
+            } else {
+                "__/^\\________/^\\________/^\\________/^\\__".to_string()
+            };
+            line.push("   ");
+            line.push(upper);
+            line.push("   ");
+        }));
+        lines.push(render_monitor_row(&monitor_frame, |line| {
+            line.push("  /      \\______/      \\______/      \\____/  ");
+        }));
+    }
+
+    lines.push(render_health_line(|line| {
+        line.pad_to(HEALTH_SCENE_MONITOR_INDENT.len())
+            .push("|")
+            .push("_".repeat(HEALTH_SCENE_MONITOR_WIDTH))
+            .push("|");
+    }));
+
+    let hr_line = format!(
+        "HR: {}   STATUS: {}",
+        heart_rate.bold(),
+        status_label.color(status_color).bold()
+    );
+    lines.push(render_monitor_row(&monitor_frame, |line| {
+        line.push(" ");
+        line.push(hr_line.pad_to_width(40));
+        line.push(" ");
+    }));
+
+    let pressure_label = if kinetic_load > 15 {
+        "MAXIMUM".red().bold().to_string()
+    } else if kinetic_load > 7 {
+        "HIGH".yellow().bold().to_string()
+    } else if kinetic_load > 3 {
+        "MODERATE".cyan().to_string()
+    } else if kinetic_load > 0 {
+        "NORMAL".green().to_string()
+    } else {
+        "IDLE".dimmed().to_string()
+    };
+
+    let pressure_line = format!("BP: PRESSURE: {}", pressure_label);
+    lines.push(render_monitor_row(&monitor_frame, |line| {
+        line.push(" ");
+        line.push(pressure_line.pad_to_width(40));
+        line.push(" ");
+    }));
+
+    let system_state_line = format!(
+        "SC: {}   OF: {}",
+        if strategic_congested {
+            "CONGESTED".yellow().bold().to_string()
+        } else {
+            "OPTIMAL".dimmed().to_string()
+        },
+        if operational_fatigue {
+            "FATIGUE".red().bold().to_string()
+        } else {
+            "CALM".dimmed().to_string()
+        }
+    );
+    lines.push(render_monitor_row(&monitor_frame, |line| {
+        line.push(" ");
+        line.push(system_state_line.pad_to_width(40));
+        line.push(" ");
+    }));
+    lines.push(render_health_line(|line| {
+        line.pad_to(HEALTH_SCENE_MONITOR_INDENT.len())
+            .push("'")
+            .push("-".repeat(HEALTH_SCENE_MONITOR_WIDTH))
+            .push("'");
+    }));
+
+    lines.push(render_health_line(|line| {
+        line.pad_to(17).push("| |");
+        line.pad_to(45).push("| |");
+    }));
+    lines.push(render_health_line(|line| {
+        line.pad_to(14).push("[ LIFE SUPPORT ]");
+        line.pad_to(HEALTH_SCENE_POD_GAP_COLUMN)
+            .push("[ NEURAL SCAN ]");
+    }));
+
+    let o2_val = if passed {
+        paint("98%".to_string(), CategoryStatus::Nominal)
+    } else {
+        paint("82%".to_string(), CategoryStatus::Failure)
+    };
+    let state_val = if passed {
+        paint("SYNC".to_string(), CategoryStatus::Nominal)
+    } else {
+        paint("FOG".to_string(), CategoryStatus::Warning)
+    };
+
+    let o2_line = format!("  O2: {}", o2_val);
+    let state_line = format!("  STATE: {}", state_val);
+    lines.push(render_health_line(|line| {
+        line.pad_to(HEALTH_SCENE_POD_INDENT)
+            .push(pod_frame.row(|pod| {
+                pod.push(o2_line.pad_to_width(HEALTH_SCENE_POD_WIDTH));
+            }));
+        line.pad_to(HEALTH_SCENE_POD_GAP_COLUMN)
+            .push(pod_frame.row(|pod| {
+                pod.push(state_line.pad_to_width(HEALTH_SCENE_POD_WIDTH));
+            }));
+    }));
+    lines.push(render_health_line(|line| {
+        line.pad_to(HEALTH_SCENE_POD_INDENT)
+            .push(pod_frame.row(|pod| {
+                pod.push("  IV: FLOW");
+            }));
+        line.pad_to(HEALTH_SCENE_POD_GAP_COLUMN)
+            .push(pod_frame.row(|pod| {
+                pod.push("  [||||||]");
+            }));
+    }));
+    lines.push(render_health_line(|line| {
+        line.pad_to(HEALTH_SCENE_POD_INDENT)
+            .push("'")
+            .push("-".repeat(HEALTH_SCENE_POD_WIDTH))
+            .push("'");
+        line.pad_to(HEALTH_SCENE_POD_GAP_COLUMN)
+            .push("'")
+            .push("-".repeat(HEALTH_SCENE_POD_WIDTH))
+            .push("'");
+    }));
+
+    lines.join("\n")
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{CategoryStatus, category_status};
-    use keel::read_model::diagnostics::types::{CheckResult, Problem, Severity};
+    use super::{CategoryStatus, HEALTH_SCENE_WIDTH, build_med_bay_scene, category_status};
+    use chrono::Utc;
+    use keel::read_model::diagnostics::types::{CheckResult, DoctorReport, Problem, Severity};
+    use keel::read_model::flow_status;
+    use keel::test_helpers::TestBoardBuilder;
     use std::path::PathBuf;
     use std::time::Duration;
+    use txt_scene::visible_width;
 
     fn check_with_problems(problems: Vec<Problem>) -> CheckResult {
         CheckResult {
@@ -359,5 +525,57 @@ mod tests {
             check_with_problems(vec![problem(Severity::Error)]),
         ];
         assert_eq!(category_status(&results), CategoryStatus::Failure);
+    }
+
+    fn nominal_report() -> DoctorReport {
+        let empty = vec![check_with_problems(Vec::new())];
+        DoctorReport {
+            story_checks: empty.clone(),
+            voyage_checks: empty.clone(),
+            epic_checks: empty.clone(),
+            adr_checks: empty.clone(),
+            bearing_checks: empty.clone(),
+            mission_checks: empty.clone(),
+            routine_checks: empty.clone(),
+            workflow_checks: empty.clone(),
+            pacemaker_checks: empty.clone(),
+            delivery_checks: empty,
+            drift_coefficient: 0.0,
+            estimated_remediation_hours: 0.0,
+            last_checked_at: std::time::SystemTime::now(),
+        }
+    }
+
+    #[test]
+    fn med_bay_scene_has_stable_width_with_colorized_content() {
+        let temp = TestBoardBuilder::new().build();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
+        let metrics = flow_status::project(&board, Utc::now());
+        let report = nominal_report();
+
+        let scene = build_med_bay_scene(&report, &metrics, false, false, true);
+
+        assert!(scene.contains("\x1b["));
+        assert!(
+            scene
+                .lines()
+                .all(|line| visible_width(line) == HEALTH_SCENE_WIDTH)
+        );
+    }
+
+    #[test]
+    fn med_bay_scene_has_stable_width_without_color() {
+        let temp = TestBoardBuilder::new().build();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
+        let metrics = flow_status::project(&board, Utc::now());
+        let report = nominal_report();
+
+        let scene = build_med_bay_scene(&report, &metrics, false, false, false);
+
+        assert!(
+            scene
+                .lines()
+                .all(|line| visible_width(line) == HEALTH_SCENE_WIDTH)
+        );
     }
 }
