@@ -627,7 +627,7 @@ fn path_for_board_node(board: &Board, id: &BoardNodeId) -> PathBuf {
             .get(id)
             .map(|watch| watch.path.clone())
             .unwrap_or_else(|| board.root.join("README.md")),
-        BoardNodeId::Heartbeat => board.root.join("heartbeat"),
+        BoardNodeId::Heartbeat => board.root.join("README.md"),
     }
 }
 

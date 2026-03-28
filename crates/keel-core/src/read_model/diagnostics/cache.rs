@@ -5,13 +5,13 @@ use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
 use super::types::DoctorReport;
-use crate::infrastructure::utils::is_path_dirty;
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct CachedReport {
     pub hash: String,
     pub report: DoctorReport,
-    pub last_poked_at: SystemTime,
+    #[serde(alias = "last_poked_at")]
+    pub last_validated_at: SystemTime,
 }
 
 pub fn cache_path(board_dir: &Path) -> PathBuf {
@@ -28,7 +28,7 @@ pub fn load_cache(board_dir: &Path, current_hash: &str) -> Option<(DoctorReport,
     let cached: CachedReport = serde_json::from_str(&data).ok()?;
 
     if cached.hash == current_hash {
-        Some((cached.report, cached.last_poked_at))
+        Some((cached.report, cached.last_validated_at))
     } else {
         None
     }
@@ -43,7 +43,7 @@ pub fn save_cache(board_dir: &Path, hash: String, report: DoctorReport) -> Resul
     let cached = CachedReport {
         hash,
         report,
-        last_poked_at: SystemTime::now(),
+        last_validated_at: SystemTime::now(),
     };
 
     let data = serde_json::to_string_pretty(&cached)?;
@@ -67,12 +67,7 @@ pub fn calculate_board_hash(board_dir: &Path) -> Result<String> {
         update_hasher_with_metadata(&mut hasher, board_dir, &metadata);
     }
 
-    // Hash heartbeat metadata if it exists
-    let heartbeat_path = board_dir.join("heartbeat");
-    if let Ok(metadata) = heartbeat_path.metadata() {
-        update_hasher_with_metadata(&mut hasher, &heartbeat_path, &metadata);
-        update_hasher_with_heartbeat_git_state(&mut hasher, board_dir);
-    }
+    hasher.update(crate::read_model::heartbeat::fingerprint(board_dir).as_bytes());
 
     for dir_name in dirs {
         let dir_path = board_dir.join(dir_name);
@@ -129,21 +124,6 @@ fn update_hasher_with_metadata(hasher: &mut Sha256, path: &Path, metadata: &fs::
     }
 }
 
-fn update_hasher_with_heartbeat_git_state(hasher: &mut Sha256, board_dir: &Path) {
-    let repo_path = board_dir.parent().unwrap_or(board_dir);
-    let relative_path = board_dir
-        .file_name()
-        .map(Path::new)
-        .unwrap_or_else(|| Path::new(".keel"))
-        .join("heartbeat");
-
-    hasher.update(if is_path_dirty(repo_path, &relative_path) {
-        b"heartbeat:dirty"
-    } else {
-        b"heartbeat:clean"
-    });
-}
-
 #[cfg(test)]
 mod tests {
     use super::calculate_board_hash;
@@ -154,33 +134,34 @@ mod tests {
     use tempfile::TempDir;
 
     #[test]
-    fn validate_report_invalidates_cache_when_heartbeat_is_committed() {
+    fn validate_report_invalidates_cache_when_dirty_worktree_is_committed() {
         let temp = TempDir::new().unwrap();
         let repo_root = temp.path();
         let board_dir = repo_root.join(".keel");
         fs::create_dir_all(&board_dir).unwrap();
-        fs::write(board_dir.join("heartbeat"), "initial").unwrap();
+        fs::write(board_dir.join("README.md"), "# Board\n").unwrap();
+        fs::write(repo_root.join("README.md"), "# Project\n").unwrap();
 
         git(repo_root, &["init"]);
         git(repo_root, &["config", "user.name", "Keel Test"]);
         git(repo_root, &["config", "user.email", "keel@example.com"]);
         git(repo_root, &["config", "commit.gpgsign", "false"]);
-        git(repo_root, &["add", ".keel/heartbeat"]);
-        git(repo_root, &["commit", "-m", "seed heartbeat"]);
+        git(repo_root, &["add", "."]);
+        git(repo_root, &["commit", "-m", "seed repo"]);
 
-        fs::write(board_dir.join("heartbeat"), "dirty").unwrap();
+        fs::write(repo_root.join("README.md"), "# Project changed\n").unwrap();
         let dirty_report = validate_report(&board_dir).unwrap();
         assert!(has_pacemaker_warning(&dirty_report));
 
         let dirty_hash = calculate_board_hash(&board_dir).unwrap();
 
-        git(repo_root, &["add", ".keel/heartbeat"]);
-        git(repo_root, &["commit", "-m", "seal heartbeat"]);
+        git(repo_root, &["add", "README.md"]);
+        git(repo_root, &["commit", "-m", "seal worktree"]);
 
         let clean_hash = calculate_board_hash(&board_dir).unwrap();
         assert_ne!(
             dirty_hash, clean_hash,
-            "committing heartbeat must invalidate the doctor cache even when file metadata is unchanged"
+            "committing worktree activity must invalidate the doctor cache"
         );
 
         let clean_report = validate_report(&board_dir).unwrap();

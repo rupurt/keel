@@ -11,11 +11,11 @@ Every session follows this deterministic cycle:
 1.  **Mission Orientation**: Start by running `keel mission next --status`. This gives you the top 3 high-signal moves required by the engine. Check `just keel flow --scene` to quickly visualize if the workflow is autonomous or blocked waiting for human input.
 2.  **Role Selection**: Identify if you are a `manager` (planning/decisions) or an `operator` (implementation). Do not drift across these roles in a single atomic change.
 3.  **Execute Move**: Perform exactly ONE move (e.g., plan a voyage, implement a story, fix a diagnostic).
-4.  **Seal Move**: Close the loop with `story submit`, `voyage plan`, or `bearing lay`. This mutates the `.keel` state and may leave temporary heartbeat debt that should be cleared by the sealing commit.
+4.  **Seal Move**: Close the loop with `story submit`, `voyage plan`, or `bearing lay`. This mutates the `.keel` state and may leave temporary worktree energy that should be cleared by the sealing commit.
 5.  **Log & Commit**:
     - Record your move in the mission `LOG.md`.
-    - **Pace-setting**: Execute `just keel poke "Sealing move: <summary>"` to refresh the board's wake marker immediately before the commit boundary.
-    - **Commit**: Execute `git commit`. The installed hooks automatically run `just quality`, `just test`, auto-poke and stage `.keel/heartbeat`, and append `doctor --status` to the commit message. Resolve any issues if the commit is rejected.
+    - **Heartbeat Check**: Use `just keel heartbeat` if you need to inspect the current activity source or confirm the circuit is still energized before the commit boundary.
+    - **Commit**: Execute `git commit`. The installed hooks automatically run `just quality`, `just test`, and append `doctor --status` to the commit message. Resolve any issues if the commit is rejected.
 6.  **Re-orient**: After the commit lands, run `just keel doctor --status` and `just keel flow` to see what the board needs next.
  This is the "plug the chord back in" moment — you reconnect to the board's current state. If the delivery lane has ready work, start the next loop immediately. Only stop to ask the human when you reach a manual lane (design direction, bearing assessment, or human verification).
 
@@ -41,12 +41,12 @@ Focus on **technical discovery and fog reduction**.
 
 ## Human Interaction & Pokes
 
-Keel's autonomous flow is governed by a physical battery metaphor. If the system is IDLE (LIGHT OFF) due to battery decay, it requires a "spark" to resume autonomy.
+Keel's autonomous flow is governed by a physical battery metaphor, but the charge is now derived from real repository activity rather than a synthetic wake file.
 
 If a human user pokes you (e.g., "I'm poking you", "Wake up"), you MUST:
-1.  **Energize the System**: Immediately execute `keel poke "Human interaction in chat"`. This physically mutates the board state and recharges the battery, signaling the engine to resume autonomous flow.
+1.  **Inspect the Charge**: Immediately execute `keel heartbeat` to see whether recent repository activity is still energizing the board and whether the worktree is carrying uncommitted energy.
 2.  **Autonomous Scan**: Run `keel mission next --status` and `keel pulse` to identify any new work that has become ready or materialized.
-3. **Visual Confirmation**: Run `keel flow --scene` to verify the light is now ON and the circuit is closed.
+3. **Visual Confirmation**: Run `keel flow --scene` to verify whether the light is ON or whether the board is idle waiting for a real move.
 
 ## Autonomous Backlog Discharge
 
@@ -54,9 +54,9 @@ As long as the system is **AUTONOMOUS (LIGHT ON)** and the circuit is healthy (n
 
 1.  **Identify Ready Work**: Scan the delivery lane for stories in `backlog` that are not blocked by dependencies.
 2.  **Autonomous Start**: For each ready story, execute `keel story start <id>`. 
-3.  **Rube Goldberg Loop**: Transitioning a story to `in-progress` mutates the board, which physically recharges the system battery, keeping the circuit closed and the engine running. 
+3.  **Rube Goldberg Loop**: Transitioning a story to `in-progress` mutates the repository, which refreshes the derived heartbeat and keeps the circuit closed while you continue moving work.
 4.  **Priority**: Discharging the backlog is your primary tactical objective once energized. You must continue until the backlog is empty or the circuit trips.
-5.  **Loop Closure**: After every successful implementation or transition, you MUST execute `just keel poke "Sealing move: <summary>"` and commit the resulting `.keel/heartbeat` alongside the board changes. This applies to ALL work, including storyless gardening or engine changes. The heartbeat is a wake marker, not a required structural file, but leaving it dirty means you have left warning-level tactical debt behind.
+5.  **Loop Closure**: After every successful implementation or transition, you MUST land a sealing commit that captures the resulting board and code changes. This applies to ALL work, including storyless gardening or engine changes. The pacemaker warning is cleared by committing the dirty worktree, not by touching a synthetic heartbeat file.
 
 ## Global Hygiene Checklist
 
@@ -72,9 +72,9 @@ Apply these checks to **every change** before finalizing work:
    - **VITAL**: Missions (Strategic achievement)
    - **AUTONOMIC**: Routines (Cadence, materialization)
    - **CIRCULATORY**: Workflow (Graph integrity, topology)
-   - **PACEMAKER**: Heartbeat (recent energization and open-loop warning state)
+   - **PACEMAKER**: Heartbeat (derived repository activity and open-loop warning state)
    - **KINETIC**: Delivery (Backlog liquidity, execution capacity)
-3. **Pacemaker Protocol**: The system's heartbeat (`.keel/heartbeat`) is a wake marker for recent activity, not a required structural artifact. A missing heartbeat does not fail `doctor`. Once the file exists, a dirty heartbeat is warning-level evidence of an open tactical loop. Before concluding any unit of work, execute `just keel poke "Sealing move: <summary>"` and land the sealing commit so that warning clears. The installed pre-commit hook keeps quality checks, tests, and heartbeat staging tied to the commit boundary, and the commit-msg hook appends `doctor --status` to the message body. The Med-Bay scene may still visually flag the pacemaker while that warning is open.
+3. **Pacemaker Protocol**: The system's heartbeat is derived from Git/worktree activity and inspected with `keel heartbeat`. A clean repo falls back to the latest commit; a dirty repo uses the freshest changed path it can observe. `doctor` warns when the worktree carries uncommitted energy, and the sealing commit is what clears that warning. The installed pre-commit hook keeps quality checks and tests tied to the commit boundary, and the commit-msg hook appends `doctor --status` to the message body.
 4. **Gardening First**: You MUST tend to the garden (fixing `doctor` errors, discharging automated backlog, and resolving structural drift) BEFORE notifying the human operator or requesting input. 
 5. **Notification Threshold**: Only request human intervention when you reach a "Manual Lane" that requires design direction or a decision on application behavior (e.g., assessing a Bearing, planning a Voyage, or human verification of a complex Story).
 6. **Automated Guardrails**: You no longer need to run `just quality` or `just test` manually before every commit. The git pre-commit hook (installed via `just keel hooks install`) automatically enforces these checks. If a commit fails, resolve the reported lints or test failures and try again.

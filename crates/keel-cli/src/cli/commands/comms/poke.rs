@@ -2,6 +2,7 @@
 
 use super::{PingStatus, check_auto_pong, load_ping, save_ping};
 use anyhow::Result;
+use chrono::Utc;
 use spoke_auth::ExecutionContext;
 use std::path::Path;
 
@@ -20,16 +21,25 @@ pub fn run(
             self_heal_hooks(board_dir);
         }
 
-        // System poke - sparks the circuit
-        let heartbeat_path = board_dir.join("heartbeat");
-        std::fs::write(&heartbeat_path, manual_pong.unwrap_or(""))?;
+        let heartbeat = keel::read_model::heartbeat::project(board_dir, Utc::now());
 
         crate::cli::presentation::audio::play(crate::cli::presentation::audio::SoundEvent::Poke);
 
         if json {
-            println!(r#"{{"status": "poked", "message": "System energized"}}"#);
+            println!(
+                "{}",
+                serde_json::json!({
+                    "status": "poked",
+                    "message": "Heartbeat is derived from repository activity",
+                    "source": heartbeat.source,
+                    "dirty": heartbeat.dirty,
+                    "note": manual_pong,
+                })
+            );
         } else {
-            println!("System poked. Energy restored.");
+            println!(
+                "System poke acknowledged. Heartbeat is derived from repository activity; run `keel heartbeat` to inspect the current charge."
+            );
         }
         return Ok(());
     }

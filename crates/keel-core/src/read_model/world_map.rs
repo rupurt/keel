@@ -486,7 +486,7 @@ fn build_world_map_node(
             node.title.clone(),
             WorldMapNodeKind::Heartbeat,
             node.state.clone(),
-            Some("System pacemaker".to_string()),
+            Some("Repository activity heartbeat".to_string()),
             None,
             Vec::new(),
         ),

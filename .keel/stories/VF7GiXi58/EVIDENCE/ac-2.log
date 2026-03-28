@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T18:20:31.099381988-07:00
+mode: manual
+---
+keel poke preserves comms and hook self-heal behavior while reporting the derived heartbeat instead of mutating heartbeat state on disk.

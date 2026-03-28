@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T18:20:28.330547545-07:00
+mode: manual
+---
+Command runs against the derived projection and does not require .keel/heartbeat to exist; current repo output reports energized state from DirtyWorktree.

@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T18:20:30.234078288-07:00
+mode: manual
+---
+Board graph, knowledge graph, world map, doctor cache, and pacemaker checks now derive heartbeat state from repository activity instead of a file node.

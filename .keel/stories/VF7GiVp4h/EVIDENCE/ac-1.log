@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T18:20:29.046804151-07:00
+mode: manual
+---
+Flow metrics now call the derived heartbeat projection when deciding energized versus unplugged rendering.

@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T18:20:27.632898222-07:00
+mode: manual
+---
+Added heartbeat projection tests for dirty worktree, clean HEAD fallback, filesystem fallback, cache artifact filtering, and fingerprint drift.

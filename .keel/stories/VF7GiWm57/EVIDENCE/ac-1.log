@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T18:20:31.692764811-07:00
+mode: manual
+---
+Foundational docs now teach heartbeat as a derived Git or worktree signal and remove instructions to touch or commit .keel/heartbeat.

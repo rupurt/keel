@@ -7,7 +7,7 @@ use std::path::Path;
 use anyhow::{Context, Result, anyhow};
 
 const PRE_COMMIT_HOOK: &str = r#"#!/bin/sh
-# keel pacemaker protocol — run quality checks, tests, and auto-poke heartbeat.
+# keel pacemaker protocol — run quality checks and tests at the commit boundary.
 # Installed by `keel hooks install`. Do not edit manually.
 
 # Run quality checks
@@ -18,20 +18,11 @@ just quality || exit 1
 echo "Running tests..."
 just test || exit 1
 
-KEEL_BIN="${KEEL_BIN:-keel}"
-
-# Find the board directory (default .keel)
-if [ -d ".keel" ]; then
-    HEARTBEAT=".keel/heartbeat"
-elif [ -f "keel.toml" ]; then
-    HEARTBEAT="$(grep -oP 'board_dir\s*=\s*"\K[^"]+' keel.toml 2>/dev/null || echo ".keel")/heartbeat"
-else
+# Skip silently when no board is present.
+if [ ! -d ".keel" ] && [ ! -f "keel.toml" ]; then
     # No board found — skip silently
     exit 0
 fi
-
-$KEEL_BIN poke "pre-commit auto-poke" 2>/dev/null || true
-git add "$HEARTBEAT" 2>/dev/null || true
 "#;
 
 const COMMIT_MSG_HOOK: &str = r#"#!/bin/sh
@@ -67,7 +58,7 @@ pub fn run_in(working_dir: Option<&Path>) -> Result<()> {
     install_hook(&hooks_dir, "commit-msg", COMMIT_MSG_HOOK)?;
 
     println!("Installed git hooks:");
-    println!("  - pre-commit  (quality + test + auto-poke)");
+    println!("  - pre-commit  (quality + test)");
     println!("  - commit-msg  (auto-append doctor --status)");
 
     Ok(())
@@ -160,7 +151,7 @@ mod tests {
 
         let content = fs::read_to_string(&pre_commit).unwrap();
         assert!(content.contains("keel pacemaker protocol"));
-        assert!(content.contains("poke"));
+        assert!(content.contains("Running quality checks"));
 
         let msg_content = fs::read_to_string(&commit_msg).unwrap();
         assert!(msg_content.contains("doctor --status"));

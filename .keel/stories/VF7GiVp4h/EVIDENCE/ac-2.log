@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T18:20:29.282884728-07:00
+mode: manual
+---
+Flow no longer depends on .keel/heartbeat; crates/keel-core/src/infrastructure/loader.rs and related flow code removed the file-backed path entirely.

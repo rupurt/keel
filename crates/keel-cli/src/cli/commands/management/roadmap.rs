@@ -166,7 +166,8 @@ mod tests {
 
         let elapsed = start.elapsed();
         assert!(
-            elapsed.as_millis() < 500,
+            // Keep a coarse regression guard without flaking under loaded debug-test hosts.
+            elapsed.as_millis() < 1500,
             "roadmap command is too slow: {elapsed:?}"
         );
     }

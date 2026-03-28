@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T18:20:29.998271909-07:00
+mode: manual
+---
+Removed crates/keel-core/src/domain/model/heartbeat.rs and deleted tracked .keel/heartbeat so board loading no longer depends on a file-backed heartbeat.

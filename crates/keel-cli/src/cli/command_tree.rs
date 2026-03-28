@@ -8,6 +8,7 @@ The Ramping Path (Your Moves):
 1. The Fixer (Learning by Healing)
   doctor      Validate board health and optionally fix issues
   health      Subsystem status check and bio-scan (The Med-Bay)
+  heartbeat   Show repository activity heartbeat and wake state
   flow        Show workflow lane dashboard from configured topology
   screen      Visual representation of the current board (Strategic Radar)
 
@@ -105,6 +106,16 @@ pub fn build_cli() -> Command {
                     Arg::new("status")
                         .long("status")
                         .help("Print a 3-bullet importance summary suitable for commit messages")
+                        .action(ArgAction::SetTrue),
+                ),
+        )
+        .subcommand(
+            Command::new("heartbeat")
+                .about("Show repository activity heartbeat and wake state")
+                .arg(
+                    Arg::new("json")
+                        .long("json")
+                        .help("Output as JSON for scripting")
                         .action(ArgAction::SetTrue),
                 ),
         )
@@ -423,11 +434,11 @@ pub fn build_cli() -> Command {
         )
         .subcommand(
             Command::new("poke")
-                .about("Respond to or re-evaluate a ping in the inbox or spark the system")
+                .about("Respond to or re-evaluate a ping in the inbox")
                 .hide(true)
-                .arg(Arg::new("message").help("Message to the system or a specific ping").num_args(1..))
+                .arg(Arg::new("message").help("Message to a specific ping or an optional system note").num_args(1..))
                 .arg(Arg::new("id").long("id").help("The ID of the ping if targeting a specific one"))
-                .arg(Arg::new("self").long("self").help("Explicitly poke the system").action(ArgAction::SetTrue))
+                .arg(Arg::new("self").long("self").help("Show the derived heartbeat without targeting a ping").action(ArgAction::SetTrue))
                 .arg(
                     Arg::new("json")
                         .long("json")

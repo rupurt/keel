@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T18:20:27.391388049-07:00
+mode: manual
+---
+HeartbeatProjection exposes HeartbeatSource, dirty state, latest path, and timestamp so flow, doctor, and CLI commands share one derived signal.

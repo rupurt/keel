@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T18:20:32.091661668-07:00
+mode: manual
+---
+just docs-build and just pre-commit both passed after the doc updates, confirming consistent heartbeat semantics across internal and public docs.

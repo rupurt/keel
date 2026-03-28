@@ -60,6 +60,10 @@ pub fn run() -> Result<()> {
                 }
             }
         }
+        Some(("heartbeat", m)) => {
+            let json = *m.get_one::<bool>("json").unwrap_or(&false);
+            super::commands::diagnostics::heartbeat::run(&resolve_board_dir()?, json)
+        }
         Some(("health", m)) => {
             let scene = *m.get_one::<bool>("scene").unwrap_or(&false);
             super::commands::diagnostics::health::run(&resolve_board_dir()?, scene)

@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T18:20:28.098809210-07:00
+mode: manual
+---
+Added keel heartbeat CLI surface in crates/keel-cli/src/cli/commands/diagnostics/heartbeat.rs with timestamp, age, source, and latest path output.

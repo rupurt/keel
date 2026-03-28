@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T18:20:27.161112280-07:00
+mode: manual
+---
+Implemented crates/keel-core/src/read_model/heartbeat.rs so dirty worktree files win first, then HEAD commit time, with filesystem fallback outside git.

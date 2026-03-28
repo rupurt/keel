@@ -22,9 +22,9 @@ index: 107
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/2 voyages complete, 0/6 stories done
+**Progress:** 2/2 voyages complete, 6/6 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Introduce Derived Heartbeat Surface And Flow Fallback](voyages/VF7Gfk7zv/) | planned | 0/3 |
-| [Remove File Heartbeat And Align Pacemaker Operations](voyages/VF7Gfkizo/) | draft | 0/3 |
+| [Introduce Derived Heartbeat Surface And Flow Fallback](voyages/VF7Gfk7zv/) | done | 3/3 |
+| [Remove File Heartbeat And Align Pacemaker Operations](voyages/VF7Gfkizo/) | done | 3/3 |
 <!-- END GENERATED -->

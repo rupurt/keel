@@ -8,6 +8,7 @@ pub mod evidence;
 pub mod execution_queue;
 pub mod flow_metrics;
 pub mod flow_status;
+pub mod heartbeat;
 pub mod knowledge;
 pub mod knowledge_graph;
 pub mod mission_show;

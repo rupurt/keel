@@ -1,0 +1,10 @@
+# COMPLIANCE REPORT: Remove File Heartbeat And Align Pacemaker Operations
+
+## Requirement Traceability Matrix
+
+| Req ID | Status | Implemented By | Proof Artifacts |
+|--------|--------|----------------|-----------------|
+| SRS-01 | ✓ VERIFIED | [VF7GiXG56](../../../../stories/VF7GiXG56/README.md), [VF7GiXG56](../../../../stories/VF7GiXG56/README.md) | [ac-1.log](../../../../stories/VF7GiXG56/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/VF7GiXG56/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/VF7GiXG56/EVIDENCE/ac-3.log)<br>[ac-1.log](../../../../stories/VF7GiXG56/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/VF7GiXG56/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/VF7GiXG56/EVIDENCE/ac-3.log) |
+| SRS-02 | ✓ VERIFIED | [VF7GiXi58](../../../../stories/VF7GiXi58/README.md), [VF7GiXi58](../../../../stories/VF7GiXi58/README.md) | [ac-1.log](../../../../stories/VF7GiXi58/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/VF7GiXi58/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/VF7GiXi58/EVIDENCE/ac-3.log)<br>[ac-1.log](../../../../stories/VF7GiXi58/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/VF7GiXi58/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/VF7GiXi58/EVIDENCE/ac-3.log) |
+| SRS-03 | ✓ VERIFIED | [VF7GiXi58](../../../../stories/VF7GiXi58/README.md) | [ac-1.log](../../../../stories/VF7GiXi58/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/VF7GiXi58/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/VF7GiXi58/EVIDENCE/ac-3.log) |
+| SRS-04 | ✓ VERIFIED | [VF7GiWm57](../../../../stories/VF7GiWm57/README.md), [VF7GiWm57](../../../../stories/VF7GiWm57/README.md) | [ac-1.log](../../../../stories/VF7GiWm57/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/VF7GiWm57/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/VF7GiWm57/EVIDENCE/ac-3.log)<br>[ac-1.log](../../../../stories/VF7GiWm57/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/VF7GiWm57/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/VF7GiWm57/EVIDENCE/ac-3.log) |

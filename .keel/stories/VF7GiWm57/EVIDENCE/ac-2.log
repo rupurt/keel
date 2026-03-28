@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T18:20:31.893792396-07:00
+mode: manual
+---
+MDX docs and downstream guidance now cover keel heartbeat, derived pacemaker behavior, and upgrade or sync steps for adopters.

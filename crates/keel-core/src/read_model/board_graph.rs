@@ -3,6 +3,8 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::fs;
 
+use chrono::Utc;
+
 use crate::domain::model::{Board, Epic, Routine, Story, Voyage, VoyageState, Watch};
 use crate::infrastructure::utils::cmp_optional_index_then_id;
 use crate::infrastructure::verification::parse_ac_references;
@@ -120,6 +122,7 @@ pub struct BoardGraph {
 }
 
 pub fn build_board_graph(board: &Board) -> BoardGraph {
+    let heartbeat = crate::read_model::heartbeat::project(&board.root, Utc::now());
     let mut nodes = vec![BoardGraphNode {
         id: BoardNodeId::Board,
         title: BOARD_TITLE.to_string(),
@@ -238,44 +241,40 @@ pub fn build_board_graph(board: &Board) -> BoardGraph {
         });
     }
 
-    if let Some(hb) = &board.heartbeat {
-        nodes.push(BoardGraphNode {
-            id: BoardNodeId::Heartbeat,
-            title: "Pacemaker".to_string(),
-            kind: BoardNodeKind::Heartbeat,
-            state: if hb.is_dirty {
-                "dirty".to_string()
-            } else {
-                "stable".to_string()
-            },
-            terminal: !hb.is_dirty,
-            order_index: None,
-            declared_parent: Some(BoardNodeId::Board),
-        });
-    }
+    nodes.push(BoardGraphNode {
+        id: BoardNodeId::Heartbeat,
+        title: "Pacemaker".to_string(),
+        kind: BoardNodeKind::Heartbeat,
+        state: if heartbeat.dirty {
+            "dirty".to_string()
+        } else {
+            "stable".to_string()
+        },
+        terminal: !heartbeat.dirty,
+        order_index: None,
+        declared_parent: Some(BoardNodeId::Board),
+    });
 
     let known_ids: BTreeSet<_> = nodes.iter().map(|node| node.id.clone()).collect();
     let mut edges = BTreeSet::new();
     let mut dangling_edges = BTreeSet::new();
 
-    if board.heartbeat.is_some() {
-        add_edge(
-            &known_ids,
-            &mut edges,
-            &mut dangling_edges,
-            BoardNodeId::Board,
-            BoardNodeId::Heartbeat,
-            BoardEdgeKind::Contains,
-        );
-        add_edge(
-            &known_ids,
-            &mut edges,
-            &mut dangling_edges,
-            BoardNodeId::Heartbeat,
-            BoardNodeId::Board,
-            BoardEdgeKind::Energizes,
-        );
-    }
+    add_edge(
+        &known_ids,
+        &mut edges,
+        &mut dangling_edges,
+        BoardNodeId::Board,
+        BoardNodeId::Heartbeat,
+        BoardEdgeKind::Contains,
+    );
+    add_edge(
+        &known_ids,
+        &mut edges,
+        &mut dangling_edges,
+        BoardNodeId::Heartbeat,
+        BoardNodeId::Board,
+        BoardEdgeKind::Energizes,
+    );
 
     for mission in sorted_missions(board) {
         add_edge(
@@ -1123,12 +1122,7 @@ updated_at: 2026-03-12T09:00:00
     #[test]
     fn board_graph_includes_pacemaker() {
         let temp = TestBoardBuilder::new().build();
-        let _board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
-
-        // Manually create a heartbeat file (TestBoardBuilder doesn't create one by default).
-        fs::write(temp.path().join("heartbeat"), "test").unwrap();
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
-        assert!(board.heartbeat.is_some());
 
         let graph = build_board_graph(&board);
         let hb_node = graph

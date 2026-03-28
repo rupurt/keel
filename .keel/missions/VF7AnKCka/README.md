@@ -1,12 +1,15 @@
 ---
 # system-managed
 id: VF7AnKCka
-status: defining
+status: verified
 created_at: 2026-03-27T16:48:22
-updated_at: 2026-03-27T16:48:22
+updated_at: 2026-03-27T18:21:13
 # authored
 title: Replace File-Based Heartbeat With Derived Git Activity Model
 watch: ~
+activated_at: 2026-03-27T18:20:26
+achieved_at: 2026-03-27T18:21:12
+verified_at: 2026-03-27T18:21:13
 ---
 
 # Replace File-Based Heartbeat With Derived Git Activity Model

@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T18:20:28.567235963-07:00
+mode: manual
+---
+Heartbeat output keeps public semantics at source, age, and path level without surfacing inode details.

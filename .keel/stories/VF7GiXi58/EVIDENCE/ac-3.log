@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T18:20:31.290739550-07:00
+mode: manual
+---
+AGENTS.md, INSTRUCTIONS.md, PROTOCOL.md, flow messaging, and poke output now describe commit plus hook lifecycle as the real pacemaker governor.

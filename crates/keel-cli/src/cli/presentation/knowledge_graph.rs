@@ -963,11 +963,20 @@ fn draw_labels(
             continue;
         }
 
-        let label = depth_label_text(
-            &positioned.node.title,
-            positioned.node.depth,
-            deepest_visible_depth,
-        );
+        let label = if matches!(
+            positioned.node.kind,
+            KnowledgeGraphNodeKind::Mission
+                | KnowledgeGraphNodeKind::Watch
+                | KnowledgeGraphNodeKind::Heartbeat
+        ) {
+            positioned.node.title.clone()
+        } else {
+            depth_label_text(
+                &positioned.node.title,
+                positioned.node.depth,
+                deepest_visible_depth,
+            )
+        };
         let style = depth_label_style(
             positioned.node,
             deepest_visible_depth,
@@ -1279,7 +1288,8 @@ fn depth_for_kind(kind: KnowledgeGraphNodeKind) -> usize {
         | KnowledgeGraphNodeKind::ProjectDoc => 4,
         KnowledgeGraphNodeKind::SourceFile => 5,
         KnowledgeGraphNodeKind::Watch => 1,
-        KnowledgeGraphNodeKind::Heartbeat => 1, // Pacemaker sits at mission/world boundary
+        // Keep the pacemaker visible without crowding the mission ring.
+        KnowledgeGraphNodeKind::Heartbeat => 2,
     }
 }
 
@@ -1294,11 +1304,11 @@ fn kind_sort_rank(kind: KnowledgeGraphNodeKind) -> u8 {
         KnowledgeGraphNodeKind::Story => 6,
         KnowledgeGraphNodeKind::Routine => 7,
         KnowledgeGraphNodeKind::Watch => 8,
-        KnowledgeGraphNodeKind::Artifact => 9,
-        KnowledgeGraphNodeKind::Knowledge => 10,
-        KnowledgeGraphNodeKind::ProjectDoc => 11,
-        KnowledgeGraphNodeKind::SourceFile => 12,
-        KnowledgeGraphNodeKind::Heartbeat => 5,
+        KnowledgeGraphNodeKind::Heartbeat => 9,
+        KnowledgeGraphNodeKind::Artifact => 10,
+        KnowledgeGraphNodeKind::Knowledge => 11,
+        KnowledgeGraphNodeKind::ProjectDoc => 12,
+        KnowledgeGraphNodeKind::SourceFile => 13,
     }
 }
 
@@ -1340,7 +1350,7 @@ fn node_radius(kind: KnowledgeGraphNodeKind) -> isize {
         | KnowledgeGraphNodeKind::Knowledge
         | KnowledgeGraphNodeKind::ProjectDoc
         | KnowledgeGraphNodeKind::SourceFile => 1,
-        KnowledgeGraphNodeKind::Heartbeat => 3,
+        KnowledgeGraphNodeKind::Heartbeat => 2,
     }
 }
 

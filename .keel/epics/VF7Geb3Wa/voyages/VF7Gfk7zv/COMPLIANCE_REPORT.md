@@ -1,0 +1,10 @@
+# COMPLIANCE REPORT: Introduce Derived Heartbeat Surface And Flow Fallback
+
+## Requirement Traceability Matrix
+
+| Req ID | Status | Implemented By | Proof Artifacts |
+|--------|--------|----------------|-----------------|
+| SRS-01 | ✓ VERIFIED | [VF7GiUM4f](../../../../stories/VF7GiUM4f/README.md), [VF7GiUM4f](../../../../stories/VF7GiUM4f/README.md) | [ac-1.log](../../../../stories/VF7GiUM4f/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/VF7GiUM4f/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/VF7GiUM4f/EVIDENCE/ac-3.log)<br>[ac-1.log](../../../../stories/VF7GiUM4f/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/VF7GiUM4f/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/VF7GiUM4f/EVIDENCE/ac-3.log) |
+| SRS-02 | ✓ VERIFIED | [VF7GiVC4g](../../../../stories/VF7GiVC4g/README.md), [VF7GiVC4g](../../../../stories/VF7GiVC4g/README.md) | [ac-1.log](../../../../stories/VF7GiVC4g/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/VF7GiVC4g/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/VF7GiVC4g/EVIDENCE/ac-3.log)<br>[ac-1.log](../../../../stories/VF7GiVC4g/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/VF7GiVC4g/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/VF7GiVC4g/EVIDENCE/ac-3.log) |
+| SRS-03 | ✓ VERIFIED | [VF7GiVp4h](../../../../stories/VF7GiVp4h/README.md), [VF7GiVp4h](../../../../stories/VF7GiVp4h/README.md) | [ac-1.log](../../../../stories/VF7GiVp4h/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/VF7GiVp4h/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/VF7GiVp4h/EVIDENCE/ac-3.log)<br>[ac-1.log](../../../../stories/VF7GiVp4h/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/VF7GiVp4h/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/VF7GiVp4h/EVIDENCE/ac-3.log) |
+| SRS-04 | ✓ VERIFIED | [VF7GiVp4h](../../../../stories/VF7GiVp4h/README.md) | [ac-1.log](../../../../stories/VF7GiVp4h/EVIDENCE/ac-1.log)<br>[ac-2.log](../../../../stories/VF7GiVp4h/EVIDENCE/ac-2.log)<br>[ac-3.log](../../../../stories/VF7GiVp4h/EVIDENCE/ac-3.log) |

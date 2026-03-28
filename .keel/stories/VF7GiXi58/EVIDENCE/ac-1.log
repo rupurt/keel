@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T18:20:30.898867150-07:00
+mode: manual
+---
+Pre-commit hook installation no longer auto-pokes or stages .keel/heartbeat and now stays focused on quality and test checks at commit time.

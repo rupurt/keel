@@ -37,7 +37,7 @@ Messages are persisted as JSON files within `.keel/inbox/<id>.json`.
 
 ## 3. Routing Rules
 
-When a `ping` (or parameter-less `poke`) is executed, the engine attempts to match the message content to a set of predefined rules to trigger a synchronous **auto-pong**.
+When a `ping` is executed, the engine attempts to match the message content to a set of predefined rules to trigger a synchronous **auto-pong**.
 
 Currently, the routing rules are simple substring matches (case-insensitive):
 
@@ -83,17 +83,17 @@ While most inputs to Keel are simple strings and flags (like `keel ping "hello"`
 
 ## 5. The System Pacemaker
 
-The communication protocol also serves as the system's **Pacemaker**. The `.keel/heartbeat` file is an optional wake marker that records recent workflow energy.
+The system's **Pacemaker** is derived from repository activity rather than a dedicated file. `keel heartbeat` is the inspection surface for that derived signal.
 
 ### The Heartbeat
-- **Activation**: Invoking `keel poke` (without a targeted ping ID) creates or updates the heartbeat file.
-- **Energization**: The engine considers itself "energized" if the heartbeat exists and its modification time is within the configured `battery_decay_minutes` (default: 10m).
-- **Idle State**: If the heartbeat is missing or decays, the engine transitions to **IDLE**, dimming the visual scenes and pausing autonomous backlog discharge. Missing heartbeat is a flow-state signal, not structural drift.
+- **Activation**: Dirty worktree activity is the primary signal; a clean repository falls back to the latest commit timestamp.
+- **Inspection**: `keel heartbeat` reports the source, age, and whether the worktree is carrying uncommitted energy.
+- **Idle State**: If the derived heartbeat decays beyond `battery_decay_minutes` (default: 10m), the engine transitions to **IDLE**, dimming the visual scenes and pausing autonomous backlog discharge. Idle heartbeat is a flow-state signal, not structural drift.
 
 ### Pace-setting
-To maintain board integrity, the pacemaker should be synchronized with the commit boundary.
-- **The Protocol**: Before landing a state-mutating commit, execute a final `keel poke` or rely on the installed pre-commit hook to auto-poke and stage `.keel/heartbeat`.
-- **Consistency**: A dirty heartbeat is warning-level evidence that the loop has been opened but not yet sealed. The commit itself clears that warning by aligning the wake marker with the resulting Git hash and board state.
+To maintain board integrity, the pacemaker should still be synchronized with the commit boundary.
+- **The Protocol**: Land sealing commits to close dirty worktree energy, and rely on the installed hooks to keep quality checks and tests attached to that boundary.
+- **Consistency**: A dirty worktree is warning-level evidence that the loop has been opened but not yet sealed. The commit itself clears that warning by aligning the repository state with the resulting board state.
 
 ## 6. Expanding the Protocol
 

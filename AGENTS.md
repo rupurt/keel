@@ -8,15 +8,15 @@ Keel is an engine with strict constraints (see [POLICY.md](POLICY.md)). Your pri
 
 ### Core Principles
 1. **Gardening First**: You MUST tend to the garden (fixing `doctor` errors, discharging automated backlog, and resolving structural drift) BEFORE notifying the human operator or requesting input. 
-2. **Heartbeat Hygiene**: Monitor the system's pulse via `keel health --scene`. A missing heartbeat is not structural drift, but "uncommitted energy" (a dirty heartbeat) is tactical debt that should be closed autonomously by landing the sealing commit.
+2. **Heartbeat Hygiene**: Monitor the system's pulse via `keel heartbeat` and `keel health --scene`. The pacemaker is derived from repository activity; uncommitted energy in the worktree is tactical debt that should be closed autonomously by landing the sealing commit.
 3. **Notification Discipline**: Ping the human operator ONLY when you need input on design direction or how the application behaves. Resolve technical drift and tactical moves autonomously.
 
 ### Session Start & Human Interaction
 When a human user opens the chat or "pokes" you (e.g., "Wake up", "I'm poking you"), you MUST immediately energize the system and orient yourself by following the **Human Interaction & Pokes** workflow in [INSTRUCTIONS.md](INSTRUCTIONS.md):
-1.  **Energize**: Run `just keel poke "Human interaction in chat"`.
+1.  **Heartbeat**: Run `just keel heartbeat` to inspect current charge and whether the worktree is carrying uncommitted energy.
 2.  **Pulse**: Run `just keel health --scene` to check subsystem stability.
 3.  **Scan**: Run `just keel mission next --status` and `just keel pulse`.
-4.  **Confirm**: Run `just keel flow --scene` to verify the LIGHT IS ON.
+4.  **Confirm**: Run `just keel flow --scene` to verify whether the LIGHT IS ON or the board is idle waiting for fresh repository activity.
 5.  **Diagnose**: Run `just keel doctor` to ensure board integrity before proceeding.
 
 ### Procedural Instructions

@@ -17,7 +17,7 @@ export const freshBoardSignals = [
     eyebrow: 'Important',
     title: 'Initialize inside Git',
     body:
-      'Running `keel init` inside a git repository lets Keel install the commit hooks that keep heartbeat hygiene attached to the commit boundary.',
+      'Running `keel init` inside a git repository lets Keel install the commit hooks that keep validation attached to the commit boundary.',
   },
   {
     eyebrow: 'Practical',
@@ -40,13 +40,14 @@ git init
 keel init
 ```
 
-When `keel init` runs inside Git, it creates the board scaffold and installs Keel's git hooks for heartbeat closure at commit time.
+When `keel init` runs inside Git, it creates the board scaffold and installs Keel's git hooks for commit-boundary validation.
 
 ## 2. Read the board before creating work
 
 ```bash
 keel health --scene
 keel doctor --status
+keel heartbeat
 keel mission next --status
 ```
 
@@ -54,11 +55,10 @@ On a brand-new board:
 
 - `keel health --scene` shows whether the system is structurally healthy
 - `keel doctor --status` reports that no mission exists yet
+- `keel heartbeat` shows whether recent repository activity is still energizing the board
 - `keel mission next --status` returns a non-zero exit with a suggestion to create a mission
 
 That is the expected opening posture. Keel is telling you the board has no direction yet.
-
-A brand-new board usually does not have `.keel/heartbeat` yet. That is fine. The heartbeat is a wake marker, not a required structural file. It matters once you start poking the board or crossing the commit boundary.
 
 ## 3. Create the first planning stack
 

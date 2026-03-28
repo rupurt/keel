@@ -94,7 +94,7 @@ pub fn run(
         if !energized {
             println!("\n{}", render_unplugged_scene(use_color));
             return Err(anyhow::anyhow!(
-                "System is idle: Cord unplugged (poke to wake)"
+                "System is idle: no recent repository activity (run `keel heartbeat`)"
             ));
         }
 
@@ -183,7 +183,7 @@ pub fn run(
     }
     if recently_completed == 0 {
         return Err(anyhow::anyhow!(
-            "System is idle: Cord unplugged (poke to wake)"
+            "System is idle: no recent repository activity (run `keel heartbeat`)"
         ));
     }
 
@@ -232,8 +232,8 @@ fn render_unplugged_scene(use_color: bool) -> String {
             "    │                                                                 │",
             "    │                                                                 │",
             "    └───────────────( \\             / )   ───                         ",
-            "                     \\ \\           / /   <-- CORD UNPLUGGED           ",
-            "                      \\ \\_ _ _ _ _/ /        (POKE TO WAKE)           ",
+            "                     \\ \\           / /   <-- NO RECENT REPO ACTIVITY ",
+            "                      \\ \\_ _ _ _ _/ /      (RUN keel heartbeat)      ",
             "                       \\___________/                                  ",
         ],
     )

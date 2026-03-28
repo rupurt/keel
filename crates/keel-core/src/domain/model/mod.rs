@@ -8,7 +8,6 @@ mod bearing;
 mod board;
 mod entity;
 mod epic;
-mod heartbeat;
 mod manifest;
 mod mission;
 mod priority;
@@ -28,7 +27,6 @@ pub use bearing::{Bearing, BearingFrontmatter, BearingStatus};
 pub use board::Board;
 pub use entity::Entity;
 pub use epic::{Epic, EpicFrontmatter, EpicState};
-pub use heartbeat::Heartbeat;
 pub use manifest::Manifest;
 pub use mission::{Mission, MissionArchetype, MissionFrontmatter};
 #[allow(unused_imports)] // Priority may be used for voyages in future
