@@ -34,7 +34,10 @@ export default function TurnCycle() {
       {steps.map((step, index) => (
         <article key={step.label} className={styles.card}>
           <div className={styles.head}>
-            <span className={styles.count}>0{index + 1}</span>
+            <div className={styles.markerRow}>
+              <span aria-hidden="true" className={styles.pulse} />
+              <span className={styles.count}>0{index + 1}</span>
+            </div>
             <h3>{step.label}</h3>
           </div>
           <code>{step.command}</code>

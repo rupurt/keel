@@ -9,7 +9,7 @@
 .wrap::before {
   content: '';
   position: absolute;
-  top: 1.4rem;
+  top: calc(var(--keel-card-padding) + 0.48rem);
   left: 8%;
   right: 8%;
   height: 2px;
@@ -19,30 +19,32 @@
 
 .card {
   position: relative;
-  padding: calc(var(--keel-card-padding) + 1.1rem) var(--keel-card-padding)
-    var(--keel-card-padding);
+  padding: var(--keel-card-padding);
   border-radius: var(--keel-radius-md);
   background: var(--keel-surface);
   border: 1px solid rgba(17, 51, 79, 0.12);
 }
 
-.card::before {
-  position: absolute;
-  top: 0.88rem;
-  left: var(--keel-card-padding);
+.head {
+  display: grid;
+  gap: var(--keel-space-3);
+  margin-bottom: var(--keel-space-3);
+}
+
+.markerRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--keel-space-2);
+}
+
+.pulse {
   width: 0.96rem;
   height: 0.96rem;
   border-radius: 999px;
   background: var(--keel-sea);
   border: 4px solid rgba(255, 253, 248, 0.96);
   box-shadow: 0 0 0 1px rgba(74, 159, 216, 0.22);
-  content: '';
-}
-
-.head {
-  display: grid;
-  gap: var(--keel-space-2);
-  margin-bottom: var(--keel-space-3);
+  flex: 0 0 auto;
 }
 
 .count {
