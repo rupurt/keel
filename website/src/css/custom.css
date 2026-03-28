@@ -143,7 +143,7 @@ body {
 
 .navbar__sliceSpacer {
   flex: 0 0 var(--keel-header-spacer-height);
-  background: var(--keel-surface);
+  background: var(--ifm-background-color);
 }
 
 .navbar__sliceRule {
