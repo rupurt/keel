@@ -11,12 +11,26 @@ type SceneAtlasProps = {
   scenes: SceneSurface[];
 };
 
+function toAnchorId(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 export default function SceneAtlas({scenes}: SceneAtlasProps) {
   return (
     <div className={styles.grid}>
       {scenes.map((entry) => (
-        <article key={entry.command} className={styles.card}>
-          <p className={styles.scene}>{entry.scene}</p>
+        <a
+          key={entry.command}
+          className={styles.card}
+          href={`#${toAnchorId(entry.scene)}`}
+        >
+          <div className={styles.topline}>
+            <p className={styles.scene}>{entry.scene}</p>
+            <span className={styles.jump}>Jump to detail</span>
+          </div>
           <code className={styles.command}>{entry.command}</code>
           <div className={styles.meta}>
             <span className={styles.label}>Reads</span>
@@ -26,7 +40,7 @@ export default function SceneAtlas({scenes}: SceneAtlasProps) {
             <span className={styles.label}>Use When</span>
             <p>{entry.when}</p>
           </div>
-        </article>
+        </a>
       ))}
     </div>
   );

@@ -14,6 +14,7 @@
     radial-gradient(circle at top right, rgba(63, 92, 133, 0.12), transparent 34%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(241, 233, 222, 0.82));
   box-shadow: var(--keel-shadow-panel);
+  scroll-margin-top: 6.5rem;
 }
 
 .header {
@@ -36,6 +37,14 @@
   color: var(--keel-copper);
 }
 
+.title {
+  margin: 0;
+  font-size: clamp(1.15rem, 1rem + 0.7vw, 1.55rem);
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  color: var(--keel-ink);
+}
+
 .command {
   display: inline-flex;
   width: fit-content;
@@ -45,6 +54,13 @@
   background: rgba(255, 255, 255, 0.76);
   color: var(--keel-ink);
   font-size: 0.83rem;
+}
+
+.backLink {
+  width: fit-content;
+  font-size: 0.78rem;
+  font-weight: 650;
+  text-decoration: none;
 }
 
 .lead {
