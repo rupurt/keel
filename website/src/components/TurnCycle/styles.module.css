@@ -137,6 +137,7 @@
 .card code {
   display: inline-block;
   margin-bottom: var(--keel-space-3);
+  padding: var(--keel-command-pill-pad-y) var(--keel-command-pill-pad-x);
   font-size: 0.82rem;
 }
 

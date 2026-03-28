@@ -100,7 +100,7 @@
 .command {
   display: inline-flex;
   width: fit-content;
-  padding: 0.42rem 0.74rem;
+  padding: var(--keel-command-pill-pad-y) var(--keel-command-pill-pad-x);
   border-radius: 999px;
   border: 1px solid rgba(17, 51, 79, 0.12);
   background: rgba(255, 255, 255, 0.54);

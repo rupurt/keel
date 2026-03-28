@@ -94,6 +94,10 @@
   --keel-card-padding: 1.45rem;
   --keel-doc-measure: 72ch;
   --keel-doc-measure-wide: 86ch;
+  --keel-inline-code-pad-y: 0.18rem;
+  --keel-inline-code-pad-x: 0.62rem;
+  --keel-command-pill-pad-y: 0.36rem;
+  --keel-command-pill-pad-x: 0.88rem;
   --keel-navbar-surface-height: 4.35rem;
   --keel-header-spacer-height: 0.72rem;
   --keel-header-rule-height: 2px;
@@ -377,7 +381,7 @@ body {
 }
 
 .theme-doc-markdown code {
-  padding: 0.18rem 0.44rem;
+  padding: var(--keel-inline-code-pad-y) var(--keel-inline-code-pad-x);
   border: 1px solid var(--keel-sky-border);
   border-radius: 0.58rem;
   background: var(--keel-sky-chip);
