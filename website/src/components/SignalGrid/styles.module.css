@@ -3,6 +3,10 @@
   gap: var(--keel-space-5);
 }
 
+.docs {
+  gap: var(--keel-space-4);
+}
+
 .twoColumns {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -27,16 +31,13 @@
   border-radius: var(--keel-radius-md);
   background: var(--keel-surface-raised);
   border: 1px solid;
-  border-color:
-    var(--keel-raised-border-top)
-    var(--keel-raised-border-right)
-    var(--keel-raised-border-bottom)
-    var(--keel-raised-border-left);
+  border-color: var(--keel-raised-border-top) var(--keel-raised-border-right)
+    var(--keel-raised-border-bottom) var(--keel-raised-border-left);
   box-shadow: var(--keel-shadow-card);
 }
 
 .card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0.88rem;
   right: 1rem;
@@ -48,7 +49,7 @@
 }
 
 .card::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0.88rem;
   right: 0.92rem;
@@ -81,12 +82,44 @@
 }
 
 .cardLink:hover .card {
-  border-color:
-    var(--keel-raised-border-strong-top)
+  border-color: var(--keel-raised-border-strong-top)
     var(--keel-raised-border-strong-right)
     var(--keel-raised-border-strong-bottom)
     var(--keel-raised-border-strong-left);
   box-shadow: var(--keel-shadow-card-hover);
+}
+
+.docs .card {
+  padding: var(--keel-card-padding);
+  background: var(--keel-surface);
+  box-shadow: var(--keel-shadow-card-doc);
+}
+
+.docs .card::before,
+.docs .card::after {
+  display: none;
+}
+
+.docs .cardLink {
+  transition: color 150ms ease;
+  will-change: auto;
+}
+
+.docs .cardLink:hover .card {
+  border-color: var(--keel-sky-border-strong);
+  box-shadow: var(--keel-shadow-card-doc);
+}
+
+.docs .eyebrow {
+  color: var(--keel-ink-soft);
+}
+
+.docs .card h3 {
+  font-size: 1.22rem;
+}
+
+.docs .linkText {
+  margin-top: var(--keel-space-3);
 }
 
 .eyebrow {

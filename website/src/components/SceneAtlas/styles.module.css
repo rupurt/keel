@@ -1,6 +1,6 @@
 .grid {
   display: grid;
-  gap: var(--keel-space-5);
+  gap: var(--keel-space-4);
   margin: var(--keel-space-6) 0 var(--keel-space-7);
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
@@ -9,21 +9,13 @@
   --magnetic-x: 0px;
   --magnetic-y: 0px;
 
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
   display: grid;
   gap: var(--keel-space-3);
-  padding: var(--keel-card-padding);
+  padding: calc(var(--keel-card-padding) - 0.08rem);
   border-radius: var(--keel-radius-md);
-  background: var(--keel-surface-raised);
-  border: 1px solid;
-  border-color:
-    var(--keel-raised-border-top)
-    var(--keel-raised-border-right)
-    var(--keel-raised-border-bottom)
-    var(--keel-raised-border-left);
-  box-shadow: var(--keel-shadow-card);
+  background: var(--keel-surface);
+  border: 1px solid var(--keel-sky-border);
+  box-shadow: var(--keel-shadow-card-doc);
   color: inherit;
   text-decoration: none;
   transform: translate(var(--magnetic-x), var(--magnetic-y));
@@ -31,46 +23,13 @@
     transform 180ms var(--keel-motion-ease-lift),
     border-color 160ms ease,
     box-shadow 160ms ease;
-  will-change: transform;
-}
-
-.card::before {
-  content: '';
-  position: absolute;
-  top: 0.88rem;
-  right: 1rem;
-  width: 38%;
-  height: 1px;
-  border-radius: 999px;
-  background: var(--keel-acrylic-line);
-  opacity: 0.88;
-}
-
-.card::after {
-  content: '';
-  position: absolute;
-  top: 0.88rem;
-  right: 0.92rem;
-  width: 1px;
-  height: 28%;
-  border-radius: 999px;
-  background: var(--keel-acrylic-line-soft);
-  opacity: 0.74;
-}
-
-.card > * {
-  position: relative;
-  z-index: 1;
+  will-change: auto;
 }
 
 .card:hover,
 .card:focus-visible {
-  border-color:
-    var(--keel-raised-border-strong-top)
-    var(--keel-raised-border-strong-right)
-    var(--keel-raised-border-strong-bottom)
-    var(--keel-raised-border-strong-left);
-  box-shadow: var(--keel-shadow-card-hover);
+  border-color: var(--keel-sky-border-strong);
+  box-shadow: var(--keel-shadow-card-doc);
 }
 
 .topline {
@@ -94,7 +53,7 @@
   font-weight: 760;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--keel-sea);
+  color: var(--keel-ink-soft);
 }
 
 .command {
@@ -106,7 +65,7 @@
   background: rgba(255, 255, 255, 0.54);
   font-size: 0.82rem;
   color: var(--keel-ink);
-  box-shadow: var(--keel-shadow-pill), var(--keel-shadow-inset);
+  box-shadow: none;
 }
 
 .meta {

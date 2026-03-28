@@ -1,18 +1,17 @@
 .wrap {
   display: grid;
-  gap: var(--keel-space-5);
+  gap: var(--keel-space-4);
   grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.88fr);
   margin: var(--keel-space-6) 0 var(--keel-space-8);
 }
 
 .backboneRail,
 .supportDock {
-  padding: calc(var(--keel-card-padding) + 0.12rem);
-  border-radius: var(--keel-radius-lg);
-  border: 1px solid rgba(17, 51, 79, 0.12);
-  border-top: 2px solid rgba(74, 159, 216, 0.32);
+  padding: calc(var(--keel-card-padding) - 0.04rem);
+  border-radius: var(--keel-radius-md);
+  border: 1px solid var(--keel-sky-border);
   background: var(--keel-surface);
-  box-shadow: var(--keel-shadow-panel);
+  box-shadow: var(--keel-shadow-panel-doc);
 }
 
 .kicker {
@@ -41,7 +40,7 @@
 }
 
 .spine::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 1rem;
   bottom: 1rem;
@@ -55,13 +54,13 @@
   position: relative;
   padding: var(--keel-space-4);
   border-radius: var(--keel-radius-md);
-  border: 1px solid rgba(17, 51, 79, 0.1);
-  background: rgba(255, 255, 255, 0.36);
-  box-shadow: var(--keel-shadow-card);
+  border: 1px solid var(--keel-sky-border);
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: var(--keel-shadow-card-doc);
 }
 
 .node::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 1.22rem;
   left: -1.58rem;
@@ -134,10 +133,10 @@
 .supportCard {
   padding: var(--keel-space-4);
   border-radius: var(--keel-radius-md);
-  border: 1px solid rgba(17, 51, 79, 0.1);
-  border-left: 3px solid rgba(106, 181, 234, 0.3);
-  background: rgba(255, 255, 255, 0.36);
-  box-shadow: var(--keel-shadow-card);
+  border: 1px solid var(--keel-sky-border);
+  border-left: 2px solid rgba(106, 181, 234, 0.3);
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: var(--keel-shadow-card-doc);
 }
 
 @media (max-width: 996px) {

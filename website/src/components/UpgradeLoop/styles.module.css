@@ -1,53 +1,16 @@
 .wrap {
   display: grid;
-  gap: var(--keel-space-5);
+  gap: var(--keel-space-4);
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   margin: var(--keel-space-6) 0;
 }
 
 .card {
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-  padding: var(--keel-card-padding);
+  padding: calc(var(--keel-card-padding) - 0.08rem);
   border-radius: var(--keel-radius-md);
-  background: var(--keel-surface-raised);
-  border: 1px solid;
-  border-color:
-    var(--keel-raised-border-top)
-    var(--keel-raised-border-right)
-    var(--keel-raised-border-bottom)
-    var(--keel-raised-border-left);
-  box-shadow: var(--keel-shadow-card);
-}
-
-.card::before {
-  content: '';
-  position: absolute;
-  top: 0.88rem;
-  right: 1rem;
-  width: 38%;
-  height: 1px;
-  border-radius: 999px;
-  background: var(--keel-acrylic-line);
-  opacity: 0.88;
-}
-
-.card::after {
-  content: '';
-  position: absolute;
-  top: 0.88rem;
-  right: 0.92rem;
-  width: 1px;
-  height: 28%;
-  border-radius: 999px;
-  background: var(--keel-acrylic-line-soft);
-  opacity: 0.74;
-}
-
-.card > * {
-  position: relative;
-  z-index: 1;
+  background: var(--keel-surface);
+  border: 1px solid var(--keel-sky-border);
+  box-shadow: var(--keel-shadow-card-doc);
 }
 
 .head {
@@ -67,7 +30,7 @@
 }
 
 .count {
-  color: var(--keel-sea);
+  color: var(--keel-navy);
 }
 
 .label {

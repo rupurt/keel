@@ -1,7 +1,7 @@
-import Link from '@docusaurus/Link';
-import {magneticFieldEvents} from '@site/src/components/magneticField';
+import Link from "@docusaurus/Link";
+import { magneticFieldEvents } from "@site/src/components/magneticField";
 
-import styles from './styles.module.css';
+import styles from "./styles.module.css";
 
 type SignalItem = {
   eyebrow?: string;
@@ -13,26 +13,33 @@ type SignalItem = {
 
 type SignalGridProps = {
   items: SignalItem[];
-  columns?: 'two' | 'three';
+  columns?: "two" | "three";
+  tone?: "docs" | "hero";
 };
 
 export default function SignalGrid({
   items,
-  columns = 'three',
+  columns = "three",
+  tone = "docs",
 }: SignalGridProps) {
   return (
     <div
       className={`${styles.grid} ${
-        columns === 'two' ? styles.twoColumns : styles.threeColumns
-      }`}>
+        columns === "two" ? styles.twoColumns : styles.threeColumns
+      } ${tone === "hero" ? styles.hero : styles.docs}`}
+    >
       {items.map((item) => {
+        const magneticProps =
+          tone === "hero" ? magneticFieldEvents<HTMLAnchorElement>() : {};
         const content = (
           <>
-            {item.eyebrow ? <p className={styles.eyebrow}>{item.eyebrow}</p> : null}
+            {item.eyebrow ? (
+              <p className={styles.eyebrow}>{item.eyebrow}</p>
+            ) : null}
             <h3>{item.title}</h3>
             <p>{item.body}</p>
             {item.href ? (
-              <span className={styles.linkText}>{item.cta ?? 'Read more'}</span>
+              <span className={styles.linkText}>{item.cta ?? "Read more"}</span>
             ) : null}
           </>
         );
@@ -43,7 +50,8 @@ export default function SignalGrid({
               key={item.title}
               className={styles.cardLink}
               to={item.href}
-              {...magneticFieldEvents<HTMLAnchorElement>()}>
+              {...magneticProps}
+            >
               <article className={styles.card}>{content}</article>
             </Link>
           );

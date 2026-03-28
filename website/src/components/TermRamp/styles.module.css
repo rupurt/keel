@@ -3,6 +3,10 @@
   gap: var(--keel-space-4);
 }
 
+.docs {
+  gap: var(--keel-space-3);
+}
+
 .cardLink {
   --magnetic-x: 0px;
   --magnetic-y: 0px;
@@ -34,16 +38,13 @@
   border-radius: var(--keel-radius-md);
   background: var(--keel-surface-raised);
   border: 1px solid;
-  border-color:
-    var(--keel-raised-border-top)
-    var(--keel-raised-border-right)
-    var(--keel-raised-border-bottom)
-    var(--keel-raised-border-left);
+  border-color: var(--keel-raised-border-top) var(--keel-raised-border-right)
+    var(--keel-raised-border-bottom) var(--keel-raised-border-left);
   box-shadow: var(--keel-shadow-card);
 }
 
 .card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0.88rem;
   right: 1rem;
@@ -55,7 +56,7 @@
 }
 
 .card::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0.88rem;
   right: 0.92rem;
@@ -72,12 +73,51 @@
 }
 
 .cardLink:hover .card {
-  border-color:
-    var(--keel-raised-border-strong-top)
+  border-color: var(--keel-raised-border-strong-top)
     var(--keel-raised-border-strong-right)
     var(--keel-raised-border-strong-bottom)
     var(--keel-raised-border-strong-left);
   box-shadow: var(--keel-shadow-card-hover);
+}
+
+.docs .card {
+  gap: var(--keel-space-3);
+  padding: calc(var(--keel-card-padding) - 0.08rem);
+  background: var(--keel-surface);
+  box-shadow: var(--keel-shadow-card-doc);
+}
+
+.docs .card::before,
+.docs .card::after {
+  display: none;
+}
+
+.docs .cardLink {
+  transition: color 150ms ease;
+  will-change: auto;
+}
+
+.docs .cardLink:hover .card {
+  border-color: var(--keel-sky-border-strong);
+  box-shadow: var(--keel-shadow-card-doc);
+}
+
+.docs .plainLabel,
+.docs .keelLabel {
+  color: var(--keel-ink-soft);
+}
+
+.docs .arrow::before {
+  background: rgba(106, 181, 234, 0.24);
+}
+
+.docs .arrow::after {
+  border-top-color: var(--keel-navy);
+  border-right-color: var(--keel-navy);
+}
+
+.docs .keelBlock h3 {
+  font-size: 1.16rem;
 }
 
 .plainBlock,
@@ -117,7 +157,7 @@
 }
 
 .arrow::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   left: 0;
@@ -129,7 +169,7 @@
 }
 
 .arrow::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   right: 0;

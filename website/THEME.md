@@ -40,6 +40,17 @@ There are three planes in the docs theme:
 3. Raised Components
    Cards, buttons, pills, and framed modules sit above paper with one consistent directional shadow system.
 
+## Surface Modes
+
+The docs system has two presentation modes:
+
+1. Hero
+   Used on the homepage and other narrative landing surfaces. This mode may use stronger elevation, magnetic pointer response, and more expressive framing to pull the reader into the story.
+2. Reference
+   Used inside the documentation corpus. This mode should be quieter, more stable, and more functional. It should prioritize scanning, command recall, and structural comprehension over theatrics.
+
+Default to Reference inside `/docs/*`. Hero is an explicit exception.
+
 ## Component Rules
 
 - Header:
@@ -48,6 +59,7 @@ There are three planes in the docs theme:
   Use a flat eggshell paper tone with no external depth effect.
 - Cards and panels:
   Use the shared raised shadow tokens, bright top-right rims, and restrained acrylic reflection instead of generic drop shadows.
+  On reference pages, reduce shadow depth, remove decorative highlight rails, and prefer flatter functional grouping.
 - Buttons and pills:
   Should feel like premium nautical controls: compact, tactile, milled, and slightly lifted from the page.
 - Recessed surfaces:
@@ -65,6 +77,7 @@ Rules:
 - all non-essential motion must shut off under `prefers-reduced-motion`
 - interactive cards may be lightly attracted toward the pointer rather than floating in a fixed direction
 - that magnetic pull should feather in early at the perimeter and dampen as the pointer gets close
+- magnetic pointer motion belongs to hero surfaces, not routine reference cards inside the docs corpus
 
 Turnsteps are the canonical motion pattern:
 

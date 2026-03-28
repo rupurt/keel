@@ -1,6 +1,4 @@
-import {magneticFieldEvents} from '@site/src/components/magneticField';
-
-import styles from './styles.module.css';
+import styles from "./styles.module.css";
 
 type SceneSurface = {
   command: string;
@@ -16,11 +14,11 @@ type SceneAtlasProps = {
 function toAnchorId(value: string) {
   return value
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
-export default function SceneAtlas({scenes}: SceneAtlasProps) {
+export default function SceneAtlas({ scenes }: SceneAtlasProps) {
   return (
     <div className={styles.grid}>
       {scenes.map((entry) => (
@@ -28,7 +26,6 @@ export default function SceneAtlas({scenes}: SceneAtlasProps) {
           key={entry.command}
           className={styles.card}
           href={`#${toAnchorId(entry.scene)}`}
-          {...magneticFieldEvents<HTMLAnchorElement>()}
         >
           <div className={styles.topline}>
             <p className={styles.scene}>{entry.scene}</p>

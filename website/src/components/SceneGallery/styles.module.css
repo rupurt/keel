@@ -1,19 +1,18 @@
 .stack {
   display: grid;
-  gap: var(--keel-space-7);
+  gap: var(--keel-space-6);
   margin: var(--keel-space-6) 0 var(--keel-space-8);
 }
 
 .card {
   display: grid;
   gap: var(--keel-space-4);
-  padding: clamp(1.2rem, 1rem + 0.7vw, 1.7rem);
-  border-radius: var(--keel-radius-lg);
-  border: 1px solid rgba(17, 51, 79, 0.12);
-  border-top: 2px solid rgba(74, 159, 216, 0.32);
+  padding: clamp(1.18rem, 1rem + 0.55vw, 1.55rem);
+  border-radius: var(--keel-radius-md);
+  border: 1px solid var(--keel-sky-border);
   background: var(--keel-surface);
   scroll-margin-top: 6.5rem;
-  box-shadow: var(--keel-shadow-panel);
+  box-shadow: var(--keel-shadow-panel-doc);
 }
 
 .header {
@@ -33,7 +32,7 @@
   font-weight: 760;
   letter-spacing: 0.17em;
   text-transform: uppercase;
-  color: var(--keel-sea);
+  color: var(--keel-ink-soft);
 }
 
 .title {
@@ -53,7 +52,7 @@
   background: rgba(255, 255, 255, 0.54);
   color: var(--keel-ink);
   font-size: 0.83rem;
-  box-shadow: var(--keel-shadow-pill), var(--keel-shadow-inset);
+  box-shadow: none;
 }
 
 .backLink {
@@ -86,9 +85,9 @@
 .terminal {
   margin: 0;
   overflow-x: auto;
-  padding: var(--keel-space-5);
+  padding: calc(var(--keel-space-4) + 0.1rem);
   border: 1px solid var(--keel-sky-border-strong);
-  border-radius: var(--keel-radius-lg);
+  border-radius: var(--keel-radius-md);
   background: var(--keel-surface-strong);
   color: var(--keel-ink);
   box-shadow: var(--keel-shadow-inset);
@@ -115,10 +114,9 @@
   gap: var(--keel-space-2);
   padding: var(--keel-space-4);
   border-radius: var(--keel-radius-md);
-  border: 1px solid rgba(17, 51, 79, 0.1);
-  border-top: 2px solid rgba(106, 181, 234, 0.22);
-  background: rgba(255, 255, 255, 0.42);
-  box-shadow: var(--keel-shadow-card);
+  border: 1px solid var(--keel-sky-border);
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: var(--keel-shadow-card-doc);
 }
 
 .label {
