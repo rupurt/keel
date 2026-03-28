@@ -72,6 +72,11 @@ const config: Config = {
           position: 'left',
         },
         {
+          href: 'https://www.spoke.sh',
+          label: 'Spoke',
+          position: 'right',
+        },
+        {
           href: repoUrl,
           label: 'GitHub',
           position: 'right',
