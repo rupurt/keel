@@ -122,7 +122,7 @@
 .primaryAction:hover {
   color: #fffdf8;
   text-decoration: none;
-  box-shadow: var(--keel-shadow-button-recessed);
+  box-shadow: var(--keel-shadow-button-hover-soft);
   border-color: rgba(255, 255, 255, 0.18) rgba(255, 255, 255, 0.14)
     rgba(17, 51, 79, 0.24) rgba(17, 51, 79, 0.18);
 }
@@ -130,7 +130,7 @@
 .secondaryAction:hover {
   color: var(--keel-ink);
   text-decoration: none;
-  box-shadow: var(--keel-shadow-button-recessed);
+  box-shadow: var(--keel-shadow-button-hover-soft);
   border-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.22)
     rgba(17, 51, 79, 0.16) rgba(17, 51, 79, 0.12);
 }
@@ -326,7 +326,7 @@
 }
 
 .sceneStepLink:hover {
-  box-shadow: var(--keel-shadow-button-recessed);
+  box-shadow: var(--keel-shadow-button-hover-soft);
 }
 
 .sceneStepLink:focus-visible {
