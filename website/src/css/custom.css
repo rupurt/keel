@@ -92,8 +92,14 @@
     var(--keel-header-clear-height) +
     var(--keel-header-echo-height)
   );
-  --keel-shadow-card: 0 10px 24px rgba(58, 89, 113, 0.05);
-  --keel-shadow-panel: 0 16px 36px rgba(58, 89, 113, 0.07);
+  --keel-shadow-shell: -14px 16px 26px rgba(58, 89, 113, 0.12);
+  --keel-shadow-card: -9px 11px 22px rgba(58, 89, 113, 0.08);
+  --keel-shadow-card-hover: -13px 16px 28px rgba(58, 89, 113, 0.12);
+  --keel-shadow-panel: -14px 18px 32px rgba(58, 89, 113, 0.1);
+  --keel-shadow-button: -6px 8px 16px rgba(58, 89, 113, 0.12);
+  --keel-shadow-button-hover: -8px 11px 20px rgba(58, 89, 113, 0.16);
+  --keel-shadow-pill: -4px 6px 10px rgba(58, 89, 113, 0.08);
+  --keel-shadow-inset: inset -1px 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 html {
@@ -125,14 +131,16 @@ body {
   backdrop-filter: blur(16px);
   background: rgba(70, 137, 188, 0.96);
   border-bottom: 0;
-  box-shadow: 0 8px 18px rgba(58, 89, 113, 0.1);
 }
 
 .navbar__surface {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   min-height: var(--keel-navbar-surface-height);
   padding-inline: var(--ifm-navbar-padding-horizontal);
+  box-shadow: var(--keel-shadow-shell);
 }
 
 .navbar__slice {

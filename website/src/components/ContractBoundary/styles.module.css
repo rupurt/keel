@@ -11,6 +11,7 @@
   padding: calc(var(--keel-card-padding) + 0.06rem);
   border-radius: var(--keel-radius-md);
   border: 1px solid rgba(17, 51, 79, 0.12);
+  box-shadow: var(--keel-shadow-card);
 }
 
 .column {

@@ -14,6 +14,7 @@
   background: var(--keel-surface);
   border: 1px solid rgba(17, 51, 79, 0.12);
   border-top: 2px solid rgba(74, 159, 216, 0.32);
+  box-shadow: var(--keel-shadow-card);
 }
 
 .eyebrow {
@@ -46,6 +47,7 @@
   border-radius: 999px;
   background: var(--keel-sky-chip);
   border: 1px solid var(--keel-sky-border);
+  box-shadow: var(--keel-shadow-pill), var(--keel-shadow-inset);
 }
 
 .commandPill code {

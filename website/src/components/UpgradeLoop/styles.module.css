@@ -11,6 +11,7 @@
   background: var(--keel-surface);
   border: 1px solid rgba(17, 51, 79, 0.12);
   border-top: 2px solid rgba(74, 159, 216, 0.32);
+  box-shadow: var(--keel-shadow-card);
 }
 
 .head {
