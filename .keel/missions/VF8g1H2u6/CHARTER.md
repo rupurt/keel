@@ -6,10 +6,10 @@ Archetype: Strategic
 
 | ID | Description | Verification |
 |----|-------------|--------------|
-| MG-01 | Establish a canonical command catalog that makes the CLI taxonomy in the public docs authoritative for help output, capability guidance, scene discovery, and future docs generation. | manual: mission log records the intended catalog boundary, owning modules, and downstream surfaces |
-| MG-02 | Introduce first-class turn and scene projections so Keel's visual surfaces render canonical engine state instead of duplicating product logic across CLI commands. | manual: mission log records the approved turn/scene projection boundaries and rollout slices |
-| MG-03 | Promote roles and lanes from mostly internal routing logic to explicit, inspectable product surfaces with explainable next-step behavior. | manual: mission log records the target user-facing role/lane surfaces and routing contract |
-| MG-04 | Convert the strongest narrative claims in the docs into executable invariants so product drift becomes test failure instead of silent divergence. | manual: mission log records the invariant families, owning test layers, and rollout order |
+| MG-01 | Establish a canonical command catalog that makes the CLI taxonomy in the public docs authoritative for help output, capability guidance, scene discovery, and future docs generation. | board: VF8hiVofm |
+| MG-02 | Introduce first-class turn and scene projections so Keel's visual surfaces render canonical engine state instead of duplicating product logic across CLI commands. | board: VF8hiVofm |
+| MG-03 | Promote roles and lanes from mostly internal routing logic to explicit, inspectable product surfaces with explainable next-step behavior. | board: VF8hiVofm |
+| MG-04 | Convert the strongest narrative claims in the docs into executable invariants so product drift becomes test failure instead of silent divergence. | board: VF8hiVofm |
 
 ## Constraints
 
@@ -22,5 +22,5 @@ Archetype: Strategic
 ## Halting Rules
 
 - DO NOT halt while command taxonomy, turn/scene semantics, roles-and-lanes explainability, or narrative invariants remain only implied in prose with no concrete implementation path.
-- HALT when the mission is decomposed into executable board work covering command catalog convergence, turn/scene projections, role-and-lane surfaces, and narrative contract tests.
+- HALT when epic `VF8hiVofm` closes with implemented command catalog convergence, turn/scene projections, role-and-lane surfaces, and narrative contract tests.
 - YIELD to human if making the docs narrative authoritative would require changing the public meaning of turns, scenes, or role routing rather than clarifying the current system.
