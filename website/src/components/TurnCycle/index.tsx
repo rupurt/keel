@@ -1,4 +1,5 @@
 import Link from '@docusaurus/Link';
+import {magneticFieldEvents} from '@site/src/components/magneticField';
 
 import styles from './styles.module.css';
 
@@ -39,7 +40,11 @@ export default function TurnCycle() {
   return (
     <div className={styles.wrap}>
       {steps.map((step, index) => (
-        <Link key={step.label} className={styles.cardLink} to={step.href}>
+        <Link
+          key={step.label}
+          className={styles.cardLink}
+          to={step.href}
+          {...magneticFieldEvents<HTMLAnchorElement>()}>
           <article className={styles.card}>
             <div className={styles.head}>
               <div className={styles.markerRow}>

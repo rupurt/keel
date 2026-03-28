@@ -18,19 +18,23 @@
 }
 
 .cardLink {
+  --magnetic-x: 0px;
+  --magnetic-y: 0px;
+
   display: block;
   height: 100%;
   color: inherit;
   text-decoration: none;
+  transform: translate(var(--magnetic-x), var(--magnetic-y));
   transition:
-    transform 150ms ease,
+    transform 180ms var(--keel-motion-ease-lift),
     color 150ms ease;
+  will-change: transform;
 }
 
 .cardLink:hover {
   color: inherit;
   text-decoration: none;
-  transform: translateY(-3px);
 }
 
 .card {

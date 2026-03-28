@@ -1,4 +1,5 @@
 import Link from '@docusaurus/Link';
+import {magneticFieldEvents} from '@site/src/components/magneticField';
 
 import styles from './styles.module.css';
 
@@ -45,7 +46,11 @@ export default function TermRamp() {
   return (
     <div className={styles.grid}>
       {terms.map((term) => (
-        <Link key={term.keel} className={styles.cardLink} to={term.href}>
+        <Link
+          key={term.keel}
+          className={styles.cardLink}
+          to={term.href}
+          {...magneticFieldEvents<HTMLAnchorElement>()}>
           <article className={styles.card}>
             <div className={styles.plainBlock}>
               <p className={styles.plainLabel}>Everyday language</p>

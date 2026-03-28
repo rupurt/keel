@@ -63,6 +63,7 @@ Rules:
 - ambient animation should be slow, sparse, and staggered
 - moving surfaces must still obey the lighting model instead of inventing a second visual system
 - all non-essential motion must shut off under `prefers-reduced-motion`
+- interactive cards may be lightly attracted toward the pointer rather than floating in a fixed direction
 
 Turnsteps are the canonical motion pattern:
 

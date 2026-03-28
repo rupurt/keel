@@ -1,4 +1,5 @@
 import Link from '@docusaurus/Link';
+import {magneticFieldEvents} from '@site/src/components/magneticField';
 
 import styles from './styles.module.css';
 
@@ -38,7 +39,11 @@ export default function SignalGrid({
 
         if (item.href) {
           return (
-            <Link key={item.title} className={styles.cardLink} to={item.href}>
+            <Link
+              key={item.title}
+              className={styles.cardLink}
+              to={item.href}
+              {...magneticFieldEvents<HTMLAnchorElement>()}>
               <article className={styles.card}>{content}</article>
             </Link>
           );

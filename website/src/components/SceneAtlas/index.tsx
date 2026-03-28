@@ -1,3 +1,5 @@
+import {magneticFieldEvents} from '@site/src/components/magneticField';
+
 import styles from './styles.module.css';
 
 type SceneSurface = {
@@ -26,6 +28,7 @@ export default function SceneAtlas({scenes}: SceneAtlasProps) {
           key={entry.command}
           className={styles.card}
           href={`#${toAnchorId(entry.scene)}`}
+          {...magneticFieldEvents<HTMLAnchorElement>()}
         >
           <div className={styles.topline}>
             <p className={styles.scene}>{entry.scene}</p>
