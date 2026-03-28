@@ -1,7 +1,7 @@
 //! Shared CLI command tree definition.
 
 use super::command_catalog::render_help_groups;
-use clap::{Arg, ArgAction, Command, Subcommand};
+use clap::{Arg, ArgAction, Command, Subcommand, ValueHint};
 
 fn hidden_subcommand_group<T>(name: &'static str, about: &'static str) -> Command
 where
@@ -396,9 +396,16 @@ pub fn build_cli() -> Command {
                 .hide(true),
         )
         .subcommand(
-            Command::new("init")
-                .about("Initialize a new keel board in the current directory")
-                .hide(true),
+            Command::new("new")
+                .about("Create a new Keel project scaffold")
+                .arg(
+                    Arg::new("path")
+                        .help("Target directory for the new project scaffold (defaults to current directory)")
+                        .value_name("PATH")
+                        .value_hint(ValueHint::DirPath)
+                        .value_parser(clap::value_parser!(std::path::PathBuf))
+                        .index(1),
+                ),
         )
         .subcommand(
             Command::new("hooks")

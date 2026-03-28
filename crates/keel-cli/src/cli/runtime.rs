@@ -223,7 +223,12 @@ pub fn run() -> Result<()> {
             super::commands::comms::outbox::run(&ctx, &resolve_board_dir()?, json)
         }
         Some(("generate", _)) => super::commands::setup::generate::run(&resolve_board_dir()?),
-        Some(("init", _)) => Ok(super::commands::setup::init::run()?),
+        Some(("new", m)) => {
+            let path = m
+                .get_one::<std::path::PathBuf>("path")
+                .map(|value| value.as_path());
+            Ok(super::commands::setup::new::run(path)?)
+        }
         Some(("hooks", m)) => match m.subcommand() {
             Some(("install", _)) => super::commands::setup::hooks::run(),
             _ => unreachable!("subcommand_required"),

@@ -77,6 +77,28 @@ pub mod watch {
     pub const README: &str = include_str!("../../../../templates/watches/README.md");
 }
 
+/// Project bootstrap templates
+pub mod project {
+    /// Project `keel.toml` template
+    pub const KEEL_TOML: &str = include_str!("../../../../templates/project/keel.toml");
+    /// Project constitution template
+    pub const CONSTITUTION: &str = include_str!("../../../../templates/project/CONSTITUTION.md");
+    /// Project policy template
+    pub const POLICY: &str = include_str!("../../../../templates/project/POLICY.md");
+    /// Project architecture template
+    pub const ARCHITECTURE: &str = include_str!("../../../../templates/project/ARCHITECTURE.md");
+    /// Project user guide template
+    pub const USER_GUIDE: &str = include_str!("../../../../templates/project/USER_GUIDE.md");
+    /// Project agents template
+    pub const AGENTS: &str = include_str!("../../../../templates/project/AGENTS.md");
+    /// Project Gemini harness template
+    pub const GEMINI: &str = include_str!("../../../../templates/project/GEMINI.md");
+    /// Project Claude harness template
+    pub const CLAUDE: &str = include_str!("../../../../templates/project/CLAUDE.md");
+    /// Project instructions template
+    pub const INSTRUCTIONS: &str = include_str!("../../../../templates/project/INSTRUCTIONS.md");
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -258,6 +280,20 @@ mod tests {
             !epic::PRD.contains("## Voyages"),
             "PRD should not include a voyages section"
         );
+    }
+
+    #[test]
+    fn project_agents_template_has_sync_markers() {
+        assert!(project::AGENTS.contains("BEGIN PROJECT-SPECIFIC"));
+        assert!(project::AGENTS.contains("downstream from Keel"));
+    }
+
+    #[test]
+    fn project_keel_toml_template_exposes_workflow_defaults() {
+        assert!(project::KEEL_TOML.contains("board_dir = \"{{board_dir}}\""));
+        assert!(project::KEEL_TOML.contains("[workflow]"));
+        assert!(project::KEEL_TOML.contains("[workflow.defaults]"));
+        assert!(project::KEEL_TOML.contains("[roles.manager]"));
     }
 
     #[test]

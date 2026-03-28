@@ -1,6 +1,6 @@
 ---
 title: Take Your First Turn
-description: Initialize a board, read the first signals, and stand up the smallest useful planning stack.
+description: Bootstrap a Keel project, read the first signals, and stand up the smallest useful planning stack.
 ---
 
 import SignalGrid from '@site/src/components/SignalGrid';
@@ -15,9 +15,9 @@ export const freshBoardSignals = [
   },
   {
     eyebrow: 'Important',
-    title: 'Initialize inside Git',
+    title: 'Bootstrap with `keel new`',
     body:
-      'Running `keel init` inside a git repository lets Keel install the commit hooks that keep validation attached to the commit boundary.',
+      '`keel new` scaffolds the board, installs commit-boundary hooks, and writes the downstream foundation docs that agents need to understand the repo.',
   },
   {
     eyebrow: 'Practical',
@@ -27,20 +27,20 @@ export const freshBoardSignals = [
   },
 ];
 
-The smallest useful Keel session is not "open the app and click around." It is: create a board, read what the board is telling you, and then make the first structured move.
+The smallest useful Keel session is not "open the app and click around." It is: scaffold the project, read what the board is telling you, and then make the first structured move.
 
 <SignalGrid items={freshBoardSignals} />
 
 ## 1. Start in a fresh Git repository
 
 ```bash
-mkdir harbor
+keel new harbor
 cd harbor
-git init
-keel init
 ```
 
-When `keel init` runs inside Git, it creates the board scaffold and installs Keel's git hooks for commit-boundary validation.
+`keel new` creates the board scaffold, initializes Git when needed, installs Keel's git hooks for commit-boundary validation, and writes the downstream foundation docs plus `keel.toml`.
+
+Before you create planning work, hydrate the root docs it scaffolds: `CONSTITUTION.md`, `POLICY.md`, `ARCHITECTURE.md`, `USER_GUIDE.md`, `AGENTS.md`, `GEMINI.md`, `CLAUDE.md`, and `INSTRUCTIONS.md`.
 
 ## 2. Read the board before creating work
 

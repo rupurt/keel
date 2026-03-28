@@ -55,6 +55,24 @@ Those two files are the downstream operating contract. They tell humans and AI h
 
 <SignalGrid items={contractSignals} />
 
+## Start with `keel new`
+
+The preferred bootstrap is now `keel new`:
+
+```bash
+keel new my-project
+cd my-project
+```
+
+That scaffold gives you:
+
+- the board in `.keel/`
+- git hook installation at the commit boundary
+- a starter `keel.toml` with workflow defaults, roles, and lanes
+- root-level downstream foundation docs such as `CONSTITUTION.md`, `POLICY.md`, `ARCHITECTURE.md`, `USER_GUIDE.md`, `AGENTS.md`, `INSTRUCTIONS.md`, `GEMINI.md`, and `CLAUDE.md`
+
+If one of those foundational docs already exists, `keel new` asks before replacing it. That makes it safe to adopt Keel inside an existing codebase without silently erasing local operating language.
+
 ## The two-file operating contract
 
 | File | Job | Why it matters |
@@ -97,12 +115,16 @@ The shape to copy is not the literal wording. The shape to copy is:
 
 ## How to adopt the contract in your own repo
 
-1. Start from upstream `AGENTS.md` and `INSTRUCTIONS.md`. Do not author these files from a blank page.
+1. Start from `keel new .` or `keel new <repo-name>` instead of authoring the contract from a blank page.
 2. Rewrite the opening frame so it clearly says your repository uses Keel as its project-management engine.
 3. Replace command paths with the repo's real command surface, including `just` wrappers, dev-shell commands, or runtime helpers.
 4. Add project-specific proof rules only when the repo has a real claim to validate, such as a runtime path, deployment check, or artifact contract.
 5. Add project overview and directory maps so new agents can orient without searching the entire tree.
 6. Keep harness-specific extras such as `CLAUDE.md` or `GEMINI.md` adjacent to this contract, not in place of it.
+
+:::tip
+`keel new` scaffolds `AGENTS.md` and `INSTRUCTIONS.md` with `PROJECT-SPECIFIC` blocks on purpose. Those are the seams you preserve when you sync newer upstream Keel versions.
+:::
 
 :::tip
 If a downstream repo supports multiple AI harnesses, keep `AGENTS.md` and `INSTRUCTIONS.md` as the canonical repo-wide contract. Put harness-specific setup in separate files that point back to the same board rules.

@@ -110,6 +110,8 @@ While you review that diff, separate the changes into two piles:
 
 Engine changes usually include the tactical loop, new lifecycle guidance, new command expectations, or updated hygiene rules. Repo-specific seams usually include your wrappers, proof contract, project overview, and any local delegation guidance.
 
+If the repo started from `keel new`, the generated `AGENTS.md` and `INSTRUCTIONS.md` already contain `PROJECT-SPECIFIC` blocks. Preserve those sections while absorbing upstream changes around them.
+
 This is also where small-but-important behavioral changes show up. For example, upstream may tighten or relax heartbeat semantics, hook behavior, or commit-boundary hygiene. Those changes belong in your downstream copies of `AGENTS.md` and `INSTRUCTIONS.md`, not in tribal memory. The public reference point for that specific contract is now [Heartbeat And Pacemaker](/docs/cli/heartbeat-and-pacemaker).
 
 ## 4. Reapply the downstream seams deliberately

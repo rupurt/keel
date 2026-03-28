@@ -96,8 +96,11 @@ enum DiagnosticsCommands {
 enum ManagementCommands {
     /// Regenerate all README files
     Generate,
-    /// Initialize a new keel board in the current directory
-    Init,
+    /// Create a new Keel project scaffold
+    New {
+        /// Target directory for the new project scaffold (defaults to current directory)
+        path: Option<std::path::PathBuf>,
+    },
     /// Epic commands
     Epic {
         #[command(subcommand)]
@@ -149,6 +152,7 @@ fn cli_help_displays_top_level_commands() {
 
     // Verify top-level commands
     assert!(help_str.contains("doctor"), "Missing doctor command");
+    assert!(help_str.contains("new"), "Missing new command");
     assert!(help_str.contains("generate"), "Missing generate command");
     assert!(help_str.contains("story"), "Missing story subcommand");
     assert!(help_str.contains("epic"), "Missing epic subcommand");
@@ -176,6 +180,23 @@ fn cli_parses_generate_command() {
         cli.command,
         Commands::Management(ManagementCommands::Generate)
     ));
+}
+
+#[test]
+fn cli_parses_new_command_with_optional_path() {
+    let cli = Cli::try_parse_from(["board", "new", "harbor"]).unwrap();
+    match cli.command {
+        Commands::Management(ManagementCommands::New { path }) => {
+            assert_eq!(path.unwrap(), std::path::PathBuf::from("harbor"));
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+}
+
+#[test]
+fn cli_rejects_removed_init_command() {
+    let result = crate::cli::build_cli().try_get_matches_from(["keel", "init"]);
+    assert!(result.is_err());
 }
 
 #[test]

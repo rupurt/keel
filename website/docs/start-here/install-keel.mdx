@@ -75,11 +75,11 @@ Use that path if you prefer release artifacts over source builds.
 
 ## Verify the CLI
 
-Once the binary is available, confirm the surface before you create a board:
+Once the binary is available, confirm the surface before you scaffold a project:
 
 ```bash
 keel --help
-keel init --help
+keel new --help
 keel next --help
 ```
 
@@ -87,7 +87,15 @@ You should see the main command families for diagnostics, planning, execution, a
 
 ## If you are adopting Keel inside another repo
 
-Installing the binary is only the first layer. A downstream repository still needs local `AGENTS.md` and `INSTRUCTIONS.md` files that teach humans and agents how to use Keel as that repo's project-management engine.
+Installing the binary is only the first layer. A downstream repository still needs a board scaffold, `keel.toml`, and local foundation docs that teach humans and agents how to use Keel as that repo's project-management engine.
+
+The preferred bootstrap is:
+
+```bash
+keel new .
+```
+
+That command creates the board scaffold, installs hooks, and writes downstream starter documents such as `AGENTS.md`, `INSTRUCTIONS.md`, `CONSTITUTION.md`, `POLICY.md`, `ARCHITECTURE.md`, and `USER_GUIDE.md` when they do not already exist.
 
 Read [Downstream Project Contracts](/docs/workflows/downstream-project-contracts) when you are adapting Keel into another codebase, and [Upgrade Keel And Sync Upstream Instructions](/docs/workflows/upgrading-keel-and-syncing-instructions) when you need to absorb upstream changes without erasing local operating rules.
 
