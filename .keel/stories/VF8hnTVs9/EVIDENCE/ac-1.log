@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:22:50.521152445-07:00
+mode: manual
+---
+CLI help output is now generated from render_help_groups() in the command catalog and wired through command_tree.rs. Verified with cargo run -- --help showing the catalog-backed family help text.

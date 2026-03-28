@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:37:18.202835056-07:00
+mode: manual
+---
+Added keel roles as a direct workflow-topology inspection surface with concise human-readable role, lane, contract, and lane-behavior output. Verified with cargo run -- roles --json and cargo test -p keel --bin keel roles_.

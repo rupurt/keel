@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:41:14.253820030-07:00
+mode: manual
+---
+Added contract guards that compare documented scene surfaces and sceneContractClaims in website/docs/cli/scene-surfaces.mdx against the central scene_contracts registry. Verified with cargo test -p keel --bin keel narrative_contracts.

@@ -414,6 +414,54 @@ _|_|_                                                            _|_|_
   },
 ];
 
+export const sceneContractClaims = [
+  {
+    surfaceId: 'med-bay',
+    dependencies: ['doctor_report', 'flow_metrics'],
+  },
+  {
+    surfaceId: 'power-rack',
+    dependencies: [
+      'working_hours_gate',
+      'doctor_report',
+      'derived_heartbeat',
+      'flow_metrics',
+      'workflow_topology',
+    ],
+  },
+  {
+    surfaceId: 'workbench',
+    dependencies: [
+      'derived_heartbeat',
+      'human_attention_queue',
+      'planning_clutter',
+      'remediation_effort',
+      'structural_drift',
+      'workflow_topology',
+    ],
+  },
+  {
+    surfaceId: 'doctor-scene',
+    dependencies: ['doctor_report'],
+  },
+  {
+    surfaceId: 'clocktower',
+    dependencies: ['pulse_cycle'],
+  },
+  {
+    surfaceId: 'constraint-watch',
+    dependencies: ['mission_constraint_watch'],
+  },
+  {
+    surfaceId: 'mission-radar',
+    dependencies: ['mission_next_decision', 'workflow_topology'],
+  },
+  {
+    surfaceId: 'vault',
+    dependencies: ['flow_metrics', 'work_capital'],
+  },
+];
+
 Keel's `--scene` flags are a deliberate answer to the agentic era: a shared terminal can carry a richer, more coherent state story than a wall of plain text, as long as the visuals stay logically tied to the command data underneath them.
 
 <SignalGrid items={sceneSignals} />

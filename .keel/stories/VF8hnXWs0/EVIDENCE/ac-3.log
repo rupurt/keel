@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:37:18.369083910-07:00
+mode: manual
+---
+Explanation output is additive only and does not alter the underlying next decision algorithm. Verified by existing decision/guidance tests plus cargo run -- next --role manager --explain --json still producing the same diagnostics decision class.

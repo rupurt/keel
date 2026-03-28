@@ -5,13 +5,53 @@ description: See how Keel turns a vague ticket flow into a visible loop of orien
 
 import TurnDivider from '@site/src/components/TurnDivider';
 
+export const turnLoopExamples = [
+  {
+    phase: 'Orient',
+    commands: [
+      'keel health --scene',
+      'keel heartbeat',
+      'keel flow --scene',
+      'keel doctor',
+    ],
+  },
+  {
+    phase: 'Inspect',
+    commands: ['keel mission next --status', 'keel pulse'],
+  },
+  {
+    phase: 'Pull',
+    commands: ['keel next --role manager'],
+  },
+  {
+    phase: 'Ship',
+    commands: [
+      'keel story start STORY-ID',
+      'keel story record STORY-ID --ac 1 --cmd "your-check-here"',
+      'keel story submit STORY-ID',
+    ],
+  },
+  {
+    phase: 'Close',
+    commands: ['keel story accept --role manager STORY-ID'],
+  },
+];
+
 After [Board Model](/docs/foundations/board-model) explains what exists and [Roles And Lanes](/docs/foundations/roles-and-lanes) explains who may act, the turn loop explains how the system changes over time. Keel is built around the idea that one turn should leave the board in a visibly better state. The loop below is not ceremony for its own sake. It is the minimum rhythm that keeps a human and AI team aligned on what is true.
+
+If you want this rhythm as a direct command surface instead of prose, use:
+
+```bash
+keel turn
+keel turn --json
+```
 
 ## Orient
 
 Start by reading the board before you move it.
 
 ```bash
+keel heartbeat
 keel health --scene
 keel flow --scene
 keel doctor

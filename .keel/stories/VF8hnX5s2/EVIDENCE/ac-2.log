@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:41:14.219191009-07:00
+mode: manual
+---
+Added drift guards that compare the documented turnLoopExamples export in website/docs/workflows/turn-loop.mdx against the canonical turn_loop projection. Verified with cargo test -p keel --bin keel narrative_contracts.

@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:31:46.578552465-07:00
+mode: manual
+---
+Heartbeat-driven and routing-aware scenes are now captured as dependencies in the central scene registry for power-rack, workbench, and mission-radar instead of ad hoc command-local contracts. Verified with cargo test -p keel-core scene_contracts.

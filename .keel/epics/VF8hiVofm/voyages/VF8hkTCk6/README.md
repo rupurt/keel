@@ -1,13 +1,15 @@
 ---
 # system-managed
 id: VF8hkTCk6
-status: planned
+status: done
 epic: VF8hiVofm
 created_at: 2026-03-27T23:05:33
 # authored
 title: Canonical Command Catalog And CLI Taxonomy
 index: 1
 updated_at: 2026-03-27T23:10:55
+started_at: 2026-03-27T23:11:37
+completed_at: 2026-03-27T23:24:00
 ---
 
 # Canonical Command Catalog And CLI Taxonomy
@@ -21,15 +23,17 @@ updated_at: 2026-03-27T23:10:55
 |----------|-------------|
 | [SRS.md](SRS.md) | Requirements and verification criteria |
 | [SDD.md](SDD.md) | Architecture and implementation details |
+| [VOYAGE_REPORT.md](VOYAGE_REPORT.md) | Narrative summary of implementation and evidence |
+| [COMPLIANCE_REPORT.md](COMPLIANCE_REPORT.md) | Traceability matrix and verification proof |
 <!-- END DOCUMENTS -->
 
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/2 stories complete
+**Progress:** 2/2 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Define Canonical CLI Command Catalog](../../../../stories/VF8hnQirj/README.md) | feat | backlog |
-| [Drive Help Text And Capability Guidance From Catalog](../../../../stories/VF8hnTVs9/README.md) | feat | backlog |
+| [Define Canonical CLI Command Catalog](../../../../stories/VF8hnQirj/README.md) | feat | done |
+| [Drive Help Text And Capability Guidance From Catalog](../../../../stories/VF8hnTVs9/README.md) | feat | done |
 <!-- END GENERATED -->

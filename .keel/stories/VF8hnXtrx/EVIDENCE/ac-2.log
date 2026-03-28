@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:41:14.310075982-07:00
+mode: manual
+---
+Added routing drift guards that compare the documented routingInspectionCommands and routingDefaults exports in website/docs/roles-and-lanes/role-routing-and-next.mdx against keel roles and keel next --explain defaults. Verified with cargo test -p keel --bin keel narrative_contracts, cargo run -- roles --json, and cargo run -- next --role manager --explain --json.

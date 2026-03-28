@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:37:18.337329337-07:00
+mode: manual
+---
+The explanation is derived from the canonical workflow_topology and role_routing projections rather than duplicated local heuristics. Verified with cargo test -p keel-core role_routing and cargo test -p keel --bin keel routing_explanation.

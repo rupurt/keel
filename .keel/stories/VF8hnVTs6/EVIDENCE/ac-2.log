@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:31:36.993009258-07:00
+mode: manual
+---
+Added keel turn with human-readable and JSON surfaces backed by the turn_loop projection. Verified with cargo run -- turn --json and cargo test -p keel --bin keel turn_.

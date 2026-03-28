@@ -22,11 +22,11 @@ index: 108
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/4 voyages complete, 0/8 stories done
+**Progress:** 4/4 voyages complete, 8/8 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Canonical Command Catalog And CLI Taxonomy](voyages/VF8hkTCk6/) | planned | 0/2 |
-| [First-Class Turn Loop And Scene Contracts](voyages/VF8hkUKk1/) | planned | 0/2 |
-| [Explain Roles Lanes And Next Routing](voyages/VF8hkVGjy/) | planned | 0/2 |
-| [Narrative Contract Tests And Drift Guards](voyages/VF8hkVhkI/) | planned | 0/2 |
+| [Canonical Command Catalog And CLI Taxonomy](voyages/VF8hkTCk6/) | done | 2/2 |
+| [First-Class Turn Loop And Scene Contracts](voyages/VF8hkUKk1/) | done | 2/2 |
+| [Explain Roles Lanes And Next Routing](voyages/VF8hkVGjy/) | done | 2/2 |
+| [Narrative Contract Tests And Drift Guards](voyages/VF8hkVhkI/) | done | 2/2 |
 <!-- END GENERATED -->

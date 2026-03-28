@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:31:36.955456872-07:00
+mode: manual
+---
+Added keel-core read_model::turn_loop as the canonical projection for Orient/Inspect/Pull/Ship/Close, with phase command associations derived from the shared command catalog. Verified with cargo test -p keel-core turn_loop.

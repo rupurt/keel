@@ -48,6 +48,13 @@ This matters for two reasons:
 - it protects strategic work from getting buried in implementation noise
 - it protects delivery work from being interrupted by planning decisions that belong elsewhere
 
+If you want to inspect the routing contract directly instead of inferring it from behavior, use:
+
+```bash
+keel roles
+keel roles --json
+```
+
 ## Management lane
 
 Management lane questions:
@@ -98,6 +105,7 @@ That is why Keel works for mixed teams. A project manager, engineer, designer, a
 ## Commands that make the lanes legible
 
 ```bash
+keel roles
 keel flow
 keel flow --scene
 keel workshop --scene
@@ -105,6 +113,7 @@ keel doctor
 ```
 
 - `keel flow` shows how work is moving across the configured topology
+- `keel roles` shows which roles resolve to which lanes and contracts
 - `keel workshop --scene` highlights items that require human attention
 - `keel doctor` validates structural integrity regardless of lane
 

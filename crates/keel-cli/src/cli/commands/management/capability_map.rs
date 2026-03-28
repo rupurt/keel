@@ -1,14 +1,9 @@
 //! Canonical command capability classification for management guidance rendering.
 
+use crate::cli::command_catalog::{CommandCapability, CommandSurfaceId, descriptor_for_id};
 use crate::cli::commands::management::guidance::{
     CanonicalGuidance, CommandGuidance, render_command_guidance,
 };
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CommandCapability {
-    Actionable,
-    Informational,
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ManagementCommand {
@@ -32,29 +27,32 @@ pub enum ManagementCommand {
     AuditStory,
 }
 
+fn command_surface_id(command: ManagementCommand) -> CommandSurfaceId {
+    match command {
+        ManagementCommand::AdrList => CommandSurfaceId::AdrList,
+        ManagementCommand::AdrShow => CommandSurfaceId::AdrShow,
+        ManagementCommand::AdrAccept => CommandSurfaceId::AdrAccept,
+        ManagementCommand::AdrReject => CommandSurfaceId::AdrReject,
+        ManagementCommand::AdrDeprecate => CommandSurfaceId::AdrDeprecate,
+        ManagementCommand::AdrSupersede => CommandSurfaceId::AdrSupersede,
+        ManagementCommand::BearingNew => CommandSurfaceId::BearingNew,
+        ManagementCommand::BearingList => CommandSurfaceId::BearingList,
+        ManagementCommand::BearingShow => CommandSurfaceId::BearingShow,
+        ManagementCommand::BearingResearch => CommandSurfaceId::BearingResearch,
+        ManagementCommand::BearingAssess => CommandSurfaceId::BearingAssess,
+        ManagementCommand::BearingPark => CommandSurfaceId::BearingPark,
+        ManagementCommand::BearingDecline => CommandSurfaceId::BearingDecline,
+        ManagementCommand::BearingLay => CommandSurfaceId::BearingLay,
+        ManagementCommand::PlaySuggest => CommandSurfaceId::PlaySuggest,
+        ManagementCommand::PlayExplore => CommandSurfaceId::PlayExplore,
+        ManagementCommand::VerifyStory => CommandSurfaceId::Verify,
+        ManagementCommand::AuditStory => CommandSurfaceId::Audit,
+    }
+}
+
 /// Canonical command capability classification map.
 pub fn classify_command(command: ManagementCommand) -> CommandCapability {
-    match command {
-        ManagementCommand::AdrList
-        | ManagementCommand::AdrShow
-        | ManagementCommand::BearingList
-        | ManagementCommand::BearingShow
-        | ManagementCommand::PlayExplore => CommandCapability::Informational,
-
-        ManagementCommand::AdrAccept
-        | ManagementCommand::AdrReject
-        | ManagementCommand::AdrDeprecate
-        | ManagementCommand::AdrSupersede
-        | ManagementCommand::BearingNew
-        | ManagementCommand::BearingResearch
-        | ManagementCommand::BearingAssess
-        | ManagementCommand::BearingPark
-        | ManagementCommand::BearingDecline
-        | ManagementCommand::BearingLay
-        | ManagementCommand::PlaySuggest
-        | ManagementCommand::VerifyStory
-        | ManagementCommand::AuditStory => CommandCapability::Actionable,
-    }
+    descriptor_for_id(command_surface_id(command)).capability
 }
 
 /// Render canonical guidance based on command capability classification.

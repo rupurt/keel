@@ -589,6 +589,252 @@ mod template_generator {
 }
 
 // ============================================================
+// Mission VF8g1H2u6: Narrative contract drift guards
+// ============================================================
+
+mod narrative_contracts {
+    use keel::infrastructure::config::Config;
+    use keel::read_model::command_catalog::{self, CommandFamily};
+    use keel::read_model::role_routing;
+    use keel::read_model::scene_contracts;
+    use keel::read_model::turn_loop;
+    use keel::read_model::workflow_topology;
+    use regex::Regex;
+
+    const CLI_OVERVIEW_DOC: &str = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../website/docs/cli/overview.mdx"
+    ));
+    const TURN_LOOP_DOC: &str = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../website/docs/workflows/turn-loop.mdx"
+    ));
+    const SCENE_SURFACES_DOC: &str = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../website/docs/cli/scene-surfaces.mdx"
+    ));
+    const ROUTING_DOC: &str = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../website/docs/roles-and-lanes/role-routing-and-next.mdx"
+    ));
+
+    fn extract_export_block<'a>(content: &'a str, name: &str) -> &'a str {
+        let anchor = format!("export const {name} = ");
+        let start = content
+            .find(&anchor)
+            .unwrap_or_else(|| panic!("missing export block `{name}`"))
+            + anchor.len();
+        let remainder = &content[start..];
+        let opener = remainder
+            .chars()
+            .find(|ch| !ch.is_whitespace())
+            .expect("export block opener");
+        let closer = match opener {
+            '[' => ']',
+            '{' => '}',
+            other => panic!("unsupported export opener `{other}`"),
+        };
+        let open_offset = remainder.find(opener).expect("export opener position");
+        let block = &remainder[open_offset..];
+
+        let mut depth = 0usize;
+        for (index, ch) in block.char_indices() {
+            if ch == opener {
+                depth += 1;
+            } else if ch == closer {
+                depth -= 1;
+                if depth == 0 {
+                    return &block[..=index];
+                }
+            }
+        }
+
+        panic!("unterminated export block `{name}`");
+    }
+
+    fn parse_string_list(block: &str) -> Vec<String> {
+        let regex = Regex::new(r"'([^']+)'").unwrap();
+        regex
+            .captures_iter(block)
+            .map(|capture| capture[1].to_string())
+            .collect()
+    }
+
+    fn parse_cli_family_commands(content: &str) -> Vec<Vec<String>> {
+        let block = extract_export_block(content, "cliFamilies");
+        let regex = Regex::new(r"commands:\s*\[(?P<items>[^\]]*)\]").unwrap();
+        regex
+            .captures_iter(block)
+            .map(|capture| parse_string_list(&capture["items"]))
+            .collect()
+    }
+
+    fn parse_turn_loop_examples(content: &str) -> Vec<(String, Vec<String>)> {
+        let block = extract_export_block(content, "turnLoopExamples");
+        let regex =
+            Regex::new(r"phase:\s*'(?P<phase>[^']+)'\s*,\s*commands:\s*\[(?P<commands>[^\]]*)\]")
+                .unwrap();
+        regex
+            .captures_iter(block)
+            .map(|capture| {
+                (
+                    capture["phase"].to_string(),
+                    parse_string_list(&capture["commands"]),
+                )
+            })
+            .collect()
+    }
+
+    fn parse_scene_surfaces(content: &str) -> Vec<(String, String)> {
+        let block = extract_export_block(content, "sceneSurfaces");
+        let regex =
+            Regex::new(r"scene:\s*'(?P<scene>[^']+)'\s*,\s*command:\s*'(?P<command>[^']+)'")
+                .unwrap();
+        regex
+            .captures_iter(block)
+            .map(|capture| (capture["scene"].to_string(), capture["command"].to_string()))
+            .collect()
+    }
+
+    fn parse_scene_dependency_claims(content: &str) -> Vec<(String, Vec<String>)> {
+        let block = extract_export_block(content, "sceneContractClaims");
+        let regex = Regex::new(
+            r"surfaceId:\s*'(?P<surface>[^']+)'\s*,\s*dependencies:\s*\[(?P<deps>[^\]]*)\]",
+        )
+        .unwrap();
+        regex
+            .captures_iter(block)
+            .map(|capture| {
+                (
+                    capture["surface"].to_string(),
+                    parse_string_list(&capture["deps"]),
+                )
+            })
+            .collect()
+    }
+
+    fn parse_object_field(content: &str, export_name: &str, field: &str) -> String {
+        let block = extract_export_block(content, export_name);
+        let regex = Regex::new(&format!(r"{field}:\s*'([^']+)'")).unwrap();
+        regex
+            .captures(block)
+            .unwrap_or_else(|| panic!("missing field `{field}` in export `{export_name}`"))[1]
+            .to_string()
+    }
+
+    fn scene_command_example(contract: &scene_contracts::SceneContract) -> String {
+        match contract.command_id {
+            command_catalog::CommandSurfaceId::MissionShow => {
+                "keel mission show MISSION-ID --scene".to_string()
+            }
+            command_catalog::CommandSurfaceId::MissionNext => {
+                "keel mission next --scene".to_string()
+            }
+            _ => format!(
+                "keel {} --scene",
+                command_catalog::descriptor_for_id(contract.command_id).full_path()
+            ),
+        }
+    }
+
+    #[test]
+    fn cli_family_docs_match_the_canonical_command_catalog() {
+        let documented = parse_cli_family_commands(CLI_OVERVIEW_DOC);
+        let canonical: Vec<Vec<String>> = CommandFamily::ALL
+            .into_iter()
+            .map(|family| {
+                command_catalog::descriptors_for_family(family)
+                    .map(|descriptor| descriptor.command.to_string())
+                    .collect()
+            })
+            .collect();
+
+        assert_eq!(documented, canonical);
+    }
+
+    #[test]
+    fn turn_loop_docs_match_the_canonical_turn_projection() {
+        let documented = parse_turn_loop_examples(TURN_LOOP_DOC);
+        let canonical: Vec<(String, Vec<String>)> = turn_loop::project()
+            .phases
+            .into_iter()
+            .map(|phase| {
+                (
+                    phase.title.to_string(),
+                    phase
+                        .commands
+                        .into_iter()
+                        .map(|command| command.example)
+                        .collect(),
+                )
+            })
+            .collect();
+
+        assert_eq!(documented, canonical);
+    }
+
+    #[test]
+    fn scene_surface_docs_match_the_scene_contract_registry() {
+        let documented = parse_scene_surfaces(SCENE_SURFACES_DOC);
+        let canonical: Vec<(String, String)> = scene_contracts::all_scene_contracts()
+            .iter()
+            .map(|contract| (contract.name.to_string(), scene_command_example(contract)))
+            .collect();
+
+        assert_eq!(documented, canonical);
+    }
+
+    #[test]
+    fn scene_dependency_claims_match_the_scene_contract_registry() {
+        let documented = parse_scene_dependency_claims(SCENE_SURFACES_DOC);
+        let canonical: Vec<(String, Vec<String>)> = scene_contracts::all_scene_contracts()
+            .iter()
+            .map(|contract| {
+                (
+                    contract.surface_id.to_string(),
+                    contract
+                        .dependencies
+                        .iter()
+                        .map(|dependency| dependency.label().to_string())
+                        .collect(),
+                )
+            })
+            .collect();
+
+        assert_eq!(documented, canonical);
+    }
+
+    #[test]
+    fn routing_docs_match_the_roles_and_explain_contract() {
+        let topology = workflow_topology::resolve(&Config::default()).unwrap();
+        let roles = role_routing::project_roles(&topology);
+
+        let documented_commands = parse_string_list(extract_export_block(
+            ROUTING_DOC,
+            "routingInspectionCommands",
+        ));
+        let documented_management =
+            parse_object_field(ROUTING_DOC, "routingDefaults", "managementRole");
+        let documented_delivery =
+            parse_object_field(ROUTING_DOC, "routingDefaults", "deliveryRole");
+
+        let canonical_commands = vec![
+            "keel roles".to_string(),
+            "keel roles --json".to_string(),
+            format!(
+                "keel next --role {} --explain",
+                roles.management_role_example
+            ),
+            format!("keel next --role {} --explain", roles.delivery_role_example),
+        ];
+
+        assert_eq!(documented_commands, canonical_commands);
+        assert_eq!(documented_management, roles.management_role_example);
+        assert_eq!(documented_delivery, roles.delivery_role_example);
+    }
+}
+
+// ============================================================
 // Story 1vxH84K5a: Token bucket contract drift checks
 // ============================================================
 
@@ -903,6 +1149,7 @@ mod queue_policy_docs {
 
     #[test]
     fn command_help_docs_describe_role_based_queue_terms() {
+        let rendered_help = crate::cli::command_catalog::render_help_groups();
         assert!(
             README_DOC.contains(
                 "`keel next --role manager` returns management-lane decisions and never returns implementation `Work`."
@@ -921,7 +1168,7 @@ mod queue_policy_docs {
             "README.md should document that `keel next` requires an explicit role"
         );
         assert!(
-            COMMAND_TREE_RS
+            rendered_help
                 .contains("next        Pull the next item using explicit role-based queue routing"),
             "CLI help text should describe explicit role-based queue routing for `next`"
         );
@@ -935,7 +1182,7 @@ mod queue_policy_docs {
             "README.md should document the workflow lane flow help text"
         );
         assert!(
-            COMMAND_TREE_RS
+            rendered_help
                 .contains("flow        Show workflow lane dashboard from configured topology"),
             "CLI help text should describe workflow lane flow terms"
         );

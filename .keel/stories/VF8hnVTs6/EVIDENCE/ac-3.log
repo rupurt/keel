@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:31:37.026542493-07:00
+mode: manual
+---
+Turn output is deterministic through projection ordering and CLI regression tests. Verified with cargo test -p keel-core turn_loop and cargo test -p keel --bin keel turn_.

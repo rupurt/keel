@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:22:50.576994557-07:00
+mode: manual
+---
+Capability guidance classification now resolves through descriptor_for_id and command metadata in capability_map.rs instead of an independent hard-coded map. Verified with cargo test -p keel --bin keel command_help_docs_describe_role_based_queue_terms and full pre-commit.

@@ -3,6 +3,18 @@ title: Role Routing And `keel next`
 description: Understand how role selectors turn lanes into executable routing decisions instead of informal team habits.
 ---
 
+export const routingInspectionCommands = [
+  'keel roles',
+  'keel roles --json',
+  'keel next --role manager --explain',
+  'keel next --role operator --explain',
+];
+
+export const routingDefaults = {
+  managementRole: 'manager',
+  deliveryRole: 'operator',
+};
+
 Roles and lanes are not just explanatory language in Keel. They are routing controls. The board uses them to decide what queue you are asking for and what type of move is legitimate next.
 
 ## Why `keel next` needs a role
@@ -21,6 +33,16 @@ The role selector tells the board:
 - which scope of work is valid for that actor
 - whether the next move should be strategic or executable
 
+If you want to inspect the routing contract directly, Keel now exposes it:
+
+```bash
+keel roles
+keel roles --json
+keel next --role manager --explain
+```
+
+Those surfaces let you inspect the lane, queue type, contract, and role-context reasoning without changing the underlying pull decision.
+
 ## Management routing
 
 Management routing is for direction-setting, planning readiness, review authority, and acceptance.
@@ -35,6 +57,7 @@ Typical commands:
 
 ```bash
 keel mission next --status
+keel next --role manager --explain
 keel next --role manager
 keel workshop --scene
 ```
@@ -52,6 +75,7 @@ Typical questions:
 Typical commands:
 
 ```bash
+keel next --role operator --explain
 keel next --role operator
 keel next --role operator/software:frontend
 keel workshop --scene
@@ -66,6 +90,21 @@ That means Keel can support:
 - a small team with one operator role
 - a mixed product team with explicit discipline roles
 - downstream projects that adapt the upstream contract to their own delivery topology
+
+## Inspect the role contract explicitly
+
+`keel roles` is the stable inspection surface for the topology itself:
+
+- which base roles exist
+- which lane each role resolves to
+- whether the lane is management or execution
+- whether the lane allows parallel work or requires manual acceptance
+
+`keel next --explain` is the stable inspection surface for one specific routing decision:
+
+- which lane the selected role resolved to
+- which queue type the decision is reading
+- which contract and persona are attached to that role
 
 ## Routing is part of integrity
 

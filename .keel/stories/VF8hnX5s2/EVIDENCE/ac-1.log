@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:41:14.181331196-07:00
+mode: manual
+---
+Added drift guards that compare the documented CLI family arrays in website/docs/cli/overview.mdx against the canonical command catalog. Verified with cargo test -p keel --bin keel narrative_contracts.

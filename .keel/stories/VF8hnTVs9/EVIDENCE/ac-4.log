@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:22:50.608828850-07:00
+mode: manual
+---
+Public command names and family vocabulary remain stable after the cutover; the atlas help text still renders the existing user-facing families and commands from catalog metadata. Verified with cargo run -- --help and cargo test -p keel --bin keel command_help_docs_describe_role_based_queue_terms.

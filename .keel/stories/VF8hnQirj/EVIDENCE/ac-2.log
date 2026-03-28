@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:22:50.492739802-07:00
+mode: manual
+---
+Catalog ordering and descriptor behavior are covered by deterministic tests in command_catalog::tests, including family coverage, unique paths, scene queries, descriptor lookup, and help rendering. Verified with cargo test -p keel --bin keel command_catalog::tests.

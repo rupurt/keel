@@ -37,6 +37,8 @@ struct JsonResult {
     scheduled_routines: Vec<JsonScheduledRoutine>,
     #[serde(skip_serializing_if = "Option::is_none")]
     guidance: Option<CanonicalGuidance>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    explanation: Option<JsonRoutingExplanation>,
 }
 
 #[derive(Serialize)]
@@ -62,6 +64,20 @@ struct JsonPairwiseBlocker {
     blocked_by: String,
     reasons: Vec<String>,
     confidence: f64,
+}
+
+#[derive(Serialize, Clone)]
+struct JsonRoutingExplanation {
+    role: String,
+    lane: String,
+    lane_description: String,
+    queue_type: String,
+    parallel: bool,
+    manual_accept: bool,
+    operational_contract: String,
+    persona: String,
+    priorities: Vec<String>,
+    workflow: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -278,6 +294,7 @@ pub fn run(
     board_dir: &Path,
     json: bool,
     parallel: bool,
+    explain: bool,
     actor_role: &keel::domain::model::taxonomy::RoleTaxonomy,
 ) -> Result<()> {
     let board = load_board(board_dir)?;
@@ -290,6 +307,10 @@ pub fn run(
         .map_err(|error| unsupported_role_error(error, &topology))?;
 
     let management_role_example = topology.management_role_example().to_string();
+    let routing_explanation = explain
+        .then(|| keel::read_model::role_routing::explain_role(&topology, &effective_role))
+        .transpose()
+        .map_err(|error| unsupported_role_error(error, &topology))?;
 
     if parallel {
         if !actor_topology.parallel {
@@ -316,9 +337,9 @@ pub fn run(
             &board,
             board_dir,
             json,
+            routing_explanation.as_ref(),
             &effective_role,
             Some(&resolved_context),
-            &management_role_example,
             reference_time,
         );
     }
@@ -333,18 +354,22 @@ pub fn run(
             .map(|contract| RoleContextGuidance::from_contract(&effective_role, contract));
 
     if json {
-        let result = decision_to_json(
+        let mut result = decision_to_json(
             &decision,
             &scheduled_routines,
             role_context.as_ref(),
             &management_role_example,
         );
+        result.explanation = routing_explanation.as_ref().map(json_routing_explanation);
         println!("{}", serde_json::to_string_pretty(&result)?);
     } else {
         println!("{}", format_decision(&decision));
         let scheduled = render_scheduled_routines_human(&scheduled_routines);
         if !scheduled.is_empty() {
             print!("{scheduled}");
+        }
+        if let Some(explanation) = routing_explanation.as_ref() {
+            print!("{}", render_routing_explanation(explanation));
         }
         print_human_guidance(
             guidance_for_decision(&decision, role_context.as_ref(), &management_role_example)
@@ -503,6 +528,7 @@ fn decision_to_json(
         details,
         scheduled_routines: json_scheduled_routines(scheduled_routines),
         guidance: guidance_for_decision(decision, role_context, management_role_example),
+        explanation: None,
     }
 }
 
@@ -645,6 +671,41 @@ fn render_human_guidance(guidance: Option<&CanonicalGuidance>) -> String {
     rendered
 }
 
+fn render_routing_explanation(
+    explanation: &keel::read_model::role_routing::RoleRoutingExplanation,
+) -> String {
+    let mut rendered = String::from("\nRouting explanation:\n");
+    rendered.push_str(&format!("  Role: {}\n", explanation.role));
+    rendered.push_str(&format!("  Lane: {}\n", explanation.lane));
+    rendered.push_str(&format!(
+        "  Lane purpose: {}\n",
+        explanation.lane_description
+    ));
+    rendered.push_str(&format!(
+        "  Queue type: {}\n",
+        queue_type_label(explanation.queue_lane)
+    ));
+    rendered.push_str(&format!(
+        "  Lane behavior: {}{}\n",
+        if explanation.parallel {
+            "parallel"
+        } else {
+            "serial"
+        },
+        if explanation.manual_accept {
+            ", manual accept"
+        } else {
+            ""
+        }
+    ));
+    rendered.push_str(&format!(
+        "  Operational Contract: {}\n",
+        explanation.operational_contract
+    ));
+    rendered.push_str(&format!("  Persona: {}\n", explanation.persona));
+    rendered
+}
+
 fn print_human_guidance(guidance: Option<&CanonicalGuidance>) {
     let rendered = render_human_guidance(guidance);
     if !rendered.is_empty() {
@@ -690,6 +751,38 @@ fn json_scheduled_routines(scheduled: &[ScheduledRoutineProjection]) -> Vec<Json
             materialized_status: routine.materialized_status,
         })
         .collect()
+}
+
+fn json_routing_explanation(
+    explanation: &keel::read_model::role_routing::RoleRoutingExplanation,
+) -> JsonRoutingExplanation {
+    JsonRoutingExplanation {
+        role: explanation.role.clone(),
+        lane: explanation.lane.clone(),
+        lane_description: explanation.lane_description.clone(),
+        queue_type: queue_type_label(explanation.queue_lane).to_string(),
+        parallel: explanation.parallel,
+        manual_accept: explanation.manual_accept,
+        operational_contract: explanation.operational_contract.clone(),
+        persona: explanation.persona.to_string(),
+        priorities: explanation
+            .priorities
+            .iter()
+            .map(|priority| (*priority).to_string())
+            .collect(),
+        workflow: explanation
+            .workflow_hints
+            .iter()
+            .map(|hint| (*hint).to_string())
+            .collect(),
+    }
+}
+
+fn queue_type_label(queue_lane: keel::read_model::queue_policy::ActorQueueLane) -> &'static str {
+    match queue_lane {
+        keel::read_model::queue_policy::ActorQueueLane::Management => "management",
+        keel::read_model::queue_policy::ActorQueueLane::Execution => "execution",
+    }
 }
 
 fn scheduled_state_label(
@@ -837,7 +930,6 @@ fn build_parallel_json_result(
     projection: &ParallelProjection<'_>,
     scheduled_routines: &[ScheduledRoutineProjection],
     role_context: Option<&RoleContextGuidance>,
-    _management_role_example: &str,
 ) -> JsonResult {
     let mut ready_json: Vec<JsonStory> = projection
         .ready
@@ -882,6 +974,7 @@ fn build_parallel_json_result(
         },
         scheduled_routines: json_scheduled_routines(scheduled_routines),
         guidance: guidance_for_parallel_ready(&projection.ready, role_context),
+        explanation: None,
     }
 }
 
@@ -889,9 +982,9 @@ fn run_parallel(
     board: &keel::domain::model::Board,
     board_dir: &Path,
     json: bool,
+    routing_explanation: Option<&keel::read_model::role_routing::RoleRoutingExplanation>,
     actor_role: &keel::domain::model::taxonomy::RoleTaxonomy,
     actor_context: Option<&ResolvedActorContext>,
-    management_role_example: &str,
     reference_time: chrono::DateTime<chrono::Utc>,
 ) -> Result<()> {
     let projection = project_parallel_work(board, board_dir, Some(actor_role), reference_time);
@@ -899,12 +992,8 @@ fn run_parallel(
     let role_context = actor_context.and_then(|context| context.role_context.as_ref());
 
     if json {
-        let result = build_parallel_json_result(
-            &projection,
-            &scheduled_routines,
-            role_context,
-            management_role_example,
-        );
+        let mut result = build_parallel_json_result(&projection, &scheduled_routines, role_context);
+        result.explanation = routing_explanation.map(json_routing_explanation);
         println!("{}", serde_json::to_string_pretty(&result)?);
     } else {
         println!("Ready for Work (Parallel Safe):");
@@ -950,6 +1039,9 @@ fn run_parallel(
             print!("{scheduled}");
         }
 
+        if let Some(explanation) = routing_explanation {
+            print!("{}", render_routing_explanation(explanation));
+        }
         print_human_guidance(guidance_for_parallel_ready(&projection.ready, role_context).as_ref());
     }
 
@@ -1014,7 +1106,7 @@ updated_at: 2026-01-01T00:00:00
             .story(TestStory::new("S1").status(StoryState::Backlog))
             .build();
         let manager = keel::domain::model::taxonomy::parse("manager").unwrap();
-        let result = run(temp.path(), false, false, &manager);
+        let result = run(temp.path(), false, false, false, &manager);
         assert!(result.is_ok());
     }
 
@@ -1066,6 +1158,14 @@ updated_at: 2026-01-01T00:00:00
         let template =
             keel::read_model::role_context::resolve_role_context(&topology, &taxonomy).unwrap();
         RoleContextGuidance::from_contract(&taxonomy, template)
+    }
+
+    fn make_routing_explanation(
+        role: &str,
+    ) -> keel::read_model::role_routing::RoleRoutingExplanation {
+        let taxonomy = keel::domain::model::taxonomy::parse(role).unwrap();
+        let topology = default_topology();
+        keel::read_model::role_routing::explain_role(&topology, &taxonomy).unwrap()
     }
 
     fn write_custom_topology_config(path: &Path) {
@@ -1248,6 +1348,28 @@ priority = 50
     }
 
     #[test]
+    fn json_routing_explanation_serializes_queue_and_lane_behavior() {
+        let explanation = make_routing_explanation("manager");
+        let json = serde_json::to_value(json_routing_explanation(&explanation)).unwrap();
+
+        assert_eq!(json["role"], "manager");
+        assert_eq!(json["lane"], "management");
+        assert_eq!(json["queue_type"], "management");
+        assert_eq!(json["parallel"], false);
+        assert_eq!(json["manual_accept"], true);
+    }
+
+    #[test]
+    fn human_routing_explanation_surfaces_queue_type() {
+        let explanation = make_routing_explanation("operator/software");
+        let rendered = render_routing_explanation(&explanation);
+
+        assert!(rendered.contains("Routing explanation:"));
+        assert!(rendered.contains("Queue type: execution"));
+        assert!(rendered.contains("Lane behavior: parallel"));
+    }
+
+    #[test]
     fn actionable_decisions_keep_human_and_json_guidance_in_sync() {
         let work = NextDecision::Work(StoryDecision {
             story: make_story("S10"),
@@ -1353,6 +1475,7 @@ priority = 50
             },
             scheduled_routines: vec![],
             guidance: None,
+            explanation: None,
         };
 
         let json = serde_json::to_value(result).unwrap();
@@ -1528,18 +1651,13 @@ priority = 50
         let second_projection =
             project_parallel_work(&board_second, temp.path(), None, reference_time);
 
-        let first_output = serde_json::to_string_pretty(&build_parallel_json_result(
-            &first_projection,
-            &[],
-            None,
-            "manager",
-        ))
-        .unwrap();
+        let first_output =
+            serde_json::to_string_pretty(&build_parallel_json_result(&first_projection, &[], None))
+                .unwrap();
         let second_output = serde_json::to_string_pretty(&build_parallel_json_result(
             &second_projection,
             &[],
             None,
-            "manager",
         ))
         .unwrap();
 

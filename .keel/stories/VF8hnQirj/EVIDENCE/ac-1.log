@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:22:50.455062023-07:00
+mode: manual
+---
+Implemented crates/keel-cli/src/cli/command_catalog.rs as the canonical descriptor set covering public command surfaces with family, capability, turn phase, docs slug, and scene support metadata. Verified with cargo test -p keel --bin keel command_catalog::tests.

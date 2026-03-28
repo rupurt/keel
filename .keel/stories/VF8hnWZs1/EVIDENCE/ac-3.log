@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:37:18.276059282-07:00
+mode: manual
+---
+The role inspection output is deterministic through the shared role_routing projection and its regression tests. Verified with cargo test -p keel-core role_routing and cargo test -p keel --bin keel roles_.

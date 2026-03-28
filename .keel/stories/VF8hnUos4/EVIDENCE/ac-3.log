@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:31:37.110772290-07:00
+mode: manual
+---
+The scene registry is descriptive only and does not change existing visual behavior. Existing command-help drift tests still pass, verified with cargo test -p keel --bin keel command_help_docs_describe_role_based_queue_terms and targeted scene/turn tests.

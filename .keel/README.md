@@ -375,14 +375,14 @@
 | [Introduce Derived Heartbeat Surface And Flow Fallback](epics/VF7Geb3Wa/voyages/VF7Gfk7zv/) | done |
 | [Remove File Heartbeat And Align Pacemaker Operations](epics/VF7Geb3Wa/voyages/VF7Gfkizo/) | done |
 
-### [Make Public Narrative Authoritative In The Engine](epics/VF8hiVofm/) (active)
+### [Make Public Narrative Authoritative In The Engine](epics/VF8hiVofm/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Canonical Command Catalog And CLI Taxonomy](epics/VF8hiVofm/voyages/VF8hkTCk6/) | planned |
-| [First-Class Turn Loop And Scene Contracts](epics/VF8hiVofm/voyages/VF8hkUKk1/) | planned |
-| [Explain Roles Lanes And Next Routing](epics/VF8hiVofm/voyages/VF8hkVGjy/) | planned |
-| [Narrative Contract Tests And Drift Guards](epics/VF8hiVofm/voyages/VF8hkVhkI/) | planned |
+| [Canonical Command Catalog And CLI Taxonomy](epics/VF8hiVofm/voyages/VF8hkTCk6/) | done |
+| [First-Class Turn Loop And Scene Contracts](epics/VF8hiVofm/voyages/VF8hkUKk1/) | done |
+| [Explain Roles Lanes And Next Routing](epics/VF8hiVofm/voyages/VF8hkVGjy/) | done |
+| [Narrative Contract Tests And Drift Guards](epics/VF8hiVofm/voyages/VF8hkVhkI/) | done |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

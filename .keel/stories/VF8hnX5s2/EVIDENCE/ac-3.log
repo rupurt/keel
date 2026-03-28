@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:41:14.276136689-07:00
+mode: manual
+---
+The drift guards read focused exported docs fragments via extract_export_block instead of snapshotting full rendered pages. Verified with cargo test -p keel --bin keel narrative_contracts and just docs-build.

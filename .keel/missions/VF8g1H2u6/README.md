@@ -1,13 +1,14 @@
 ---
 # system-managed
 id: VF8g1H2u6
-status: active
+status: achieved
 created_at: 2026-03-27T22:58:40
-updated_at: 2026-03-27T23:10:59
+updated_at: 2026-03-27T23:45:07
 # authored
 title: Converge Product Narrative And Engine Contracts
 watch: ~
 activated_at: 2026-03-27T23:10:59
+achieved_at: 2026-03-27T23:45:07
 ---
 
 # Converge Product Narrative And Engine Contracts

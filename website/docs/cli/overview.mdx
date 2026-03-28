@@ -40,7 +40,7 @@ export const cliFamilies = [
     title: 'Pull and close delivery slices',
     body:
       'Use the workbench and role-scoped queues to pull one executable move, attach proof, and close the slice without guessing.',
-    commands: ['workshop', 'next', 'story', 'verify', 'audit'],
+    commands: ['workshop', 'turn', 'roles', 'next', 'story', 'verify', 'audit'],
   },
   {
     eyebrow: 'The Architect',
@@ -100,6 +100,16 @@ That sequence answers four different questions:
 
 Once that loop feels natural, expand outward into planning commands such as `mission`, `epic`, `voyage`, and `adr`, then deeper maintenance surfaces such as `pulse`, `topology`, and `knowledge`.
 
+Two additional inspection surfaces become useful as soon as the board starts to feel real:
+
+```bash
+keel turn
+keel roles
+```
+
+- `keel turn` exposes the canonical operating rhythm directly instead of leaving it only in docs prose.
+- `keel roles` exposes the configured lane and contract model directly instead of burying it inside config and implicit `next` behavior.
+
 ## The CLI is designed to be read by both humans and agents
 
 The same surface should work in three modes:
@@ -114,3 +124,4 @@ That is why the CLI matters so much in Keel. It is not just an admin tool. It is
 
 - Read [Heartbeat And Pacemaker](/docs/cli/heartbeat-and-pacemaker) to understand the derived repository-activity model that now powers the pacemaker.
 - Read [Scene Surfaces](/docs/cli/scene-surfaces) to learn which `--scene` views are logical decision surfaces rather than decoration.
+- Read [The Turn Loop](/docs/workflows/turn-loop) and [Role Routing And `keel next`](/docs/roles-and-lanes/role-routing-and-next) to see how `keel turn`, `keel roles`, and `keel next --explain` fit together.

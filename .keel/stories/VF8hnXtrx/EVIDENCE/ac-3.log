@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:41:14.337503734-07:00
+mode: manual
+---
+The scene and routing guards are readable, localized helpers in crates/keel-cli/src/drift_tests.rs that compare structured exports to canonical projections rather than comparing opaque strings. Verified with cargo test -p keel --bin keel narrative_contracts.

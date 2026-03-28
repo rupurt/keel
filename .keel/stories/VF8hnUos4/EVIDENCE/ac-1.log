@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:31:37.065333144-07:00
+mode: manual
+---
+Added keel-core read_model::scene_contracts as the central registry for every public --scene surface and its canonical dependency signals. Verified with cargo test -p keel-core scene_contracts.

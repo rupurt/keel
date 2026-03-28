@@ -1,0 +1,5 @@
+---
+recorded_at: 2026-03-27T23:37:18.236292779-07:00
+mode: manual
+---
+keel roles --json now exposes stable machine-readable defaults, roles, and overrides derived from the canonical role_routing projection. Verified with cargo run -- roles --json.

@@ -4,6 +4,7 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 
+pub mod command_catalog;
 pub mod command_tree;
 pub mod commands;
 pub mod presentation;

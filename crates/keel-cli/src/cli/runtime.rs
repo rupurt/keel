@@ -83,6 +83,15 @@ pub fn run() -> Result<()> {
             let scene = *m.get_one::<bool>("scene").unwrap_or(&false);
             super::commands::diagnostics::workshop::run(&resolve_board_dir()?, scene)
         }
+        Some(("turn", m)) => {
+            let json = *m.get_one::<bool>("json").unwrap_or(&false);
+            super::commands::diagnostics::turn::run(json)
+        }
+        Some(("roles", m)) => {
+            let role = m.get_one::<String>("role").map(|value| value.as_str());
+            let json = *m.get_one::<bool>("json").unwrap_or(&false);
+            super::commands::management::roles::run(&resolve_board_dir()?, role, json)
+        }
         Some(("throughput", m)) => {
             let no_color = *m.get_one::<bool>("no_color").unwrap_or(&false);
             super::commands::diagnostics::throughput::run(&resolve_board_dir()?, no_color)
@@ -90,10 +99,17 @@ pub fn run() -> Result<()> {
         Some(("next", m)) => {
             let json = *m.get_one::<bool>("json").unwrap_or(&false);
             let parallel = *m.get_one::<bool>("parallel").unwrap_or(&false);
+            let explain = *m.get_one::<bool>("explain").unwrap_or(&false);
             let role_str = m.get_one::<String>("role").expect("required");
             let role = super::commands::management::next::parse_actor_role(role_str)?;
 
-            super::commands::management::next::run(&resolve_board_dir()?, json, parallel, &role)
+            super::commands::management::next::run(
+                &resolve_board_dir()?,
+                json,
+                parallel,
+                explain,
+                &role,
+            )
         }
         Some(("pulse", m)) => {
             let json = *m.get_one::<bool>("json").unwrap_or(&false);

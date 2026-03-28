@@ -1,52 +1,7 @@
 //! Shared CLI command tree definition.
 
+use super::command_catalog::render_help_groups;
 use clap::{Arg, ArgAction, Command, Subcommand};
-
-const HELP_GROUPS: &str = r#"
-The Ramping Path (Your Moves):
-
-1. The Fixer (Learning by Healing)
-  doctor      Validate board health and optionally fix issues
-  health      Subsystem status check and bio-scan (The Med-Bay)
-  heartbeat   Show repository activity heartbeat and wake state
-  flow        Show workflow lane dashboard from configured topology
-  screen      Visual representation of the current board (Strategic Radar)
-
-2. The Operator (Learning by Building)
-  workshop    Focus on items requiring human attention (The Workbench)
-  next        Pull the next item using explicit role-based queue routing
-  story       Implementation units and acceptance criteria
-  verify      Execute verification proofs
-  audit       Rich evidence/traceability report
-
-3. The Architect (Learning by Constraining)
-  mission     Strategic objectives and charters
-  epic        Strategic grouping and PRD management
-  voyage      Tactical planning (SRS/SDD) and execution
-  routine     Scheduled strategic work (Routines)
-  adr         Architecture Decision Records (The Physics)
-  roadmap     Strategic management timeline
-  finance     Work capital and system solvency (The Vault)
-
-Discovery & Automation:
-  play        Invite play-driven discovery (The Sandbox)
-  bearing     Research phase and fog reduction
-  knowledge   Manage institutional memory
-  pulse       Run one non-interactive automation cycle
-  topology    Show a zoomable world map of the board
-
-Comms:
-  ping        Send a message to the inbox
-  poke        Respond to or re-evaluate a ping in the inbox
-  inbox       List messages in the inbox
-  outbox      List messages in the outbox
-
-Setup:
-  init        Initialize a new keel board
-  config      Configuration and technique inventory
-  generate    Regenerate board artifacts
-  hooks       Install git hooks for pacemaker protocol
-"#;
 
 fn hidden_subcommand_group<T>(name: &'static str, about: &'static str) -> Command
 where
@@ -59,7 +14,7 @@ pub fn build_cli() -> Command {
     Command::new("keel")
         .about("Agentic SDLC management — minimize drift through planning, execution, and verification")
         .version(env!("CARGO_PKG_VERSION"))
-        .after_help(HELP_GROUPS)
+        .after_help(render_help_groups())
         .disable_help_subcommand(true)
         .arg(
             Arg::new("auth-file")
@@ -176,6 +131,35 @@ pub fn build_cli() -> Command {
                 .hide(true),
         )
         .subcommand(
+            Command::new("turn")
+                .about("Inspect the canonical Orient/Inspect/Pull/Ship/Close loop")
+                .hide(true)
+                .arg(
+                    Arg::new("json")
+                        .long("json")
+                        .help("Output as JSON for scripting")
+                        .action(ArgAction::SetTrue),
+                ),
+        )
+        .subcommand(
+            Command::new("roles")
+                .about("Inspect configured roles, lanes, and contracts")
+                .hide(true)
+                .arg(
+                    Arg::new("role")
+                        .long("role")
+                        .value_name("TAXONOMY")
+                        .help("Focus on a specific role taxonomy")
+                        .num_args(1),
+                )
+                .arg(
+                    Arg::new("json")
+                        .long("json")
+                        .help("Output as JSON for scripting")
+                        .action(ArgAction::SetTrue),
+                ),
+        )
+        .subcommand(
             Command::new("next")
                 .about("Pull the next item for an explicit role-selected queue")
                 .hide(true)
@@ -197,6 +181,12 @@ pub fn build_cli() -> Command {
                     Arg::new("parallel")
                         .long("parallel")
                         .help("Return all parallel-safe stories for batch dispatch")
+                        .action(ArgAction::SetTrue),
+                )
+                .arg(
+                    Arg::new("explain")
+                        .long("explain")
+                        .help("Show canonical routing explanation for the selected role")
                         .action(ArgAction::SetTrue),
                 ),
         )
