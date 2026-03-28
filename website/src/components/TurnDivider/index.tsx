@@ -22,8 +22,11 @@ type PointerState = {
   y: number;
 };
 
-const GRAVITY_RADIUS_FACTOR = 0.92;
-const GRAVITY_SCALE_MAX = 1.9;
+const GRAVITY_OUTER_RADIUS_FACTOR = 0.62;
+const GRAVITY_INNER_RADIUS_FACTOR = 0.26;
+const GRAVITY_OUTER_ENTRY_THRESHOLD = 0.24;
+const GRAVITY_OUTER_SCALE_GAIN = 0.14;
+const GRAVITY_INNER_SCALE_GAIN = 0.68;
 
 const STEP_PATTERNS: Record<2 | 3 | 4, StepPosition[]> = {
   2: [
@@ -94,18 +97,31 @@ export default function TurnDivider({
           if (pointer) {
             const stepCenterX = (x / 100) * pointer.width;
             const stepCenterY = (step.y / 100) * pointer.height;
-            const gravityRadius =
-              Math.max(pointer.width, pointer.height) * GRAVITY_RADIUS_FACTOR;
+            const gravityExtent = Math.max(pointer.width, pointer.height);
+            const outerRadius =
+              gravityExtent * GRAVITY_OUTER_RADIUS_FACTOR;
+            const innerRadius =
+              gravityExtent * GRAVITY_INNER_RADIUS_FACTOR;
             const distance = Math.hypot(
               pointer.x - stepCenterX,
               pointer.y - stepCenterY,
             );
-            const proximity = Math.max(0, 1 - distance / gravityRadius);
+            const outerProximity = Math.max(0, 1 - distance / outerRadius);
+            const innerProximity = Math.max(0, 1 - distance / innerRadius);
+            const outerInfluence =
+              outerProximity <= GRAVITY_OUTER_ENTRY_THRESHOLD
+                ? 0
+                : Math.pow(
+                    (outerProximity - GRAVITY_OUTER_ENTRY_THRESHOLD) /
+                      (1 - GRAVITY_OUTER_ENTRY_THRESHOLD),
+                    2.35,
+                  );
+            const innerInfluence = Math.pow(innerProximity, 1.4);
 
             cursorScale =
               1 +
-              Math.pow(proximity, 1.8) *
-                (GRAVITY_SCALE_MAX - 1);
+              outerInfluence * GRAVITY_OUTER_SCALE_GAIN +
+              innerInfluence * GRAVITY_INNER_SCALE_GAIN;
           }
 
           const style = {

@@ -72,6 +72,7 @@ Turnsteps are the canonical motion pattern:
 - the motion should feel like footsteps through paper or sand, with a slight rise and settle rather than a jump
 - opacity and inset highlight may pulse with the active step, but the overall surface must remain calm
 - pointer devices may exert local gravity so nearby steps scale up as the cursor approaches
+- gravity should feather in at the perimeter, then tighten so the nearest step grows most once the pointer is inside the trail
 - the gravity field must stay local to the trail, decay quickly, and drop out on touch or reduced-motion contexts
 
 ## Avoid
