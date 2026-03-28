@@ -37,8 +37,8 @@ export default function TurnCycle() {
             <div className={styles.markerRow}>
               <span aria-hidden="true" className={styles.pulse} />
               <span className={styles.count}>0{index + 1}</span>
+              <h3>{step.label}</h3>
             </div>
-            <h3>{step.label}</h3>
           </div>
           <code>{step.command}</code>
           <p>{step.body}</p>
