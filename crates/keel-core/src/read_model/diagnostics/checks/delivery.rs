@@ -16,7 +16,7 @@ pub fn check_delivery_liquidity(board: &Board) -> Vec<Problem> {
         problems.push(Problem {
             severity: Severity::Warning,
             path: board.root.join("stories"),
-            message: "Zero delivery liquidity. No ready stories in the backlog to sustain the 9-5 window.".to_string(),
+            message: "Zero delivery liquidity. No ready stories in the backlog to sustain the 7-7 window.".to_string(),
             fix: None,
             scope: None,
             category: None,

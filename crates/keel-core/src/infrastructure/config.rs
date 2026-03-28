@@ -202,11 +202,11 @@ pub fn default_open_for_work() -> bool {
 }
 
 pub fn default_working_hours_start() -> u8 {
-    9
+    7
 }
 
 pub fn default_working_hours_end() -> u8 {
-    17
+    19
 }
 
 pub fn default_battery_decay_minutes() -> u32 {
@@ -237,11 +237,11 @@ pub struct WorkflowConfig {
     #[serde(default = "default_open_for_work")]
     pub open_for_work: bool,
 
-    /// Hour of the day (0-23) the system starts working autonomously (default: 9)
+    /// Hour of the day (0-23) the system starts working autonomously (default: 7)
     #[serde(default = "default_working_hours_start")]
     pub working_hours_start: u8,
 
-    /// Hour of the day (0-23) the system stops working autonomously (default: 17)
+    /// Hour of the day (0-23) the system stops working autonomously (default: 19)
     #[serde(default = "default_working_hours_end")]
     pub working_hours_end: u8,
 
@@ -584,6 +584,13 @@ mod tests {
     fn default_config_has_constrained_mode() {
         let config = Config::default();
         assert_eq!(config.scoring.mode, "constrained");
+    }
+
+    #[test]
+    fn default_config_uses_seven_to_seven_working_window() {
+        let config = Config::default();
+        assert_eq!(config.workflow.working_hours_start, 7);
+        assert_eq!(config.workflow.working_hours_end, 19);
     }
 
     #[test]

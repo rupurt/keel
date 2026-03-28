@@ -148,6 +148,6 @@ fn render_vault_scene(
             " CAUTION ".on_yellow().black()
         );
     } else {
-        println!("\n    The vault is healthy. Work capital is sufficient for the 9-5 window.");
+        println!("\n    The vault is healthy. Work capital is sufficient for the 7-7 window.");
     }
 }
