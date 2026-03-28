@@ -81,9 +81,15 @@
   box-shadow: var(--keel-shadow-button);
 }
 
-.primaryAction:hover,
+.primaryAction:hover {
+  color: #fffdf8;
+  text-decoration: none;
+  transform: translateY(-2px);
+  box-shadow: var(--keel-shadow-button-hover);
+}
+
 .secondaryAction:hover {
-  color: inherit;
+  color: var(--keel-ink);
   text-decoration: none;
   transform: translateY(-2px);
   box-shadow: var(--keel-shadow-button-hover);
