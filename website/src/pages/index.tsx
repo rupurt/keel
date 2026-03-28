@@ -2,6 +2,7 @@ import type {ReactNode} from 'react';
 import Link from '@docusaurus/Link';
 import Layout from '@theme/Layout';
 import SignalGrid from '@site/src/components/SignalGrid';
+import TurnDivider from '@site/src/components/TurnDivider';
 import TurnCycle from '@site/src/components/TurnCycle';
 import TermRamp from '@site/src/components/TermRamp';
 import PersonaGrid from '@site/src/components/PersonaGrid';
@@ -117,6 +118,7 @@ export default function Home(): ReactNode {
                 </div>
               </div>
             </div>
+            <TurnDivider arcSide="right" turns={3} />
           </div>
         </section>
 
@@ -133,6 +135,7 @@ export default function Home(): ReactNode {
               </p>
             </div>
             <SignalGrid items={signalItems} />
+            <TurnDivider arcSide="left" turns={2} />
           </div>
         </section>
 
@@ -148,6 +151,7 @@ export default function Home(): ReactNode {
               </p>
             </div>
             <TurnCycle />
+            <TurnDivider arcSide="right" turns={3} />
           </div>
         </section>
 
@@ -163,6 +167,7 @@ export default function Home(): ReactNode {
               </p>
             </div>
             <TermRamp />
+            <TurnDivider arcSide="left" turns={2} />
           </div>
         </section>
 
@@ -178,6 +183,7 @@ export default function Home(): ReactNode {
               </p>
             </div>
             <SignalGrid items={laneItems} columns="two" />
+            <TurnDivider arcSide="right" turns={3} />
           </div>
         </section>
 
@@ -193,6 +199,7 @@ export default function Home(): ReactNode {
               </p>
             </div>
             <PersonaGrid />
+            <TurnDivider arcSide="left" turns={2} />
           </div>
         </section>
 

@@ -6,6 +6,7 @@ description: Learn how Keel structures work, why the hierarchy is strict, and wh
 import SignalGrid from '@site/src/components/SignalGrid';
 import TermRamp from '@site/src/components/TermRamp';
 import BoardSystemDiagram from '@site/src/components/BoardSystemDiagram';
+import TurnDivider from '@site/src/components/TurnDivider';
 
 export const structuralSignals = [
   {
@@ -48,9 +49,13 @@ Once the terms are familiar, the board map becomes easier to read. Keel is stric
 
 <BoardSystemDiagram />
 
+<TurnDivider compact arcSide="right" turns={3} />
+
 ## The core hierarchy
 
 <SignalGrid items={structuralSignals} columns="two" />
+
+<TurnDivider compact arcSide="left" turns={2} />
 
 | Plain-language job | Keel object | Primary artifact | Why it matters |
 | --- | --- | --- | --- |
@@ -80,6 +85,8 @@ The hierarchy exists so the board can answer:
 - what evidence will close it
 
 When that chain is missing, the board starts drifting. Keel's doctor and gates are built to surface that drift instead of tolerating it quietly.
+
+<TurnDivider compact arcSide="right" turns={3} />
 
 ## State matters as much as structure
 

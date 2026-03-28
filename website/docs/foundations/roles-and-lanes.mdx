@@ -4,6 +4,7 @@ description: See how Keel separates direction-setting from delivery while keepin
 ---
 
 import SignalGrid from '@site/src/components/SignalGrid';
+import TurnDivider from '@site/src/components/TurnDivider';
 
 export const laneSignals = [
   {
@@ -29,6 +30,8 @@ export const laneSignals = [
 If [Board Model](/docs/foundations/board-model) explains what exists on the board, this page explains who gets to move it. Keel keeps strategy and implementation close, but it does not let them blur together. The board has separate lanes because the questions are different.
 
 <SignalGrid items={laneSignals} />
+
+<TurnDivider compact arcSide="left" turns={2} />
 
 ## `keel next` is role-aware on purpose
 
@@ -89,6 +92,8 @@ Separation does not mean fragmentation. Both lanes read from the same board stat
 - the same routines and health signals
 
 That is why Keel works for mixed teams. A project manager, engineer, designer, and operator can all look at one system without wanting the same view.
+
+<TurnDivider compact arcSide="right" turns={3} />
 
 ## Commands that make the lanes legible
 

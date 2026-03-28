@@ -3,6 +3,8 @@ title: The Turn Loop
 description: See how Keel turns a vague ticket flow into a visible loop of orientation, selection, execution, and closure.
 ---
 
+import TurnDivider from '@site/src/components/TurnDivider';
+
 After [Board Model](/docs/foundations/board-model) explains what exists and [Roles And Lanes](/docs/foundations/roles-and-lanes) explains who may act, the turn loop explains how the system changes over time. Keel is built around the idea that one turn should leave the board in a visibly better state. The loop below is not ceremony for its own sake. It is the minimum rhythm that keeps a human and AI team aligned on what is true.
 
 ## Orient
@@ -20,6 +22,8 @@ This step answers three questions first:
 - Is the system structurally healthy?
 - Is work flowing, blocked, or waiting on human attention?
 - Can the board be trusted before more motion is introduced?
+
+<TurnDivider compact arcSide="right" turns={3} />
 
 ## Inspect
 
@@ -44,6 +48,8 @@ keel next --role operator/software:frontend
 
 This is where Keel stops being a passive tracker. The board routes work based on roles and lanes so strategy and execution do not fight for the same queue. This is the exact handoff point between the lane model and the turn model.
 
+<TurnDivider compact arcSide="left" turns={2} />
+
 ## Ship
 
 Execute the slice and attach proof while the work is still fresh.
@@ -65,6 +71,8 @@ keel story accept --role manager STORY-ID
 ```
 
 Closure is a governed act. Acceptance remains visible because the system distinguishes "submitted" from "trusted."
+
+<TurnDivider compact arcSide="right" turns={3} />
 
 ## Why the loop matters
 

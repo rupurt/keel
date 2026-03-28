@@ -5,6 +5,7 @@ description: Understand what Keel is, what it is not, and how to learn the board
 
 import SignalGrid from '@site/src/components/SignalGrid';
 import TermRamp from '@site/src/components/TermRamp';
+import TurnDivider from '@site/src/components/TurnDivider';
 import TurnCycle from '@site/src/components/TurnCycle';
 
 export const openingSignals = [
@@ -60,6 +61,8 @@ This documentation starts in plain language on purpose. You do not need to know 
 
 <SignalGrid items={openingSignals} />
 
+<TurnDivider compact arcSide="right" turns={3} />
+
 ## What "turn-based" means in practice
 
 Most tools assume that more activity means more progress. Keel assumes the opposite: when the board is blurry, the team slows down even if everyone is busy.
@@ -68,6 +71,8 @@ A turn is a bounded move. It begins with orientation, advances one scoped slice,
 
 <TurnCycle />
 
+<TurnDivider compact arcSide="left" turns={2} />
+
 ## Translate first, then learn the board terms
 
 Keel uses a native vocabulary because it wants different types of work to mean different things. A mission is not just a bigger story, and a routine is not just a repeating ticket.
@@ -75,6 +80,8 @@ Keel uses a native vocabulary because it wants different types of work to mean d
 The docs will translate from familiar concepts into Keel terms as you go.
 
 <TermRamp />
+
+<TurnDivider compact arcSide="right" turns={3} />
 
 ## What Keel does and does not own
 
