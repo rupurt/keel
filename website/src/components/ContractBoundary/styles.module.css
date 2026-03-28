@@ -1,41 +1,62 @@
 .wrap {
   display: grid;
-  gap: var(--keel-space-4);
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.7fr) minmax(0, 1fr);
+  gap: var(--keel-space-5);
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.72fr) minmax(0, 1fr);
   margin: var(--keel-space-6) 0;
 }
 
 .column,
 .seam {
-  padding: calc(var(--keel-card-padding) + 0.05rem);
-  border-radius: var(--keel-radius-lg);
-  border: 1px solid rgba(23, 33, 50, 0.09);
-  box-shadow: var(--keel-shadow-card);
+  position: relative;
+  padding: calc(var(--keel-card-padding) + 0.06rem);
+  border-radius: var(--keel-radius-md);
+  border: 1px solid rgba(17, 51, 79, 0.12);
 }
 
 .column {
-  background:
-    radial-gradient(circle at top right, rgba(63, 92, 133, 0.14), transparent 34%),
-    rgba(255, 255, 255, 0.76);
+  background: var(--keel-surface);
+  border-top: 2px solid rgba(74, 159, 216, 0.32);
+}
+
+.column::before,
+.seam::before {
+  content: '';
+  display: block;
+  width: 4rem;
+  height: 2px;
+  margin-bottom: var(--keel-space-3);
+  border-radius: 999px;
 }
 
 .seam {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  background:
-    linear-gradient(180deg, rgba(191, 122, 61, 0.11), rgba(63, 92, 133, 0.08)),
-    rgba(255, 248, 241, 0.92);
+  background: var(--keel-surface-strong);
+  color: var(--keel-ink);
+  border-top: 2px solid rgba(74, 159, 216, 0.32);
+}
+
+.column::before,
+.seam::before {
+  background: rgba(74, 159, 216, 0.96);
 }
 
 .eyebrow,
 .seamLabel {
   margin: 0 0 var(--keel-space-2);
   font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  font-weight: 760;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--keel-copper);
+}
+
+.eyebrow {
+  color: var(--keel-sea);
+}
+
+.seamLabel {
+  color: var(--keel-sea);
 }
 
 .column h3,

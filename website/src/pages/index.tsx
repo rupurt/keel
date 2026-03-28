@@ -48,19 +48,19 @@ export default function Home(): ReactNode {
   return (
     <Layout
       title="Keel"
-      description="Keel is a turn-based board operating engine for human/AI delivery teams.">
+      description="Keel is a turn-based board engine for human/AI delivery teams.">
       <main className={styles.page}>
         <section className={styles.hero}>
           <div className="container">
             <div className={styles.heroGrid}>
               <div className={styles.heroCopy}>
-                <p className={styles.eyebrow}>Board Operating Engine</p>
+                <p className={styles.eyebrow}>Agentic Board Engine</p>
                 <h1>Operate delivery one turn at a time.</h1>
                 <p className={styles.lede}>
-                  Keel is a turn-based board operating engine for human/AI
-                  delivery teams. It turns planning, execution, and verification
-                  into one shared board with explicit moves, role-aware lanes,
-                  and evidence-backed closure.
+                  Keel is a turn-based board engine for human/AI delivery
+                  teams. It turns planning, execution, and verification into
+                  one shared board with explicit moves, role-aware lanes, and
+                  evidence-backed closure.
                 </p>
                 <div className={styles.actions}>
                   <Link className={styles.primaryAction} to="/docs/intro">
@@ -80,6 +80,11 @@ export default function Home(): ReactNode {
               </div>
               <div className={styles.scenePanel}>
                 <div className={styles.sceneFrame}>
+                  <div className={styles.sceneChrome} aria-hidden="true">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
                   <p className={styles.sceneLabel}>Typical First Turn</p>
                   <ol className={styles.sceneSteps}>
                     <li>
@@ -99,20 +104,6 @@ export default function Home(): ReactNode {
                       <code>keel doctor</code>
                     </li>
                   </ol>
-                </div>
-                <div className={styles.sceneSignals}>
-                  <div>
-                    <span className={styles.signalTitle}>Turns</span>
-                    <strong>Explicit</strong>
-                  </div>
-                  <div>
-                    <span className={styles.signalTitle}>Proof</span>
-                    <strong>Recorded</strong>
-                  </div>
-                  <div>
-                    <span className={styles.signalTitle}>Automation</span>
-                    <strong>Constrained</strong>
-                  </div>
                 </div>
               </div>
             </div>

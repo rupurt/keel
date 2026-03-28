@@ -5,6 +5,7 @@ description: Learn how Keel structures work, why the hierarchy is strict, and wh
 
 import SignalGrid from '@site/src/components/SignalGrid';
 import TermRamp from '@site/src/components/TermRamp';
+import BoardSystemDiagram from '@site/src/components/BoardSystemDiagram';
 
 export const structuralSignals = [
   {
@@ -36,6 +37,10 @@ export const structuralSignals = [
 Keel uses a strict hierarchy because the board is meant to answer more than "what is someone doing right now?" It must also answer why the work exists, which constraints govern it, and how closure will be verified later.
 
 <TermRamp />
+
+Once the terms are familiar, the board map becomes easier to read. Keel is strict because these objects are meant to stay connected, not because the vocabulary is trying to feel exotic.
+
+<BoardSystemDiagram />
 
 ## The core hierarchy
 

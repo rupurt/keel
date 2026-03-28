@@ -59,10 +59,6 @@ const config: Config = {
     },
     navbar: {
       title: 'Keel',
-      logo: {
-        alt: 'Keel logo',
-        src: 'img/logo.svg',
-      },
       items: [
         {
           type: 'doc',

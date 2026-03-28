@@ -1,6 +1,6 @@
 .grid {
   display: grid;
-  gap: var(--keel-space-4);
+  gap: var(--keel-space-5);
   margin: var(--keel-space-6) 0 var(--keel-space-7);
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
@@ -9,25 +9,21 @@
   display: grid;
   gap: var(--keel-space-3);
   padding: var(--keel-card-padding);
-  border-radius: var(--keel-radius-xl);
-  background:
-    radial-gradient(circle at top right, rgba(191, 122, 61, 0.15), transparent 30%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(241, 233, 222, 0.84));
-  border: 1px solid var(--keel-line);
-  box-shadow: var(--keel-shadow-card);
+  border-radius: var(--keel-radius-md);
+  background: var(--keel-surface);
+  border: 1px solid rgba(17, 51, 79, 0.12);
+  border-top: 2px solid rgba(74, 159, 216, 0.32);
   color: inherit;
   text-decoration: none;
   transition:
     transform 160ms ease,
-    box-shadow 160ms ease,
     border-color 160ms ease;
 }
 
 .card:hover,
 .card:focus-visible {
-  transform: translateY(-2px);
-  border-color: rgba(63, 92, 133, 0.28);
-  box-shadow: 0 22px 38px rgba(23, 33, 50, 0.13);
+  transform: translateY(-3px);
+  border-color: var(--keel-sky-border-strong);
 }
 
 .topline {
@@ -39,8 +35,8 @@
 
 .jump {
   font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: 720;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ifm-link-color);
 }
@@ -48,19 +44,19 @@
 .scene {
   margin: 0;
   font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  font-weight: 760;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--keel-copper);
+  color: var(--keel-sea);
 }
 
 .command {
   display: inline-flex;
   width: fit-content;
-  padding: 0.4rem 0.72rem;
+  padding: 0.42rem 0.74rem;
   border-radius: 999px;
-  border: 1px solid rgba(23, 33, 50, 0.08);
-  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(17, 51, 79, 0.12);
+  background: rgba(255, 255, 255, 0.54);
   font-size: 0.82rem;
   color: var(--keel-ink);
 }
@@ -72,7 +68,7 @@
 
 .label {
   font-size: 0.74rem;
-  font-weight: 700;
+  font-weight: 760;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--keel-ink);

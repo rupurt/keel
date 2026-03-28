@@ -1,19 +1,17 @@
 .stack {
   display: grid;
-  gap: var(--keel-space-6);
+  gap: var(--keel-space-7);
   margin: var(--keel-space-6) 0 var(--keel-space-8);
 }
 
 .card {
   display: grid;
   gap: var(--keel-space-4);
-  padding: clamp(1.15rem, 1rem + 0.6vw, 1.6rem);
-  border-radius: var(--keel-radius-xl);
-  border: 1px solid var(--keel-line);
-  background:
-    radial-gradient(circle at top right, rgba(63, 92, 133, 0.12), transparent 34%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(241, 233, 222, 0.82));
-  box-shadow: var(--keel-shadow-panel);
+  padding: clamp(1.2rem, 1rem + 0.7vw, 1.7rem);
+  border-radius: var(--keel-radius-lg);
+  border: 1px solid rgba(17, 51, 79, 0.12);
+  border-top: 2px solid rgba(74, 159, 216, 0.32);
+  background: var(--keel-surface);
   scroll-margin-top: 6.5rem;
 }
 
@@ -34,12 +32,12 @@
   font-weight: 760;
   letter-spacing: 0.17em;
   text-transform: uppercase;
-  color: var(--keel-copper);
+  color: var(--keel-sea);
 }
 
 .title {
   margin: 0;
-  font-size: clamp(1.15rem, 1rem + 0.7vw, 1.55rem);
+  font-size: clamp(1.18rem, 1rem + 0.7vw, 1.6rem);
   line-height: 1.12;
   letter-spacing: -0.03em;
   color: var(--keel-ink);
@@ -50,8 +48,8 @@
   width: fit-content;
   padding: 0.42rem 0.72rem;
   border-radius: 999px;
-  border: 1px solid rgba(23, 33, 50, 0.08);
-  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(17, 51, 79, 0.12);
+  background: rgba(255, 255, 255, 0.54);
   color: var(--keel-ink);
   font-size: 0.83rem;
 }
@@ -87,14 +85,11 @@
   margin: 0;
   overflow-x: auto;
   padding: var(--keel-space-5);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--keel-sky-border-strong);
   border-radius: var(--keel-radius-lg);
-  background:
-    linear-gradient(180deg, rgba(14, 20, 31, 0.95), rgba(23, 33, 50, 0.96));
-  color: rgba(248, 242, 232, 0.94);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 16px 28px rgba(23, 33, 50, 0.16);
+  background: var(--keel-surface-strong);
+  color: var(--keel-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.48);
 }
 
 .terminal code {
@@ -118,8 +113,9 @@
   gap: var(--keel-space-2);
   padding: var(--keel-space-4);
   border-radius: var(--keel-radius-md);
-  border: 1px solid rgba(23, 33, 50, 0.08);
-  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(17, 51, 79, 0.1);
+  border-top: 2px solid rgba(106, 181, 234, 0.22);
+  background: rgba(255, 255, 255, 0.42);
 }
 
 .label {

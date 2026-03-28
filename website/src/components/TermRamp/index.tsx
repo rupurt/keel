@@ -38,10 +38,16 @@ export default function TermRamp() {
     <div className={styles.grid}>
       {terms.map((term) => (
         <article key={term.keel} className={styles.card}>
-          <p className={styles.plain}>{term.plain}</p>
-          <div className={styles.arrow} />
-          <h3>{term.keel}</h3>
-          <p>{term.body}</p>
+          <div className={styles.plainBlock}>
+            <p className={styles.plainLabel}>Everyday language</p>
+            <p className={styles.plain}>{term.plain}</p>
+          </div>
+          <div className={styles.arrow} aria-hidden="true" />
+          <div className={styles.keelBlock}>
+            <p className={styles.keelLabel}>Keel term</p>
+            <h3>{term.keel}</h3>
+            <p>{term.body}</p>
+          </div>
         </article>
       ))}
     </div>
