@@ -14,18 +14,24 @@ const signalItems = [
     title: 'Reduce drift before it spreads',
     body:
       'Keel treats planning gaps, stale state, and missing evidence as first-class system problems instead of project folklore.',
+    href: '/docs/foundations/board-model',
+    cta: 'Read the board model',
   },
   {
     eyebrow: 'Shared Operations',
     title: 'Give humans and agents one operating surface',
     body:
       'The board, the CLI, and the planning artifacts form one public contract that works across terminals, editors, and AI harnesses.',
+    href: '/docs/workflows/downstream-project-contracts',
+    cta: 'See the operating contract',
   },
   {
     eyebrow: 'Proof Over Vibes',
     title: 'Close work with evidence',
     body:
       'Stories do not end when someone says they are done. They end when the board can show why they should be trusted.',
+    href: '/docs/foundations/planning-and-verification',
+    cta: 'Learn verification flow',
   },
 ];
 
