@@ -15,7 +15,7 @@ That means:
 - simple geometry
 - careful spacing
 - restrained color
-- visible elevation without glossy effects
+- visible elevation with restrained acrylic reflection
 - mechanical, legible controls instead of decorative flourishes
 
 ## Light Physics
@@ -47,9 +47,9 @@ There are three planes in the docs theme:
 - Page background:
   Use a flat eggshell paper tone with no external depth effect.
 - Cards and panels:
-  Use the shared raised shadow tokens and avoid ad hoc ambient glows.
+  Use the shared raised shadow tokens, bright top-right rims, and restrained acrylic reflection instead of generic drop shadows.
 - Buttons and pills:
-  Should feel like nautical controls: compact, tactile, and slightly lifted from the page.
+  Should feel like premium nautical controls: compact, tactile, milled, and slightly lifted from the page.
 - Recessed surfaces:
   Terminals and internal trays should rely on inset contrast rather than external drop shadows.
 
@@ -79,5 +79,6 @@ Turnsteps are the canonical motion pattern:
 
 - symmetrical ambient shadows that ignore the light source
 - gradients as surface decoration
+- loud glossy streaks or toy-like shine
 - paper surfaces with conflicting elevations
 - components inventing their own shadow language

@@ -35,15 +35,55 @@
 
 .card {
   position: relative;
+  overflow: hidden;
+  isolation: isolate;
   padding: var(--keel-card-padding);
   border-radius: var(--keel-radius-md);
-  background: var(--keel-surface);
-  border: 1px solid rgba(17, 51, 79, 0.12);
+  background: var(--keel-surface-raised);
+  border: 1px solid;
+  border-color:
+    var(--keel-raised-border-top)
+    var(--keel-raised-border-right)
+    var(--keel-raised-border-bottom)
+    var(--keel-raised-border-left);
   box-shadow: var(--keel-shadow-card);
 }
 
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0.88rem;
+  right: 1rem;
+  width: 38%;
+  height: 1px;
+  border-radius: 999px;
+  background: var(--keel-acrylic-line);
+  opacity: 0.88;
+}
+
+.card::after {
+  content: '';
+  position: absolute;
+  top: 0.88rem;
+  right: 0.92rem;
+  width: 1px;
+  height: 30%;
+  border-radius: 999px;
+  background: var(--keel-acrylic-line-soft);
+  opacity: 0.74;
+}
+
+.card > * {
+  position: relative;
+  z-index: 1;
+}
+
 .cardLink:hover .card {
-  border-color: var(--keel-sky-border-strong);
+  border-color:
+    var(--keel-raised-border-strong-top)
+    var(--keel-raised-border-strong-right)
+    var(--keel-raised-border-strong-bottom)
+    var(--keel-raised-border-strong-left);
   box-shadow: var(--keel-shadow-card-hover);
 }
 

@@ -53,12 +53,16 @@
 
 .primaryAction,
 .secondaryAction {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-height: 3.1rem;
   padding: 0.82rem 1.34rem;
   border-radius: 999px;
+  border: 1px solid;
   font-weight: 640;
   text-decoration: none;
   transition:
@@ -68,30 +72,59 @@
     background 150ms ease;
 }
 
+.primaryAction::before,
+.secondaryAction::before {
+  content: '';
+  position: absolute;
+  top: 0.56rem;
+  right: 0.92rem;
+  width: 36%;
+  height: 1px;
+  border-radius: 999px;
+  background: var(--keel-acrylic-line);
+  opacity: 0.82;
+  pointer-events: none;
+}
+
+.primaryAction > *,
+.secondaryAction > * {
+  position: relative;
+  z-index: 1;
+}
+
 .primaryAction {
   color: #fffdf8;
   background: var(--keel-navy);
+  border-color:
+    rgba(255, 255, 255, 0.44)
+    rgba(255, 255, 255, 0.28)
+    rgba(17, 51, 79, 0.18)
+    rgba(17, 51, 79, 0.14);
   box-shadow: var(--keel-shadow-button);
 }
 
 .secondaryAction {
   color: var(--keel-ink);
-  background: var(--keel-surface);
-  border: 1px solid rgba(17, 51, 79, 0.14);
+  background: var(--keel-surface-control);
+  border-color:
+    var(--keel-raised-border-top)
+    var(--keel-raised-border-right)
+    var(--keel-raised-border-bottom)
+    var(--keel-raised-border-left);
   box-shadow: var(--keel-shadow-button);
 }
 
 .primaryAction:hover {
   color: #fffdf8;
   text-decoration: none;
-  transform: translateY(-2px);
+  transform: translate(-1px, -3px);
   box-shadow: var(--keel-shadow-button-hover);
 }
 
 .secondaryAction:hover {
   color: var(--keel-ink);
   text-decoration: none;
-  transform: translateY(-2px);
+  transform: translate(-1px, -3px);
   box-shadow: var(--keel-shadow-button-hover);
 }
 
@@ -131,15 +164,46 @@
 .sceneFrame {
   position: relative;
   overflow: hidden;
+  isolation: isolate;
   padding: 1.65rem;
   border-radius: 2rem;
-  background: var(--keel-surface);
-  border: 1px solid rgba(17, 51, 79, 0.14);
+  background: var(--keel-surface-raised);
+  border: 1px solid;
+  border-color:
+    var(--keel-raised-border-top)
+    var(--keel-raised-border-right)
+    var(--keel-raised-border-bottom)
+    var(--keel-raised-border-left);
   box-shadow: var(--keel-shadow-panel);
 }
 
 .sceneFrame::before {
-  content: none;
+  content: '';
+  position: absolute;
+  top: 0.95rem;
+  right: 1.2rem;
+  width: 34%;
+  height: 1px;
+  border-radius: 999px;
+  background: var(--keel-acrylic-line);
+  opacity: 0.88;
+}
+
+.sceneFrame::after {
+  content: '';
+  position: absolute;
+  top: 1rem;
+  right: 0.95rem;
+  width: 1px;
+  height: 28%;
+  border-radius: 999px;
+  background: var(--keel-acrylic-line-soft);
+  opacity: 0.78;
+}
+
+.sceneFrame > * {
+  position: relative;
+  z-index: 1;
 }
 
 .sceneChrome {
@@ -235,6 +299,8 @@
 
 .ctaCard {
   position: relative;
+  overflow: hidden;
+  isolation: isolate;
   display: flex;
   justify-content: space-between;
   gap: 1.8rem;
@@ -242,7 +308,12 @@
   padding: 2rem;
   border-radius: 2rem;
   background: var(--keel-navy);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid;
+  border-color:
+    rgba(255, 255, 255, 0.34)
+    rgba(255, 255, 255, 0.22)
+    rgba(17, 51, 79, 0.16)
+    rgba(17, 51, 79, 0.12);
   color: #fffdf8;
   box-shadow: var(--keel-shadow-panel);
 }
@@ -256,6 +327,23 @@
   height: 2px;
   border-radius: 999px;
   background: rgba(255, 253, 248, 0.72);
+}
+
+.ctaCard::after {
+  content: '';
+  position: absolute;
+  top: 1rem;
+  right: 1.2rem;
+  width: 34%;
+  height: 1px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.58);
+  opacity: 0.92;
+}
+
+.ctaCard > * {
+  position: relative;
+  z-index: 1;
 }
 
 .ctaCard h2 {
