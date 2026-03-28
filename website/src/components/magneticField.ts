@@ -1,7 +1,9 @@
 import type {PointerEventHandler} from 'react';
 
-const MAGNETIC_MAX_PULL_PX = 16;
-const MAGNETIC_FIELD_EXPONENT = 1.6;
+const MAGNETIC_MAX_PULL_PX = 11;
+const MAGNETIC_PERIMETER_EXPONENT = 0.72;
+const MAGNETIC_CORE_DAMPING = 0.42;
+const MAGNETIC_CORE_DAMPING_EXPONENT = 1.8;
 
 function prefersReducedMotion() {
   return (
@@ -38,10 +40,10 @@ function updateMagneticField(
   const normalizedY = offsetY / centerY;
   const radialDistance = Math.min(1, Math.hypot(normalizedX, normalizedY));
   const proximity = Math.max(0, 1 - radialDistance);
-  const magneticField = Math.pow(
-    Math.sin(proximity * Math.PI),
-    MAGNETIC_FIELD_EXPONENT,
-  );
+  const perimeterField = Math.pow(proximity, MAGNETIC_PERIMETER_EXPONENT);
+  const coreDamping =
+    1 - MAGNETIC_CORE_DAMPING * Math.pow(proximity, MAGNETIC_CORE_DAMPING_EXPONENT);
+  const magneticField = perimeterField * coreDamping;
   const pullX = normalizedX * MAGNETIC_MAX_PULL_PX * magneticField;
   const pullY = normalizedY * MAGNETIC_MAX_PULL_PX * magneticField;
 
