@@ -22,8 +22,16 @@ const sidebars: SidebarsConfig = {
       label: 'Foundations',
       items: [
         'foundations/board-model',
-        'foundations/roles-and-lanes',
+        'foundations/board-vocabulary',
         'foundations/planning-and-verification',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Roles And Lanes',
+      items: [
+        'foundations/roles-and-lanes',
+        'roles-and-lanes/role-routing-and-next',
       ],
     },
     {
@@ -31,6 +39,7 @@ const sidebars: SidebarsConfig = {
       label: 'Workflows',
       items: [
         'workflows/everyday-keel',
+        'workflows/turn-loop',
         'workflows/downstream-project-contracts',
         'workflows/upgrading-keel-and-syncing-instructions',
         'workflows/routines-and-pulse',

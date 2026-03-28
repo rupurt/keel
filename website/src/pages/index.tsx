@@ -41,12 +41,16 @@ const laneItems = [
     title: 'Choose direction',
     body:
       'Use missions, epics, voyages, and bearings to decide what the team should do next and what constraints matter.',
+    href: '/docs/foundations/roles-and-lanes#management-lane',
+    cta: 'Read the management lane',
   },
   {
     eyebrow: 'Delivery Lane',
     title: 'Ship one slice at a time',
     body:
       'Pull work with explicit roles, move it through clear states, and keep every turn small enough to verify.',
+    href: '/docs/roles-and-lanes/role-routing-and-next#delivery-routing',
+    cta: 'Read delivery routing',
   },
 ];
 

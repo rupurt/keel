@@ -17,12 +17,32 @@
   background: rgba(106, 181, 234, 0.36);
 }
 
+.cardLink {
+  display: block;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    transform 150ms ease,
+    color 150ms ease;
+}
+
+.cardLink:hover {
+  color: inherit;
+  text-decoration: none;
+  transform: translateY(-3px);
+}
+
 .card {
   position: relative;
   padding: var(--keel-card-padding);
   border-radius: var(--keel-radius-md);
   background: var(--keel-surface);
   border: 1px solid rgba(17, 51, 79, 0.12);
+}
+
+.cardLink:hover .card {
+  border-color: var(--keel-sky-border-strong);
 }
 
 .head {

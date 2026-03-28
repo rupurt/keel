@@ -1,0 +1,74 @@
+---
+title: Role Routing And `keel next`
+description: Understand how role selectors turn lanes into executable routing decisions instead of informal team habits.
+---
+
+Roles and lanes are not just explanatory language in Keel. They are routing controls. The board uses them to decide what queue you are asking for and what type of move is legitimate next.
+
+## Why `keel next` needs a role
+
+Keel does not assume there is one universal backlog. Asking "what is next?" without context is exactly how planning work and delivery work get mixed together.
+
+```bash
+keel next --role manager
+keel next --role operator
+keel next --role operator/software:frontend
+```
+
+The role selector tells the board:
+
+- which lane you want to read from
+- which scope of work is valid for that actor
+- whether the next move should be strategic or executable
+
+## Management routing
+
+Management routing is for direction-setting, planning readiness, review authority, and acceptance.
+
+Typical questions:
+
+- Which mission or epic needs attention next?
+- Is a voyage ready to be planned or started?
+- Which submitted story needs review or acceptance?
+
+Typical commands:
+
+```bash
+keel mission next --status
+keel next --role manager
+keel workshop --scene
+```
+
+## Delivery routing
+
+Delivery routing is for role-scoped execution work in the delivery lane.
+
+Typical questions:
+
+- What is the next implementable slice?
+- Which story should this operator start now?
+- What evidence or remediation is still missing?
+
+Typical commands:
+
+```bash
+keel next --role operator
+keel next --role operator/software:frontend
+keel workshop --scene
+```
+
+## Role selectors can be coarse or specific
+
+You can use a broad role family when you want a lane-level queue, or a more specific role selector when the board topology distinguishes types of delivery work.
+
+That means Keel can support:
+
+- a small team with one operator role
+- a mixed product team with explicit discipline roles
+- downstream projects that adapt the upstream contract to their own delivery topology
+
+## Routing is part of integrity
+
+This matters because pull behavior shapes board trust. If people bypass role routing and browse loosely, the board stops being the authority on what should happen next.
+
+Read [Roles And Lanes](/docs/foundations/roles-and-lanes) for the lane model itself, and [Everyday Keel](/docs/workflows/everyday-keel) for the day-to-day operator loop.

@@ -45,7 +45,7 @@ This matters for two reasons:
 - it protects strategic work from getting buried in implementation noise
 - it protects delivery work from being interrupted by planning decisions that belong elsewhere
 
-## What belongs in each lane
+## Management lane
 
 Management lane questions:
 
@@ -54,12 +54,30 @@ Management lane questions:
 - Is a voyage planned tightly enough to start?
 - Can this story be accepted yet?
 
+Management work is about selection, constraint, and authority. This lane is where the board decides what should exist and what can be trusted next.
+
+## Delivery lane
+
 Delivery lane questions:
 
 - What is the next executable slice?
 - Which story should I start now?
 - What evidence is still missing?
 - What should be submitted for review next?
+
+Delivery work is about execution, submission, and local proof. This lane is where the board consumes the plan without improvising a new one.
+
+## Role selectors
+
+The lane boundary becomes real when you use explicit roles on commands:
+
+```bash
+keel next --role manager
+keel next --role operator
+keel next --role operator/software:frontend
+```
+
+If you want the routing rules and command patterns in more detail, read [Role Routing And `keel next`](/docs/roles-and-lanes/role-routing-and-next).
 
 ## The shared board is still one system
 

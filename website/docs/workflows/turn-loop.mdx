@@ -1,0 +1,73 @@
+---
+title: The Turn Loop
+description: See how Keel turns a vague ticket flow into a visible loop of orientation, selection, execution, and closure.
+---
+
+Keel is built around the idea that one turn should leave the board in a visibly better state. The loop below is not ceremony for its own sake. It is the minimum rhythm that keeps a human and AI team aligned on what is true.
+
+## Orient
+
+Start by reading the board before you move it.
+
+```bash
+keel health --scene
+keel flow --scene
+keel doctor
+```
+
+This step answers three questions first:
+
+- Is the system structurally healthy?
+- Is work flowing, blocked, or waiting on human attention?
+- Can the board be trusted before more motion is introduced?
+
+## Inspect
+
+Once the board is healthy, read what it thinks matters now.
+
+```bash
+keel mission next --status
+keel pulse
+```
+
+Inspection is about deciding what the engine thinks is strategically or operationally important before you choose a slice.
+
+## Pull
+
+Pull one role-scoped slice from the correct lane.
+
+```bash
+keel next --role manager
+keel next --role operator
+keel next --role operator/software:frontend
+```
+
+This is where Keel stops being a passive tracker. The board routes work based on roles and lanes so strategy and execution do not fight for the same queue.
+
+## Ship
+
+Execute the slice and attach proof while the work is still fresh.
+
+```bash
+keel story start STORY-ID
+keel story record STORY-ID --ac 1 --cmd "your-check-here"
+keel story submit STORY-ID
+```
+
+Shipping in Keel means implementation plus evidence. Submission without proof is only partial closure.
+
+## Close
+
+Accept the slice explicitly and let the board absorb that state change upward.
+
+```bash
+keel story accept --role manager STORY-ID
+```
+
+Closure is a governed act. Acceptance remains visible because the system distinguishes "submitted" from "trusted."
+
+## Why the loop matters
+
+A normal ticket can sit in ambiguous states for days. A turn should not. Each step above exists to make the next state legible to both humans and agents.
+
+For the visual surfaces that support this loop, read [Scene Surfaces](/docs/cli/scene-surfaces). For the planning contract behind it, read [Planning And Verification](/docs/foundations/planning-and-verification).
