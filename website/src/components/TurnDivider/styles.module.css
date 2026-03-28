@@ -1,8 +1,8 @@
 .wrap {
-  --turn-divider-height: 5.3rem;
-  --turn-divider-step-width: 1.88rem;
-  --turn-divider-step-height: 1.7rem;
-  --turn-divider-trail-width: min(10rem, 14vw);
+  --turn-divider-height: 5.9rem;
+  --turn-divider-step-width: 2.22rem;
+  --turn-divider-step-height: 2rem;
+  --turn-divider-trail-width: min(12rem, 16vw);
 
   position: relative;
   min-height: var(--turn-divider-height);
@@ -10,10 +10,10 @@
 }
 
 .compact {
-  --turn-divider-height: 4.4rem;
-  --turn-divider-step-width: 1.5rem;
-  --turn-divider-step-height: 1.34rem;
-  --turn-divider-trail-width: min(7.6rem, 18vw);
+  --turn-divider-height: 4.9rem;
+  --turn-divider-step-width: 1.78rem;
+  --turn-divider-step-height: 1.58rem;
+  --turn-divider-trail-width: min(9rem, 20vw);
 
   margin: var(--keel-space-6) 0;
 }
@@ -128,20 +128,20 @@
 
 @media (max-width: 996px) {
   .wrap {
-    --turn-divider-height: 4.5rem;
-    --turn-divider-step-width: 1.58rem;
-    --turn-divider-step-height: 1.42rem;
-    --turn-divider-trail-width: min(6.2rem, 16vw);
+    --turn-divider-height: 5rem;
+    --turn-divider-step-width: 1.86rem;
+    --turn-divider-step-height: 1.66rem;
+    --turn-divider-trail-width: min(7.4rem, 18vw);
   }
 }
 
 @media (max-width: 640px) {
   .wrap,
   .compact {
-    --turn-divider-height: 3.2rem;
-    --turn-divider-step-width: 1.2rem;
-    --turn-divider-step-height: 1.06rem;
-    --turn-divider-trail-width: 4.8rem;
+    --turn-divider-height: 3.8rem;
+    --turn-divider-step-width: 1.44rem;
+    --turn-divider-step-height: 1.28rem;
+    --turn-divider-trail-width: 5.6rem;
   }
 }
 
