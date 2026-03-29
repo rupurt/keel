@@ -333,6 +333,17 @@ fn cli_parses_mission_next_with_id() {
 }
 
 #[test]
+fn cli_parses_mission_resume() {
+    let cli = Cli::try_parse_from(["board", "mission", "resume", "M1"]).unwrap();
+    assert!(matches!(
+        cli.command,
+        Commands::Management(ManagementCommands::Mission {
+            action: MissionAction::Resume { id }
+        }) if id == "M1"
+    ));
+}
+
+#[test]
 fn cli_parses_pulse_with_json() {
     let matches = crate::cli::build_cli()
         .try_get_matches_from(["keel", "pulse", "--json"])

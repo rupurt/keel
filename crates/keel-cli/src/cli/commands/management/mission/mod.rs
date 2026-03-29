@@ -84,6 +84,11 @@ pub enum MissionAction {
         /// Mission ID
         id: String,
     },
+    /// Resume a mission (Paused -> Active)
+    Resume {
+        /// Mission ID
+        id: String,
+    },
     /// Achieve a mission (Active -> Achieved)
     Achieve {
         /// Mission ID
@@ -155,6 +160,9 @@ pub fn run(ctx: &spoke_auth::ExecutionContext, action: MissionAction) -> Result<
         }
         MissionAction::Pause { id } => {
             keel::application::mission_lifecycle::MissionLifecycleService::pause(&board_dir, &id)
+        }
+        MissionAction::Resume { id } => {
+            keel::application::mission_lifecycle::MissionLifecycleService::resume(&board_dir, &id)
         }
         MissionAction::Achieve { id } => {
             let result = keel::application::mission_lifecycle::MissionLifecycleService::achieve(

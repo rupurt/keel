@@ -241,6 +241,41 @@ impl Board {
             .unwrap_or(false)
     }
 
+    /// Check whether an epic is halted because its parent mission is paused.
+    pub fn is_epic_paused_by_mission(&self, epic_id: &str) -> bool {
+        self.epics
+            .get(epic_id)
+            .and_then(|epic| epic.frontmatter.mission.as_deref())
+            .and_then(|mission_id| self.missions.get(mission_id))
+            .is_some_and(|mission| {
+                mission.status() == crate::domain::state_machine::mission::MissionStatus::Paused
+            })
+    }
+
+    /// Check whether a voyage is halted because its parent mission is paused.
+    pub fn is_voyage_paused_by_mission(&self, voyage: &Voyage) -> bool {
+        self.is_epic_paused_by_mission(&voyage.epic_id)
+    }
+
+    /// Check whether a story is halted because its parent mission is paused.
+    pub fn is_story_paused_by_mission(&self, story: &Story) -> bool {
+        story
+            .epic()
+            .is_some_and(|epic_id| self.is_epic_paused_by_mission(epic_id))
+    }
+
+    /// Check whether a bearing is halted because its parent mission is paused.
+    pub fn is_bearing_paused_by_mission(&self, bearing: &Bearing) -> bool {
+        bearing
+            .frontmatter
+            .mission
+            .as_deref()
+            .and_then(|mission_id| self.missions.get(mission_id))
+            .is_some_and(|mission| {
+                mission.status() == crate::domain::state_machine::mission::MissionStatus::Paused
+            })
+    }
+
     /// Returns a deterministic hash of the board state (SRS-04).
     ///
     /// The hash changes when any story or voyage state changes.

@@ -66,6 +66,7 @@ pub fn calculate_metrics(board: &Board, reference_time: DateTime<Utc>) -> FlowMe
         .stories
         .values()
         .filter(|s| s.status == StoryState::Backlog)
+        .filter(|story| !board.is_story_paused_by_mission(story))
         .collect();
     metrics.execution.backlog_count = backlog_stories.len();
     let (ready, blocked) = execution_queue::backlog_queue_counts(board);
@@ -76,11 +77,13 @@ pub fn calculate_metrics(board: &Board, reference_time: DateTime<Utc>) -> FlowMe
         .stories
         .values()
         .filter(|s| s.status == StoryState::InProgress)
+        .filter(|story| !board.is_story_paused_by_mission(story))
         .count();
     metrics.execution.active_voyages_count = board
         .voyages
         .values()
         .filter(|v| v.status() == VoyageState::InProgress)
+        .filter(|voyage| !board.is_voyage_paused_by_mission(voyage))
         .count();
 
     // Recently active - acts as battery charge
@@ -95,16 +98,19 @@ pub fn calculate_metrics(board: &Board, reference_time: DateTime<Utc>) -> FlowMe
         .voyages
         .values()
         .filter(|v| v.status() == VoyageState::Draft)
+        .filter(|voyage| !board.is_voyage_paused_by_mission(voyage))
         .count();
     metrics.planning.planned_count = board
         .voyages
         .values()
         .filter(|v| v.status() == VoyageState::Planned)
+        .filter(|voyage| !board.is_voyage_paused_by_mission(voyage))
         .count();
     metrics.planning.epics_needing_voyages = board
         .epics
         .values()
         .filter(|e| e.status() == EpicState::Draft)
+        .filter(|epic| !board.is_epic_paused_by_mission(epic.id()))
         .filter(|e| board.voyages_for_epic(e).is_empty())
         .count();
 
@@ -113,6 +119,7 @@ pub fn calculate_metrics(board: &Board, reference_time: DateTime<Utc>) -> FlowMe
         .bearings
         .values()
         .filter(|b| b.frontmatter.status == crate::domain::model::BearingStatus::Exploring)
+        .filter(|bearing| !board.is_bearing_paused_by_mission(bearing))
         .count();
     metrics.research.surveying_count = board
         .bearings
@@ -121,6 +128,7 @@ pub fn calculate_metrics(board: &Board, reference_time: DateTime<Utc>) -> FlowMe
             b.frontmatter.status == crate::domain::model::BearingStatus::Evaluating
                 && b.has_evidence
         })
+        .filter(|bearing| !board.is_bearing_paused_by_mission(bearing))
         .count();
     metrics.research.assessing_count = board
         .bearings
@@ -129,16 +137,19 @@ pub fn calculate_metrics(board: &Board, reference_time: DateTime<Utc>) -> FlowMe
             b.frontmatter.status == crate::domain::model::BearingStatus::Evaluating
                 && !b.has_evidence
         })
+        .filter(|bearing| !board.is_bearing_paused_by_mission(bearing))
         .count();
     metrics.research.laid_count = board
         .bearings
         .values()
         .filter(|b| b.frontmatter.status == crate::domain::model::BearingStatus::Laid)
+        .filter(|bearing| !board.is_bearing_paused_by_mission(bearing))
         .count();
     metrics.research.parked_count = board
         .bearings
         .values()
         .filter(|b| b.frontmatter.status == crate::domain::model::BearingStatus::Parked)
+        .filter(|bearing| !board.is_bearing_paused_by_mission(bearing))
         .count();
 
     // 4. Verification
@@ -146,6 +157,7 @@ pub fn calculate_metrics(board: &Board, reference_time: DateTime<Utc>) -> FlowMe
         .stories
         .values()
         .filter(|s| s.status == StoryState::NeedsHumanVerification)
+        .filter(|story| !board.is_story_paused_by_mission(story))
         .count();
     // TODO: Age calculation
 
@@ -201,7 +213,9 @@ pub fn calculate_metrics(board: &Board, reference_time: DateTime<Utc>) -> FlowMe
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use crate::test_helpers::{
+        TestBearing, TestBoardBuilder, TestEpic, TestMission, TestStory, TestVoyage,
+    };
 
     #[test]
     fn calculate_counts_stories_by_stage() {
@@ -218,6 +232,61 @@ mod tests {
         assert_eq!(m.execution.backlog_ready_count, 1);
         assert_eq!(m.execution.backlog_blocked_count, 0);
         assert_eq!(m.done_count, 1);
+    }
+
+    #[test]
+    fn calculate_excludes_children_of_paused_missions_from_live_flow_counts() {
+        let srs = "# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req | test |\nEND FUNCTIONAL_REQUIREMENTS";
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("paused"))
+            .mission(TestMission::new("M2").status("active"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .epic(TestEpic::new("E2").mission("M2"))
+            .voyage(
+                TestVoyage::new("V1", "E1")
+                    .status("planned")
+                    .srs_content(srs),
+            )
+            .voyage(
+                TestVoyage::new("V2", "E2")
+                    .status("planned")
+                    .srs_content(srs),
+            )
+            .story(
+                TestStory::new("S1")
+                    .scope("E1/V1")
+                    .status(StoryState::Backlog),
+            )
+            .story(
+                TestStory::new("S2")
+                    .scope("E1/V1")
+                    .status(StoryState::InProgress),
+            )
+            .story(
+                TestStory::new("S3")
+                    .scope("E1/V1")
+                    .status(StoryState::NeedsHumanVerification),
+            )
+            .story(
+                TestStory::new("S4")
+                    .scope("E2/V2")
+                    .status(StoryState::Backlog),
+            )
+            .bearing(TestBearing::new("B1").mission("M1").status("exploring"))
+            .bearing(TestBearing::new("B2").mission("M2").status("exploring"))
+            .build();
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+
+        let metrics = calculate_metrics(&board, Utc::now());
+
+        assert_eq!(metrics.execution.backlog_count, 1);
+        assert_eq!(metrics.execution.backlog_ready_count, 1);
+        assert_eq!(metrics.execution.backlog_blocked_count, 0);
+        assert_eq!(metrics.execution.in_progress_count, 0);
+        assert_eq!(metrics.execution.active_voyages_count, 0);
+        assert_eq!(metrics.planning.planned_count, 1);
+        assert_eq!(metrics.research.exploring_count, 1);
+        assert_eq!(metrics.verification.count, 0);
     }
 
     #[test]

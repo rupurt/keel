@@ -43,6 +43,12 @@ impl MissionLifecycleService {
         Ok(())
     }
 
+    pub fn resume(board_dir: &Path, id: &str) -> Result<()> {
+        execute(board_dir, id, &mission_transitions::RESUME)?;
+        println!("Resumed mission: {}", id);
+        Ok(())
+    }
+
     pub fn achieve(ctx: &spoke_auth::ExecutionContext, board_dir: &Path, id: &str) -> Result<()> {
         let board = load_board(board_dir)?;
         let mission = board.require_mission(id)?;

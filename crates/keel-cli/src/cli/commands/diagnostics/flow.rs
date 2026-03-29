@@ -118,6 +118,7 @@ pub fn run(
                             let items: Vec<_> = match source.source.as_str() {
                                 "story.needs-human-verification" => board.stories.values()
                                     .filter(|s| s.status == keel::domain::model::StoryState::NeedsHumanVerification)
+                                    .filter(|story| !board.is_story_paused_by_mission(story))
                                     .map(|s| format!("Story {}", s.id()))
                                     .collect(),
                                 "mission.achieved" => board.missions.values()
@@ -126,18 +127,22 @@ pub fn run(
                                     .collect(),
                                 "voyage.draft" => board.voyages.values()
                                     .filter(|v| v.status() == keel::domain::state_machine::voyage::VoyageState::Draft)
+                                    .filter(|voyage| !board.is_voyage_paused_by_mission(voyage))
                                     .map(|v| format!("Voyage {}", v.id()))
                                     .collect(),
                                 "bearing.exploring" => board.bearings.values()
                                     .filter(|b| b.status() == keel::domain::model::BearingStatus::Exploring)
+                                    .filter(|bearing| !board.is_bearing_paused_by_mission(bearing))
                                     .map(|b| format!("Bearing {}", b.id()))
                                     .collect(),
                                 "bearing.evaluating" => board.bearings.values()
                                     .filter(|b| b.status() == keel::domain::model::BearingStatus::Evaluating)
+                                    .filter(|bearing| !board.is_bearing_paused_by_mission(bearing))
                                     .map(|b| format!("Bearing {}", b.id()))
                                     .collect(),
                                 "bearing.ready" => board.bearings.values()
                                     .filter(|b| b.status() == keel::domain::model::BearingStatus::Ready)
+                                    .filter(|bearing| !board.is_bearing_paused_by_mission(bearing))
                                     .map(|b| format!("Bearing {}", b.id()))
                                     .collect(),
                                 _ => vec![],

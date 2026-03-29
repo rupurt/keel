@@ -27,6 +27,10 @@ pub fn classify_backlog_story(
         return BacklogQueueState::Blocked;
     }
 
+    if board.is_story_paused_by_mission(story) {
+        return BacklogQueueState::Blocked;
+    }
+
     let workable =
         crate::domain::state_machine::invariants::story_workable(story, board, &board.root);
     if !workable {
@@ -59,6 +63,7 @@ pub fn backlog_queue_counts(board: &Board) -> (usize, usize) {
         .stories
         .values()
         .filter(|story| story.status == StoryState::Backlog)
+        .filter(|story| !board.is_story_paused_by_mission(story))
     {
         match classify_backlog_story(board, story, &dependencies) {
             BacklogQueueState::Ready => ready_count += 1,

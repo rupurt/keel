@@ -60,6 +60,10 @@ pub fn project(board: &Board) -> SystemCapacity {
     let mut watch_map: HashMap<String, WatchCapacityReport> = HashMap::new();
 
     for epic in board.epics.values() {
+        if board.is_epic_paused_by_mission(epic.id()) {
+            continue;
+        }
+
         epic_map.insert(
             epic.id().to_string(),
             EpicCapacityReport {
@@ -74,6 +78,10 @@ pub fn project(board: &Board) -> SystemCapacity {
     }
 
     for story in board.stories.values() {
+        if board.is_story_paused_by_mission(story) {
+            continue;
+        }
+
         if let Some(epic_id) = story.epic() {
             let Some(report) = epic_map.get_mut(epic_id) else {
                 continue;
@@ -180,7 +188,7 @@ fn classify_charge(ready: usize, blocked: usize) -> ChargeState {
 mod tests {
     use super::project;
     use crate::domain::model::StoryState;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestMission, TestStory, TestVoyage};
     use std::fs;
 
     fn write_watch(root: &std::path::Path, id: &str, title: &str) {
@@ -321,5 +329,43 @@ mod tests {
         assert_eq!(cap.watches[0].title, "Standard Operations");
         assert_eq!(cap.watches[0].capacity.ready, 1);
         assert_eq!(cap.watches[0].capacity.blocked, 0);
+    }
+
+    #[test]
+    fn project_skips_epics_and_stories_under_paused_missions() {
+        let srs = "# SRS\n\n## Functional Requirements\nBEGIN FUNCTIONAL_REQUIREMENTS\n| SRS-01 | req | test |\nEND FUNCTIONAL_REQUIREMENTS";
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("paused"))
+            .mission(TestMission::new("M2").status("active"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .epic(TestEpic::new("E2").mission("M2"))
+            .voyage(
+                TestVoyage::new("V1", "E1")
+                    .status("planned")
+                    .srs_content(srs),
+            )
+            .voyage(
+                TestVoyage::new("V2", "E2")
+                    .status("planned")
+                    .srs_content(srs),
+            )
+            .story(
+                TestStory::new("S1")
+                    .scope("E1/V1")
+                    .status(StoryState::Backlog),
+            )
+            .story(
+                TestStory::new("S2")
+                    .scope("E2/V2")
+                    .status(StoryState::Backlog),
+            )
+            .build();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let cap = project(&board);
+
+        assert_eq!(cap.epics.len(), 1);
+        assert_eq!(cap.epics[0].id, "E2");
+        assert_eq!(cap.epics[0].capacity.ready, 1);
     }
 }

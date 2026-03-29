@@ -756,7 +756,7 @@ fn format_no_actionable_mission_message(
     if !paused.is_empty() {
         writeln!(
             out,
-            "  - Decide whether the paused missions should stay halted or be replaced by a new mission."
+            "  - Resume a paused mission with `keel mission resume <mission-id>` or replace it with a new mission."
         )
         .unwrap();
     }
