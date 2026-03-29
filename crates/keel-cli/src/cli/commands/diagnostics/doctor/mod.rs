@@ -158,7 +158,7 @@ pub fn run(
 /// Each bullet is at most 8–10 words with a 3–6 character taxonomy ID,
 /// designed for embedding in commit messages.
 fn run_status(board_dir: &Path) -> Result<()> {
-    use keel::domain::model::{EpicState, StoryState, VoyageState};
+    use keel::domain::model::{StoryState, VoyageState};
     use keel::infrastructure::loader::load_board;
     use keel::read_model::board_graph::build_board_graph;
 
@@ -167,30 +167,7 @@ fn run_status(board_dir: &Path) -> Result<()> {
     let report = validate(board_dir)?;
 
     // --- Mission layer (MSN) ---
-    let active_missions = board
-        .missions
-        .values()
-        .filter(|m| !m.status().is_terminal())
-        .count();
-    let active_epics = board
-        .epics
-        .values()
-        .filter(|e| e.status() != EpicState::Done)
-        .count();
-    let mission_bullet = if active_missions == 0 {
-        "No missions defined on the board".to_string()
-    } else {
-        let m_word = if active_missions == 1 {
-            "mission"
-        } else {
-            "missions"
-        };
-        let e_word = if active_epics == 1 { "epic" } else { "epics" };
-        format!(
-            "{} {} driving {} {} forward",
-            active_missions, m_word, active_epics, e_word
-        )
-    };
+    let mission_bullet = mission_status_bullet(&board);
 
     // --- Execution layer (EXC) ---
     let in_progress = board
@@ -247,4 +224,118 @@ fn run_status(board_dir: &Path) -> Result<()> {
     println!("• [HLT] {}", health_bullet);
 
     Ok(())
+}
+
+fn mission_status_bullet(board: &keel::domain::model::Board) -> String {
+    use keel::domain::model::EpicState;
+    use keel::domain::state_machine::mission::MissionStatus;
+
+    let driving_missions: Vec<_> = board
+        .missions
+        .values()
+        .filter(|mission| {
+            matches!(
+                mission.status(),
+                MissionStatus::Defining | MissionStatus::Active
+            )
+        })
+        .collect();
+
+    if !driving_missions.is_empty() {
+        let driving_epics = board
+            .epics
+            .values()
+            .filter(|epic| epic.status() != EpicState::Done)
+            .filter(|epic| {
+                epic.frontmatter
+                    .mission
+                    .as_deref()
+                    .is_some_and(|mission_id| {
+                        driving_missions
+                            .iter()
+                            .any(|mission| mission.id() == mission_id)
+                    })
+            })
+            .count();
+        let mission_word = if driving_missions.len() == 1 {
+            "mission"
+        } else {
+            "missions"
+        };
+        let epic_word = if driving_epics == 1 { "epic" } else { "epics" };
+        return format!(
+            "{} {} driving {} {} forward",
+            driving_missions.len(),
+            mission_word,
+            driving_epics,
+            epic_word
+        );
+    }
+
+    let achieved_missions = board
+        .missions
+        .values()
+        .filter(|mission| mission.status() == MissionStatus::Achieved)
+        .count();
+    if achieved_missions > 0 {
+        let mission_word = if achieved_missions == 1 {
+            "mission"
+        } else {
+            "missions"
+        };
+        return format!("{achieved_missions} {mission_word} to be verified");
+    }
+
+    let paused_missions = board
+        .missions
+        .values()
+        .filter(|mission| mission.status() == MissionStatus::Paused)
+        .count();
+    if paused_missions > 0 {
+        let mission_word = if paused_missions == 1 {
+            "mission"
+        } else {
+            "missions"
+        };
+        return format!("{paused_missions} {mission_word} paused");
+    }
+
+    if board.missions.is_empty() {
+        "No missions defined on the board".to_string()
+    } else {
+        "No active missions on the board".to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::mission_status_bullet;
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestMission};
+
+    #[test]
+    fn mission_status_bullet_prefers_verification_pressure_when_only_achieved_missions_remain() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("achieved"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .build();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
+
+        assert_eq!(mission_status_bullet(&board), "1 mission to be verified");
+    }
+
+    #[test]
+    fn mission_status_bullet_reports_driving_missions_and_linked_open_epics() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .mission(TestMission::new("M2").status("achieved"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .epic(TestEpic::new("E2").mission("M2"))
+            .build();
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
+
+        assert_eq!(
+            mission_status_bullet(&board),
+            "1 mission driving 1 epic forward"
+        );
+    }
 }
