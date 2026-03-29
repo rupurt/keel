@@ -152,9 +152,20 @@ mod tests {
         let content = fs::read_to_string(&pre_commit).unwrap();
         assert!(content.contains("keel pacemaker protocol"));
         assert!(content.contains("Running quality checks"));
+        assert!(!content.contains(".keel/heartbeat"));
+        assert!(!content.contains("git add"));
+        assert!(!content.contains(" poke "));
 
         let msg_content = fs::read_to_string(&commit_msg).unwrap();
         assert!(msg_content.contains("doctor --status"));
+    }
+
+    #[test]
+    fn pre_commit_hook_uses_commit_boundary_without_synthetic_heartbeat_file() {
+        assert!(!PRE_COMMIT_HOOK.contains(".keel/heartbeat"));
+        assert!(!PRE_COMMIT_HOOK.contains("git add"));
+        assert!(!PRE_COMMIT_HOOK.contains("pre-commit auto-poke"));
+        assert!(!PRE_COMMIT_HOOK.contains("KEEL_BIN"));
     }
 
     #[test]

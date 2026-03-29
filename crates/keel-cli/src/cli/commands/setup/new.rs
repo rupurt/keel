@@ -523,6 +523,11 @@ mod tests {
         assert!(config.contains("max_battery_packs = 20"));
         assert!(config.contains("working_hours_start = 7"));
         assert!(config.contains("[roles.manager]"));
+
+        let pre_commit = fs::read_to_string(root.join(".git/hooks/pre-commit")).unwrap();
+        assert!(!pre_commit.contains(".keel/heartbeat"));
+        assert!(!pre_commit.contains("git add"));
+        assert!(!pre_commit.contains("pre-commit auto-poke"));
     }
 
     #[test]
