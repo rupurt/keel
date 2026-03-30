@@ -90,7 +90,16 @@ fn play_mission(mission: &keel::domain::model::Mission) -> Result<()> {
 fn play_artifact(path: &Path) -> Result<()> {
     let path_str = path.to_string_lossy();
 
-    // Prefer ffplay if available for GIFs/Videos
+    // Prefer atext (Art as Text) for terminal-native high-dimension playback
+    let env = atext::TerminalEnvironment::capture();
+    let profile = atext::detect_terminal_profile(&env);
+
+    if let Ok(text) = atext::render_to_text(path, &profile) {
+        println!("{}", text);
+        return Ok(());
+    }
+
+    // Fallback to ffplay for GIFs/Videos
     if is_media_file(&path_str)
         && let Ok(status) = std::process::Command::new("ffplay")
             .arg("-autoexit")
