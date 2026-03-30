@@ -88,9 +88,15 @@ impl MissionLifecycleService {
 
     pub fn verify(board_dir: &Path, id: &str, artifact: Option<&str>) -> Result<()> {
         let board = load_board(board_dir)?;
-        let mission = board.require_mission(id)?;
+        let mut mission = board.require_mission(id)?.clone();
 
-        let problems = evaluate_mission_transition(&board, mission, MissionTransition::Verify);
+        // If an artifact is provided, we temporarily update the mission model
+        // so that the gating check sees it. The actual file update happens later.
+        if let Some(art) = artifact {
+            mission.frontmatter.verification_artifact = Some(art.to_string());
+        }
+
+        let problems = evaluate_mission_transition(&board, &mission, MissionTransition::Verify);
         if !problems.is_empty() {
             return Err(anyhow!(format_gate_error("mission", "verify", &problems)));
         }
@@ -641,6 +647,23 @@ mod tests {
         let readme = fs::read_to_string(temp.path().join("missions/M1/README.md")).unwrap();
         assert!(readme.contains("status: verified"));
         assert!(readme.contains("verification_artifact: verification.gif"));
+    }
+
+    #[test]
+    fn test_mission_verify_fails_without_artifact() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("achieved"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "E1").status("done"))
+            .build();
+
+        let res = MissionLifecycleService::verify(temp.path(), "M1", None);
+        assert!(res.is_err());
+        assert!(
+            res.unwrap_err()
+                .to_string()
+                .contains("missing high-dimension verification proof")
+        );
     }
 
     #[test]

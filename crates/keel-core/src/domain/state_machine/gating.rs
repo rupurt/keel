@@ -14,7 +14,7 @@ use crate::domain::state_machine::mission::MissionTransition;
 use crate::domain::state_machine::story::StoryTransition;
 use crate::domain::state_machine::voyage::VoyageTransition;
 use crate::infrastructure::validation::charter::{self, GoalVerification};
-use crate::infrastructure::validation::{CheckId, Problem, Severity};
+use crate::infrastructure::validation::{CheckId, GapCategory, Problem, Severity};
 use crate::infrastructure::verification::parse_verify_annotations;
 use crate::infrastructure::verification::parser::RequirementPhase;
 
@@ -255,6 +255,22 @@ fn evaluate_mission_verification(
             board, mission,
         ),
     );
+
+    // Check verification artifact: MUST have a .gif for high-dimension verification
+    if mission.frontmatter.verification_artifact.is_none() {
+        problems.push(
+            Problem::error(
+                mission.path.clone(),
+                format!(
+                    "Mission {} cannot be verified: missing high-dimension verification proof. Please attach a .gif artifact.",
+                    mission.id()
+                ),
+            )
+            .with_scope(mission.id())
+            .with_category(GapCategory::Coherence)
+            .with_check_id(CheckId::MissionNonTerminalChildren),
+        );
+    }
 
     problems
 }

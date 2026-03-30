@@ -84,3 +84,25 @@ pub fn check_mission_terminal_children(board: &Board, mission: &Mission) -> Vec<
         .with_check_id(CheckId::MissionNonTerminalChildren),
     ]
 }
+
+pub fn check_verified_mission_artifact(_board: &Board, mission: &Mission) -> Vec<Problem> {
+    use crate::domain::model::MissionStatus;
+    if mission.status() == MissionStatus::Verified
+        && mission.frontmatter.verification_artifact.is_none()
+    {
+        return vec![
+            Problem::error(
+                mission.path.clone(),
+                format!(
+                    "Verified Mission {} is missing a high-dimension verification proof (.gif). Please attach one for zero-drift compliance.",
+                    mission.id()
+                ),
+            )
+            .with_scope(mission.id())
+            .with_category(GapCategory::Coherence)
+            .with_check_id(CheckId::MissionNonTerminalChildren),
+        ];
+    }
+
+    Vec::new()
+}

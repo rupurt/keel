@@ -253,6 +253,7 @@ pub fn check_mission_completion_evidence(board: &Board) -> Vec<Problem> {
         }
 
         problems.extend(missions::check_mission_terminal_children(board, mission));
+        problems.extend(missions::check_verified_mission_artifact(board, mission));
     }
 
     problems
@@ -778,6 +779,32 @@ mod tests {
         assert_eq!(problems.len(), 1);
         assert_eq!(problems[0].check_id, CheckId::MissionNonTerminalChildren);
         assert!(problems[0].message.contains("bearing B1 (ready)"));
+    }
+
+    #[test]
+    fn test_check_mission_completion_evidence_requires_artifact_for_verified_mission() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("verified"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "E1").status("done"))
+            .build();
+
+        fs::write(
+            temp.path().join("missions/M1/LOG.md"),
+            "# Mission Log\n\n## 2026-01-01T00:00:00\n\nDid some work.\n",
+        )
+        .unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_mission_completion_evidence(&board);
+
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].check_id, CheckId::MissionNonTerminalChildren);
+        assert!(
+            problems[0]
+                .message
+                .contains("missing a high-dimension verification proof")
+        );
     }
 
     #[test]
