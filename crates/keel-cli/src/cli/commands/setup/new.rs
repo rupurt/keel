@@ -35,7 +35,7 @@ struct FoundationalDocSpec {
     template: &'static str,
 }
 
-const FOUNDATIONAL_DOCS: [FoundationalDocSpec; 8] = [
+const FOUNDATIONAL_DOCS: [FoundationalDocSpec; 9] = [
     FoundationalDocSpec {
         path: "CONSTITUTION.md",
         description: "collaboration philosophy and decision hierarchy",
@@ -75,6 +75,11 @@ const FOUNDATIONAL_DOCS: [FoundationalDocSpec; 8] = [
         path: "INSTRUCTIONS.md",
         description: "procedural turn loop and hygiene checklist with sync seam",
         template: templates::project::INSTRUCTIONS,
+    },
+    FoundationalDocSpec {
+        path: "CODE_WALKTHROUGH.md",
+        description: "source layout, key abstractions, and data-flow orientation",
+        template: templates::project::CODE_WALKTHROUGH,
     },
 ];
 

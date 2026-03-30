@@ -97,6 +97,9 @@ pub mod project {
     pub const CLAUDE: &str = include_str!("../../../../templates/project/CLAUDE.md");
     /// Project instructions template
     pub const INSTRUCTIONS: &str = include_str!("../../../../templates/project/INSTRUCTIONS.md");
+    /// Project code walkthrough template
+    pub const CODE_WALKTHROUGH: &str =
+        include_str!("../../../../templates/project/CODE_WALKTHROUGH.md");
 }
 
 #[cfg(test)]
