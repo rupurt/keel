@@ -25,5 +25,5 @@ mission: VFOKjcgv6
 **Progress:** 0/1 voyages complete, 0/0 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Verification Sign-off Gate](voyages/VFOL0ebAt/) | draft | 0/0 |
+| [Verification Sign-off Gate](voyages/VFOL0ebAt/) | planned | 0/0 |
 <!-- END GENERATED -->

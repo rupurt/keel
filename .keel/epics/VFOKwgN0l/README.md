@@ -25,6 +25,6 @@ mission: VFOKjcgv6
 **Progress:** 0/2 voyages complete, 0/0 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Txt-scene Framing](voyages/VFOL0QJ85/) | draft | 0/0 |
-| [Adaptive Resizing](voyages/VFOL0XX8w/) | draft | 0/0 |
+| [Txt-scene Framing](voyages/VFOL0QJ85/) | planned | 0/0 |
+| [Adaptive Resizing](voyages/VFOL0XX8w/) | planned | 0/0 |
 <!-- END GENERATED -->

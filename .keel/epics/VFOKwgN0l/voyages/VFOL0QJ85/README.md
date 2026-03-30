@@ -1,7 +1,7 @@
 ---
 # system-managed
 id: VFOL0QJ85
-status: draft
+status: planned
 epic: VFOKwgN0l
 created_at: 2026-03-30T15:15:34
 # authored

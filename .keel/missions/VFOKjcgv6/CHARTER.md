@@ -6,9 +6,9 @@ Archetype: Voyage
 
 | ID | Description | Verification |
 |----|-------------|--------------|
-| MG-01 | Integrate atxt-core library with streaming support and frame-accurate timing. | board: atxt-core-integration |
-| MG-02 | Implement "Theater Mode" in txt-scene with borders and centered alignment. | board: theater-mode-ux |
-| MG-03 | Add an interactive "Final Review" gate to `keel mission verify` requiring user sign-off after playback. | board: verification-sign-off |
+| MG-01 | Integrate atxt-core library with streaming support and frame-accurate timing. | board: VFOKwZazq |
+| MG-02 | Implement "Theater Mode" in txt-scene with borders and centered alignment. | board: VFOKwgN0l |
+| MG-03 | Add an interactive "Final Review" gate to `keel mission verify` requiring user sign-off after playback. | board: VFOKwnF2e |
 
 ## Constraints
 

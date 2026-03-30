@@ -1,12 +1,13 @@
 ---
 # system-managed
 id: VFOKjcgv6
-status: defining
+status: active
 created_at: 2026-03-30T15:14:29
-updated_at: 2026-03-30T15:14:29
+updated_at: 2026-03-30T15:20:03
 # authored
 title: Cinematic Verification Playback
 watch: ~
+activated_at: 2026-03-30T15:20:03
 ---
 
 # Cinematic Verification Playback
