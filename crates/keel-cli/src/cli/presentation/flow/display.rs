@@ -20,7 +20,7 @@ use keel::read_model::workflow_lane_flow::{LaneFlowCard, LaneFlowProjection, Lan
 #[allow(clippy::too_many_arguments)]
 pub fn render_annotated_flow(
     board: &Board,
-    metrics: &FlowMetrics,
+    _metrics: &FlowMetrics,
     lane_flow: &LaneFlowProjection,
     scheduled: &[ScheduledRoutineProjection],
     materialized_by_key: &HashMap<String, String>,
@@ -85,17 +85,7 @@ pub fn render_annotated_flow(
             writeln!(output, "{}", watch_render).unwrap();
         }
 
-        if !has_actionable_capacity {
-            if !cap_render.is_empty() || !watch_render.is_empty() {
-                writeln!(output).unwrap();
-            }
-            writeln!(
-                output,
-                "    {}",
-                strategic_capacity_guidance(board, metrics)
-            )
-            .unwrap();
-        }
+        // No-capacity guidance is emitted as a notice by the command layer
     }
 
     // 5. Bottleneck Dependencies (Only shown when blockage exists)
@@ -724,7 +714,7 @@ fn render_lane_capabilities_line(lane: &LaneFlowCard, width: usize) -> String {
     crate::cli::presentation::flow::format::pad_to_width(&line, width)
 }
 
-fn strategic_capacity_available(
+pub(crate) fn strategic_capacity_available(
     capacity: &crate::cli::presentation::flow::capacity::SystemCapacity,
 ) -> bool {
     capacity.epics.iter().any(|report| {
@@ -734,7 +724,7 @@ fn strategic_capacity_available(
     })
 }
 
-fn strategic_capacity_guidance(board: &Board, metrics: &FlowMetrics) -> &'static str {
+pub(crate) fn strategic_capacity_guidance(board: &Board, metrics: &FlowMetrics) -> &'static str {
     if board.epics.is_empty() {
         return "No executable epic capacity. Next step: create an epic with `keel epic new` or lay an assessed bearing.";
     }
@@ -933,7 +923,7 @@ mod tests {
         );
         assert!(rendered.contains("management (0) [p100]"));
         assert!(rendered.contains("delivery (0) [p50]"));
-        assert!(rendered.contains("No executable epic capacity"));
+        assert!(!rendered.contains("No executable epic capacity"));
         assert!(!rendered.contains("Governance"));
         assert!(!rendered.contains("Research"));
         assert!(!rendered.contains("Planning"));

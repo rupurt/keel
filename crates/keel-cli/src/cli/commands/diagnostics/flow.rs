@@ -4,7 +4,9 @@ use anyhow::Result;
 use chrono::{DateTime, Utc};
 use txt_scene::{SceneFrame, SceneLine, ScenePalette};
 
-use crate::cli::presentation::flow::display::render_annotated_flow;
+use crate::cli::presentation::flow::display::{
+    render_annotated_flow, strategic_capacity_available, strategic_capacity_guidance,
+};
 use crate::cli::presentation::terminal::get_terminal_width;
 use crate::cli::presentation::theme::Theme;
 use keel::infrastructure::loader::load_board;
@@ -92,9 +94,10 @@ pub fn run(
 
         if !heartbeat.energized {
             println!("\n{}", render_unplugged_scene(use_color));
-            return Err(anyhow::anyhow!(
-                "System is idle: no recent repository activity (run `keel heartbeat`)"
-            ));
+            eprintln!(
+                "Notice: System is idle: no recent repository activity (run `keel heartbeat`)"
+            );
+            return Ok(());
         }
 
         let ready_backlog = metrics.execution.backlog_ready_count;
@@ -183,12 +186,14 @@ pub fn run(
         return Err(anyhow::anyhow!("Short circuit: System is unhealthy"));
     }
     if !autonomous {
-        return Err(anyhow::anyhow!("System is idle: Human input required"));
+        eprintln!("Notice: System is idle: Human input required");
     }
     if !heartbeat.energized {
-        return Err(anyhow::anyhow!(
-            "System is idle: no recent repository activity (run `keel heartbeat`)"
-        ));
+        eprintln!("Notice: System is idle: no recent repository activity (run `keel heartbeat`)");
+    }
+    let capacity = project_capacity(&board);
+    if !strategic_capacity_available(&capacity) {
+        eprintln!("Notice: {}", strategic_capacity_guidance(&board, &metrics));
     }
 
     Ok(())
