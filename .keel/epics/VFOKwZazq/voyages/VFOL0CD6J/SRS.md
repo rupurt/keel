@@ -12,11 +12,12 @@ Goal: Support the atxt library's new streaming and detect_terminal_profile APIs.
 - Integration with `atxt` version 0.1.0 from GitHub.
 - Use `atxt::TerminalEnvironment::capture()` to detect environment.
 - Use `atxt::detect_terminal_profile()` to determine capabilities.
-- Implement `atxt::render_to_text()` for artifact playback.
+- Implement real-time, frame-accurate playback loop with delta-encoding.
+- Support upscaled rendering while preserving aspect ratio.
 
 ### Out of Scope
 
-- Real-time streaming (future voyage).
+- Cinematic "Theater Mode" (future voyage).
 - Sixel/Kitty graphics (limited to terminal profile support).
 
 ## Functional Requirements

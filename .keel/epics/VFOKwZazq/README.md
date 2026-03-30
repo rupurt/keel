@@ -22,9 +22,9 @@ mission: VFOKjcgv6
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/2 voyages complete, 0/0 stories done
+**Progress:** 2/2 voyages complete, 0/0 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Atxt Core Streaming Client](voyages/VFOL0CD6J/) | planned | 0/0 |
-| [Frame Accurate Scheduler](voyages/VFOL0JG7A/) | planned | 0/0 |
+| [Atxt Core Streaming Client](voyages/VFOL0CD6J/) | done | 0/0 |
+| [Frame Accurate Scheduler](voyages/VFOL0JG7A/) | done | 0/0 |
 <!-- END GENERATED -->

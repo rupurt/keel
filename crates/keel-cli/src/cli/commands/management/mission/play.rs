@@ -92,9 +92,15 @@ fn play_artifact(path: &Path) -> Result<()> {
 
     // Prefer atxt (Art as Text) for terminal-native high-dimension playback
     let env = atxt::TerminalEnvironment::capture();
-    let profile = atxt::detect_terminal_profile(&env);
+    let terminal = atxt::detect_terminal_profile(&env);
+    let probe = atxt::probe_path(path);
+    let plan = atxt::plan_render(&probe, &terminal);
 
-    if let Ok(text) = atxt::render_to_text(path, &profile) {
+    if plan.output == atxt::OutputKind::FrameSequence {
+        return run_high_fidelity_playback(path, &probe, &plan);
+    }
+
+    if let Ok(text) = atxt::render_to_text(path, &terminal) {
         println!("{}", text);
         return Ok(());
     }
@@ -145,6 +151,85 @@ fn play_artifact(path: &Path) -> Result<()> {
             );
         }
     }
+
+    Ok(())
+}
+
+fn run_high_fidelity_playback(
+    path: &Path,
+    probe: &atxt::ProbeResult,
+    plan: &atxt::RenderPlan,
+) -> Result<()> {
+    use std::io::{Write, stdout};
+    use std::thread;
+    use std::time::Duration;
+
+    let sequence = atxt::decode_timed_sequence(path, probe, None)
+        .map_err(|e| anyhow!("Failed to decode timed sequence: {}", e))?;
+    let mut stdout = stdout();
+
+    // Clear screen and hide cursor
+    write!(stdout, "\x1b[2J\x1b[H\x1b[?25l").map_err(|e| anyhow!("Terminal IO error: {}", e))?;
+    stdout
+        .flush()
+        .map_err(|e| anyhow!("Terminal IO error: {}", e))?;
+
+    let mut previous_frame_output: Option<String> = None;
+    let mut previous_timestamp_ms = 0;
+
+    for (index, sample) in sequence.samples().iter().enumerate() {
+        if index > 0 {
+            let delay_ms = sample.timestamp_ms.saturating_sub(previous_timestamp_ms);
+            thread::sleep(Duration::from_millis(delay_ms));
+        }
+
+        // Prepare a single-frame plan for the individual frame
+        let mut frame_plan = plan.clone();
+        frame_plan.output = atxt::OutputKind::SingleFrame;
+
+        let frame_output = atxt::render_still_image(&sample.frame, &frame_plan)
+            .map_err(|e| anyhow!("Rendering error: {}", e))?;
+
+        // Apply delta encoding if we have a previous frame of the same size
+        match &previous_frame_output {
+            Some(prev) if prev.len() == frame_output.len() => {
+                let mut line_index = 1;
+                let mut col_index = 1;
+                for (p, c) in prev.chars().zip(frame_output.chars()) {
+                    if p != c {
+                        // Move cursor to line_index, col_index and print character c
+                        write!(stdout, "\x1b[{};{}H{}", line_index, col_index, c)
+                            .map_err(|e| anyhow!("Terminal IO error: {}", e))?;
+                    }
+                    if c == '\n' {
+                        line_index += 1;
+                        col_index = 1;
+                    } else {
+                        col_index += 1;
+                    }
+                }
+            }
+            _ => {
+                // First frame or size change: redraw full frame
+                write!(stdout, "\x1b[H{}", frame_output)
+                    .map_err(|e| anyhow!("Terminal IO error: {}", e))?;
+            }
+        }
+
+        stdout
+            .flush()
+            .map_err(|e| anyhow!("Terminal IO error: {}", e))?;
+
+        previous_timestamp_ms = sample.timestamp_ms;
+        previous_frame_output = Some(frame_output);
+    }
+
+    // Show cursor and move to next line
+    write!(stdout, "\x1b[?25h").map_err(|e| anyhow!("Terminal IO error: {}", e))?;
+    stdout
+        .flush()
+        .map_err(|e| anyhow!("Terminal IO error: {}", e))?;
+    println!();
 
     Ok(())
 }

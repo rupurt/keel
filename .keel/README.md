@@ -384,12 +384,12 @@
 | [Explain Roles Lanes And Next Routing](epics/VF8hiVofm/voyages/VF8hkVGjy/) | done |
 | [Narrative Contract Tests And Drift Guards](epics/VF8hiVofm/voyages/VF8hkVhkI/) | done |
 
-### [Atxt Integration Layer](epics/VFOKwZazq/) (active)
+### [Atxt Integration Layer](epics/VFOKwZazq/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Atxt Core Streaming Client](epics/VFOKwZazq/voyages/VFOL0CD6J/) | planned |
-| [Frame Accurate Scheduler](epics/VFOKwZazq/voyages/VFOL0JG7A/) | planned |
+| [Atxt Core Streaming Client](epics/VFOKwZazq/voyages/VFOL0CD6J/) | done |
+| [Frame Accurate Scheduler](epics/VFOKwZazq/voyages/VFOL0JG7A/) | done |
 
 ### [Theater Mode Ux](epics/VFOKwgN0l/) (active)
 

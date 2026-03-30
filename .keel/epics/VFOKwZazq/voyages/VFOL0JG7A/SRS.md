@@ -9,18 +9,20 @@ Goal: Ensure playback respects GIF frame delays for accurate timing.
 
 ### In Scope
 
-- (list in-scope items)
+- Real-time frame scheduling using `atxt` timestamp metadata.
+- Non-blocking terminal IO for interruptible playback.
+- Efficient delta-encoding cursor movement.
 
 ### Out of Scope
 
-- (list out-of-scope items)
+- Real-time audio synchronization.
 
 ## Functional Requirements
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Scope | Source | Verification |
 |----|-------------|-------|--------|--------------|
-| SRS-01 | Sample requirement | SCOPE-01 | FR-01 | manual |
+| SRS-01 | Playback respects frame delays | SCOPE-01 | FR-01 | board: VFOL0JG7A |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ## Non-Functional Requirements
@@ -28,5 +30,5 @@ Goal: Ensure playback respects GIF frame delays for accurate timing.
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Scope | Source | Verification |
 |----|-------------|-------|--------|--------------|
-| SRS-NFR-01 | Sample NFR | SCOPE-01 | NFR-01 | manual |
+| SRS-NFR-01 | Low terminal flicker via delta updates | SCOPE-01 | NFR-01 | manual |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
