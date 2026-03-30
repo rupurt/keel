@@ -101,6 +101,57 @@ impl<'a> SceneFrame<'a> {
     }
 }
 
+/// A cinematic frame with double-line borders and centered title support.
+#[derive(Debug, Clone, Copy)]
+pub struct TheaterFrame {
+    width: usize,
+}
+
+impl TheaterFrame {
+    pub fn new(width: usize) -> Self {
+        Self { width }
+    }
+
+    pub fn top_border(&self, title: Option<&str>) -> String {
+        let mut line = String::from("╔");
+        let border_char = "═";
+
+        if let Some(t) = title {
+            let t_width = visible_width(t);
+            let side_width = self.width.saturating_sub(t_width + 4) / 2;
+            line.push_str(&border_char.repeat(side_width));
+            line.push_str("╡ ");
+            line.push_str(t);
+            line.push_str(" ╞");
+            let remaining = self.width.saturating_sub(visible_width(&line) - 1);
+            line.push_str(&border_char.repeat(remaining));
+        } else {
+            line.push_str(&border_char.repeat(self.width));
+        }
+
+        line.push('╗');
+        line
+    }
+
+    pub fn bottom_border(&self) -> String {
+        format!("╚{}╝", "═".repeat(self.width))
+    }
+
+    pub fn row(&self, content: &str) -> String {
+        let c_width = visible_width(content);
+        let padding = self.width.saturating_sub(c_width);
+        let left_padding = padding / 2;
+        let right_padding = padding - left_padding;
+
+        format!(
+            "║{}{}{}║",
+            " ".repeat(left_padding),
+            content,
+            " ".repeat(right_padding)
+        )
+    }
+}
+
 /// Simple scene palette that can disable ANSI styling entirely.
 #[derive(Debug, Clone, Copy)]
 pub struct ScenePalette {
@@ -176,5 +227,19 @@ mod tests {
         let palette = ScenePalette::new(false);
         assert_eq!(palette.green("█"), "█");
         assert_eq!(palette.yellow_bold("line"), "line");
+    }
+
+    #[test]
+    fn theater_frame_renders_borders_and_centered_rows() {
+        let frame = TheaterFrame::new(10);
+        let top = frame.top_border(Some("TV"));
+        let row = frame.row("X");
+        let bottom = frame.bottom_border();
+
+        assert_eq!(visible_width(&top), 12);
+        assert!(top.contains("╡ TV ╞"));
+        assert_eq!(visible_width(&row), 12);
+        assert!(row.contains("    X     "));
+        assert_eq!(visible_width(&bottom), 12);
     }
 }

@@ -81,13 +81,13 @@ fn play_mission(mission: &keel::domain::model::Mission) -> Result<()> {
     }
 
     // Attempt to play the artifact
-    play_artifact(&artifact_path)?;
+    play_artifact(&artifact_path, mission.id())?;
 
     println!();
     Ok(())
 }
 
-fn play_artifact(path: &Path) -> Result<()> {
+fn play_artifact(path: &Path, mission_id: &str) -> Result<()> {
     let path_str = path.to_string_lossy();
 
     // Prefer atxt (Art as Text) for terminal-native high-dimension playback
@@ -97,7 +97,7 @@ fn play_artifact(path: &Path) -> Result<()> {
     let plan = atxt::plan_render(&probe, &terminal);
 
     if plan.output == atxt::OutputKind::FrameSequence {
-        return run_high_fidelity_playback(path, &probe, &plan);
+        return run_high_fidelity_playback(path, &probe, &plan, mission_id);
     }
 
     if let Ok(text) = atxt::render_to_text(path, &terminal) {
@@ -159,17 +159,43 @@ fn run_high_fidelity_playback(
     path: &Path,
     probe: &atxt::ProbeResult,
     plan: &atxt::RenderPlan,
+    mission_id: &str,
 ) -> Result<()> {
     use std::io::{Write, stdout};
     use std::thread;
     use std::time::Duration;
+    use txt_scene::TheaterFrame;
 
     let sequence = atxt::decode_timed_sequence(path, probe, None)
         .map_err(|e| anyhow!("Failed to decode timed sequence: {}", e))?;
     let mut stdout = stdout();
 
+    // Determine frame width from the first sample
+    let first_frame = sequence
+        .samples()
+        .first()
+        .ok_or_else(|| anyhow!("No frames in sequence"))?;
+
+    // We need to render one frame to get its width
+    let mut init_plan = plan.clone();
+    init_plan.output = atxt::OutputKind::SingleFrame;
+    let init_output = atxt::render_still_image(&first_frame.frame, &init_plan)
+        .map_err(|e| anyhow!("Initial rendering error: {}", e))?;
+
+    let frame_width = init_output
+        .lines()
+        .map(txt_scene::visible_width)
+        .max()
+        .unwrap_or(0);
+    let theater = TheaterFrame::new(frame_width);
+
     // Clear screen and hide cursor
     write!(stdout, "\x1b[2J\x1b[H\x1b[?25l").map_err(|e| anyhow!("Terminal IO error: {}", e))?;
+
+    // Print top border with mission ID
+    let title = format!("MISSION {}", mission_id);
+    writeln!(stdout, "{}", theater.top_border(Some(&title)))
+        .map_err(|e| anyhow!("Terminal IO error: {}", e))?;
     stdout
         .flush()
         .map_err(|e| anyhow!("Terminal IO error: {}", e))?;
@@ -187,17 +213,24 @@ fn run_high_fidelity_playback(
         let mut frame_plan = plan.clone();
         frame_plan.output = atxt::OutputKind::SingleFrame;
 
-        let frame_output = atxt::render_still_image(&sample.frame, &frame_plan)
+        let raw_frame = atxt::render_still_image(&sample.frame, &frame_plan)
             .map_err(|e| anyhow!("Rendering error: {}", e))?;
 
-        // Apply delta encoding if we have a previous frame of the same size
+        // Render each row inside the theater frame
+        let mut frame_output = String::new();
+        for line in raw_frame.lines() {
+            frame_output.push_str(&theater.row(line));
+            frame_output.push('\n');
+        }
+
+        // Apply delta encoding if we have a previous frame
         match &previous_frame_output {
             Some(prev) if prev.len() == frame_output.len() => {
-                let mut line_index = 1;
+                let line_offset = 2; // Accounting for top border
+                let mut line_index = line_offset;
                 let mut col_index = 1;
                 for (p, c) in prev.chars().zip(frame_output.chars()) {
                     if p != c {
-                        // Move cursor to line_index, col_index and print character c
                         write!(stdout, "\x1b[{};{}H{}", line_index, col_index, c)
                             .map_err(|e| anyhow!("Terminal IO error: {}", e))?;
                     }
@@ -210,8 +243,8 @@ fn run_high_fidelity_playback(
                 }
             }
             _ => {
-                // First frame or size change: redraw full frame
-                write!(stdout, "\x1b[H{}", frame_output)
+                // Redraw full frame starting below top border
+                write!(stdout, "\x1b[2;1H{}", frame_output)
                     .map_err(|e| anyhow!("Terminal IO error: {}", e))?;
             }
         }
@@ -223,6 +256,10 @@ fn run_high_fidelity_playback(
         previous_timestamp_ms = sample.timestamp_ms;
         previous_frame_output = Some(frame_output);
     }
+
+    // Print bottom border
+    writeln!(stdout, "{}", theater.bottom_border())
+        .map_err(|e| anyhow!("Terminal IO error: {}", e))?;
 
     // Show cursor and move to next line
     write!(stdout, "\x1b[?25h").map_err(|e| anyhow!("Terminal IO error: {}", e))?;
