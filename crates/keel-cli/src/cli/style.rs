@@ -712,12 +712,17 @@ pub fn highlight_code_block(code: &str, lang: &str) -> Option<String> {
 /// Styled header line
 #[allow(dead_code)]
 pub fn header(id: &str, title: &str, style_fn: fn(&str) -> String) -> String {
-    format!("  {} {}", style_fn(id), title.bold(),)
+    format!("  {} {}", style_fn(id), title.bold())
 }
 
-/// Color an entity ID consistently (defaults to Story ID)
+/// Color an Entity ID consistently (defaults to Story ID)
 pub fn styled_id(id: &str) -> String {
     styled_story_id(id)
+}
+
+/// Color a Mission ID
+pub fn styled_mission_id(id: &str) -> String {
+    id.bright_green().bold().to_string()
 }
 
 /// Color an Epic ID

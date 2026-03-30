@@ -7,6 +7,7 @@ pub mod attach;
 pub mod list;
 pub mod new;
 pub mod next;
+pub mod play;
 pub mod show;
 
 #[derive(Subcommand, Debug)]
@@ -98,6 +99,14 @@ pub enum MissionAction {
     Verify {
         /// Mission ID
         id: String,
+        /// Verification artifact (e.g. GIF)
+        #[arg(long, short)]
+        artifact: Option<String>,
+    },
+    /// Play mission verification artifacts
+    Play {
+        /// Mission ID (optional, if omitted plays verified missions in last-completed order)
+        id: Option<String>,
     },
     /// Abandon a mission (Active or Paused -> Abandoned)
     Abandon {
@@ -175,9 +184,11 @@ pub fn run(ctx: &spoke_auth::ExecutionContext, action: MissionAction) -> Result<
             }
             result
         }
-        MissionAction::Verify { id } => {
+        MissionAction::Verify { id, artifact } => {
             let result = keel::application::mission_lifecycle::MissionLifecycleService::verify(
-                &board_dir, &id,
+                &board_dir,
+                &id,
+                artifact.as_deref(),
             );
             if result.is_ok() {
                 crate::cli::presentation::audio::play(
@@ -186,6 +197,7 @@ pub fn run(ctx: &spoke_auth::ExecutionContext, action: MissionAction) -> Result<
             }
             result
         }
+        MissionAction::Play { id } => play::run(id.as_deref()),
         MissionAction::Abandon { id } => {
             keel::application::mission_lifecycle::MissionLifecycleService::abandon(&board_dir, &id)
         }

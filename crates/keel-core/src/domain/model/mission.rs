@@ -99,6 +99,9 @@ pub struct MissionFrontmatter {
         skip_serializing_if = "Option::is_none"
     )]
     pub verified_at: Option<NaiveDateTime>,
+    /// Optional high-level verification artifact (e.g. GIF)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub verification_artifact: Option<String>,
     /// Optional watch ID that constrains this mission's time
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub watch: Option<String>,
@@ -274,6 +277,7 @@ status: defining
             activated_at: None,
             achieved_at: None,
             verified_at: None,
+            verification_artifact: None,
             watch: None,
             operator_signal: None,
         };
@@ -305,6 +309,7 @@ status: defining
             activated_at: None,
             achieved_at: None,
             verified_at: None,
+            verification_artifact: None,
             watch: None,
             operator_signal: None,
         };

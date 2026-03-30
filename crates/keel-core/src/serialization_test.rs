@@ -31,6 +31,7 @@ fn test_mission_serialization_order() {
         activated_at: None,
         achieved_at: None,
         verified_at: None,
+        verification_artifact: None,
         watch: None,
         operator_signal: None,
     };
@@ -152,6 +153,7 @@ fn test_canonical_markdown_formatting() {
         activated_at: None,
         achieved_at: None,
         verified_at: None,
+        verification_artifact: None,
         watch: None,
         operator_signal: None,
     };

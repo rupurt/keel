@@ -87,6 +87,13 @@ fn build_document(projection: &MissionShowProjection, width: usize) -> ShowDocum
                 .operator_signal
                 .as_ref()
                 .map(|s| format!("{}", s.italic().bright_cyan())),
+        )
+        .row_optional(
+            "Artifact:",
+            projection
+                .verification_artifact
+                .as_ref()
+                .map(|s| format!("{}", s.cyan())),
         );
 
     let mut document = ShowDocument::new();
@@ -266,6 +273,7 @@ mod tests {
                 ],
             },
             log_summary: Some("2026-03-12T17:00:00 - Latest".to_string()),
+            verification_artifact: None,
             operator_signal: None,
             watch: None,
         }

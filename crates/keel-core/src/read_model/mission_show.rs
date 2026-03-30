@@ -18,6 +18,7 @@ pub struct MissionShowProjection {
     pub child_entities: MissionChildren,
     pub drift: DriftSurfaceSummary,
     pub log_summary: Option<String>,
+    pub verification_artifact: Option<String>,
     pub operator_signal: Option<String>,
     pub watch: Option<WatchSummary>,
 }
@@ -123,6 +124,7 @@ pub fn build_projection(board: &Board, mission: &Mission) -> Result<MissionShowP
         },
         drift,
         log_summary,
+        verification_artifact: mission.frontmatter.verification_artifact.clone(),
         operator_signal: mission.frontmatter.operator_signal.clone(),
         watch,
     })

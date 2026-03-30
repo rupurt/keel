@@ -86,7 +86,7 @@ impl MissionLifecycleService {
         Ok(())
     }
 
-    pub fn verify(board_dir: &Path, id: &str) -> Result<()> {
+    pub fn verify(board_dir: &Path, id: &str, artifact: Option<&str>) -> Result<()> {
         let board = load_board(board_dir)?;
         let mission = board.require_mission(id)?;
 
@@ -95,7 +95,27 @@ impl MissionLifecycleService {
             return Err(anyhow!(format_gate_error("mission", "verify", &problems)));
         }
 
+        // Apply state transition
         execute(board_dir, id, &mission_transitions::VERIFY)?;
+
+        // Store artifact if provided
+        if let Some(art) = artifact {
+            if !art.to_lowercase().ends_with(".gif") {
+                return Err(anyhow!("Mission verification artifact must be a .gif"));
+            }
+
+            let board = load_board(board_dir)?;
+            let mission = board.require_mission(id)?;
+            let readme_path = mission.path.clone();
+            let content = std::fs::read_to_string(&readme_path)?;
+
+            use crate::infrastructure::frontmatter_mutation::{Mutation, apply};
+            let mutations = vec![Mutation::set("verification_artifact", art)];
+            let updated_content = apply(&content, &mutations);
+
+            std::fs::write(&readme_path, updated_content)?;
+        }
+
         println!("Verified mission: {}", id);
         Ok(())
     }
@@ -608,6 +628,22 @@ mod tests {
     }
 
     #[test]
+    fn test_mission_verify_with_artifact() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("achieved"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "E1").status("done"))
+            .build();
+
+        let artifact = "verification.gif";
+        MissionLifecycleService::verify(temp.path(), "M1", Some(artifact)).unwrap();
+
+        let readme = fs::read_to_string(temp.path().join("missions/M1/README.md")).unwrap();
+        assert!(readme.contains("status: verified"));
+        assert!(readme.contains("verification_artifact: verification.gif"));
+    }
+
+    #[test]
     fn test_mission_verify_requires_terminal_children() {
         let temp = TestBoardBuilder::new()
             .mission(TestMission::new("M1").status("achieved"))
@@ -624,7 +660,7 @@ mod tests {
 
         MissionLifecycleService::log(temp.path(), "M1", "Did some work").unwrap();
 
-        let res = MissionLifecycleService::verify(temp.path(), "M1");
+        let res = MissionLifecycleService::verify(temp.path(), "M1", None);
         assert!(res.is_err());
         let err = res.unwrap_err().to_string();
         assert!(err.contains("non-terminal child entities"));
