@@ -90,11 +90,11 @@ fn play_mission(mission: &keel::domain::model::Mission) -> Result<()> {
 fn play_artifact(path: &Path) -> Result<()> {
     let path_str = path.to_string_lossy();
 
-    // Prefer atext (Art as Text) for terminal-native high-dimension playback
-    let env = atext::TerminalEnvironment::capture();
-    let profile = atext::detect_terminal_profile(&env);
+    // Prefer atxt (Art as Text) for terminal-native high-dimension playback
+    let env = atxt::TerminalEnvironment::capture();
+    let profile = atxt::detect_terminal_profile(&env);
 
-    if let Ok(text) = atext::render_to_text(path, &profile) {
+    if let Ok(text) = atxt::render_to_text(path, &profile) {
         println!("{}", text);
         return Ok(());
     }
