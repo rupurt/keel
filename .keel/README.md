@@ -384,6 +384,26 @@
 | [Explain Roles Lanes And Next Routing](epics/VF8hiVofm/voyages/VF8hkVGjy/) | done |
 | [Narrative Contract Tests And Drift Guards](epics/VF8hiVofm/voyages/VF8hkVhkI/) | done |
 
+### [Atxt Integration Layer](epics/VFOKwZazq/) (draft)
+
+| Voyage | Status |
+|--------|--------|
+| [Atxt Core Streaming Client](epics/VFOKwZazq/voyages/VFOL0CD6J/) | draft |
+| [Frame Accurate Scheduler](epics/VFOKwZazq/voyages/VFOL0JG7A/) | draft |
+
+### [Theater Mode Ux](epics/VFOKwgN0l/) (draft)
+
+| Voyage | Status |
+|--------|--------|
+| [Txt-scene Framing](epics/VFOKwgN0l/voyages/VFOL0QJ85/) | draft |
+| [Adaptive Resizing](epics/VFOKwgN0l/voyages/VFOL0XX8w/) | draft |
+
+### [Verification Lifecycle Integration](epics/VFOKwnF2e/) (draft)
+
+| Voyage | Status |
+|--------|--------|
+| [Verification Sign-off Gate](epics/VFOKwnF2e/voyages/VFOL0ebAt/) | draft |
+
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
 | Voyage | Status |
