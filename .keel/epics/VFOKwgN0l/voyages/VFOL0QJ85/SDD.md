@@ -1,60 +1,19 @@
-# Txt-scene Framing - Software Design Description
-
-> Center and frame playback in the terminal using the txt-scene library.
-
-**SRS:** [SRS.md](SRS.md)
+# Txt-scene Framing - SDD
 
 ## Overview
 
-<!-- How this voyage achieves its requirements; the big picture -->
-
-## Context & Boundaries
-
-<!-- What's in scope, what's out of scope, external actors/systems we interact with -->
-
-```
-┌─────────────────────────────────────────┐
-│              This Voyage                │
-│                                         │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐ │
-│  │         │  │         │  │         │ │
-│  └─────────┘  └─────────┘  └─────────┘ │
-└─────────────────────────────────────────┘
-        ↑               ↑
-   [External]      [External]
-```
-
-## Dependencies
-
-<!-- External systems, libraries, services this design relies on -->
-
-| Dependency | Type | Purpose | Version/API |
-|------------|------|---------|-------------|
-
-## Key Decisions
-
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
+This voyage implements the visual "Theater Mode" for artifact playback using the `txt-scene` library.
 
 ## Architecture
 
-<!-- Component relationships, layers, modules -->
+The `TheaterScene` will wrap the `atxt` playback buffer, providing a high-fidelity visual container.
 
 ## Components
 
-<!-- For each major component: purpose, interface, behavior -->
-
-## Interfaces
-
-<!-- API contracts, message formats, protocols (if this voyage exposes/consumes APIs) -->
+- `TheaterScene`: The primary scene container.
+- `DoubleBorder`: A layout component for cinematic framing.
+- `TitleBar`: Displays mission metadata.
 
 ## Data Flow
 
-<!-- How data moves through the system; sequence diagrams if helpful -->
-
-## Error Handling
-
-<!-- What can go wrong, how we detect it, how we recover -->
-
-| Error Condition | Detection | Response | Recovery |
-|-----------------|-----------|----------|----------|
+`atxt` Frames -> `TheaterScene` -> Terminal Buffer.

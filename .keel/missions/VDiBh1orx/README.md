@@ -2,6 +2,7 @@
 id: VDiBh1orx
 title: Horizon and Roadmap View
 status: verified
+verification_artifact: historical-proof.gif
 created_at: 2026-03-12T19:46:15
 updated_at: 2026-03-16T18:16:47
 activated_at: 2026-03-16T18:16:47

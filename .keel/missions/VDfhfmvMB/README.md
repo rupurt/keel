@@ -2,6 +2,7 @@
 id: VDfhfmvMB
 title: Deterministic Artifact Generation
 status: verified
+verification_artifact: historical-proof.gif
 created_at: 2026-03-12T09:34:28
 updated_at: 2026-03-12T09:45:01
 activated_at: 2026-03-12T09:38:38

@@ -2,6 +2,7 @@
 id: VDTncWcFG
 title: Role Based Management and Execution
 status: verified
+verification_artifact: historical-proof.gif
 created_at: 2026-03-10T08:42:49
 updated_at: 2026-03-10T14:58:37
 activated_at: 2026-03-10T13:04:06

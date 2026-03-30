@@ -2,6 +2,7 @@
 id: VDZsowb2k
 title: Board Coherence Restoration
 status: verified
+verification_artifact: historical-proof.gif
 created_at: 2026-03-11T09:41:07
 updated_at: 2026-03-11T11:26:07
 activated_at: 2026-03-11T09:42:21

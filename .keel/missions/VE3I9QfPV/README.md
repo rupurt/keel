@@ -2,6 +2,7 @@
 id: VE3I9QfPV
 title: Engine Infrastructure and Standard Work
 status: verified
+verification_artifact: historical-proof.gif
 created_at: 2026-03-16T10:23:37
 updated_at: 2026-03-16T18:15:30
 watch: VE3IAG4jZ

@@ -1,60 +1,18 @@
-# Atxt Core Streaming Client - Software Design Description
-
-> Support the atxt library's new streaming and detect_terminal_profile APIs.
-
-**SRS:** [SRS.md](SRS.md)
+# Atxt Core Streaming Client - SDD
 
 ## Overview
 
-<!-- How this voyage achieves its requirements; the big picture -->
-
-## Context & Boundaries
-
-<!-- What's in scope, what's out of scope, external actors/systems we interact with -->
-
-```
-┌─────────────────────────────────────────┐
-│              This Voyage                │
-│                                         │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐ │
-│  │         │  │         │  │         │ │
-│  └─────────┘  └─────────┘  └─────────┘ │
-└─────────────────────────────────────────┘
-        ↑               ↑
-   [External]      [External]
-```
-
-## Dependencies
-
-<!-- External systems, libraries, services this design relies on -->
-
-| Dependency | Type | Purpose | Version/API |
-|------------|------|---------|-------------|
-
-## Key Decisions
-
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
+Integrates the foundational atxt-core library into Keel for artifact processing.
 
 ## Architecture
 
-<!-- Component relationships, layers, modules -->
+Leverages atxt's environment detection and planning engine to select the best terminal renderer.
 
 ## Components
 
-<!-- For each major component: purpose, interface, behavior -->
-
-## Interfaces
-
-<!-- API contracts, message formats, protocols (if this voyage exposes/consumes APIs) -->
+- `AtxtClient`: High-level wrapper for atxt APIs.
+- `TerminalScanner`: Uses `atxt::TerminalEnvironment::capture`.
 
 ## Data Flow
 
-<!-- How data moves through the system; sequence diagrams if helpful -->
-
-## Error Handling
-
-<!-- What can go wrong, how we detect it, how we recover -->
-
-| Error Condition | Detection | Response | Recovery |
-|-----------------|-----------|----------|----------|
+`ArtifactPath` -> `probe_path` -> `plan_render` -> `render_to_text`.

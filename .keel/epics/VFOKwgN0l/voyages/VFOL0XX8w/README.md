@@ -1,7 +1,7 @@
 ---
 # system-managed
 id: VFOL0XX8w
-status: planned
+status: in-progress
 epic: VFOKwgN0l
 created_at: 2026-03-30T15:15:34
 # authored
@@ -25,5 +25,9 @@ index: 2
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/0 stories complete
+**Progress:** 0/1 stories complete
+
+| Title | Type | Status |
+|-------|------|--------|
+| [Terminal Resize Handler](../../../../stories/VFOaKzShH/README.md) | feat | in-progress |
 <!-- END GENERATED -->

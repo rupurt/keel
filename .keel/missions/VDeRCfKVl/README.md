@@ -2,6 +2,7 @@
 id: VDeRCfKVl
 title: Simulation Kernel and Reactive Architecture
 status: verified
+verification_artifact: historical-proof.gif
 created_at: 2026-03-12T04:22:46
 updated_at: 2026-03-12T04:57:43
 activated_at: 2026-03-12T04:26:55

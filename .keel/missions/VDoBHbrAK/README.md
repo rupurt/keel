@@ -2,6 +2,7 @@
 id: VDoBHbrAK
 title: Realize High-Density TUI Show Surfaces
 status: verified
+verification_artifact: historical-proof.gif
 created_at: 2026-03-13T20:22:16
 updated_at: 2026-03-14T23:21:31
 activated_at: 2026-03-13T20:23:29

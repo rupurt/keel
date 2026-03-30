@@ -1,60 +1,18 @@
-# Verification Sign-off Gate - Software Design Description
-
-> Block verification until the human has reviewed and signed off on the artifact playback.
-
-**SRS:** [SRS.md](SRS.md)
+# Verification Sign-off Gate - SDD
 
 ## Overview
 
-<!-- How this voyage achieves its requirements; the big picture -->
-
-## Context & Boundaries
-
-<!-- What's in scope, what's out of scope, external actors/systems we interact with -->
-
-```
-┌─────────────────────────────────────────┐
-│              This Voyage                │
-│                                         │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐ │
-│  │         │  │         │  │         │ │
-│  └─────────┘  └─────────┘  └─────────┘ │
-└─────────────────────────────────────────┘
-        ↑               ↑
-   [External]      [External]
-```
-
-## Dependencies
-
-<!-- External systems, libraries, services this design relies on -->
-
-| Dependency | Type | Purpose | Version/API |
-|------------|------|---------|-------------|
-
-## Key Decisions
-
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
+Integrates the artifact playback directly into the `keel mission verify` lifecycle.
 
 ## Architecture
 
-<!-- Component relationships, layers, modules -->
+The verification service will now include a `ProofReviewStage` between gate evaluation and state mutation.
 
 ## Components
 
-<!-- For each major component: purpose, interface, behavior -->
-
-## Interfaces
-
-<!-- API contracts, message formats, protocols (if this voyage exposes/consumes APIs) -->
+- `ProofReviewer`: Orchestrates the `TheaterScene` playback.
+- `SignOffPrompt`: An interactive TTY prompt for user confirmation.
 
 ## Data Flow
 
-<!-- How data moves through the system; sequence diagrams if helpful -->
-
-## Error Handling
-
-<!-- What can go wrong, how we detect it, how we recover -->
-
-| Error Condition | Detection | Response | Recovery |
-|-----------------|-----------|----------|----------|
+`Achieved` Status -> `evaluate_gates` -> `play_proof` -> `human_sign_off` -> `Verified` Status.

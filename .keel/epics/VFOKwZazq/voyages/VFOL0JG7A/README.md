@@ -27,5 +27,9 @@ index: 2
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/0 stories complete
+**Progress:** 1/1 stories complete
+
+| Title | Type | Status |
+|-------|------|--------|
+| [Playback Loop Timing](../../../../stories/VFOaKjPgf/README.md) | feat | done |
 <!-- END GENERATED -->

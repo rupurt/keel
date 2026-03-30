@@ -8,23 +8,24 @@ Keel needs a stable, high-performance integration with the atxt-core library to 
 
 | ID | Goal | Success Metric | Target |
 |----|------|----------------|--------|
-| GOAL-01 | Resolve the problem described above for the primary user. | A measurable outcome is defined for this problem | Target agreed during planning |
+| GOAL-01 | Support high-fidelity terminal playback. | Artifacts play at native speeds. | Q1 2026 |
 
 ## Users
 
 | Persona | Description | Primary Need |
 |---------|-------------|--------------|
-| Primary User | The person or team most affected by the problem above. | A clearer path to the outcome this epic should improve. |
+| Keel Maintainer | Developer integrating rich verification tools. | Clean API for playback. |
 
 ## Scope
 
 ### In Scope
 
-- [SCOPE-01] The smallest end-to-end change needed to address the problem statement.
+- [SCOPE-01] Timing-aware playback loop.
+- [SCOPE-02] Terminal profile detection.
 
 ### Out of Scope
 
-- [SCOPE-02] Follow-on improvements or adjacent work that is not required for the first outcome.
+- [SCOPE-03] GUI-based playback.
 
 ## Requirements
 
@@ -33,7 +34,7 @@ Keel needs a stable, high-performance integration with the atxt-core library to 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Goals | Priority | Rationale |
 |----|-------------|-------|----------|-----------|
-| FR-01 | Deliver the primary user workflow for this epic end-to-end. | GOAL-01 | must | Establishes the minimum functional capability needed to achieve the epic goal. |
+| FR-01 | Support real-time terminal playback. | GOAL-01 | must | Core mission requirement. |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ### Non-Functional Requirements
@@ -41,29 +42,29 @@ Keel needs a stable, high-performance integration with the atxt-core library to 
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Goals | Priority | Rationale |
 |----|-------------|-------|----------|-----------|
-| NFR-01 | Maintain reliability and observability for all new workflow paths introduced by this epic. | GOAL-01 | must | Keeps operations stable and makes regressions detectable during rollout. |
+| NFR-01 | Low flicker. | GOAL-01 | must | UX quality. |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->
 
 ## Verification Strategy
 
 | Area | Method | Evidence |
 |------|--------|----------|
-| Problem outcome | Tests, CLI proofs, or manual review chosen during planning | Story-level verification artifacts linked during execution |
+| Integration | Manual CLI playback | Story-level verification artifacts |
 
 ## Assumptions
 
 | Assumption | Impact if Wrong | Validation |
 |------------|-----------------|------------|
-| The problem statement reflects a real user or operator need. | The epic may optimize the wrong outcome. | Revisit with planners during decomposition. |
+| atxt library is stable | Integration may break | CI testing |
 
 ## Open Questions & Risks
 
 | Question/Risk | Owner | Status |
 |---------------|-------|--------|
-| Which metric best proves the problem above is resolved? | Epic owner | Open |
+| Performance over high latency | Alex | Open |
 
 ## Success Criteria
 
 <!-- BEGIN SUCCESS_CRITERIA -->
-- [ ] The team can state a measurable user outcome that resolves the problem above.
+- [x] Artifacts play back smoothly in the terminal.
 <!-- END SUCCESS_CRITERIA -->

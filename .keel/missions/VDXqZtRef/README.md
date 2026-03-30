@@ -2,6 +2,7 @@
 id: VDXqZtRef
 title: Keel Lib Interface and Hexagonal Refactor
 status: verified
+verification_artifact: historical-proof.gif
 created_at: 2026-03-10T21:00:00
 updated_at: 2026-03-11T07:24:19
 activated_at: 2026-03-10T22:37:04

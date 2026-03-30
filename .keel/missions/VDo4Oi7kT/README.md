@@ -2,6 +2,7 @@
 id: VDo4Oi7kT
 title: Implement Interactive Inquiry for Theater Mode
 status: verified
+verification_artifact: historical-proof.gif
 created_at: 2026-03-13T19:54:55
 updated_at: 2026-03-14T23:21:31
 activated_at: 2026-03-13T19:56:16

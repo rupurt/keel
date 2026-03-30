@@ -9,18 +9,20 @@ Goal: Center and frame playback in the terminal using the txt-scene library.
 
 ### In Scope
 
-- (list in-scope items)
+- [SCOPE-01] Double-line scene borders using Unicode box-drawing characters.
+- [SCOPE-02] Centered title bar with Mission ID and Name.
+- [SCOPE-03] Adaptive padding to keep content centered.
 
 ### Out of Scope
 
-- (list out-of-scope items)
+- [SCOPE-04] Interactive playback controls (pause/seek).
 
 ## Functional Requirements
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Scope | Source | Verification |
 |----|-------------|-------|--------|--------------|
-| SRS-01 | Sample requirement | SCOPE-01 | FR-01 | manual |
+| SRS-01 | Render a double-line border around playback | SCOPE-01 | FR-01 | board: VFOL0QJ85 |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ## Non-Functional Requirements
@@ -28,5 +30,5 @@ Goal: Center and frame playback in the terminal using the txt-scene library.
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Scope | Source | Verification |
 |----|-------------|-------|--------|--------------|
-| SRS-NFR-01 | Sample NFR | SCOPE-01 | NFR-01 | manual |
+| SRS-NFR-01 | Minimal layout overhead (< 5 cells) | SCOPE-02 | NFR-01 | manual |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->

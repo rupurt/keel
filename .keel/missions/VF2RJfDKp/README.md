@@ -2,6 +2,7 @@
 # system-managed
 id: VF2RJfDKp
 status: verified
+verification_artifact: historical-proof.gif
 created_at: 2026-03-26T21:22:38
 updated_at: 2026-03-26T21:33:03
 # authored

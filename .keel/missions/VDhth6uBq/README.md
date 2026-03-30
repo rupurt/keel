@@ -2,6 +2,7 @@
 id: VDhth6uBq
 title: HEAD Syntax For Show Commands
 status: verified
+verification_artifact: historical-proof.gif
 created_at: 2026-03-12T18:34:46
 updated_at: 2026-03-12T19:42:38
 activated_at: 2026-03-12T18:39:56

@@ -9,23 +9,20 @@ Goal: Support the atxt library's new streaming and detect_terminal_profile APIs.
 
 ### In Scope
 
-- Integration with `atxt` version 0.1.0 from GitHub.
-- Use `atxt::TerminalEnvironment::capture()` to detect environment.
-- Use `atxt::detect_terminal_profile()` to determine capabilities.
-- Implement real-time, frame-accurate playback loop with delta-encoding.
-- Support upscaled rendering while preserving aspect ratio.
+- [SCOPE-01] Integration with atxt library.
+- [SCOPE-02] Terminal profile detection.
+- [SCOPE-03] Delta-encoded playback loop.
 
 ### Out of Scope
 
-- Cinematic "Theater Mode" (future voyage).
-- Sixel/Kitty graphics (limited to terminal profile support).
+- [SCOPE-04] Interactive UI controls.
 
 ## Functional Requirements
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Scope | Source | Verification |
 |----|-------------|-------|--------|--------------|
-| SRS-01 | Support terminal profile detection using atxt | SCOPE-01 | FR-01 | board: VFOL0CD6J |
+| SRS-01 | Support terminal profile detection using atxt | SCOPE-02 | FR-01 | [atxt-integration](crates/keel-cli/src/cli/commands/management/mission/play.rs) |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ## Non-Functional Requirements

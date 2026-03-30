@@ -20,11 +20,13 @@ Verification should be a sensory-rich experience where human sign-off is tied di
 
 ### In Scope
 
-- [SCOPE-01] The smallest end-to-end change needed to address the problem statement.
+- [SCOPE-01] Automatic trigger of Theater Mode during verification.
+- [SCOPE-02] Interactive Y/N sign-off prompt.
+- [SCOPE-03] Integration with mission gating.
 
 ### Out of Scope
 
-- [SCOPE-02] Follow-on improvements or adjacent work that is not required for the first outcome.
+- [SCOPE-04] Batch verification review mode.
 
 ## Requirements
 

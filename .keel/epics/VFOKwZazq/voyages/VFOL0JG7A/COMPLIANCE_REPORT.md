@@ -4,4 +4,4 @@
 
 | Req ID | Status | Implemented By | Proof Artifacts |
 |--------|--------|----------------|-----------------|
-| SRS-01 | ○ PENDING | - | - |
+| SRS-01 | ✓ VERIFIED | [VFOaKjPgf](../../../../stories/VFOaKjPgf/README.md) | [VERIFICATION_MANIFEST.json](../../../../stories/VFOaKjPgf/EVIDENCE/VERIFICATION_MANIFEST.json) |

@@ -395,14 +395,14 @@
 
 | Voyage | Status |
 |--------|--------|
-| [Txt-scene Framing](epics/VFOKwgN0l/voyages/VFOL0QJ85/) | planned |
-| [Adaptive Resizing](epics/VFOKwgN0l/voyages/VFOL0XX8w/) | planned |
+| [Txt-scene Framing](epics/VFOKwgN0l/voyages/VFOL0QJ85/) | in-progress |
+| [Adaptive Resizing](epics/VFOKwgN0l/voyages/VFOL0XX8w/) | in-progress |
 
 ### [Verification Lifecycle Integration](epics/VFOKwnF2e/) (active)
 
 | Voyage | Status |
 |--------|--------|
-| [Verification Sign-off Gate](epics/VFOKwnF2e/voyages/VFOL0ebAt/) | planned |
+| [Verification Sign-off Gate](epics/VFOKwnF2e/voyages/VFOL0ebAt/) | in-progress |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

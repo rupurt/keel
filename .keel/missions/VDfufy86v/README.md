@@ -2,6 +2,7 @@
 id: VDfufy86v
 title: Knowledge Graph and Drift Cartography
 status: verified
+verification_artifact: historical-proof.gif
 created_at: 2026-03-12T10:26:07
 updated_at: 2026-03-12T17:45:10
 activated_at: 2026-03-12T10:28:31

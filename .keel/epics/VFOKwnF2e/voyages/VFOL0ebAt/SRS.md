@@ -9,18 +9,20 @@ Goal: Block verification until the human has reviewed and signed off on the arti
 
 ### In Scope
 
-- (list in-scope items)
+- [SCOPE-01] Automatic trigger of Theater Mode during `keel mission verify`.
+- [SCOPE-02] Mandatory interactive sign-off prompt after playback.
+- [SCOPE-03] Integration with existing mission verification gating rules.
 
 ### Out of Scope
 
-- (list out-of-scope items)
+- [SCOPE-04] Batch verification review mode.
 
 ## Functional Requirements
 
 <!-- BEGIN FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Scope | Source | Verification |
 |----|-------------|-------|--------|--------------|
-| SRS-01 | Sample requirement | SCOPE-01 | FR-01 | manual |
+| SRS-01 | verification command triggers playback | SCOPE-01 | FR-01 | board: VFOL0ebAt |
 <!-- END FUNCTIONAL_REQUIREMENTS -->
 
 ## Non-Functional Requirements
@@ -28,5 +30,5 @@ Goal: Block verification until the human has reviewed and signed off on the arti
 <!-- BEGIN NON_FUNCTIONAL_REQUIREMENTS -->
 | ID | Requirement | Scope | Source | Verification |
 |----|-------------|-------|--------|--------------|
-| SRS-NFR-01 | Sample NFR | SCOPE-01 | NFR-01 | manual |
+| SRS-NFR-01 | Atomic state transition only on sign-off | SCOPE-02 | NFR-01 | manual |
 <!-- END NON_FUNCTIONAL_REQUIREMENTS -->

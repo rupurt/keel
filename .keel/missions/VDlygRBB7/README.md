@@ -2,6 +2,7 @@
 id: VDlygRBB7
 title: Add Keel Play Theater Mode
 status: verified
+verification_artifact: historical-proof.gif
 created_at: 2026-03-13T11:19:40
 updated_at: 2026-03-13T11:32:59
 activated_at: 2026-03-13T11:32:45

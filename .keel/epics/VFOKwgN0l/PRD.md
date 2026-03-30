@@ -20,11 +20,13 @@ Playback currently lacks visual framing; a 'Theater Mode' using txt-scene will p
 
 ### In Scope
 
-- [SCOPE-01] The smallest end-to-end change needed to address the problem statement.
+- [SCOPE-01] Double-line scene borders.
+- [SCOPE-02] Centered title and playback area.
+- [SCOPE-03] Terminal resize handling.
 
 ### Out of Scope
 
-- [SCOPE-02] Follow-on improvements or adjacent work that is not required for the first outcome.
+- [SCOPE-04] Interactive playback controls (pause/seek).
 
 ## Requirements
 

@@ -27,5 +27,9 @@ index: 1
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/0 stories complete
+**Progress:** 1/1 stories complete
+
+| Title | Type | Status |
+|-------|------|--------|
+| [Atxt Integration Research](../../../../stories/VFOaKbafm/README.md) | feat | done |
 <!-- END GENERATED -->
