@@ -46,8 +46,8 @@ When querying with `--status`, the engine MUST:
 - Style IDs and Titles consistently to minimize cognitive load.
 
 ## 7. Mission Archetypes
-To prevent "Strategic Fog," every mission must align with one of four archetypes:
-- **Strategic (Foundation):** Large-scale value shifts or architectural foundations.
-- **Maintenance (Healing):** Purely focused on reaching/maintaining Zero Drift.
-- **Exploratory (Discovery):** Dominated by `Bearings` and `Play`; focuses on reducing the fog of war.
-- **Bridging (Realization):** Explicitly graduates conclusive research (Graduated Bearings) into `Planned` implementation work.
+To prevent "Strategic Fog," every mission must align with one of four archetypes. Choose the archetype that matches the mission's primary intent:
+- **Strategic (Foundation):** Large-scale value shifts or architectural foundations. Choose when the mission introduces new capabilities, defines new bounded contexts, or reshapes how the system works.
+- **Maintenance (Healing):** Purely focused on reaching/maintaining Zero Drift. Choose when the mission exists to fix doctor errors, resolve structural drift, or pay down technical debt without adding new features.
+- **Exploratory (Discovery):** Dominated by `Bearings` and `Play`; focuses on reducing the fog of war. Choose when the path forward is uncertain and the mission's primary output is research, evidence, and assessed options rather than shipped code.
+- **Bridging (Realization):** Explicitly graduates conclusive research (Graduated Bearings) into `Planned` implementation work. Choose when assessed bearings are ready to become epics and the mission's job is to author PRDs, SRS/SDDs, and decompose stories.

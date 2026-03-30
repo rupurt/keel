@@ -1,6 +1,6 @@
 # GEMINI.md
 
-Gemini-specific entrypoint for {{project_name}}.
+Guidance for **Gemini CLI** and **Google AI Studio** when working with this repository.
 
 ## Shared Contract
 
@@ -16,6 +16,4 @@ Those files are the repo-wide operating contract. This file should stay thin and
 ## Project-Specific Gemini Notes
 
 <!-- BEGIN PROJECT-SPECIFIC -->
-- Add Gemini-specific invocation, sandbox, or workflow notes here.
-- Keep repo-wide board and lifecycle rules in `AGENTS.md` and `INSTRUCTIONS.md`.
 <!-- END PROJECT-SPECIFIC -->

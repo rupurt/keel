@@ -13,7 +13,8 @@ This repository uses Keel as its project-management engine. This file is downstr
 1. `INSTRUCTIONS.md` for the repo's procedural turn loop.
 2. `POLICY.md` for local operational invariants.
 3. `ARCHITECTURE.md` and `USER_GUIDE.md` for product and system context.
-4. `keel turn`, `keel mission next --status`, and `keel doctor --status` for the live board state.
+4. `CODE_WALKTHROUGH.md` for source layout and key abstractions.
+5. `keel turn`, `keel mission next --status`, and `keel doctor --status` for the live board state.
 
 ## Core Principles
 
@@ -21,6 +22,29 @@ This repository uses Keel as its project-management engine. This file is downstr
 - Prefer explicit proof over chat-only claims.
 - Close loop debt with sealing commits instead of leaving dirty work behind.
 - Escalate only when the work requires human product, design, legal, or operational judgment.
+
+## Decision Resolution Hierarchy
+
+When faced with ambiguity, resolve decisions in this descending order:
+1.  **ADRs**: Binding architectural constraints.
+2.  **CONSTITUTION**: The philosophy of collaboration.
+3.  **POLICY**: The engine's operational invariants.
+4.  **ARCHITECTURE**: Source layout and technical boundaries.
+5.  **PLANNING**: PRD/SRS/SDD authored for the current mission.
+
+## Foundational Documents
+
+These define the constraints and workflow of the {{project_name}} environment:
+
+- `INSTRUCTIONS.md` — Step-by-step procedural loops and checklists.
+- `POLICY.md` — Operational invariants and engine constraints.
+- `CONSTITUTION.md` — Collaboration philosophy and decision hierarchy.
+- `ARCHITECTURE.md` — Implementation architecture and technical boundaries.
+- `CODE_WALKTHROUGH.md` — Source layout, key abstractions, and data-flow orientation.
+- `USER_GUIDE.md` — Operator-visible product story and workflow guidance.
+- `.keel/adrs/` — Binding architecture decisions.
+
+Use this order when interpreting constraints: ADRs → Constitution → Policy → Architecture → Planning artifacts.
 
 ## Project-Specific Conventions
 

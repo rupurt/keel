@@ -52,6 +52,7 @@ These define the constraints and workflow of the Keel environment:
 - `ARCHITECTURE.md` — Implementation architecture and flow model.
 - `STAGE.md` — Visual philosophy and scene rendering.
 - `PROTOCOL.md` — Communications protocol and data contracts.
+- `CODE_WALKTHROUGH.md` — Source layout, key abstractions, and data-flow orientation.
 - `CONFIGURATION.md` — Role-based and config-driven topology.
 - `RELEASE.md` — Release process and artifacts.
 - `.keel/adrs/` — Binding architecture decisions.

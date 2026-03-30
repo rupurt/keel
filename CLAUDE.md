@@ -2,4 +2,18 @@
 
 Guidance for **Claude Code** when working with this repository.
 
-> **Note:** This file extends [AGENTS.md](AGENTS.md) with Claude-specific behaviors. Read AGENTS.md first.
+## Shared Contract
+
+Before doing work, read:
+
+1. `AGENTS.md`
+2. `INSTRUCTIONS.md`
+3. `POLICY.md`
+4. `ARCHITECTURE.md`
+
+Those files are the repo-wide operating contract. This file should stay thin and only capture Claude-specific harness notes.
+
+## Project-Specific Claude Notes
+
+<!-- BEGIN PROJECT-SPECIFIC -->
+<!-- END PROJECT-SPECIFIC -->

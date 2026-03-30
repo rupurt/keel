@@ -10,6 +10,23 @@ This document is downstream from Keel and should describe the operational invari
 - The canonical tactical rhythm is the Turn Loop exposed by `keel turn`.
 - Board mutations, proof, and lifecycle closure happen through the CLI, not manual file edits.
 
+## The Core Objective: Zero Drift
+
+The primary goal of the engine is to eliminate **Drift** — any gap between what the board describes and what the code actually delivers. Progress is blocked if any of the following are detected by the `doctor`:
+- **Structural Drift:** Missing files, invalid IDs, or broken frontmatter.
+- **Architectural Drift:** Working in a bounded context with a `proposed` ADR.
+- **Requirement Drift:** Stories missing SRS references or acceptance criteria.
+- **Scaffold Drift:** Presence of placeholder text (e.g., `{{goal}}`, `Item 1`).
+
+## Entity Invariants
+
+Every entity in the `{{board_dir}}/` directory must adhere to structural rules. Define what must always be true for each entity type in this repository:
+
+- **Missions:** Must have a `CHARTER.md` with at least one `board:`-verifiable goal to be `active`.
+- **Epics:** Status is *derived* from voyages. An epic is `draft` until its first voyage is `planned`.
+- **Voyages:** Must have an `SRS.md` and `SDD.md` with authored content to transition from `draft` to `planned`.
+- **Stories:** Must link to a `voyage/SRS` requirement via the `[SRS-XX/AC-YY]` format.
+
 ## Repo Invariants
 
 Hydrate the rules that should always be true in this repository.

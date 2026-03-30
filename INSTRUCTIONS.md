@@ -63,7 +63,7 @@ As long as the system is **AUTONOMOUS (LIGHT ON)** and the circuit is healthy (n
 Apply these checks to **every change** before finalizing work:
 
 1. **Doctor First**: `just keel doctor` is the ultimate source of truth for board integrity. You MUST run the doctor at the start of every session. If the doctor reports errors or "Short Circuits", you MUST prioritize fixing those diagnostic orders before attempting any other work or architectural changes.
-2. **The Health Loop**: Use `just keel health --scene` for high-level triage. Subsystems are mapped as follows:
+2. **The Health Loop**: Use `just keel health --scene` for high-level triage. Each subsystem maps a metaphorical name to a concrete entity type and the checks it performs:
    - **NEURAL**: Stories (ID consistency, AC completion)
    - **MOTOR**: Voyages (Structure, SRS/SDD authorship)
    - **STRATEGIC**: Epics (PRD, Goal lineage)

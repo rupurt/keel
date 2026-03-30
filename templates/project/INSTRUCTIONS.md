@@ -18,6 +18,28 @@ Use Keel's canonical `Orient -> Inspect -> Pull -> Ship -> Close` loop as the ba
 4. **Ship**: execute the slice and record proof while the work is fresh
 5. **Close**: land the relevant lifecycle transition and the sealing commit
 
+## Primary Workflows
+
+Define the role-specific procedures for this repository. Each workflow should document the context commands, typical actions, and constraints for that role.
+
+### Operator (Implementation)
+Focus on **evidence-backed delivery**.
+- **Context**: `keel story show <id>`, `keel voyage show <id>`, `keel next --role operator`
+- **Action**: Implement requirements, record proofs with `keel story record`, and `submit`.
+- **Constraint**: Every AC must have a proof.
+
+### Manager (Planning)
+Focus on **strategic alignment and unblocking**.
+- **Context**: `keel epic show <id>`, `keel roles`, `keel next --role manager --explain`, `keel flow`
+- **Action**: Author `PRD.md`, `SRS.md`, `SDD.md`, resolve routing, decompose stories, and attach mission children.
+- **Constraint**: Move voyages from `draft` to `planned` only when requirements are coherent.
+
+### Explorer (Research)
+Focus on **technical discovery and fog reduction**.
+- **Context**: `keel bearing list`
+- **Action**: Fill `BRIEF.md`, collect `EVIDENCE.md`, and `assess`.
+- **Constraint**: Graduate to epics only when research is conclusive.
+
 ## Repo-Specific Turn Surfaces
 
 <!-- BEGIN PROJECT-SPECIFIC -->

@@ -88,7 +88,7 @@ Acceptance confirms this chain is intact. The implementation traces back through
 
 ## Bounded Contexts
 
-Keel is organized into **bounded contexts** — distinct areas of the domain with clear boundaries:
+A bounded context is a self-contained area of the domain where terms and rules have a specific, consistent meaning. Keel is organized into bounded contexts so that each area can evolve independently and parallel work across contexts is safe by default:
 
 | Context | Purpose | Core Entities |
 |---------|---------|---------------|
