@@ -9,6 +9,7 @@ use std::fs;
 
 use crate::domain::model::{Board, Story, StoryState, Voyage};
 use crate::domain::state_machine::invariants;
+use crate::domain::state_machine::mission::MissionStatus;
 use crate::domain::state_machine::mission::MissionTransition;
 use crate::domain::state_machine::story::StoryTransition;
 use crate::domain::state_machine::voyage::VoyageTransition;
@@ -287,10 +288,33 @@ fn evaluate_story_start(board: &Board, story: &Story) -> Vec<Problem> {
         return problems;
     };
 
-    // 1. Check Voyage documentation
+    // 1. Check mission readiness (must be active if assigned)
+    if let Some(epic) = board.epics.get(&voyage.epic_id)
+        && let Some(mission_id) = &epic.frontmatter.mission
+        && let Some(mission) = board.missions.get(mission_id)
+        && mission.status() != MissionStatus::Active
+    {
+        problems.push(Problem {
+            severity: Severity::Error,
+            path: mission.path.clone(),
+            scope: Some(scope.to_string()),
+            message: format!(
+                "Cannot start story {}: epic '{}' belongs to mission '{}' which is '{}' (must be 'active')",
+                story.id(),
+                epic.id(),
+                mission_id,
+                mission.status(),
+            ),
+            fix: None,
+            category: None,
+            check_id: CheckId::Unknown,
+        });
+    }
+
+    // 2. Check Voyage documentation
     problems.extend(check_voyage_documents_complete(voyage));
 
-    // 2. Check Epic documentation
+    // 3. Check Epic documentation
     if let Some(epic) = board.epics.get(&voyage.epic_id) {
         problems.extend(check_epic_documents_complete(epic));
     }
@@ -1200,7 +1224,7 @@ mod tests {
     use super::*;
     use crate::domain::model::StoryState;
     use crate::infrastructure::loader::load_board;
-    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestStory, TestVoyage};
+    use crate::test_helpers::{TestBoardBuilder, TestEpic, TestMission, TestStory, TestVoyage};
     use std::fs;
     use std::path::PathBuf;
 
@@ -2161,6 +2185,91 @@ mod tests {
             !has_message(&problems, "unresolved scaffold/default text"),
             "only README and REFLECT should be checked for unresolved scaffold markers"
         );
+    }
+
+    #[test]
+    fn story_start_blocked_when_mission_is_defining() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("defining"))
+            .epic(TestEpic::new("test-epic").mission("M1"))
+            .voyage(TestVoyage::new("01-planned", "test-epic").status("planned"))
+            .story(
+                TestStory::new("S1")
+                    .scope("test-epic/01-planned")
+                    .status(StoryState::Backlog),
+            )
+            .build();
+        let board = load_board(temp.path()).unwrap();
+        let story = board.require_story("S1").unwrap();
+
+        let problems = evaluate_story_start(&board, story);
+        assert!(has_message(&problems, "mission 'M1' which is 'defining'"));
+        assert!(has_message(&problems, "must be 'active'"));
+    }
+
+    #[test]
+    fn story_start_blocked_when_mission_is_paused() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("paused"))
+            .epic(TestEpic::new("test-epic").mission("M1"))
+            .voyage(TestVoyage::new("01-planned", "test-epic").status("planned"))
+            .story(
+                TestStory::new("S1")
+                    .scope("test-epic/01-planned")
+                    .status(StoryState::Backlog),
+            )
+            .build();
+        let board = load_board(temp.path()).unwrap();
+        let story = board.require_story("S1").unwrap();
+
+        let problems = evaluate_story_start(&board, story);
+        assert!(has_message(&problems, "mission 'M1' which is 'paused'"));
+    }
+
+    #[test]
+    fn story_start_allowed_when_mission_is_active() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .epic(TestEpic::new("test-epic").mission("M1"))
+            .voyage(
+                TestVoyage::new("01-planned", "test-epic")
+                    .status("planned")
+                    .srs_content(&scoped_srs(&[("SRS-01", "FR-01")])),
+            )
+            .story(
+                TestStory::new("S1")
+                    .scope("test-epic/01-planned")
+                    .status(StoryState::Backlog),
+            )
+            .build();
+        write_prd(&temp, "test-epic", &scoped_prd(&["FR-01"]));
+        let board = load_board(temp.path()).unwrap();
+        let story = board.require_story("S1").unwrap();
+
+        let problems = evaluate_story_start(&board, story);
+        assert!(
+            !has_message(&problems, "mission"),
+            "expected no mission gate problems, got: {:?}",
+            problems
+        );
+    }
+
+    #[test]
+    fn story_start_allowed_when_epic_has_no_mission() {
+        let temp = TestBoardBuilder::new()
+            .epic(TestEpic::new("test-epic"))
+            .voyage(TestVoyage::new("01-planned", "test-epic").status("planned"))
+            .story(
+                TestStory::new("S1")
+                    .scope("test-epic/01-planned")
+                    .status(StoryState::Backlog),
+            )
+            .build();
+        let board = load_board(temp.path()).unwrap();
+        let story = board.require_story("S1").unwrap();
+
+        let problems = evaluate_story_start(&board, story);
+        assert!(!has_message(&problems, "mission"));
     }
 
     #[test]
