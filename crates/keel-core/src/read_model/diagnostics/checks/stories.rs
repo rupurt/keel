@@ -200,7 +200,7 @@ fn submitted_before_completed_problem(story: &Story) -> Option<Problem> {
         return None;
     };
 
-    if submitted_at < completed_at {
+    if submitted_at <= completed_at {
         return None;
     }
 
@@ -208,7 +208,7 @@ fn submitted_before_completed_problem(story: &Story) -> Option<Problem> {
         Problem::error(
             story.path.clone(),
             format!(
-                "submitted_at ({}) must be earlier than completed_at ({})",
+                "submitted_at ({}) must be no later than completed_at ({})",
                 submitted_at.format("%Y-%m-%dT%H:%M:%S"),
                 completed_at.format("%Y-%m-%dT%H:%M:%S")
             ),
@@ -1429,7 +1429,32 @@ mod tests {
     }
 
     #[test]
-    fn date_consistency_fails_when_submitted_at_is_not_before_completed_at() {
+    fn date_consistency_fails_when_submitted_at_is_after_completed_at() {
+        let temp = TestBoardBuilder::new()
+            .story(TestStory::new("S1").status(StoryState::Done))
+            .build();
+        let path = temp.path().join("stories/S1/README.md");
+        let content = fs::read_to_string(&path).unwrap();
+        let updated = content.replacen(
+            "status: done\n",
+            "status: done\nstarted_at: 2026-03-04T10:00:00\nsubmitted_at: 2026-03-04T10:30:01\ncompleted_at: 2026-03-04T10:30:00\n",
+            1,
+        );
+        fs::write(&path, updated).unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_story_dates(&board);
+
+        assert!(problems.iter().any(|problem| {
+            problem.check_id == CheckId::StoryDateConsistency
+                && problem
+                    .message
+                    .contains("must be no later than completed_at")
+        }));
+    }
+
+    #[test]
+    fn date_consistency_allows_submitted_at_equal_to_completed_at() {
         let temp = TestBoardBuilder::new()
             .story(TestStory::new("S1").status(StoryState::Done))
             .build();
@@ -1445,12 +1470,11 @@ mod tests {
         let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
         let problems = check_story_dates(&board);
 
-        assert!(problems.iter().any(|problem| {
-            problem.check_id == CheckId::StoryDateConsistency
-                && problem
-                    .message
-                    .contains("must be earlier than completed_at")
-        }));
+        assert!(
+            !problems
+                .iter()
+                .any(|problem| { problem.check_id == CheckId::StoryDateConsistency })
+        );
     }
 
     #[test]
