@@ -158,9 +158,10 @@ fn play_artifact(path: &Path, mission_id: &str) -> Result<()> {
 fn run_high_fidelity_playback(
     path: &Path,
     probe: &atxt::ProbeResult,
-    plan: &atxt::RenderPlan,
+    init_plan: &atxt::RenderPlan,
     mission_id: &str,
 ) -> Result<()> {
+    use crossterm::event::{self, Event, KeyCode};
     use std::io::{Write, stdout};
     use std::thread;
     use std::time::Duration;
@@ -170,56 +171,80 @@ fn run_high_fidelity_playback(
         .map_err(|e| anyhow!("Failed to decode timed sequence: {}", e))?;
     let mut stdout = stdout();
 
-    // Determine frame width from the first sample
-    let first_frame = sequence
-        .samples()
-        .first()
-        .ok_or_else(|| anyhow!("No frames in sequence"))?;
-
-    // We need to render one frame to get its width
-    let mut init_plan = plan.clone();
-    init_plan.output = atxt::OutputKind::SingleFrame;
-    let init_output = atxt::render_still_image(&first_frame.frame, &init_plan)
-        .map_err(|e| anyhow!("Initial rendering error: {}", e))?;
-
-    let frame_width = init_output
-        .lines()
-        .map(txt_scene::visible_width)
-        .max()
-        .unwrap_or(0);
-    let theater = TheaterFrame::new(frame_width);
+    let mut current_plan = init_plan.clone();
+    let mut theater = None;
+    let mut previous_frame_output: Option<String> = None;
+    let mut previous_timestamp_ms = 0;
+    let mut needs_full_redraw = true;
 
     // Clear screen and hide cursor
     write!(stdout, "\x1b[2J\x1b[H\x1b[?25l").map_err(|e| anyhow!("Terminal IO error: {}", e))?;
-
-    // Print top border with mission ID
-    let title = format!("MISSION {}", mission_id);
-    writeln!(stdout, "{}", theater.top_border(Some(&title)))
-        .map_err(|e| anyhow!("Terminal IO error: {}", e))?;
     stdout
         .flush()
         .map_err(|e| anyhow!("Terminal IO error: {}", e))?;
 
-    let mut previous_frame_output: Option<String> = None;
-    let mut previous_timestamp_ms = 0;
-
     for (index, sample) in sequence.samples().iter().enumerate() {
+        // Handle input and resize events
+        while event::poll(Duration::ZERO).unwrap_or(false) {
+            match event::read().unwrap() {
+                Event::Key(key) => {
+                    if key.code == KeyCode::Char('q') || key.code == KeyCode::Esc {
+                        write!(stdout, "\x1b[?25h").ok();
+                        return Ok(());
+                    }
+                }
+                Event::Resize(_, _) => {
+                    // Re-plan on resize
+                    let env = atxt::TerminalEnvironment::capture();
+                    let terminal = atxt::detect_terminal_profile(&env);
+                    current_plan = atxt::plan_render(probe, &terminal);
+                    needs_full_redraw = true;
+                    previous_frame_output = None;
+                    theater = None;
+
+                    // Clear screen for clean resize
+                    write!(stdout, "\x1b[2J\x1b[H").ok();
+                }
+                _ => {}
+            }
+        }
+
         if index > 0 {
             let delay_ms = sample.timestamp_ms.saturating_sub(previous_timestamp_ms);
             thread::sleep(Duration::from_millis(delay_ms));
         }
 
         // Prepare a single-frame plan for the individual frame
-        let mut frame_plan = plan.clone();
+        let mut frame_plan = current_plan.clone();
         frame_plan.output = atxt::OutputKind::SingleFrame;
 
         let raw_frame = atxt::render_still_image(&sample.frame, &frame_plan)
             .map_err(|e| anyhow!("Rendering error: {}", e))?;
 
+        // Initialize theater frame if needed (first frame or after resize)
+        if theater.is_none() {
+            let frame_width = raw_frame
+                .lines()
+                .map(txt_scene::visible_width)
+                .max()
+                .unwrap_or(0);
+            theater = Some(TheaterFrame::new(frame_width));
+        }
+
+        let theater_frame = theater.as_ref().unwrap();
+
+        if needs_full_redraw {
+            // Print top border with mission ID
+            let title = format!("MISSION {}", mission_id);
+            write!(stdout, "\x1b[H{}", theater_frame.top_border(Some(&title)))
+                .map_err(|e| anyhow!("Terminal IO error: {}", e))?;
+            needs_full_redraw = false;
+        }
+
         // Render each row inside the theater frame
         let mut frame_output = String::new();
         for line in raw_frame.lines() {
-            frame_output.push_str(&theater.row(line));
+            frame_output.push_str(&theater_frame.row(line));
             frame_output.push('\n');
         }
 
@@ -258,8 +283,10 @@ fn run_high_fidelity_playback(
     }
 
     // Print bottom border
-    writeln!(stdout, "{}", theater.bottom_border())
-        .map_err(|e| anyhow!("Terminal IO error: {}", e))?;
+    if let Some(theater_frame) = theater {
+        writeln!(stdout, "{}", theater_frame.bottom_border())
+            .map_err(|e| anyhow!("Terminal IO error: {}", e))?;
+    }
 
     // Show cursor and move to next line
     write!(stdout, "\x1b[?25h").map_err(|e| anyhow!("Terminal IO error: {}", e))?;
