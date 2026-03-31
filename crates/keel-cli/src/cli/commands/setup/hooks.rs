@@ -23,6 +23,10 @@ if [ ! -d ".keel" ] && [ ! -f "keel.toml" ]; then
     # No board found — skip silently
     exit 0
 fi
+
+# Run keel health checks
+echo "Running keel health..."
+keel health || exit 1
 "#;
 
 const COMMIT_MSG_HOOK: &str = r#"#!/bin/sh
