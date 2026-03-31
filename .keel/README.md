@@ -391,11 +391,11 @@
 | [Atxt Core Streaming Client](epics/VFOKwZazq/voyages/VFOL0CD6J/) | done |
 | [Frame Accurate Scheduler](epics/VFOKwZazq/voyages/VFOL0JG7A/) | done |
 
-### [Theater Mode Ux](epics/VFOKwgN0l/) (active)
+### [Theater Mode Ux](epics/VFOKwgN0l/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Txt-scene Framing](epics/VFOKwgN0l/voyages/VFOL0QJ85/) | in-progress |
+| [Txt-scene Framing](epics/VFOKwgN0l/voyages/VFOL0QJ85/) | done |
 | [Adaptive Resizing](epics/VFOKwgN0l/voyages/VFOL0XX8w/) | done |
 
 ### [Verification Lifecycle Integration](epics/VFOKwnF2e/) (active)

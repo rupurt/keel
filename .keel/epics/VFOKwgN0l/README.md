@@ -22,9 +22,9 @@ mission: VFOKjcgv6
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/2 voyages complete, 1/2 stories done
+**Progress:** 2/2 voyages complete, 2/2 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Txt-scene Framing](voyages/VFOL0QJ85/) | in-progress | 0/1 |
+| [Txt-scene Framing](voyages/VFOL0QJ85/) | done | 1/1 |
 | [Adaptive Resizing](voyages/VFOL0XX8w/) | done | 1/1 |
 <!-- END GENERATED -->
