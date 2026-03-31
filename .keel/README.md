@@ -398,11 +398,11 @@
 | [Txt-scene Framing](epics/VFOKwgN0l/voyages/VFOL0QJ85/) | done |
 | [Adaptive Resizing](epics/VFOKwgN0l/voyages/VFOL0XX8w/) | done |
 
-### [Verification Lifecycle Integration](epics/VFOKwnF2e/) (active)
+### [Verification Lifecycle Integration](epics/VFOKwnF2e/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Verification Sign-off Gate](epics/VFOKwnF2e/voyages/VFOL0ebAt/) | in-progress |
+| [Verification Sign-off Gate](epics/VFOKwnF2e/voyages/VFOL0ebAt/) | done |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

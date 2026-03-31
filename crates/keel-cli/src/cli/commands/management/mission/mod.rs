@@ -1,5 +1,7 @@
 //! Mission commands - lifecycle management
 
+use std::io::IsTerminal;
+
 use anyhow::Result;
 use clap::{ArgGroup, Subcommand};
 
@@ -185,17 +187,11 @@ pub fn run(ctx: &spoke_auth::ExecutionContext, action: MissionAction) -> Result<
             result
         }
         MissionAction::Verify { id, artifact } => {
-            let result = keel::application::mission_lifecycle::MissionLifecycleService::verify(
-                &board_dir,
-                &id,
-                artifact.as_deref(),
+            verify_with_signoff(&board_dir, &id, artifact.as_deref())?;
+            crate::cli::presentation::audio::play(
+                crate::cli::presentation::audio::SoundEvent::MissionVerified,
             );
-            if result.is_ok() {
-                crate::cli::presentation::audio::play(
-                    crate::cli::presentation::audio::SoundEvent::MissionVerified,
-                );
-            }
-            result
+            Ok(())
         }
         MissionAction::Play { id } => play::run(id.as_deref()),
         MissionAction::Abandon { id } => {
@@ -210,6 +206,74 @@ pub fn run(ctx: &spoke_auth::ExecutionContext, action: MissionAction) -> Result<
             keel::application::mission_lifecycle::MissionLifecycleService::digest(&board_dir, &id)
         }
     }
+}
+
+/// Verify a mission with interactive sign-off: evaluate gates, play the
+/// artifact for human review, then prompt for confirmation before
+/// transitioning to Verified.
+fn verify_with_signoff(
+    board_dir: &std::path::Path,
+    id: &str,
+    artifact: Option<&str>,
+) -> Result<()> {
+    use anyhow::anyhow;
+
+    let board = keel::infrastructure::loader::load_board(board_dir)?;
+    let mut mission = board.require_mission(id)?.clone();
+
+    // Temporarily inject the artifact so gate evaluation sees it.
+    if let Some(art) = artifact {
+        mission.frontmatter.verification_artifact = Some(art.to_string());
+    }
+
+    // Pre-evaluate gates to fail fast before playback.
+    let problems = keel::domain::state_machine::evaluate_mission_transition(
+        &board,
+        &mission,
+        keel::domain::state_machine::MissionTransition::Verify,
+    );
+    if !problems.is_empty() {
+        return Err(anyhow!(keel::domain::state_machine::format_gate_error(
+            "mission", "verify", &problems
+        )));
+    }
+
+    // Resolve the artifact path for playback.
+    let art_ref = artifact
+        .map(String::from)
+        .or_else(|| mission.frontmatter.verification_artifact.clone());
+
+    if let Some(art) = &art_ref {
+        let mission_dir = mission.path.parent().unwrap();
+        let artifact_path = mission_dir.join(art);
+
+        if artifact_path.exists() {
+            println!("Playing verification artifact for review...");
+            println!();
+            play::play_artifact(&artifact_path, id)?;
+            println!();
+
+            // Interactive sign-off prompt
+            if std::io::stdin().is_terminal() {
+                use std::io::{Write, stdin, stdout};
+                print!("Sign off on this verification? [y/N] ");
+                stdout().flush().map_err(|e| anyhow!("IO error: {}", e))?;
+
+                let mut response = String::new();
+                stdin()
+                    .read_line(&mut response)
+                    .map_err(|e| anyhow!("IO error: {}", e))?;
+
+                let response = response.trim().to_lowercase();
+                if response != "y" && response != "yes" {
+                    return Err(anyhow!("Verification sign-off declined"));
+                }
+            }
+        }
+    }
+
+    // Proceed with the actual state transition.
+    keel::application::mission_lifecycle::MissionLifecycleService::verify(board_dir, id, artifact)
 }
 
 pub fn run_new(title: &str) -> Result<()> {

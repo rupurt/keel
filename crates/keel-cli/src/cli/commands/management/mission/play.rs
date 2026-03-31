@@ -87,7 +87,7 @@ fn play_mission(mission: &keel::domain::model::Mission) -> Result<()> {
     Ok(())
 }
 
-fn play_artifact(path: &Path, mission_id: &str) -> Result<()> {
+pub(crate) fn play_artifact(path: &Path, mission_id: &str) -> Result<()> {
     let path_str = path.to_string_lossy();
 
     // Prefer atxt (Art as Text) for terminal-native high-dimension playback
