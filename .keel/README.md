@@ -396,7 +396,7 @@
 | Voyage | Status |
 |--------|--------|
 | [Txt-scene Framing](epics/VFOKwgN0l/voyages/VFOL0QJ85/) | in-progress |
-| [Adaptive Resizing](epics/VFOKwgN0l/voyages/VFOL0XX8w/) | in-progress |
+| [Adaptive Resizing](epics/VFOKwgN0l/voyages/VFOL0XX8w/) | done |
 
 ### [Verification Lifecycle Integration](epics/VFOKwnF2e/) (active)
 
