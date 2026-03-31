@@ -100,7 +100,7 @@ checksum = "7c02d123df017efcdfbd739ef81735b36c5ba83ec3c59c80a9d7ecc718f92e50"
 [[package]]
 name = "atxt"
 version = "0.1.0"
-source = "git+https://github.com/spoke-sh/atxt#5873b3cedc2d549aa94f88d1fcf8686937477a5b"
+source = "git+https://github.com/spoke-sh/atxt#427cee26c1675c5a3fa221db1bac7f6c662d4a09"
 dependencies = [
  "colored",
  "crossterm 0.29.0",
@@ -110,7 +110,7 @@ dependencies = [
  "serde",
  "serde_json",
  "symphonia",
- "txtplot 0.1.0 (git+https://github.com/rupurt/txtplot.git?rev=a7629f47a9e70979317c3b3b42c27d2f87f84fac)",
+ "txtplot",
 ]
 
 [[package]]
@@ -926,7 +926,7 @@ dependencies = [
  "terminal_size 0.4.3",
  "toml",
  "txt-scene",
- "txtplot 0.1.0 (git+https://github.com/rupurt/txtplot)",
+ "txtplot",
 ]
 
 [[package]]
@@ -1983,18 +1983,7 @@ dependencies = [
 [[package]]
 name = "txtplot"
 version = "0.1.0"
-source = "git+https://github.com/rupurt/txtplot.git?rev=a7629f47a9e70979317c3b3b42c27d2f87f84fac#a7629f47a9e70979317c3b3b42c27d2f87f84fac"
-dependencies = [
- "colored",
- "crossterm 0.27.0",
- "rand",
- "terminal_size 0.3.0",
-]
-
-[[package]]
-name = "txtplot"
-version = "0.1.0"
-source = "git+https://github.com/rupurt/txtplot#9dd65204fbacb773e374f4b9142c71b0dc3c9886"
+source = "git+https://github.com/rupurt/txtplot?rev=9dd65204fbacb773e374f4b9142c71b0dc3c9886#9dd65204fbacb773e374f4b9142c71b0dc3c9886"
 dependencies = [
  "colored",
  "crossterm 0.27.0",

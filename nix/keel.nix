@@ -12,7 +12,7 @@ rustPlatform.buildRustPackage {
   cargoLock = {
     lockFile = ../Cargo.lock;
     outputHashes = {
-      "atxt-0.1.0" = "sha256-tTgEGGX1+Kiw5dJR1IWmOIPKrRjJ6xGipv0pfltASfM=";
+      "atxt-0.1.0" = "sha256-FjumT0LCkkGr7WiRUKwMxE1CAMsmUSAY3rL9eVpXitA=";
       "txtplot-0.1.0" = "sha256-bC6zo1yhJg41iz69XbXqwIKOfNVXwFke0vzcSMbqvFE=";
     };
   };
