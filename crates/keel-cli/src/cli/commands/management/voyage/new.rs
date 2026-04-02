@@ -9,7 +9,7 @@ use chrono::Local;
 use keel::infrastructure::duplicate_ids::{self, DuplicateEntity};
 use keel::infrastructure::frontmatter_mutation::Mutation;
 use keel::infrastructure::loader::load_board;
-use keel::infrastructure::story_id::generate_story_id;
+use keel::infrastructure::story_id::generate_story_id_avoiding_casefold_collisions;
 use keel::infrastructure::template_rendering;
 use keel::infrastructure::templates;
 
@@ -46,7 +46,7 @@ fn new_voyage(board_dir: &Path, name: &str, epic_id: &str, goal: &str) -> Result
 
     // Find next voyage number for this epic
     let next_num = find_next_voyage_num(&board, epic_id);
-    let voyage_id = generate_story_id();
+    let voyage_id = generate_story_id_avoiding_casefold_collisions(board.voyages.keys());
 
     // Create voyage directory
     let voyage_dir = board_dir

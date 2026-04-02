@@ -36,7 +36,10 @@ fn new_routine(
     let board = load_board(board_dir)?;
     validate_target_scope(&board, target_scope)?;
 
-    let routine_id = keel_core::infrastructure::story_id::generate_story_id();
+    let routine_id =
+        keel_core::infrastructure::story_id::generate_story_id_avoiding_casefold_collisions(
+            board.routines.keys(),
+        );
 
     let routine_dir = board_dir.join("routines").join(&routine_id);
     if routine_dir.exists() {

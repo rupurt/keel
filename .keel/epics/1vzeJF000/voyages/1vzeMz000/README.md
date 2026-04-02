@@ -29,8 +29,8 @@ index: 4
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Refine Completeness Analysis](../../../../stories/1vzeUf000/README.md) | feat | done |
 | [Agents Template Mission Workflow](../../../../stories/1vzeUg000/README.md) | docs | done |
 | [Mission Aware Keel Next](../../../../stories/1vzeVn000/README.md) | feat | done |
 | [Mission Progress In Keel Flow](../../../../stories/1vzeVr000/README.md) | feat | done |
+| [Refine Completeness Analysis](../../../../stories/1vzeuf001/README.md) | feat | done |
 <!-- END GENERATED -->

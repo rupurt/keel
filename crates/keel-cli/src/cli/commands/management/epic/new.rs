@@ -9,7 +9,7 @@ use chrono::Local;
 use keel::infrastructure::duplicate_ids::{self, DuplicateEntity};
 use keel::infrastructure::frontmatter_mutation::Mutation;
 use keel::infrastructure::loader::load_board;
-use keel::infrastructure::story_id::generate_story_id;
+use keel::infrastructure::story_id::generate_story_id_avoiding_casefold_collisions;
 use keel::infrastructure::template_rendering;
 use keel::infrastructure::templates;
 
@@ -40,8 +40,7 @@ fn new_epic(board_dir: &Path, name: &str, problem: &str) -> Result<()> {
         ));
     }
 
-    // Generate random epic ID
-    let epic_id = generate_story_id();
+    let epic_id = generate_story_id_avoiding_casefold_collisions(board.epics.keys());
 
     // Calculate next index
     let next_index = board

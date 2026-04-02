@@ -5,9 +5,8 @@ use std::path::Path;
 
 use anyhow::{Context, Result, anyhow};
 
-use keel::infrastructure::duplicate_ids::{self, DuplicateEntity};
 use keel::infrastructure::loader::load_board;
-use keel::infrastructure::story_id::generate_story_id;
+use keel::infrastructure::story_id::generate_story_id_avoiding_casefold_collisions;
 use keel::infrastructure::template_rendering;
 use keel::infrastructure::templates;
 
@@ -19,8 +18,6 @@ pub fn run(title: &str, limit: u32) -> Result<String> {
 
 /// Create a new watch
 fn new_watch(board_dir: &Path, title: &str, limit: u32) -> Result<String> {
-    duplicate_ids::ensure_unique_ids(board_dir, DuplicateEntity::Mission, "keel watch new")?;
-
     // Enforce Title Case
     if !keel::infrastructure::utils::is_title_case(title) {
         return Err(anyhow!(
@@ -29,10 +26,8 @@ fn new_watch(board_dir: &Path, title: &str, limit: u32) -> Result<String> {
         ));
     }
 
-    let _board = load_board(board_dir)?;
-
-    // Generate random watch ID
-    let watch_id = generate_story_id();
+    let board = load_board(board_dir)?;
+    let watch_id = generate_story_id_avoiding_casefold_collisions(board.watches.keys());
 
     // Create watches directory if it doesn't exist
     let watches_dir = board_dir.join("watches");

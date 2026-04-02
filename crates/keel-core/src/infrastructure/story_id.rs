@@ -3,6 +3,7 @@
 //! Generates 9-character IDs: 7 chars timestamp (milliseconds) + 2 chars suffix.
 //! IDs are lexicographically sortable by creation time.
 
+use std::collections::HashSet;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -25,6 +26,21 @@ pub fn generate_story_id() -> String {
         .as_millis() as u64;
 
     generate_story_id_with_timestamp(timestamp)
+}
+
+/// Normalize an ID to the key used by case-insensitive filesystems.
+pub fn casefold_id_for_filesystem(id: &str) -> String {
+    id.to_ascii_lowercase()
+}
+
+/// Generate a new story-style ID that does not collide with existing IDs when
+/// compared on a case-insensitive filesystem.
+pub fn generate_story_id_avoiding_casefold_collisions<I, S>(existing_ids: I) -> String
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+{
+    allocate_casefold_safe_id_with(existing_ids, generate_story_id)
 }
 
 /// Generate a story ID with a specific timestamp (milliseconds)
@@ -94,6 +110,25 @@ fn next_suffix_value() -> u32 {
     }
 
     COUNTER.fetch_add(1, Ordering::Relaxed) % SUFFIX_SPACE
+}
+
+fn allocate_casefold_safe_id_with<I, S, F>(existing_ids: I, mut next_id: F) -> String
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+    F: FnMut() -> String,
+{
+    let reserved: HashSet<String> = existing_ids
+        .into_iter()
+        .map(|id| casefold_id_for_filesystem(id.as_ref()))
+        .collect();
+
+    loop {
+        let candidate = next_id();
+        if !reserved.contains(&casefold_id_for_filesystem(&candidate)) {
+            return candidate;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -236,5 +271,23 @@ mod tests {
         // 2 base62 chars = 62^2 = 3,844 possibilities per millisecond
         let capacity = 62u64.pow(2);
         assert_eq!(capacity, 3844);
+    }
+
+    #[test]
+    fn casefold_safe_allocator_skips_case_insensitive_collisions() {
+        let mut candidates = ["1vzeUF000", "1vzeug000"].into_iter();
+        let allocated = allocate_casefold_safe_id_with(["1vzeUf000"], || {
+            candidates
+                .next()
+                .expect("test candidate should exist")
+                .to_string()
+        });
+
+        assert_eq!(allocated, "1vzeug000");
+    }
+
+    #[test]
+    fn filesystem_casefold_normalizes_ascii_case() {
+        assert_eq!(casefold_id_for_filesystem("AbC123xYz"), "abc123xyz");
     }
 }

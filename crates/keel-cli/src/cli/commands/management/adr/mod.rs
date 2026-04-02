@@ -159,7 +159,9 @@ fn new_adr(
     let board = load_board(board_dir)?;
 
     // Generate random ID and calculate index
-    let id = keel::infrastructure::story_id::generate_story_id();
+    let id = keel::infrastructure::story_id::generate_story_id_avoiding_casefold_collisions(
+        board.adrs.keys(),
+    );
     let index = next_adr_index(&board);
     let date = Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
     let context_value = format_context_value(context);

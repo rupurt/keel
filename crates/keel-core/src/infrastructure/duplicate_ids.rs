@@ -1,6 +1,6 @@
 //! Shared duplicate-ID scanner used by commands and diagnostics.
 
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -140,12 +140,36 @@ pub fn duplicate_id_problems(board_dir: &Path, entity: DuplicateEntity) -> Vec<P
         }
     }
 
+    for collision in scan_casefold_id_collisions(board_dir, entity) {
+        for entry in &collision.entries {
+            let other_entries: Vec<_> = collision
+                .entries
+                .iter()
+                .filter(|candidate| candidate.path != entry.path)
+                .map(|candidate| format!("'{}' ({})", candidate.id, candidate.path.display()))
+                .collect();
+            problems.push(
+                Problem::error(
+                    entry.path.clone(),
+                    format!(
+                        "{} ID '{}' collides on case-insensitive filesystems with {}",
+                        entity.singular_label(),
+                        entry.id,
+                        other_entries.join(", ")
+                    ),
+                )
+                .with_check_id(entity.check_id()),
+            );
+        }
+    }
+
     problems
 }
 
 pub fn ensure_unique_ids(board_dir: &Path, entity: DuplicateEntity, command: &str) -> Result<()> {
     let duplicates = scan_duplicate_ids(board_dir, entity);
-    if duplicates.is_empty() {
+    let casefold_collisions = scan_casefold_id_collisions(board_dir, entity);
+    if duplicates.is_empty() && casefold_collisions.is_empty() {
         return Ok(());
     }
 
@@ -159,13 +183,76 @@ pub fn ensure_unique_ids(board_dir: &Path, entity: DuplicateEntity, command: &st
             .join(", ");
         lines.push(format!("  - {} => {}", duplicate.id, paths));
     }
+    for collision in casefold_collisions {
+        let entries = collision
+            .entries
+            .iter()
+            .map(|entry| format!("{} => {}", entry.id, entry.path.display()))
+            .collect::<Vec<_>>()
+            .join(", ");
+        lines.push(format!("  - case-insensitive collision [{}]", entries));
+    }
 
     bail!(
-        "Cannot run `{}` while duplicate {} IDs exist.\nRun `keel doctor` to fix duplicates first.\n{}",
+        "Cannot run `{}` while duplicate or case-insensitive-colliding {} IDs exist.\nRun `keel doctor` to fix ID collisions first.\n{}",
         command,
         entity.singular_label(),
         lines.join("\n")
     )
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct CasefoldIdEntry {
+    id: String,
+    path: PathBuf,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct CasefoldIdCollisionGroup {
+    folded_id: String,
+    entries: Vec<CasefoldIdEntry>,
+}
+
+fn scan_casefold_id_collisions(
+    board_dir: &Path,
+    entity: DuplicateEntity,
+) -> Vec<CasefoldIdCollisionGroup> {
+    let mut id_to_entries: HashMap<String, Vec<CasefoldIdEntry>> = HashMap::new();
+
+    for path in entity.collect_candidate_paths(board_dir) {
+        let Ok(content) = fs::read_to_string(&path) else {
+            continue;
+        };
+        let Some(id) = entity.parse_id(&content) else {
+            continue;
+        };
+        id_to_entries
+            .entry(crate::infrastructure::story_id::casefold_id_for_filesystem(
+                &id,
+            ))
+            .or_default()
+            .push(CasefoldIdEntry { id, path });
+    }
+
+    let mut collisions: Vec<CasefoldIdCollisionGroup> = id_to_entries
+        .into_iter()
+        .filter_map(|(folded_id, mut entries)| {
+            let distinct_ids: BTreeSet<&str> =
+                entries.iter().map(|entry| entry.id.as_str()).collect();
+            if distinct_ids.len() < 2 {
+                return None;
+            }
+
+            entries.sort_by(|left, right| {
+                left.id
+                    .cmp(&right.id)
+                    .then_with(|| left.path.cmp(&right.path))
+            });
+            Some(CasefoldIdCollisionGroup { folded_id, entries })
+        })
+        .collect();
+    collisions.sort_by(|left, right| left.folded_id.cmp(&right.folded_id));
+    collisions
 }
 
 fn collect_story_paths(board_dir: &Path) -> Vec<PathBuf> {
@@ -345,6 +432,29 @@ mod tests {
     }
 
     #[test]
+    fn scan_duplicate_story_ids_detects_casefold_collisions() {
+        let temp = TempDir::new().unwrap();
+        let stories_dir = temp.path().join("stories");
+        fs::create_dir_all(stories_dir.join("A")).unwrap();
+        fs::create_dir_all(stories_dir.join("B")).unwrap();
+        fs::write(
+            stories_dir.join("A/README.md"),
+            "---\nid: 1vzeUF000\ntitle: One\nstatus: backlog\ntype: feat\ncreated_at: 2026-01-01T00:00:00\nupdated_at: 2026-01-01T00:00:00\n---\n",
+        )
+        .unwrap();
+        fs::write(
+            stories_dir.join("B/README.md"),
+            "---\nid: 1vzeUf000\ntitle: Two\nstatus: backlog\ntype: feat\ncreated_at: 2026-01-01T00:00:00\nupdated_at: 2026-01-01T00:00:00\n---\n",
+        )
+        .unwrap();
+
+        let collisions = scan_casefold_id_collisions(temp.path(), DuplicateEntity::Story);
+        assert_eq!(collisions.len(), 1);
+        assert_eq!(collisions[0].folded_id, "1vzeuf000");
+        assert_eq!(collisions[0].entries.len(), 2);
+    }
+
+    #[test]
     fn ensure_unique_ids_returns_actionable_error() {
         let temp = TempDir::new().unwrap();
         let epics_dir = temp.path().join("epics");
@@ -365,7 +475,32 @@ mod tests {
             .unwrap_err()
             .to_string();
         assert!(err.contains("Cannot run `keel epic new`"));
-        assert!(err.contains("duplicate epic IDs"));
+        assert!(err.contains("duplicate or case-insensitive-colliding epic IDs"));
         assert!(err.contains("Run `keel doctor`"));
+    }
+
+    #[test]
+    fn ensure_unique_ids_reports_casefold_collisions() {
+        let temp = TempDir::new().unwrap();
+        let stories_dir = temp.path().join("stories");
+        fs::create_dir_all(stories_dir.join("A")).unwrap();
+        fs::create_dir_all(stories_dir.join("B")).unwrap();
+        fs::write(
+            stories_dir.join("A/README.md"),
+            "---\nid: 1vzeUF000\ntitle: One\nstatus: backlog\ntype: feat\ncreated_at: 2026-01-01T00:00:00\nupdated_at: 2026-01-01T00:00:00\n---\n",
+        )
+        .unwrap();
+        fs::write(
+            stories_dir.join("B/README.md"),
+            "---\nid: 1vzeUf000\ntitle: Two\nstatus: backlog\ntype: feat\ncreated_at: 2026-01-01T00:00:00\nupdated_at: 2026-01-01T00:00:00\n---\n",
+        )
+        .unwrap();
+
+        let err = ensure_unique_ids(temp.path(), DuplicateEntity::Story, "keel story new")
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("case-insensitive-colliding story IDs"));
+        assert!(err.contains("1vzeUF000"));
+        assert!(err.contains("1vzeUf000"));
     }
 }

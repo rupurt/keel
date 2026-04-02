@@ -10,18 +10,6 @@
 **Progress:** 4/4 stories complete
 
 ## Implementation Narrative
-### Refine Completeness Analysis
-- **ID:** 1vzeUf000
-- **Status:** done
-
-#### Summary
-Implement CHARTER.md completeness analysis for the refine command's question generation.
-
-#### Acceptance Criteria
-- [x] [SRS-05/AC-01] Completeness analysis checks Goals, Constraints, and Halting Rules sections for authored content <!-- verify: test, SRS-05:start:end -->
-- [x] [SRS-05/AC-02] Analysis generates contextual questions for missing or incomplete sections <!-- verify: test, SRS-05:start:end -->
-- [x] [SRS-05/AC-03] Analysis requires at least one board-type verification goal as baseline <!-- verify: test, SRS-05:start:end -->
-
 ### Agents Template Mission Workflow
 - **ID:** 1vzeUg000
 - **Status:** done
@@ -54,5 +42,17 @@ Add mission-level progress section to `keel flow` output.
 #### Acceptance Criteria
 - [x] [SRS-03/AC-01] `keel flow` includes mission progress section when active missions exist <!-- verify: test, SRS-03:start:end -->
 - [x] [SRS-04/AC-01] `keel flow` mission section is omitted when no missions exist (backward compatible) <!-- verify: test, SRS-04:start:end -->
+
+### Refine Completeness Analysis
+- **ID:** 1vzeuf001
+- **Status:** done
+
+#### Summary
+Implement CHARTER.md completeness analysis for the refine command's question generation.
+
+#### Acceptance Criteria
+- [x] [SRS-05/AC-01] Completeness analysis checks Goals, Constraints, and Halting Rules sections for authored content <!-- verify: test, SRS-05:start:end -->
+- [x] [SRS-05/AC-02] Analysis generates contextual questions for missing or incomplete sections <!-- verify: test, SRS-05:start:end -->
+- [x] [SRS-05/AC-03] Analysis requires at least one board-type verification goal as baseline <!-- verify: test, SRS-05:start:end -->
 
 

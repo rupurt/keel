@@ -10,7 +10,7 @@ use keel::domain::model::{AdrStatus, Board};
 use keel::infrastructure::duplicate_ids::{self, DuplicateEntity};
 use keel::infrastructure::frontmatter_mutation::Mutation;
 use keel::infrastructure::loader::load_board;
-use keel::infrastructure::story_id::generate_story_id;
+use keel::infrastructure::story_id::generate_story_id_avoiding_casefold_collisions;
 use keel::infrastructure::template_rendering;
 use keel::infrastructure::templates;
 use keel::infrastructure::utils::slugify;
@@ -170,7 +170,7 @@ fn new_story(
         .map(|e| find_governing_adrs(&board, e))
         .unwrap_or_default();
 
-    let story_id = generate_story_id();
+    let story_id = generate_story_id_avoiding_casefold_collisions(board.stories.keys());
     let story_bundle_dir = board_dir.join("stories").join(&story_id);
     fs::create_dir_all(&story_bundle_dir).with_context(|| {
         format!(
@@ -324,7 +324,7 @@ mod tests {
         let err = new_story(board_dir, "Blocked Story", "feat", None, None)
             .unwrap_err()
             .to_string();
-        assert!(err.contains("duplicate story IDs"));
+        assert!(err.contains("duplicate or case-insensitive-colliding story IDs"));
         assert!(err.contains("keel doctor"));
     }
 

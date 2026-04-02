@@ -13,7 +13,6 @@ use txtplot::ChartContext;
 use crate::cli::commands::comms::notify;
 use keel::domain::model::{AdrStatus, Board, StoryFrontmatter, StoryState, StoryType, VoyageState};
 use keel::infrastructure::loader::load_board;
-use keel::infrastructure::story_id::generate_story_id;
 use keel::read_model::routine_materialization::{
     existing_materializations, materialization_marker, projection_materialization_key,
 };
@@ -431,7 +430,9 @@ fn create_materialized_story(
         .entry(routine.target_scope.clone())
         .and_modify(|index| *index += 1)
         .or_insert(1);
-    let story_id = generate_story_id();
+    let story_id = keel::infrastructure::story_id::generate_story_id_avoiding_casefold_collisions(
+        board.stories.keys(),
+    );
     let story_dir = board_dir.join("stories").join(&story_id);
     let story_path = story_dir.join("README.md");
     fs::create_dir_all(&story_dir)

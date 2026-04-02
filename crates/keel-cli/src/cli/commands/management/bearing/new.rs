@@ -9,7 +9,7 @@ use chrono::Local;
 use keel::infrastructure::duplicate_ids::{self, DuplicateEntity};
 use keel::infrastructure::frontmatter_mutation::Mutation;
 use keel::infrastructure::loader::load_board;
-use keel::infrastructure::story_id::generate_story_id;
+use keel::infrastructure::story_id::generate_story_id_avoiding_casefold_collisions;
 use keel::infrastructure::template_rendering;
 use keel::infrastructure::templates;
 
@@ -34,8 +34,7 @@ fn new_bearing(board_dir: &Path, name: &str) -> Result<String> {
     let board = load_board(board_dir)?;
     let now = Local::now().format("%Y-%m-%dT%H:%M:%S").to_string();
 
-    // Generate random bearing ID
-    let bearing_id = generate_story_id();
+    let bearing_id = generate_story_id_avoiding_casefold_collisions(board.bearings.keys());
 
     // Calculate next index
     let next_index = board
