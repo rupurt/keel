@@ -7,7 +7,11 @@
 
 Welcome to Keel. This is not a notes app with automation bolted on; it is a board engine designed for the era of human-agent collaboration. Keel treats software development as a high-fidelity operating system where **Formal Rules** act as the physics, **Turns** are the unit of progress, and **Play** remains a first-class tool for discovery.
 
-![Keel flow dashboard](docs/images/keel-flow.png)
+<p align="center">
+  <img src="docs/images/keel-flow.png" alt="Keel flow dashboard" width="32%" />
+  <img src="docs/images/keel-flow-scene.png" alt="Keel flow scene" width="32%" />
+  <img src="docs/images/keel-workshop-scene.png" alt="Keel workshop scene" width="32%" />
+</p>
 
 ---
 
