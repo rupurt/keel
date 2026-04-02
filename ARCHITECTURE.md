@@ -189,6 +189,25 @@ Verification queue categories are shared across command and flow paths:
 - `HumanBlocked` when queue is `5..20` (blocks human `keel next`).
 - `FlowBlocked` when queue is `> 20` (blocks flow and human `keel next`).
 
+### Flow Circuit Assessment
+
+`keel flow` does not use raw `DoctorReport::total_errors()` as its only fuse. The power-circuit judgment combines:
+
+- working-hours gating from config
+- derived heartbeat state
+- canonical `FlowMetrics`
+- doctor findings
+- workflow topology and manual-accept pressure
+
+Blocking rule:
+
+- non-transitional doctor errors remain hard blocking
+- transitional mission-intake findings (`MissionMissingChildren`, `MissionActiveNoWork`) may be suppressed up to the current entity-creation pressure
+- entity-creation pressure is derived from incomplete missions plus planning and research queues
+- that suppression only exists while the heartbeat is energized
+
+Architectural consequence: `keel doctor` remains the pathology report, while `keel flow` is a readiness projection that can tolerate live upstream entity creation without declaring an immediate board-wide shutdown.
+
 Management-lane `keel next --role <management-role>` decision set is constrained to:
 `decision`, `accept`, `research`, `needs-stories`, `needs-planning`, `blocked`, `empty`.
 It never returns `Work`.

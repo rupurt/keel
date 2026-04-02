@@ -9,6 +9,14 @@ The primary goal of the engine is to eliminate **Drift**. Progress is blocked if
 - **Requirement Drift:** Stories missing SRS references or acceptance criteria.
 - **Scaffold Drift:** Presence of placeholder text (e.g., `{{goal}}`, `Item 1`).
 
+### 1.1 Flow Circuit Policy
+`keel doctor` remains the authoritative remediation surface, but `keel flow` is allowed to distinguish transitional intake from actual circuit failure.
+
+- **Blocking by Default:** Non-transitional doctor errors still short-circuit the flow circuit.
+- **Transitional Intake Exception:** `MissionMissingChildren` and `MissionActiveNoWork` may be suppressed in `keel flow` while the heartbeat is energized and the board is showing live entity-creation pressure from missions, planning work, or research work.
+- **No Silent Waiver:** This exception changes the circuit-readiness judgment only. It does not clear doctor debt or waive the need to finish wiring the mission correctly.
+- **Pressure Bound:** If transitional intake debt exceeds current live intake pressure, the circuit still short-circuits.
+
 ## 2. Entity Invariants
 Every entity in the `.keel/` directory must adhere to these structural rules:
 - **Missions:** Must have a `CHARTER.md` with at least one `board:`-verifiable goal to be `active`.

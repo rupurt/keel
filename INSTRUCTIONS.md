@@ -19,6 +19,8 @@ Keel is an engine with strict constraints. Your job is to move the board through
 6.  **Re-orient**: After the commit lands, run `just keel doctor --status` and `just keel flow` to see what the board needs next.
  This is the "plug the cord back in" moment. If the delivery lane has ready work, start the next turn immediately. Only stop to ask the human when you reach a manual lane (design direction, bearing assessment, or human verification).
 
+Interpret `keel flow --scene` as a circuit-readiness judgment, not a verbatim replay of `keel doctor`. During energized mission intake, the circuit may stay open with a notice even while `doctor` still reports transitional mission-wiring debt that must be finished.
+
 ## Primary Workflows
 
 ### Operator (Implementation)
@@ -62,7 +64,7 @@ As long as the system is **AUTONOMOUS (LIGHT ON)** and the circuit is healthy (n
 
 Apply these checks to **every change** before finalizing work:
 
-1. **Doctor First**: `just keel doctor` is the ultimate source of truth for board integrity. You MUST run the doctor at the start of every session. If the doctor reports errors or "Short Circuits", you MUST prioritize fixing those diagnostic orders before attempting any other work or architectural changes.
+1. **Doctor First**: `just keel doctor` is the ultimate source of truth for board integrity. You MUST run the doctor at the start of every session. If the doctor reports errors or "Short Circuits", you MUST prioritize fixing those diagnostic orders before attempting any other work or architectural changes. Do not mistake an energized `keel flow` circuit during mission intake for a clean doctor report.
 2. **The Health Loop**: Use `just keel health --scene` for high-level triage. Each subsystem maps a metaphorical name to a concrete entity type and the checks it performs:
    - **NEURAL**: Stories (ID consistency, AC completion)
    - **MOTOR**: Voyages (Structure, SRS/SDD authorship)

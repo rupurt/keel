@@ -16,6 +16,7 @@ Every public `--scene` surface should have an explicit contract.
 - Scene dependencies live in `crates/keel-core/src/read_model/scene_contracts.rs`.
 - Scene renderers should consume canonical read models (`heartbeat`, `flow_metrics`, `workflow_topology`, mission projections, etc.) instead of re-deriving logic inside CLI handlers.
 - Energization must stay coherent across surfaces: if `keel heartbeat` reports the board as idle, scenes like `flow --scene` and `workshop` must reflect that same state.
+- Failure scenes should reflect blocking policy, not raw error counts. `keel flow --scene` may stay energized during live mission intake and show a warning notice even when `keel doctor` still reports transitional intake debt.
 - Width and alignment are part of the contract. ANSI color must not change visible geometry.
 
 ## Archetypes of Scenes
@@ -25,7 +26,7 @@ Scenes generally fall into three categories:
 ### 1. The Pulse (Diagnostic & State)
 Direct visual representations of system health or status.
 - **Example:** `keel doctor --scene` renders a green EKG for a healthy board, or a red flatline for errors.
-- **Example:** `keel flow --scene` renders an illuminated circuit when the system is autonomous, and a broken circuit when human input is blocking flow.
+- **Example:** `keel flow --scene` renders an illuminated circuit when the system is autonomous, a warning-driven live circuit during mission intake churn, and a broken circuit when blocking failures actually trip flow.
 
 ### 2. The Sandbox (Generative & Abstract)
 Procedural or simulated visuals used in discovery and exploration commands to set a tone or represent complexity.

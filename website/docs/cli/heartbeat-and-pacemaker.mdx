@@ -66,12 +66,14 @@ The heartbeat command is the source of truth. Scene surfaces should only visuali
 
 | Surface | Correct pacemaker behavior |
 | --- | --- |
-| `keel flow --scene` | Show the unplugged circuit when the heartbeat is idle, even if the board is otherwise healthy |
+| `keel flow --scene` | Show the unplugged circuit when the heartbeat is idle, and only allow the mission-intake override while the heartbeat is energized |
 | `keel workshop --scene` | Turn the workbench lamp on only when the heartbeat is energized |
 | `keel health --scene` | Do not invent pacemaker state; show structural subsystem health only |
 | `keel doctor --scene` | Treat pacemaker drift as a diagnostic finding, not a separate power model |
 
 If a scene disagrees with `keel heartbeat`, the scene is wrong.
+
+That heartbeat gate matters for `keel flow`. Keel may temporarily keep the circuit open while missions, voyages, or bearings are still being validly created, but only if the pacemaker can still prove recent repository motion. Once the board goes idle, that intake exception disappears and the same transitional doctor debt can short-circuit the flow again.
 
 For representative scene outputs and the exact state legends those scenes should obey, read [Scene Surfaces](/docs/cli/scene-surfaces).
 

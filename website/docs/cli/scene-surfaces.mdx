@@ -41,7 +41,7 @@ export const sceneSurfaces = [
     scene: 'Power Circuit',
     command: 'keel flow --scene',
     signal:
-      'Working-hours gate, heartbeat energization, delivery readiness, watch pressure, and human-input blocking.',
+      'Working-hours gate, heartbeat energization, delivery readiness, flow-circuit blocking policy, watch pressure, and human-input blocking.',
     when:
       'Use before pulling work or when the board feels idle, blocked, or strangely quiet.',
   },
@@ -155,7 +155,7 @@ SCANNING SUBSYSTEMS...
                   \_____________________/        (LIGHT ON)`,
     reads: [
       'Working-hours policy and open-for-work config before any deeper diagnosis.',
-      'Doctor structural pass/fail before the circuit is allowed to energize.',
+      'Doctor findings interpreted through the flow-circuit policy instead of a raw total-error count.',
       'Derived heartbeat output from `keel heartbeat`, ready backlog count, watch capacity, and manual-accept lane pressure.',
     ],
     states: [
@@ -172,7 +172,12 @@ SCANNING SUBSYSTEMS...
       {
         label: 'Short circuit',
         detail:
-          'If doctor detects structural errors, the power scene flips to the unhealthy state instead of pretending delivery can continue.',
+          'Blocking doctor errors, or transitional mission-intake debt that exceeds live intake pressure, flip the power scene to the unhealthy state instead of pretending delivery can continue.',
+      },
+      {
+        label: 'Intake override',
+        detail:
+          'If the heartbeat is energized and the board is actively creating valid upstream entities, transitional mission-intake errors such as missing children or no in-flight work become a warning notice instead of a blown circuit.',
       },
       {
         label: 'Battery packs',

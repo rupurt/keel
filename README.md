@@ -53,6 +53,8 @@ The canonical operating rhythm is:
 - **Ship**: `keel story start <id>`, `keel story record <id>`, `keel story submit <id>`
 - **Close**: `keel story accept <id> --role manager` or the equivalent planning transition plus a sealing commit
 
+`keel flow` is the readiness surface, not a second copy of `keel doctor`. It short-circuits on blocking doctor failures, but while the heartbeat is energized it can keep the circuit open during active mission intake when the only errors are transitional mission-wiring debt such as missing children or no in-flight work.
+
 ### Role Routing & Lanes
 The engine uses a 2-lane pull model to prevent strategic fog:
 

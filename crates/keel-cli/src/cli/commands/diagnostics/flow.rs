@@ -2,6 +2,8 @@
 
 use anyhow::Result;
 use chrono::{DateTime, Utc};
+use keel::read_model::diagnostics::types::{CheckId, DoctorReport, Severity};
+use keel::read_model::flow_metrics::FlowMetrics;
 use txt_scene::{SceneFrame, SceneLine, ScenePalette};
 
 use crate::cli::presentation::flow::display::{
@@ -44,6 +46,23 @@ struct WatchSceneSummary {
     governed_story_count: usize,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct FlowCircuitAssessment {
+    blocking_error_count: usize,
+    suppressed_creation_error_count: usize,
+    creation_pressure: usize,
+}
+
+impl FlowCircuitAssessment {
+    fn is_short_circuited(self) -> bool {
+        self.blocking_error_count > 0
+    }
+
+    fn intake_override_active(self) -> bool {
+        self.suppressed_creation_error_count > 0 && !self.is_short_circuited()
+    }
+}
+
 /// Run the flow command
 pub fn run(
     board_dir: &std::path::Path,
@@ -56,8 +75,8 @@ pub fn run(
     let lane_flow = workflow_lane_flow::project(&board, &topology);
     let metrics = flow_status::project(&board, chrono::Utc::now());
     let report = keel::read_model::diagnostics::validate_report(board_dir)?;
-    let healthy = report.total_errors() == 0;
     let heartbeat = super::heartbeat::inspect(board_dir, Utc::now());
+    let circuit = assess_flow_circuit(&report, &metrics, heartbeat.energized);
 
     // System is autonomous if no tasks are pending in manual_accept lanes
     let needs_human_input = lane_flow
@@ -86,7 +105,7 @@ pub fn run(
             ));
         }
 
-        if !healthy {
+        if circuit.is_short_circuited() {
             println!("\n{}", render_unhealthy_scene(use_color));
             println!("Run `keel doctor` to repair the circuit.");
             return Err(anyhow::anyhow!("Short circuit: System is unhealthy"));
@@ -111,6 +130,13 @@ pub fn run(
                 use_color,
             )
         );
+
+        if circuit.intake_override_active() {
+            eprintln!(
+                "Notice: `keel doctor` reports {} transitional mission intake error(s), but recent entity creation pressure is holding the flow open.",
+                circuit.suppressed_creation_error_count
+            );
+        }
 
         if !autonomous {
             let mut blocking_items = Vec::new();
@@ -182,8 +208,14 @@ pub fn run(
             "Circuit is open (disabled or off the clock)"
         ));
     }
-    if !healthy {
+    if circuit.is_short_circuited() {
         return Err(anyhow::anyhow!("Short circuit: System is unhealthy"));
+    }
+    if circuit.intake_override_active() {
+        eprintln!(
+            "Notice: `keel doctor` reports {} transitional mission intake error(s), but recent entity creation pressure is holding the flow open.",
+            circuit.suppressed_creation_error_count
+        );
     }
     if !autonomous {
         eprintln!("Notice: System is idle: Human input required");
@@ -197,6 +229,53 @@ pub fn run(
     }
 
     Ok(())
+}
+
+fn assess_flow_circuit(
+    report: &DoctorReport,
+    metrics: &FlowMetrics,
+    heartbeat_energized: bool,
+) -> FlowCircuitAssessment {
+    let creation_pressure = entity_creation_pressure(metrics, heartbeat_energized);
+    let suppressible_creation_error_count = report
+        .all_problems()
+        .into_iter()
+        .filter(|problem| {
+            problem.severity == Severity::Error
+                && is_transitional_creation_problem(problem.check_id)
+        })
+        .count();
+    let suppressed_creation_error_count = suppressible_creation_error_count.min(creation_pressure);
+    let blocking_error_count = report
+        .total_errors()
+        .saturating_sub(suppressed_creation_error_count);
+
+    FlowCircuitAssessment {
+        blocking_error_count,
+        suppressed_creation_error_count,
+        creation_pressure,
+    }
+}
+
+fn entity_creation_pressure(metrics: &FlowMetrics, heartbeat_energized: bool) -> usize {
+    if !heartbeat_energized {
+        return 0;
+    }
+
+    metrics.incomplete_missions_count
+        + metrics.planning.draft_count
+        + metrics.planning.planned_count
+        + metrics.planning.epics_needing_voyages
+        + metrics.research.exploring_count
+        + metrics.research.surveying_count
+        + metrics.research.assessing_count
+}
+
+fn is_transitional_creation_problem(check_id: CheckId) -> bool {
+    matches!(
+        check_id,
+        CheckId::MissionMissingChildren | CheckId::MissionActiveNoWork
+    )
 }
 
 fn render_open_circuit_scene(use_color: bool) -> String {
@@ -591,10 +670,15 @@ mod tests {
     use chrono::TimeZone;
     use keel::domain::model::StoryState;
     use keel::read_model::capacity::EpicCapacity;
+    use keel::read_model::diagnostics::CheckResult;
+    use keel::read_model::diagnostics::types::{Problem, Severity};
+    use keel::read_model::flow_metrics::{PlanningMetrics, ResearchMetrics};
     use keel::read_model::routine_materialization::materialization_marker;
     use keel::test_helpers::{TestBearing, TestBoardBuilder, TestMission, TestStory};
     use std::fs;
     use std::path::Path;
+    use std::path::PathBuf;
+    use std::time::{Duration, SystemTime};
     use txt_scene::visible_width;
 
     fn write_routine(root: &Path, id: &str, title: &str, target_scope: &str, cadence_block: &str) {
@@ -859,6 +943,145 @@ updated_at: 2026-01-05T18:00:00
 
         assert!(scene.contains("◑"));
         assert!(scene.contains("1 WATCH KEEPING 5 STORIES ON CLOCK"));
+    }
+
+    #[test]
+    fn assess_flow_circuit_keeps_recent_mission_intake_open() {
+        let report =
+            doctor_report_with_problems(vec![error_problem(CheckId::MissionMissingChildren)]);
+        let metrics = FlowMetrics {
+            incomplete_missions_count: 1,
+            ..FlowMetrics::default()
+        };
+
+        let assessment = assess_flow_circuit(&report, &metrics, true);
+
+        assert_eq!(
+            assessment,
+            FlowCircuitAssessment {
+                blocking_error_count: 0,
+                suppressed_creation_error_count: 1,
+                creation_pressure: 1,
+            }
+        );
+        assert!(!assessment.is_short_circuited());
+        assert!(assessment.intake_override_active());
+    }
+
+    #[test]
+    fn assess_flow_circuit_requires_recent_activity_for_intake_override() {
+        let report =
+            doctor_report_with_problems(vec![error_problem(CheckId::MissionMissingChildren)]);
+        let metrics = FlowMetrics {
+            incomplete_missions_count: 1,
+            ..FlowMetrics::default()
+        };
+
+        let assessment = assess_flow_circuit(&report, &metrics, false);
+
+        assert_eq!(
+            assessment,
+            FlowCircuitAssessment {
+                blocking_error_count: 1,
+                suppressed_creation_error_count: 0,
+                creation_pressure: 0,
+            }
+        );
+        assert!(assessment.is_short_circuited());
+    }
+
+    #[test]
+    fn assess_flow_circuit_leaves_overflowing_creation_errors_blocking() {
+        let report = doctor_report_with_problems(vec![
+            error_problem(CheckId::MissionMissingChildren),
+            error_problem(CheckId::MissionActiveNoWork),
+        ]);
+        let metrics = FlowMetrics {
+            incomplete_missions_count: 1,
+            ..FlowMetrics::default()
+        };
+
+        let assessment = assess_flow_circuit(&report, &metrics, true);
+
+        assert_eq!(
+            assessment,
+            FlowCircuitAssessment {
+                blocking_error_count: 1,
+                suppressed_creation_error_count: 1,
+                creation_pressure: 1,
+            }
+        );
+        assert!(assessment.is_short_circuited());
+    }
+
+    #[test]
+    fn assess_flow_circuit_still_blocks_non_transitional_errors() {
+        let report = doctor_report_with_problems(vec![error_problem(CheckId::StoryDuplicateId)]);
+        let metrics = FlowMetrics {
+            planning: PlanningMetrics {
+                draft_count: 2,
+                planned_count: 1,
+                epics_needing_voyages: 1,
+            },
+            research: ResearchMetrics {
+                exploring_count: 1,
+                surveying_count: 1,
+                assessing_count: 1,
+                ..ResearchMetrics::default()
+            },
+            incomplete_missions_count: 1,
+            ..FlowMetrics::default()
+        };
+
+        let assessment = assess_flow_circuit(&report, &metrics, true);
+
+        assert_eq!(
+            assessment,
+            FlowCircuitAssessment {
+                blocking_error_count: 1,
+                suppressed_creation_error_count: 0,
+                creation_pressure: 8,
+            }
+        );
+        assert!(assessment.is_short_circuited());
+    }
+
+    fn doctor_report_with_problems(problems: Vec<Problem>) -> DoctorReport {
+        DoctorReport {
+            story_checks: vec![CheckResult {
+                id: "test-check".to_string(),
+                name: "test-check".to_string(),
+                evaluations: problems.len(),
+                problems,
+                duration: Duration::from_secs(0),
+                passed: false,
+                disabled: false,
+            }],
+            voyage_checks: Vec::new(),
+            epic_checks: Vec::new(),
+            adr_checks: Vec::new(),
+            bearing_checks: Vec::new(),
+            mission_checks: Vec::new(),
+            routine_checks: Vec::new(),
+            workflow_checks: Vec::new(),
+            pacemaker_checks: Vec::new(),
+            delivery_checks: Vec::new(),
+            drift_coefficient: 0.0,
+            estimated_remediation_hours: 0.0,
+            last_checked_at: SystemTime::UNIX_EPOCH,
+        }
+    }
+
+    fn error_problem(check_id: CheckId) -> Problem {
+        Problem {
+            severity: Severity::Error,
+            path: PathBuf::from("test.md"),
+            message: "test".to_string(),
+            fix: None,
+            scope: None,
+            category: None,
+            check_id,
+        }
     }
 
     fn watch_report(
