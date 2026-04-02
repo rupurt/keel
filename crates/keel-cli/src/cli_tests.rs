@@ -101,6 +101,12 @@ enum ManagementCommands {
         /// Target directory for the new project scaffold (defaults to current directory)
         path: Option<std::path::PathBuf>,
     },
+    /// Upgrade keel from the latest release or a git ref
+    Upgrade {
+        /// Optional git tag or commit to build and install from source
+        #[arg(long = "ref")]
+        ref_spec: Option<String>,
+    },
     /// Epic commands
     Epic {
         #[command(subcommand)]
@@ -153,6 +159,7 @@ fn cli_help_displays_top_level_commands() {
     // Verify top-level commands
     assert!(help_str.contains("doctor"), "Missing doctor command");
     assert!(help_str.contains("new"), "Missing new command");
+    assert!(help_str.contains("upgrade"), "Missing upgrade command");
     assert!(help_str.contains("generate"), "Missing generate command");
     assert!(help_str.contains("story"), "Missing story subcommand");
     assert!(help_str.contains("epic"), "Missing epic subcommand");
@@ -191,6 +198,27 @@ fn cli_parses_new_command_with_optional_path() {
         }
         other => panic!("unexpected command: {other:?}"),
     }
+}
+
+#[test]
+fn cli_parses_upgrade_command_with_optional_ref() {
+    let cli = Cli::try_parse_from(["board", "upgrade", "--ref", "v0.1.0"]).unwrap();
+    match cli.command {
+        Commands::Management(ManagementCommands::Upgrade { ref_spec }) => {
+            assert_eq!(ref_spec.as_deref(), Some("v0.1.0"));
+        }
+        other => panic!("unexpected command: {other:?}"),
+    }
+}
+
+#[test]
+fn build_cli_parses_upgrade_without_ref() {
+    let matches = crate::cli::build_cli()
+        .try_get_matches_from(["keel", "upgrade"])
+        .unwrap();
+    assert_eq!(matches.subcommand_name(), Some("upgrade"));
+    let upgrade = matches.subcommand_matches("upgrade").unwrap();
+    assert!(upgrade.get_one::<String>("git-ref").is_none());
 }
 
 #[test]

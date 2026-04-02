@@ -15,6 +15,9 @@ path-guid = "5B298B7E-F56C-43DB-A7E1-AA2A97424EA8"
 license = false
 eula = false
 
+[package.metadata.dist]
+dist = true
+
 [package.metadata.deb]
 maintainer = "keel contributors"
 copyright = "2026, keel contributors"

@@ -38,9 +38,9 @@ export const upgradeSteps = [
   {
     label: 'Upgrade',
     title: 'Update the binary or dev-shell path',
-    command: 'nix flake update',
+    command: 'keel upgrade',
     body:
-      'Upgrade Keel the same way your repository installed it: release artifact, Nix input, source build, or pinned contributor toolchain.',
+      'Upgrade Keel through the same install path your repository actually uses: `keel upgrade` for release installs, `keel upgrade --ref <tag-or-sha>` for source snapshots, or a flake/dev-shell update for Nix-managed setups.',
   },
   {
     label: 'Diff',
@@ -88,10 +88,18 @@ If those surfaces are already broken, fix that drift before the upgrade. Otherwi
 Use the same upgrade path that installed Keel in the first place:
 
 - Nix-managed repo: update the flake input or dev-shell pin.
-- Source-driven repo: rebuild or reinstall from the desired commit or release tag.
-- Release-artifact repo: replace the pinned binary or installer version.
+- Release-installer repo: run `keel upgrade`.
+- Source-driven repo: run `keel upgrade --ref <tag-or-sha>` when you want Keel to fetch the cached source, build it with a supported local toolchain, and install it through the generated installer.
 
 Do not change the instruction files first. Upgrade the engine, then sync the contract around the engine you are actually going to run.
+
+Typical upgrade commands:
+
+```bash
+keel upgrade
+keel upgrade --ref v0.1.0
+keel upgrade --ref 533fa5b8
+```
 
 ## 3. Diff upstream `AGENTS.md` and `INSTRUCTIONS.md`
 

@@ -82,7 +82,7 @@ Transitions are executed in `domain/transitions/` which applies the state change
 cli/commands/
 ├── diagnostics/   # doctor, flow, health, heartbeat, throughput, workshop, turn, screen, topology, play
 ├── management/    # story/*, voyage/*, epic/*, bearing/*, mission/*, routine/*, watch/*, adr/*, knowledge/*
-├── setup/         # new, generate, hooks, config
+├── setup/         # new, upgrade, generate, hooks, config
 └── comms/         # ping, poke, inbox, outbox, notify
 ```
 
@@ -94,7 +94,7 @@ Key command families:
 | **Story lifecycle** | `story new/start/submit/accept/reject/ice/thaw/record` | Full story state machine traversal |
 | **Planning** | `epic new`, `voyage new/plan/start/done`, `bearing new/assess/lay` | Strategic pipeline management |
 | **Missions** | `mission new/attach/next` | Autonomous session lifecycle |
-| **Setup** | `new`, `generate`, `hooks install` | Project scaffold and artifact sync |
+| **Setup** | `new`, `upgrade`, `generate`, `hooks install` | Project scaffold, install maintenance, and artifact sync |
 | **Comms** | `ping`, `poke`, `inbox`, `notify` | Human-agent message exchange |
 
 ### Presentation Layer

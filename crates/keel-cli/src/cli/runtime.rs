@@ -229,6 +229,10 @@ pub fn run() -> Result<()> {
                 .map(|value| value.as_path());
             Ok(super::commands::setup::new::run(path)?)
         }
+        Some(("upgrade", m)) => {
+            let ref_spec = m.get_one::<String>("git-ref").map(|value| value.as_str());
+            super::commands::setup::upgrade::run(ref_spec)
+        }
         Some(("hooks", m)) => match m.subcommand() {
             Some(("install", _)) => super::commands::setup::hooks::run(),
             _ => unreachable!("subcommand_required"),

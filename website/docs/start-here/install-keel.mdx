@@ -65,6 +65,12 @@ cargo run -- --help
 
 ## Release artifacts
 
+Fastest long-lived install path on macOS and Linux:
+
+```bash
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/spoke-sh/keel/releases/latest/download/keel-installer.sh | sh
+```
+
 Packaged binaries and installers are published on GitHub Releases:
 
 ```text
@@ -72,6 +78,19 @@ https://github.com/spoke-sh/keel/releases
 ```
 
 Use that path if you prefer release artifacts over source builds.
+
+Once the release-installed binary is on your machine, keep it current with:
+
+```bash
+keel upgrade
+```
+
+If you need a specific upstream tag or commit instead of the latest published release, Keel can build and install it through the same installer flow:
+
+```bash
+keel upgrade --ref v0.1.0
+keel upgrade --ref 533fa5b8
+```
 
 ## Verify the CLI
 

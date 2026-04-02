@@ -139,6 +139,7 @@ Run `just keel --help` for the full command tree. The core commands you should r
 | Planning | `just keel epic new <name> --problem <problem>` `just keel voyage new <name> --epic <epic-id> --goal <goal>` |
 | Execution | `just keel story new "<title>" [--type <type>] [--epic <epic-id> [--voyage <voyage-id>]]` |
 | Board Ops | `just keel next --role manager` `just keel next --role operator` `just keel generate` `just keel config show` `just keel mission show <id>` `just keel mission attach <mission-id> --epic <epic-id>` `just keel mission attach <mission-id> --bearing <bearing-id>` `just keel mission attach <mission-id> --adr <adr-id>` |
+| Setup & Maintenance | `just keel upgrade` `just keel upgrade --ref <tag-or-sha>` `just keel hooks install` `just keel config show` |
 | Lifecycle | Story/voyage/epic transitions in the table below |
 
 ## Story and Milestone State Changes

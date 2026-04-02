@@ -11,11 +11,27 @@ brew tap rupurt/homebrew-tap
 brew install keel
 ```
 
+### Shell Installer (macOS and Linux)
+
+```bash
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/spoke-sh/keel/releases/latest/download/keel-installer.sh | sh
+```
+
 ### Nix (Anywhere)
 
 ```bash
 nix run github:rupurt/keel
 ```
+
+### Upgrade an Existing Install
+
+```bash
+keel upgrade
+keel upgrade --ref v0.1.0
+keel upgrade --ref 533fa5b8
+```
+
+`keel upgrade` uses the published release installer by default. `keel upgrade --ref <tag-or-sha>` refreshes a cached source checkout under `~/.cache/keel`, looks for a supported Rust toolchain, builds a host-local installer bundle, and then installs that build through the generated installer script.
 
 ---
 

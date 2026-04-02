@@ -104,6 +104,8 @@ Use this order when authoring or reviewing decisions:
 4. **Pull:** `keel next --role manager` or `keel next --role operator`
 5. **Ship & Close:** move one slice, record proof, and land the sealing commit
 
+Release-installer installs can be refreshed with `keel upgrade`. If you need a specific upstream tag or commit instead of the latest published release, use `keel upgrade --ref <tag-or-sha>`.
+
 **Everything flows down:** Vision → Epic → Voyage → Story → Implementation.
 **Everything loops back:** Reflection → Knowledge → Patterns → Bearings → Architecture.
 

@@ -408,6 +408,16 @@ pub fn build_cli() -> Command {
                 ),
         )
         .subcommand(
+            Command::new("upgrade")
+                .about("Upgrade keel from the latest release or a git ref")
+                .arg(
+                    Arg::new("git-ref")
+                        .long("ref")
+                        .help("Optional git tag or commit to build and install from source")
+                        .value_name("TAG_OR_SHA"),
+                ),
+        )
+        .subcommand(
             Command::new("hooks")
                 .about("Manage git hooks for the pacemaker protocol")
                 .hide(true)
