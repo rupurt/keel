@@ -8,7 +8,7 @@ use std::fs;
 
 use crate::domain::model::Board;
 use crate::infrastructure::verification::parse_ac_references;
-use crate::read_model::board_graph::build_board_graph;
+use crate::read_model::board_graph::derive_story_dependencies;
 
 /// Traceability matrix mapping requirements to IMPLEMENTATIONS (stories).
 #[derive(Debug, Default)]
@@ -53,7 +53,7 @@ pub fn build_matrix(board: &Board) -> TraceabilityMatrix {
 
 /// Calculate story-to-story implementation dependencies based on SRS order.
 pub fn derive_implementation_dependencies(board: &Board) -> HashMap<String, Vec<String>> {
-    build_board_graph(board).story_dependencies()
+    derive_story_dependencies(board).into_iter().collect()
 }
 
 /// Check if a story is "parallel safe" (has no implementation dependencies).

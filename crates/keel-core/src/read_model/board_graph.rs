@@ -662,7 +662,7 @@ fn routine_declared_parent(board: &Board, routine: &Routine) -> Option<BoardNode
     Some(BoardNodeId::Epic(target_scope.to_string()))
 }
 
-fn derive_story_dependencies(board: &Board) -> BTreeMap<String, Vec<String>> {
+pub(crate) fn derive_story_dependencies(board: &Board) -> BTreeMap<String, Vec<String>> {
     let mut dependencies = BTreeMap::<String, Vec<String>>::new();
     let mut scope_to_requirements: HashMap<String, HashMap<String, Vec<String>>> = HashMap::new();
 
