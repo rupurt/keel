@@ -160,22 +160,28 @@ jobs:
       - name: Build linux packages
         shell: bash
         run: |
-          cargo build --locked --profile dist --target x86_64-unknown-linux-gnu
+          export CARGO_TARGET_DIR="${GITHUB_WORKSPACE}/target"
+
+          cargo build --locked --profile dist --target x86_64-unknown-linux-gnu -p keel
           strip --strip-unneeded target/x86_64-unknown-linux-gnu/dist/keel
 
           version="$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "keel").version')"
           mkdir -p target/distrib
 
           cargo deb \
+            -p keel \
             --no-build \
             --profile dist \
             --target x86_64-unknown-linux-gnu \
             --output "target/distrib/keel_${version}_amd64.deb"
 
-          cargo generate-rpm \
-            --profile dist \
-            --target x86_64-unknown-linux-gnu \
-            -o target/distrib
+          (
+            cd crates/keel-cli
+            cargo generate-rpm \
+              --profile dist \
+              --target x86_64-unknown-linux-gnu \
+              -o ../../target/distrib
+          )
 
       - name: Upload linux packages
         uses: actions/upload-artifact@v4

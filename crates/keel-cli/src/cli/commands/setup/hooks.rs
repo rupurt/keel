@@ -1,10 +1,12 @@
 //! `keel hooks install` — install git hooks that enforce the pacemaker protocol.
 
 use std::fs;
-use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 
 use anyhow::{Context, Result, anyhow};
+
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
 
 const PRE_COMMIT_HOOK: &str = r#"#!/bin/sh
 # keel pacemaker protocol — run quality checks and tests at the commit boundary.
@@ -116,8 +118,22 @@ fn install_hook(hooks_dir: &Path, name: &str, content: &str) -> Result<()> {
     fs::write(&hook_path, content)
         .with_context(|| format!("Failed to write hook: {}", hook_path.display()))?;
 
-    fs::set_permissions(&hook_path, fs::Permissions::from_mode(0o755))
-        .with_context(|| format!("Failed to set permissions on: {}", hook_path.display()))?;
+    set_hook_permissions(&hook_path)?;
+
+    Ok(())
+}
+
+fn set_hook_permissions(hook_path: &Path) -> Result<()> {
+    #[cfg(unix)]
+    {
+        fs::set_permissions(hook_path, fs::Permissions::from_mode(0o755))
+            .with_context(|| format!("Failed to set permissions on: {}", hook_path.display()))?;
+    }
+
+    #[cfg(not(unix))]
+    {
+        let _ = hook_path;
+    }
 
     Ok(())
 }
@@ -126,6 +142,9 @@ fn install_hook(hooks_dir: &Path, name: &str, content: &str) -> Result<()> {
 mod tests {
     use super::*;
     use tempfile::tempdir;
+
+    #[cfg(unix)]
+    use std::os::unix::fs::PermissionsExt;
 
     fn init_git_repo(dir: &Path) {
         std::process::Command::new("git")
@@ -150,8 +169,11 @@ mod tests {
         assert!(pre_commit.exists());
         assert!(commit_msg.exists());
 
-        let pre_mode = fs::metadata(&pre_commit).unwrap().permissions().mode();
-        assert_eq!(pre_mode & 0o755, 0o755);
+        #[cfg(unix)]
+        {
+            let pre_mode = fs::metadata(&pre_commit).unwrap().permissions().mode();
+            assert_eq!(pre_mode & 0o755, 0o755);
+        }
 
         let content = fs::read_to_string(&pre_commit).unwrap();
         assert!(content.contains("keel pacemaker protocol"));

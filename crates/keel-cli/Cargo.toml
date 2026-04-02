@@ -21,7 +21,7 @@ dist = true
 [package.metadata.deb]
 maintainer = "keel contributors"
 copyright = "2026, keel contributors"
-license-file = ["LICENSE", "0"]
+license-file = ["../../LICENSE", "0"]
 depends = "$auto"
 section = "utils"
 priority = "optional"
@@ -32,8 +32,8 @@ keel is a fast CLI for agentic SDLC management."""
 summary = "Fast CLI for project board management"
 assets = [
   { source = "target/release/keel", dest = "/usr/bin/keel", mode = "755" },
-  { source = "README.md", dest = "/usr/share/doc/keel/README.md", mode = "644", doc = true },
-  { source = "LICENSE", dest = "/usr/share/doc/keel/LICENSE", mode = "644", doc = true },
+  { source = "../../README.md", dest = "/usr/share/doc/keel/README.md", mode = "644", doc = true },
+  { source = "../../LICENSE", dest = "/usr/share/doc/keel/LICENSE", mode = "644", doc = true },
 ]
 
 [dependencies]

@@ -13,8 +13,8 @@ version = "0.1.0"
 edition = "2024"
 authors = ["keel contributors"]
 license = "MIT"
-repository = "https://github.com/rupurt/keel"
-homepage = "https://github.com/rupurt/keel"
+repository = "https://github.com/spoke-sh/keel"
+homepage = "https://github.com/spoke-sh/keel"
 
 [workspace.dependencies]
 keel-core = { path = "crates/keel-core" }

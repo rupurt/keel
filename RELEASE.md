@@ -20,7 +20,7 @@ curl --proto '=https' --tlsv1.2 -LsSf https://github.com/spoke-sh/keel/releases/
 ### Nix (Anywhere)
 
 ```bash
-nix run github:rupurt/keel
+nix run github:spoke-sh/keel
 ```
 
 ### Upgrade an Existing Install
@@ -74,7 +74,7 @@ Pushing the tag triggers the [Release GitHub Action](.github/workflows/release.y
 
 ### 5. Verify the Release
 Once the GitHub Action completes:
-1.  Go to the [Releases](https://github.com/rupurt/keel/releases) page.
+1.  Go to the [Releases](https://github.com/spoke-sh/keel/releases) page.
 2.  Verify that all artifacts (tarballs and installers) are attached.
 3.  Ensure the `checksums.txt` file is present.
 

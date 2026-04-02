@@ -2,8 +2,8 @@
 
 > **Turn-based board engine for human/AI delivery teams.**
 
-[![Keel Board](https://img.shields.io/badge/Keel-Board-blue)](https://github.com/rupurt/keel/blob/main/.keel/README.md)
-[![CI](https://github.com/rupurt/keel/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/rupurt/keel/actions/workflows/ci.yml)
+[![Keel Board](https://img.shields.io/badge/Keel-Board-blue)](https://github.com/spoke-sh/keel/blob/main/.keel/README.md)
+[![CI](https://github.com/spoke-sh/keel/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/spoke-sh/keel/actions/workflows/ci.yml)
 
 Welcome to Keel. This is not a notes app with automation bolted on; it is a board engine designed for the era of human-agent collaboration. Keel treats software development as a high-fidelity operating system where **Formal Rules** act as the physics, **Turns** are the unit of progress, and **Play** remains a first-class tool for discovery.
 
