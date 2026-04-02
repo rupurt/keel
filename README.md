@@ -15,6 +15,43 @@ Welcome to Keel. This is not a notes app with automation bolted on; it is a boar
 
 ---
 
+## Installation
+
+### Homebrew (macOS and Linux)
+
+```bash
+brew tap rupurt/homebrew-tap
+brew install keel
+```
+
+### One-liner Install (macOS and Linux)
+
+```bash
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/spoke-sh/keel/releases/latest/download/keel-installer.sh | sh
+```
+
+### Nix (Anywhere)
+
+```bash
+nix run github:spoke-sh/keel
+```
+
+### Upgrade an Existing Install
+
+```bash
+keel upgrade
+keel upgrade --ref v0.1.0
+```
+
+### Manual Download
+
+Download the latest pre-built binaries and installers for your platform from the [GitHub Releases](https://github.com/spoke-sh/keel/releases) page. We provide:
+- **Linux:** `.tar.gz` archives plus the cross-platform shell installer
+- **macOS:** `.tar.gz` archives plus the cross-platform shell installer
+- **Windows:** `.zip` archives, `.msi`, and the PowerShell installer
+
+---
+
 ## 🎮 The Ramping Path
 
 Keel is designed to meet you where you are in your journey of comprehension. As you interact with the engine, you naturally level up through three distinct roles:
