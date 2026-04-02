@@ -20,7 +20,7 @@ Welcome to Keel. This is not a notes app with automation bolted on; it is a boar
 ### Homebrew (macOS and Linux)
 
 ```bash
-brew tap rupurt/homebrew-tap
+brew tap spoke-sh/tap
 brew install keel
 ```
 
