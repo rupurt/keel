@@ -17,7 +17,7 @@ install-path = "CARGO_HOME"
 hosting = "github"
 # Whether to install an updater program
 install-updater = false
-# Keep pull requests cheap; we only build full artifacts for tags or manual dry-runs.
+# Keep pull requests cheap; we only build full artifacts for tags.
 pr-run-mode = "plan"
 # Homebrew formula publishing is handled by this repo's workflow because the tap repo is runtime-configured.
 publish-jobs = []

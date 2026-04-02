@@ -4,20 +4,7 @@ on:
   pull_request:
   push:
     tags:
-      - "v[0-9]+.[0-9]+.[0-9]+*"
-      - "[0-9]+.[0-9]+.[0-9]+*"
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Semver tag to publish when publish=true (for example v0.2.0)"
-        required: false
-        default: ""
-        type: string
-      publish:
-        description: "Publish a GitHub release instead of only building artifacts"
-        required: true
-        default: false
-        type: boolean
+      - "**[0-9]+.[0-9]+.[0-9]+*"
 
 permissions:
   contents: write
@@ -27,10 +14,9 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       val: ${{ steps.plan.outputs.manifest }}
-      tag: ${{ steps.context.outputs.tag }}
-      tag-flag: ${{ steps.context.outputs.tag_flag }}
-      build_artifacts: ${{ steps.context.outputs.build_artifacts }}
-      publishing: ${{ steps.context.outputs.publishing }}
+      tag: ${{ !github.event.pull_request && github.ref_name || '' }}
+      tag-flag: ${{ !github.event.pull_request && format('--tag={0}', github.ref_name) || '' }}
+      publishing: ${{ !github.event.pull_request }}
       publish_homebrew: ${{ steps.context.outputs.publish_homebrew }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -58,54 +44,18 @@ jobs:
         name: Resolve release context
         shell: bash
         run: |
-          tag=""
-          tag_flag=""
-          build_artifacts=false
-          publishing=false
           publish_homebrew=false
-
-          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
-            tag="${GITHUB_REF_NAME}"
-            build_artifacts=true
-            publishing=true
-          elif [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-            tag="${{ inputs.tag }}"
-            build_artifacts=true
-            publishing="${{ inputs.publish }}"
-
-            if [[ "${publishing}" == "true" && -z "${tag}" ]]; then
-              echo "publish=true requires a semver tag input" >&2
-              exit 1
-            fi
-          fi
 
           if [[ -n "${HOMEBREW_TAP_REPO:-}" && -n "${HOMEBREW_TAP_TOKEN}" ]]; then
             publish_homebrew=true
           fi
 
-          if [[ -n "${tag}" ]]; then
-            tag_flag="--tag=${tag}"
-          fi
-
-          {
-            echo "tag=${tag}"
-            echo "tag_flag=${tag_flag}"
-            echo "publishing=${publishing}"
-            echo "build_artifacts=${build_artifacts}"
-            echo "publish_homebrew=${publish_homebrew}"
-          } >> "${GITHUB_OUTPUT}"
+          echo "publish_homebrew=${publish_homebrew}" >> "${GITHUB_OUTPUT}"
 
       - id: plan
         shell: bash
         run: |
-          if [[ "${{ steps.context.outputs.publishing }}" == "true" ]]; then
-            dist host --steps=create ${{ steps.context.outputs.tag_flag }} --output-format=json > plan-dist-manifest.json
-          elif [[ -n "${{ steps.context.outputs.tag }}" ]]; then
-            dist plan ${{ steps.context.outputs.tag_flag }} --output-format=json > plan-dist-manifest.json
-          else
-            dist plan --output-format=json > plan-dist-manifest.json
-          fi
-
+          dist ${{ !github.event.pull_request && format('host --steps=create --tag={0}', github.ref_name) || 'plan' }} --output-format=json > plan-dist-manifest.json
           echo "dist ran successfully"
           cat plan-dist-manifest.json
           echo "manifest=$(jq -c "." plan-dist-manifest.json)" >> "${GITHUB_OUTPUT}"
@@ -120,7 +70,7 @@ jobs:
     name: build-local-artifacts (${{ join(matrix.targets, ', ') }})
     needs:
       - plan
-    if: ${{ fromJson(needs.plan.outputs.val).ci.github.artifacts_matrix.include != null && (needs.plan.outputs.build_artifacts == 'true' || fromJson(needs.plan.outputs.val).ci.github.pr_run_mode == 'upload') }}
+    if: ${{ fromJson(needs.plan.outputs.val).ci.github.artifacts_matrix.include != null && (needs.plan.outputs.publishing == 'true' || fromJson(needs.plan.outputs.val).ci.github.pr_run_mode == 'upload') }}
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.plan.outputs.val).ci.github.artifacts_matrix }}
@@ -188,7 +138,7 @@ jobs:
     name: build-linux-packages (.deb, .rpm)
     needs:
       - plan
-    if: ${{ needs.plan.outputs.build_artifacts == 'true' }}
+    if: ${{ needs.plan.outputs.publishing == 'true' }}
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v5

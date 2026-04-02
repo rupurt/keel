@@ -1,6 +1,6 @@
 # Release Process
 
-`keel` uses [release-plz](https://github.com/MarcoIeni/release-plz) and [cargo-dist](https://opensource.axodotdev.com/cargo-dist/) to automate cross-platform releases. Binaries and installers for Linux, macOS, and Windows are automatically built and uploaded to GitHub Releases.
+This project uses [cargo-dist](https://opensource.axodotdev.com/cargo-dist/) to automate cross-platform releases. Binaries and installers for Linux, macOS, and Windows are automatically built and uploaded to GitHub Releases when a version tag is pushed.
 
 ## How to Install
 
@@ -23,26 +23,40 @@ nix run github:rupurt/keel
 
 Follow these steps to release a new version of `keel`:
 
-### 1. Version Bump & PR
-`keel` is configured with `release-plz`. When you push changes to `main`, the `release-plz` GitHub Action will:
-- Check if a new version should be released based on [Conventional Commits](https://www.conventionalcommits.org/).
-- Automatically create or update a "Release PR" that bumps the version in `Cargo.toml` and updates `CHANGELOG.md`.
+### 1. Update Version
+Bump the version number in `Cargo.toml`. We follow [Semantic Versioning](https://semver.org/).
 
-### 2. Merge the Release PR
-Merge the PR created by `release-plz`.
+```toml
+# Cargo.toml
+[workspace.package]
+version = "0.1.0" # Update this
+```
 
-### 3. Automated Tagging and Release
-Once the Release PR is merged into `main`, the `release-plz` workflow will:
-- Tag the commit (e.g., `v0.1.0`).
-- Push the tag to GitHub.
+### 2. Commit and Push
+Commit the version bump to the `main` branch.
 
+```bash
+git add Cargo.toml
+git commit -m "chore: bump version to 0.1.0"
+git push origin main
+```
+
+### 3. Create and Push a Tag
+Create a git tag corresponding to the new version (must start with `v`).
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+### 4. Automated Workflow
 Pushing the tag triggers the [Release GitHub Action](.github/workflows/release.yml). This workflow will:
 - Plan the release using `cargo dist plan`.
 - Build binaries for all supported platforms in parallel.
 - Generate supported installers (shell, PowerShell, Homebrew, and `.msi`).
 - Create a GitHub Release and upload all artifacts and checksums.
 
-### 4. Verify the Release
+### 5. Verify the Release
 Once the GitHub Action completes:
 1.  Go to the [Releases](https://github.com/rupurt/keel/releases) page.
 2.  Verify that all artifacts (tarballs and installers) are attached.
@@ -54,9 +68,7 @@ Once the GitHub Action completes:
 
 | Platform | Target Triple | Artifacts |
 |----------|---------------|-----------|
-| **Linux (x86_64, glibc)** | `x86_64-unknown-linux-gnu` | `.tar.gz`, shell installer |
-| **Linux (x86_64, static)** | `x86_64-unknown-linux-musl` | `.tar.gz`, shell installer |
-| **Linux (ARM64)** | `aarch64-unknown-linux-gnu` | `.tar.gz`, shell installer |
+| **Linux (x86_64, glibc)** | `x86_64-unknown-linux-gnu` | `.tar.gz`, shell installer, `.deb`, `.rpm` |
 | **macOS (Intel)** | `x86_64-apple-darwin` | `.tar.gz`, shell installer, Homebrew formula |
 | **macOS (Apple Silicon)** | `aarch64-apple-darwin` | `.tar.gz`, shell installer, Homebrew formula |
 | **Windows (x86_64)** | `x86_64-pc-windows-msvc` | `.zip`, `.msi`, PowerShell installer |
