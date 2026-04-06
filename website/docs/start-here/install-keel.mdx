@@ -7,6 +7,12 @@ import SignalGrid from '@site/src/components/SignalGrid';
 
 export const installPaths = [
   {
+    eyebrow: 'Release Artifacts',
+    title: 'Use packaged binaries when available',
+    body:
+      'GitHub Releases are the public distribution point for installers and archives across supported platforms.',
+  },
+  {
     eyebrow: 'Fastest Path',
     title: 'Run it with Nix',
     body: 'Best when you want to try Keel immediately without setting up a long-lived local install.',
@@ -17,17 +23,47 @@ export const installPaths = [
     body:
       'Best when you want the latest code, want to contribute, or prefer a Rust-first local workflow.',
   },
-  {
-    eyebrow: 'Release Artifacts',
-    title: 'Use packaged binaries when available',
-    body:
-      'GitHub Releases are the public distribution point for installers and archives across supported platforms.',
-  },
 ];
 
-If you are evaluating Keel for the first time, use the fastest path that gets the CLI into your terminal. If you plan to contribute or inspect the source, use the repo path.
+If you want the recommended long-lived install, start with release artifacts. If you are evaluating Keel quickly, use Nix. If you plan to contribute or inspect the source, use the repo path.
 
 <SignalGrid items={installPaths} />
+
+## Release artifacts
+
+Fastest long-lived install path on macOS and Linux:
+
+```bash
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/spoke-sh/keel/releases/latest/download/keel-installer.sh | sh
+```
+
+If you prefer Homebrew, use the published tap:
+
+```bash
+brew tap spoke-sh/tap
+brew install keel
+```
+
+Packaged binaries and installers are published on GitHub Releases:
+
+```text
+https://github.com/spoke-sh/keel/releases
+```
+
+Use that path first if you want a stable install before source builds.
+
+Once the release-installed binary is on your machine, keep it current with:
+
+```bash
+keel upgrade
+```
+
+If you need a specific upstream tag or commit instead of the latest published release, Keel can build and install it through the same installer flow:
+
+```bash
+keel upgrade --ref v0.1.0
+keel upgrade --ref 533fa5b8
+```
 
 ## Quick try with Nix
 
@@ -61,42 +97,6 @@ If you do not want to install globally yet, running through Cargo is fine during
 
 ```bash
 cargo run -- --help
-```
-
-## Release artifacts
-
-Fastest long-lived install path on macOS and Linux:
-
-```bash
-curl --proto '=https' --tlsv1.2 -LsSf https://github.com/spoke-sh/keel/releases/latest/download/keel-installer.sh | sh
-```
-
-If you prefer Homebrew, use the published tap:
-
-```bash
-brew tap spoke-sh/tap
-brew install keel
-```
-
-Packaged binaries and installers are published on GitHub Releases:
-
-```text
-https://github.com/spoke-sh/keel/releases
-```
-
-Use that path if you prefer release artifacts over source builds.
-
-Once the release-installed binary is on your machine, keep it current with:
-
-```bash
-keel upgrade
-```
-
-If you need a specific upstream tag or commit instead of the latest published release, Keel can build and install it through the same installer flow:
-
-```bash
-keel upgrade --ref v0.1.0
-keel upgrade --ref 533fa5b8
 ```
 
 ## Verify the CLI
