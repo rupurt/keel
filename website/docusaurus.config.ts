@@ -51,7 +51,13 @@ const config: Config = {
   ],
 
   themeConfig: {
-    image: 'img/keel-social-card.svg',
+    image: 'img/keel-social.webp',
+    metadata: [
+      {
+        property: 'og:site_name',
+        content: 'Keel',
+      },
+    ],
     colorMode: {
       defaultMode: 'light',
       disableSwitch: true,
