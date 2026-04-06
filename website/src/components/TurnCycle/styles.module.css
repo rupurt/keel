@@ -116,12 +116,6 @@
   box-shadow: var(--keel-shadow-card-doc);
 }
 
-.docs .pulse {
-  width: 0.82rem;
-  height: 0.82rem;
-  border-width: 3px;
-}
-
 .docs .count {
   min-width: 1.88rem;
   min-height: 1.88rem;
@@ -141,16 +135,6 @@
   align-items: center;
   gap: var(--keel-space-2);
   min-width: 0;
-}
-
-.pulse {
-  width: 0.96rem;
-  height: 0.96rem;
-  border-radius: 999px;
-  background: var(--keel-sea);
-  border: 4px solid rgba(255, 253, 248, 0.96);
-  box-shadow: 0 0 0 1px rgba(74, 159, 216, 0.22);
-  flex: 0 0 auto;
 }
 
 .count {

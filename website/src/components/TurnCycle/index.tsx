@@ -55,7 +55,6 @@ export default function TurnCycle({ tone = "docs" }: TurnCycleProps) {
           <article className={styles.card}>
             <div className={styles.head}>
               <div className={styles.markerRow}>
-                <span aria-hidden="true" className={styles.pulse} />
                 <span className={styles.count}>0{index + 1}</span>
                 <h3>{step.label}</h3>
               </div>
