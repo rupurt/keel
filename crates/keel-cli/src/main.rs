@@ -13,8 +13,9 @@ mod command_regression_tests;
 #[cfg(test)]
 mod drift_tests;
 
-use anyhow::Result;
-
-fn main() -> Result<()> {
-    cli::run()
+fn main() {
+    if let Err(error) = cli::run() {
+        eprintln!("Error: {error}");
+        std::process::exit(1);
+    }
 }
