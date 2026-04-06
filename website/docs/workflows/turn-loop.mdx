@@ -91,6 +91,17 @@ keel next --role operator/software:frontend
 
 This is where Keel stops being a passive tracker. The board routes work based on roles and lanes so strategy and execution do not fight for the same queue. This is the exact handoff point between the lane model and the turn model.
 
+In Keel terms, the slice you pull is not a vague ticket. It is one story with active mission, epic, and voyage lineage plus the authored planning artifacts that constrain the move.
+
+Pull should leave you able to answer:
+
+- what objective this story serves
+- which PRD, SRS, and SDD define the boundary
+- what this implementation cut captures right now
+- what exact next state change should happen after you start
+
+That is why Keel session wording often summarizes board lineage, authored artifacts, slice boundary, current status, and next step together. That bundle is the slice.
+
 <TurnDivider compact arcSide="left" turns={2} />
 
 ## Ship
