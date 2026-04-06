@@ -782,7 +782,7 @@ pub fn check_scoped_story_evidence(board: &Board) -> Vec<Problem> {
 
         if !AC_REQ_RE.is_match(&content) {
             problems.push(
-                Problem::warning(
+                Problem::error(
                     story.path.clone(),
                     "scoped story has no SRS references in acceptance criteria",
                 )
