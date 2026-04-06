@@ -180,16 +180,15 @@ body {
 }
 
 .navbar {
-  position: relative;
   padding-block: 0;
   padding-inline: 0;
   display: flex;
   flex-direction: column;
   height: auto;
   min-height: var(--ifm-navbar-height);
-  backdrop-filter: blur(16px);
-  background: rgba(70, 137, 188, 0.96);
+  background: transparent;
   border-bottom: 0;
+  box-shadow: none;
 }
 
 .navbar__surface {
@@ -197,8 +196,11 @@ body {
   z-index: 1;
   display: flex;
   align-items: center;
+  width: 100%;
   min-height: var(--keel-navbar-surface-height);
   padding-inline: var(--ifm-navbar-padding-horizontal);
+  backdrop-filter: blur(16px);
+  background: rgba(70, 137, 188, 0.96);
   box-shadow: var(--keel-shadow-shell);
 }
 
@@ -235,6 +237,14 @@ body {
 
 .navbar-sidebar__brand {
   height: var(--keel-navbar-surface-height);
+}
+
+.navbar-sidebar__backdrop {
+  z-index: 2;
+}
+
+.navbar-sidebar {
+  z-index: 3;
 }
 
 .navbar-sidebar__items {
