@@ -245,6 +245,33 @@ body {
 
 .navbar-sidebar {
   z-index: 3;
+  color: #fffdf8;
+  background:
+    linear-gradient(180deg, rgba(59, 120, 166, 0.985) 0%, rgba(70, 137, 188, 0.985) 100%);
+  --ifm-menu-color: rgba(255, 253, 248, 0.9);
+  --ifm-menu-color-active: #fffdf8;
+  --ifm-menu-color-background-active: rgba(255, 255, 255, 0.16);
+  --ifm-menu-color-background-hover: rgba(255, 255, 255, 0.1);
+  --ifm-menu-link-sublist-icon-filter: brightness(0) saturate(100%)
+    invert(100%);
+}
+
+.navbar-sidebar .navbar__brand,
+.navbar-sidebar .navbar__brand:hover,
+.navbar-sidebar .navbar__title,
+.navbar-sidebar .menu__link,
+.navbar-sidebar .menu__caret,
+.navbar-sidebar .navbar-sidebar__back,
+.navbar-sidebar .navbar-sidebar__close {
+  color: #fffdf8;
+}
+
+.navbar-sidebar .menu__link:hover,
+.navbar-sidebar .menu__link--active,
+.navbar-sidebar .menu__caret:hover,
+.navbar-sidebar .navbar-sidebar__back:hover,
+.navbar-sidebar .navbar-sidebar__close:hover {
+  color: #fffdf8;
 }
 
 .navbar-sidebar__items {
