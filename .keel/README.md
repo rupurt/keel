@@ -439,11 +439,11 @@
 |--------|--------|
 | [Define Keeper Trust Boundaries And Audit Checkpoints](epics/VDupml7OG/voyages/VG73OljA2/) | done |
 
-### [Mission Request Command Surface](epics/VG6ggE3ud/) (active)
+### [Mission Request Command Surface](epics/VG6ggE3ud/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Stabilize Mission Request Command Semantics](epics/VG6ggE3ud/voyages/VG7sBGWN6/) | in-progress |
+| [Stabilize Mission Request Command Semantics](epics/VG6ggE3ud/voyages/VG7sBGWN6/) | done |
 
 ### [Keeper Provider Mission Request Ingress](epics/VG6ggSPFR/) (active)
 
