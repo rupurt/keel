@@ -113,6 +113,22 @@ keel roles
 - `keel turn` exposes the canonical operating rhythm directly instead of leaving it only in docs prose.
 - `keel roles` exposes the configured lane and contract model directly instead of burying it inside config and implicit `next` behavior.
 
+## External ingress is still a CLI contract
+
+For normal day-one use, planning enters Keel through direct `mission`, `epic`,
+`voyage`, and `story` commands.
+
+When Keel sits inside a larger runtime such as Keeper, the public boundary is
+still CLI-first: providers should normalize into a formal mission request
+envelope and lower through Keel commands instead of mutating board artifacts
+out-of-band.
+
+The documented direction is a native `keel mission request ...` namespace for
+that ingress path. Until it ships, treat it as an architectural contract rather
+than a required onboarding command family.
+
+Read [Keeper Boundary And Mission Requests](/docs/foundations/keeper-boundaries-and-mission-requests) for the ownership split between Keel and Keeper, the first GitHub issue request format, and the multiplayer security boundary.
+
 ## The CLI is designed to be read by both humans and agents
 
 The same surface should work in three modes:

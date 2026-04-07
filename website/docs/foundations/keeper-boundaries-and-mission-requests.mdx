@@ -1,0 +1,122 @@
+---
+title: Keeper Boundary And Mission Requests
+description: Understand how Keel stays authoritative for planning while Keeper or other runtimes can feed it formal external requests and stronger multiplayer guarantees.
+---
+
+Keel's normal path is direct and local: a human or agent uses `mission`, `epic`,
+`voyage`, and `story` commands to shape the board inside the repo.
+
+That is still the primary way to learn and use Keel.
+
+This page covers the boundary that matters when Keel is embedded inside a larger
+runtime such as Keeper or when external systems need to request work without
+bypassing the board contract.
+
+## Keel still owns planning truth
+
+Keel owns:
+
+- the mission, epic, voyage, and story hierarchy
+- the authored planning artifacts that constrain work
+- the lifecycle states that decide what is real on the board
+- the proof and acceptance contract for closure
+
+That means external providers should not invent `.keel` state directly.
+
+They should lower requests into Keel through a formal planning boundary.
+
+## Keeper owns runtime ingress and execution
+
+If you run Keel inside Keeper, Keeper becomes the runtime boundary around the
+board:
+
+- provider polling and webhooks
+- provider authentication and request retrieval
+- request revision tracking and replay
+- execution routing, leases, and runtime coordination
+- provider-facing acknowledgement delivery
+
+That split is intentional. Keel stays authoritative for planning semantics.
+Keeper stays authoritative for runtime coordination.
+
+## Formal mission requests
+
+The documented external-ingress shape is a provider-neutral mission request.
+
+The first provider form is GitHub issues.
+
+### First documented GitHub issue shape
+
+Title:
+
+```text
+Keel Mission Request: Add Keel Mission Request Feature
+```
+
+Body sections:
+
+- `Summary`
+- `Problem`
+- `Desired Outcome`
+- `Constraints`
+- `Requested Scope / In Scope`
+- `Requested Scope / Out Of Scope`
+
+The important rule is not GitHub itself. The important rule is that the request
+becomes a canonical envelope before it touches planning state.
+
+## The command boundary
+
+The documented direction is a native `keel mission request ...` namespace with
+stages like:
+
+- `template`
+- `parse`
+- `validate`
+- `draft`
+- `apply`
+- `ack`
+
+That is a contract for external composition, not the required day-one workflow
+for ordinary repo use.
+
+Until that namespace ships, the same architectural rule still applies:
+
+- normalize the external request first
+- preserve provider identity and revision metadata
+- validate before mutating planning state
+- lower into ordinary Keel planning commands
+- keep acknowledgement rendering separate from provider delivery
+
+## Multiplayer security without a hard backend dependency
+
+Keel's documented multiplayer security model is boundary-focused, not
+consensus-heavy.
+
+The important ideas are:
+
+- Keel remains backend-agnostic
+- Transit may be a strong backend, but it is optional
+- stronger auditability should come from append-only checkpoints plus inclusion
+  and consistency proofs
+- threshold attestation belongs on high-consequence transitions and published
+  checkpoints, not on every local move
+- private provider or connector payloads should stay at the runtime boundary,
+  not leak into public planning artifacts
+
+This keeps the single-repo local workflow simple while still giving multiplayer
+deployments a stronger contract to build on.
+
+## What changes for normal single-repo use?
+
+Usually, nothing.
+
+If you are working directly in a repo:
+
+- keep using the ordinary planning commands
+- keep treating Keel as the source of truth for board state
+- think of mission requests and Keeper as the external boundary, not the center
+  of the day-one experience
+
+This page exists so teams can scale outward without changing the core rule:
+planning truth stays in Keel.

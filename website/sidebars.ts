@@ -23,6 +23,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'foundations/board-model',
         'foundations/board-vocabulary',
+        'foundations/keeper-boundaries-and-mission-requests',
         'foundations/planning-and-verification',
       ],
     },

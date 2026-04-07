@@ -147,6 +147,44 @@ Boundary rules:
 
 These tests are the executable architecture specification.
 
+## Keeper Boundary and External Mission Requests
+
+This boundary is foundational, but it is not the default onboarding path for a
+single local repo. Today, most planning still enters Keel through direct
+`mission`, `epic`, `voyage`, and `story` commands. The cross-runtime
+architecture contract is:
+
+| Concern | Keel | Keeper or another runtime |
+|---------|------|---------------------------|
+| Planning truth | Canonical source of missions, epics, voyages, stories, and authored artifacts | Must not invent board state outside Keel commands |
+| Provider ingress | Consumes normalized requests only | Polls providers, authenticates, tracks revisions, and normalizes payloads |
+| Routing and execution | Exposes the board state and lane contract | Owns runtime routing, leases, execution, and replay |
+| Acknowledgement | Owns request semantics and acknowledgement content contract | Delivers comments, statuses, or provider-facing responses |
+| Audit and security | Defines which transitions matter and what evidence is required | Produces checkpoint evidence and applies stronger multiplayer policies at the boundary |
+
+Documented ingress path:
+- External requests lower into a provider-neutral mission request envelope.
+- The first provider shape is a GitHub issue whose title begins
+  `Keel Mission Request:`.
+- The documented command boundary is a native `keel mission request ...`
+  namespace for parse, validate, draft, apply, and acknowledgement composition.
+- Until that namespace ships, external runtimes should preserve the same
+  normalized envelope and lower into ordinary planning commands rather than
+  writing `.keel` artifacts directly.
+
+Documented multiplayer security boundary:
+- Backend adapters should expose append, checkpoint, inclusion-proof, and
+  consistency-proof operations so Keel remains backend-agnostic.
+- Transit is therefore an optional strong backend, not a hard dependency.
+- Threshold attestation belongs on high-consequence transitions and published
+  checkpoints, not on every event in a local turn loop.
+
+Architectural consequence:
+- Provider-specific payloads stop at the runtime boundary.
+- Keel remains authoritative for planning semantics.
+- Stronger audit and attestation behavior is attached at the runtime boundary
+  without changing the board model for ordinary single-repo use.
+
 ## Workflow Lane Pull System
 
 Keel coordinates work through configurable workflow lanes with a pull model. The topology is fully defined and overridable in `keel.toml` using `[workflow.defaults]`, `[roles]`, and `[lanes]` sections.

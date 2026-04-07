@@ -103,12 +103,21 @@ Keel does not try to replace the rest of your toolchain:
 
 That boundary is deliberate. Keel is the operating layer, not the entire stack.
 
+That rule still holds when Keel is embedded inside a larger runtime. Keel
+continues to own planning truth. A runtime such as Keeper can own provider
+ingress, routing, execution, and replay, but it should lower external work
+through a formal mission-request boundary instead of inventing board state
+out-of-band.
+
+If you are integrating Keel with GitHub issues or a multiplayer runtime, read
+[Keeper Boundary And Mission Requests](/docs/foundations/keeper-boundaries-and-mission-requests).
+
 ## Read the docs in this order
 
 1. Install the CLI and verify your local path.
 2. Scaffold a project and take the first turn.
 3. Learn the CLI interface, pacemaker contract, and scene surfaces.
-4. Learn the board model, lanes, and verification loop.
+4. Learn the board model, Keeper boundary, lanes, and verification loop.
 5. Move into the persona track that matches your job.
 
 <SignalGrid items={nextStops} />

@@ -115,6 +115,26 @@ flow        Show workflow lane dashboard from configured topology
 doctor      Validate board health and optionally fix issues
 ```
 
+### Keeper, External Ingress, and Multiplayer Boundaries
+Keel's day-one path is still direct board work through `mission`, `epic`,
+`voyage`, and `story` commands. When Keel is embedded inside a larger runtime
+such as Keeper, the boundary should stay explicit:
+
+- Keel owns planning truth and board artifacts.
+- Keeper owns provider ingress, routing, execution, and replay.
+- External requests should normalize into a provider-neutral mission request
+  envelope instead of mutating `.keel` state out-of-band.
+- The first documented provider shape is a GitHub issue whose title begins
+  `Keel Mission Request:`.
+- The documented direction is a native `keel mission request ...` command family
+  for parse, validate, draft, apply, and acknowledgement composition.
+- Stronger multiplayer guarantees belong at the boundary through
+  backend-agnostic audit proofs and high-consequence attestation, not as a
+  requirement for every local turn.
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) and [PROTOCOL.md](PROTOCOL.md) for the
+foundational contract.
+
 ## ⚖️ The Physics: Formal Rules
 
 Keel is governed by a strict set of operational invariants. These rules ensure that as the simulation grows in complexity, it never drifts into chaos.

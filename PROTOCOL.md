@@ -97,7 +97,82 @@ To maintain board integrity, the pacemaker should still be synchronized with the
 - **The Protocol**: Land sealing commits to close dirty worktree energy, and rely on the installed hooks to keep quality checks and tests attached to that boundary.
 - **Consistency**: A dirty worktree is warning-level evidence that the loop has been opened but not yet sealed. The commit itself clears that warning by aligning the repository state with the resulting board state.
 
-## 6. Expanding the Protocol
+## 6. Formal Mission Request Boundary
+
+`ping` and `poke` are conversational surfaces. Mission requests are structured
+planning ingress.
+
+This is the documented boundary for external providers and runtimes such as
+Keeper. Direct planning commands remain the normal path today, but the
+cross-runtime protocol should already be treated as stable in shape.
+
+### First Provider Shape
+
+The first documented provider is GitHub issues.
+
+A GitHub issue is a formal mission request candidate when:
+- the title begins with `Keel Mission Request:`
+- the body contains the required structured sections
+- the provider metadata can be preserved for replay and acknowledgement
+
+### Canonical Envelope
+
+Mission requests should normalize into a provider-neutral envelope before they
+touch planning state:
+
+```yaml
+version: 1
+request:
+  title: Add Keel Mission Request Feature
+  summary: Add a native mission request workflow for Keeper and automation.
+  problem: Operators need a canonical intake path that preserves board truth.
+  outcome: Mission creation and acknowledgement become scriptable and replayable.
+  constraints:
+    - Keep Keel provider-neutral.
+    - Preserve deterministic stdin/stdout composition.
+  requested_scope:
+    in_scope:
+      - Native mission request command surface
+      - Provider-neutral normalization rules
+    out_of_scope:
+      - Provider polling internals
+  provider:
+    kind: github-issue
+    source_id: 1234
+    source_url: https://github.com/spoke-sh/keel/issues/1234
+    revision: 7
+```
+
+### Processing Contract
+
+The documented direction is a native `keel mission request ...` namespace with
+parse, validate, draft, apply, and acknowledgement stages.
+
+Until that surface ships, external runtimes should still preserve the same
+contract:
+1. Detect the formal provider request.
+2. Normalize it into the canonical envelope.
+3. Validate the request before mutating planning state.
+4. Lower the validated request into ordinary Keel planning commands.
+5. Render acknowledgement content separately from provider delivery.
+
+### Responsibility Split
+
+- **Keel** owns request semantics, planning mutation rules, and acknowledgement
+  content contracts.
+- **Keeper or another runtime** owns provider polling, authentication, revision
+  tracking, retries, and provider-facing response delivery.
+
+### Security Boundary
+
+Mission request ingress is part of the multiplayer security model:
+- replay metadata should stay attached to the normalized request
+- stronger auditability should come from backend-agnostic append, checkpoint,
+  inclusion-proof, and consistency-proof operations
+- threshold attestation should be reserved for high-consequence transitions and
+  published checkpoints, not for every local move
+
+## 7. Expanding the Protocol
 
 As Keel's capabilities grow, the routing rules will be expanded to support more complex interactions:
 - **Regex/Semantic Matching:** Moving beyond simple word inclusion to understand intent.
