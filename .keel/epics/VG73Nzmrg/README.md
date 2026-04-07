@@ -22,8 +22,8 @@ mission: VG6d7gjkx
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 0/1 stories done
+**Progress:** 1/1 voyages complete, 1/1 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Define The Initial Mission Request Command Family](voyages/VG73OBJuF/) | planned | 0/1 |
+| [Define The Initial Mission Request Command Family](voyages/VG73OBJuF/) | done | 1/1 |
 <!-- END GENERATED -->

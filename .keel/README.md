@@ -406,11 +406,11 @@
 |--------|--------|
 | [Verification Sign-off Gate](epics/VFOKwnF2e/voyages/VFOL0ebAt/) | done |
 
-### [Canonical Mission Request Command Surface](epics/VG73Nzmrg/) (active)
+### [Canonical Mission Request Command Surface](epics/VG73Nzmrg/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Define The Initial Mission Request Command Family](epics/VG73Nzmrg/voyages/VG73OBJuF/) | planned |
+| [Define The Initial Mission Request Command Family](epics/VG73Nzmrg/voyages/VG73OBJuF/) | done |
 
 ### [Keeper Mission Request Provider Ingress](epics/VG73ONWxt/) (active)
 
