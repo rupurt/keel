@@ -1,15 +1,16 @@
 ---
 # system-managed
-id: VDupml7OG
-created_at: 2026-04-07T05:03:46
+id: VG73ONWxt
+created_at: 2026-04-07T06:47:51
 # authored
-title: Collaborative Cryptographic Primitives Over Adversarial Transport
-mission: VG6d7rdqN
+title: Keeper Mission Request Provider Ingress
+index: 113
+mission: VG6d7m4m9
 ---
 
-# Collaborative Cryptographic Primitives Over Adversarial Transport
+# Keeper Mission Request Provider Ingress
 
-> Define the Keeper-managed multiplayer security foundations for attestation, auditability, private payload handling, and provider-neutral mission request ingress.
+> Keeper lacks a replayable provider ingress flow for formal mission requests, so GitHub issue activation would drift across workers and retries.
 
 ## Documents
 
@@ -24,5 +25,5 @@ mission: VG6d7rdqN
 **Progress:** 0/1 voyages complete, 0/1 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Define Keeper Trust Boundaries And Audit Checkpoints](voyages/VG73OljA2/) | planned | 0/1 |
+| [Normalize GitHub Issues Into Mission Requests](voyages/VG73OZ01E/) | planned | 0/1 |
 <!-- END GENERATED -->

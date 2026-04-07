@@ -406,6 +406,18 @@
 |--------|--------|
 | [Verification Sign-off Gate](epics/VFOKwnF2e/voyages/VFOL0ebAt/) | done |
 
+### [Canonical Mission Request Command Surface](epics/VG73Nzmrg/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Define The Initial Mission Request Command Family](epics/VG73Nzmrg/voyages/VG73OBJuF/) | planned |
+
+### [Keeper Mission Request Provider Ingress](epics/VG73ONWxt/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Normalize GitHub Issues Into Mission Requests](epics/VG73ONWxt/voyages/VG73OZ01E/) | planned |
+
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
 | Voyage | Status |
@@ -421,5 +433,9 @@
 |--------|--------|
 | [Realize High-Density Views](epics/VDmdk1uib/voyages/VDoBLEiaF/) | done |
 
-### [Collaborative Cryptographic Primitives Over Adversarial Transport](epics/VDupml7OG/) (draft)
+### [Collaborative Cryptographic Primitives Over Adversarial Transport](epics/VDupml7OG/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Define Keeper Trust Boundaries And Audit Checkpoints](epics/VDupml7OG/voyages/VG73OljA2/) | planned |
 

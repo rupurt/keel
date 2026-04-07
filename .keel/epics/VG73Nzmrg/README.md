@@ -1,15 +1,16 @@
 ---
 # system-managed
-id: VDupml7OG
-created_at: 2026-04-07T05:03:46
+id: VG73Nzmrg
+created_at: 2026-04-07T06:47:49
 # authored
-title: Collaborative Cryptographic Primitives Over Adversarial Transport
-mission: VG6d7rdqN
+title: Canonical Mission Request Command Surface
+index: 112
+mission: VG6d7gjkx
 ---
 
-# Collaborative Cryptographic Primitives Over Adversarial Transport
+# Canonical Mission Request Command Surface
 
-> Define the Keeper-managed multiplayer security foundations for attestation, auditability, private payload handling, and provider-neutral mission request ingress.
+> Keel lacks a provider-neutral mission request CLI surface, so Keeper and automation would duplicate parsing, validation, and application semantics.
 
 ## Documents
 
@@ -24,5 +25,5 @@ mission: VG6d7rdqN
 **Progress:** 0/1 voyages complete, 0/1 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Define Keeper Trust Boundaries And Audit Checkpoints](voyages/VG73OljA2/) | planned | 0/1 |
+| [Define The Initial Mission Request Command Family](voyages/VG73OBJuF/) | planned | 0/1 |
 <!-- END GENERATED -->
