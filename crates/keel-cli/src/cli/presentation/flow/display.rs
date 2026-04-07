@@ -30,6 +30,7 @@ pub fn render_annotated_flow(
 ) -> String {
     let mut output = String::new();
     let theme = Theme::for_color_mode(Theme::should_use_color(no_color));
+    let lane_flow = lane_flow_with_management_icebox(board, lane_flow);
 
     // 1. Command Directives (Admiral's Inbox)
     let directives = render_command_directives(
@@ -50,7 +51,7 @@ pub fn render_annotated_flow(
 
     // 2. Queue Handoff (Configured Workflow Lanes)
     ensure_section_spacing(&mut output);
-    let lane_boxes = render_lane_boxes(lane_flow, width, &theme);
+    let lane_boxes = render_lane_boxes(&lane_flow, width, &theme);
     write!(output, "{}", lane_boxes).unwrap();
 
     // 3. Execution Capacity (Strategic Throughput)
@@ -168,6 +169,52 @@ pub fn render_annotated_flow(
     }
 
     output
+}
+
+fn lane_flow_with_management_icebox(
+    board: &Board,
+    lane_flow: &LaneFlowProjection,
+) -> LaneFlowProjection {
+    let icebox_count = board
+        .stories
+        .values()
+        .filter(|story| story.status == StoryState::Icebox)
+        .filter(|story| !board.is_story_paused_by_mission(story))
+        .count();
+
+    if icebox_count == 0 {
+        return lane_flow.clone();
+    }
+
+    let mut augmented = lane_flow.clone();
+    let Some(management_lane) = augmented.lanes.iter_mut().find(|lane| lane.manual_accept) else {
+        return augmented;
+    };
+
+    if management_lane
+        .source_counts
+        .iter()
+        .any(|source| source.source == "story.icebox")
+    {
+        return augmented;
+    }
+
+    let insert_at = management_lane
+        .source_counts
+        .iter()
+        .position(|source| source.source == "voyage.draft")
+        .unwrap_or(management_lane.source_counts.len());
+
+    management_lane.source_counts.insert(
+        insert_at,
+        LaneSourceCount {
+            source: "story.icebox".to_string(),
+            count: icebox_count,
+        },
+    );
+    management_lane.total_count += icebox_count;
+
+    augmented
 }
 
 fn render_command_directives(
@@ -930,6 +977,30 @@ mod tests {
         assert!(!rendered.contains("Execution"));
         assert!(!rendered.contains("Verification"));
         assert!(!rendered.contains("Done"));
+    }
+
+    #[test]
+    fn render_annotated_flow_surfaces_icebox_stories_in_management_lane() {
+        let temp = TestBoardBuilder::new()
+            .story(TestStory::new("S1").status(StoryState::Icebox))
+            .build();
+        let board = loader::load_board(temp.path()).unwrap();
+        let topology = workflow_topology::resolve(&Config::default()).unwrap();
+        let lane_flow = workflow_lane_flow::project(&board, &topology);
+        let rendered = render_annotated_flow(
+            &board,
+            &make_test_metrics(),
+            &lane_flow,
+            &[],
+            &HashMap::new(),
+            100,
+            true,
+            true,
+        );
+
+        assert!(rendered.contains("management (1) [p100]"));
+        assert!(rendered.contains("story.icebox"));
+        assert!(rendered.contains("story.icebox  1"));
     }
 
     #[test]
