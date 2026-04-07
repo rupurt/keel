@@ -443,7 +443,7 @@
 
 | Voyage | Status |
 |--------|--------|
-| [Stabilize Mission Request Command Semantics](epics/VG6ggE3ud/voyages/VG7sBGWN6/) | planned |
+| [Stabilize Mission Request Command Semantics](epics/VG6ggE3ud/voyages/VG7sBGWN6/) | in-progress |
 
 ### [Keeper Provider Mission Request Ingress](epics/VG6ggSPFR/) (active)
 

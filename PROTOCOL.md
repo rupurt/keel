@@ -143,6 +143,16 @@ request:
     revision: 7
 ```
 
+### Caller Field Responsibility
+
+- Required caller-supplied fields: `version`, `request.title`,
+  `request.summary`, `request.problem`, `request.outcome`, and
+  `request.requested_scope.in_scope`
+- Optional caller-supplied fields: `request.constraints` and
+  `request.requested_scope.out_of_scope`
+- Derivable provider fields after normalization: `request.provider.kind`,
+  `source_id`, `source_url`, and `revision`
+
 ### Processing Contract
 
 The documented direction is a native `keel mission request ...` namespace with
@@ -155,6 +165,17 @@ contract:
 3. Validate the request before mutating planning state.
 4. Lower the validated request into ordinary Keel planning commands.
 5. Render acknowledgement content separately from provider delivery.
+
+### Stage IO And Failure Semantics
+
+- `template`, `parse`, `validate`, `draft`, and `ack` are side-effect free.
+- `apply` is the only stage that mutates `.keel` planning state.
+- Validation failures are recoverable caller errors with actionable diagnostics
+  and no mutation.
+- Execution failures happen after validation and should be treated as runtime or
+  policy failures rather than malformed input.
+- The same normalized envelope should yield deterministic semantic results for
+  automation callers unless the board state itself has changed.
 
 ### Responsibility Split
 

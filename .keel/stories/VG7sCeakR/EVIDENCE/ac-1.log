@@ -1,0 +1,5 @@
+Mission request IO contract evidence
+
+- Authored `.keel/epics/VG6ggE3ud/voyages/VG7sBGWN6/COMMAND_CONTRACT.md`
+- Defined command-family inputs, stdout contract, and canonical envelope shape
+- Updated `PROTOCOL.md` and public foundation docs to preserve the same transport-neutral rules

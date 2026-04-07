@@ -1,0 +1,5 @@
+Mission request caller-field evidence
+
+- Added caller responsibility table to `COMMAND_CONTRACT.md`
+- Distinguished required caller-supplied fields from derivable provider metadata and optional fields
+- Mirrored the caller-field rules in `PROTOCOL.md`

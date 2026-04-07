@@ -1,0 +1,5 @@
+Mission request determinism evidence
+
+- Added pipeline rules requiring pipe-friendly composition and deterministic semantic results
+- Bound provider details to the normalized envelope instead of command-specific flags
+- Mirrored replay and determinism expectations in protocol and public docs

@@ -26,5 +26,5 @@ mission: VG6d7gjkx
 **Progress:** 0/1 voyages complete, 0/1 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Stabilize Mission Request Command Semantics](voyages/VG7sBGWN6/) | planned | 0/1 |
+| [Stabilize Mission Request Command Semantics](voyages/VG7sBGWN6/) | in-progress | 0/1 |
 <!-- END GENERATED -->

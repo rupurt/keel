@@ -88,6 +88,16 @@ Until that namespace ships, the same architectural rule still applies:
 - lower into ordinary Keel planning commands
 - keep acknowledgement rendering separate from provider delivery
 
+The stabilized IO and failure rules are:
+
+- required caller fields are the planning payload itself, not provider-only IDs
+- provider identity and revision metadata are derivable after normalization
+- `template`, `parse`, `validate`, `draft`, and `ack` stay side-effect free
+- `apply` is the only stage allowed to mutate `.keel`
+- validation failures are recoverable request errors
+- execution failures are runtime or policy failures after a request already
+  passed validation
+
 ## Multiplayer security without a hard backend dependency
 
 Keel's documented multiplayer security model is boundary-focused, not

@@ -1,0 +1,5 @@
+Mission request failure semantics evidence
+
+- Defined success, validation failure, and execution failure as separate command outcomes
+- Bound side effects to `apply` only
+- Documented the same semantics in `COMMAND_CONTRACT.md` and `PROTOCOL.md`

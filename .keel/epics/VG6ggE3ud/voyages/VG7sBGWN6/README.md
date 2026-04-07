@@ -1,13 +1,14 @@
 ---
 # system-managed
 id: VG7sBGWN6
-status: planned
+status: in-progress
 epic: VG6ggE3ud
 created_at: 2026-04-07T10:09:35
 # authored
 title: Stabilize Mission Request Command Semantics
 index: 1
 updated_at: 2026-04-07T10:11:18
+started_at: 2026-04-07T10:13:50
 ---
 
 # Stabilize Mission Request Command Semantics
@@ -30,5 +31,5 @@ updated_at: 2026-04-07T10:11:18
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Specify Mission Request IO And Failure Semantics](../../../../stories/VG7sCeakR/README.md) | feat | backlog |
+| [Specify Mission Request IO And Failure Semantics](../../../../stories/VG7sCeakR/README.md) | feat | needs-human-verification |
 <!-- END GENERATED -->
