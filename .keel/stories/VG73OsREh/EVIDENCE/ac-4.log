@@ -1,0 +1,85 @@
+---
+recorded_at: 2026-04-07T07:23:40.202056855-07:00
+mode: manual
+files: [".keel/epics/VDupml7OG/voyages/VG73OljA2/SECURITY_BOUNDARY.md"]
+---
+
+--- File: SECURITY_BOUNDARY.md ---
+# Keeper Security Boundary Slice
+
+## Purpose
+
+Define the first operational security boundary for multiplayer Keel under
+Keeper.
+
+## Authority Split
+
+| Concern | System of Record | Notes |
+|---------|------------------|-------|
+| planning truth | Keel | missions, epics, voyages, stories, and mission request semantics |
+| provider ingress | Keeper | provider polling, normalization, retries, acknowledgements |
+| execution routing | Keeper | leases, worker routing, and runtime coordination |
+| audit checkpoints | backend adapter under Keeper | append, checkpoint, inclusion proof, consistency proof |
+| acceptance policy | Keel policy plus Keeper enforcement | threshold boundaries applied only where required |
+
+## Audit Checkpoint Contract
+
+Every backend used for stronger auditability must expose:
+
+- `append(event)` to persist canonical lifecycle or ingress events
+- `checkpoint(range)` to materialize an append-only checkpoint over a bounded
+  event range
+- `prove_inclusion(checkpoint_id, event_id)` to show an event is in a published
+  checkpoint
+- `prove_consistency(previous_checkpoint_id, checkpoint_id)` to show the newer
+  checkpoint is an append-only extension of the older one
+
+Keel never depends on a specific backend implementation. Transit may satisfy
+this contract, but so may any compatible append-only log implementation.
+
+## Attestation Policy
+
+### Ordinary Audit Events
+
+- story start and submit
+- voyage planning and thaw side effects
+- provider request parsing and validation
+- acknowledgement rendering
+
+These events require canonical logging and checkpoint inclusion, not threshold
+signatures.
+
+### Threshold-Attested Events
+
+- high-consequence mission creation or activation triggered by external request
+- acceptance of protected planning transitions where quorum approval is policy
+- publication of checkpoint roots used as external audit anchors
+
+Threshold attestation is scoped to the boundary where irreversible or
+high-consequence state changes occur.
+
+## Private Payload Boundary
+
+- public planning artifacts remain reviewable in `.keel`
+- provider secrets and reactor-private payloads are never copied into public
+  planning docs
+- sealed or referenced payload handling remains a Keeper/runtime concern
+- proof records may point to sealed artifacts without exposing raw secret
+  content
+
+## Mission Request Security Boundary
+
+- provider requests enter through Keeper
+- Keeper normalizes them into the canonical mission request envelope
+- Keel evaluates and mutates planning state
+- Keeper records ingress lineage and checkpoint evidence
+- acknowledgement content is rendered by Keel but delivered by Keeper
+
+## Replay Guarantees
+
+- provider revisions remain explicit in normalized mission request payloads
+- checkpoints create append-only lineage over ingress and lifecycle events
+- attestation policy is evaluated deterministically from event class and policy
+  boundary
+- storage backend choice does not change Keel planning semantics
+

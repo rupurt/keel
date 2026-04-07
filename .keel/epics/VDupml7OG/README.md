@@ -21,8 +21,8 @@ mission: VG6d7rdqN
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 0/1 stories done
+**Progress:** 1/1 voyages complete, 1/1 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Define Keeper Trust Boundaries And Audit Checkpoints](voyages/VG73OljA2/) | planned | 0/1 |
+| [Define Keeper Trust Boundaries And Audit Checkpoints](voyages/VG73OljA2/) | done | 1/1 |
 <!-- END GENERATED -->

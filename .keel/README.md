@@ -433,9 +433,9 @@
 |--------|--------|
 | [Realize High-Density Views](epics/VDmdk1uib/voyages/VDoBLEiaF/) | done |
 
-### [Collaborative Cryptographic Primitives Over Adversarial Transport](epics/VDupml7OG/) (active)
+### [Collaborative Cryptographic Primitives Over Adversarial Transport](epics/VDupml7OG/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Define Keeper Trust Boundaries And Audit Checkpoints](epics/VDupml7OG/voyages/VG73OljA2/) | planned |
+| [Define Keeper Trust Boundaries And Audit Checkpoints](epics/VDupml7OG/voyages/VG73OljA2/) | done |
 
