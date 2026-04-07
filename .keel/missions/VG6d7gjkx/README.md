@@ -1,14 +1,16 @@
 ---
 # system-managed
 id: VG6d7gjkx
-status: achieved
+status: verified
 created_at: 2026-04-07T05:03:30
-updated_at: 2026-04-07T11:54:11
+updated_at: 2026-04-07T13:31:20
 # authored
 title: Keel Mission Request Command Surface
 watch: ~
 activated_at: 2026-04-07T05:18:34
 achieved_at: 2026-04-07T11:54:11
+verified_at: 2026-04-07T13:31:20
+verification_artifact: verification-playback.gif
 ---
 
 # Keel Mission Request Command Surface
