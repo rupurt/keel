@@ -445,9 +445,9 @@
 |--------|--------|
 | [Stabilize Mission Request Command Semantics](epics/VG6ggE3ud/voyages/VG7sBGWN6/) | done |
 
-### [Keeper Provider Mission Request Ingress](epics/VG6ggSPFR/) (active)
+### [Keeper Provider Mission Request Ingress](epics/VG6ggSPFR/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Define Mission Request Ingress Replay And Acknowledgement](epics/VG6ggSPFR/voyages/VG7sCmWrK/) | in-progress |
+| [Define Mission Request Ingress Replay And Acknowledgement](epics/VG6ggSPFR/voyages/VG7sCmWrK/) | done |
 
