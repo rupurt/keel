@@ -412,11 +412,11 @@
 |--------|--------|
 | [Define The Initial Mission Request Command Family](epics/VG73Nzmrg/voyages/VG73OBJuF/) | done |
 
-### [Keeper Mission Request Provider Ingress](epics/VG73ONWxt/) (active)
+### [Keeper Mission Request Provider Ingress](epics/VG73ONWxt/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Normalize GitHub Issues Into Mission Requests](epics/VG73ONWxt/voyages/VG73OZ01E/) | planned |
+| [Normalize GitHub Issues Into Mission Requests](epics/VG73ONWxt/voyages/VG73OZ01E/) | done |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

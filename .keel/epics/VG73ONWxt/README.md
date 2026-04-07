@@ -22,8 +22,8 @@ mission: VG6d7m4m9
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 0/1 stories done
+**Progress:** 1/1 voyages complete, 1/1 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Normalize GitHub Issues Into Mission Requests](voyages/VG73OZ01E/) | planned | 0/1 |
+| [Normalize GitHub Issues Into Mission Requests](voyages/VG73OZ01E/) | done | 1/1 |
 <!-- END GENERATED -->
