@@ -11,8 +11,8 @@
 | [Simulation Kernel Architecture Research](bearings/VDeRKA7fo/) | laid | ✓ | ✓ | decision-ready | 3.36 | ✓ |
 | [TUI Compact Layout Research](bearings/VDmdk1uib/) | laid | ✓ | ✓ | decision-ready | 7.50 | ✓ |
 | [Collaborative Cryptographic Primitives Over Adversarial Transport](bearings/VDupml7OG/) | laid | ✓ | ✓ | decision-ready | 3.41 | ✓ |
-| [Mission Request Command Surface Research](bearings/VG6ggE3ud/) | exploring | ✓ | ✓ | repair citations | - | - |
-| [Keeper Provider Mission Request Ingress Research](bearings/VG6ggSPFR/) | exploring | ✓ | ✓ | repair citations | - | - |
+| [Mission Request Command Surface Research](bearings/VG6ggE3ud/) | laid | ✓ | ✓ | decision-ready | 3.46 | ✓ |
+| [Keeper Provider Mission Request Ingress Research](bearings/VG6ggSPFR/) | laid | ✓ | ✓ | decision-ready | 3.67 | ✓ |
 
 <details>
 <summary>Archived Bearings</summary>
@@ -438,4 +438,8 @@
 | Voyage | Status |
 |--------|--------|
 | [Define Keeper Trust Boundaries And Audit Checkpoints](epics/VDupml7OG/voyages/VG73OljA2/) | done |
+
+### [Mission Request Command Surface](epics/VG6ggE3ud/) (draft)
+
+### [Keeper Provider Mission Request Ingress](epics/VG6ggSPFR/) (draft)
 

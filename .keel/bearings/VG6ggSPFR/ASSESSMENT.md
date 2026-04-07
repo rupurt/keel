@@ -8,10 +8,10 @@ id: VG6ggSPFR
 
 | Factor | Score | Rationale |
 |--------|-------|-----------|
-| Impact | 3 | Expected value delivered if successful |
-| Confidence | 3 | Certainty we can achieve the outcome |
-| Effort | 3 | Resources and time required |
-| Risk | 3 | Probability of negative outcomes |
+| Impact | 4 | Provider ingress is the operational bridge between external requests and native Keel planning state. [SRC-01][SRC-03] |
+| Confidence | 4 | Keeper already owns provider routing and the GitHub-first mission-request envelope is defined. [SRC-01][SRC-03] |
+| Effort | 3 | The work is to normalize, validate, and acknowledge inbound requests through Keeper rather than inventing a new runtime role. [SRC-01][SRC-02][SRC-03] |
+| Risk | 2 | The main risk is overfitting the first provider, which is manageable by enforcing the provider-neutral request envelope. [SRC-01][SRC-03] |
 
 *Scores range from 1-5:*
 - 1 = Very Low
@@ -22,22 +22,24 @@ id: VG6ggSPFR
 
 ## Findings
 
-- Key finding with canonical support [SRC-01]
+- Keeper is the correct owner for provider polling, normalization, and acknowledgement in the Keel/Keeper boundary. [SRC-01][SRC-02]
+- GitHub issues are a strong first ingress provider, but the normalization path must stay provider-neutral and lower into native Keel commands. [SRC-01][SRC-03]
 
 ## Opportunity Cost
 
-What are we not doing by pursuing this? Cite the tradeoff, for example [SRC-01].
+- Delaying this work leaves external mission intake informal and prevents Keeper from acting as a controlled multiplayer ingress boundary. [SRC-01][SRC-03]
 
 ## Dependencies
 
-- Dependency or prerequisite with support [SRC-01]
+- The mission-request command surface needs to exist so Keeper can target a native Keel contract instead of mutating board state directly. [SRC-02][SRC-03]
+- The ingress path should align with Keeper’s existing architecture for provider routing and envelope handling. [SRC-01]
 
 ## Alternatives Considered
 
-- Alternative path with support [SRC-01]
+- Let each provider mutate planning state directly. This was rejected because it bypasses a stable Keel contract and makes auditability and provider parity weaker. [SRC-01][SRC-03]
 
 ## Recommendation
 
-[ ] Proceed → convert to epic [SRC-01]
+[x] Proceed → convert to epic [SRC-01][SRC-03]
 [ ] Park → revisit later [SRC-01]
 [ ] Decline → document learnings [SRC-01]

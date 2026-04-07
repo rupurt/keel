@@ -146,18 +146,99 @@ pub fn check_mission_definition_readiness(board: &Board) -> Vec<Problem> {
         match mission.status() {
             MissionStatus::Defining => {
                 problems.extend(charter::check_defining_mission_charter_authorship(mission));
+                problems.extend(check_mission_goal_bearing_alignment(board, mission));
             }
             MissionStatus::Active => {
                 problems.extend(charter::check_mission_charter_readiness(board, mission));
                 problems.extend(missions::check_mission_actionable_lineage_readiness(
                     board, mission,
                 ));
+                problems.extend(check_mission_goal_bearing_alignment(board, mission));
             }
             MissionStatus::Paused
             | MissionStatus::Achieved
             | MissionStatus::Verified
             | MissionStatus::Abandoned => {}
         }
+    }
+
+    problems
+}
+
+fn check_mission_goal_bearing_alignment(
+    board: &Board,
+    mission: &crate::domain::model::Mission,
+) -> Vec<Problem> {
+    let charter_path = mission.path.parent().unwrap().join("CHARTER.md");
+    let content = match std::fs::read_to_string(&charter_path) {
+        Ok(content) => content,
+        Err(_) => return Vec::new(),
+    };
+
+    let sibling_epics: Vec<String> = board
+        .epics_for_mission(mission.id())
+        .into_iter()
+        .map(|epic| epic.id().to_string())
+        .collect();
+
+    if sibling_epics.is_empty() {
+        return Vec::new();
+    }
+
+    let mut problems = Vec::new();
+
+    for goal in charter::parse_mission_goals(&content) {
+        let GoalVerification::Board(target) = goal.verification else {
+            continue;
+        };
+        let target = target.trim();
+        let Some(bearing) = board.bearings.get(target) else {
+            continue;
+        };
+
+        if bearing.frontmatter.mission.as_deref() != Some(mission.id()) {
+            continue;
+        }
+
+        if matches!(
+            bearing.status(),
+            crate::domain::model::BearingStatus::Laid
+                | crate::domain::model::BearingStatus::Declined
+        ) {
+            continue;
+        }
+
+        let delivery_epics: Vec<String> = sibling_epics
+            .iter()
+            .filter(|epic_id| epic_id.as_str() != target)
+            .filter(|epic_id| {
+                !board.voyages_for_epic_id(epic_id).is_empty()
+                    || board
+                        .epics
+                        .get(epic_id.as_str())
+                        .is_some_and(|epic| epic.status() == crate::domain::model::EpicState::Done)
+            })
+            .cloned()
+            .collect();
+
+        if delivery_epics.is_empty() {
+            continue;
+        }
+
+        problems.push(
+            Problem::error(
+                mission.path.clone(),
+                format!(
+                    "Mission {} still verifies a board goal against live research bearing {} while sibling epics {} already exist. Lay the bearing into a strategic epic or retarget the goal before decomposing delivery work.",
+                    mission.id(),
+                    target,
+                    delivery_epics.join(", "),
+                ),
+            )
+            .with_scope(mission.id())
+            .with_category(GapCategory::Coherence)
+            .with_check_id(CheckId::MissionDefinitionReadiness),
+        );
     }
 
     problems
@@ -647,6 +728,78 @@ mod tests {
             .mission(TestMission::new("M1").status("active"))
             .epic(TestEpic::new("E1").mission("M1"))
             .bearing(TestBearing::new("B1").mission("M1"))
+            .build();
+
+        let charter_path = temp.path().join("missions/M1/CHARTER.md");
+        fs::write(
+            charter_path,
+            r#"
+## Goals
+| ID | Description | Verification |
+|----|-------------|--------------|
+| MG-01 | Test goal | board: B1 |
+
+## Constraints
+- Keep the work scoped to one investigation at a time.
+
+## Halting Rules
+- Halt after the first bearing produces enough evidence to choose the next step.
+- Yield to human review before changing external workflow contracts.
+"#,
+        )
+        .unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_mission_definition_readiness(&board);
+
+        assert!(problems.is_empty());
+    }
+
+    #[test]
+    fn test_check_mission_definition_readiness_flags_live_bearing_goal_with_sibling_epic() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "E1").status("planned"))
+            .bearing(TestBearing::new("B1").mission("M1").status("ready"))
+            .build();
+
+        let charter_path = temp.path().join("missions/M1/CHARTER.md");
+        fs::write(
+            charter_path,
+            r#"
+## Goals
+| ID | Description | Verification |
+|----|-------------|--------------|
+| MG-01 | Test goal | board: B1 |
+
+## Constraints
+- Keep the work scoped to one investigation at a time.
+
+## Halting Rules
+- Halt after the first bearing produces enough evidence to choose the next step.
+- Yield to human review before changing external workflow contracts.
+"#,
+        )
+        .unwrap();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_mission_definition_readiness(&board);
+
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].check_id, CheckId::MissionDefinitionReadiness);
+        assert!(problems[0].message.contains("live research bearing B1"));
+        assert!(problems[0].message.contains("E1"));
+    }
+
+    #[test]
+    fn test_check_mission_definition_readiness_allows_laid_bearing_goal_with_sibling_epic() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .epic(TestEpic::new("B1").mission("M1"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "B1").status("planned"))
+            .bearing(TestBearing::new("B1").mission("M1").status("laid"))
             .build();
 
         let charter_path = temp.path().join("missions/M1/CHARTER.md");
