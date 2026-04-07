@@ -1,9 +1,13 @@
 ---
 id: VDupml7OG
 title: Collaborative Cryptographic Primitives Over Adversarial Transport
-status: parked
+status: laid
 created_at: 2026-03-14T23:40:46
 index: 4
+mission: VG6d7rdqN
+updated_at: 2026-04-07T05:03:31
+laid_at: 2026-04-07T05:03:46
+epic: VDupml7OG
 ---
 
 # Collaborative Cryptographic Primitives Over Adversarial Transport

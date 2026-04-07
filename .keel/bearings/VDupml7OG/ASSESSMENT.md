@@ -45,11 +45,11 @@ favorable because security and intake semantics are harder to retrofit later.
 
 ## Dependencies
 
-- Canonical event and request encodings in Keel
-- Keeper provider polling and acknowledgement paths
-- Key lifecycle design for threshold signing, including DKG or resharing
-- Replayable evidence storage for provider payload digests or copies
-- Policy definitions for which transitions require quorum attestation
+- Canonical event and request encodings in Keel [SRC-07][SRC-08][SRC-09]
+- Keeper provider polling and acknowledgement paths [SRC-07][SRC-08][SRC-09]
+- Key lifecycle design for threshold signing, including DKG or resharing [SRC-01]
+- Replayable evidence storage for provider payload digests or copies [SRC-04][SRC-07]
+- Policy definitions for which transitions require quorum attestation [SRC-01][SRC-07]
 
 ## Alternatives Considered
 
@@ -62,7 +62,7 @@ favorable because security and intake semantics are harder to retrofit later.
 
 ## Recommendation
 
-[ ] Proceed → convert to epic [SRC-01][SRC-04][SRC-07]
-[x] Park → keep as a foundational design package until Keeper ingress and
+[x] Proceed → convert to epic [SRC-01][SRC-04][SRC-07]
+[ ] Park → keep as a foundational design package until Keeper ingress and
     attestation work is scheduled [SRC-01][SRC-04][SRC-07][SRC-08][SRC-09]
 [ ] Decline → document learnings [SRC-01]
