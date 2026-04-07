@@ -98,6 +98,15 @@ The stabilized IO and failure rules are:
 - execution failures are runtime or policy failures after a request already
   passed validation
 
+The replay and acknowledgement rules are:
+
+- provider runtimes bind requests to explicit source identity and revision
+- duplicate deliveries for the same revision do not replay planning mutations
+- edited requests produce a new normalized revision and a fresh Keel evaluation
+- Keeper owns provider-facing acknowledgement delivery and retries
+- Keel owns acknowledgement payload rendering from the normalized request and
+  planning result
+
 ## Multiplayer security without a hard backend dependency
 
 Keel's documented multiplayer security model is boundary-focused, not

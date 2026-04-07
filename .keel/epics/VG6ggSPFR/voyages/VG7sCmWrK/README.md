@@ -1,13 +1,14 @@
 ---
 # system-managed
 id: VG7sCmWrK
-status: planned
+status: in-progress
 epic: VG6ggSPFR
 created_at: 2026-04-07T10:09:41
 # authored
 title: Define Mission Request Ingress Replay And Acknowledgement
 index: 1
 updated_at: 2026-04-07T10:11:19
+started_at: 2026-04-07T10:16:15
 ---
 
 # Define Mission Request Ingress Replay And Acknowledgement
@@ -30,5 +31,5 @@ updated_at: 2026-04-07T10:11:19
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Specify GitHub Request Revision And Acknowledgement Rules](../../../../stories/VG7sFBnRR/README.md) | feat | backlog |
+| [Specify GitHub Request Revision And Acknowledgement Rules](../../../../stories/VG7sFBnRR/README.md) | feat | needs-human-verification |
 <!-- END GENERATED -->

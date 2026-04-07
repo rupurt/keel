@@ -177,6 +177,20 @@ contract:
 - The same normalized envelope should yield deterministic semantic results for
   automation callers unless the board state itself has changed.
 
+### Provider Revision And Acknowledgement Rules
+
+- Provider runtimes should bind every normalized request to an explicit replay
+  identity, at minimum provider kind, source identity, and provider revision.
+- Duplicate deliveries for an unchanged replay identity must not create a second
+  planning mutation.
+- Edited provider requests should produce a new normalized revision and a fresh
+  Keel evaluation.
+- Keeper or another runtime owns acknowledgement delivery and retries.
+- Keel owns acknowledgement payload rendering from the normalized request and
+  planning result.
+- Acknowledgement retry failure must not be treated as license to replay an
+  already-applied planning mutation.
+
 ### Responsibility Split
 
 - **Keel** owns request semantics, planning mutation rules, and acknowledgement

@@ -1,0 +1,5 @@
+Ingress determinism evidence
+
+- Defined canonical replay identity and duplicate suppression
+- Required edited requests to produce new normalized revisions
+- Required acknowledgement retry failure to avoid replaying an already-applied planning mutation

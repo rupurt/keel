@@ -1,0 +1,5 @@
+Acknowledgement ownership evidence
+
+- Defined Keeper-owned acknowledgement delivery and retry behavior
+- Defined Keel-owned acknowledgement payload rendering
+- Bound acknowledgements to the exact issue identity and revision that produced the outcome

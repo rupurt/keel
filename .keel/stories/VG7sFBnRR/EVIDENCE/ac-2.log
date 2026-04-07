@@ -1,0 +1,5 @@
+Ingress replay evidence
+
+- Defined replay identity using provider kind, source identity, and revision
+- Specified duplicate-delivery, retry, and edited-request behavior
+- Updated protocol guidance so provider retries do not replay planning mutations

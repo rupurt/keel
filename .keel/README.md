@@ -449,5 +449,5 @@
 
 | Voyage | Status |
 |--------|--------|
-| [Define Mission Request Ingress Replay And Acknowledgement](epics/VG6ggSPFR/voyages/VG7sCmWrK/) | planned |
+| [Define Mission Request Ingress Replay And Acknowledgement](epics/VG6ggSPFR/voyages/VG7sCmWrK/) | in-progress |
 

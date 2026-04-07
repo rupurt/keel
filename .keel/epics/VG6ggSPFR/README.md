@@ -26,5 +26,5 @@ mission: VG6d7m4m9
 **Progress:** 0/1 voyages complete, 0/1 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Define Mission Request Ingress Replay And Acknowledgement](voyages/VG7sCmWrK/) | planned | 0/1 |
+| [Define Mission Request Ingress Replay And Acknowledgement](voyages/VG7sCmWrK/) | in-progress | 0/1 |
 <!-- END GENERATED -->
