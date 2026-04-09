@@ -904,7 +904,7 @@ dependencies = [
 
 [[package]]
 name = "keel"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "ansi-escape-sequences",
  "anyhow",
@@ -931,7 +931,7 @@ dependencies = [
 
 [[package]]
 name = "keel-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "ansi-escape-sequences",
  "anyhow",
@@ -1635,14 +1635,14 @@ checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
 
 [[package]]
 name = "speccy"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
 ]
 
 [[package]]
 name = "spoke-auth"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -1974,7 +1974,7 @@ checksum = "5d99f8c9a7727884afe522e9bd5edbfc91a3312b36a77b5fb8926e4c31a41801"
 
 [[package]]
 name = "txt-scene"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "owo-colors",
  "regex",

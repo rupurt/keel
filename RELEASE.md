@@ -27,7 +27,7 @@ nix run github:spoke-sh/keel
 
 ```bash
 keel upgrade
-keel upgrade --ref v0.1.0
+keel upgrade --ref v0.2.0
 keel upgrade --ref 533fa5b8
 ```
 
@@ -58,7 +58,7 @@ Bump the version number in `Cargo.toml`. We follow [Semantic Versioning](https:/
 ```toml
 # Cargo.toml
 [workspace.package]
-version = "0.1.0" # Update this
+version = "0.2.0" # Update this
 ```
 
 ### 2. Commit and Push
@@ -66,7 +66,7 @@ Commit the version bump to the `main` branch.
 
 ```bash
 git add Cargo.toml
-git commit -m "chore: bump version to 0.1.0"
+git commit -m "chore: bump version to 0.2.0"
 git push origin main
 ```
 
@@ -74,8 +74,8 @@ git push origin main
 Create a git tag corresponding to the new version (must start with `v`).
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.2.0
+git push origin v0.2.0
 ```
 
 ### 4. Automated Workflow
