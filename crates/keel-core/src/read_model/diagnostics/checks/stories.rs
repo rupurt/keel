@@ -494,7 +494,7 @@ pub fn check_verification_manifests(board: &Board) -> Vec<Problem> {
             problems.push(
                 Problem::error(
                     story.path.clone(),
-                    "missing verification manifest (run `keel verify run` to generate)",
+                    "missing verification manifest for terminal story state",
                 )
                 .with_check_id(CheckId::StoryMissingManifest)
                 .with_scope(story.scope().unwrap_or_default()),
@@ -543,7 +543,10 @@ pub fn check_verification_manifests(board: &Board) -> Vec<Problem> {
                 problems.push(
                     Problem::error(
                         manifest_path.clone(),
-                        format!("manifested evidence file missing: {}", rel_path),
+                        format!(
+                            "manifest references evidence file missing from repository: {}",
+                            rel_path
+                        ),
                     )
                     .with_check_id(CheckId::StoryManifestTampered)
                     .with_scope(story.scope().unwrap_or_default()),
@@ -596,20 +599,16 @@ pub fn check_verification_manifests(board: &Board) -> Vec<Problem> {
 
                     if !manifest.evidence.contains_key(&rel_path) {
                         problems.push(
-
-                                Problem::warning(
-
-                                    manifest_path.clone(),
-
-                                    format!("new evidence file not in manifest: {} (run `keel verify run` to update)", rel_path),
-
-                                )
-
-                                .with_check_id(CheckId::StoryManifestTampered)
-
-                                .with_scope(story.scope().unwrap_or_default()),
-
-                            );
+                            Problem::warning(
+                                manifest_path.clone(),
+                                format!(
+                                    "evidence file exists on disk but is not sealed into the manifest: {}",
+                                    rel_path
+                                ),
+                            )
+                            .with_check_id(CheckId::StoryManifestTampered)
+                            .with_scope(story.scope().unwrap_or_default()),
+                        );
                     }
                 }
             }
@@ -1921,6 +1920,54 @@ mod tests {
         assert!(
             problems.is_empty(),
             "draft voyage stories should be skipped"
+        );
+    }
+
+    #[test]
+    fn verification_manifests_do_not_suggest_verify_run_for_missing_manifest() {
+        let temp = TestBoardBuilder::new()
+            .story(TestStory::new("S1").status(StoryState::Done))
+            .build();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_verification_manifests(&board);
+
+        assert!(problems.iter().any(|problem| {
+            problem.message == "missing verification manifest for terminal story state"
+        }));
+        assert!(
+            problems
+                .iter()
+                .all(|problem| !problem.message.contains("keel verify run"))
+        );
+    }
+
+    #[test]
+    fn verification_manifests_report_unsealed_evidence_without_rerun_hint() {
+        let temp = TestBoardBuilder::new()
+            .story(TestStory::new("S1").status(StoryState::Done))
+            .build();
+        let story_dir = temp.path().join("stories/S1");
+        fs::write(
+            story_dir.join("manifest.yaml"),
+            "id: S1\ngit_sha: deadbeef\nevidence: {}\n",
+        )
+        .unwrap();
+        fs::create_dir_all(story_dir.join("EVIDENCE")).unwrap();
+        fs::write(story_dir.join("EVIDENCE/ac-1.log"), "proof").unwrap();
+
+        let board = crate::infrastructure::loader::load_board(temp.path()).unwrap();
+        let problems = check_verification_manifests(&board);
+
+        assert!(problems.iter().any(|problem| {
+            problem.message.contains(
+                "evidence file exists on disk but is not sealed into the manifest: EVIDENCE/ac-1.log",
+            )
+        }));
+        assert!(
+            problems
+                .iter()
+                .all(|problem| !problem.message.contains("keel verify run"))
         );
     }
 

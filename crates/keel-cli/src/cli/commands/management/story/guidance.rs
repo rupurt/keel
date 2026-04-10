@@ -155,11 +155,13 @@ fn recovery_command_for_error(
                 || lower.contains("missing verification annotations")
                 || lower.contains("missing srs refs")
                 || lower.contains("missing evidence chain phase markers")
-                || lower.contains("evidence directory missing in bundle")
-                || lower.contains("verification failed")
                 || lower.contains("unresolved scaffold/default text")
             {
-                Some(format!("keel verify run {story_id}"))
+                Some(format!("keel story show {story_id}"))
+            } else if lower.contains("evidence directory missing in bundle")
+                || lower.contains("verification failed")
+            {
+                Some(format!("keel story audit {story_id}"))
             } else if lower.contains("cannot submit") {
                 Some(format!("keel story show {story_id}"))
             } else {
@@ -172,11 +174,11 @@ fn recovery_command_for_error(
                 || lower.contains("manual verification must be accepted with")
             {
                 Some(accept_command_for_role(story_id, accept_role))
-            } else if lower.contains("evidence directory missing in bundle")
-                || lower.contains("unresolved scaffold/default text")
+            } else if lower.contains("evidence directory missing in bundle") {
+                Some(format!("keel story audit {story_id}"))
+            } else if lower.contains("unresolved scaffold/default text")
+                || lower.contains("cannot accept")
             {
-                Some(format!("keel verify run {story_id}"))
-            } else if lower.contains("cannot accept") {
                 Some(format!("keel story show {story_id}"))
             } else {
                 None
@@ -221,7 +223,7 @@ fn recovery_command_for_error(
             {
                 Some(format!("keel story show {story_id}"))
             } else if lower.contains("command failed with exit code") {
-                Some(format!("keel verify run {story_id}"))
+                Some(format!("keel story audit {story_id}"))
             } else {
                 None
             }
@@ -393,6 +395,40 @@ mod tests {
             json,
             json!({
                 "recovery_step": { "command": "keel story accept S6 --role director" }
+            })
+        );
+    }
+
+    #[test]
+    fn recovery_submit_unchecked_acceptance_criteria_maps_to_story_show() {
+        let guidance = recovery_for_error(
+            StoryLifecycleAction::Submit,
+            "S7",
+            "Cannot submit story S7: unchecked acceptance criteria remain.",
+        )
+        .unwrap();
+        let json = serde_json::to_value(guidance).unwrap();
+        assert_eq!(
+            json,
+            json!({
+                "recovery_step": { "command": "keel story show S7" }
+            })
+        );
+    }
+
+    #[test]
+    fn recovery_submit_verification_failure_maps_to_story_audit() {
+        let guidance = recovery_for_error(
+            StoryLifecycleAction::Submit,
+            "S7",
+            "Cannot submit story S7: verification failed for AC-01.",
+        )
+        .unwrap();
+        let json = serde_json::to_value(guidance).unwrap();
+        assert_eq!(
+            json,
+            json!({
+                "recovery_step": { "command": "keel story audit S7" }
             })
         );
     }
