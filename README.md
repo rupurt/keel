@@ -40,7 +40,7 @@ nix run github:spoke-sh/keel
 
 ```bash
 keel upgrade
-keel upgrade --ref v0.2.0
+keel upgrade --ref v0.2.1
 ```
 
 ### Manual Download

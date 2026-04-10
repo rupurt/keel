@@ -200,10 +200,20 @@ fn latest_filesystem_entry(project_root: &Path) -> Option<(PathBuf, DateTime<Utc
         .max_by_key(|(_, modified)| *modified)
 }
 
+fn git_command(dir: &Path) -> Command {
+    let mut command = Command::new("git");
+    command.current_dir(dir);
+    for (key, _) in std::env::vars_os() {
+        if key.to_string_lossy().starts_with("GIT_") {
+            command.env_remove(key);
+        }
+    }
+    command
+}
+
 fn git_repo_root(project_root: &Path) -> Option<PathBuf> {
-    let output = Command::new("git")
+    let output = git_command(project_root)
         .args(["rev-parse", "--show-toplevel"])
-        .current_dir(project_root)
         .output()
         .ok()?;
     if !output.status.success() {
@@ -214,9 +224,8 @@ fn git_repo_root(project_root: &Path) -> Option<PathBuf> {
 }
 
 fn git_dir(repo_root: &Path) -> Option<PathBuf> {
-    let output = Command::new("git")
+    let output = git_command(repo_root)
         .args(["rev-parse", "--git-dir"])
-        .current_dir(repo_root)
         .output()
         .ok()?;
     if !output.status.success() {
@@ -236,9 +245,8 @@ fn git_head_commit_at(repo_root: &Path) -> Option<DateTime<Utc>> {
 }
 
 fn git_head_signature(repo_root: &Path) -> Option<(String, DateTime<Utc>)> {
-    let output = Command::new("git")
+    let output = git_command(repo_root)
         .args(["log", "-1", "--format=%H%x00%ct"])
-        .current_dir(repo_root)
         .output()
         .ok()?;
     if !output.status.success() {
@@ -257,7 +265,7 @@ fn git_dirty_paths(repo_root: &Path) -> Vec<PathBuf> {
 }
 
 fn git_status_output(repo_root: &Path) -> Vec<u8> {
-    Command::new("git")
+    git_command(repo_root)
         .args([
             "status",
             "--porcelain=v1",
@@ -265,7 +273,6 @@ fn git_status_output(repo_root: &Path) -> Vec<u8> {
             "--untracked-files=all",
             "--no-renames",
         ])
-        .current_dir(repo_root)
         .output()
         .ok()
         .filter(|output| output.status.success())
@@ -320,12 +327,11 @@ fn update_hasher_with_metadata(hasher: &mut Sha256, path: &Path, metadata: &fs::
 mod tests {
     use std::fs;
     use std::path::Path;
-    use std::process::Command;
 
     use chrono::{Duration, Utc};
     use tempfile::TempDir;
 
-    use super::{HeartbeatSource, fingerprint, project};
+    use super::{HeartbeatSource, fingerprint, git_command, project};
 
     #[test]
     fn heartbeat_prefers_dirty_worktree_activity() {
@@ -444,11 +450,7 @@ mod tests {
     }
 
     fn git(dir: &Path, args: &[&str]) {
-        let output = Command::new("git")
-            .args(args)
-            .current_dir(dir)
-            .output()
-            .unwrap();
+        let output = git_command(dir).args(args).output().unwrap();
         assert!(
             output.status.success(),
             "git {:?} failed: stdout=`{}` stderr=`{}`",

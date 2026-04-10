@@ -83,11 +83,14 @@ mod tests {
     }
 
     fn git(dir: &Path, args: &[&str]) {
-        let output = Command::new("git")
-            .args(args)
-            .current_dir(dir)
-            .output()
-            .unwrap();
+        let mut command = Command::new("git");
+        command.args(args).current_dir(dir);
+        for (key, _) in std::env::vars_os() {
+            if key.to_string_lossy().starts_with("GIT_") {
+                command.env_remove(key);
+            }
+        }
+        let output = command.output().unwrap();
         assert!(
             output.status.success(),
             "git {:?} failed: stdout=`{}` stderr=`{}`",
