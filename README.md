@@ -50,6 +50,20 @@ Download the latest pre-built binaries and installers for your platform from the
 - **macOS:** `.tar.gz` archives plus the cross-platform shell installer
 - **Windows:** `.zip` archives, `.msi`, and the PowerShell installer
 
+## 🚀 Quick Start
+
+1. **Install Keel:** follow the [Installation](#installation) instructions above.
+2. **Create a board:** `keel new my-project && cd my-project`
+3. **Orient:** `keel turn`
+4. **Inspect:** `keel mission next --status`
+5. **Pull:** `keel next --role manager` or `keel next --role operator`
+6. **Ship & Close:** move one slice, record proof, land the sealing commit, and repeat the turn cycle
+
+Release-installer installs can be refreshed with `keel upgrade`. If you need a specific upstream tag or commit instead of the latest published release, use `keel upgrade --ref <tag-or-sha>`.
+
+**Everything flows down:** Vision → Epic → Voyage → Story → Implementation.
+**Everything loops back:** Reflection → Knowledge → Patterns → Bearings → Architecture.
+
 ---
 
 ## 🎮 The Ramping Path
@@ -150,21 +164,6 @@ Use this order when authoring or reviewing decisions:
 7. Planning artifacts (`PRD.md` → `SRS.md`/`SDD.md` → story `README.md`) — scoped executable work
 
 - **[AGENTS.md](AGENTS.md)**: The turn loop and operator contract for AI contributors.
-
----
-
-## 🚀 Quick Start
-
-1. **Install:** `nix run github:spoke-sh/keel`
-2. **Orient:** `keel turn`
-3. **Inspect:** `keel mission next --status`
-4. **Pull:** `keel next --role manager` or `keel next --role operator`
-5. **Ship & Close:** move one slice, record proof, and land the sealing commit
-
-Release-installer installs can be refreshed with `keel upgrade`. If you need a specific upstream tag or commit instead of the latest published release, use `keel upgrade --ref <tag-or-sha>`.
-
-**Everything flows down:** Vision → Epic → Voyage → Story → Implementation.
-**Everything loops back:** Reflection → Knowledge → Patterns → Bearings → Architecture.
 
 ---
 
