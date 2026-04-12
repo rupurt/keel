@@ -1,0 +1,125 @@
+# Plan The Janitor Handoff And GitHub Connector Bridge - Software Design Description
+
+> Define the first executable contract for Keeper-managed janitor stewardship over Keel and the GitHub connector flow it depends on.
+
+**SRS:** [SRS.md](SRS.md)
+
+## Overview
+
+This voyage produces the first explicit contract for Keeper-managed janitor
+stewardship. The design does not invent a second planning engine or a direct
+provider-to-board path. Instead, it threads Keeper posture and provenance into
+Keel's authenticated execution boundary, constrains what janitor posture may do
+autonomously, and defines how GitHub events become janitor work that still
+lowers through native Keel commands.
+
+## Context & Boundaries
+
+The key boundary is between:
+
+- Keeper posture and connector policy in `spoke`
+- Planning truth and lifecycle mutation in `keel`
+
+`janitor` is treated as a Keeper control posture, not as a replacement for the
+Keel board role used to pull a specific lane. A janitor action therefore needs
+both:
+
+- Keeper custody metadata: who/what is acting and under which posture
+- Keel board-role selection: which lane the specific command is allowed to pull
+
+GitHub remains the first connector, but the custody model must stay provider
+neutral once events are normalized.
+
+```text
+GitHub event / comment / workflow failure
+                  |
+                  v
+        Spoke GitHub connector worker
+                  |
+                  v
+          Keeper janitor reactor
+      posture=janitor, policy=gardening
+                  |
+                  v
+      Keel custody context + native commands
+  identity + posture + board_role + provenance
+                  |
+                  v
+     .keel lifecycle mutation + repo evidence
+                  |
+                  v
+     Connector acknowledgement / handoff reply
+```
+
+## Dependencies
+
+| Dependency | Type | Purpose | Version/API |
+|------------|------|---------|-------------|
+| `spoke/docs/architecture/keeper.md` | sibling-repo doc | Canonical Keel/Keeper boundary and connector model | workspace |
+| `spoke/crates/hub/src/main.rs` | sibling-repo code | Existing Keeper posture vocabulary and recommendation semantics | workspace |
+| `keel/crates/spoke-auth/src/lib.rs` | local code | Current authenticated execution boundary that needs richer custody semantics | workspace |
+| `keel/.keel/bearings/VDupml7OG/MISSION_REQUESTS.md` | local planning doc | Existing provider-neutral lowering pattern for Keeper -> Keel commands | workspace |
+
+## Key Decisions
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Keeper posture vs. Keel board role | Keep them separate | `janitor` answers "under what custody policy is this action happening?" while board role answers "which lane is being pulled?" |
+| Board mutation boundary | Keep all planning mutation behind native Keel commands | Preserves Keel as planning authority and keeps provider/connector code out of `.keel` mutation paths |
+| First connector | GitHub first | Matches existing Keeper architecture and gives the janitor transition a concrete provider surface |
+| Janitor autonomy | Gardening and maintenance only, with explicit escalation on design/behavior changes | Keeps janitor useful without silently expanding into full operator discretion |
+
+## Architecture
+
+The first rollout spans two repos with one explicit seam.
+
+- `keel`
+  - Extend the custody/auth surface so authenticated automation can record
+    Keeper provenance and posture explicitly.
+  - Preserve existing command families as the only mutation path.
+  - Make lifecycle logs and audit evidence show that a Keeper janitor action
+    occurred under explicit custody.
+- `spoke`
+  - Add janitor-reactor policy that decides which Keel commands are permissible.
+  - Add a GitHub connector worker that normalizes inbound stimuli and publishes
+    outbound acknowledgements or handoff summaries.
+  - Keep connector code provider-specific and Keel invocation provider-neutral.
+
+## Components
+
+| Component | Repo | Purpose | Notes |
+|-----------|------|---------|-------|
+| Custody context model | `keel` | Carry `identity`, `keeper_posture`, `board_role`, and provenance such as `reactor_id` / `project_ref` into command execution | Evolves beyond today's generic authenticated `system` role |
+| Janitor policy adapter | `spoke` | Decide whether a normalized janitor event is autonomous, blocked, or escalated | Encodes gardening-first constraints |
+| GitHub connector worker | `spoke` | Normalize GitHub events into janitor work and deliver acknowledgements back out | First provider-specific surface |
+| Lifecycle provenance logging | `keel` | Emit enough authored evidence to explain what Keeper did and under which posture | Supports replay and audit |
+
+## Interfaces
+
+| Interface | Producer -> Consumer | Purpose |
+|-----------|----------------------|---------|
+| Janitor ingress event | GitHub connector -> janitor reactor | Deliver normalized GitHub stimuli such as workflow failure, review request, or issue/comment signal |
+| Custody claims | janitor reactor -> Keel command runtime | Carry janitor posture, selected board role, and Keeper provenance into native Keel commands |
+| Command invocation | janitor reactor -> Keel CLI/lib | Run Orient/Inspect/Pull/Ship/Close actions without bypassing board rules |
+| Acknowledgement payload | janitor reactor -> GitHub connector | Publish provider-facing status, handoff summary, or escalation reply after Keel action settles |
+
+## Data Flow
+
+1. A GitHub event arrives on the connector boundary.
+2. The GitHub connector normalizes it into a janitor ingress event with stable
+   provider identity and replay keys.
+3. The janitor reactor evaluates policy to determine whether the event is
+   autonomous maintenance work or requires escalation.
+4. If autonomous, the reactor invokes native Keel commands with a custody
+   context that records Keeper posture, selected board role, and provenance.
+5. Keel applies any allowed lifecycle mutations and records authored evidence.
+6. The reactor emits an acknowledgement or handoff summary for GitHub egress.
+
+## Error Handling
+
+| Error Condition | Detection | Response | Recovery |
+|-----------------|-----------|----------|----------|
+| Unknown or unsupported GitHub event | Connector normalization rejects the payload | Do not call Keel; write reactor-private audit event | Extend connector mapping in a later slice if needed |
+| Janitor policy forbids the requested action | Policy evaluation returns `escalate` | Emit handoff summary instead of mutating board state | Human operator or higher-posture Keeper decides next action |
+| Keel command fails validation or hits doctor debt | Command exits non-zero or `doctor` stays red | Record failure, avoid duplicate retries that would compound drift | Repair board debt first, then replay from the normalized event |
+| Duplicate provider delivery | Matching provider identity / replay key | Collapse to idempotent handling | Reuse prior acknowledgement or mark duplicate as observed |

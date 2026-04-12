@@ -418,6 +418,12 @@
 |--------|--------|
 | [Normalize GitHub Issues Into Mission Requests](epics/VG73ONWxt/voyages/VG73OZ01E/) | done |
 
+### [Keeper Managed Janitor Stewardship Boundary](epics/VGYFmJEuH/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Plan The Janitor Handoff And GitHub Connector Bridge](epics/VGYFmJEuH/voyages/VGYFoW0Vc/) | planned |
+
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
 | Voyage | Status |
