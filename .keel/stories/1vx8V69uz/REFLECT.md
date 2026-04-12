@@ -35,7 +35,7 @@ Format:
 | **Observed At** | 2026-03-02T19:30:00Z |
 | **Score** | 0.88 |
 | **Confidence** | 0.95 |
-| **Applied** | |
+| **Applied** | Documented in `CLAUDE.md` project-specific drift guards on 2026-04-11 |
 
 ## Observations
 
