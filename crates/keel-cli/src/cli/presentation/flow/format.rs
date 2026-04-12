@@ -1,6 +1,5 @@
 //! Terminal formatting for flow diagnostics
 
-use ansi_escape_sequences::strip_ansi;
 use owo_colors::OwoColorize;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write;
@@ -26,7 +25,7 @@ pub struct VoyageDepSummary {
 }
 
 pub fn pad_to_width(s: &str, target_width: usize) -> String {
-    let current_width = strip_ansi(s).len();
+    let current_width = keel::infrastructure::utils::visible_width(s);
     if current_width >= target_width {
         s.to_string()
     } else {
@@ -673,6 +672,71 @@ mod tests {
         assert!(rendered.contains("▓"));
         assert!(rendered.contains("▒"));
         assert!(rendered.contains("░"));
+    }
+
+    #[test]
+    fn render_epic_capacities_aligns_capacity_bar_right_edges() {
+        let theme = Theme::default();
+        let capacities = HashMap::from([
+            (
+                "epic1".to_string(),
+                EpicCapacityReport {
+                    index: Some(1),
+                    id: "epic1".to_string(),
+                    title: "Split Work".to_string(),
+                    status: keel::domain::model::EpicState::Active,
+                    charge_state: crate::cli::presentation::flow::capacity::ChargeState::Blocked,
+                    capacity: crate::cli::presentation::flow::capacity::EpicCapacity {
+                        ready: 0,
+                        in_flight: 1,
+                        blocked: 0,
+                        inactive: 0,
+                        done: 1,
+                    },
+                },
+            ),
+            (
+                "epic2".to_string(),
+                EpicCapacityReport {
+                    index: Some(2),
+                    id: "epic2".to_string(),
+                    title: "Completed Work".to_string(),
+                    status: keel::domain::model::EpicState::Done,
+                    charge_state: crate::cli::presentation::flow::capacity::ChargeState::Discharged,
+                    capacity: crate::cli::presentation::flow::capacity::EpicCapacity {
+                        ready: 0,
+                        in_flight: 0,
+                        blocked: 0,
+                        inactive: 0,
+                        done: 2,
+                    },
+                },
+            ),
+        ]);
+
+        let mut board = keel::domain::model::Board::default();
+        board.epics.insert(
+            "epic1".to_string(),
+            build_epic("epic1", keel::domain::model::EpicState::Active),
+        );
+        board.epics.insert(
+            "epic2".to_string(),
+            build_epic("epic2", keel::domain::model::EpicState::Done),
+        );
+
+        let rendered = render_epic_capacities(&board, &capacities, &theme);
+        let bracket_columns: Vec<_> = rendered
+            .lines()
+            .filter_map(|line| {
+                let plain = ansi_escape_sequences::strip_ansi(line);
+                plain.rfind(']').map(|right_edge| {
+                    keel::infrastructure::utils::visible_width(&plain[..=right_edge])
+                })
+            })
+            .collect();
+
+        assert_eq!(bracket_columns.len(), 2);
+        assert!(bracket_columns.windows(2).all(|pair| pair[0] == pair[1]));
     }
 
     #[test]

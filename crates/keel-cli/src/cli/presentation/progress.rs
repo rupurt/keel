@@ -38,9 +38,12 @@ pub fn render_capacity_bar(
         return format!("[{}]", " ".repeat(width));
     }
 
-    let done_width = (done as f64 / total as f64 * width as f64).round() as usize;
-    let in_flight_width = (in_flight as f64 / total as f64 * width as f64).round() as usize;
-    let ready_width = (ready as f64 / total as f64 * width as f64).round() as usize;
+    // Round cumulative boundaries so the segment widths always sum to the
+    // requested bar width, even for proportions like 50/50 on odd widths.
+    let done_width = scaled_boundary(done, total, width);
+    let in_flight_boundary = scaled_boundary(done + in_flight, total, width);
+    let in_flight_width = in_flight_boundary.saturating_sub(done_width);
+    let ready_width = width.saturating_sub(done_width + in_flight_width);
 
     let mut bar = String::new();
     if let Some(color) = color {
@@ -59,9 +62,14 @@ pub fn render_capacity_bar(
     format!("[{}]", bar)
 }
 
+fn scaled_boundary(count: usize, total: usize, width: usize) -> usize {
+    ((count as f64 / total as f64) * width as f64).round() as usize
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use keel::infrastructure::utils::visible_width;
 
     #[test]
     fn render_count_bar_handles_zero_total() {
@@ -76,5 +84,18 @@ mod tests {
         let rendered = render_count_bar(2, 4, 10, Some("(stories)"));
         assert!(rendered.contains("2/4"));
         assert!(rendered.contains("(stories)"));
+    }
+
+    #[test]
+    fn render_capacity_bar_preserves_requested_width_for_split_work() {
+        let rendered = render_capacity_bar(1, 1, 0, 15, None);
+        assert_eq!(visible_width(&rendered), 17);
+        assert_eq!(rendered, "[▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒]");
+    }
+
+    #[test]
+    fn render_capacity_bar_preserves_requested_width_when_colored() {
+        let rendered = render_capacity_bar(1, 1, 0, 15, Some(owo_colors::AnsiColors::Green));
+        assert_eq!(visible_width(&rendered), 17);
     }
 }
