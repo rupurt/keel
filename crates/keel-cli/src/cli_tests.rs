@@ -170,6 +170,23 @@ fn cli_help_displays_top_level_commands() {
     assert!(help_str.contains("roadmap"), "Missing roadmap command");
     assert!(help_str.contains("verify"), "Missing verify command");
 
+    let auth_idx = help_str
+        .find("\n  auth")
+        .expect("Missing auth entry in help");
+    let upgrade_idx = help_str
+        .find("\n  upgrade")
+        .expect("Missing upgrade entry in help");
+    let new_idx = help_str.find("\n  new").expect("Missing new entry in help");
+    let heartbeat_idx = help_str
+        .find("\n  heartbeat")
+        .expect("Missing heartbeat entry in help");
+    assert!(auth_idx < upgrade_idx, "auth should appear before upgrade");
+    assert!(upgrade_idx < new_idx, "upgrade should appear before new");
+    assert!(
+        new_idx < heartbeat_idx,
+        "new should appear before heartbeat"
+    );
+
     // Verify groups (The Ramping Path section)
     let diag_section = help_str
         .find("The Ramping Path")
@@ -178,6 +195,19 @@ fn cli_help_displays_top_level_commands() {
     assert!(
         after_diag.contains("verify"),
         "verify command not in The Ramping Path section of help groups"
+    );
+
+    let setup_section = help_str.find("Setup:").expect("Missing Setup section");
+    let after_setup = &help_str[setup_section..];
+    let setup_upgrade_idx = after_setup
+        .find("\n  upgrade")
+        .expect("Missing upgrade entry in Setup section");
+    let setup_new_idx = after_setup
+        .find("\n  new")
+        .expect("Missing new entry in Setup section");
+    assert!(
+        setup_upgrade_idx < setup_new_idx,
+        "Setup section should list upgrade before new"
     );
 }
 

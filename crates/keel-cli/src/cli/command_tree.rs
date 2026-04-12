@@ -30,6 +30,28 @@ pub fn build_cli() -> Command {
             .subcommand_required(true),
         )
         .subcommand(
+            Command::new("upgrade")
+                .about("Upgrade keel from the latest release or a git ref")
+                .arg(
+                    Arg::new("git-ref")
+                        .long("ref")
+                        .help("Optional git tag or commit to build and install from source")
+                        .value_name("TAG_OR_SHA"),
+                ),
+        )
+        .subcommand(
+            Command::new("new")
+                .about("Create a new Keel project scaffold")
+                .arg(
+                    Arg::new("path")
+                        .help("Target directory for the new project scaffold (defaults to current directory)")
+                        .value_name("PATH")
+                        .value_hint(ValueHint::DirPath)
+                        .value_parser(clap::value_parser!(std::path::PathBuf))
+                        .index(1),
+                ),
+        )
+        .subcommand(
             Command::new("doctor")
                 .about("Validate board health and optionally fix issues")
                 .hide(true)
@@ -400,28 +422,6 @@ pub fn build_cli() -> Command {
             Command::new("generate")
                 .about("Regenerate all README files")
                 .hide(true),
-        )
-        .subcommand(
-            Command::new("new")
-                .about("Create a new Keel project scaffold")
-                .arg(
-                    Arg::new("path")
-                        .help("Target directory for the new project scaffold (defaults to current directory)")
-                        .value_name("PATH")
-                        .value_hint(ValueHint::DirPath)
-                        .value_parser(clap::value_parser!(std::path::PathBuf))
-                        .index(1),
-                ),
-        )
-        .subcommand(
-            Command::new("upgrade")
-                .about("Upgrade keel from the latest release or a git ref")
-                .arg(
-                    Arg::new("git-ref")
-                        .long("ref")
-                        .help("Optional git tag or commit to build and install from source")
-                        .value_name("TAG_OR_SHA"),
-                ),
         )
         .subcommand(
             Command::new("hooks")
