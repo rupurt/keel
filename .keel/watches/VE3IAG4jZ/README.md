@@ -25,7 +25,7 @@ If a new recurring operational review belongs on this watch later, it should be 
 
 ## Retired Routine Anchors
 
-The following watch-scoped routine anchors were retired on `2026-03-26` after confirming that their blueprint intent had already shipped under earlier scopes or did not fit this repository. Their current watch-scoped materializations were iced or removed and the stale routines were deleted so they can no longer create false strategic pressure.
+The following watch-scoped routine anchors were retired on `2026-03-26` after confirming that their blueprint intent had already shipped under earlier scopes or did not fit this repository. Their transient watch-scoped materializations were removed and the stale routines were deleted so they can no longer create false strategic pressure.
 
 - `VEvd69Hyf` Eliminate Report Tail Friction — covered by `VE56ttUZW` and voyage `VE5NSQ2T2`
 - `VEvd69Hyg` Ask About Keel System Audio Feedback Support For Transitions — covered by `VE56ttUZX` and voyage `VE5NSQ2T2`
