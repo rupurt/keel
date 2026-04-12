@@ -33,6 +33,16 @@ impl std::fmt::Display for ConfigSource {
     }
 }
 
+impl ConfigSource {
+    /// Return the directory containing the config file, when one exists.
+    pub fn base_dir(&self) -> Option<&Path> {
+        match self {
+            ConfigSource::Local(path) | ConfigSource::User(path) => path.parent(),
+            ConfigSource::Defaults => None,
+        }
+    }
+}
+
 /// Scoring mode weights
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ModeWeights {
@@ -346,9 +356,27 @@ pub enum StorageBackend {
 
 /// Storage-level configuration.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub struct StorageServerConfig {
+    #[serde(default)]
+    pub keeper_base_url: Option<String>,
+    #[serde(default)]
+    pub hub_base_url: Option<String>,
+}
+
+/// Storage-level configuration.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub struct StorageConfig {
     #[serde(default)]
     pub backend: StorageBackend,
+    #[serde(default)]
+    pub server: StorageServerConfig,
+}
+
+/// Authentication configuration.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+pub struct AuthConfig {
+    #[serde(default)]
+    pub session_file: Option<String>,
 }
 
 /// Audio feedback configuration.
@@ -393,6 +421,10 @@ pub struct Config {
     #[serde(default)]
     pub storage: StorageConfig,
 
+    /// Authentication configuration.
+    #[serde(default)]
+    pub auth: AuthConfig,
+
     /// Workflow defaults and topology controls.
     #[serde(default, skip_serializing_if = "WorkflowConfig::is_default")]
     pub workflow: WorkflowConfig,
@@ -431,6 +463,7 @@ impl Default for Config {
         Self {
             board_dir: default_board_dir(),
             storage: StorageConfig::default(),
+            auth: AuthConfig::default(),
             workflow: WorkflowConfig::default(),
             roles: BTreeMap::new(),
             lanes: BTreeMap::new(),
@@ -554,6 +587,27 @@ pub fn load_config_from(dir: &Path) -> (Config, ConfigSource) {
 pub fn load_config() -> (Config, ConfigSource) {
     let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
     load_config_from(&cwd)
+}
+
+/// Resolve a path value relative to the config file that declared it.
+pub fn resolve_path_from_source(source: &ConfigSource, value: &str) -> PathBuf {
+    if let Some(stripped) = value
+        .strip_prefix("~/")
+        .or_else(|| value.strip_prefix("~\\"))
+        && let Some(home_dir) = dirs::home_dir()
+    {
+        return home_dir.join(stripped);
+    }
+
+    let path = PathBuf::from(value);
+    if path.is_absolute() {
+        return path;
+    }
+
+    source
+        .base_dir()
+        .map(|base| base.join(path.clone()))
+        .unwrap_or(path)
 }
 
 /// Load configuration from a specific file
@@ -854,15 +908,52 @@ backend = "unknown-backend"
         let content = r#"
 [storage]
 backend = "server"
+
+[storage.server]
+keeper_base_url = "https://keeper.spoke.test"
+hub_base_url = "https://hub.spoke.test"
+
+[auth]
+session_file = ".keel/session.json"
 "#;
         fs::write(&path, content).unwrap();
 
         let config = load_from_file(&path).unwrap();
         assert_eq!(config.storage.backend, StorageBackend::Server);
+        assert_eq!(
+            config.storage.server.keeper_base_url.as_deref(),
+            Some("https://keeper.spoke.test")
+        );
+        assert_eq!(
+            config.storage.server.hub_base_url.as_deref(),
+            Some("https://hub.spoke.test")
+        );
+        assert_eq!(
+            config.auth.session_file.as_deref(),
+            Some(".keel/session.json")
+        );
 
         // Default case
         let config_default = Config::default();
         assert_eq!(config_default.storage.backend, StorageBackend::Filesystem);
+    }
+
+    #[test]
+    fn resolve_path_from_source_anchors_relative_paths_to_config_file_directory() {
+        let source = ConfigSource::Local(PathBuf::from("/tmp/demo/keel.toml"));
+        let resolved = resolve_path_from_source(&source, "auth/session.json");
+        assert_eq!(resolved, PathBuf::from("/tmp/demo/auth/session.json"));
+
+        let absolute = resolve_path_from_source(&source, "/var/lib/keel/session.json");
+        assert_eq!(absolute, PathBuf::from("/var/lib/keel/session.json"));
+    }
+
+    #[test]
+    fn resolve_path_from_source_expands_home_prefix() {
+        let source = ConfigSource::Defaults;
+        let resolved = resolve_path_from_source(&source, "~/.config/keel/auth-session.json");
+        assert!(resolved.ends_with(".config/keel/auth-session.json"));
+        assert!(resolved.is_absolute());
     }
 
     #[test]

@@ -1,0 +1,14 @@
+---
+recorded_at: 2026-04-12T11:12:11.131914014-07:00
+command: cargo test -p spoke-auth load_auth_context_returns_local_system_when_no_session_exists
+---
+
+running 1 test
+test tests::load_auth_context_returns_local_system_when_no_session_exists ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+
+--- stderr ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.07s
+     Running unittests src/lib.rs (/home/alex/.cache/cargo-target/keel/debug/deps/spoke_auth-82499c0519b8a396)

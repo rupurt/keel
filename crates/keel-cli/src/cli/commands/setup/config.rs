@@ -113,6 +113,24 @@ struct ConfigShowWorkflowPayload {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+struct ConfigShowStorageServerPayload {
+    keeper_base_url: Option<String>,
+    hub_base_url: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+struct ConfigShowStoragePayload {
+    backend: String,
+    server: ConfigShowStorageServerPayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+struct ConfigShowAuthPayload {
+    configured_session_file: Option<String>,
+    effective_session_file: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 struct TechniqueStatusRow {
     label: String,
     detected: bool,
@@ -171,6 +189,8 @@ struct ConfigShowPayload {
     source: String,
     project_root: String,
     board_dir: String,
+    storage: ConfigShowStoragePayload,
+    auth: ConfigShowAuthPayload,
     workflow: ConfigShowWorkflowPayload,
     scoring: ConfigShowScoringPayload,
     research: ConfigShowResearchPayload,
@@ -185,6 +205,14 @@ fn build_show_payload(
 ) -> Result<ConfigShowPayload> {
     let projection = build_verification_technique_projection(config, project_root);
     let weights = config.current_weights();
+    let configured_session_file = config.auth.session_file.clone();
+    let configured_session_path = config
+        .auth
+        .session_file
+        .as_deref()
+        .map(|value| config::resolve_path_from_source(source, value));
+    let effective_session_file =
+        spoke_auth::resolve_session_file_path(None, configured_session_path.as_deref())?;
     let topology = workflow_topology::resolve(config)?;
     let workflow_topology::ResolvedWorkflowTopology {
         defaults,
@@ -216,6 +244,21 @@ fn build_show_payload(
         source: source.to_string(),
         project_root: project_root.display().to_string(),
         board_dir: config.board_dir().to_string(),
+        storage: ConfigShowStoragePayload {
+            backend: match config.storage.backend {
+                keel::infrastructure::config::StorageBackend::Filesystem => "filesystem",
+                keel::infrastructure::config::StorageBackend::Server => "server",
+            }
+            .to_string(),
+            server: ConfigShowStorageServerPayload {
+                keeper_base_url: config.storage.server.keeper_base_url.clone(),
+                hub_base_url: config.storage.server.hub_base_url.clone(),
+            },
+        },
+        auth: ConfigShowAuthPayload {
+            configured_session_file,
+            effective_session_file: effective_session_file.display().to_string(),
+        },
         workflow: ConfigShowWorkflowPayload {
             max_active_missions: config.workflow.max_active_missions,
             max_battery_packs: config.workflow.max_battery_packs,
@@ -297,6 +340,29 @@ fn render_show_payload(payload: &ConfigShowPayload) -> Vec<String> {
     lines.push(format!("# Configuration source: {}", payload.source));
     lines.push(format!("project_root = \"{}\"", payload.project_root));
     lines.push(format!("board_dir = \"{}\"", payload.board_dir));
+    lines.push(String::new());
+    lines.push("[storage]".to_string());
+    lines.push(format!("backend = \"{}\"", payload.storage.backend));
+    lines.push(String::new());
+    lines.push("[storage.server]".to_string());
+    match &payload.storage.server.keeper_base_url {
+        Some(url) => lines.push(format!("keeper_base_url = \"{}\"", url)),
+        None => lines.push("# keeper_base_url = (unset)".to_string()),
+    }
+    match &payload.storage.server.hub_base_url {
+        Some(url) => lines.push(format!("hub_base_url = \"{}\"", url)),
+        None => lines.push("# hub_base_url = (unset)".to_string()),
+    }
+    lines.push(String::new());
+    lines.push("[auth]".to_string());
+    lines.push(format!(
+        "session_file = \"{}\"",
+        payload.auth.effective_session_file
+    ));
+    match &payload.auth.configured_session_file {
+        Some(path) => lines.push(format!("# configured_session_file = \"{}\"", path)),
+        None => lines.push("# configured_session_file = (default)".to_string()),
+    }
     lines.push(String::new());
     lines.push("[workflow]".to_string());
     lines.push(format!(
@@ -645,6 +711,14 @@ disable = ["rust-coverage"]
             "# Configuration source: {}",
             config::ConfigSource::Defaults
         )));
+        assert!(rendered.contains("[storage]"));
+        assert!(rendered.contains("backend = \"filesystem\""));
+        assert!(rendered.contains("[storage.server]"));
+        assert!(rendered.contains("# keeper_base_url = (unset)"));
+        assert!(rendered.contains("# hub_base_url = (unset)"));
+        assert!(rendered.contains("[auth]"));
+        assert!(rendered.contains("session_file = \""));
+        assert!(rendered.contains("# configured_session_file = (default)"));
         assert!(rendered.contains("[workflow.defaults]"));
         assert!(rendered.contains("management_role = \"manager\""));
         assert!(rendered.contains("delivery_role = \"operator\""));
@@ -823,6 +897,13 @@ enable = ["llm-judge"]
             serde_json::Value::String(config::ConfigSource::Defaults.to_string())
         );
         assert_eq!(
+            json["storage"]["backend"],
+            serde_json::Value::String("filesystem".to_string())
+        );
+        assert!(json["storage"]["server"]["keeper_base_url"].is_null());
+        assert!(json["storage"]["server"]["hub_base_url"].is_null());
+        assert!(json["auth"]["effective_session_file"].is_string());
+        assert_eq!(
             json["workflow"]["defaults"]["management_role"],
             serde_json::Value::String("manager".to_string())
         );
@@ -880,6 +961,33 @@ enable = ["llm-judge"]
         assert!(first.get("command").is_some());
         assert!(first.get("name").is_none());
         assert!(first.get("modality").is_none());
+    }
+
+    #[test]
+    fn config_show_renders_server_backend_and_configured_auth_path() {
+        let config = Config {
+            storage: keel::infrastructure::config::StorageConfig {
+                backend: keel::infrastructure::config::StorageBackend::Server,
+                server: keel::infrastructure::config::StorageServerConfig {
+                    keeper_base_url: Some("https://keeper.spoke.test".to_string()),
+                    hub_base_url: Some("https://hub.spoke.test".to_string()),
+                },
+            },
+            auth: keel::infrastructure::config::AuthConfig {
+                session_file: Some(".keel/auth/session.json".to_string()),
+            },
+            ..Config::default()
+        };
+        let source = config::ConfigSource::Local(PathBuf::from("/tmp/demo/keel.toml"));
+
+        let payload = build_show_payload(&config, &source, Path::new("/tmp/demo")).unwrap();
+        let rendered = render_show_payload(&payload).join("\n");
+
+        assert!(rendered.contains("backend = \"server\""));
+        assert!(rendered.contains("keeper_base_url = \"https://keeper.spoke.test\""));
+        assert!(rendered.contains("hub_base_url = \"https://hub.spoke.test\""));
+        assert!(rendered.contains("session_file = \"/tmp/demo/.keel/auth/session.json\""));
+        assert!(rendered.contains("# configured_session_file = \".keel/auth/session.json\""));
     }
 
     #[test]

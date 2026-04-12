@@ -430,6 +430,12 @@
 |--------|--------|
 | [Plan Reactor-Aware Mission Request Scheduling](epics/VGYPeZj64/voyages/VGYPh3luG/) | done |
 
+### [Hub Session Auth And Server Backend Wiring](epics/VGbHeuTMW/) (done)
+
+| Voyage | Status |
+|--------|--------|
+| [Ship Hub Session CLI And Remote Backend Config](epics/VGbHeuTMW/voyages/VGbHgxwnS/) | done |
+
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
 | Voyage | Status |

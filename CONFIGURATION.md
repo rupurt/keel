@@ -18,6 +18,49 @@ You can specify where Keel stores its state (defaults to `.keel`):
 board_dir = ".keel"
 ```
 
+## Storage Backend
+
+Keel always supports the local filesystem board. For Keeper-managed multiplayer work, you can switch the storage backend contract to `server` and provide explicit Keeper and Hub coordinates.
+
+```toml
+[storage]
+backend = "filesystem" # or "server"
+```
+
+### Remote Keeper Backend
+
+Use `[storage.server]` when `backend = "server"` so Keel knows which Keeper API and Hub authority it is targeting.
+
+```toml
+[storage]
+backend = "server"
+
+[storage.server]
+keeper_base_url = "https://keeper.spoke.example"
+hub_base_url = "https://hub.spoke.example"
+```
+
+`keeper_base_url` is the future command transport target. `hub_base_url` is the authentication authority used by `keel auth login`.
+
+## Auth Session
+
+Keel can persist a reusable Hub-backed session record for authenticated operators.
+
+```toml
+[auth]
+session_file = "~/.config/keel/auth-session.json"
+```
+
+If `session_file` is omitted, Keel defaults to `~/.config/keel/auth-session.json` when the platform exposes a standard config directory. Relative paths are resolved relative to the `keel.toml` file that declares them.
+
+### Auth Commands
+
+- `keel auth login --email <addr> --password-stdin --hub-url <url>` signs in through Spoke Hub and saves a reusable session.
+- `keel auth info` inspects the current saved session without printing bearer tokens.
+- `keel auth logout` revokes the saved Hub session when possible and removes the local session file.
+
+`keel config show` is the canonical way to inspect the effective storage backend and auth-session path that Keel will use at runtime.
+
 ## Workflow & Topology
 
 Keel uses a flexible, role-based lane topology to route work. This is configured via the `[workflow]`, `[roles]`, and `[lanes]` sections, and it drives the `Pull` phase of the turn loop.
@@ -172,6 +215,16 @@ just keel health --scene
 
 ```toml
 board_dir = ".keel"
+
+[storage]
+backend = "server"
+
+[storage.server]
+keeper_base_url = "https://keeper.spoke.example"
+hub_base_url = "https://hub.spoke.example"
+
+[auth]
+session_file = ".keel/auth/session.json"
 
 [workflow.defaults]
 management_role = "manager"

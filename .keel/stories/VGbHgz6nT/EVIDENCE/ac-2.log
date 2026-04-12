@@ -1,0 +1,23 @@
+---
+recorded_at: 2026-04-12T11:11:26.185644334-07:00
+command: cargo test -p keel cli::commands::setup::auth::tests::
+---
+
+running 3 tests
+test cli::commands::setup::auth::tests::logout_revokes_remote_session_and_deletes_saved_file ... ok
+test cli::commands::setup::auth::tests::info_verifies_saved_session_without_printing_token ... ok
+test cli::commands::setup::auth::tests::login_persists_session_and_redacts_human_output ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 785 filtered out; finished in 0.00s
+
+
+--- stderr ---
+   Compiling ring v0.17.14
+   Compiling rustls v0.23.37
+   Compiling rustls-webpki v0.103.11
+   Compiling tokio-rustls v0.26.4
+   Compiling hyper-rustls v0.27.8
+   Compiling reqwest v0.12.28
+   Compiling keel v0.2.1 (/home/alex/workspace/spoke-sh/keel/crates/keel-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.53s
+     Running unittests src/main.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-2e86119e532f3d98)

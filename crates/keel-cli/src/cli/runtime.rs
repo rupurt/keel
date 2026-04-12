@@ -6,6 +6,7 @@
 use super::{build_cli, resolve_board_dir};
 use anyhow::Result;
 use clap::{ArgMatches, FromArgMatches};
+use std::path::PathBuf;
 
 pub fn run() -> Result<()> {
     let raw_args: Vec<String> = std::env::args().collect();
@@ -19,12 +20,8 @@ pub fn run() -> Result<()> {
     }
     let matches = build_cli().get_matches_from(raw_args);
 
-    let auth_file = matches
-        .get_one::<std::path::PathBuf>("auth-file")
-        .map(|p| p.as_path());
-    let ctx = spoke_auth::load_auth_context(auth_file)?;
-
     let result = match matches.subcommand() {
+        Some(("auth", m)) => super::commands::setup::auth::run(parse_subcommand_action(m)?),
         Some(("doctor", m)) => {
             let fix = *m.get_one::<bool>("fix").unwrap_or(&false);
             let evidence = *m.get_one::<bool>("evidence").unwrap_or(&false);
@@ -165,7 +162,7 @@ pub fn run() -> Result<()> {
         Some(("audit", m)) => {
             let id = m.get_one::<String>("id").cloned();
             super::commands::management::story::audit::run(
-                &ctx,
+                &load_execution_context(&matches)?,
                 &resolve_board_dir()?,
                 id.as_deref(),
             )
@@ -187,7 +184,7 @@ pub fn run() -> Result<()> {
             }
             _ => unreachable!("verify subcommand required"),
         },
-        Some(("knowledge", m)) => handle_knowledge_command(&ctx, m),
+        Some(("knowledge", m)) => handle_knowledge_command(&load_execution_context(&matches)?, m),
         Some(("ping", m)) => {
             let message = m
                 .get_many::<String>("message")
@@ -196,7 +193,12 @@ pub fn run() -> Result<()> {
                 .collect::<Vec<_>>()
                 .join(" ");
             let json = *m.get_one::<bool>("json").unwrap_or(&false);
-            super::commands::comms::ping::run(&ctx, &resolve_board_dir()?, &message, json)
+            super::commands::comms::ping::run(
+                &load_execution_context(&matches)?,
+                &resolve_board_dir()?,
+                &message,
+                json,
+            )
         }
         Some(("poke", m)) => {
             let id = m.get_one::<String>("id");
@@ -206,7 +208,7 @@ pub fn run() -> Result<()> {
             let json = *m.get_one::<bool>("json").unwrap_or(&false);
             let is_self = m.get_flag("self");
             super::commands::comms::poke::run(
-                &ctx,
+                &load_execution_context(&matches)?,
                 &resolve_board_dir()?,
                 id.map(|s| s.as_str()),
                 message.as_deref(),
@@ -216,11 +218,19 @@ pub fn run() -> Result<()> {
         }
         Some(("inbox", m)) => {
             let json = *m.get_one::<bool>("json").unwrap_or(&false);
-            super::commands::comms::inbox::run(&ctx, &resolve_board_dir()?, json)
+            super::commands::comms::inbox::run(
+                &load_execution_context(&matches)?,
+                &resolve_board_dir()?,
+                json,
+            )
         }
         Some(("outbox", m)) => {
             let json = *m.get_one::<bool>("json").unwrap_or(&false);
-            super::commands::comms::outbox::run(&ctx, &resolve_board_dir()?, json)
+            super::commands::comms::outbox::run(
+                &load_execution_context(&matches)?,
+                &resolve_board_dir()?,
+                json,
+            )
         }
         Some(("generate", _)) => super::commands::setup::generate::run(&resolve_board_dir()?),
         Some(("new", m)) => {
@@ -238,19 +248,19 @@ pub fn run() -> Result<()> {
             _ => unreachable!("subcommand_required"),
         },
         Some(("roadmap", _)) => super::commands::management::roadmap::run(),
-        Some(("epic", m)) => handle_epic_command(&ctx, m),
-        Some(("routine", m)) => handle_routine_command(&ctx, m),
-        Some(("voyage", m)) => handle_voyage_command(&ctx, m),
-        Some(("story", m)) => handle_story_command(&ctx, m),
-        Some(("bearing", m)) => handle_bearing_command(&ctx, m),
-        Some(("adr", m)) => handle_adr_command(&ctx, m),
-        Some(("mission", m)) => handle_mission_command(&ctx, m),
+        Some(("epic", m)) => handle_epic_command(&load_execution_context(&matches)?, m),
+        Some(("routine", m)) => handle_routine_command(&load_execution_context(&matches)?, m),
+        Some(("voyage", m)) => handle_voyage_command(&load_execution_context(&matches)?, m),
+        Some(("story", m)) => handle_story_command(&load_execution_context(&matches)?, m),
+        Some(("bearing", m)) => handle_bearing_command(&load_execution_context(&matches)?, m),
+        Some(("adr", m)) => handle_adr_command(&load_execution_context(&matches)?, m),
+        Some(("mission", m)) => handle_mission_command(&load_execution_context(&matches)?, m),
         Some(("watch", m)) => handle_watch_command(m),
         Some(("finance", m)) => {
             let scene = *m.get_one::<bool>("scene").unwrap_or(&false);
             super::commands::diagnostics::finance::run(&resolve_board_dir()?, scene)
         }
-        Some(("config", m)) => handle_config_command(&ctx, m),
+        Some(("config", m)) => handle_config_command(m),
         None => {
             let mut cli = build_cli();
             cli.print_long_help()?;
@@ -375,8 +385,11 @@ fn handle_knowledge_command(
     super::commands::management::knowledge::run(ctx, &resolve_board_dir()?, action)
 }
 
-fn handle_config_command(ctx: &spoke_auth::ExecutionContext, matches: &ArgMatches) -> Result<()> {
-    super::commands::setup::config::run(ctx, parse_subcommand_action(matches)?)
+fn handle_config_command(matches: &ArgMatches) -> Result<()> {
+    super::commands::setup::config::run(
+        &spoke_auth::ExecutionContext::new_local(current_os_user()),
+        parse_subcommand_action(matches)?,
+    )
 }
 
 fn parse_subcommand_action<T>(matches: &ArgMatches) -> Result<T>
@@ -384,4 +397,20 @@ where
     T: FromArgMatches,
 {
     Ok(T::from_arg_matches(matches)?)
+}
+
+fn load_execution_context(matches: &ArgMatches) -> Result<spoke_auth::ExecutionContext> {
+    let auth_file = matches.get_one::<PathBuf>("auth-file").map(|p| p.as_path());
+    let (config, source) = keel::infrastructure::config::load_config();
+    let configured_session_file = config
+        .auth
+        .session_file
+        .as_deref()
+        .map(|value| keel::infrastructure::config::resolve_path_from_source(&source, value));
+
+    spoke_auth::load_auth_context(auth_file, configured_session_file.as_deref())
+}
+
+fn current_os_user() -> String {
+    std::env::var("USER").unwrap_or_else(|_| "unknown".to_string())
 }

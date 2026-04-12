@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod config;
 pub mod generate;
 pub mod hooks;

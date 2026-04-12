@@ -20,8 +20,14 @@ pub fn build_cli() -> Command {
             Arg::new("auth-file")
                 .long("auth-file")
                 .global(true)
-                .help("Path to a JWT file to authenticate the actor")
+                .help("Path to a saved auth session or legacy JWT file")
                 .value_parser(clap::value_parser!(std::path::PathBuf)),
+        )
+        .subcommand(
+            crate::cli::commands::setup::auth::AuthAction::augment_subcommands(
+                Command::new("auth").about("Authenticate keel against Spoke Hub"),
+            )
+            .subcommand_required(true),
         )
         .subcommand(
             Command::new("doctor")

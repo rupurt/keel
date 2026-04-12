@@ -1,0 +1,16 @@
+---
+recorded_at: 2026-04-12T11:11:46.626377902-07:00
+command: cargo test -p keel-core load_from_file_parses_storage_section
+---
+
+running 1 test
+test infrastructure::config::tests::load_from_file_parses_storage_section ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 972 filtered out; finished in 0.00s
+
+
+--- stderr ---
+   Compiling spoke-auth v0.2.1 (/home/alex/workspace/spoke-sh/keel/crates/spoke-auth)
+   Compiling keel-core v0.2.1 (/home/alex/workspace/spoke-sh/keel/crates/keel-core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 12.20s
+     Running unittests src/lib.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel_core-f09f6ace8bab6e3e)

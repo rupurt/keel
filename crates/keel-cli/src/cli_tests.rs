@@ -157,6 +157,7 @@ fn cli_help_displays_top_level_commands() {
     let help_str = String::from_utf8(help).unwrap();
 
     // Verify top-level commands
+    assert!(help_str.contains("auth"), "Missing auth command");
     assert!(help_str.contains("doctor"), "Missing doctor command");
     assert!(help_str.contains("new"), "Missing new command");
     assert!(help_str.contains("upgrade"), "Missing upgrade command");
@@ -219,6 +220,47 @@ fn build_cli_parses_upgrade_without_ref() {
     assert_eq!(matches.subcommand_name(), Some("upgrade"));
     let upgrade = matches.subcommand_matches("upgrade").unwrap();
     assert!(upgrade.get_one::<String>("git-ref").is_none());
+}
+
+#[test]
+fn build_cli_parses_auth_login() {
+    let matches = crate::cli::build_cli()
+        .try_get_matches_from([
+            "keel",
+            "auth",
+            "login",
+            "--email",
+            "pilot@spoke.sh",
+            "--password",
+            "secret",
+            "--hub-url",
+            "https://hub.spoke.test",
+        ])
+        .unwrap();
+    assert_eq!(matches.subcommand_name(), Some("auth"));
+    let auth = matches.subcommand_matches("auth").unwrap();
+    assert_eq!(auth.subcommand_name(), Some("login"));
+}
+
+#[test]
+fn build_cli_parses_auth_info_and_logout() {
+    let info = crate::cli::build_cli()
+        .try_get_matches_from(["keel", "auth", "info", "--json"])
+        .unwrap();
+    assert_eq!(info.subcommand_name(), Some("auth"));
+    assert_eq!(
+        info.subcommand_matches("auth").unwrap().subcommand_name(),
+        Some("info")
+    );
+
+    let logout = crate::cli::build_cli()
+        .try_get_matches_from(["keel", "auth", "logout"])
+        .unwrap();
+    assert_eq!(logout.subcommand_name(), Some("auth"));
+    assert_eq!(
+        logout.subcommand_matches("auth").unwrap().subcommand_name(),
+        Some("logout")
+    );
 }
 
 #[test]
