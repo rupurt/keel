@@ -424,11 +424,11 @@
 |--------|--------|
 | [Plan The Janitor Handoff And GitHub Connector Bridge](epics/VGYFmJEuH/voyages/VGYFoW0Vc/) | done |
 
-### [Trusted Consumer Mission Request Scheduling](epics/VGYPeZj64/) (active)
+### [Trusted Consumer Mission Request Scheduling](epics/VGYPeZj64/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Plan Reactor-Aware Mission Request Scheduling](epics/VGYPeZj64/voyages/VGYPh3luG/) | planned |
+| [Plan Reactor-Aware Mission Request Scheduling](epics/VGYPeZj64/voyages/VGYPh3luG/) | done |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

@@ -1,0 +1,176 @@
+---
+recorded_at: 2026-04-12T08:19:11.017181119-07:00
+mode: manual
+files: [".keel/epics/VGYPeZj64/voyages/VGYPh3luG/SDD.md"]
+---
+
+--- File: SDD.md ---
+# Plan Reactor-Aware Mission Request Scheduling - Software Design Description
+
+> Define how normalized ingress becomes reactor-visible demand and how a trusted consumer schedules native mission-request application without letting connectors or janitor posture pull board lanes directly.
+
+**SRS:** [SRS.md](SRS.md)
+
+## Overview
+
+This voyage corrects the too-direct janitor bridge by inserting a Keel-native
+communication and staging layer between normalized external ingress and
+planning mutation. Provider runtimes such as Keeper still normalize GitHub
+traffic and own transport acknowledgements, but they first submit a typed
+ingress record into Keel. That record becomes authored demand visible to
+Keel-native reactors and read models. A separately trusted consumer decides
+whether and when to schedule mission-request `draft` and `apply`; other
+reactors remain observers, enrichers, or escalators rather than lane-pullers.
+
+## Context & Boundaries
+
+The relevant boundaries are already present in the repo:
+
+- `ping` and `poke` are conversational surfaces and should stay that way.
+- Formal mission requests are structured planning ingress with only `apply`
+  allowed to mutate board state.
+- Cross-aggregate automation inside Keel belongs in the application process
+  manager and its reactors, not in provider adapters.
+
+This voyage therefore does not make GitHub connectors, janitor posture, or
+free-form comms direct board-mutators. It introduces a typed ingress record
+that uses Keel communication and reactor machinery to surface pending work
+inside the engine before a trusted consumer schedules any mutation.
+
+```text
+GitHub issue / comment / workflow signal
+                  |
+                  v
+        Spoke connector and janitor producer
+      normalize + attach replay and trust data
+                  |
+                  v
+        Keel typed ingress record / notice
+   envelope + replay_identity + trust_context
+        + scheduling_state=pending
+                  |
+                  v
+      Keel read models and process-manager reactors
+         become aware, score, summarize, escalate
+                  |
+                  v
+            Trusted consumer only
+     schedule -> mission request draft/apply
+                  |
+                  v
+        board mutation + acknowledgement payload
+                  |
+                  v
+          Spoke transport delivery and retries
+```
+
+## Dependencies
+
+| Dependency | Type | Purpose | Version/API |
+|------------|------|---------|-------------|
+| `PROTOCOL.md` | local doc | Defines the boundary between conversational comms and structured mission-request ingress | current repo |
+| `ARCHITECTURE.md` | local doc | Defines the application-layer reactor pipeline | current repo |
+| `.keel/epics/VG73Nzmrg/voyages/VG73OBJuF/COMMAND_CONTRACT.md` | local planning doc | Defines the native `keel mission request` stages and outputs | current repo |
+| `.keel/epics/VG6ggSPFR/voyages/VG7sCmWrK/GITHUB_INGRESS_CONTRACT.md` | local planning doc | Defines GitHub-first ingress, replay identity, and acknowledgement ownership | current repo |
+| `crates/keel-cli/src/cli/commands/comms/mod.rs` | local code | Shows the current chat-oriented comms schema that is too thin for trusted scheduling | current repo |
+| `spoke/docs/architecture/keeper.md` | sibling-repo doc | Supplies Keeper reactor and transport responsibilities | workspace |
+
+## Key Decisions
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Staged ingress before mutation | Persist a typed ingress record before any mission-request `apply` happens | Lets Keel-native reactors observe demand and preserves audit and replay semantics |
+| Keep `ping` and `poke` conversational | Do not overload free-form `PingMessage` as the planning-mutation path | The current schema is too small and the protocol already separates chat from structured ingress |
+| Trusted consumer exclusivity | Only an explicitly trusted consumer may schedule work or invoke mission-request `apply` | Observers and provider adapters must not mutate planning state implicitly |
+| Reactor awareness stays inside Keel | Use read models and the application process manager to fan out awareness | Matches Keel architecture and avoids connector-owned queue semantics |
+| Provider-neutral core | Normalized envelope, replay identity, and trust context stay provider-neutral after ingress | GitHub can be first without becoming the trust model |
+
+## Architecture
+
+The design has five layers:
+
+1. Provider adapter in `spoke`
+   - Detects eligible GitHub traffic.
+   - Normalizes it into the canonical mission-request or work envelope.
+   - Supplies replay identity and producer trust metadata.
+2. Keel ingress staging surface
+   - Persists a typed ingress record or notice as authored demand.
+   - Does not mutate planning artifacts yet.
+3. Keel awareness layer
+   - Read models and application reactors discover new pending ingress.
+   - They may score, summarize, escalate, or mark readiness, but not apply.
+4. Trusted scheduling consumer
+   - The only actor allowed to schedule a pending ingress item or call
+     mission-request `draft` and `apply`.
+   - Carries authenticated identity and trust provenance.
+5. Acknowledgement layer
+   - Keel renders canonical acknowledgement payloads from the staged ingress and
+     the planning result.
+   - Keeper or another provider runtime delivers those payloads outward.
+
+Janitor posture changes role in this design. It may produce normalized ingress
+records and observe or summarize pending work, but it is not automatically the
+scheduler.
+
+## Components
+
+| Component | Repo | Purpose | Notes |
+|-----------|------|---------|-------|
+| Typed ingress record | `keel` | Stores normalized envelope, replay identity, trust context, and scheduling state such as `pending`, `scheduled`, `applied`, `acknowledged`, or `escalated` | Uses Keel-authored communication machinery instead of direct lifecycle mutation |
+| Awareness projection | `keel` | Exposes pending ingress to reactors, scenes, and trusted consumers | May be backed by read models and process-manager events |
+| Trusted consumer | `keel` / authenticated caller | Selects eligible ingress and invokes mission-request `draft` and `apply` | The only mutation-capable scheduling actor |
+| Acknowledgement renderer | `keel` | Renders canonical acknowledgement content from staged ingress plus planning result | Provider delivery stays outside Keel |
+| Provider adapter | `spoke` | Normalizes raw GitHub artifacts, submits ingress, and delivers acknowledgement transport | GitHub-specific logic stays here |
+
+## Interfaces
+
+| Interface | Producer -> Consumer | Purpose |
+|-----------|----------------------|---------|
+| Normalized ingress envelope | Spoke connector -> Keel ingress writer | Carry provider-neutral request or work data plus replay identity and trust context |
+| Authored ingress notice | Keel ingress writer -> Keel reactors and read models | Surface pending work inside Keel without mutating planning state |
+| Scheduling decision | Trusted consumer -> mission-request command surface | Move a pending ingress item into `draft` or `apply` |
+| Acknowledgement payload | Keel ack renderer -> Spoke connector | Return provider-facing status or handoff content for transport delivery |
+
+The current `PingMessage` shape is insufficient for this interface because it
+only carries `id`, `message`, `timestamp`, `status`, and `pong_message`. The
+first implementation slice should either enrich the comms envelope with typed
+records or add a sibling typed queue on the same communication substrate.
+
+## Rollout Split
+
+| Surface | Repo | First change expected |
+|---------|------|-----------------------|
+| `crates/keel-cli/src/cli/commands/comms/mod.rs` | `keel` | introduce a typed ingress notice or sibling queue schema beyond the flat `PingMessage` record |
+| `crates/keel-core/src/application/process_manager.rs` | `keel` | route awareness events for newly staged ingress without direct board mutation |
+| `crates/keel-core/src/read_model/` | `keel` | add projections or selectors that surface pending ingress to trusted consumers and scenes |
+| `crates/keel-cli/src/cli/runtime.rs` plus future `mission request` namespace | `keel` | separate ingress staging, scheduling, and `apply` from free-form chat commands |
+| `docs/architecture/keeper.md` | `spoke` | define janitor as ingress producer and acknowledgement transport, not a direct lane-puller |
+| `crates/keeper/src/reactor.rs` | `spoke` | publish normalized ingress notices and consume acknowledgement payloads |
+| `crates/keeper/src/lib.rs` and `crates/keeper-cli/src/main.rs` | `spoke` | expose trusted-consumer scheduling entrypoints distinct from producer ingress paths |
+
+## Data Flow
+
+1. A GitHub event, mission request, or maintenance prompt arrives in `spoke`.
+2. The provider adapter normalizes it into the canonical envelope and attaches
+   replay identity plus producer trust metadata.
+3. Keel persists a typed ingress notice with scheduling state `pending`.
+4. Read models and process-manager reactors surface the pending ingress to other
+   Keel reactors and operator-facing views.
+5. A trusted consumer evaluates the pending ingress and, if authorized, invokes
+   mission-request `draft` and then `apply`.
+6. Keel mutates planning state only at `apply`, records evidence, and renders an
+   acknowledgement payload.
+7. The provider runtime delivers the acknowledgement and retries delivery without
+   replaying the planning mutation.
+
+## Error Handling
+
+| Error Condition | Detection | Response | Recovery |
+|-----------------|-----------|----------|----------|
+| Ingress record lacks required replay or trust metadata | validation at ingress-write time | Reject or mark invalid before it becomes pending demand | Producer fixes normalization and resubmits |
+| Duplicate replay identity arrives | replay-key match on existing ingress notice | Reuse the existing scheduling or acknowledgement outcome | No second board mutation |
+| Reactors observe pending ingress but no trusted consumer is available | pending notice remains unscheduled | Surface scheduling pressure without mutating planning state | Trusted consumer picks it up later |
+| Untrusted actor attempts scheduling or `apply` | auth or policy check on scheduling boundary | Refuse the mutation and emit diagnostics | Use the designated trusted consumer path |
+| Mission-request `apply` fails after scheduling | command exits non-zero | Preserve pending or failed scheduling state with diagnostics | Repair board state, then retry from the staged ingress record |
+| Provider acknowledgement fails after `apply` succeeds | transport failure in provider runtime | Preserve the canonical Keel result and retry acknowledgement only | Retry delivery without replaying `apply` |
+
