@@ -22,8 +22,8 @@ mission: VGYFlZ3hK
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 0/1 stories done
+**Progress:** 1/1 voyages complete, 1/1 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Plan The Janitor Handoff And GitHub Connector Bridge](voyages/VGYFoW0Vc/) | planned | 0/1 |
+| [Plan The Janitor Handoff And GitHub Connector Bridge](voyages/VGYFoW0Vc/) | done | 1/1 |
 <!-- END GENERATED -->

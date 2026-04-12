@@ -1,3 +1,10 @@
+---
+recorded_at: 2026-04-11T22:45:39.312487019-07:00
+mode: manual
+files: [".keel/epics/VGYFmJEuH/voyages/VGYFoW0Vc/SDD.md"]
+---
+
+--- File: SDD.md ---
 # Plan The Janitor Handoff And GitHub Connector Bridge - Software Design Description
 
 > Define the first executable contract for Keeper-managed janitor stewardship over Keel and the GitHub connector flow it depends on.
@@ -170,3 +177,4 @@ neutral so a later email or SMS connector can reuse the same janitor core.
 | Janitor policy forbids the requested action | Policy evaluation returns `escalate` | Emit handoff summary instead of mutating board state | Human operator or higher-posture Keeper decides next action |
 | Keel command fails validation or hits doctor debt | Command exits non-zero or `doctor` stays red | Record failure, avoid duplicate retries that would compound drift | Repair board debt first, then replay from the normalized event |
 | Duplicate provider delivery | Matching provider identity / replay key | Collapse to idempotent handling | Reuse prior acknowledgement or mark duplicate as observed |
+
