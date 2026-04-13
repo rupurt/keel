@@ -27,11 +27,11 @@ started_at: 2026-04-12T22:35:38
 ## Stories
 
 <!-- BEGIN GENERATED -->
-**Progress:** 1/3 stories complete
+**Progress:** 2/3 stories complete
 
 | Title | Type | Status |
 |-------|------|--------|
-| [Surface Mission Stack In Turn Next And Mission Status](../../../../stories/VGe8Mf0Jg/README.md) | feat | backlog |
+| [Surface Mission Stack In Turn Next And Mission Status](../../../../stories/VGe8Mf0Jg/README.md) | feat | done |
 | [Load Mission Stack Projection From Local Manifest](../../../../stories/VGe8MfYJW/README.md) | feat | done |
 | [Enforce Mission Stack Diagnostics And Foreign Worktree Guards](../../../../stories/VGe8Mg4Jj/README.md) | feat | backlog |
 <!-- END GENERATED -->

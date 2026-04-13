@@ -5,6 +5,7 @@ use super::{
     ResearchDecision, StoryDecision, VerifyMissionDecision,
 };
 use keel::domain::model::Entity;
+use keel::read_model::mission_stack::{MissionStackExecutionReason, MissionStackExecutionStatus};
 use owo_colors::OwoColorize;
 
 fn story_header(story: &keel::domain::model::Story) -> String {
@@ -34,6 +35,89 @@ pub fn format_decision(decision: &NextDecision) -> String {
             report,
             suggested_command,
         } => format_diagnostics(report, suggested_command),
+        NextDecision::StackYield(d) => format_stack_gate(d, MissionStackExecutionStatus::Yield),
+        NextDecision::StackBlocked(d) => format_stack_gate(d, MissionStackExecutionStatus::Blocked),
+    }
+}
+
+fn format_stack_gate(
+    decision: &super::MissionStackDecision,
+    expected_status: MissionStackExecutionStatus,
+) -> String {
+    let mut out = String::new();
+    let label = match expected_status {
+        MissionStackExecutionStatus::Yield => "Mission Stack Yield".bold().yellow().to_string(),
+        MissionStackExecutionStatus::Blocked => "Mission Stack Blocked".bold().red().to_string(),
+        MissionStackExecutionStatus::Allowed => "Mission Stack".bold().to_string(),
+    };
+
+    out.push_str(&format!(
+        "{}: {} on {}\n",
+        label, decision.stack.id, decision.stack.branch
+    ));
+    out.push_str(&format!(
+        "  Local member: {} ({:?})\n",
+        decision.stack.local_repo, decision.stack.local_member.role
+    ));
+    out.push_str(&format!("  Mode: {}", decision.stack.mode_label().bold()));
+    if !decision.gate.active_repos.is_empty() {
+        out.push_str(&format!(
+            " | active repos: {}",
+            decision.gate.active_repos.join(", ")
+        ));
+    }
+    out.push('\n');
+
+    if let Some(reason) = decision.gate.reason {
+        out.push_str(&format!("  Reason: {}\n", stack_gate_reason(reason)));
+    }
+
+    if let Some(checkpoint) = &decision.gate.checkpoint {
+        out.push_str(&format!("  Checkpoint: {checkpoint}\n"));
+    }
+
+    if !decision.gate.checkpoint_waiting_on.is_empty() {
+        out.push_str(&format!(
+            "  Waiting on: {}\n",
+            decision.gate.checkpoint_waiting_on.join(", ")
+        ));
+    }
+
+    if !decision.gate.waiting_for_receipts_from.is_empty() {
+        out.push_str(&format!(
+            "  Waiting for receipts from: {}\n",
+            decision.gate.waiting_for_receipts_from.join(", ")
+        ));
+    }
+
+    if let Some(state) = decision.gate.foreign_execution_state {
+        out.push_str(&format!("  Foreign execution state: {:?}\n", state));
+    }
+
+    out.push_str("  Run `keel mission next --status` for full stack coordination state.");
+    out
+}
+
+fn stack_gate_reason(reason: MissionStackExecutionReason) -> &'static str {
+    match reason {
+        MissionStackExecutionReason::ExclusiveLeaseHeldElsewhere => {
+            "another repo currently holds the exclusive execution baton"
+        }
+        MissionStackExecutionReason::SharedWindowClosed => {
+            "the local repo is outside the current shared execution window"
+        }
+        MissionStackExecutionReason::CheckpointActive => {
+            "the stack is paused at a checkpoint and local execution is sealed"
+        }
+        MissionStackExecutionReason::PendingNegotiation => {
+            "the local member is still waiting for reactor negotiation"
+        }
+        MissionStackExecutionReason::WaitingForReceipts => {
+            "the local member is waiting on pushed receipts from another repo"
+        }
+        MissionStackExecutionReason::ForeignExecutionRequired => {
+            "execution must happen from the managed foreign worktree"
+        }
     }
 }
 

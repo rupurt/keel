@@ -124,6 +124,12 @@ enum JsonDetails {
         errors: usize,
         warnings: usize,
     },
+    StackYield {
+        stack: JsonMissionStack,
+    },
+    StackBlocked {
+        stack: JsonMissionStack,
+    },
     Empty {
         suggestions: Vec<String>,
     },
@@ -159,6 +165,24 @@ struct JsonBearing {
 struct JsonMission {
     id: String,
     title: String,
+}
+
+#[derive(Serialize)]
+struct JsonMissionStack {
+    id: String,
+    branch: String,
+    local_repo: String,
+    local_role: keel::read_model::mission_stack::MissionStackMemberRole,
+    local_mission: Option<String>,
+    mode: String,
+    reason: Option<keel::read_model::mission_stack::MissionStackExecutionReason>,
+    active_repos: Vec<String>,
+    pending_negotiation: bool,
+    waiting_for_receipts_from: Vec<String>,
+    checkpoint: Option<String>,
+    checkpoint_waiting_on: Vec<String>,
+    foreign_execution_state:
+        Option<keel::read_model::mission_stack::MissionStackForeignExecutionState>,
 }
 
 struct ParallelProjection<'a> {
@@ -508,6 +532,12 @@ fn decision_to_json(
             errors: report.total_errors(),
             warnings: report.total_warnings(),
         },
+        NextDecision::StackYield(d) => JsonDetails::StackYield {
+            stack: json_mission_stack(d),
+        },
+        NextDecision::StackBlocked(d) => JsonDetails::StackBlocked {
+            stack: json_mission_stack(d),
+        },
         NextDecision::VerifyMission(d) => JsonDetails::Missions {
             missions: d
                 .missions
@@ -546,7 +576,29 @@ fn decision_kind(decision: &NextDecision) -> &'static str {
         NextDecision::Missions(_) => "missions",
         NextDecision::VerifyMission(_) => "verify_mission",
         NextDecision::Diagnostics { .. } => "diagnostics",
+        NextDecision::StackYield(_) => "stack_yield",
+        NextDecision::StackBlocked(_) => "stack_blocked",
         NextDecision::Empty(_) => "empty",
+    }
+}
+
+fn json_mission_stack(
+    decision: &crate::cli::commands::management::next_support::MissionStackDecision,
+) -> JsonMissionStack {
+    JsonMissionStack {
+        id: decision.stack.id.clone(),
+        branch: decision.stack.branch.clone(),
+        local_repo: decision.stack.local_repo.clone(),
+        local_role: decision.stack.local_member.role,
+        local_mission: decision.stack.local_member.mission.clone(),
+        mode: decision.stack.mode_label().to_string(),
+        reason: decision.gate.reason,
+        active_repos: decision.gate.active_repos.clone(),
+        pending_negotiation: decision.gate.pending_negotiation,
+        waiting_for_receipts_from: decision.gate.waiting_for_receipts_from.clone(),
+        checkpoint: decision.gate.checkpoint.clone(),
+        checkpoint_waiting_on: decision.gate.checkpoint_waiting_on.clone(),
+        foreign_execution_state: decision.gate.foreign_execution_state,
     }
 }
 
@@ -599,6 +651,7 @@ fn guidance_for_decision(
         NextDecision::Diagnostics {
             suggested_command, ..
         } => Some(CommandGuidance::next(suggested_command.clone())),
+        NextDecision::StackYield(_) | NextDecision::StackBlocked(_) => None,
         NextDecision::VerifyMission(d) => d
             .missions
             .first()
@@ -1072,7 +1125,7 @@ mod tests {
     use keel::domain::model::StoryState;
     use keel::test_helpers::{
         AdrFactory, BearingFactory, StoryFactory, TestBoardBuilder, TestEpic, TestStory,
-        TestVoyage, VoyageFactory,
+        TestVoyage, VoyageFactory, git, init_git_repo, write_stack_manifest,
     };
     use std::fs;
     use std::path::Path;
@@ -1424,6 +1477,115 @@ priority = 50
             suggestions: vec!["Refuel".to_string()],
         });
         assert_human_json_guidance_parity(&empty);
+    }
+
+    #[test]
+    fn next_emits_stack_aware_decisions() {
+        let temp = TestBoardBuilder::new()
+            .story(TestStory::new("SSTACK").status(StoryState::Backlog))
+            .build();
+        init_git_repo(temp.path());
+        git(temp.path(), &["checkout", "-b", "stack/demo-stack"]);
+
+        write_stack_manifest(
+            temp.path(),
+            "demo-stack",
+            r#"
+id: demo-stack
+steward_repo: keel
+local_repo: keel
+mode:
+  kind: exclusive
+  active_repo: paddles
+members:
+  - repo: keel
+    role: steward
+    state: waiting
+    mission: M1
+  - repo: paddles
+    role: member
+    state: active
+    mission: M2
+"#,
+        );
+
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
+        let decision = calculate_next(&board, temp.path(), true, &ItemFilter::none()).unwrap();
+        let text = format_decision(&decision);
+        let json = serde_json::to_value(decision_to_json(&decision, &[], None, "manager")).unwrap();
+
+        match decision {
+            NextDecision::StackYield(ref stack) => {
+                assert_eq!(stack.stack.id, "demo-stack");
+                assert_eq!(
+                    stack.gate.reason,
+                    Some(
+                        keel::read_model::mission_stack::MissionStackExecutionReason::ExclusiveLeaseHeldElsewhere
+                    )
+                );
+            }
+            other => panic!("expected stack yield, got {other:?}"),
+        }
+
+        assert!(text.contains("Mission Stack Yield"));
+        assert!(text.contains("demo-stack"));
+        assert_eq!(json["decision"], "stack_yield");
+        assert_eq!(json["details"]["stack_yield"]["stack"]["id"], "demo-stack");
+        assert_eq!(
+            json["details"]["stack_yield"]["stack"]["reason"],
+            "exclusive_lease_held_elsewhere"
+        );
+
+        write_stack_manifest(
+            temp.path(),
+            "demo-stack",
+            r#"
+id: demo-stack
+steward_repo: keel
+local_repo: keel
+mode:
+  kind: shared
+  active_repos:
+    - keel
+members:
+  - repo: keel
+    role: steward
+    state: active
+    mission: M1
+foreign_execution:
+  required: true
+  managed_path: managed/paddles
+"#,
+        );
+
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
+        let decision = calculate_next(&board, temp.path(), true, &ItemFilter::none()).unwrap();
+        let text = format_decision(&decision);
+        let json = serde_json::to_value(decision_to_json(&decision, &[], None, "manager")).unwrap();
+
+        match decision {
+            NextDecision::StackBlocked(ref stack) => {
+                assert_eq!(stack.stack.id, "demo-stack");
+                assert_eq!(
+                    stack.gate.reason,
+                    Some(
+                        keel::read_model::mission_stack::MissionStackExecutionReason::ForeignExecutionRequired
+                    )
+                );
+            }
+            other => panic!("expected stack blocked, got {other:?}"),
+        }
+
+        assert!(text.contains("Mission Stack Blocked"));
+        assert_eq!(json["decision"], "stack_blocked");
+        assert_eq!(
+            json["details"]["stack_blocked"]["stack"]["reason"],
+            "foreign_execution_required"
+        );
+        assert_eq!(
+            json["details"]["stack_blocked"]["stack"]["foreign_execution_state"],
+            "missing_managed_checkout"
+        );
     }
 
     #[test]

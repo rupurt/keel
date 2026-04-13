@@ -1,0 +1,21 @@
+---
+recorded_at: 2026-04-12T22:56:04.308429819-07:00
+command: cargo test -p keel turn_surfaces_mission_stack_context_in_text_and_json -- --nocapture
+---
+
+running 1 test
+test cli::commands::diagnostics::turn::tests::turn_surfaces_mission_stack_context_in_text_and_json ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 793 filtered out; finished in 0.04s
+
+
+--- stderr ---
+   Compiling ring v0.17.14
+   Compiling rustls v0.23.37
+   Compiling rustls-webpki v0.103.11
+   Compiling tokio-rustls v0.26.4
+   Compiling hyper-rustls v0.27.8
+   Compiling reqwest v0.12.28
+   Compiling keel v0.2.1 (/home/alex/workspace/spoke-sh/keel/crates/keel-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.47s
+     Running unittests src/main.rs (/home/alex/.cache/cargo-target/keel/debug/deps/keel-2e86119e532f3d98)

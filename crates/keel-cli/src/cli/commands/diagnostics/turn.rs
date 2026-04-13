@@ -6,6 +6,8 @@ use serde::Serialize;
 #[derive(Debug, Serialize)]
 struct TurnPayload {
     phases: Vec<TurnPhasePayload>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    mission_stack: Option<TurnMissionStackPayload>,
 }
 
 #[derive(Debug, Serialize)]
@@ -23,8 +25,25 @@ struct TurnCommandPayload {
     docs_slug: String,
 }
 
+#[derive(Debug, Serialize)]
+struct TurnMissionStackPayload {
+    id: String,
+    branch: String,
+    current_branch: Option<String>,
+    local_repo: String,
+    local_role: keel::read_model::mission_stack::MissionStackMemberRole,
+    local_state: String,
+    local_mission: Option<String>,
+    mode: keel::read_model::mission_stack::MissionStackModeProjection,
+    checkpoint: Option<keel::read_model::mission_stack::MissionStackCheckpointProjection>,
+    execution_gate: keel::read_model::mission_stack::MissionStackExecutionGateProjection,
+    foreign_execution_required: bool,
+    foreign_execution_state: keel::read_model::mission_stack::MissionStackForeignExecutionState,
+}
+
 pub fn run(json: bool) -> Result<()> {
-    let projection = keel::read_model::turn_loop::project();
+    let board_dir = keel::infrastructure::config::find_board_dir()?;
+    let projection = keel::read_model::turn_loop::project_for_board(&board_dir)?;
 
     if json {
         println!(
@@ -61,11 +80,39 @@ fn payload_for(projection: &keel::read_model::turn_loop::TurnLoopProjection) -> 
                     .collect(),
             })
             .collect(),
+        mission_stack: projection
+            .mission_stack
+            .as_ref()
+            .map(turn_mission_stack_payload),
+    }
+}
+
+fn turn_mission_stack_payload(
+    stack: &keel::read_model::mission_stack::MissionStackProjection,
+) -> TurnMissionStackPayload {
+    TurnMissionStackPayload {
+        id: stack.id.clone(),
+        branch: stack.branch.clone(),
+        current_branch: stack.current_branch.clone(),
+        local_repo: stack.local_repo.clone(),
+        local_role: stack.local_member.role,
+        local_state: stack.local_member.state.clone(),
+        local_mission: stack.local_member.mission.clone(),
+        mode: stack.mode.clone(),
+        checkpoint: stack.checkpoint.clone(),
+        execution_gate: stack.local_execution_gate(),
+        foreign_execution_required: stack.checkout.foreign_execution_required,
+        foreign_execution_state: stack.checkout.foreign_execution_state,
     }
 }
 
 fn render_text(projection: &keel::read_model::turn_loop::TurnLoopProjection) -> String {
     let mut output = String::from("The Turn Loop\n\n");
+
+    if let Some(stack) = projection.mission_stack.as_ref() {
+        output.push_str(&render_mission_stack_text(stack));
+        output.push('\n');
+    }
 
     for (index, phase) in projection.phases.iter().enumerate() {
         output.push_str(&format!(
@@ -83,9 +130,32 @@ fn render_text(projection: &keel::read_model::turn_loop::TurnLoopProjection) -> 
     output
 }
 
+fn render_mission_stack_text(
+    stack: &keel::read_model::mission_stack::MissionStackProjection,
+) -> String {
+    let gate = stack.local_execution_gate();
+    let mut output = String::from("Mission Stack\n");
+    output.push_str(&format!("  Stack: {} on {}\n", stack.id, stack.branch));
+    output.push_str(&format!(
+        "  Local member: {} ({:?})\n",
+        stack.local_repo, stack.local_member.role
+    ));
+    output.push_str(&format!("  Mode: {}\n", stack.mode_label()));
+    if let Some(checkpoint) = &stack.checkpoint {
+        output.push_str(&format!("  Checkpoint: {}\n", checkpoint.name));
+    }
+    output.push_str(&format!(
+        "  Foreign execution: {:?}\n",
+        stack.checkout.foreign_execution_state
+    ));
+    output.push_str(&format!("  Execution gate: {:?}\n", gate.status));
+    output
+}
+
 #[cfg(test)]
 mod tests {
     use super::{payload_for, render_text};
+    use keel::test_helpers::{TestBoardBuilder, git, init_git_repo, write_stack_manifest};
 
     #[test]
     fn turn_text_surface_contains_documented_examples() {
@@ -118,6 +188,59 @@ mod tests {
                 .expect("ship commands")
                 .iter()
                 .any(|command| command["example"] == "keel story submit STORY-ID")
+        );
+    }
+
+    #[test]
+    fn turn_surfaces_mission_stack_context_in_text_and_json() {
+        let temp = TestBoardBuilder::new().build();
+        init_git_repo(temp.path());
+        git(temp.path(), &["checkout", "-b", "stack/demo-stack"]);
+        write_stack_manifest(
+            temp.path(),
+            "demo-stack",
+            r#"
+id: demo-stack
+steward_repo: keel
+local_repo: keel
+mode:
+  kind: shared
+  active_repos:
+    - keel
+members:
+  - repo: keel
+    role: steward
+    state: active
+    mission: M1
+checkpoint:
+  name: integration
+  required_members:
+    - keel
+foreign_execution:
+  required: true
+  managed_path: managed/paddles
+"#,
+        );
+
+        let projection = keel::read_model::turn_loop::project_for_board(temp.path()).unwrap();
+        let rendered = render_text(&projection);
+        let json = serde_json::to_value(payload_for(&projection)).unwrap();
+
+        assert!(rendered.contains("Mission Stack"));
+        assert!(rendered.contains("demo-stack"));
+        assert!(rendered.contains("stack/demo-stack"));
+        assert!(rendered.contains("Mode: shared"));
+        assert!(rendered.contains("Checkpoint: integration"));
+        assert!(rendered.contains("Foreign execution"));
+
+        assert_eq!(json["mission_stack"]["id"], "demo-stack");
+        assert_eq!(json["mission_stack"]["branch"], "stack/demo-stack");
+        assert_eq!(json["mission_stack"]["local_role"], "steward");
+        assert_eq!(json["mission_stack"]["mode"]["kind"], "shared");
+        assert_eq!(json["mission_stack"]["checkpoint"]["name"], "integration");
+        assert_eq!(
+            json["mission_stack"]["foreign_execution_state"],
+            "missing_managed_checkout"
         );
     }
 }

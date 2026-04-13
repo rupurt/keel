@@ -6,6 +6,7 @@
 
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 use tempfile::TempDir;
 
@@ -24,6 +25,36 @@ pub struct TestBoardBuilder {
     adrs: Vec<TestAdr>,
     bearings: Vec<TestBearing>,
     missions: Vec<TestMission>,
+}
+
+pub fn write_stack_manifest(board_dir: &Path, id: &str, manifest: &str) {
+    let stack_dir = board_dir.join("stacks").join(id);
+    fs::create_dir_all(&stack_dir).unwrap();
+    fs::write(stack_dir.join("manifest.yaml"), manifest.trim_start()).unwrap();
+}
+
+pub fn init_git_repo(repo_root: &Path) {
+    git(repo_root, &["init"]);
+    git(repo_root, &["config", "user.name", "Keel Test"]);
+    git(repo_root, &["config", "user.email", "keel@example.com"]);
+    git(repo_root, &["config", "commit.gpgsign", "false"]);
+    fs::write(repo_root.join("README.md"), "# Test Repo\n").unwrap();
+    git(repo_root, &["add", "."]);
+    git(repo_root, &["commit", "-m", "initial"]);
+}
+
+pub fn git(repo_root: &Path, args: &[&str]) {
+    let output = Command::new("git")
+        .args(args)
+        .current_dir(repo_root)
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "git {:?} failed: {}",
+        args,
+        String::from_utf8_lossy(&output.stderr).trim()
+    );
 }
 
 /// Configuration for a test mission.

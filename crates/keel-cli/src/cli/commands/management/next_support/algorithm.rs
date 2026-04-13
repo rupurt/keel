@@ -7,6 +7,9 @@ use std::path::Path;
 
 use keel::domain::model::{Board, Story, StoryState};
 use keel::domain::policy::queue::compare_work_item_ids;
+use keel::read_model::mission_stack::{
+    MissionStackExecutionStatus, MissionStackProjection, load_active as load_active_mission_stack,
+};
 use keel::read_model::queue_policy::{self, DraftVoyageQueueCategory};
 
 use keel::read_model::diagnostics::DoctorReport;
@@ -93,6 +96,16 @@ pub enum NextDecision {
         report: DoctorReport,
         suggested_command: String,
     },
+    /// Mission Stack baton has been yielded to another repo or waiting state.
+    StackYield(MissionStackDecision),
+    /// Mission Stack blocks local execution until the gate is cleared.
+    StackBlocked(MissionStackDecision),
+}
+
+#[derive(Debug, Clone)]
+pub struct MissionStackDecision {
+    pub stack: MissionStackProjection,
+    pub gate: keel::read_model::mission_stack::MissionStackExecutionGateProjection,
 }
 
 #[derive(Debug)]
@@ -231,6 +244,11 @@ pub fn calculate_all_decisions(
                 count: metrics.verification.count,
             }));
         }
+    }
+
+    if agent_mode && let Some(stack_decision) = stack_execution_decision(board_dir)? {
+        decisions.push(stack_decision);
+        return Ok(decisions);
     }
 
     // 2. Check for proposed ADRs (human only)
@@ -490,6 +508,10 @@ pub(crate) fn calculate_next_at(
 
     let metrics = keel::read_model::flow_status::project(board, chrono::Utc::now());
     let queue_policy_snapshot = queue_policy::project(&metrics);
+
+    if agent_mode && let Some(stack_decision) = stack_execution_decision(board_dir)? {
+        return Ok(stack_decision);
+    }
 
     // 1. Check for blocking verification backlog (human only)
     if !agent_mode && queue_policy_snapshot.verification.blocks_human_next() {
@@ -754,6 +776,20 @@ pub(crate) fn calculate_next_at(
     }))
 }
 
+fn stack_execution_decision(board_dir: &Path) -> Result<Option<NextDecision>> {
+    let Some(stack) = load_active_mission_stack(board_dir)? else {
+        return Ok(None);
+    };
+    let gate = stack.local_execution_gate();
+    let decision = MissionStackDecision { stack, gate };
+
+    match decision.gate.status {
+        MissionStackExecutionStatus::Allowed => Ok(None),
+        MissionStackExecutionStatus::Yield => Ok(Some(NextDecision::StackYield(decision))),
+        MissionStackExecutionStatus::Blocked => Ok(Some(NextDecision::StackBlocked(decision))),
+    }
+}
+
 pub(crate) fn actionable_mission_decisions(
     board: &Board,
     filter: &ItemFilter,
@@ -971,6 +1007,8 @@ updated_at: 2026-01-01T00:00:00
             NextDecision::Missions(_) => {}
             NextDecision::VerifyMission(_) => {}
             NextDecision::Diagnostics { .. } => {}
+            NextDecision::StackYield(_) => {}
+            NextDecision::StackBlocked(_) => {}
         }
     }
 

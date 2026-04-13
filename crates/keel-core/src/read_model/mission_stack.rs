@@ -70,6 +70,14 @@ impl MissionStackProjection {
         }
     }
 
+    pub fn active_repos(&self) -> Vec<String> {
+        match &self.mode {
+            MissionStackModeProjection::Exclusive { active_repo } => vec![active_repo.clone()],
+            MissionStackModeProjection::Shared { active_repos } => active_repos.clone(),
+            MissionStackModeProjection::Checkpoint { .. } => Vec::new(),
+        }
+    }
+
     pub fn waiting_on_checkpoint_members(&self) -> Vec<String> {
         let Some(checkpoint) = &self.checkpoint else {
             return Vec::new();
@@ -100,6 +108,117 @@ impl MissionStackProjection {
             .iter()
             .filter(|member| !member.waiting_for_receipts_from.is_empty())
             .collect()
+    }
+
+    pub fn local_execution_gate(&self) -> MissionStackExecutionGateProjection {
+        let active_repos = self.active_repos();
+        let checkpoint_waiting_on = self.waiting_on_checkpoint_members();
+        let pending_negotiation = self.local_member.pending_negotiation;
+        let waiting_for_receipts_from = self.local_member.waiting_for_receipts_from.clone();
+        let foreign_execution_state = self
+            .checkout
+            .foreign_execution_required
+            .then_some(self.checkout.foreign_execution_state);
+        let checkpoint_name = self
+            .checkpoint
+            .as_ref()
+            .map(|checkpoint| checkpoint.name.clone());
+
+        match &self.mode {
+            MissionStackModeProjection::Checkpoint { .. } => {
+                return MissionStackExecutionGateProjection {
+                    status: MissionStackExecutionStatus::Blocked,
+                    reason: Some(MissionStackExecutionReason::CheckpointActive),
+                    active_repos,
+                    pending_negotiation,
+                    waiting_for_receipts_from,
+                    checkpoint: checkpoint_name,
+                    checkpoint_waiting_on,
+                    foreign_execution_state,
+                };
+            }
+            MissionStackModeProjection::Exclusive { active_repo }
+                if active_repo != &self.local_repo =>
+            {
+                return MissionStackExecutionGateProjection {
+                    status: MissionStackExecutionStatus::Yield,
+                    reason: Some(MissionStackExecutionReason::ExclusiveLeaseHeldElsewhere),
+                    active_repos,
+                    pending_negotiation,
+                    waiting_for_receipts_from,
+                    checkpoint: checkpoint_name,
+                    checkpoint_waiting_on,
+                    foreign_execution_state,
+                };
+            }
+            MissionStackModeProjection::Shared { active_repos }
+                if !active_repos.iter().any(|repo| repo == &self.local_repo) =>
+            {
+                return MissionStackExecutionGateProjection {
+                    status: MissionStackExecutionStatus::Yield,
+                    reason: Some(MissionStackExecutionReason::SharedWindowClosed),
+                    active_repos: active_repos.clone(),
+                    pending_negotiation,
+                    waiting_for_receipts_from,
+                    checkpoint: checkpoint_name,
+                    checkpoint_waiting_on,
+                    foreign_execution_state,
+                };
+            }
+            _ => {}
+        }
+
+        if pending_negotiation {
+            return MissionStackExecutionGateProjection {
+                status: MissionStackExecutionStatus::Yield,
+                reason: Some(MissionStackExecutionReason::PendingNegotiation),
+                active_repos,
+                pending_negotiation,
+                waiting_for_receipts_from,
+                checkpoint: checkpoint_name,
+                checkpoint_waiting_on,
+                foreign_execution_state,
+            };
+        }
+
+        if !waiting_for_receipts_from.is_empty() {
+            return MissionStackExecutionGateProjection {
+                status: MissionStackExecutionStatus::Yield,
+                reason: Some(MissionStackExecutionReason::WaitingForReceipts),
+                active_repos,
+                pending_negotiation,
+                waiting_for_receipts_from,
+                checkpoint: checkpoint_name,
+                checkpoint_waiting_on,
+                foreign_execution_state,
+            };
+        }
+
+        if self.checkout.foreign_execution_required
+            && self.checkout.foreign_execution_state != MissionStackForeignExecutionState::Ready
+        {
+            return MissionStackExecutionGateProjection {
+                status: MissionStackExecutionStatus::Blocked,
+                reason: Some(MissionStackExecutionReason::ForeignExecutionRequired),
+                active_repos,
+                pending_negotiation,
+                waiting_for_receipts_from,
+                checkpoint: checkpoint_name,
+                checkpoint_waiting_on,
+                foreign_execution_state,
+            };
+        }
+
+        MissionStackExecutionGateProjection {
+            status: MissionStackExecutionStatus::Allowed,
+            reason: None,
+            active_repos,
+            pending_negotiation,
+            waiting_for_receipts_from,
+            checkpoint: checkpoint_name,
+            checkpoint_waiting_on,
+            foreign_execution_state,
+        }
     }
 }
 
@@ -185,6 +304,37 @@ pub enum MissionStackForeignExecutionState {
     MissingManagedCheckout,
     WrongCheckout,
     PrimaryCheckoutDisallowed,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum MissionStackExecutionStatus {
+    Allowed,
+    Yield,
+    Blocked,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum MissionStackExecutionReason {
+    ExclusiveLeaseHeldElsewhere,
+    SharedWindowClosed,
+    CheckpointActive,
+    PendingNegotiation,
+    WaitingForReceipts,
+    ForeignExecutionRequired,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct MissionStackExecutionGateProjection {
+    pub status: MissionStackExecutionStatus,
+    pub reason: Option<MissionStackExecutionReason>,
+    pub active_repos: Vec<String>,
+    pub pending_negotiation: bool,
+    pub waiting_for_receipts_from: Vec<String>,
+    pub checkpoint: Option<String>,
+    pub checkpoint_waiting_on: Vec<String>,
+    pub foreign_execution_state: Option<MissionStackForeignExecutionState>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -306,6 +456,10 @@ pub fn scan(board_dir: &Path) -> Result<MissionStackScan> {
     }
 
     Ok(scan)
+}
+
+pub fn load_active(board_dir: &Path) -> Result<Option<MissionStackProjection>> {
+    Ok(scan(board_dir)?.active_stack().cloned())
 }
 
 fn discover_manifest_paths(stacks_dir: &Path) -> Result<Vec<PathBuf>> {

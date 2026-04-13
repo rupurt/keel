@@ -1,5 +1,9 @@
 //! Canonical turn-loop projection for the public operating rhythm.
 
+use std::path::Path;
+
+use anyhow::Result;
+
 use super::command_catalog::{CommandSurfaceId, TurnPhase, descriptor_for_id};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -25,6 +29,7 @@ pub struct TurnPhaseProjection {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TurnLoopProjection {
     pub phases: Vec<TurnPhaseProjection>,
+    pub mission_stack: Option<super::mission_stack::MissionStackProjection>,
 }
 
 pub fn project() -> TurnLoopProjection {
@@ -45,7 +50,16 @@ pub fn project() -> TurnLoopProjection {
         })
         .collect();
 
-    TurnLoopProjection { phases }
+    TurnLoopProjection {
+        phases,
+        mission_stack: None,
+    }
+}
+
+pub fn project_for_board(board_dir: &Path) -> Result<TurnLoopProjection> {
+    let mut projection = project();
+    projection.mission_stack = super::mission_stack::load_active(board_dir)?;
+    Ok(projection)
 }
 
 fn phase_command_ids(phase: TurnPhase) -> &'static [CommandSurfaceId] {

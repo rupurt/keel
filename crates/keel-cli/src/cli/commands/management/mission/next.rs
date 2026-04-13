@@ -198,6 +198,8 @@ fn is_strategic_unblocker(decision: &NextDecision) -> bool {
             | NextDecision::NeedsStories(_)
             | NextDecision::VerifyMission(_)
             | NextDecision::Accept(_)
+            | NextDecision::StackYield(_)
+            | NextDecision::StackBlocked(_)
             | NextDecision::Diagnostics { .. }
     )
 }
@@ -212,6 +214,10 @@ fn render_compact_status(board: &Board, board_dir: &Path, mission: &Mission) -> 
         }
         println!("• No other active work remains.");
         return Ok(());
+    }
+
+    if let Some(summary) = render_mission_stack_status(board_dir, mission)? {
+        print!("{summary}");
     }
 
     let topology = workflow_topology::load_for_board(board_dir)?;
@@ -423,6 +429,26 @@ fn add_decision_to_bullets(
                 bullets.push((9, text));
             }
         }
+        NextDecision::StackYield(d) => {
+            let text = format!(
+                "Yield Mission Stack {} to {}",
+                d.stack.id.bold(),
+                d.gate.active_repos.join(", ").bold()
+            );
+            if seen_texts.insert(text.clone()) {
+                bullets.push((1, text));
+            }
+        }
+        NextDecision::StackBlocked(d) => {
+            let text = format!(
+                "Clear Mission Stack block for {} on {}",
+                d.stack.id.bold(),
+                d.stack.branch.bold()
+            );
+            if seen_texts.insert(text.clone()) {
+                bullets.push((1, text));
+            }
+        }
         NextDecision::Empty(d) => {
             if let Some(suggestion) = d.suggestions.first()
                 && seen_texts.insert(suggestion.clone())
@@ -430,8 +456,8 @@ fn add_decision_to_bullets(
                 bullets.push((10, suggestion.clone()));
             }
         }
-
-        _ => {}
+        NextDecision::Blocked(_) | NextDecision::Missions(_) | NextDecision::Diagnostics { .. } => {
+        }
     }
 }
 
@@ -496,6 +522,93 @@ fn render_mission_next(board: &Board, board_dir: &Path, mission: &Mission) -> Re
     }
 
     Ok(())
+}
+
+fn render_mission_stack_status(board_dir: &Path, mission: &Mission) -> Result<Option<String>> {
+    let Some(stack) = keel::read_model::mission_stack::load_active(board_dir)? else {
+        return Ok(None);
+    };
+    if !stack_relevant_to_mission(&stack, mission) {
+        return Ok(None);
+    }
+
+    let linked_missions: Vec<_> = stack
+        .members
+        .iter()
+        .filter_map(|member| {
+            member
+                .mission
+                .as_ref()
+                .map(|mission| (&member.repo, mission))
+        })
+        .map(|(repo, mission)| format!("{repo}={mission}"))
+        .collect();
+    let pending_negotiations: Vec<_> = stack
+        .pending_negotiation_members()
+        .into_iter()
+        .map(|member| member.repo.clone())
+        .collect();
+    let waiting_receipts: Vec<_> = stack
+        .waiting_receipt_members()
+        .into_iter()
+        .map(|member| {
+            format!(
+                "{}<-{}",
+                member.repo,
+                member.waiting_for_receipts_from.join(",")
+            )
+        })
+        .collect();
+
+    let mut output = String::from("Mission Stack\n");
+    output.push_str(&format!(
+        "• {} on {} as {:?}\n",
+        stack.id.bold(),
+        stack.branch.bold(),
+        stack.local_member.role
+    ));
+    output.push_str(&format!("• Mode: {}\n", stack.mode_label().bold()));
+    if !linked_missions.is_empty() {
+        output.push_str(&format!(
+            "• Linked member missions: {}\n",
+            linked_missions.join(", ")
+        ));
+    }
+    if !pending_negotiations.is_empty() {
+        output.push_str(&format!(
+            "• Pending negotiations: {}\n",
+            pending_negotiations.join(", ")
+        ));
+    }
+    if !waiting_receipts.is_empty() {
+        output.push_str(&format!(
+            "• Waiting receipts: {}\n",
+            waiting_receipts.join(", ")
+        ));
+    }
+    if let Some(checkpoint) = &stack.checkpoint {
+        let waiting_on = stack.waiting_on_checkpoint_members();
+        output.push_str(&format!("• Checkpoint: {}\n", checkpoint.name));
+        if !waiting_on.is_empty() {
+            output.push_str(&format!(
+                "• Checkpoint waiting on: {}\n",
+                waiting_on.join(", ")
+            ));
+        }
+    }
+    output.push('\n');
+
+    Ok(Some(output))
+}
+
+fn stack_relevant_to_mission(
+    stack: &keel::read_model::mission_stack::MissionStackProjection,
+    mission: &Mission,
+) -> bool {
+    stack
+        .members
+        .iter()
+        .any(|member| member.mission.as_deref() == Some(mission.id()))
 }
 
 fn is_mission_ready_for_achievement(board: &Board, mission: &Mission) -> bool {
@@ -818,7 +931,8 @@ mod tests {
     use keel::domain::model::StoryState;
     use keel::read_model::knowledge::{KnowledgeSourceType, ReflectionSignal};
     use keel::test_helpers::{
-        TestBearing, TestBoardBuilder, TestEpic, TestMission, TestStory, TestVoyage,
+        TestBearing, TestBoardBuilder, TestEpic, TestMission, TestStory, TestVoyage, git,
+        init_git_repo, write_stack_manifest,
     };
     use std::fs;
     use std::path::PathBuf;
@@ -1147,5 +1261,52 @@ mod tests {
             suggested_mission_title("Strategic Capacity"),
             "Strategic Capacity"
         );
+    }
+
+    #[test]
+    fn mission_next_status_surfaces_stack_dependencies() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .mission(TestMission::new("M2").status("active"))
+            .build();
+        init_git_repo(temp.path());
+        git(temp.path(), &["checkout", "-b", "stack/demo-stack"]);
+        write_stack_manifest(
+            temp.path(),
+            "demo-stack",
+            r#"
+id: demo-stack
+steward_repo: keel
+local_repo: keel
+mode:
+  kind: shared
+  active_repos:
+    - keel
+members:
+  - repo: keel
+    role: steward
+    state: active
+    mission: M1
+  - repo: paddles
+    role: member
+    state: waiting
+    mission: M2
+    pending_negotiation: true
+    waiting_for_receipts_from:
+      - keel
+"#,
+        );
+
+        let board = load_board(temp.path()).unwrap();
+        let mission = board.require_mission("M1").unwrap();
+        let summary = render_mission_stack_status(temp.path(), mission)
+            .unwrap()
+            .expect("stack summary");
+
+        assert!(summary.contains("Mission Stack"));
+        assert!(summary.contains("demo-stack"));
+        assert!(summary.contains("Linked member missions: keel=M1, paddles=M2"));
+        assert!(summary.contains("Pending negotiations: paddles"));
+        assert!(summary.contains("Waiting receipts: paddles<-keel"));
     }
 }
