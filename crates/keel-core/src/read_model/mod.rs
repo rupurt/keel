@@ -13,6 +13,7 @@ pub mod heartbeat;
 pub mod knowledge;
 pub mod knowledge_graph;
 pub mod mission_show;
+pub mod mission_stack;
 pub mod planning_show;
 pub mod queue_policy;
 pub mod roadmap;

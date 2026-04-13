@@ -454,6 +454,12 @@
 |--------|--------|
 | [Specify Managed Foreign Worktree Lifecycle](epics/VGdxE0lFe/voyages/VGdyGssEu/) | done |
 
+### [Mission Stack Context Engine And Enforcement](epics/VGe7mCcFW/) (active)
+
+| Voyage | Status |
+|--------|--------|
+| [Implement Mission Stack Context Surfaces](epics/VGe7mCcFW/voyages/VGe8Ad6Jy/) | in-progress |
+
 ### [Mission Entity](epics/1vzeJF000/) (done)
 
 | Voyage | Status |
