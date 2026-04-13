@@ -1,0 +1,901 @@
+---
+recorded_at: 2026-04-12T22:06:34.361344643-07:00
+mode: manual
+files: ["PROTOCOL.md", "ARCHITECTURE.md", "website/docs/workflows/downstream-project-contracts.mdx"]
+---
+
+--- File: PROTOCOL.md ---
+# PROTOCOL.md: The Keel Communications Protocol
+
+The Keel CLI implements an asynchronous communication layer through the `ping` and `poke` commands. This system allows the workflow engine to field requests, route messages, and provide either synchronous automated responses or facilitate asynchronous offline interactions.
+
+This document defines the expected message structures, the routing logic, and the lifecycle of an inbox message.
+
+## 1. The Inbox Lifecycle
+
+All communication is routed through the `.keel/inbox/` directory.
+
+1. **Submission:** A user or agent invokes `keel ping "<message>"`.
+2. **Evaluation:** The engine evaluates the message against its **Routing Rules**.
+3. **Response (Sync vs. Async):**
+   - **Synchronous (`pong`):** If a routing rule matches, the engine immediately responds via `stdout`, marks the message as `ponged`, and saves the state to the inbox.
+   - **Asynchronous (Pending):** If no routing rule matches, the engine returns only the generated **Ping ID** (e.g., `VDtzUxoCp`) to `stdout`. The message is saved to the inbox in a `pending` state.
+4. **Resolution (`poke`):** A pending message can be resolved later using `keel poke <id> "[message]"`.
+   - If a manual message is provided, it acts as the response, marking the ping as `ponged`.
+   - If no manual message is provided, the engine re-evaluates the original message against the current routing rules (which may have been updated).
+
+## 2. Message Format
+
+Messages are persisted as JSON files within `.keel/inbox/<id>.json`.
+
+**Schema (`PingMessage`):**
+```json
+{
+  "id": "VDtzUxoCp",
+  "message": "The original message content.",
+  "timestamp": "2026-03-15T03:00:00Z",
+  "status": "pending | ponged",
+  "pong_message": "The response message, or null if pending."
+}
+```
+- **`id`**: A globally unique identifier generated using Keel's standard ID generation (e.g., `VD...`).
+- **`status`**: The current state of the interaction (`pending` or `ponged`).
+- **`pong_message`**: The recorded response, ensuring historical traceability of the communication.
+
+## 3. Routing Rules
+
+When a `ping` is executed, the engine attempts to match the message content to a set of predefined rules to trigger a synchronous **auto-pong**.
+
+Currently, the routing rules are simple substring matches (case-insensitive):
+
+| Match Condition (contains word) | Synchronous Response (Pong) |
+| :--- | :--- |
+| `"ping"` | `pong` |
+| `"hello"` or `"hi"` | `Hello! I am keel. How can I help?` |
+| `"help"` | `I am a workflow engine. Try running `keel doctor` or `keel flow`.` |
+
+*If a message does not match any of these conditions, it falls through to the Asynchronous track and requires a future `poke`.*
+
+## 4. JSONIN and JSONOUT Data Contracts
+
+As a primary interface for autonomous agents and external scripts, Keel implements strict `JSONOUT` and potential `JSONIN` data contracts. These are separate from human-readable CLI outputs and guarantee structured predictability.
+
+### JSONOUT: Engine to Agent
+Whenever a command is invoked with `--json` (e.g., `keel pulse --json`, `keel next --json`, `keel verify run --json`), the standard out is guaranteed to be a single, parseable JSON payload representing the complete return state.
+
+- **Predictable Schemas**: Changes to `--json` output schemas must be treated as breaking changes. 
+- **Example (`keel pulse --json`)**:
+  ```json
+  {
+    "mode": "materialize",
+    "evaluated": 3,
+    "created": 1,
+    "skipped": 0,
+    "deferred": 2,
+    "routines": [
+      {
+        "id": "routine-due",
+        "outcome": "created",
+        "story_id": "VDtx8IW2K"
+      }
+    ]
+  }
+  ```
+
+### JSONIN: Agent to Engine
+While most inputs to Keel are simple strings and flags (like `keel ping "hello"`), the protocol anticipates `JSONIN` payloads for complex configurations, bulk operations, or structured responses (like piping an LLM's structured JSON output directly to a state-mutating command).
+
+- **The Inbox as JSONIN**: The `.keel/inbox/<id>.json` file itself represents our first JSONIN construct. When an agent creates or modifies a ping file directly, it must conform to the `PingMessage` schema defined above.
+- **Future Support**: We plan to support piping JSON directly into commands (e.g., `cat payload.json | keel poke <id> --json-in`) to allow agents to pass rich contextual data structures instead of flat strings.
+
+## 5. The System Pacemaker
+
+The system's **Pacemaker** is derived from repository activity rather than a dedicated file. `keel heartbeat` is the inspection surface for that derived signal.
+
+### The Heartbeat
+- **Activation**: Dirty worktree activity is the primary signal; a clean repository falls back to the latest commit timestamp.
+- **Inspection**: `keel heartbeat` reports the source, age, and whether the worktree is carrying uncommitted energy.
+- **Turn Loop**: `Orient` uses `keel heartbeat` as the canonical charge surface before `flow --scene` and other visual checks are interpreted.
+- **Idle State**: If the derived heartbeat decays beyond `battery_decay_minutes` (default: 10m), the engine transitions to **IDLE**, dimming the visual scenes and pausing autonomous backlog discharge. Idle heartbeat is a flow-state signal, not structural drift.
+- **Flow Override Gate**: `keel flow` may keep the circuit open during transitional mission intake only while `keel heartbeat` still proves recent activity. An idle heartbeat removes that exception.
+
+### Pace-setting
+To maintain board integrity, the pacemaker should still be synchronized with the commit boundary.
+- **The Protocol**: Land sealing commits to close dirty worktree energy, and rely on the installed hooks to keep quality checks and tests attached to that boundary.
+- **Consistency**: A dirty worktree is warning-level evidence that the loop has been opened but not yet sealed. The commit itself clears that warning by aligning the repository state with the resulting board state.
+
+## 6. Formal Mission Request Boundary
+
+`ping` and `poke` are conversational surfaces. Mission requests are structured
+planning ingress.
+
+This is the documented boundary for external providers and runtimes such as
+Keeper. Direct planning commands remain the normal path today, but the
+cross-runtime protocol should already be treated as stable in shape.
+
+### First Provider Shape
+
+The first documented provider is GitHub issues.
+
+A GitHub issue is a formal mission request candidate when:
+- the title begins with `Keel Mission Request:`
+- the body contains the required structured sections
+- the provider metadata can be preserved for replay and acknowledgement
+
+### Canonical Envelope
+
+Mission requests should normalize into a provider-neutral envelope before they
+touch planning state:
+
+```yaml
+version: 1
+request:
+  title: Add Keel Mission Request Feature
+  summary: Add a native mission request workflow for Keeper and automation.
+  problem: Operators need a canonical intake path that preserves board truth.
+  outcome: Mission creation and acknowledgement become scriptable and replayable.
+  constraints:
+    - Keep Keel provider-neutral.
+    - Preserve deterministic stdin/stdout composition.
+  requested_scope:
+    in_scope:
+      - Native mission request command surface
+      - Provider-neutral normalization rules
+    out_of_scope:
+      - Provider polling internals
+  provider:
+    kind: github-issue
+    source_id: 1234
+    source_url: https://github.com/spoke-sh/keel/issues/1234
+    revision: 7
+```
+
+### Caller Field Responsibility
+
+- Required caller-supplied fields: `version`, `request.title`,
+  `request.summary`, `request.problem`, `request.outcome`, and
+  `request.requested_scope.in_scope`
+- Optional caller-supplied fields: `request.constraints` and
+  `request.requested_scope.out_of_scope`
+- Derivable provider fields after normalization: `request.provider.kind`,
+  `source_id`, `source_url`, and `revision`
+
+### Processing Contract
+
+The documented direction is a native `keel mission request ...` namespace with
+parse, validate, draft, apply, and acknowledgement stages.
+
+Until that surface ships, external runtimes should still preserve the same
+contract:
+1. Detect the formal provider request.
+2. Normalize it into the canonical envelope.
+3. Validate the request before mutating planning state.
+4. Lower the validated request into ordinary Keel planning commands.
+5. Render acknowledgement content separately from provider delivery.
+
+### Stage IO And Failure Semantics
+
+- `template`, `parse`, `validate`, `draft`, and `ack` are side-effect free.
+- `apply` is the only stage that mutates `.keel` planning state.
+- Validation failures are recoverable caller errors with actionable diagnostics
+  and no mutation.
+- Execution failures happen after validation and should be treated as runtime or
+  policy failures rather than malformed input.
+- The same normalized envelope should yield deterministic semantic results for
+  automation callers unless the board state itself has changed.
+
+### Provider Revision And Acknowledgement Rules
+
+- Provider runtimes should bind every normalized request to an explicit replay
+  identity, at minimum provider kind, source identity, and provider revision.
+- Duplicate deliveries for an unchanged replay identity must not create a second
+  planning mutation.
+- Edited provider requests should produce a new normalized revision and a fresh
+  Keel evaluation.
+- Keeper or another runtime owns acknowledgement delivery and retries.
+- Keel owns acknowledgement payload rendering from the normalized request and
+  planning result.
+- Acknowledgement retry failure must not be treated as license to replay an
+  already-applied planning mutation.
+
+### Responsibility Split
+
+- **Keel** owns request semantics, planning mutation rules, and acknowledgement
+  content contracts.
+- **Keeper or another runtime** owns provider polling, authentication, revision
+  tracking, retries, and provider-facing response delivery.
+
+### Security Boundary
+
+Mission request ingress is part of the multiplayer security model:
+- replay metadata should stay attached to the normalized request
+- stronger auditability should come from backend-agnostic append, checkpoint,
+  inclusion-proof, and consistency-proof operations
+- threshold attestation should be reserved for high-consequence transitions and
+  published checkpoints, not for every local move
+
+## 7. Mission Stack Coordination
+
+Mission requests solve structured ingress into another board. A **Mission Stack**
+defines what happens after that request is accepted when one outcome spans
+multiple repositories, each with its own Keel board and reactor.
+
+### Federated Board Rule
+
+- A Mission Stack is a federation of independent Keel boards, not a shared
+  multi-repo board.
+- Each member repository remains authoritative for its own `.keel` state.
+- One repository MUST NOT mutate another repository's planning artifacts
+  directly from outside that repository's reactor.
+- Cross-repo work begins with a mission request and reactor negotiation.
+
+### Stack Branch And Handoff Rule
+
+- Every stack member uses branch `stack/<id>` for stack-linked work.
+- Local closure still happens at commit time inside the member repo.
+- Inter-reactor handoff happens at push time and may remain git-native in the
+  first version of the protocol.
+- The minimum pushed receipt is stack id, member repo identity, branch, head
+  sha, and optional checkpoint or role context.
+
+### Foreign Worktree Rule
+
+When a reactor needs to execute in another stack member repository from the
+outside, that work MUST happen in a managed git worktree.
+
+- Foreign execution MUST NOT run in the member repo's primary checkout.
+- The managed worktree MUST target `stack/<id>` or an explicitly approved
+  stack-derived head from that branch.
+- The worktree lifecycle MUST define create, reuse, inspection, and cleanup
+  behavior for the lifetime of the open stack.
+- Managed foreign worktrees SHOULD be garbage-collected when the stack closes.
+- Cleanup MUST fail safe by reporting ambiguous leftovers rather than silently
+  deleting uncertain state.
+
+### Command And Hook Enforcement
+
+The Mission Stack worktree rule is enforced at the same seams that already
+govern turn execution and closure:
+
+- command surfaces such as `turn`, `next`, `mission next`, `story start`, and
+  `doctor` should explain or reject unsupported foreign execution
+- git hooks should reject commits or pushes that violate the approved stack
+  worktree and branch contract
+- diagnostics should surface wrong-branch, unsupported-primary-checkout, or
+  missing-cleanup states as stack violations rather than silent drift
+
+## 8. Expanding the Protocol
+
+As Keel's capabilities grow, the routing rules will be expanded to support more complex interactions:
+- **Regex/Semantic Matching:** Moving beyond simple word inclusion to understand intent.
+- **Action Triggers:** Allowing a `ping` to synchronously trigger engine operations (e.g., "ping: status" running `keel flow`).
+- **Agent Handoffs:** Routing pending messages to specific sub-agents or workflow lanes for evaluation during `keel pulse`.
+
+
+--- File: ARCHITECTURE.md ---
+# Keel Architecture
+
+This document describes the current architecture of `keel`: the normalized DDD layer layout, the 2-queue pull model, entity state machines, and transition gating.
+
+## Scope
+
+This document is the implementation contract for source layout, dependency boundaries, runtime flows, and state-machine behavior. Governance philosophy and document hierarchy are defined upstream in `README.md` and `AGENTS.md`.
+
+## Layered Source Layout
+
+Keel now uses five explicit source roots under `src/`:
+
+| Root | Responsibility | Key Modules |
+|------|----------------|-------------|
+| `src/cli` | CLI adapters, command handlers, terminal formatting, queue display | `commands/**`, `presentation/flow/**`, `style.rs`, `table.rs` |
+| `src/application` | Use-case orchestration and process manager behavior | `story_lifecycle.rs`, `voyage_epic_lifecycle.rs`, `process_manager.rs` |
+| `src/domain` | Core entities, policies, state machines, transition rules | `model/**`, `policy/**`, `state_machine/**`, `transitions/**` |
+| `src/infrastructure` | Filesystem adapters, parsers, templates, verification runners, generation | `loader.rs`, `parser.rs`, `templates.rs`, `validation/**`, `verification/**`, `generate/**`, `config.rs` |
+| `src/read_model` | Query-side projections and derived views for flow, capacity, evidence, knowledge | `flow_status.rs`, `capacity.rs`, `queue_policy.rs`, `traceability.rs`, `evidence.rs`, `knowledge/**` |
+
+Entry and test roots:
+- `src/lib.rs` wires the five layer roots (`cli`, `application`, `domain`, `infrastructure`, `read_model`).
+- `src/main.rs` is a thin binary bootstrap that delegates to `keel::cli::run()`.
+- `src/*_tests.rs` files at root are test-only modules.
+
+## Architecture Diagrams
+
+### 1) Layer Dependency Map
+
+```mermaid
+flowchart TB
+    subgraph Entry["Entry"]
+        MAIN["main.rs"]
+    end
+
+    subgraph Runtime["CLI Runtime"]
+        RUN["keel::cli::run()"]
+        CLI["cli"]
+    end
+
+    subgraph Wiring["Crate Wiring"]
+        LIB["lib.rs (layer wiring)"]
+    end
+
+    subgraph Core["Core"]
+        APP["application"]
+        DOMAIN["domain"]
+    end
+
+    subgraph Support["Support"]
+        INFRA["infrastructure"]
+        RM["read_model"]
+    end
+
+    MAIN --> RUN
+    RUN --> CLI
+
+    LIB --> CLI
+    LIB --> APP
+    LIB --> DOMAIN
+    LIB --> INFRA
+    LIB --> RM
+
+    CLI --> APP
+    CLI --> DOMAIN
+    CLI --> INFRA
+    CLI --> RM
+
+    APP --> DOMAIN
+    APP --> INFRA
+    INFRA --> DOMAIN
+    RM --> DOMAIN
+```
+
+### 2) Command Execution Path (Typical Story Command)
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant C as CLI Command (src/cli/commands/**)
+    participant A as Application Service (src/application/**)
+    participant I as Infrastructure (src/infrastructure/**)
+    participant D as Domain Gates/Transitions (src/domain/**)
+    participant R as Read Models (src/read_model/**)
+
+    U->>C: keel story start <id>
+    C->>A: delegate use-case
+    A->>I: load board/files
+    A->>D: enforce transition + evaluate gates
+    D-->>A: allow/block findings
+    A->>I: persist transition effects
+    A->>R: refresh projections (when needed)
+    A-->>C: outcome DTO/result
+    C-->>U: rendered output
+```
+
+### 3) Queue and Story Lifecycle View
+
+```mermaid
+flowchart LR
+    subgraph AgentQueue["Agent Queue"]
+        B["backlog"]
+        IP["in-progress"]
+    end
+
+    subgraph HumanQueue["Human Queue"]
+        NHV["needs-human-verification"]
+    end
+
+    B -->|story start| IP
+    IP -->|story submit| NHV
+    NHV -->|story accept| D["done"]
+    NHV -->|story reject| RJ["rejected"]
+    IP -->|story ice| IX["icebox"]
+    IX -->|story thaw| B
+```
+
+## Bounded Context Ownership Map
+
+This map describes logical ownership by business context while using the normalized physical layers.
+
+| Context | Responsibility | Primary Modules |
+|---------|----------------|-----------------|
+| `governance` | ADR lifecycle, role taxonomy, constitutional constraints | `src/cli/commands/management/adr/**`, `src/domain/model/taxonomy.rs`, `src/domain/state_machine/invariants.rs` |
+| `work-management` | Story/voyage/epic lifecycle orchestration and transitions | `src/cli/commands/management/story/**`, `src/cli/commands/management/voyage/**`, `src/cli/commands/management/epic/**`, `src/application/**`, `src/domain/state_machine/**`, `src/domain/transitions/**` |
+| `research` | Bearing discovery, play workflow, and synthesis inputs | `src/cli/commands/management/bearing/**`, `src/cli/commands/management/play.rs`, `src/read_model/knowledge/**` |
+| `verification` | Verified Spec Driven Development (VSDD): Evidence capture, structural checks, command proof execution | `src/cli/commands/management/verify.rs`, `src/cli/commands/diagnostics/doctor/**`, `src/infrastructure/verification/**`, `src/infrastructure/validation/**`, `src/read_model/evidence.rs`, `src/read_model/traceability.rs` |
+| `read-model` | Flow/capacity projections and queue-policy facades | `src/read_model/**`, consumed by `src/cli/presentation/flow/**` and `src/cli/commands/management/next_support/**` |
+
+Boundary rules:
+- Each production source file belongs to exactly one layer root.
+- CLI modules are adapters: parse input, delegate, render output.
+- Read-model modules are query-side projection code, not transition actuators.
+- Domain rules are centralized in domain policies/state machines/transitions and reused by command and reporting paths.
+
+## Enforced Architecture Contracts
+
+`src/architecture_contract_tests.rs` enforces key boundaries:
+
+- `main.rs` must remain a minimal bootstrap adapter that delegates to `keel::cli::run()`.
+- `main.rs` must not depend on `domain`, `application`, `infrastructure`, or `read_model` directly.
+- `lib.rs` must declare only the normalized layer roots: `cli`, `application`, `domain`, `infrastructure`, and `read_model`.
+- Legacy top-level module families (for example old `src/commands`, `src/model`, `src/loader.rs`) must not exist.
+- Diagnostic adapters must not bypass into unrelated lifecycle command modules.
+- Read-model projection files must not import CLI command handlers or domain transition execution.
+- Queue policy consumers must use the shared read-model API.
+
+These tests are the executable architecture specification.
+
+## Keeper Boundary and External Mission Requests
+
+This boundary is foundational, but it is not the default onboarding path for a
+single local repo. Today, most planning still enters Keel through direct
+`mission`, `epic`, `voyage`, and `story` commands. The cross-runtime
+architecture contract is:
+
+| Concern | Keel | Keeper or another runtime |
+|---------|------|---------------------------|
+| Planning truth | Canonical source of missions, epics, voyages, stories, and authored artifacts | Must not invent board state outside Keel commands |
+| Provider ingress | Consumes normalized requests only | Polls providers, authenticates, tracks revisions, and normalizes payloads |
+| Routing and execution | Exposes the board state and lane contract | Owns runtime routing, leases, execution, and replay |
+| Acknowledgement | Owns request semantics and acknowledgement content contract | Delivers comments, statuses, or provider-facing responses |
+| Audit and security | Defines which transitions matter and what evidence is required | Produces checkpoint evidence and applies stronger multiplayer policies at the boundary |
+
+Documented ingress path:
+- External requests lower into a provider-neutral mission request envelope.
+- The first provider shape is a GitHub issue whose title begins
+  `Keel Mission Request:`.
+- The documented command boundary is a native `keel mission request ...`
+  namespace for parse, validate, draft, apply, and acknowledgement composition.
+- Until that namespace ships, external runtimes should preserve the same
+  normalized envelope and lower into ordinary planning commands rather than
+  writing `.keel` artifacts directly.
+
+Documented multiplayer security boundary:
+- Backend adapters should expose append, checkpoint, inclusion-proof, and
+  consistency-proof operations so Keel remains backend-agnostic.
+- Transit is therefore an optional strong backend, not a hard dependency.
+- Threshold attestation belongs on high-consequence transitions and published
+  checkpoints, not on every event in a local turn loop.
+
+Architectural consequence:
+- Provider-specific payloads stop at the runtime boundary.
+- Keel remains authoritative for planning semantics.
+- Stronger audit and attestation behavior is attached at the runtime boundary
+  without changing the board model for ordinary single-repo use.
+
+## Mission Stack Execution Contract
+
+Mission requests define ingress into another reactor. **Mission Stack** defines
+execution across multiple Keel boards after ingress succeeds.
+
+The architectural contract is:
+
+| Concern | Member Repository | Stack Steward / Peer Reactor |
+|---------|-------------------|------------------------------|
+| Board authority | Owns and mutates only its own `.keel` state | Must not mutate another repo's board directly |
+| Stack branch | Works on `stack/<id>` for stack-linked changes | Uses the same branch convention when coordinating handoff |
+| Local closure | Seals local work at commit time | Consumes the sealed result as input for the next negotiation |
+| Handoff | Exposes git-native receipt data such as branch and head sha | Routes the next move from pushed receipt plus stack mode |
+| Foreign execution | Allows outside work only through a managed git worktree | Must enter the target repo through that managed worktree, never the primary checkout |
+
+Stack modes govern when a member may act:
+- `exclusive(<repo>)` allows one active member repo
+- `shared([repos...])` allows an explicit parallel work window
+- `checkpoint(<name>, members...)` pauses forward progress until required
+  members acknowledge the integration boundary
+
+Foreign execution rule:
+- outside execution in another member repo MUST use a managed git worktree
+- that worktree MUST target `stack/<id>` or an approved stack-derived head
+- the primary checkout of the member repo is never the foreign execution target
+- managed worktrees persist for the open stack lifecycle and are garbage-collected
+  when the stack closes, with fail-safe reporting for ambiguous leftovers
+
+Architectural consequence:
+- repo-local heartbeat semantics remain repo-local
+- stack readiness and gating belong to separate stack-aware read models
+- command and hook enforcement can reject unsupported foreign execution without
+  redefining the single-repo pacemaker contract
+
+## Workflow Lane Pull System
+
+Keel coordinates work through configurable workflow lanes with a pull model. The topology is fully defined and overridable in `keel.toml` using `[workflow.defaults]`, `[roles]`, and `[lanes]` sections.
+
+The zero-config topology seeds:
+
+| Lane | Selected Sources | Default Role | Purpose |
+|------|------------------|--------------|---------|
+| `management` | `bearing.*`, `voyage.draft`, `story.needs-human-verification` | `manager` | Planning, triage, calibration, acceptance |
+| `delivery` | `story.backlog`, `story.in-progress` | `operator` | Active delivery work |
+
+Pull commands:
+- `keel next --role manager`: management lane only (never returns implementation `Work`).
+- `keel next --role <role>`: pull work from the lane associated with the role family.
+- `keel next --role operator`: delivery lane (`in-progress` then `backlog`).
+- `keel roles`: inspect the resolved role families, lanes, and operational contracts.
+- `keel next --role <role> --explain`: explain why a role resolves to a lane and queue behavior.
+- `keel turn`: expose the same routing model inside the canonical turn loop.
+- `keel next` requires `--role`; there is no implicit management-lane fallback.
+- `keel flow`: visual dashboard using the same queue policy semantics plus topology-resolved lane cards.
+
+Config-driven mapping:
+- Every role (e.g., `operator/software`) resolves to a **Role Family** (e.g., `operator`).
+- Each Role Family has a configured `default_lane` in `keel.toml`.
+- Lanes filter entities by status and source (e.g., `story.backlog`).
+- `keel flow` renders lanes in priority order.
+
+Canonical queue policy location:
+- Core thresholds and categories: `src/domain/policy/queue.rs`.
+- Shared read facade: `src/read_model/queue_policy.rs`.
+
+| Constant | Value | Behavior |
+|----------|-------|----------|
+| `HUMAN_NEXT_VERIFY_BLOCK_THRESHOLD` | 5 | Human `keel next` blocks new work when verification queue is `>= 5`. |
+| `FLOW_VERIFY_BLOCK_THRESHOLD` | 20 | Flow enters `VERIFY_BLOCKED` when verification queue is `> 20`. |
+
+Verification queue categories are shared across command and flow paths:
+- `Empty` when queue is `0`.
+- `Attention` when queue is `1..4`.
+- `HumanBlocked` when queue is `5..20` (blocks human `keel next`).
+- `FlowBlocked` when queue is `> 20` (blocks flow and human `keel next`).
+
+### Flow Circuit Assessment
+
+`keel flow` does not use raw `DoctorReport::total_errors()` as its only fuse. The power-circuit judgment combines:
+
+- working-hours gating from config
+- derived heartbeat state
+- canonical `FlowMetrics`
+- doctor findings
+- workflow topology and manual-accept pressure
+
+Blocking rule:
+
+- non-transitional doctor errors remain hard blocking
+- transitional mission-intake findings (`MissionMissingChildren`, `MissionActiveNoWork`) may be suppressed up to the current entity-creation pressure
+- entity-creation pressure is derived from incomplete missions plus planning and research queues
+- that suppression only exists while the heartbeat is energized
+
+Architectural consequence: `keel doctor` remains the pathology report, while `keel flow` is a readiness projection that can tolerate live upstream entity creation without declaring an immediate board-wide shutdown.
+
+Management-lane `keel next --role <management-role>` decision set is constrained to:
+`decision`, `accept`, `research`, `needs-stories`, `needs-planning`, `blocked`, `empty`.
+It never returns `Work`.
+
+## Canonical Operator Projections
+
+Keel's public operator vocabulary is defined in shared read models rather than duplicated across CLI handlers.
+
+- `crates/keel-core/src/read_model/command_catalog.rs` owns the canonical command taxonomy, docs slugs, turn-phase hints, and scene capability metadata.
+- `crates/keel-core/src/read_model/turn_loop.rs` owns the canonical `Orient -> Inspect -> Pull -> Ship -> Close` projection exposed by `keel turn`.
+- `crates/keel-core/src/read_model/scene_contracts.rs` defines which engine signals each public `--scene` surface is allowed to represent.
+- `crates/keel-core/src/read_model/role_routing.rs` owns the role-and-lane explanation surfaced by `keel roles` and `keel next --explain`.
+
+Architectural consequence:
+- CLI help, routing guidance, scene discovery, and docs drift guards should consume these projections instead of re-declaring parallel taxonomies in command handlers.
+
+## World Map Projection
+
+`keel topology` is not a tree printer. It renders the board as a `subtree-weighted orbit map`.
+
+Projection contract:
+- The world node sits at the center.
+- Concentric rings represent progressively deeper entity layers.
+- Angular span is allocated by subtree weight so larger branches occupy more of the circle.
+- Zoom levels reveal deeper tactical layers in order: `world -> mission -> epic -> voyage -> story`.
+- Focused views preserve the same layout model while filtering to one branch.
+- Interactive mode is the default on a TTY; `--static` keeps the rendering snapshot-friendly for harnesses and logs.
+
+Implementation ownership:
+- `src/read_model/world_map.rs` builds the canonical world-map projection and zoom slices.
+- `src/cli/presentation/topology.rs` lays out and renders the subtree-weighted orbit map.
+- `src/cli/commands/management/topology.rs` owns the interactive terminal loop and static command surface.
+
+This projection gives Keel a stable spatial metaphor for board state: strategic entities stay closer to the center, tactical entities move outward, and denser parts of the board naturally claim more visual territory.
+
+## Command and Control Architecture
+
+| Layer | Responsibility | Location |
+|-------|----------------|----------|
+| Actuators | User-facing commands that trigger behavior | `src/cli/commands/**` |
+| Safety (Gates) | Transition legality and gate evaluators | `src/domain/state_machine/gating.rs`, `src/domain/state_machine/enforcement.rs` |
+| Visibility (Queues) | Queue and flow presentation and ranking | `src/cli/commands/management/next_support/**`, `src/cli/presentation/flow/**`, `src/read_model/**` |
+
+### Core Primitives
+
+1. Bearings: `src/cli/commands/management/bearing/**`
+2. Epics: `src/cli/commands/management/epic/**`
+3. Voyages: `src/cli/commands/management/voyage/**`
+4. Stories: `src/cli/commands/management/story/**`
+5. ADRs: `src/cli/commands/management/adr/**`
+
+## Entity State Machines
+
+Each entity has a formal lifecycle.
+
+### Story State Machine
+
+```
+backlog -> in-progress -> needs-human-verification -> done
+                 \-> icebox
+needs-human-verification -> rejected
+```
+
+### Voyage State Machine
+
+```
+draft -> planned -> in-progress -> done
+```
+
+### Bearing State Machine
+
+```
+exploring -> evaluating -> ready -> laid
+                    \-> parked
+                    \-> declined
+```
+
+## Verified Spec Driven Development (VSDD)
+
+VSDD is the core methodology implemented by Keel's architectural patterns. It mandates that transitions in the entity state machines are gated by **verifiable evidence**.
+
+### The Specification-Evidence Loop
+
+1.  **Specification**: Authors define requirements in `SRS.md` and acceptance criteria in story `README.md`.
+2.  **Implementation**: Operators (agents or humans) write code to satisfy the criteria.
+3.  **Verification**: The `verification` context executes structured proofs (commands, tests, or judges) and records the output as immutable **Evidence**.
+4.  **Transition**: The `domain` gating logic only allows terminal transitions (e.g., `InProgress` → `Done`) when the evidence chain for all linked requirements is complete and valid.
+
+This loop ensures that the "Definition of Done" is not a checklist, but an executable proof.
+
+## Gating Architecture
+
+Domain constraints are enforced via reusable gate evaluators in `src/domain/state_machine/gating.rs`.
+
+Transitions are mediated by enforcement logic in `src/domain/state_machine/enforcement.rs`.
+
+Typical runtime call flow:
+1. CLI actuator (for example `src/cli/commands/management/story/start.rs`) receives a command.
+2. Application or command adapter loads board state via infrastructure services.
+3. Domain enforcement/gating validates legality and requirements.
+4. Transition and persistence proceed only when blocking findings are absent.
+5. Readme/report regeneration runs as follow-on side effect where applicable.
+
+Runtime command entry points that rely on gate logic include:
+- `src/cli/commands/management/story/start.rs`
+- `src/cli/commands/management/voyage/start.rs`
+- `src/cli/commands/management/voyage/plan.rs`
+- `src/cli/commands/management/voyage/done.rs`
+
+Doctor/reporting paths reuse the same underlying domain rules for coherence diagnostics:
+- `src/cli/commands/diagnostics/doctor/**`
+
+### Derived Implementation Dependencies
+
+Implementation dependency ordering is derived from SRS traceability:
+- Stories annotate acceptance criteria with `[SRS-XX/AC-YY]`.
+- Dependencies are inferred from SRS requirement order within a voyage scope.
+- This enables automatic parallel-safe selection in `keel next --role operator --parallel`.
+
+Implementation location:
+- `src/read_model/traceability.rs`
+
+## Application Reactor Pipeline
+
+Cross-aggregate lifecycle automation lives in the application layer, not in CLI
+adapters or domain entities. The canonical path is:
+
+1. A lifecycle service or command adapter completes an existing transition and emits a `DomainEvent`.
+2. `src/application/process_manager.rs` dispatches that event through explicit application-layer reactors.
+3. Reactors plan follow-up `ProcessAction`s that reuse the existing lifecycle services.
+
+This preserves current CLI semantics: commands remain thin adapters that
+delegate into application services, while reactor rules stay in
+`src/application/**` and do not move into `src/cli/**` or `src/domain/**`.
+
+## Flow State Machine
+
+Flow health is derived from queue depths and thresholds.
+
+States:
+- `HEALTHY_FLOW`
+- `AGENT_STARVED`
+- `VERIFY_BLOCKED`
+- `PIPELINE_EMPTY`
+
+Primary behavior:
+- Verification queue pressure can block human pull behavior.
+- Empty/low-ready conditions surface planning actions.
+- Flow state is computed, not manually set.
+
+## Knowledge and Memory System
+
+Knowledge lifecycle:
+1. Story reflection in `REFLECT.md`.
+2. Voyage-level synthesis into `KNOWLEDGE.md`.
+3. Trend detection by knowledge navigator.
+4. Context surfacing during pull/start actions.
+
+Module locations:
+- Scanning/model/navigation: `src/read_model/knowledge/**`
+- Synthesis generation: `src/infrastructure/generate/knowledge_synthesis.rs`
+- CLI views: `src/cli/commands/management/knowledge/**`
+
+## Current Module Structure
+
+```text
+src/
+├── lib.rs
+├── application/
+├── cli/
+│   ├── commands/
+│   │   ├── diagnostics/
+│   │   ├── management/
+│   │   └── setup/
+│   ├── command_tree.rs
+│   ├── presentation/
+│   │   └── flow/
+│   └── runtime.rs
+├── domain/
+│   ├── model/
+│   ├── policy/
+│   ├── state_machine/
+│   └── transitions/
+├── infrastructure/
+│   ├── generate/
+│   ├── validation/
+│   └── verification/
+├── read_model/
+│   └── knowledge/
+└── main.rs
+```
+
+
+--- File: downstream-project-contracts.mdx ---
+---
+title: Keel Downstream Project Contracts
+sidebar_label: Downstream Project Contracts
+description: Adapt AGENTS.md and INSTRUCTIONS.md so Keel becomes the project-management engine inside your repository, not just another CLI on the PATH.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+import ContractBoundary from '@site/src/components/ContractBoundary';
+
+export const contractSignals = [
+  {
+    eyebrow: 'Operating Layer',
+    title: 'Keel becomes the project-management engine',
+    body:
+      'A repo does not adopt Keel just by installing the binary. It adopts Keel when every human and agent is taught to orient, pull work, prove work, and close work through the board.',
+  },
+  {
+    eyebrow: 'Canonical Core',
+    title: 'Keep the engine discipline recognizable',
+    body:
+      'The tactical loop, evidence bar, health checks, and lifecycle rules should stay recognizable across downstream repos so the board behaves consistently.',
+  },
+  {
+    eyebrow: 'Project Surface',
+    title: 'Adapt only what the repo actually owns',
+    body:
+      'Command wrappers, proof contracts, project overviews, and local workflow helpers belong in the downstream copies because they depend on the actual repository.',
+  },
+];
+
+export const upstreamBoundary = {
+  eyebrow: 'Upstream Keel',
+  title: 'Canonical engine contract',
+  items: [
+    'Core principles such as gardening first, derived-heartbeat hygiene, and notification discipline.',
+    'The tactical loop, role separation, lifecycle expectations, and doctor-first hygiene.',
+    'Canonical board operations such as mission, voyage, story, bearing, flow, doctor, and pulse.',
+    'The resolution hierarchy that points back to ADRs, policy, architecture, and planning artifacts.',
+  ],
+};
+
+export const downstreamBoundary = {
+  eyebrow: 'Downstream Repository',
+  title: 'Local operating surface',
+  items: [
+    'A repo-specific opening that makes it clear Keel is the project-management engine for this codebase.',
+    'Repo-local wrapper commands such as direct `keel ...` usage or helper recipes like `just mission` and `just screen`.',
+    'Proof contracts tied to the project outcome, runtime, or deployment shape the repo is trying to validate.',
+    'Project overview, directory map, delegation rules, and harness-specific helpers that belong to the codebase rather than the engine.',
+  ],
+};
+
+Installing Keel into a repository gives you the engine. Authoring `AGENTS.md` and `INSTRUCTIONS.md` inside that repository is what turns the engine on for day-to-day work.
+
+Those two files are the downstream operating contract. They tell humans and AI harnesses how to use the board, which commands are canonical in this repo, what proof counts, and which local wrappers or validation surfaces matter here.
+
+<SignalGrid items={contractSignals} />
+
+## Start with `keel new`
+
+The preferred bootstrap is now `keel new`:
+
+```bash
+keel new my-project
+cd my-project
+```
+
+That scaffold gives you:
+
+- the board in `.keel/`
+- git hook installation at the commit boundary
+- a starter `keel.toml` with workflow defaults, roles, and lanes
+- root-level downstream foundation docs such as `CONSTITUTION.md`, `POLICY.md`, `ARCHITECTURE.md`, `USER_GUIDE.md`, `AGENTS.md`, `INSTRUCTIONS.md`, `GEMINI.md`, and `CLAUDE.md`
+
+If one of those foundational docs already exists, `keel new` asks before replacing it. That makes it safe to adopt Keel inside an existing codebase without silently erasing local operating language.
+
+## The two-file operating contract
+
+| File | Job | Why it matters |
+| --- | --- | --- |
+| `AGENTS.md` | Short, high-authority entry contract | It sets priorities, points to the right command surfaces, names the foundational documents, and tells an agent how to behave before it does anything clever. |
+| `INSTRUCTIONS.md` | Detailed procedural manual | It defines the tactical loop, role-specific workflows, hygiene rules, lifecycle sequencing, and the exact command vocabulary that should be used in the repo. |
+
+`AGENTS.md` should be easy to scan. `INSTRUCTIONS.md` should be the place where ambiguity goes to die.
+
+One example of upstream intent worth preserving exactly is heartbeat semantics: the pacemaker is derived from Git/worktree activity, `keel heartbeat` is the inspection surface, and dirty repository energy is warning-level loop debt that should be closed at the commit boundary. Downstream copies should preserve that contract instead of inventing repo-local heartbeat files or wake rituals. See [Heartbeat And Pacemaker](/docs/cli/heartbeat-and-pacemaker) for the canonical public explanation.
+
+If a downstream repo participates in a Mission Stack, preserve that contract too:
+cross-repo work should enter through mission requests and reactor negotiation,
+and any outside execution in that repo should use a managed git worktree on
+`stack/<id>` instead of the repo's primary checkout.
+
+## What stays upstream and what changes downstream
+
+<ContractBoundary
+  upstream={upstreamBoundary}
+  downstream={downstreamBoundary}
+  seamTitle="Copy first, adapt second"
+  seamBody="Do not rewrite the engine contract from memory. Start from upstream Keel, then change only the repo-facing seams that must describe your codebase, wrappers, proof requirements, or local workflow tooling."
+/>
+
+This is the key distinction: upstream Keel owns the board discipline, while the downstream repository owns the local operating surface.
+
+## The `port` adaptation pattern
+
+The `port` repository is a good example of a downstream adoption that preserves the engine while changing the project-facing seams.
+
+| Surface | Upstream Keel | `port` adaptation | Why it changes |
+| --- | --- | --- | --- |
+| Opening frame | "Keel is an engine with strict constraints." | "This repository uses Keel as its project management engine." | The downstream copy needs to center the project repo, not the Keel repo itself. |
+| Command path | `just keel ...` for board work inside the Keel source tree | direct `keel ...`, plus wrappers such as `just mission`, `just screen`, and `just port` | Downstream repos choose the command surface that matches their own shell and wrapper conventions. |
+| Proof guidance | generic board integrity and verification expectations | a repo-specific Mission Proof Contract tied to Port's runtime claim | Downstream proof must answer the repo's actual product question, not just the board's health. |
+| Delegation rules | general engine guidance | mission steward and worker-context guidance tuned for Port | Repos can add coordination rules when their harness or workflow needs stricter separation. |
+| Repo context | Keel foundational docs and architecture map | project overview, board directory, and repo-local command tables | Agents need to know what this repository is and where its important surfaces live. |
+
+The shape to copy is not the literal wording. The shape to copy is:
+
+1. Keep the engine contract recognizable.
+2. Rename or reframe only the parts that must describe this repo.
+3. Add project-specific sections only when they govern real operating behavior.
+
+## How to adopt the contract in your own repo
+
+1. Start from `keel new .` or `keel new <repo-name>` instead of authoring the contract from a blank page.
+2. Rewrite the opening frame so it clearly says your repository uses Keel as its project-management engine.
+3. Replace command paths with the repo's real command surface, including `just` wrappers, dev-shell commands, or runtime helpers.
+4. Add project-specific proof rules only when the repo has a real claim to validate, such as a runtime path, deployment check, or artifact contract.
+5. Add project overview and directory maps so new agents can orient without searching the entire tree.
+6. Keep harness-specific extras such as `CLAUDE.md` or `GEMINI.md` adjacent to this contract, not in place of it.
+
+:::tip
+`keel new` scaffolds `AGENTS.md` and `INSTRUCTIONS.md` with `PROJECT-SPECIFIC` blocks on purpose. Those are the seams you preserve when you sync newer upstream Keel versions.
+:::
+
+:::tip
+If a downstream repo supports multiple AI harnesses, keep `AGENTS.md` and `INSTRUCTIONS.md` as the canonical repo-wide contract. Put harness-specific setup in separate files that point back to the same board rules.
+:::
+
+## The failure mode to avoid
+
+The common mistake is to "customize" the files so heavily that the downstream repo no longer behaves like Keel at all.
+
+When that happens, the board model becomes optional, lifecycle commands drift, and every agent ends up re-learning the repo from scratch. Keel stops being the project-management engine and collapses back into a disconnected CLI.
+
+The safer pattern is narrower: preserve the engine, adapt the seam.
+
+## Next step
+
+Once a repo has adopted the contract, the next responsibility is maintenance. Read [Upgrade Keel And Sync Upstream Instructions](/docs/workflows/upgrading-keel-and-syncing-instructions) for the safe way to absorb upstream changes without deleting downstream intent.
+

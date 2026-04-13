@@ -1,3 +1,10 @@
+---
+recorded_at: 2026-04-12T22:06:20.042829132-07:00
+mode: manual
+files: ["PROTOCOL.md"]
+---
+
+--- File: PROTOCOL.md ---
 # PROTOCOL.md: The Keel Communications Protocol
 
 The Keel CLI implements an asynchronous communication layer through the `ping` and `poke` commands. This system allows the workflow engine to field requests, route messages, and provide either synchronous automated responses or facilitate asynchronous offline interactions.
@@ -263,3 +270,4 @@ As Keel's capabilities grow, the routing rules will be expanded to support more 
 - **Regex/Semantic Matching:** Moving beyond simple word inclusion to understand intent.
 - **Action Triggers:** Allowing a `ping` to synchronously trigger engine operations (e.g., "ping: status" running `keel flow`).
 - **Agent Handoffs:** Routing pending messages to specific sub-agents or workflow lanes for evaluation during `keel pulse`.
+

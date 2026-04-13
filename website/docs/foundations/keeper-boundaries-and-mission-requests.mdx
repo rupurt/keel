@@ -107,6 +107,53 @@ The replay and acknowledgement rules are:
 - Keel owns acknowledgement payload rendering from the normalized request and
   planning result
 
+## Mission stacks after ingress
+
+Mission requests explain how work enters another board. They do not, by
+themselves, define how execution should continue when one outcome spans multiple
+repositories.
+
+That follow-on coordination lives in the **Mission Stack** contract.
+
+A Mission Stack is a federation of independent Keel boards:
+
+- each member repository keeps its own Keel board
+- each member reactor remains authoritative for its own planning state
+- one repo does not write another repo's `.keel` directory directly
+- cross-repo work starts with a mission request and reactor negotiation
+
+The branch and handoff rules are:
+
+- every stack member uses branch `stack/<id>`
+- commit is still the local closure boundary inside a repo
+- push is the inter-reactor handoff boundary between repos
+- the first pushed receipt can stay git-native: stack id, repo identity, branch,
+  head sha, and optional checkpoint context
+
+Mission Stack also introduces explicit flow-control modes:
+
+- `exclusive(<repo>)`
+- `shared([repos...])`
+- `checkpoint(<name>, required_members...)`
+
+Those modes tell a reactor whether it may continue locally, yield to another
+member, or stop at an integration gate.
+
+## Foreign execution uses managed worktrees
+
+If a reactor needs to execute work inside another stack member repository from
+the outside, it should not run in that member repo's primary checkout.
+
+The required contract is:
+
+- outside execution uses a managed git worktree
+- that worktree targets `stack/<id>` or an approved stack-derived head
+- create, reuse, inspection, and cleanup behavior belong to the stack lifecycle
+- managed foreign worktrees are garbage-collected when the stack closes
+- ambiguous leftovers are reported instead of being deleted silently
+
+This keeps local ownership and cross-repo traceability legible at the same time.
+
 ## Multiplayer security without a hard backend dependency
 
 Keel's documented multiplayer security model is boundary-focused, not

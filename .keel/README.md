@@ -448,11 +448,11 @@
 |--------|--------|
 | [Define Mission Stack Stewardship And Handoff Protocol](epics/VGdxE0AFZ/voyages/VGdyGsOEw/) | planned |
 
-### [Foreign Reactor Worktree Execution Lifecycle](epics/VGdxE0lFe/) (active)
+### [Foreign Reactor Worktree Execution Lifecycle](epics/VGdxE0lFe/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Specify Managed Foreign Worktree Lifecycle](epics/VGdxE0lFe/voyages/VGdyGssEu/) | planned |
+| [Specify Managed Foreign Worktree Lifecycle](epics/VGdxE0lFe/voyages/VGdyGssEu/) | done |
 
 ### [Mission Entity](epics/1vzeJF000/) (done)
 

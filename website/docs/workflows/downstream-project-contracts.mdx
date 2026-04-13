@@ -85,6 +85,11 @@ If one of those foundational docs already exists, `keel new` asks before replaci
 
 One example of upstream intent worth preserving exactly is heartbeat semantics: the pacemaker is derived from Git/worktree activity, `keel heartbeat` is the inspection surface, and dirty repository energy is warning-level loop debt that should be closed at the commit boundary. Downstream copies should preserve that contract instead of inventing repo-local heartbeat files or wake rituals. See [Heartbeat And Pacemaker](/docs/cli/heartbeat-and-pacemaker) for the canonical public explanation.
 
+If a downstream repo participates in a Mission Stack, preserve that contract too:
+cross-repo work should enter through mission requests and reactor negotiation,
+and any outside execution in that repo should use a managed git worktree on
+`stack/<id>` instead of the repo's primary checkout.
+
 ## What stays upstream and what changes downstream
 
 <ContractBoundary
