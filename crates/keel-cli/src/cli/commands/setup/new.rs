@@ -35,7 +35,7 @@ struct FoundationalDocSpec {
     template: &'static str,
 }
 
-const FOUNDATIONAL_DOCS: [FoundationalDocSpec; 9] = [
+const FOUNDATIONAL_DOCS: [FoundationalDocSpec; 10] = [
     FoundationalDocSpec {
         path: "CONSTITUTION.md",
         description: "collaboration philosophy and decision hierarchy",
@@ -50,6 +50,11 @@ const FOUNDATIONAL_DOCS: [FoundationalDocSpec; 9] = [
         path: "ARCHITECTURE.md",
         description: "system map, boundaries, and technical seams",
         template: templates::project::ARCHITECTURE,
+    },
+    FoundationalDocSpec {
+        path: "PROTOCOL.md",
+        description: "coordination protocol and data contracts, including Mission Stack rules",
+        template: templates::project::PROTOCOL,
     },
     FoundationalDocSpec {
         path: "USER_GUIDE.md",
@@ -515,6 +520,7 @@ mod tests {
         assert!(root.join("keel.toml").is_file());
         assert!(root.join("AGENTS.md").is_file());
         assert!(root.join("INSTRUCTIONS.md").is_file());
+        assert!(root.join("PROTOCOL.md").is_file());
         assert!(root.join("GEMINI.md").is_file());
         assert!(root.join("CLAUDE.md").is_file());
         assert!(report.initialized_git);

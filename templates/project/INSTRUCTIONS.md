@@ -6,6 +6,8 @@ Procedural instructions for humans and agents working with {{project_name}} thro
 
 This file is downstream from Keel and should keep the engine's turn-loop discipline recognizable while describing how {{project_name}} actually operates.
 
+Mission Stack coordination is part of the formal downstream protocol surface. Hydrate `PROTOCOL.md` instead of inventing ad hoc cross-repo rules in chat or commit lore.
+
 When syncing from a newer Keel version, preserve the `PROJECT-SPECIFIC` block instead of re-authoring the local operating surface from scratch.
 
 ## The Turn Loop
@@ -46,6 +48,7 @@ Focus on **technical discovery and fog reduction**.
 - Add the exact build, test, runtime, or preview commands this repo expects.
 - Add any mandatory local wrappers such as `just check`, `pnpm test`, `cargo test`, or deploy smoke tests.
 - Add role-specific expectations if the repo uses designer, marketer, legal, or executive lanes in practice.
+- If this repo participates in Mission Stacks, point to the branch, checkpoint, handoff, and managed-worktree rules in `PROTOCOL.md`.
 <!-- END PROJECT-SPECIFIC -->
 
 ## Hydration Checklist
@@ -61,5 +64,6 @@ Before relying on this file as a real operating contract, fill in:
 
 - Use the CLI as the canonical lifecycle surface.
 - Prefer board-backed proof over memory or chat summaries.
+- Treat Mission Stack coordination as a formal protocol. Another repo must not mutate this repo's `{{board_dir}}/` state directly.
 - Keep downstream wrappers truthful about the real repo commands.
 - Update this file when the repo workflow changes materially.

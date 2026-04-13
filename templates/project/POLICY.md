@@ -9,6 +9,7 @@ This document is downstream from Keel and should describe the operational invari
 - The board lives in `{{board_dir}}/`.
 - The canonical tactical rhythm is the Turn Loop exposed by `keel turn`.
 - Board mutations, proof, and lifecycle closure happen through the CLI, not manual file edits.
+- Cross-repo coordination, including Mission Stacks, follows `PROTOCOL.md`; no peer repo or reactor may mutate this repo's `{{board_dir}}/` state directly.
 
 ## The Core Objective: Zero Drift
 
@@ -34,6 +35,7 @@ Hydrate the rules that should always be true in this repository.
 - What must pass before a change can land?
 - What kinds of changes require explicit human review?
 - What evidence is required for code, product, UX, legal, or operational claims?
+- Which Mission Stack or external-ingress rules are binding for cross-repo work in this repository?
 
 ## Safety Rails
 

@@ -12,7 +12,7 @@ This repository uses Keel as its project-management engine. This file is downstr
 
 1. `INSTRUCTIONS.md` for the repo's procedural turn loop.
 2. `POLICY.md` for local operational invariants.
-3. `ARCHITECTURE.md` and `USER_GUIDE.md` for product and system context.
+3. `ARCHITECTURE.md`, `PROTOCOL.md`, and `USER_GUIDE.md` for system, coordination, and product context.
 4. `CODE_WALKTHROUGH.md` for source layout and key abstractions.
 5. `keel turn`, `keel mission next --status`, and `keel doctor --status` for the live board state.
 
@@ -21,6 +21,7 @@ This repository uses Keel as its project-management engine. This file is downstr
 - Use Keel as the canonical planning and lifecycle surface.
 - Prefer explicit proof over chat-only claims.
 - Close loop debt with sealing commits instead of leaving dirty work behind.
+- Treat Mission Stack coordination as a formal protocol defined in `PROTOCOL.md`, not as ad hoc repo folklore.
 - Escalate only when the work requires human product, design, legal, or operational judgment.
 
 ## Decision Resolution Hierarchy
@@ -40,6 +41,7 @@ These define the constraints and workflow of the {{project_name}} environment:
 - `POLICY.md` — Operational invariants and engine constraints.
 - `CONSTITUTION.md` — Collaboration philosophy and decision hierarchy.
 - `ARCHITECTURE.md` — Implementation architecture and technical boundaries.
+- `PROTOCOL.md` — Coordination protocol and data contracts, including Mission Stack rules.
 - `CODE_WALKTHROUGH.md` — Source layout, key abstractions, and data-flow orientation.
 - `USER_GUIDE.md` — Operator-visible product story and workflow guidance.
 - `.keel/adrs/` — Binding architecture decisions.

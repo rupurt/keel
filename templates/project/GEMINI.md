@@ -10,6 +10,7 @@ Before doing work, read:
 2. `INSTRUCTIONS.md`
 3. `POLICY.md`
 4. `ARCHITECTURE.md`
+5. `PROTOCOL.md`
 
 Those files are the repo-wide operating contract. This file should stay thin and only capture Gemini-specific harness notes.
 

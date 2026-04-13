@@ -1,6 +1,6 @@
 # {{project_name}} Code Walkthrough
 
-This document orients contributors and agents to the source layout, key abstractions, and data flows in the {{project_name}} codebase. For governance philosophy see [CONSTITUTION.md](CONSTITUTION.md); for architectural contracts see [ARCHITECTURE.md](ARCHITECTURE.md).
+This document orients contributors and agents to the source layout, key abstractions, and data flows in the {{project_name}} codebase. For governance philosophy see [CONSTITUTION.md](CONSTITUTION.md); for architectural contracts see [ARCHITECTURE.md](ARCHITECTURE.md); for coordination and Mission Stack rules see [PROTOCOL.md](PROTOCOL.md).
 
 ## Repository Layout
 
@@ -33,6 +33,7 @@ Trace a representative operation from entry point to completion.
 - Where does user input enter the system?
 - What validation or enforcement happens before execution?
 - How are results persisted and presented back?
+- Where do external or Mission Stack requests get normalized before local board mutations?
 
 ## Configuration
 

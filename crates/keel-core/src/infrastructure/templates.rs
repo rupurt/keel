@@ -87,6 +87,8 @@ pub mod project {
     pub const POLICY: &str = include_str!("../../../../templates/project/POLICY.md");
     /// Project architecture template
     pub const ARCHITECTURE: &str = include_str!("../../../../templates/project/ARCHITECTURE.md");
+    /// Project protocol template
+    pub const PROTOCOL: &str = include_str!("../../../../templates/project/PROTOCOL.md");
     /// Project user guide template
     pub const USER_GUIDE: &str = include_str!("../../../../templates/project/USER_GUIDE.md");
     /// Project agents template
@@ -289,6 +291,13 @@ mod tests {
     fn project_agents_template_has_sync_markers() {
         assert!(project::AGENTS.contains("BEGIN PROJECT-SPECIFIC"));
         assert!(project::AGENTS.contains("downstream from Keel"));
+    }
+
+    #[test]
+    fn project_protocol_template_makes_mission_stack_formal() {
+        assert!(project::PROTOCOL.contains("Mission Stacks are a formal Keel protocol"));
+        assert!(project::PROTOCOL.contains("stack/<id>"));
+        assert!(project::PROTOCOL.contains("managed worktree"));
     }
 
     #[test]
