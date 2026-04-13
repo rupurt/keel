@@ -442,11 +442,11 @@
 |--------|--------|
 | [Specify Stack-Aware Turn Next And Doctor Contracts](epics/VGdxDziFF/voyages/VGdyGtOFK/) | planned |
 
-### [Federated Mission Stack Domain Model](epics/VGdxE0AFZ/) (active)
+### [Federated Mission Stack Domain Model](epics/VGdxE0AFZ/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Define Mission Stack Stewardship And Handoff Protocol](epics/VGdxE0AFZ/voyages/VGdyGsOEw/) | planned |
+| [Define Mission Stack Stewardship And Handoff Protocol](epics/VGdxE0AFZ/voyages/VGdyGsOEw/) | done |
 
 ### [Foreign Reactor Worktree Execution Lifecycle](epics/VGdxE0lFe/) (done)
 

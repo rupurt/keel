@@ -119,16 +119,11 @@ A Mission Stack is a federation of independent Keel boards:
 
 - each member repository keeps its own Keel board
 - each member reactor remains authoritative for its own planning state
+- one reactor may act as the stack steward for coordination
 - one repo does not write another repo's `.keel` directory directly
 - cross-repo work starts with a mission request and reactor negotiation
-
-The branch and handoff rules are:
-
-- every stack member uses branch `stack/<id>`
-- commit is still the local closure boundary inside a repo
-- push is the inter-reactor handoff boundary between repos
-- the first pushed receipt can stay git-native: stack id, repo identity, branch,
-  head sha, and optional checkpoint context
+- the target reactor materializes its own local mission lineage after
+  negotiation instead of accepting external board mutation
 
 Mission Stack also introduces explicit flow-control modes:
 
@@ -138,6 +133,24 @@ Mission Stack also introduces explicit flow-control modes:
 
 Those modes tell a reactor whether it may continue locally, yield to another
 member, or stop at an integration gate.
+
+The branch and handoff rules are:
+
+- every stack member uses branch `stack/<id>`
+- commit is still the local closure boundary inside a repo
+- push is the inter-reactor handoff boundary between repos
+- the first pushed receipt can stay git-native: stack id, repo identity, branch,
+  head sha, and optional checkpoint or role context
+
+The coordination sequence is:
+
+1. local work proceeds inside the current member repo
+2. commit seals the local result
+3. push publishes `stack/<id>`
+4. the pushed receipt tells the next reactor exactly which stack state to fetch
+5. the target reactor negotiates and materializes its own local mission lineage
+6. acknowledgment or integration closes the handoff and yields to the next
+   stack mode boundary
 
 ## Foreign execution uses managed worktrees
 

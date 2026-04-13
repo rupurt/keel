@@ -217,10 +217,23 @@ multiple repositories, each with its own Keel board and reactor.
 
 - A Mission Stack is a federation of independent Keel boards, not a shared
   multi-repo board.
+- One reactor may act as the stack steward for coordination, but stewardship
+  does not grant authority to mutate another repo's board directly.
 - Each member repository remains authoritative for its own `.keel` state.
 - One repository MUST NOT mutate another repository's planning artifacts
   directly from outside that repository's reactor.
 - Cross-repo work begins with a mission request and reactor negotiation.
+- A target reactor materializes its own local mission lineage after negotiation
+  rather than accepting external `.keel` mutations from another repo.
+
+### Stack Modes
+
+Mission Stack uses explicit coordination modes:
+
+- `exclusive(<repo>)` allows one active member repo at a time.
+- `shared([repos...])` opens an explicit parallel execution window.
+- `checkpoint(<name>, required_members...)` pauses forward progress until the
+  named members acknowledge the integration boundary.
 
 ### Stack Branch And Handoff Rule
 
@@ -230,6 +243,20 @@ multiple repositories, each with its own Keel board and reactor.
   first version of the protocol.
 - The minimum pushed receipt is stack id, member repo identity, branch, head
   sha, and optional checkpoint or role context.
+
+### Coordination Sequence
+
+The canonical Mission Stack handoff is:
+
+1. local work proceeds inside the current member repo
+2. local closure seals that work at commit time
+3. the member pushes `stack/<id>` to publish the sealed result
+4. the pushed receipt exposes stack id, repo identity, branch, head sha, and
+   optional checkpoint or role context
+5. the target reactor negotiates the next move and materializes any local
+   mission lineage inside its own board
+6. the target reactor acknowledges or integrates the receipt and either
+   continues locally or yields at the next stack mode boundary
 
 ### Foreign Worktree Rule
 

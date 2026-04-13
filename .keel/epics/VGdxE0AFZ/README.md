@@ -22,8 +22,8 @@ mission: VGdx8iyUo
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 0/1 stories done
+**Progress:** 1/1 voyages complete, 1/1 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Define Mission Stack Stewardship And Handoff Protocol](voyages/VGdyGsOEw/) | planned | 0/1 |
+| [Define Mission Stack Stewardship And Handoff Protocol](voyages/VGdyGsOEw/) | done | 1/1 |
 <!-- END GENERATED -->
