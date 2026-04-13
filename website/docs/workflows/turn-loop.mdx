@@ -47,6 +47,19 @@ keel turn
 keel turn --json
 ```
 
+If this repository participates in a Mission Stack, `keel turn` is also where
+the local operator should see stack-specific turn state without losing the
+single-repo loop:
+
+- stack id
+- current `stack/<id>` branch
+- local member role
+- current stack mode
+- checkpoint status
+
+`keel turn --json` should mirror the same facts in a dedicated stack payload so
+automation and human output stay aligned.
+
 ## Orient
 
 Start by reading the board before you move it.
@@ -65,6 +78,10 @@ This step answers three questions first:
 - Can the board be trusted before more motion is introduced?
 
 `keel flow --scene` and `keel doctor` are intentionally close but not identical. `doctor` is the pathology report. `flow` is the circuit-readiness judgment. During energized mission intake, `flow` may stay open with a warning notice while `doctor` still reports transitional mission-intake debt that has not been resolved yet.
+
+Mission Stack does not redefine the pacemaker. `keel heartbeat` still answers
+repo-local wake questions only. Stack readiness belongs on `turn`, `next`,
+`mission next`, and `doctor`, not inside the heartbeat fields.
 
 <TurnDivider compact arcSide="right" turns={3} />
 

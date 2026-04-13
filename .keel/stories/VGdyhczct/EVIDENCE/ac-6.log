@@ -1,3 +1,10 @@
+---
+recorded_at: 2026-04-12T22:13:40.182655563-07:00
+mode: manual
+files: ["ARCHITECTURE.md", "website/docs/workflows/turn-loop.mdx", "website/docs/cli/heartbeat-and-pacemaker.mdx"]
+---
+
+--- File: ARCHITECTURE.md ---
 # Keel Architecture
 
 This document describes the current architecture of `keel`: the normalized DDD layer layout, the 2-queue pull model, entity state machines, and transition gating.
@@ -508,3 +515,274 @@ src/
 │   └── knowledge/
 └── main.rs
 ```
+
+
+--- File: turn-loop.mdx ---
+---
+title: Keel Turn Loop
+sidebar_label: The Turn Loop
+description: See how Keel turns a vague ticket flow into a visible loop of orientation, selection, execution, and closure.
+---
+
+import TurnDivider from '@site/src/components/TurnDivider';
+
+export const turnLoopExamples = [
+  {
+    phase: 'Orient',
+    commands: [
+      'keel health --scene',
+      'keel heartbeat',
+      'keel flow --scene',
+      'keel doctor',
+    ],
+  },
+  {
+    phase: 'Inspect',
+    commands: ['keel mission next --status', 'keel pulse'],
+  },
+  {
+    phase: 'Pull',
+    commands: ['keel next --role manager'],
+  },
+  {
+    phase: 'Ship',
+    commands: [
+      'keel story start STORY-ID',
+      'keel story record STORY-ID --ac 1 --cmd "your-check-here"',
+      'keel story submit STORY-ID',
+    ],
+  },
+  {
+    phase: 'Close',
+    commands: ['keel story accept --role manager STORY-ID'],
+  },
+];
+
+After [Board Model](/docs/foundations/board-model) explains what exists and [Roles And Lanes](/docs/foundations/roles-and-lanes) explains who may act, the turn loop explains how the system changes over time. Keel is built around the idea that one turn should leave the board in a visibly better state. The loop below is not ceremony for its own sake. It is the minimum rhythm that keeps a human and AI team aligned on what is true.
+
+If you want this rhythm as a direct command surface instead of prose, use:
+
+```bash
+keel turn
+keel turn --json
+```
+
+If this repository participates in a Mission Stack, `keel turn` is also where
+the local operator should see stack-specific turn state without losing the
+single-repo loop:
+
+- stack id
+- current `stack/<id>` branch
+- local member role
+- current stack mode
+- checkpoint status
+
+`keel turn --json` should mirror the same facts in a dedicated stack payload so
+automation and human output stay aligned.
+
+## Orient
+
+Start by reading the board before you move it.
+
+```bash
+keel heartbeat
+keel health --scene
+keel flow --scene
+keel doctor
+```
+
+This step answers three questions first:
+
+- Is the system structurally healthy?
+- Is work flowing, blocked, or waiting on human attention?
+- Can the board be trusted before more motion is introduced?
+
+`keel flow --scene` and `keel doctor` are intentionally close but not identical. `doctor` is the pathology report. `flow` is the circuit-readiness judgment. During energized mission intake, `flow` may stay open with a warning notice while `doctor` still reports transitional mission-intake debt that has not been resolved yet.
+
+Mission Stack does not redefine the pacemaker. `keel heartbeat` still answers
+repo-local wake questions only. Stack readiness belongs on `turn`, `next`,
+`mission next`, and `doctor`, not inside the heartbeat fields.
+
+<TurnDivider compact arcSide="right" turns={3} />
+
+## Inspect
+
+Once the board is healthy, read what it thinks matters now.
+
+```bash
+keel mission next --status
+keel pulse
+```
+
+Inspection is about deciding what the engine thinks is strategically or operationally important before you choose a slice.
+
+## Pull
+
+Pull one role-scoped slice from the correct lane.
+
+```bash
+keel next --role manager
+keel next --role operator
+keel next --role operator/software:frontend
+```
+
+This is where Keel stops being a passive tracker. The board routes work based on roles and lanes so strategy and execution do not fight for the same queue. This is the exact handoff point between the lane model and the turn model.
+
+In Keel terms, the slice you pull is not a vague ticket. It is one story with active mission, epic, and voyage lineage plus the authored planning artifacts that constrain the move.
+
+Pull should leave you able to answer:
+
+- what objective this story serves
+- which PRD, SRS, and SDD define the boundary
+- what this implementation cut captures right now
+- what exact next state change should happen after you start
+
+That is why Keel session wording often summarizes board lineage, authored artifacts, slice boundary, current status, and next step together. That bundle is the slice.
+
+<TurnDivider compact arcSide="left" turns={2} />
+
+## Ship
+
+Execute the slice and attach proof while the work is still fresh.
+
+```bash
+keel story start STORY-ID
+keel story record STORY-ID --ac 1 --cmd "your-check-here"
+keel story submit STORY-ID
+```
+
+Shipping in Keel means implementation plus evidence. Submission without proof is only partial closure.
+
+## Close
+
+Accept the slice explicitly and let the board absorb that state change upward.
+
+```bash
+keel story accept --role manager STORY-ID
+```
+
+Closure is a governed act. Acceptance remains visible because the system distinguishes "submitted" from "trusted."
+
+<TurnDivider compact arcSide="right" turns={3} />
+
+## Why the loop matters
+
+A normal ticket can sit in ambiguous states for days. A turn should not. Each step above exists to make the next state legible to both humans and agents.
+
+For the visual surfaces that support this loop, read [Scene Surfaces](/docs/cli/scene-surfaces). For the planning contract behind it, read [Planning And Verification](/docs/foundations/planning-and-verification).
+
+Taken together, these three pages describe one system:
+
+- [Board Model](/docs/foundations/board-model): what exists
+- [Roles And Lanes](/docs/foundations/roles-and-lanes): who may act
+- [The Turn Loop](/docs/workflows/turn-loop): how state changes
+
+
+--- File: heartbeat-and-pacemaker.mdx ---
+---
+title: Heartbeat And Pacemaker In Keel
+sidebar_label: Heartbeat And Pacemaker
+description: Understand the pacemaker as a derived CLI surface backed by repository activity, not a synthetic heartbeat file.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+
+export const heartbeatSignals = [
+  {
+    eyebrow: 'Canonical',
+    title: 'The pacemaker is now a CLI surface',
+    body:
+      'Keel no longer needs a synthetic heartbeat file to describe recent activity. `keel heartbeat` is the public inspection surface for the board’s wake state.',
+  },
+  {
+    eyebrow: 'Derived',
+    title: 'The signal comes from Git and the worktree',
+    body:
+      'The heartbeat is projected from dirty worktree paths, the Git index, the latest commit, or a filesystem fallback when Git is unavailable.',
+  },
+  {
+    eyebrow: 'Governing Boundary',
+    title: 'The commit boundary closes loop debt',
+    body:
+      'Dirty repository energy is warning-level loop debt. Hooks and the commit action are the governor controls that close it cleanly.',
+  },
+];
+
+`keel heartbeat` is now the canonical pacemaker contract. If a human, an AI harness, or a visual scene needs to know whether the board is still energized, it should read the same derived signal.
+
+<SignalGrid items={heartbeatSignals} />
+
+## What `keel heartbeat` tells you
+
+```bash
+keel heartbeat
+keel heartbeat --json
+```
+
+The heartbeat output answers five practical questions:
+
+| Field | Meaning |
+| --- | --- |
+| `state` | Whether the pacemaker is currently `energized` or `idle` |
+| `source` | Which source won: dirty worktree, Git index, head commit, or filesystem fallback |
+| `last_activity_at` | The timestamp of the newest activity Keel could prove |
+| `dirty` / `dirty_files` | Whether there is uncommitted repository energy still on the floor |
+| `decay_minutes` | The charge window before the system falls back to idle |
+
+The important shift is conceptual: the heartbeat is no longer a file to poke. It is a read model to inspect.
+
+## The pacemaker protocol after formalization
+
+The protocol is now simpler:
+
+1. Work changes the repository.
+2. `keel heartbeat` projects the newest trustworthy activity.
+3. Scene surfaces consume that projection.
+4. The commit boundary closes dirty energy through hooks and the commit itself.
+
+This is why the pacemaker belongs in the CLI. It is board state, not a ritual.
+
+## Mission Stack does not redefine heartbeat
+
+Mission Stack adds coordination across repos, but it does not change what
+`keel heartbeat` means inside one repo.
+
+- `keel heartbeat` and `keel heartbeat --json` stay repo-local
+- stack id, stack mode, checkpoint state, and waiting receipts belong to
+  `keel turn`, `keel next`, `keel mission next --status`, and `keel doctor`
+- stack-aware surfaces should add their own text and JSON fields without
+  overloading heartbeat output
+
+## How scenes should read the pacemaker
+
+The heartbeat command is the source of truth. Scene surfaces should only visualize that truth.
+
+| Surface | Correct pacemaker behavior |
+| --- | --- |
+| `keel flow --scene` | Show the unplugged circuit when the heartbeat is idle, and only allow the mission-intake override while the heartbeat is energized |
+| `keel workshop --scene` | Turn the workbench lamp on only when the heartbeat is energized |
+| `keel health --scene` | Do not invent pacemaker state; show structural subsystem health only |
+| `keel doctor --scene` | Treat pacemaker drift as a diagnostic finding, not a separate power model |
+
+If a scene disagrees with `keel heartbeat`, the scene is wrong.
+
+That heartbeat gate matters for `keel flow`. Keel may temporarily keep the circuit open while missions, voyages, or bearings are still being validly created, but only if the pacemaker can still prove recent repository motion. Once the board goes idle, that intake exception disappears and the same transitional doctor debt can short-circuit the flow again.
+
+For representative scene outputs and the exact state legends those scenes should obey, read [Scene Surfaces](/docs/cli/scene-surfaces).
+
+## Dirty energy is not failure
+
+Keel treats dirty heartbeat energy as warning-level loop debt, not a structural failure. That distinction matters:
+
+- missing recent activity can make the board idle
+- dirty worktree activity should warn
+- doctor and health should still describe structural truth separately from wake state
+
+This keeps the pacemaker honest without overstating it.
+
+## Downstream copies should preserve the same contract
+
+If Keel is embedded inside another repository, keep this language recognizable in downstream `AGENTS.md` and `INSTRUCTIONS.md`. Downstream repos can change wrappers and proof rules, but they should not replace the derived heartbeat model with custom wake files or repo-local rituals.
+
+For the visual contract that sits on top of the pacemaker, continue with [Scene Surfaces](/docs/cli/scene-surfaces).
+

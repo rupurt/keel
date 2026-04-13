@@ -1,13 +1,16 @@
 ---
 # system-managed
 id: VGdx8iyUo
-status: active
+status: verified
 created_at: 2026-04-12T21:50:00
-updated_at: 2026-04-12T21:57:10
+updated_at: 2026-04-12T22:17:46
 # authored
 title: Federated Mission Stack Coordination Protocol
 watch: ~
 activated_at: 2026-04-12T21:57:10
+achieved_at: 2026-04-12T22:15:54
+verified_at: 2026-04-12T22:17:46
+verification_artifact: verification-playback.gif
 ---
 
 # Federated Mission Stack Coordination Protocol

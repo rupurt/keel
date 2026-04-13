@@ -1,3 +1,10 @@
+---
+recorded_at: 2026-04-12T22:13:27.295679929-07:00
+mode: manual
+files: ["ARCHITECTURE.md", "website/docs/roles-and-lanes/role-routing-and-next.mdx"]
+---
+
+--- File: ARCHITECTURE.md ---
 # Keel Architecture
 
 This document describes the current architecture of `keel`: the normalized DDD layer layout, the 2-queue pull model, entity state machines, and transition gating.
@@ -508,3 +515,149 @@ src/
 │   └── knowledge/
 └── main.rs
 ```
+
+
+--- File: role-routing-and-next.mdx ---
+---
+title: Role Routing With `keel next`
+sidebar_label: Role Routing And `keel next`
+description: Understand how role selectors turn lanes into executable routing decisions instead of informal team habits.
+---
+
+export const routingInspectionCommands = [
+  'keel roles',
+  'keel roles --json',
+  'keel next --role manager --explain',
+  'keel next --role operator --explain',
+];
+
+export const routingDefaults = {
+  managementRole: 'manager',
+  deliveryRole: 'operator',
+};
+
+Roles and lanes are not just explanatory language in Keel. They are routing controls. The board uses them to decide what queue you are asking for and what type of move is legitimate next.
+
+## Why `keel next` needs a role
+
+Keel does not assume there is one universal backlog. Asking "what is next?" without context is exactly how planning work and delivery work get mixed together.
+
+```bash
+keel next --role manager
+keel next --role operator
+keel next --role operator/software:frontend
+```
+
+The role selector tells the board:
+
+- which lane you want to read from
+- which scope of work is valid for that actor
+- whether the next move should be strategic or executable
+
+If you want to inspect the routing contract directly, Keel now exposes it:
+
+```bash
+keel roles
+keel roles --json
+keel next --role manager --explain
+```
+
+Those surfaces let you inspect the lane, queue type, contract, and role-context reasoning without changing the underlying pull decision.
+
+## Management routing
+
+Management routing is for direction-setting, planning readiness, review authority, and acceptance.
+
+Typical questions:
+
+- Which mission or epic needs attention next?
+- Is a voyage ready to be planned or started?
+- Which submitted story needs review or acceptance?
+
+Typical commands:
+
+```bash
+keel mission next --status
+keel next --role manager --explain
+keel next --role manager
+keel workshop --scene
+```
+
+## Delivery routing
+
+Delivery routing is for role-scoped execution work in the delivery lane.
+
+Typical questions:
+
+- What is the next implementable slice?
+- Which story should this operator start now?
+- What evidence or remediation is still missing?
+
+Typical commands:
+
+```bash
+keel next --role operator --explain
+keel next --role operator
+keel next --role operator/software:frontend
+keel workshop --scene
+```
+
+## Mission Stack changes outcomes, not the role model
+
+Mission Stack does not replace role routing. It adds a stack gate on top of the
+same lane decision.
+
+In a stack-participating repo, `keel next` should be able to explain three
+high-value outcomes:
+
+- continue locally because this repo is allowed to act now
+- yield to another member because stack mode points elsewhere
+- report stack-blocked because a checkpoint, branch mismatch, or other stack
+  gate prevents local execution
+
+`keel next --json` should expose the same outcome class in machine-readable
+form, not only as prose.
+
+## Mission inspection in a stack
+
+`keel mission next --status` remains the mission inspection surface, but in a
+Mission Stack it should also tell the operator about cross-repo state:
+
+- linked member missions
+- pending negotiations
+- waiting pushed receipts or acknowledgments
+
+`keel mission next --status --json` should carry those same linkage and handoff
+facts so automation can branch on them deterministically.
+
+## Role selectors can be coarse or specific
+
+You can use a broad role family when you want a lane-level queue, or a more specific role selector when the board topology distinguishes types of delivery work.
+
+That means Keel can support:
+
+- a small team with one operator role
+- a mixed product team with explicit discipline roles
+- downstream projects that adapt the upstream contract to their own delivery topology
+
+## Inspect the role contract explicitly
+
+`keel roles` is the stable inspection surface for the topology itself:
+
+- which base roles exist
+- which lane each role resolves to
+- whether the lane is management or execution
+- whether the lane allows parallel work or requires manual acceptance
+
+`keel next --explain` is the stable inspection surface for one specific routing decision:
+
+- which lane the selected role resolved to
+- which queue type the decision is reading
+- which contract and persona are attached to that role
+
+## Routing is part of integrity
+
+This matters because pull behavior shapes board trust. If people bypass role routing and browse loosely, the board stops being the authority on what should happen next.
+
+Read [Roles And Lanes](/docs/foundations/roles-and-lanes) for the lane model itself, and [Everyday Keel](/docs/workflows/everyday-keel) for the day-to-day operator loop.
+

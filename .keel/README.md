@@ -436,11 +436,11 @@
 |--------|--------|
 | [Ship Hub Session CLI And Remote Backend Config](epics/VGbHeuTMW/voyages/VGbHgxwnS/) | done |
 
-### [Stack-Aware Turn And Queue Surfaces](epics/VGdxDziFF/) (active)
+### [Stack-Aware Turn And Queue Surfaces](epics/VGdxDziFF/) (done)
 
 | Voyage | Status |
 |--------|--------|
-| [Specify Stack-Aware Turn Next And Doctor Contracts](epics/VGdxDziFF/voyages/VGdyGtOFK/) | planned |
+| [Specify Stack-Aware Turn Next And Doctor Contracts](epics/VGdxDziFF/voyages/VGdyGtOFK/) | done |
 
 ### [Federated Mission Stack Domain Model](epics/VGdxE0AFZ/) (done)
 

@@ -61,6 +61,17 @@ The protocol is now simpler:
 
 This is why the pacemaker belongs in the CLI. It is board state, not a ritual.
 
+## Mission Stack does not redefine heartbeat
+
+Mission Stack adds coordination across repos, but it does not change what
+`keel heartbeat` means inside one repo.
+
+- `keel heartbeat` and `keel heartbeat --json` stay repo-local
+- stack id, stack mode, checkpoint state, and waiting receipts belong to
+  `keel turn`, `keel next`, `keel mission next --status`, and `keel doctor`
+- stack-aware surfaces should add their own text and JSON fields without
+  overloading heartbeat output
+
 ## How scenes should read the pacemaker
 
 The heartbeat command is the source of truth. Scene surfaces should only visualize that truth.

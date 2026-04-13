@@ -1,3 +1,10 @@
+---
+recorded_at: 2026-04-12T22:13:24.229570329-07:00
+mode: manual
+files: ["ARCHITECTURE.md", "website/docs/workflows/turn-loop.mdx"]
+---
+
+--- File: ARCHITECTURE.md ---
 # Keel Architecture
 
 This document describes the current architecture of `keel`: the normalized DDD layer layout, the 2-queue pull model, entity state machines, and transition gating.
@@ -508,3 +515,165 @@ src/
 │   └── knowledge/
 └── main.rs
 ```
+
+
+--- File: turn-loop.mdx ---
+---
+title: Keel Turn Loop
+sidebar_label: The Turn Loop
+description: See how Keel turns a vague ticket flow into a visible loop of orientation, selection, execution, and closure.
+---
+
+import TurnDivider from '@site/src/components/TurnDivider';
+
+export const turnLoopExamples = [
+  {
+    phase: 'Orient',
+    commands: [
+      'keel health --scene',
+      'keel heartbeat',
+      'keel flow --scene',
+      'keel doctor',
+    ],
+  },
+  {
+    phase: 'Inspect',
+    commands: ['keel mission next --status', 'keel pulse'],
+  },
+  {
+    phase: 'Pull',
+    commands: ['keel next --role manager'],
+  },
+  {
+    phase: 'Ship',
+    commands: [
+      'keel story start STORY-ID',
+      'keel story record STORY-ID --ac 1 --cmd "your-check-here"',
+      'keel story submit STORY-ID',
+    ],
+  },
+  {
+    phase: 'Close',
+    commands: ['keel story accept --role manager STORY-ID'],
+  },
+];
+
+After [Board Model](/docs/foundations/board-model) explains what exists and [Roles And Lanes](/docs/foundations/roles-and-lanes) explains who may act, the turn loop explains how the system changes over time. Keel is built around the idea that one turn should leave the board in a visibly better state. The loop below is not ceremony for its own sake. It is the minimum rhythm that keeps a human and AI team aligned on what is true.
+
+If you want this rhythm as a direct command surface instead of prose, use:
+
+```bash
+keel turn
+keel turn --json
+```
+
+If this repository participates in a Mission Stack, `keel turn` is also where
+the local operator should see stack-specific turn state without losing the
+single-repo loop:
+
+- stack id
+- current `stack/<id>` branch
+- local member role
+- current stack mode
+- checkpoint status
+
+`keel turn --json` should mirror the same facts in a dedicated stack payload so
+automation and human output stay aligned.
+
+## Orient
+
+Start by reading the board before you move it.
+
+```bash
+keel heartbeat
+keel health --scene
+keel flow --scene
+keel doctor
+```
+
+This step answers three questions first:
+
+- Is the system structurally healthy?
+- Is work flowing, blocked, or waiting on human attention?
+- Can the board be trusted before more motion is introduced?
+
+`keel flow --scene` and `keel doctor` are intentionally close but not identical. `doctor` is the pathology report. `flow` is the circuit-readiness judgment. During energized mission intake, `flow` may stay open with a warning notice while `doctor` still reports transitional mission-intake debt that has not been resolved yet.
+
+Mission Stack does not redefine the pacemaker. `keel heartbeat` still answers
+repo-local wake questions only. Stack readiness belongs on `turn`, `next`,
+`mission next`, and `doctor`, not inside the heartbeat fields.
+
+<TurnDivider compact arcSide="right" turns={3} />
+
+## Inspect
+
+Once the board is healthy, read what it thinks matters now.
+
+```bash
+keel mission next --status
+keel pulse
+```
+
+Inspection is about deciding what the engine thinks is strategically or operationally important before you choose a slice.
+
+## Pull
+
+Pull one role-scoped slice from the correct lane.
+
+```bash
+keel next --role manager
+keel next --role operator
+keel next --role operator/software:frontend
+```
+
+This is where Keel stops being a passive tracker. The board routes work based on roles and lanes so strategy and execution do not fight for the same queue. This is the exact handoff point between the lane model and the turn model.
+
+In Keel terms, the slice you pull is not a vague ticket. It is one story with active mission, epic, and voyage lineage plus the authored planning artifacts that constrain the move.
+
+Pull should leave you able to answer:
+
+- what objective this story serves
+- which PRD, SRS, and SDD define the boundary
+- what this implementation cut captures right now
+- what exact next state change should happen after you start
+
+That is why Keel session wording often summarizes board lineage, authored artifacts, slice boundary, current status, and next step together. That bundle is the slice.
+
+<TurnDivider compact arcSide="left" turns={2} />
+
+## Ship
+
+Execute the slice and attach proof while the work is still fresh.
+
+```bash
+keel story start STORY-ID
+keel story record STORY-ID --ac 1 --cmd "your-check-here"
+keel story submit STORY-ID
+```
+
+Shipping in Keel means implementation plus evidence. Submission without proof is only partial closure.
+
+## Close
+
+Accept the slice explicitly and let the board absorb that state change upward.
+
+```bash
+keel story accept --role manager STORY-ID
+```
+
+Closure is a governed act. Acceptance remains visible because the system distinguishes "submitted" from "trusted."
+
+<TurnDivider compact arcSide="right" turns={3} />
+
+## Why the loop matters
+
+A normal ticket can sit in ambiguous states for days. A turn should not. Each step above exists to make the next state legible to both humans and agents.
+
+For the visual surfaces that support this loop, read [Scene Surfaces](/docs/cli/scene-surfaces). For the planning contract behind it, read [Planning And Verification](/docs/foundations/planning-and-verification).
+
+Taken together, these three pages describe one system:
+
+- [Board Model](/docs/foundations/board-model): what exists
+- [Roles And Lanes](/docs/foundations/roles-and-lanes): who may act
+- [The Turn Loop](/docs/workflows/turn-loop): how state changes
+

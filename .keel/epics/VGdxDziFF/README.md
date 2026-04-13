@@ -22,8 +22,8 @@ mission: VGdx8iyUo
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 0/1 stories done
+**Progress:** 1/1 voyages complete, 1/1 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Specify Stack-Aware Turn Next And Doctor Contracts](voyages/VGdyGtOFK/) | planned | 0/1 |
+| [Specify Stack-Aware Turn Next And Doctor Contracts](voyages/VGdyGtOFK/) | done | 1/1 |
 <!-- END GENERATED -->

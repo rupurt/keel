@@ -77,10 +77,16 @@ Two surfaces matter constantly:
 
 ```bash
 keel doctor
+keel doctor --json
 keel verify recommend
 ```
 
 - `keel doctor` tells you whether the board has drifted structurally
+- in a Mission Stack repo, `keel doctor` should also report stack violations
+  such as wrong branch, unauthorized active member, missing checkpoint
+  acknowledgment, or unsupported foreign execution state
+- `keel doctor --json` should expose those same violations as structured
+  diagnostics instead of prose only
 - `keel verify recommend` shows which verification techniques are active or detected for the current context
 
 The important part is not any one subcommand. It is the habit of making verification visible before work is declared complete.

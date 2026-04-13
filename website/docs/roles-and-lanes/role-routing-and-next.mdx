@@ -82,6 +82,34 @@ keel next --role operator/software:frontend
 keel workshop --scene
 ```
 
+## Mission Stack changes outcomes, not the role model
+
+Mission Stack does not replace role routing. It adds a stack gate on top of the
+same lane decision.
+
+In a stack-participating repo, `keel next` should be able to explain three
+high-value outcomes:
+
+- continue locally because this repo is allowed to act now
+- yield to another member because stack mode points elsewhere
+- report stack-blocked because a checkpoint, branch mismatch, or other stack
+  gate prevents local execution
+
+`keel next --json` should expose the same outcome class in machine-readable
+form, not only as prose.
+
+## Mission inspection in a stack
+
+`keel mission next --status` remains the mission inspection surface, but in a
+Mission Stack it should also tell the operator about cross-repo state:
+
+- linked member missions
+- pending negotiations
+- waiting pushed receipts or acknowledgments
+
+`keel mission next --status --json` should carry those same linkage and handoff
+facts so automation can branch on them deterministically.
+
 ## Role selectors can be coarse or specific
 
 You can use a broad role family when you want a lane-level queue, or a more specific role selector when the board topology distinguishes types of delivery work.

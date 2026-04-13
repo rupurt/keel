@@ -1,3 +1,10 @@
+---
+recorded_at: 2026-04-12T22:13:33.230539184-07:00
+mode: manual
+files: ["ARCHITECTURE.md", "website/docs/foundations/planning-and-verification.mdx"]
+---
+
+--- File: ARCHITECTURE.md ---
 # Keel Architecture
 
 This document describes the current architecture of `keel`: the normalized DDD layer layout, the 2-queue pull model, entity state machines, and transition gating.
@@ -508,3 +515,112 @@ src/
 │   └── knowledge/
 └── main.rs
 ```
+
+
+--- File: planning-and-verification.mdx ---
+---
+title: Keel Planning And Verification
+sidebar_label: Planning And Verification
+description: Understand how Keel freezes constraints before execution and why stories close with proof instead of narrative.
+---
+
+import SignalGrid from '@site/src/components/SignalGrid';
+
+export const loopSignals = [
+  {
+    eyebrow: 'Plan First',
+    title: 'Voyages define the delivery contract',
+    body:
+      'SRS and SDD documents exist to reduce ambiguity before the delivery lane begins consuming stories.',
+  },
+  {
+    eyebrow: 'Verify Continuously',
+    title: 'Evidence is attached at story level',
+    body:
+      'Acceptance criteria are backed by commands, files, or manual proof recorded on the story bundle.',
+  },
+  {
+    eyebrow: 'Gate Closure',
+    title: 'Acceptance requires an explicit role',
+    body:
+      'Keel does not treat submission and acceptance as the same thing. Review authority stays visible.',
+  },
+];
+
+Keel is opinionated about planning because it wants execution to be fast. Tight plans reduce improvisation later. It is opinionated about verification because "looks done to me" is not a durable collaboration protocol.
+
+<SignalGrid items={loopSignals} />
+
+## The planning chain
+
+The planning path flows downward:
+
+1. A mission declares the long-running objective.
+2. An epic defines the problem statement in a PRD.
+3. A voyage captures requirements in `SRS.md` and design decisions in `SDD.md`.
+4. Stories inherit that context and turn it into executable slices.
+
+Typical planning commands:
+
+```bash
+keel mission new "Launch public docs"
+keel epic new --problem "Readers cannot orient quickly." "Teach the first-use path"
+keel voyage new --epic EPIC-ID --goal "Ship guided onboarding." "Narrative onboarding"
+keel voyage plan VOYAGE-ID
+```
+
+The goal is not paperwork for its own sake. The goal is to make later execution more exact.
+
+## The verification chain
+
+The verification loop flows upward:
+
+1. Record proof against acceptance criteria.
+2. Submit the story for acceptance.
+3. Accept it with an explicit role.
+4. Let the parent voyage and epic inherit a trustworthy closure signal.
+
+Typical proof and acceptance commands:
+
+```bash
+keel story record STORY-ID --ac 1 --cmd "cargo test"
+keel story record STORY-ID --ac 2 --msg "Manual UX review completed."
+keel story submit STORY-ID
+keel story accept --role manager STORY-ID
+```
+
+Use command proof when the criterion is executable. Use manual proof when the judgment is inherently human.
+
+## Diagnostics are part of the loop
+
+Two surfaces matter constantly:
+
+```bash
+keel doctor
+keel doctor --json
+keel verify recommend
+```
+
+- `keel doctor` tells you whether the board has drifted structurally
+- in a Mission Stack repo, `keel doctor` should also report stack violations
+  such as wrong branch, unauthorized active member, missing checkpoint
+  acknowledgment, or unsupported foreign execution state
+- `keel doctor --json` should expose those same violations as structured
+  diagnostics instead of prose only
+- `keel verify recommend` shows which verification techniques are active or detected for the current context
+
+The important part is not any one subcommand. It is the habit of making verification visible before work is declared complete.
+
+## Why this matters for human/AI teams
+
+Human and AI collaborators can move fast together, but only if the boundary between "planned," "implemented," and "verified" is explicit.
+
+Keel makes that boundary hard to ignore:
+
+- planning artifacts constrain execution
+- stories carry acceptance criteria
+- evidence attaches to those criteria
+- acceptance remains an explicit act
+
+That is the difference between an operating model and a chat transcript.
+
