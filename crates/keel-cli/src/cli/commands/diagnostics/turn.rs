@@ -155,7 +155,9 @@ fn render_mission_stack_text(
 #[cfg(test)]
 mod tests {
     use super::{payload_for, render_text};
+    use chrono::Utc;
     use keel::test_helpers::{TestBoardBuilder, git, init_git_repo, write_stack_manifest};
+    use std::fs;
 
     #[test]
     fn turn_text_surface_contains_documented_examples() {
@@ -242,5 +244,91 @@ foreign_execution:
             json["mission_stack"]["foreign_execution_state"],
             "missing_managed_checkout"
         );
+    }
+
+    #[test]
+    fn mission_stack_surfaces_expose_deterministic_json() {
+        let temp = TestBoardBuilder::new().build();
+        init_git_repo(temp.path());
+        git(temp.path(), &["checkout", "-b", "stack/demo-stack"]);
+        write_stack_manifest(
+            temp.path(),
+            "demo-stack",
+            r#"
+id: demo-stack
+steward_repo: keel
+local_repo: keel
+mode:
+  kind: exclusive
+  active_repo: paddles
+members:
+  - repo: keel
+    role: steward
+    state: waiting
+    mission: M1
+  - repo: paddles
+    role: member
+    state: active
+    mission: M2
+"#,
+        );
+
+        let projection = keel::read_model::turn_loop::project_for_board(temp.path()).unwrap();
+        let json = serde_json::to_value(payload_for(&projection)).unwrap();
+
+        assert_eq!(json["mission_stack"]["id"], "demo-stack");
+        assert_eq!(json["mission_stack"]["mode"]["kind"], "exclusive");
+        assert_eq!(json["mission_stack"]["execution_gate"]["status"], "yield");
+        assert_eq!(
+            json["mission_stack"]["execution_gate"]["reason"],
+            "exclusive_lease_held_elsewhere"
+        );
+        assert_eq!(
+            json["mission_stack"]["execution_gate"]["active_repos"][0],
+            "paddles"
+        );
+    }
+
+    #[test]
+    fn mission_stack_surfaces_preserve_heartbeat_semantics() {
+        let temp = tempfile::TempDir::new().unwrap();
+        let board_dir = temp.path().join(".keel");
+        fs::create_dir_all(&board_dir).unwrap();
+        fs::write(board_dir.join("README.md"), "# Board\n").unwrap();
+        init_git_repo(temp.path());
+        git(temp.path(), &["checkout", "-b", "stack/demo-stack"]);
+        write_stack_manifest(
+            &board_dir,
+            "demo-stack",
+            r#"
+id: demo-stack
+steward_repo: keel
+local_repo: keel
+mode:
+  kind: shared
+  active_repos:
+    - keel
+members:
+  - repo: keel
+    role: steward
+    state: active
+"#,
+        );
+        git(temp.path(), &["add", ".keel/stacks"]);
+        git(temp.path(), &["commit", "-m", "add stack"]);
+
+        let before = keel::read_model::heartbeat::project(&board_dir, Utc::now());
+        let _projection = keel::read_model::turn_loop::project_for_board(&board_dir).unwrap();
+        let after = keel::read_model::heartbeat::project(&board_dir, Utc::now());
+
+        assert_eq!(
+            before.source,
+            keel::read_model::heartbeat::HeartbeatSource::HeadCommit
+        );
+        assert_eq!(
+            after.source,
+            keel::read_model::heartbeat::HeartbeatSource::HeadCommit
+        );
+        assert_eq!(before.dirty, after.dirty);
     }
 }

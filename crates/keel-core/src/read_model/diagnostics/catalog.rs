@@ -346,4 +346,14 @@ pub const ALL_DOCTOR_CHECKS: &[DoctorCheckDefinition] = &[
         section: "Workflow",
         name: "Workflow topology",
     },
+    DoctorCheckDefinition {
+        id: "workflow-mission-stack-protocol",
+        section: "Workflow",
+        name: "Mission Stack protocol",
+    },
+    DoctorCheckDefinition {
+        id: "workflow-mission-stack-closeout",
+        section: "Workflow",
+        name: "Mission Stack closeout",
+    },
 ];

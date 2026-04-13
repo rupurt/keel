@@ -758,6 +758,25 @@ fn validate_with_config_internal(
         topology_problems,
     ));
 
+    let mission_stack_problems = checks::mission_stack::check_mission_stack_protocol(board_dir);
+    workflow_checks.push(configured_check(
+        doctor_config,
+        "workflow-mission-stack-protocol",
+        "Mission Stack protocol",
+        1,
+        mission_stack_problems,
+    ));
+
+    let mission_stack_closeout_problems =
+        checks::mission_stack::check_closed_stack_worktree_leftovers(board_dir);
+    workflow_checks.push(configured_check(
+        doctor_config,
+        "workflow-mission-stack-closeout",
+        "Mission Stack closeout",
+        1,
+        mission_stack_closeout_problems,
+    ));
+
     let overload_problems =
         checks::stories::check_circuit_overload(&board, config.workflow.max_battery_packs);
     workflow_checks.push(configured_check(

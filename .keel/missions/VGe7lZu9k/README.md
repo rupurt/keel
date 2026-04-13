@@ -1,13 +1,14 @@
 ---
 # system-managed
 id: VGe7lZu9k
-status: active
+status: achieved
 created_at: 2026-04-12T22:32:13
-updated_at: 2026-04-12T22:35:44
+updated_at: 2026-04-12T23:10:20
 # authored
 title: Implement Mission Stack Protocol
 watch: ~
 activated_at: 2026-04-12T22:35:44
+achieved_at: 2026-04-12T23:10:20
 ---
 
 # Implement Mission Stack Protocol

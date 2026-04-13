@@ -310,7 +310,9 @@ fn mission_status_bullet(board: &keel::domain::model::Board) -> String {
 #[cfg(test)]
 mod tests {
     use super::mission_status_bullet;
-    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestMission};
+    use keel::test_helpers::{
+        TestBoardBuilder, TestEpic, TestMission, git, init_git_repo, write_stack_manifest,
+    };
 
     #[test]
     fn mission_status_bullet_prefers_verification_pressure_when_only_achieved_missions_remain() {
@@ -337,5 +339,105 @@ mod tests {
             mission_status_bullet(&board),
             "1 mission driving 1 epic forward"
         );
+    }
+
+    #[test]
+    fn doctor_reports_mission_stack_violations() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .build();
+        init_git_repo(temp.path());
+        write_stack_manifest(
+            temp.path(),
+            "demo-stack",
+            r#"
+id: demo-stack
+steward_repo: keel
+local_repo: keel
+branch: stack/demo-stack
+mode:
+  kind: checkpoint
+  name: integration
+  required_members:
+    - keel
+members:
+  - repo: keel
+    role: steward
+    state: active
+    mission: M1
+foreign_execution:
+  required: true
+  managed_path: managed/paddles
+"#,
+        );
+
+        let report = super::validate(temp.path()).unwrap();
+        let problems = report
+            .workflow_checks
+            .iter()
+            .find(|check| check.id == "workflow-mission-stack-protocol")
+            .expect("mission stack protocol check")
+            .problems
+            .iter()
+            .map(|problem| problem.message.clone())
+            .collect::<Vec<_>>()
+            .join("\n");
+
+        assert!(problems.contains("expects branch `stack/demo-stack`"));
+        assert!(problems.contains("missing local acknowledgment"));
+        assert!(problems.contains("foreign execution requires a managed worktree"));
+    }
+
+    #[test]
+    fn doctor_reports_closed_stack_worktree_leftovers() {
+        let temp = TestBoardBuilder::new().build();
+        init_git_repo(temp.path());
+        git(temp.path(), &["checkout", "-b", "stack/demo-stack"]);
+        git(
+            temp.path(),
+            &[
+                "worktree",
+                "add",
+                "managed/paddles",
+                "-b",
+                "stack/demo-stack-foreign",
+            ],
+        );
+        write_stack_manifest(
+            temp.path(),
+            "demo-stack",
+            r#"
+id: demo-stack
+state: closed
+steward_repo: keel
+local_repo: keel
+mode:
+  kind: shared
+  active_repos:
+    - keel
+members:
+  - repo: keel
+    role: steward
+    state: done
+foreign_execution:
+  required: true
+  managed_path: managed/paddles
+"#,
+        );
+
+        let report = super::validate(temp.path()).unwrap();
+        let problems = report
+            .workflow_checks
+            .iter()
+            .find(|check| check.id == "workflow-mission-stack-closeout")
+            .expect("mission stack closeout check")
+            .problems
+            .iter()
+            .map(|problem| problem.message.clone())
+            .collect::<Vec<_>>()
+            .join("\n");
+
+        assert!(problems.contains("is closed but managed worktrees remain"));
+        assert!(problems.contains("managed/paddles"));
     }
 }

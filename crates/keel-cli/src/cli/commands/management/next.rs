@@ -1129,6 +1129,7 @@ mod tests {
     };
     use std::fs;
     use std::path::Path;
+    use std::process::Command;
 
     fn write_routine(root: &Path, id: &str, target_scope: &str, cadence_block: &str) {
         let routine_dir = root.join("routines").join(id);
@@ -1151,6 +1152,21 @@ updated_at: 2026-01-01T00:00:00
             ),
         )
         .unwrap();
+    }
+
+    fn git_stdout(dir: &Path, args: &[&str]) -> String {
+        let output = Command::new("git")
+            .args(args)
+            .current_dir(dir)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "git {:?} failed: {}",
+            args,
+            String::from_utf8_lossy(&output.stderr).trim()
+        );
+        String::from_utf8_lossy(&output.stdout).to_string()
     }
 
     #[test]
@@ -1586,6 +1602,47 @@ foreign_execution:
             json["details"]["stack_blocked"]["stack"]["foreign_execution_state"],
             "missing_managed_checkout"
         );
+    }
+
+    #[test]
+    fn mission_stack_guardrails_fail_safe() {
+        let temp = TestBoardBuilder::new()
+            .story(TestStory::new("SSTACK").status(StoryState::Backlog))
+            .build();
+        init_git_repo(temp.path());
+        git(temp.path(), &["checkout", "-b", "stack/demo-stack"]);
+        write_stack_manifest(
+            temp.path(),
+            "demo-stack",
+            r#"
+id: demo-stack
+steward_repo: keel
+local_repo: keel
+mode:
+  kind: shared
+  active_repos:
+    - keel
+members:
+  - repo: keel
+    role: steward
+    state: active
+foreign_execution:
+  required: true
+  managed_path: managed/paddles
+"#,
+        );
+
+        let managed_path = temp.path().join("managed/paddles");
+        let worktrees_before = git_stdout(temp.path(), &["worktree", "list", "--porcelain"]);
+        assert!(!managed_path.exists());
+
+        let board = keel::infrastructure::loader::load_board(temp.path()).unwrap();
+        let decision = calculate_next(&board, temp.path(), true, &ItemFilter::none()).unwrap();
+        let worktrees_after = git_stdout(temp.path(), &["worktree", "list", "--porcelain"]);
+
+        assert!(matches!(decision, NextDecision::StackBlocked(_)));
+        assert!(!managed_path.exists());
+        assert_eq!(worktrees_before, worktrees_after);
     }
 
     #[test]

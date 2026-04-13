@@ -44,11 +44,14 @@ pub fn init_git_repo(repo_root: &Path) {
 }
 
 pub fn git(repo_root: &Path, args: &[&str]) {
-    let output = Command::new("git")
-        .args(args)
-        .current_dir(repo_root)
-        .output()
-        .unwrap();
+    let mut command = Command::new("git");
+    command.args(args).current_dir(repo_root);
+    for (key, _) in std::env::vars_os() {
+        if key.to_string_lossy().starts_with("GIT_") {
+            command.env_remove(key);
+        }
+    }
+    let output = command.output().unwrap();
     assert!(
         output.status.success(),
         "git {:?} failed: {}",

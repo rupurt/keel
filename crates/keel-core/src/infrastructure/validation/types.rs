@@ -233,6 +233,8 @@ pub enum CheckId {
     MissionWatchConstraint,
     WorkflowGraphIntegrity,
     WorkflowTopology,
+    MissionStackProtocol,
+    MissionStackCloseout,
     RoutineInvalidCadence,
     RoutineScopeIncoherence,
 }

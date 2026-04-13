@@ -6,6 +6,7 @@ pub mod drift;
 pub mod epics;
 pub mod evidence;
 pub mod graph;
+pub mod mission_stack;
 pub mod missions;
 pub mod pacemaker;
 pub mod routines;

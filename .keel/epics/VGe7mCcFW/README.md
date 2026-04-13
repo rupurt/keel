@@ -22,8 +22,8 @@ mission: VGe7lZu9k
 ## Voyages
 
 <!-- BEGIN GENERATED -->
-**Progress:** 0/1 voyages complete, 2/3 stories done
+**Progress:** 1/1 voyages complete, 3/3 stories done
 | Voyage | Status | Stories |
 |--------|--------|---------|
-| [Implement Mission Stack Context Surfaces](voyages/VGe8Ad6Jy/) | in-progress | 2/3 |
+| [Implement Mission Stack Context Surfaces](voyages/VGe8Ad6Jy/) | done | 3/3 |
 <!-- END GENERATED -->
