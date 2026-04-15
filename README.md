@@ -13,6 +13,7 @@ Welcome to Keel. This is not a notes app with automation bolted on; it is a boar
   <img src="docs/images/keel-workshop-scene.png" alt="Keel workshop scene" width="32%" />
   <img src="docs/images/keel-knowledge-graph-zoom-out.png" alt="Keel knowledge graph zoom out" width="32%" />
   <img src="docs/images/keel-knowledge-graph-zoom-in.png" alt="Keel knowledge graph zoom in" width="32%" />
+  <img src="docs/images/keel-doctor.png" alt="Keel doctor" width="32%" />
 </p>
 
 ---
