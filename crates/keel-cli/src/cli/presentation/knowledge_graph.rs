@@ -607,12 +607,23 @@ fn layout_positions<'a>(
         .max(1);
     let center_x = (chart.canvas.pixel_width() / 2) as isize;
     let center_y = (chart.canvas.pixel_height() / 2) as isize;
-    let min_dimension = chart.canvas.pixel_width().min(chart.canvas.pixel_height()) as f64;
+    let px_w = chart.canvas.pixel_width() as f64;
+    let px_h = chart.canvas.pixel_height() as f64;
+    let min_dimension = px_w.min(px_h);
     let margin = (min_dimension * 0.12).clamp(4.0, 12.0);
-    let max_radius = (chart.canvas.pixel_width().min(chart.canvas.pixel_height()) as f64 / 2.0
-        - margin)
-        .max(8.0);
-    let radius_step = max_radius / (max_depth as f64 + 0.35);
+    let base_radius = (min_dimension / 2.0 - margin).max(8.0);
+    let radius_step = base_radius / (max_depth as f64 + 0.35);
+
+    // Use an oval layout when there is meaningfully more horizontal space than
+    // vertical space, stretching the x-axis radius up to the available width.
+    let aspect = px_w / px_h.max(1.0);
+    let (x_radius_step, y_radius_step) = if aspect > 1.15 {
+        let max_x_radius = (px_w / 2.0 - margin).max(8.0);
+        let x_step = max_x_radius / (max_depth as f64 + 0.35);
+        (x_step, radius_step)
+    } else {
+        (radius_step, radius_step)
+    };
 
     let mut weights = HashMap::new();
     let mut positions = HashMap::new();
@@ -632,7 +643,8 @@ fn layout_positions<'a>(
         TAU,
         center_x,
         center_y,
-        radius_step,
+        x_radius_step,
+        y_radius_step,
         &child_map,
         &mut weights,
         &mut positions,
@@ -648,7 +660,8 @@ fn assign_child_positions<'a>(
     angle_span: f64,
     center_x: isize,
     center_y: isize,
-    radius_step: f64,
+    x_radius_step: f64,
+    y_radius_step: f64,
     child_map: &HashMap<String, Vec<&'a KnowledgeGraphViewNode>>,
     weights: &mut HashMap<String, usize>,
     positions: &mut HashMap<String, PositionedNode<'a>>,
@@ -674,9 +687,9 @@ fn assign_child_positions<'a>(
             angle_span * weight as f64 / total_weight as f64
         };
         let angle = cursor + child_span / 2.0;
-        let radius = radius_step * child.depth as f64;
-        let x = center_x as f64 + radius * angle.cos();
-        let y = center_y as f64 + radius * angle.sin();
+        let depth = child.depth as f64;
+        let x = center_x as f64 + x_radius_step * depth * angle.cos();
+        let y = center_y as f64 + y_radius_step * depth * angle.sin();
 
         positions.insert(
             child.id.clone(),
@@ -699,7 +712,8 @@ fn assign_child_positions<'a>(
             child_sector,
             center_x,
             center_y,
-            radius_step,
+            x_radius_step,
+            y_radius_step,
             child_map,
             weights,
             positions,
@@ -738,23 +752,30 @@ fn draw_orbits(
 ) {
     let center_x = (chart.canvas.pixel_width() / 2) as isize;
     let center_y = (chart.canvas.pixel_height() / 2) as isize;
-    let mut depth_radii: BTreeMap<usize, Vec<isize>> = projection
+
+    // Accumulate (|dx|, |dy|) per depth so we can draw an ellipse that fits
+    // the actual node layout, which may be oval when horizontal space allows.
+    let mut depth_axes: BTreeMap<usize, Vec<(isize, isize)>> = projection
         .nodes
         .iter()
         .filter(|node| node.kind != KnowledgeGraphNodeKind::World && node.depth > 0)
         .filter_map(|node| positions.get(&node.id))
         .fold(BTreeMap::new(), |mut acc, position| {
-            let dx = position.x - center_x;
-            let dy = position.y - center_y;
-            let radius = (((dx * dx + dy * dy) as f64).sqrt().round() as isize).max(1);
-            acc.entry(position.node.depth).or_default().push(radius);
+            let dx = (position.x - center_x).abs();
+            let dy = (position.y - center_y).abs();
+            acc.entry(position.node.depth).or_default().push((dx, dy));
             acc
         });
 
-    for radii in depth_radii.values_mut() {
-        let total: isize = radii.iter().copied().sum();
-        let radius = (total as f64 / radii.len() as f64).round() as isize;
-        draw_circle_screen(chart, center_x, center_y, radius, Some(Color::BrightBlack));
+    for axes in depth_axes.values_mut() {
+        let count = axes.len() as f64;
+        let rx = (axes.iter().map(|(dx, _)| *dx).sum::<isize>() as f64 / count).round() as isize;
+        let ry = (axes.iter().map(|(_, dy)| *dy).sum::<isize>() as f64 / count).round() as isize;
+        if rx == ry {
+            draw_circle_screen(chart, center_x, center_y, rx, Some(Color::BrightBlack));
+        } else {
+            draw_ellipse_screen(chart, center_x, center_y, rx, ry, Some(Color::BrightBlack));
+        }
     }
 }
 
@@ -963,12 +984,17 @@ fn draw_labels(
             continue;
         }
 
-        let label = if matches!(
-            positioned.node.kind,
-            KnowledgeGraphNodeKind::Mission
-                | KnowledgeGraphNodeKind::Watch
-                | KnowledgeGraphNodeKind::Heartbeat
-        ) {
+        let is_focused = projection
+            .focus
+            .as_ref()
+            .is_some_and(|focus| focus.id == positioned.node.id);
+        let label = if is_focused
+            || matches!(
+                positioned.node.kind,
+                KnowledgeGraphNodeKind::Mission
+                    | KnowledgeGraphNodeKind::Watch
+                    | KnowledgeGraphNodeKind::Heartbeat
+            ) {
             positioned.node.title.clone()
         } else {
             depth_label_text(
@@ -1116,6 +1142,37 @@ fn draw_circle_screen(
         let angle = TAU * step as f64 / segments as f64;
         let x = center_x as f64 + radius as f64 * angle.cos();
         let y = center_y as f64 + radius as f64 * angle.sin();
+        let current = (x.round() as isize, y.round() as isize);
+        if let Some((prev_x, prev_y)) = previous {
+            chart
+                .canvas
+                .line_screen(prev_x, prev_y, current.0, current.1, color);
+        }
+        previous = Some(current);
+    }
+}
+
+fn draw_ellipse_screen(
+    chart: &mut ChartContext,
+    center_x: isize,
+    center_y: isize,
+    rx: isize,
+    ry: isize,
+    color: Option<Color>,
+) {
+    if rx <= 0 || ry <= 0 {
+        chart
+            .canvas
+            .set_pixel_screen(center_x.max(0) as usize, center_y.max(0) as usize, color);
+        return;
+    }
+
+    let segments = (rx.max(ry) * 8).clamp(24, 144) as usize;
+    let mut previous = None;
+    for step in 0..=segments {
+        let angle = TAU * step as f64 / segments as f64;
+        let x = center_x as f64 + rx as f64 * angle.cos();
+        let y = center_y as f64 + ry as f64 * angle.sin();
         let current = (x.round() as isize, y.round() as isize);
         if let Some((prev_x, prev_y)) = previous {
             chart
