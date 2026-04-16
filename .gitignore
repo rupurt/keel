@@ -23,3 +23,6 @@ keel.toml
 .gemini/
 gha-creds-*.json
 .keel/outbox/
+
+# macOS metadata
+.DS_Store
