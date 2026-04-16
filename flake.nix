@@ -33,7 +33,7 @@
         devShells.default = pkgs.mkShell {
           buildInputs = [
             rust
-            pkgs.nodejs_22
+            pkgs.nodejs_24
             pkgs.just
             pkgs.cargo-nextest
             pkgs.cargo-llvm-cov
