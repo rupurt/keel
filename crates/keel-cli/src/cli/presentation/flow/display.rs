@@ -64,8 +64,8 @@ pub fn render_annotated_flow(
         .map(|report| (report.id.clone(), report))
         .collect::<std::collections::HashMap<_, _>>();
 
-    let cap_render = render_epic_capacities(board, &cap_map, &theme);
-    let watch_render = render_watch_capacities(board, &capacity.watches, &theme);
+    let cap_render = render_epic_capacities(board, &cap_map, width, &theme);
+    let watch_render = render_watch_capacities(board, &capacity.watches, width, &theme);
     if !cap_render.is_empty() || !watch_render.is_empty() || !has_actionable_capacity {
         ensure_section_spacing(&mut output);
         writeln!(

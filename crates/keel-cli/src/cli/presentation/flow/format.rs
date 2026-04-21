@@ -8,6 +8,9 @@ pub use super::capacity::{EpicCapacityReport, WatchCapacityReport};
 use crate::cli::presentation::theme::Theme;
 
 const COMPLETED_EPIC_RENDER_LIMIT: usize = 3;
+const STRATEGIC_STATUS_WIDTH: usize = 10;
+const STRATEGIC_CAPACITY_BAR_WIDTH: usize = 15;
+const MIN_STRATEGIC_LABEL_WIDTH: usize = 17;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DepStatus {
@@ -145,6 +148,7 @@ pub fn classify_stories(
 pub fn render_epic_capacities(
     board: &keel::domain::model::Board,
     capacities: &HashMap<String, EpicCapacityReport>,
+    viewport_width: usize,
     theme: &Theme,
 ) -> String {
     let mut out = String::new();
@@ -173,20 +177,17 @@ pub fn render_epic_capacities(
     done_epics.sort_by_key(|e| e.index);
     done_epics.reverse();
 
-    let all_epics = draft_epics
-        .iter()
-        .chain(active_epics.iter())
-        .chain(done_epics.iter());
-
-    let mut max_width = 15;
-    for cap in all_epics {
-        let label_width = cap.id.len() + 1 + cap.title.len();
-        if label_width > max_width {
-            max_width = label_width;
-        }
-    }
-    max_width += 2;
-    let status_width = 10;
+    let max_width = strategic_label_width(
+        draft_epics
+            .iter()
+            .chain(active_epics.iter())
+            .chain(done_epics.iter())
+            .map(|cap| {
+                keel::infrastructure::utils::visible_width(&format!("{} {}", cap.id, cap.title))
+            }),
+        viewport_width,
+    );
+    let status_width = STRATEGIC_STATUS_WIDTH;
 
     let header = format!(
         "     {: <w$} {:<sw$} CAPACITY",
@@ -258,6 +259,7 @@ pub fn render_epic_capacities(
 pub fn render_watch_capacities(
     board: &keel::domain::model::Board,
     capacities: &[WatchCapacityReport],
+    viewport_width: usize,
     _theme: &Theme,
 ) -> String {
     let mut out = String::new();
@@ -265,15 +267,13 @@ pub fn render_watch_capacities(
         return out;
     }
 
-    let mut max_width = 15;
-    for cap in capacities {
-        let label_width = cap.id.len() + 1 + cap.title.len();
-        if label_width > max_width {
-            max_width = label_width;
-        }
-    }
-    max_width += 2;
-    let status_width = 10;
+    let max_width = strategic_label_width(
+        capacities.iter().map(|cap| {
+            keel::infrastructure::utils::visible_width(&format!("{} {}", cap.id, cap.title))
+        }),
+        viewport_width,
+    );
+    let status_width = STRATEGIC_STATUS_WIDTH;
 
     let header = format!(
         "     {: <w$} {:<sw$} CAPACITY",
@@ -322,14 +322,18 @@ fn render_epic_line(
     };
 
     let id_styled = crate::cli::style::styled_epic_id(&cap.id);
-    let epic_label = format!("{} {}", id_styled, cap.title);
-    let epic_padded = pad_to_width(&epic_label, epic_width);
+    let epic_padded = render_strategic_label(
+        &id_styled,
+        keel::infrastructure::utils::visible_width(&cap.id),
+        &cap.title,
+        epic_width,
+    );
 
     let bar = crate::cli::presentation::progress::render_capacity_bar(
         cap.capacity.done,
         cap.capacity.in_flight,
         cap.capacity.ready,
-        15,
+        STRATEGIC_CAPACITY_BAR_WIDTH,
         if cap.capacity.in_flight > 0 {
             Some(owo_colors::AnsiColors::Green)
         } else if cap.capacity.ready > 0 {
@@ -354,15 +358,19 @@ fn render_watch_line(
     let watch = board.watches.get(&cap.id).unwrap();
 
     let id_styled = crate::cli::style::styled_watch_id(&cap.id);
-    let watch_label = format!("{} {}", id_styled, watch.title());
-    let watch_padded = pad_to_width(&watch_label, watch_width);
+    let watch_padded = render_strategic_label(
+        &id_styled,
+        keel::infrastructure::utils::visible_width(&cap.id),
+        watch.title(),
+        watch_width,
+    );
     let status_padded = pad_to_width(&format!("{}", "watch".dimmed()), status_width);
 
     let bar = crate::cli::presentation::progress::render_capacity_bar(
         cap.capacity.done,
         cap.capacity.in_flight,
         cap.capacity.ready,
-        15,
+        STRATEGIC_CAPACITY_BAR_WIDTH,
         if cap.capacity.in_flight > 0 {
             Some(owo_colors::AnsiColors::Green)
         } else if cap.capacity.ready > 0 {
@@ -393,6 +401,68 @@ fn centered_ellipsis_width(max_width: usize, header: &str) -> usize {
     let target_width = keel::infrastructure::utils::visible_width(header)
         .max(keel::infrastructure::utils::visible_width(&sample_row));
     target_width.saturating_sub(3) / 2
+}
+
+fn strategic_label_width(
+    label_widths: impl Iterator<Item = usize>,
+    viewport_width: usize,
+) -> usize {
+    let desired_width = label_widths.max().unwrap_or(MIN_STRATEGIC_LABEL_WIDTH - 2) + 2;
+    let max_width = viewport_width
+        .saturating_sub(strategic_row_overhead(STRATEGIC_STATUS_WIDTH))
+        .max(1);
+    let min_width = MIN_STRATEGIC_LABEL_WIDTH.min(max_width);
+
+    desired_width.clamp(min_width, max_width)
+}
+
+fn strategic_row_overhead(status_width: usize) -> usize {
+    let sample_bar = crate::cli::presentation::progress::render_capacity_bar(
+        0,
+        0,
+        0,
+        STRATEGIC_CAPACITY_BAR_WIDTH,
+        None,
+    );
+    keel::infrastructure::utils::visible_width(&format!(
+        "  {} {} {} {}",
+        charge_icon(crate::cli::presentation::flow::capacity::ChargeState::Discharged),
+        "",
+        " ".repeat(status_width),
+        sample_bar
+    ))
+}
+
+fn render_strategic_label(
+    id_styled: &str,
+    id_width: usize,
+    title: &str,
+    target_width: usize,
+) -> String {
+    let mut label = id_styled.to_string();
+    let title_width = target_width.saturating_sub(id_width + 1);
+    if title_width > 0 && !title.is_empty() {
+        label.push(' ');
+        label.push_str(&truncate_text(title, title_width));
+    }
+
+    pad_to_width(&label, target_width)
+}
+
+fn truncate_text(text: &str, limit: usize) -> String {
+    if limit == 0 {
+        return String::new();
+    }
+    if text.chars().count() <= limit {
+        return text.to_string();
+    }
+
+    let mut truncated = text
+        .chars()
+        .take(limit.saturating_sub(1))
+        .collect::<String>();
+    truncated.push('…');
+    truncated
 }
 
 fn visible_epic_capacities<'a>(sorted: &[&'a EpicCapacityReport]) -> Vec<&'a EpicCapacityReport> {
@@ -666,7 +736,7 @@ mod tests {
             },
         );
         let theme = Theme::default();
-        let rendered = render_epic_capacities(&board, &capacities, &theme);
+        let rendered = render_epic_capacities(&board, &capacities, 100, &theme);
         assert!(rendered.contains("epic1"));
         assert!(rendered.contains("active"));
         assert!(rendered.contains("▓"));
@@ -724,13 +794,95 @@ mod tests {
             build_epic("epic2", keel::domain::model::EpicState::Done),
         );
 
-        let rendered = render_epic_capacities(&board, &capacities, &theme);
+        let rendered = render_epic_capacities(&board, &capacities, 100, &theme);
         let bracket_columns: Vec<_> = rendered
             .lines()
             .filter_map(|line| {
                 let plain = ansi_escape_sequences::strip_ansi(line);
                 plain.rfind(']').map(|right_edge| {
                     keel::infrastructure::utils::visible_width(&plain[..=right_edge])
+                })
+            })
+            .collect();
+
+        assert_eq!(bracket_columns.len(), 2);
+        assert!(bracket_columns.windows(2).all(|pair| pair[0] == pair[1]));
+    }
+
+    #[test]
+    fn render_epic_capacities_caps_long_titles_to_viewport_width() {
+        let theme = Theme::default();
+        let viewport_width = 80;
+        let capacities = HashMap::from([
+            (
+                "epic1".to_string(),
+                EpicCapacityReport {
+                    index: Some(1),
+                    id: "epic1".to_string(),
+                    title: "Configurable Hosted Timeouts And Concurrent Connection Handling"
+                        .to_string(),
+                    status: keel::domain::model::EpicState::Active,
+                    charge_state: crate::cli::presentation::flow::capacity::ChargeState::Charged,
+                    capacity: crate::cli::presentation::flow::capacity::EpicCapacity {
+                        ready: 0,
+                        in_flight: 1,
+                        blocked: 0,
+                        inactive: 0,
+                        done: 1,
+                    },
+                },
+            ),
+            (
+                "epic2".to_string(),
+                EpicCapacityReport {
+                    index: Some(2),
+                    id: "epic2".to_string(),
+                    title: "Short Title".to_string(),
+                    status: keel::domain::model::EpicState::Done,
+                    charge_state: crate::cli::presentation::flow::capacity::ChargeState::Discharged,
+                    capacity: crate::cli::presentation::flow::capacity::EpicCapacity {
+                        ready: 0,
+                        in_flight: 0,
+                        blocked: 0,
+                        inactive: 0,
+                        done: 2,
+                    },
+                },
+            ),
+        ]);
+
+        let mut board = keel::domain::model::Board::default();
+        board.epics.insert(
+            "epic1".to_string(),
+            build_epic("epic1", keel::domain::model::EpicState::Active),
+        );
+        board.epics.insert(
+            "epic2".to_string(),
+            build_epic("epic2", keel::domain::model::EpicState::Done),
+        );
+
+        let rendered = render_epic_capacities(&board, &capacities, viewport_width, &theme);
+        let data_lines: Vec<_> = rendered
+            .lines()
+            .filter_map(|line| {
+                let plain = ansi_escape_sequences::strip_ansi(line);
+                plain.contains('[').then_some(plain)
+            })
+            .collect();
+
+        assert_eq!(data_lines.len(), 2);
+        assert!(
+            data_lines
+                .iter()
+                .all(|line| { keel::infrastructure::utils::visible_width(line) <= viewport_width })
+        );
+        assert!(data_lines[0].contains('…'));
+
+        let bracket_columns: Vec<_> = data_lines
+            .iter()
+            .filter_map(|line| {
+                line.rfind(']').map(|right_edge| {
+                    keel::infrastructure::utils::visible_width(&line[..=right_edge])
                 })
             })
             .collect();
@@ -786,7 +938,7 @@ mod tests {
             "epic5".to_string(),
             build_epic("epic5", keel::domain::model::EpicState::Done),
         );
-        let rendered = render_epic_capacities(&board, &capacities, &theme);
+        let rendered = render_epic_capacities(&board, &capacities, 100, &theme);
 
         assert!(!rendered.contains("epic1"));
         assert!(!rendered.contains("epic2"));
@@ -882,7 +1034,7 @@ mod tests {
             "epic8".to_string(),
             build_epic("epic8", keel::domain::model::EpicState::Active),
         );
-        let rendered = render_epic_capacities(&board, &capacities, &theme);
+        let rendered = render_epic_capacities(&board, &capacities, 100, &theme);
 
         assert!(!rendered.contains("epic1"));
         assert!(!rendered.contains("epic2"));
@@ -933,7 +1085,7 @@ mod tests {
             "epic4".to_string(),
             build_epic("epic4", keel::domain::model::EpicState::Active),
         );
-        let rendered = render_epic_capacities(&board, &capacities, &theme);
+        let rendered = render_epic_capacities(&board, &capacities, 100, &theme);
 
         assert!(rendered.contains("epic1"));
         assert!(rendered.contains("epic2"));
@@ -972,6 +1124,7 @@ mod tests {
                     done: 0,
                 },
             }],
+            100,
             &theme,
         );
 
