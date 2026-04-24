@@ -7,6 +7,7 @@ use clap::{ArgGroup, Subcommand};
 
 pub mod attach;
 pub mod list;
+pub mod log;
 pub mod new;
 pub mod next;
 pub mod play;
@@ -115,13 +116,13 @@ pub enum MissionAction {
         /// Mission ID
         id: String,
     },
-    /// Add entry to mission log
+    /// Show mission log or add entry to mission log
     Log {
-        /// Mission ID
+        /// Mission ID or HEAD selector (HEAD, HEAD~, HEAD~~, HEAD^)
         id: String,
         /// Log entry text
         #[arg(long)]
-        entry: String,
+        entry: Option<String>,
     },
     /// Digest mission log entries
     Digest {
@@ -197,11 +198,17 @@ pub fn run(ctx: &spoke_auth::ExecutionContext, action: MissionAction) -> Result<
         MissionAction::Abandon { id } => {
             keel::application::mission_lifecycle::MissionLifecycleService::abandon(&board_dir, &id)
         }
-        MissionAction::Log { id, entry } => {
-            keel::application::mission_lifecycle::MissionLifecycleService::log(
-                &board_dir, &id, &entry,
-            )
-        }
+        MissionAction::Log { id, entry } => match entry {
+            Some(entry) => {
+                let resolved_id = log::resolve_mission_id(&board_dir, &id)?;
+                keel::application::mission_lifecycle::MissionLifecycleService::log(
+                    &board_dir,
+                    &resolved_id,
+                    &entry,
+                )
+            }
+            None => log::run_with_dir(&board_dir, &id),
+        },
         MissionAction::Digest { id } => {
             keel::application::mission_lifecycle::MissionLifecycleService::digest(&board_dir, &id)
         }

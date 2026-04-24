@@ -444,6 +444,32 @@ fn cli_parses_mission_resume() {
 }
 
 #[test]
+fn cli_parses_mission_log_without_entry() {
+    let cli = Cli::try_parse_from(["board", "mission", "log", "M1"]).unwrap();
+    assert!(matches!(
+        cli.command,
+        Commands::Management(ManagementCommands::Mission {
+            action: MissionAction::Log { id, entry: None }
+        }) if id == "M1"
+    ));
+}
+
+#[test]
+fn cli_parses_mission_log_with_entry() {
+    let cli =
+        Cli::try_parse_from(["board", "mission", "log", "M1", "--entry", "Did some work"]).unwrap();
+    assert!(matches!(
+        cli.command,
+        Commands::Management(ManagementCommands::Mission {
+            action: MissionAction::Log {
+                id,
+                entry: Some(entry)
+            }
+        }) if id == "M1" && entry == "Did some work"
+    ));
+}
+
+#[test]
 fn cli_parses_pulse_with_json() {
     let matches = crate::cli::build_cli()
         .try_get_matches_from(["keel", "pulse", "--json"])
