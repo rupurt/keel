@@ -666,6 +666,16 @@ fn validate_with_config_internal(
         mission_work_problems,
     ));
 
+    let mission_draft_voyage_problems =
+        checks::missions::check_mission_active_draft_voyages(&board);
+    mission_checks.push(configured_check(
+        doctor_config,
+        "mission-active-draft-voyages",
+        "Active mission draft voyages",
+        board.missions.len(),
+        mission_draft_voyage_problems,
+    ));
+
     let mission_orphan_problems = checks::missions::check_mission_orphans(&board);
     mission_checks.push(configured_check(
         doctor_config,

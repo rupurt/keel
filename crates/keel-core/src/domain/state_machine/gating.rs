@@ -72,6 +72,11 @@ pub fn evaluate_mission_transition(
 ) -> Vec<Problem> {
     match transition {
         MissionTransition::Activate => evaluate_mission_activation(board, mission),
+        MissionTransition::Resume => {
+            crate::infrastructure::validation::missions::check_mission_draft_voyage_coherence(
+                board, mission,
+            )
+        }
         MissionTransition::Achieve => evaluate_mission_achieve(board, mission),
         MissionTransition::Verify => evaluate_mission_verification(board, mission),
         _ => Vec::new(),
@@ -117,6 +122,12 @@ fn evaluate_mission_activation(
 
     problems.extend(
         crate::infrastructure::validation::missions::check_mission_actionable_lineage_readiness(
+            board, mission,
+        ),
+    );
+
+    problems.extend(
+        crate::infrastructure::validation::missions::check_mission_draft_voyage_coherence(
             board, mission,
         ),
     );

@@ -322,6 +322,11 @@ pub const ALL_DOCTOR_CHECKS: &[DoctorCheckDefinition] = &[
         name: "Active mission work coherence",
     },
     DoctorCheckDefinition {
+        id: "mission-active-draft-voyages",
+        section: "Missions",
+        name: "Active mission draft voyages",
+    },
+    DoctorCheckDefinition {
         id: "mission-orphaned-lineage",
         section: "Missions",
         name: "Orphaned mission lineage",

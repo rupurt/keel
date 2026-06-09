@@ -421,6 +421,23 @@ pub fn check_mission_active_no_work(board: &Board) -> Vec<Problem> {
     problems
 }
 
+/// Check for active missions carrying draft voyages in linked epics.
+pub fn check_mission_active_draft_voyages(board: &Board) -> Vec<Problem> {
+    let mut problems = Vec::new();
+
+    for mission in board.missions.values() {
+        if mission.status() != MissionStatus::Active {
+            continue;
+        }
+
+        problems.extend(missions::check_mission_draft_voyage_coherence(
+            board, mission,
+        ));
+    }
+
+    problems
+}
+
 /// Check for orphaned mission lineage
 pub fn check_mission_orphans(board: &Board) -> Vec<Problem> {
     let mut problems = Vec::new();
@@ -868,6 +885,38 @@ mod tests {
         assert_eq!(problems.len(), 1);
         assert_eq!(problems[0].check_id, CheckId::MissionActiveNoWork);
         assert_eq!(problems[0].severity, Severity::Error);
+    }
+
+    #[test]
+    fn test_check_mission_active_draft_voyages_flags_active_mission() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "E1").status("draft"))
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_mission_active_draft_voyages(&board);
+
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].check_id, CheckId::MissionDraftVoyageCoherence);
+        assert_eq!(problems[0].severity, Severity::Error);
+        assert!(problems[0].message.contains("draft voyage"));
+        assert!(problems[0].message.contains("E1/V1"));
+    }
+
+    #[test]
+    fn test_check_mission_active_draft_voyages_ignores_defining_mission() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("defining"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "E1").status("draft"))
+            .build();
+
+        let board = load_board(temp.path()).unwrap();
+        let problems = check_mission_active_draft_voyages(&board);
+
+        assert!(problems.is_empty());
     }
 
     #[test]

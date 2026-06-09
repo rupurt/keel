@@ -6,6 +6,7 @@ use std::path::Path;
 use anyhow::{Context, Result, anyhow};
 use chrono::Local;
 
+use keel::domain::model::MissionStatus;
 use keel::infrastructure::duplicate_ids::{self, DuplicateEntity};
 use keel::infrastructure::frontmatter_mutation::Mutation;
 use keel::infrastructure::loader::load_board;
@@ -42,7 +43,17 @@ fn new_voyage(board_dir: &Path, name: &str, epic_id: &str, goal: &str) -> Result
     }
 
     // Verify epic exists
-    board.require_epic(epic_id)?;
+    let epic = board.require_epic(epic_id)?;
+    if let Some(mission_id) = epic.frontmatter.mission.as_deref()
+        && let Some(mission) = board.missions.get(mission_id)
+        && mission.status() == MissionStatus::Active
+    {
+        return Err(anyhow!(
+            "Cannot create draft voyage under active mission {} via epic {}. Plan voyage work before mission activation or pause the mission before adding draft voyage scope.",
+            mission.id(),
+            epic_id,
+        ));
+    }
 
     // Find next voyage number for this epic
     let next_num = find_next_voyage_num(&board, epic_id);
@@ -153,7 +164,7 @@ fn find_next_voyage_num(board: &keel::domain::model::Board, epic_id: &str) -> u3
 mod tests {
     use super::*;
     use keel::infrastructure::validation::{CheckId, structural};
-    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestVoyage};
+    use keel::test_helpers::{TestBoardBuilder, TestEpic, TestMission, TestVoyage};
     use regex::Regex;
 
     #[test]
@@ -213,6 +224,21 @@ mod tests {
             sdd_problems.is_empty(),
             "Voyage SDD should satisfy placeholder checks: {sdd_problems:?}"
         );
+    }
+
+    #[test]
+    fn test_new_voyage_rejects_active_mission_epic() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").status("active"))
+            .epic(TestEpic::new("test-epic").mission("M1"))
+            .build();
+
+        let err = new_voyage(temp.path(), "New Voyage", "test-epic", "My goal")
+            .unwrap_err()
+            .to_string();
+
+        assert!(err.contains("active mission M1"), "{err}");
+        assert!(err.contains("draft voyage"), "{err}");
     }
 
     #[test]

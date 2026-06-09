@@ -44,6 +44,14 @@ impl MissionLifecycleService {
     }
 
     pub fn resume(board_dir: &Path, id: &str) -> Result<()> {
+        let board = load_board(board_dir)?;
+        let mission = board.require_mission(id)?;
+
+        let problems = evaluate_mission_transition(&board, mission, MissionTransition::Resume);
+        if !problems.is_empty() {
+            return Err(anyhow!(format_gate_error("mission", "resume", &problems)));
+        }
+
         execute(board_dir, id, &mission_transitions::RESUME)?;
         println!("Resumed mission: {}", id);
         Ok(())
@@ -492,6 +500,43 @@ mod tests {
                 .to_string()
                 .contains("planned epic or bearing")
         );
+    }
+
+    #[test]
+    fn test_mission_activate_fails_with_draft_voyage() {
+        let temp = TestBoardBuilder::new()
+            .mission(
+                TestMission::new("M1")
+                    .title("Mission One")
+                    .status("defining"),
+            )
+            .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "E1").status("draft"))
+            .build();
+
+        let charter_path = temp.path().join("missions/M1/CHARTER.md");
+        fs::write(charter_path, authored_charter("E1")).unwrap();
+
+        let res = MissionLifecycleService::activate(temp.path(), "M1");
+        assert!(res.is_err());
+        let err = res.unwrap_err().to_string();
+        assert!(err.contains("draft voyage"), "{err}");
+        assert!(err.contains("E1/V1"), "{err}");
+    }
+
+    #[test]
+    fn test_mission_resume_fails_with_draft_voyage() {
+        let temp = TestBoardBuilder::new()
+            .mission(TestMission::new("M1").title("Mission One").status("paused"))
+            .epic(TestEpic::new("E1").mission("M1"))
+            .voyage(TestVoyage::new("V1", "E1").status("draft"))
+            .build();
+
+        let res = MissionLifecycleService::resume(temp.path(), "M1");
+        assert!(res.is_err());
+        let err = res.unwrap_err().to_string();
+        assert!(err.contains("draft voyage"), "{err}");
+        assert!(err.contains("E1/V1"), "{err}");
     }
 
     #[test]

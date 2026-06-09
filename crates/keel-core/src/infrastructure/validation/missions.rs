@@ -1,4 +1,4 @@
-use crate::domain::model::{Board, EpicState, Mission};
+use crate::domain::model::{Board, EpicState, Mission, VoyageState};
 
 use super::{CheckId, GapCategory, Problem};
 
@@ -32,6 +32,36 @@ pub fn check_mission_actionable_lineage_readiness(
         .with_scope(mission.id())
         .with_category(GapCategory::Coherence)
         .with_check_id(CheckId::MissionDefinitionReadiness),
+    ]
+}
+
+/// Active missions must not carry draft voyages in linked epics.
+pub fn check_mission_draft_voyage_coherence(board: &Board, mission: &Mission) -> Vec<Problem> {
+    let mut draft_voyages: Vec<_> = board
+        .epics_for_mission(mission.id())
+        .into_iter()
+        .flat_map(|epic| board.voyages_for_epic_id(epic.id()))
+        .filter(|voyage| voyage.status() == VoyageState::Draft)
+        .map(|voyage| voyage.scope_path())
+        .collect();
+    draft_voyages.sort();
+
+    if draft_voyages.is_empty() {
+        return Vec::new();
+    }
+
+    vec![
+        Problem::error(
+            mission.path.clone(),
+            format!(
+                "Mission {} cannot be active while linked epics contain draft voyage(s): {}. Plan or remove draft voyages before activating or continuing the mission.",
+                mission.id(),
+                draft_voyages.join(", "),
+            ),
+        )
+        .with_scope(mission.id())
+        .with_category(GapCategory::Coherence)
+        .with_check_id(CheckId::MissionDraftVoyageCoherence),
     ]
 }
 

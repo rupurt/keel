@@ -223,6 +223,7 @@ pub enum CheckId {
     BearingDanglingDependency,
     BearingDependencyCycle,
     MissionDefinitionReadiness,
+    MissionDraftVoyageCoherence,
     MissionGoalAchieved,
     MissionActiveNoWork,
     MissionOrphanedLineage,
